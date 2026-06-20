@@ -42,11 +42,14 @@ Platform access to agency operational data should be audited and minimized.
 
 - `no_portal_access`
 - `invited`
+- `email_unverified`
 - `active`
 - `suspended`
 - `archived`
 
 Agency staff can create client profiles without login access, invite later, resend invitations, suspend access, and archive accounts.
+
+`email_unverified` is used for self-registration before email verification or invitation acceptance. It is a portal-account state, not a separate client profile status.
 
 ## Client/Passenger Permission Fields
 
@@ -173,9 +176,9 @@ Audit events should record:
 - Before/after critical fields where appropriate.
 - Support-access reason where platform user accessed tenant data.
 
-## Review Hardening: Missing Permission Decisions
+## Review Hardening: Permission Decisions Resolved For MVP
 
-Before database implementation, the permission model must explicitly define:
+The permission model now defines the following MVP decisions:
 
 - Which agency roles can create, edit, archive, merge, or export client and passenger profiles.
 - Which agency roles can edit `client_passenger_relationship` permissions and consent status.
@@ -210,3 +213,31 @@ Platform support must not use agency-private commercial data to update global kn
 - Portal visibility for a record requires all of: active client account, tenant match, relationship permission where passenger data is involved, record-specific visibility, and non-archived document or record status.
 - Portal edits should create audit events and may require agency review for legal identity, travel documents, consent, and service-needs fields.
 - Internal notes, internal warnings, unreviewed knowledge, commercial agreements, and private fare data are never client-visible.
+
+## Architecture Decisions: Staff Permission Defaults
+
+Initial role permissions:
+
+- `agency_owner`: full agency workspace access, including staff management, settings, exports, passenger merges, financial records, overrides, and archive policies.
+- `agency_admin`: all operational records, passenger merges, relationship permissions, templates, overrides, and staff management except owner transfer and destructive export/archive policy.
+- `agency_agent`: create/edit clients, passengers, relationships, requests, offers, bookings, tickets, EMDs, documents, messages, tasks, and notes; cannot reconcile payments, export all data, merge passengers, or edit agency-wide settings unless separately granted.
+- `agency_accountant`: view limited client/booking context; create/edit invoices, payments, refunds/exchanges, reconciliation notes, and financial documents; cannot edit passenger legal identity or airline knowledge overrides.
+- `agency_readonly`: read permitted operational records; no edits; internal commercial fields, support audit events, and private agreements hidden by default.
+
+Sensitive actions:
+
+- Passenger merge: `agency_owner` and `agency_admin` only.
+- Relationship permission/consent edits: `agency_owner`, `agency_admin`, and `agency_agent`.
+- Client-visible offer send/withdraw: `agency_owner`, `agency_admin`, and `agency_agent`.
+- Ticket/EMD mark-issued: `agency_owner`, `agency_admin`, and `agency_agent`; financial visibility follows role restrictions.
+- Invoice issue/payment reconciliation/refund paid: `agency_owner`, `agency_admin`, and `agency_accountant`.
+- Agency airline override create/edit: `agency_owner`, `agency_admin`; `agency_agent` may add notes only if allowed by setting.
+- Agency airline override activate for operational use: `agency_owner` or `agency_admin`.
+
+Client portal rules:
+
+- `email_unverified` clients may edit basic own profile fields and complete verification only.
+- `email_unverified` clients may not view existing agency records, accept offers, view bookings, view documents, make payments, or manage non-self passenger relationships.
+- Active clients can act only through record visibility and relationship permissions.
+- Legal identity, date of birth, passport/travel document, consent, and medical/service-need edits from the portal create staff-review events before operational use when attached to active travel records.
+- Authorized contacts require their own scoped authorization record in MVP; they do not automatically inherit all client/passenger relationship permissions.

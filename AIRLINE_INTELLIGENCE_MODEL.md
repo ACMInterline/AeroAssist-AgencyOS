@@ -292,3 +292,64 @@ The flexible `airline_knowledge_item` model should not become unstructured free 
 - override mode
 
 `structured_data` must be validated by a schema selected from domain/layer metadata where possible. Truly new layers may begin with a generic schema, but platform review should decide whether a reusable schema is needed before broad publishing.
+
+## Architecture Decisions: Agency Override Schema
+
+Decision: agency overrides use one generic `agency_airline_override` envelope with typed `override_type` and validated `structured_data`. Specialized tables may be introduced later only when a type becomes operationally complex.
+
+Required fields:
+
+- `id`
+- `agency_id`
+- `airline_id`
+- `target_global_record_type` optional
+- `target_global_record_id` optional
+- `target_global_version_id` optional
+- `override_type`
+- `override_mode`: `replace`, `augment`, `annotate`
+- `title`
+- `applicability`
+- `structured_data`
+- `internal_only`
+- `client_visible_allowed`
+- `effective_from`
+- `effective_to`
+- `status`: `draft`, `active`, `needs_review`, `expired`, `archived`
+- `source_note` or `knowledge_source_id` optional
+- `created_by`
+- `reviewed_by` optional
+- `activated_by` optional
+- timestamps
+
+Initial `override_type` values:
+
+- `contact`
+- `agreement`
+- `pricing_note`
+- `operational_note`
+- `document_template`
+- `internal_warning`
+- `service_policy_note`
+- `emd_mapping_note`
+
+Typed structured data:
+
+- `contact`: desk/type, name, phone, email, URL, hours, languages, escalation level, notes.
+- `agreement`: PCC/OID/account reference, commission/private fare/waiver notes, validity, confidentiality, settlement notes. Always internal-only in MVP.
+- `pricing_note`: fee note, route/cabin/service applicability, currency if relevant, manual quote flag, client-visible eligibility.
+- `operational_note`: procedure steps, channel, required documents, expected SLA, confirmation method, credential reference.
+- `document_template`: agency template ID, global template source ID optional, applicability, language, portal visibility default.
+- `internal_warning`: warning text, severity, applicability, expiry/review date. Always internal-only unless converted to approved client wording separately.
+- `service_policy_note`: service code, policy note, document requirements, passenger/segment scope, manual review flag.
+- `emd_mapping_note`: service code, RFIC/RFISC note, issuance type, manual review flag, source note.
+
+Mode behavior:
+
+- `replace` supersedes the matching global field or record for the owning agency only.
+- `augment` adds agency-specific data beside the global record.
+- `annotate` adds internal agency context without changing global operational guidance.
+
+Client visibility:
+
+- Agreements, private fares, commission notes, PCC/OID/account references, credentials, and internal warnings are never client-visible.
+- Pricing notes, operational notes, service policy notes, and document template overrides may become client-visible only when `client_visible_allowed = true` and the consuming workflow explicitly selects approved client wording.

@@ -16,11 +16,12 @@ Outcome: agency can operate a branded workspace, public website, and client port
 
 1. Visitor enters from agency website or portal link.
 2. Visitor creates a client account.
-3. System creates `client_profile` and `client_account` with `active` or verification-pending status depending on security policy.
-4. Client completes own profile.
-5. Client may create passenger profiles if agency allows self-service.
-6. System creates relationship records, usually `self` for the client and any additional relationships requested.
-7. Agency staff receives notification and can review, approve, restrict, or archive.
+3. System creates `client_profile` and `client_account` with `email_unverified` status.
+4. Before email verification, the client can complete basic own profile fields and submit the registration, but cannot view existing agency records, accept offers, see bookings, access documents, pay, or create passenger relationships beyond a provisional self profile.
+5. After email verification, status changes to `active` unless the agency requires staff review; if review is required, portal access remains restricted by record visibility and relationship permissions until staff approves.
+6. Client may create passenger profiles only if agency self-service settings allow it.
+7. System creates relationship records, usually `self` for the client and any additional relationships requested, with `proposed` relationship status until accepted by staff or policy.
+8. Agency staff receives notification and can review, approve, restrict, suspend, or archive.
 
 ## Staff-Created Client Invitation
 
@@ -171,10 +172,10 @@ Request validity does not depend on airline evaluation.
 - Refund/exchange workflow: create a snapshot when the case decision is sent to the client and when the refund/exchange is processed.
 - Document workflow: create or reference a snapshot when a client-facing document is generated, sent, downloaded, or archived.
 
-## Review Hardening: Known Workflow Gaps To Resolve Before Build
+## Architecture Decisions: Workflow Gap Resolutions
 
-- Define exact statuses for requests, offers, bookings, tickets, EMDs, invoices, payments, refunds/exchanges, documents, messages, and tasks.
-- Decide whether a client can accept an offer without staff approval when passenger documents or payment are incomplete.
-- Define how quote expiry, price changes, and unavailable fare bundles are represented after an offer has been sent.
-- Define whether client messages can create tasks automatically in MVP or only notify staff.
-- Define how external communications from WhatsApp, email, and phone are captured: message record, timeline event, uploaded transcript, or all three.
+- Status enums are defined in `CANONICAL_DATA_MODEL.md`.
+- Offer acceptance is allowed only for active verified client accounts with required relationship permissions. If required passenger documents or payment are incomplete, acceptance records the selected option but booking creation remains a staff action.
+- Quote expiry, price changes, and unavailable fare bundles are represented with offer, route alternative, and fare bundle statuses: `expired`, `price_changed`, `unavailable`, `withdrawn`, or `superseded`.
+- Client messages notify staff in MVP. Automatic task creation from messages is later scope unless staff manually creates a task.
+- External communications from WhatsApp, email, and phone are captured as message records with channel metadata and timeline events. Uploaded transcripts or screenshots are optional document attachments.
