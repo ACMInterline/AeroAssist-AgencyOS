@@ -1256,6 +1256,530 @@ class OfferTimelineEvent(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class BookingStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING_RESERVATION = "pending_reservation"
+    RESERVED = "reserved"
+    PENDING_PAYMENT = "pending_payment"
+    PAID = "paid"
+    TICKETING_PENDING = "ticketing_pending"
+    TICKETED = "ticketed"
+    PARTIALLY_TICKETED = "partially_ticketed"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
+class BookingChannel(str, Enum):
+    GDS = "gds"
+    AIRLINE_PORTAL = "airline_portal"
+    OTA_AFFILIATE = "ota_affiliate"
+    DIRECT_AIRLINE_WEBSITE = "direct_airline_website"
+    SUPPLIER_EMAIL = "supplier_email"
+    PHONE = "phone"
+    MANUAL = "manual"
+    MIXED = "mixed"
+
+
+class BookingPassengerTicketStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    ISSUED = "issued"
+    VOIDED = "voided"
+    REFUNDED = "refunded"
+    EXCHANGED = "exchanged"
+
+
+class BookingSegmentStatus(str, Enum):
+    BOOKED = "booked"
+    CONFIRMED = "confirmed"
+    WAITLISTED = "waitlisted"
+    CANCELLED = "cancelled"
+    FLOWN = "flown"
+    INFO_ONLY = "info_only"
+
+
+class TicketStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    VOIDED = "voided"
+    REFUNDED = "refunded"
+    EXCHANGED = "exchanged"
+    CANCELLED = "cancelled"
+
+
+class EmdType(str, Enum):
+    EMD_S = "emd_s"
+    EMD_A = "emd_a"
+    UNKNOWN = "unknown"
+
+
+class EmdStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    VOIDED = "voided"
+    REFUNDED = "refunded"
+    EXCHANGED = "exchanged"
+    CANCELLED = "cancelled"
+
+
+class InvoiceStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    PARTIALLY_PAID = "partially_paid"
+    PAID = "paid"
+    OVERDUE = "overdue"
+    VOIDED = "voided"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
+class InvoiceLineType(str, Enum):
+    AIRFARE = "airfare"
+    TAXES = "taxes"
+    AIRLINE_ANCILLARY = "airline_ancillary"
+    AGENCY_SERVICE_FEE = "agency_service_fee"
+    DOCUMENT_SERVICE_FEE = "document_service_fee"
+    SPECIAL_ASSISTANCE_FEE = "special_assistance_fee"
+    TICKET_FEE = "ticket_fee"
+    EMD_FEE = "emd_fee"
+    DISCOUNT = "discount"
+    MARKUP = "markup"
+    OTHER = "other"
+
+
+class PaymentStatus(str, Enum):
+    PENDING = "pending"
+    RECEIVED = "received"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
+    CANCELLED = "cancelled"
+
+
+class PaymentMethod(str, Enum):
+    CASH = "cash"
+    BANK_TRANSFER = "bank_transfer"
+    CARD_OFFLINE = "card_offline"
+    PAYMENT_LINK_EXTERNAL = "payment_link_external"
+    AGENCY_CREDIT = "agency_credit"
+    OTHER = "other"
+
+
+class ReconciliationStatus(str, Enum):
+    UNRECONCILED = "unreconciled"
+    PARTIALLY_RECONCILED = "partially_reconciled"
+    RECONCILED = "reconciled"
+    DISPUTED = "disputed"
+
+
+class Booking(BaseDocument):
+    agency_id: str
+    booking_reference: str
+    client_id: str
+    request_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    selected_route_alternative_id: Optional[str] = None
+    selected_fare_option_id: Optional[str] = None
+    created_by_user_id: str
+    assigned_user_id: Optional[str] = None
+    status: BookingStatus = BookingStatus.DRAFT
+    pnr: Optional[str] = None
+    validating_airline_code: Optional[str] = None
+    booking_channel: BookingChannel = BookingChannel.MANUAL
+    currency: str = "EUR"
+    total_amount: float = 0
+    amount_paid: float = 0
+    amount_due: float = 0
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+    booking_snapshot: Optional[Dict[str, Any]] = None
+    confirmed_at: Optional[datetime] = None
+    ticketed_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+
+
+class BookingCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    client_id: str
+    request_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    selected_route_alternative_id: Optional[str] = None
+    selected_fare_option_id: Optional[str] = None
+    assigned_user_id: Optional[str] = None
+    status: BookingStatus = BookingStatus.DRAFT
+    pnr: Optional[str] = None
+    validating_airline_code: Optional[str] = None
+    booking_channel: BookingChannel = BookingChannel.MANUAL
+    currency: str = "EUR"
+    total_amount: float = 0
+    amount_paid: float = 0
+    amount_due: float = 0
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class BookingUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    assigned_user_id: Optional[str] = None
+    status: Optional[BookingStatus] = None
+    pnr: Optional[str] = None
+    validating_airline_code: Optional[str] = None
+    booking_channel: Optional[BookingChannel] = None
+    currency: Optional[str] = None
+    total_amount: Optional[float] = None
+    amount_paid: Optional[float] = None
+    amount_due: Optional[float] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class CreateBookingFromOffer(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    selected_route_alternative_id: Optional[str] = None
+    selected_fare_option_id: Optional[str] = None
+    pnr: Optional[str] = None
+    booking_channel: BookingChannel = BookingChannel.MANUAL
+    status: BookingStatus = BookingStatus.DRAFT
+    assigned_user_id: Optional[str] = None
+    internal_notes: Optional[str] = None
+    accept_offer: bool = True
+
+
+class BookingPassenger(BaseDocument):
+    agency_id: str
+    booking_id: str
+    passenger_id: Optional[str] = None
+    offer_passenger_id: Optional[str] = None
+    snapshot_display_name: str
+    snapshot_date_of_birth: Optional[date] = None
+    snapshot_passenger_type: str = "ADT"
+    is_primary_traveler: bool = False
+    ticket_status: BookingPassengerTicketStatus = BookingPassengerTicketStatus.PENDING
+
+
+class BookingPassengerCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    passenger_id: Optional[str] = None
+    offer_passenger_id: Optional[str] = None
+    snapshot_display_name: Optional[str] = None
+    snapshot_date_of_birth: Optional[date] = None
+    snapshot_passenger_type: str = "ADT"
+    is_primary_traveler: bool = False
+    ticket_status: BookingPassengerTicketStatus = BookingPassengerTicketStatus.PENDING
+
+
+class BookingPassengerUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_display_name: Optional[str] = None
+    snapshot_date_of_birth: Optional[date] = None
+    snapshot_passenger_type: Optional[str] = None
+    is_primary_traveler: Optional[bool] = None
+    ticket_status: Optional[BookingPassengerTicketStatus] = None
+
+
+class BookingSegment(BaseDocument):
+    agency_id: str
+    booking_id: str
+    offer_segment_id: Optional[str] = None
+    sequence: int
+    marketing_airline_code: str
+    marketing_airline_name: Optional[str] = None
+    operating_airline_code: Optional[str] = None
+    operating_airline_name: Optional[str] = None
+    flight_number: Optional[str] = None
+    origin_airport_code: str
+    origin_city: Optional[str] = None
+    destination_airport_code: str
+    destination_city: Optional[str] = None
+    departure_datetime: Optional[datetime] = None
+    arrival_datetime: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_basis: Optional[str] = None
+    segment_status: BookingSegmentStatus = BookingSegmentStatus.BOOKED
+    baggage_summary: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class BookingSegmentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    sequence: int
+    marketing_airline_code: str
+    marketing_airline_name: Optional[str] = None
+    operating_airline_code: Optional[str] = None
+    operating_airline_name: Optional[str] = None
+    flight_number: Optional[str] = None
+    origin_airport_code: str
+    origin_city: Optional[str] = None
+    destination_airport_code: str
+    destination_city: Optional[str] = None
+    departure_datetime: Optional[datetime] = None
+    arrival_datetime: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_basis: Optional[str] = None
+    segment_status: BookingSegmentStatus = BookingSegmentStatus.BOOKED
+    baggage_summary: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class BookingSegmentUpdate(BookingSegmentCreate):
+    sequence: Optional[int] = None
+    marketing_airline_code: Optional[str] = None
+    origin_airport_code: Optional[str] = None
+    destination_airport_code: Optional[str] = None
+
+
+class TicketRecord(BaseDocument):
+    agency_id: str
+    booking_id: str
+    passenger_id: Optional[str] = None
+    booking_passenger_id: Optional[str] = None
+    ticket_number: str
+    validating_airline_code: str
+    issue_date: Optional[date] = None
+    status: TicketStatus = TicketStatus.DRAFT
+    base_fare_amount: float = 0
+    taxes_amount: float = 0
+    total_amount: float = 0
+    currency: str = "EUR"
+    fare_basis: Optional[str] = None
+    coupon_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class TicketRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    passenger_id: Optional[str] = None
+    booking_passenger_id: Optional[str] = None
+    ticket_number: str
+    validating_airline_code: str
+    issue_date: Optional[date] = None
+    status: TicketStatus = TicketStatus.DRAFT
+    base_fare_amount: float = 0
+    taxes_amount: float = 0
+    total_amount: Optional[float] = None
+    currency: str = "EUR"
+    fare_basis: Optional[str] = None
+    coupon_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class TicketRecordUpdate(TicketRecordCreate):
+    ticket_number: Optional[str] = None
+    validating_airline_code: Optional[str] = None
+
+
+class EMDRecord(BaseDocument):
+    agency_id: str
+    booking_id: str
+    passenger_id: Optional[str] = None
+    booking_passenger_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    service_code: str
+    service_name: str
+    emd_number: str
+    emd_type: EmdType = EmdType.UNKNOWN
+    rfic_code: Optional[str] = None
+    rfisc_code: Optional[str] = None
+    reason_for_issuance: Optional[str] = None
+    issue_date: Optional[date] = None
+    status: EmdStatus = EmdStatus.DRAFT
+    amount: float = 0
+    currency: str = "EUR"
+    associated_segment_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class EMDRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    passenger_id: Optional[str] = None
+    booking_passenger_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    service_code: str
+    service_name: str
+    emd_number: str
+    emd_type: EmdType = EmdType.UNKNOWN
+    rfic_code: Optional[str] = None
+    rfisc_code: Optional[str] = None
+    reason_for_issuance: Optional[str] = None
+    issue_date: Optional[date] = None
+    status: EmdStatus = EmdStatus.DRAFT
+    amount: float = 0
+    currency: str = "EUR"
+    associated_segment_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class EMDRecordUpdate(EMDRecordCreate):
+    service_code: Optional[str] = None
+    service_name: Optional[str] = None
+    emd_number: Optional[str] = None
+
+
+class Invoice(BaseDocument):
+    agency_id: str
+    invoice_number: str
+    client_id: str
+    booking_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    status: InvoiceStatus = InvoiceStatus.DRAFT
+    currency: str = "EUR"
+    subtotal_amount: float = 0
+    tax_amount: float = 0
+    total_amount: float = 0
+    paid_amount: float = 0
+    due_amount: float = 0
+    issue_date: Optional[date] = None
+    due_date: Optional[date] = None
+    client_visible_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    paid_at: Optional[datetime] = None
+
+
+class InvoiceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    invoice_number: Optional[str] = None
+    client_id: str
+    booking_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    status: InvoiceStatus = InvoiceStatus.DRAFT
+    currency: str = "EUR"
+    issue_date: Optional[date] = None
+    due_date: Optional[date] = None
+    client_visible_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class InvoiceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[InvoiceStatus] = None
+    issue_date: Optional[date] = None
+    due_date: Optional[date] = None
+    client_visible_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class InvoiceLineItem(BaseDocument):
+    agency_id: str
+    invoice_id: str
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    line_type: InvoiceLineType
+    description: str
+    service_code: Optional[str] = None
+    quantity: float = 1
+    unit_amount: float = 0
+    total_amount: float = 0
+    currency: str = "EUR"
+    supplier_pass_through: bool = False
+    client_visible: bool = True
+    status: str = "active"
+
+
+class InvoiceLineItemCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    line_type: InvoiceLineType
+    description: str
+    service_code: Optional[str] = None
+    quantity: float = 1
+    unit_amount: float = 0
+    total_amount: Optional[float] = None
+    currency: str = "EUR"
+    supplier_pass_through: bool = False
+    client_visible: bool = True
+
+
+class InvoiceLineItemUpdate(InvoiceLineItemCreate):
+    line_type: Optional[InvoiceLineType] = None
+    description: Optional[str] = None
+
+
+class PaymentRecord(BaseDocument):
+    agency_id: str
+    invoice_id: str
+    booking_id: Optional[str] = None
+    client_id: str
+    status: PaymentStatus = PaymentStatus.PENDING
+    method: PaymentMethod = PaymentMethod.BANK_TRANSFER
+    amount: float = 0
+    currency: str = "EUR"
+    received_at: Optional[datetime] = None
+    external_reference: Optional[str] = None
+    reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
+    reconciliation_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class PaymentRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    invoice_id: str
+    booking_id: Optional[str] = None
+    client_id: str
+    status: PaymentStatus = PaymentStatus.PENDING
+    method: PaymentMethod = PaymentMethod.BANK_TRANSFER
+    amount: float
+    currency: str = "EUR"
+    received_at: Optional[datetime] = None
+    external_reference: Optional[str] = None
+    reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
+    reconciliation_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class PaymentRecordUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[PaymentStatus] = None
+    method: Optional[PaymentMethod] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    received_at: Optional[datetime] = None
+    external_reference: Optional[str] = None
+    reconciliation_status: Optional[ReconciliationStatus] = None
+    reconciliation_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class BookingTimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    booking_id: str
+    event_type: str
+    actor_user_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    visibility: Visibility = Visibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=now_utc)
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
     key: str
