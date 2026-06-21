@@ -384,6 +384,15 @@ class ClientProfileUpdate(BaseModel):
     status: Optional[ClientStatus] = None
 
 
+class PortalAccessMapping(BaseDocument):
+    agency_id: str
+    client_id: str
+    user_email: EmailStr
+    portal_status: ClientPortalStatus = ClientPortalStatus.ACTIVE
+    display_name: str
+    last_login_at: Optional[datetime] = None
+
+
 class PassengerProfile(BaseDocument):
     agency_id: str
     first_name: str

@@ -37,6 +37,7 @@ from models import (
     PassengerProfile,
     PlatformRole,
     PlatformUser,
+    PortalAccessMapping,
     RequestMessage,
     RequestPassenger,
     RequestSegment,
@@ -104,6 +105,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     workspaces = db.collection("agency_workspaces")
     memberships = db.collection("agency_staff_memberships")
     clients = db.collection("client_profiles")
+    portal_mappings = db.collection("portal_access_mappings")
     passengers = db.collection("passenger_profiles")
     relationships = db.collection("client_passenger_relationships")
     requests = db.collection("travel_requests")
@@ -255,6 +257,23 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         )
         family_client = await clients.insert_one(family_model.model_dump(mode="json"))
         created.append("client:family")
+
+    portal_specs = [
+        (individual_client, "anna.client@example.com", "Anna Novak"),
+        (organization_client, "travel@orbitex.example.com", "Orbitex Travel Desk"),
+    ]
+    for client, user_email, display_name in portal_specs:
+        existing_portal = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": user_email})
+        if existing_portal is None:
+            portal_mapping = PortalAccessMapping(
+                agency_id=agency["id"],
+                client_id=client["id"],
+                user_email=user_email,
+                portal_status="active",
+                display_name=display_name,
+            )
+            await portal_mappings.insert_one(portal_mapping.model_dump(mode="json"))
+            created.append(f"portal_mapping:{user_email}")
 
     anna_passenger = await passengers.find_one({"agency_id": agency["id"], "display_name": "Anna Novak"})
     if anna_passenger is None:

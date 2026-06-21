@@ -11,7 +11,7 @@ async def health() -> dict:
     return {
         "ok": True,
         "service": "AeroAssist AgencyOS API",
-        "phase": "phase_1_foundation",
+        "phase": "phase_8_client_portal_visibility_foundation",
     }
 
 
@@ -39,11 +39,14 @@ async def summary(
             "emds": await db.collection("emd_records").count(),
             "invoices": await db.collection("invoices").count(),
             "payments": await db.collection("payment_records").count(),
+            "portal_mappings": await db.collection("portal_access_mappings").count(),
             "airlines": await db.collection("airline_profiles").count(),
             "airline_knowledge": await db.collection("airline_knowledge_items").count(),
             "airline_procedures": await db.collection("airline_procedures").count(),
             "airline_emd_notes": await db.collection("airline_emd_rule_notes").count(),
             "airline_overrides": await db.collection("agency_airline_overrides").count(),
+            "document_templates": await db.collection("document_templates").count(),
+            "rendered_documents": await db.collection("rendered_documents").count(),
             "reference_records": await db.collection("global_reference_records").count(),
             "audit_events": await db.collection("audit_events").count(),
         },
@@ -55,11 +58,15 @@ async def summary(
             "Manual offer builder foundation",
             "Booking, ticket, EMD, invoice, and payment tracking foundation",
             "Airline Intelligence foundation",
+            "Branded HTML document output foundation",
+            "Read-only client portal visibility foundation",
         ],
         "not_yet_implemented": [
-            "Client portal workflows",
-            "Branded document output",
+            "Production client portal authentication",
+            "Client request submission and editable portal workflows",
+            "Offer acceptance or rejection workflows",
             "Payment gateway integration",
+            "PDF export and public document links",
         ],
     }
 

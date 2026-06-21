@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, and Phase 7 branded HTML document output foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, and Phase 8 read-only client portal visibility foundation.
 
 ## Project Structure
 
@@ -102,9 +102,23 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Render actions from offer, booking, ticket, EMD, and invoice detail workflows.
 - Seeded default templates and rendered demo documents.
 
+## Phase 8 Includes
+
+- Demo portal access mapping records from portal email to agency client.
+- Read-only client portal API under `/api/portal`.
+- Portal-safe client, passenger, request, offer, booking, document, invoice, and payment responses.
+- Client/passenger visibility enforcement through active `can_view` relationships.
+- Client-scoped request, offer, booking, document, invoice, and payment visibility.
+- Client-visible-only messages, tasks, timeline events, price lines, invoice lines, and rendered documents.
+- Branded portal layout using agency workspace brand settings.
+- Portal dashboard, profile, passengers, requests, offers, bookings, documents, invoices, and payments pages.
+- Seeded demo portal accounts for the individual and organization sample clients.
+
 ## Intentionally Not Included Yet
 
-- Client portal workflows.
+- Production client portal authentication, invitations, sessions, or account security.
+- Client request submission or editable portal workflows.
+- Offer acceptance/rejection workflows.
 - PDF document export.
 - Email/share/public document links.
 - Payment gateway processing.
@@ -263,9 +277,36 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - `POST /api/agencies/{agency_id}/documents/{document_id}/archive`
 - `GET /api/agencies/{agency_id}/documents/{document_id}/timeline`
 - Render document actions under offers, bookings, tickets, EMDs, and invoices.
+- `GET /api/portal/me`
+- `GET /api/portal/dashboard`
+- `GET /api/portal/profile`
+- `GET /api/portal/passengers`
+- `GET /api/portal/passengers/{passenger_id}`
+- `GET /api/portal/requests`
+- `GET /api/portal/requests/{request_id}`
+- `GET /api/portal/offers`
+- `GET /api/portal/offers/{offer_id}`
+- `GET /api/portal/bookings`
+- `GET /api/portal/bookings/{booking_id}`
+- `GET /api/portal/documents`
+- `GET /api/portal/documents/{document_id}`
+- `GET /api/portal/invoices`
+- `GET /api/portal/invoices/{invoice_id}`
+- `GET /api/portal/payments`
 - `GET /api/reference`
 - `GET /api/reference/{domain}`
 - `POST /api/reference/seed`
+
+## Portal Demo Access
+
+Phase 8 portal preview uses development-only headers:
+
+```bash
+X-Demo-Role: portal_client
+X-Demo-Client-Email: anna.client@example.com
+```
+
+Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.com`. These headers are only for local/demo visibility testing and must be replaced before production client authentication.
 
 ## Canonical Layers
 
@@ -274,4 +315,4 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. PDF export, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. PDF export, gateway payments, production portal auth, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

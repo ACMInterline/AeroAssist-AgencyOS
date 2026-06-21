@@ -26,7 +26,21 @@ import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
+import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
+import PortalBookingsPage from "./pages/portal/PortalBookingsPage"
 import PortalDashboardPage from "./pages/portal/PortalDashboardPage"
+import PortalDocumentDetailPage from "./pages/portal/PortalDocumentDetailPage"
+import PortalDocumentsPage from "./pages/portal/PortalDocumentsPage"
+import PortalInvoiceDetailPage from "./pages/portal/PortalInvoiceDetailPage"
+import PortalInvoicesPage from "./pages/portal/PortalInvoicesPage"
+import PortalOfferDetailPage from "./pages/portal/PortalOfferDetailPage"
+import PortalOffersPage from "./pages/portal/PortalOffersPage"
+import PortalPassengerDetailPage from "./pages/portal/PortalPassengerDetailPage"
+import PortalPassengersPage from "./pages/portal/PortalPassengersPage"
+import PortalPaymentsPage from "./pages/portal/PortalPaymentsPage"
+import PortalProfilePage from "./pages/portal/PortalProfilePage"
+import PortalRequestDetailPage from "./pages/portal/PortalRequestDetailPage"
+import PortalRequestsPage from "./pages/portal/PortalRequestsPage"
 import HomePage from "./pages/public/HomePage"
 
 const routes = {
@@ -39,6 +53,14 @@ const routes = {
   "/agency/documents": DocumentsPage,
   "/agency/document-templates": DocumentTemplatesPage,
   "/portal": PortalDashboardPage,
+  "/portal/profile": PortalProfilePage,
+  "/portal/passengers": PortalPassengersPage,
+  "/portal/requests": PortalRequestsPage,
+  "/portal/offers": PortalOffersPage,
+  "/portal/bookings": PortalBookingsPage,
+  "/portal/documents": PortalDocumentsPage,
+  "/portal/invoices": PortalInvoicesPage,
+  "/portal/payments": PortalPaymentsPage,
 }
 
 export default function App() {
@@ -107,6 +129,36 @@ export default function App() {
   const platformKnowledgeMatch = window.location.pathname.match(/^\/platform\/airline-knowledge\/([^/]+)$/)
   if (platformKnowledgeMatch) {
     return <AirlineKnowledgeDetailPage knowledgeId={platformKnowledgeMatch[1]} />
+  }
+
+  const portalPassengerMatch = window.location.pathname.match(/^\/portal\/passengers\/([^/]+)$/)
+  if (portalPassengerMatch) {
+    return <PortalPassengerDetailPage passengerId={portalPassengerMatch[1]} />
+  }
+
+  const portalRequestMatch = window.location.pathname.match(/^\/portal\/requests\/([^/]+)$/)
+  if (portalRequestMatch) {
+    return <PortalRequestDetailPage requestId={portalRequestMatch[1]} />
+  }
+
+  const portalOfferMatch = window.location.pathname.match(/^\/portal\/offers\/([^/]+)$/)
+  if (portalOfferMatch) {
+    return <PortalOfferDetailPage offerId={portalOfferMatch[1]} />
+  }
+
+  const portalBookingMatch = window.location.pathname.match(/^\/portal\/bookings\/([^/]+)$/)
+  if (portalBookingMatch) {
+    return <PortalBookingDetailPage bookingId={portalBookingMatch[1]} />
+  }
+
+  const portalDocumentMatch = window.location.pathname.match(/^\/portal\/documents\/([^/]+)$/)
+  if (portalDocumentMatch) {
+    return <PortalDocumentDetailPage documentId={portalDocumentMatch[1]} />
+  }
+
+  const portalInvoiceMatch = window.location.pathname.match(/^\/portal\/invoices\/([^/]+)$/)
+  if (portalInvoiceMatch) {
+    return <PortalInvoiceDetailPage invoiceId={portalInvoiceMatch[1]} />
   }
 
   if (window.location.pathname === "/agency/clients") {
