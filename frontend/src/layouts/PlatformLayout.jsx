@@ -1,4 +1,4 @@
-import { Building2, Database, Plane, ShieldCheck } from "lucide-react"
+import { Building2, Plane, ShieldCheck } from "lucide-react"
 
 export default function PlatformLayout({ children, user }) {
   return (
@@ -17,10 +17,6 @@ export default function PlatformLayout({ children, user }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency">
               <Building2 className="h-4 w-4" />
               Agency
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform">
-              <Database className="h-4 w-4" />
-              Reference
             </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airlines">
               <Plane className="h-4 w-4" />
