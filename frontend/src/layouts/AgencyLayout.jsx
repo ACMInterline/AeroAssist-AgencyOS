@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileText, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
+import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
 
 export default function AgencyLayout({ children, user, agency }) {
   return (
@@ -45,6 +45,10 @@ export default function AgencyLayout({ children, user, agency }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/airline-intelligence">
               <BookOpenCheck className="h-4 w-4" />
               Airline Intelligence
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/documents">
+              <Files className="h-4 w-4" />
+              Documents
             </a>
           </nav>
           {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}

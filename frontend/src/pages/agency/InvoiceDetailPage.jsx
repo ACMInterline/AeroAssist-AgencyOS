@@ -79,6 +79,11 @@ export default function InvoiceDetailPage({ invoiceId }) {
     await load()
   }
 
+  async function renderInvoiceSummary() {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/invoices/${invoiceId}/render-document`, { document_type: "invoice_summary" })
+    window.location.href = `/agency/documents/${result.document.id}`
+  }
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -92,6 +97,7 @@ export default function InvoiceDetailPage({ invoiceId }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <InvoiceStatusBadge status={state.invoice.status} />
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={renderInvoiceSummary}>Render invoice summary</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={issue}>Issue</button>
               <button className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700" onClick={voidInvoice}>Void</button>
             </div>

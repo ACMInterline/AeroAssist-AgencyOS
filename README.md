@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, and Phase 6 Airline Intelligence foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, and Phase 7 branded HTML document output foundation.
 
 ## Project Structure
 
@@ -89,10 +89,24 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Lightweight search links from request, offer, and booking detail pages.
 - Seeded fake/demo airline intelligence data.
 
+## Phase 7 Includes
+
+- Agency/platform document template records.
+- Agency-owned rendered document records.
+- Document timeline events.
+- Snapshot-based branded HTML rendering service.
+- Agency workspace brand snapshots on rendered documents.
+- Source snapshots on rendered documents.
+- Staff document list/detail/template pages.
+- Sandboxed HTML document preview.
+- Render actions from offer, booking, ticket, EMD, and invoice detail workflows.
+- Seeded default templates and rendered demo documents.
+
 ## Intentionally Not Included Yet
 
 - Client portal workflows.
-- Branded documents.
+- PDF document export.
+- Email/share/public document links.
 - Payment gateway processing.
 - Full accounting or ledger reconciliation.
 - Automated ticketing, GDS, NDC, OTA, or supplier integrations.
@@ -239,6 +253,16 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - `GET /api/agencies/{agency_id}/airlines/{airline_id}/intelligence`
 - `GET /api/agencies/{agency_id}/airline-knowledge/{knowledge_id}`
 - Agency override and usage endpoints under `/api/agencies/{agency_id}/airlines/{airline_id}` and `/api/agencies/{agency_id}/airline-knowledge/{knowledge_id}`
+- `GET /api/agencies/{agency_id}/document-templates`
+- `POST /api/agencies/{agency_id}/document-templates`
+- `GET /api/agencies/{agency_id}/document-templates/{template_id}`
+- `PUT /api/agencies/{agency_id}/document-templates/{template_id}`
+- `POST /api/agencies/{agency_id}/document-templates/{template_id}/archive`
+- `GET /api/agencies/{agency_id}/documents`
+- `GET /api/agencies/{agency_id}/documents/{document_id}`
+- `POST /api/agencies/{agency_id}/documents/{document_id}/archive`
+- `GET /api/agencies/{agency_id}/documents/{document_id}/timeline`
+- Render document actions under offers, bookings, tickets, EMDs, and invoices.
 - `GET /api/reference`
 - `GET /api/reference/{domain}`
 - `POST /api/reference/seed`
@@ -250,4 +274,4 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Branded documents, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. PDF export, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

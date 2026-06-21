@@ -7,6 +7,9 @@ import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingsPage from "./pages/agency/BookingsPage"
 import ClientDetailPage from "./pages/agency/ClientDetailPage"
 import ClientsPage from "./pages/agency/ClientsPage"
+import DocumentDetailPage from "./pages/agency/DocumentDetailPage"
+import DocumentTemplatesPage from "./pages/agency/DocumentTemplatesPage"
+import DocumentsPage from "./pages/agency/DocumentsPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
@@ -33,6 +36,8 @@ const routes = {
   "/platform/airlines": AirlinesPage,
   "/agency": AgencyDashboardPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
+  "/agency/documents": DocumentsPage,
+  "/agency/document-templates": DocumentTemplatesPage,
   "/portal": PortalDashboardPage,
 }
 
@@ -87,6 +92,11 @@ export default function App() {
   const agencyKnowledgeMatch = window.location.pathname.match(/^\/agency\/airline-knowledge\/([^/]+)$/)
   if (agencyKnowledgeMatch) {
     return <AirlineKnowledgeViewPage knowledgeId={agencyKnowledgeMatch[1]} />
+  }
+
+  const documentMatch = window.location.pathname.match(/^\/agency\/documents\/([^/]+)$/)
+  if (documentMatch) {
+    return <DocumentDetailPage documentId={documentMatch[1]} />
   }
 
   const platformAirlineMatch = window.location.pathname.match(/^\/platform\/airlines\/([^/]+)$/)

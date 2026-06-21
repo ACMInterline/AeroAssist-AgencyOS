@@ -2206,6 +2206,126 @@ class AirlineKnowledgeUsageEventCreate(BaseModel):
     note: Optional[str] = None
 
 
+class DocumentTemplateScope(str, Enum):
+    PLATFORM_DEFAULT = "platform_default"
+    AGENCY_CUSTOM = "agency_custom"
+
+
+class DocumentType(str, Enum):
+    OFFER_SUMMARY = "offer_summary"
+    BOOKING_CONFIRMATION = "booking_confirmation"
+    ITINERARY_SUMMARY = "itinerary_summary"
+    TICKET_RECEIPT_SUMMARY = "ticket_receipt_summary"
+    EMD_RECEIPT_SUMMARY = "emd_receipt_summary"
+    INVOICE_SUMMARY = "invoice_summary"
+    SERVICE_SUMMARY = "service_summary"
+
+
+class DocumentTemplateStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ARCHIVED = "archived"
+
+
+class RenderedDocumentSourceType(str, Enum):
+    OFFER = "offer"
+    BOOKING = "booking"
+    TICKET = "ticket"
+    EMD = "emd"
+    INVOICE = "invoice"
+    REQUEST = "request"
+
+
+class RenderedDocumentStatus(str, Enum):
+    DRAFT = "draft"
+    RENDERED = "rendered"
+    SUPERSEDED = "superseded"
+    ARCHIVED = "archived"
+
+
+class DocumentTemplate(BaseDocument):
+    agency_id: Optional[str] = None
+    template_scope: DocumentTemplateScope = DocumentTemplateScope.PLATFORM_DEFAULT
+    document_type: DocumentType
+    name: str
+    description: Optional[str] = None
+    status: DocumentTemplateStatus = DocumentTemplateStatus.ACTIVE
+    language: str = "en"
+    version: int = 1
+    template_config: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+
+
+class DocumentTemplateCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    template_scope: DocumentTemplateScope = DocumentTemplateScope.AGENCY_CUSTOM
+    document_type: DocumentType
+    name: str
+    description: Optional[str] = None
+    status: DocumentTemplateStatus = DocumentTemplateStatus.ACTIVE
+    language: str = "en"
+    version: int = 1
+    template_config: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentTemplateUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[DocumentTemplateStatus] = None
+    language: Optional[str] = None
+    version: Optional[int] = None
+    template_config: Optional[Dict[str, Any]] = None
+
+
+class RenderDocumentRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    document_type: Optional[DocumentType] = None
+    template_id: Optional[str] = None
+    client_visible: bool = True
+    internal_notes: Optional[str] = None
+    language: str = "en"
+
+
+class RenderedDocument(BaseDocument):
+    agency_id: str
+    document_type: DocumentType
+    template_id: Optional[str] = None
+    source_entity_type: RenderedDocumentSourceType
+    source_entity_id: str
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    title: str
+    status: RenderedDocumentStatus = RenderedDocumentStatus.RENDERED
+    language: str = "en"
+    brand_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    source_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    rendered_html: str
+    client_visible: bool = True
+    internal_notes: Optional[str] = None
+    rendered_by_user_id: Optional[str] = None
+    rendered_at: datetime = Field(default_factory=now_utc)
+
+
+class DocumentTimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    rendered_document_id: str
+    event_type: str
+    actor_user_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    visibility: Visibility = Visibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=now_utc)
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
     key: str

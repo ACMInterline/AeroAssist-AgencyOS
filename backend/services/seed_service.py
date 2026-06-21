@@ -19,6 +19,8 @@ from models import (
     BookingTimelineEvent,
     ClientPassengerRelationship,
     ClientProfile,
+    DocumentTemplate,
+    DocumentTimelineEvent,
     EMDRecord,
     GlobalReferenceRecord,
     Invoice,
@@ -41,10 +43,12 @@ from models import (
     RequestTask,
     RequestTimelineEvent,
     RequestedService,
+    RenderedDocument,
     SubscriptionStatus,
     TicketRecord,
     TravelRequest,
 )
+from services.document_rendering_service import render_document_payload
 
 
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
@@ -132,6 +136,9 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     airline_emd_rule_notes = db.collection("airline_emd_rule_notes")
     airline_sources = db.collection("airline_knowledge_sources")
     airline_overrides = db.collection("agency_airline_overrides")
+    document_templates = db.collection("document_templates")
+    rendered_documents = db.collection("rendered_documents")
+    document_timeline = db.collection("document_timeline_events")
     references = db.collection("global_reference_records")
     audits = db.collection("audit_events")
 
@@ -956,6 +963,67 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                 created.append("airline_override:petc_annotation")
 
     await ensure_airline_intelligence()
+
+    async def ensure_documents() -> None:
+        template_specs = [
+            ("offer_summary", "Default offer summary", "Client-ready HTML offer summary preview."),
+            ("booking_confirmation", "Default booking confirmation", "Agency-generated booking confirmation preview."),
+            ("itinerary_summary", "Default itinerary summary", "Printable itinerary summary preview."),
+            ("ticket_receipt_summary", "Default ticket receipt summary", "Ticket receipt summary from manually tracked ticket records."),
+            ("emd_receipt_summary", "Default EMD receipt summary", "EMD receipt summary from manually tracked EMD records."),
+            ("invoice_summary", "Default invoice summary", "Invoice summary from manually tracked invoice and payment records."),
+        ]
+        for document_type, name, description in template_specs:
+            existing = await document_templates.find_one({"agency_id": None, "document_type": document_type, "name": name})
+            if existing is None:
+                template = DocumentTemplate(
+                    agency_id=None,
+                    template_scope="platform_default",
+                    document_type=document_type,
+                    name=name,
+                    description=description,
+                    status="active",
+                    language="en",
+                    version=1,
+                    template_config={
+                        "layout": "clean_printable_html",
+                        "show_preview_label": True,
+                        "show_snapshot_notice": True,
+                        "demo": True,
+                    },
+                    created_by_user_id=owner["id"],
+                )
+                await document_templates.insert_one(template.model_dump(mode="json"))
+                created.append(f"document_template:{document_type}")
+
+        async def seed_rendered(source_type: str, source_id: str, document_type: str) -> None:
+            existing = await rendered_documents.find_one({"agency_id": agency["id"], "source_entity_type": source_type, "source_entity_id": source_id, "document_type": document_type})
+            if existing is not None:
+                return
+            rendered = await render_document_payload(db, agency["id"], source_type, source_id, document_type, None, "en")
+            document = RenderedDocument(
+                agency_id=agency["id"],
+                rendered_by_user_id=owner["id"],
+                client_visible=True,
+                internal_notes="Seeded demo HTML preview. No PDF, email, or portal publishing.",
+                **rendered,
+            )
+            created_document = await rendered_documents.insert_one(document.model_dump(mode="json"))
+            await document_timeline.insert_one(DocumentTimelineEvent(agency_id=agency["id"], rendered_document_id=created_document["id"], actor_user_id=owner["id"], event_type="document.seeded", title="Seeded rendered document", summary=created_document["title"]).model_dump(mode="json"))
+            created.append(f"rendered_document:{document_type}")
+
+        offer = await offers.find_one({"agency_id": agency["id"], "offer_reference": "OFF-DEMO-0002"})
+        if offer:
+            await seed_rendered("offer", offer["id"], "offer_summary")
+        booking = await bookings.find_one({"agency_id": agency["id"], "booking_reference": "BKG-DEMO-0001"})
+        if booking:
+            await seed_rendered("booking", booking["id"], "booking_confirmation")
+            await seed_rendered("booking", booking["id"], "itinerary_summary")
+        invoice = await invoices.find_one({"agency_id": agency["id"], "invoice_number": "INV-DEMO-0001"})
+        if invoice:
+            await seed_rendered("invoice", invoice["id"], "invoice_summary")
+
+    await ensure_documents()
 
     if created:
         event = AuditEvent(

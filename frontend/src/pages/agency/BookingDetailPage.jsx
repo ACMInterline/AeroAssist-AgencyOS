@@ -127,6 +127,21 @@ export default function BookingDetailPage({ bookingId }) {
     await load()
   }
 
+  async function renderBookingDocument(documentType = "booking_confirmation") {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/bookings/${bookingId}/render-document`, { document_type: documentType })
+    window.location.href = `/agency/documents/${result.document.id}`
+  }
+
+  async function renderTicketDocument(ticketId) {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/tickets/${ticketId}/render-document`, { document_type: "ticket_receipt_summary" })
+    window.location.href = `/agency/documents/${result.document.id}`
+  }
+
+  async function renderEmdDocument(emdId) {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/emds/${emdId}/render-document`, { document_type: "emd_receipt_summary" })
+    window.location.href = `/agency/documents/${result.document.id}`
+  }
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -140,6 +155,8 @@ export default function BookingDetailPage({ bookingId }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <BookingStatusBadge status={state.booking.status} />
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={() => renderBookingDocument("booking_confirmation")}>Render confirmation</button>
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={() => renderBookingDocument("itinerary_summary")}>Render itinerary</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={() => updateStatus("reserved")}>Reserved</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={() => updateStatus("ticketed")}>Ticketed</button>
               <button className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700" onClick={() => updateStatus("cancelled")}>Cancel</button>
@@ -179,7 +196,7 @@ export default function BookingDetailPage({ bookingId }) {
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Ticket number issued externally" value={form.ticket_number} onChange={(event) => setField("ticket_number", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white">Record ticket</button>
             </form>
-            <List items={state.tickets} empty="No tickets recorded" render={(item) => `${item.ticket_number} · ${item.validating_airline_code} · ${item.status.replaceAll("_", " ")} · ${item.total_amount} ${item.currency}`} />
+            <List items={state.tickets} empty="No tickets recorded" render={(item) => <span className="flex flex-wrap items-center justify-between gap-2"><span>{item.ticket_number} · {item.validating_airline_code} · {item.status.replaceAll("_", " ")} · {item.total_amount} {item.currency}</span><button className="text-blue-700" onClick={() => renderTicketDocument(item.id)}>Render receipt</button></span>} />
           </Panel>
           <Panel title="EMDs">
             <form className="grid gap-3 md:grid-cols-[100px_1fr_1fr_auto]" onSubmit={addEmd}>
@@ -188,7 +205,7 @@ export default function BookingDetailPage({ bookingId }) {
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="EMD number issued externally" value={form.emd_number} onChange={(event) => setField("emd_number", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white">Record EMD</button>
             </form>
-            <List items={state.emds} empty="No EMD records" render={(item) => `${item.emd_number} · ${item.service_code} ${item.service_name} · ${item.status.replaceAll("_", " ")}`} />
+            <List items={state.emds} empty="No EMD records" render={(item) => <span className="flex flex-wrap items-center justify-between gap-2"><span>{item.emd_number} · {item.service_code} {item.service_name} · {item.status.replaceAll("_", " ")}</span><button className="text-blue-700" onClick={() => renderEmdDocument(item.id)}>Render receipt</button></span>} />
           </Panel>
           <Panel title="Invoice / Payments">
             <div className="flex flex-wrap items-center gap-2">

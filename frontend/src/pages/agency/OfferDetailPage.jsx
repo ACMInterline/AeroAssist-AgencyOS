@@ -138,6 +138,11 @@ export default function OfferDetailPage({ offerId }) {
     await load()
   }
 
+  async function renderOfferSummary() {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/offers/${offerId}/render-document`, { document_type: "offer_summary" })
+    window.location.href = `/agency/documents/${result.document.id}`
+  }
+
   const routeById = Object.fromEntries((state?.routes || []).map((route) => [route.id, route]))
   const validToSend = (state?.routes || []).length > 0 && (state?.fare_options || []).length > 0
 
@@ -161,6 +166,7 @@ export default function OfferDetailPage({ offerId }) {
                 <p className="mt-1 text-sm text-blue-800">Create a manual booking tracking record from this offer. No reservation or ticketing integration is connected.</p>
               </div>
               <a className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/agency/bookings/new">Create booking</a>
+              <button className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700" onClick={renderOfferSummary}>Render offer summary</button>
             </div>
           </div>
           <AirlineIntelLinkPanel

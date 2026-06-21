@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import database
-from routers import agencies, airline_intelligence, auth, bookings, clients, finance, offers, passengers, platform, reference, requests
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, platform, reference, requests
 from services.seed_service import seed_core_data
 
 app = FastAPI(
@@ -46,4 +46,5 @@ app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)
 app.include_router(airline_intelligence.router)
+app.include_router(documents.router)
 app.include_router(reference.router)
