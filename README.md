@@ -6,7 +6,7 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, and Phase 1 routers.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, and implemented Phase 1-8 routers.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
