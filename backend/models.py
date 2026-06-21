@@ -1780,6 +1780,432 @@ class BookingTimelineEvent(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class AirlineStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+    MERGED = "merged"
+    ARCHIVED = "archived"
+
+
+class AirlineKnowledgeCategory(str, Enum):
+    BOOKING_POLICY = "booking_policy"
+    SERVICING_POLICY = "servicing_policy"
+    SPECIAL_SERVICE = "special_service"
+    BAGGAGE = "baggage"
+    PET_TRAVEL = "pet_travel"
+    ACCESSIBILITY = "accessibility"
+    UNACCOMPANIED_MINOR = "unaccompanied_minor"
+    MEDICAL_TRAVEL = "medical_travel"
+    DOCUMENTS = "documents"
+    CONTACT = "contact"
+    PAYMENT = "payment"
+    REFUND_EXCHANGE = "refund_exchange"
+    SCHEDULE_CHANGE = "schedule_change"
+    DISRUPTION = "disruption"
+    EMD = "emd"
+    FARE_FAMILY = "fare_family"
+    OPERATIONAL_NOTE = "operational_note"
+    OTHER = "other"
+
+
+class KnowledgeReviewStatus(str, Enum):
+    DRAFT = "draft"
+    NEEDS_REVIEW = "needs_review"
+    VERIFIED = "verified"
+    PUBLISHED = "published"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class KnowledgeConfidence(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    OFFICIAL_SOURCE = "official_source"
+
+
+class AirlineProcedureType(str, Enum):
+    RESERVATION = "reservation"
+    TICKETING = "ticketing"
+    REISSUE = "reissue"
+    REFUND = "refund"
+    EMD = "emd"
+    SPECIAL_SERVICE_REQUEST = "special_service_request"
+    PET_BOOKING = "pet_booking"
+    WHEELCHAIR_ASSISTANCE = "wheelchair_assistance"
+    UMNR = "umnr"
+    MEDICAL_CLEARANCE = "medical_clearance"
+    GROUP_BOOKING = "group_booking"
+    DISRUPTION = "disruption"
+    AGENCY_SUPPORT = "agency_support"
+    OTHER = "other"
+
+
+class AirlineProcedureChannel(str, Enum):
+    GDS = "gds"
+    AIRLINE_PORTAL = "airline_portal"
+    EMAIL = "email"
+    PHONE = "phone"
+    WEBFORM = "webform"
+    SALES_OFFICE = "sales_office"
+    AIRPORT = "airport"
+    OTHER = "other"
+
+
+class AirlineEmdAppliesTo(str, Enum):
+    PETC = "petc"
+    AVIH = "avih"
+    WCHR = "wchr"
+    WCHS = "wchs"
+    WCHC = "wchc"
+    UMNR = "umnr"
+    BAGGAGE = "baggage"
+    SEAT = "seat"
+    MEAL = "meal"
+    MEDICAL = "medical"
+    OTHER = "other"
+
+
+class AirlineKnowledgeSourceType(str, Enum):
+    AIRLINE_WEBSITE = "airline_website"
+    AIRLINE_PDF = "airline_pdf"
+    GDS_ENTRY = "gds_entry"
+    EMAIL_FROM_AIRLINE = "email_from_airline"
+    PHONE_NOTE = "phone_note"
+    AGENCY_EXPERIENCE = "agency_experience"
+    ATPCO_IATA_REFERENCE = "atpco_iata_reference"
+    INTERNAL_NOTE = "internal_note"
+    OTHER = "other"
+
+
+class SourceReliability(str, Enum):
+    OFFICIAL = "official"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    ANECDOTAL = "anecdotal"
+
+
+class AgencyOverrideTargetType(str, Enum):
+    AIRLINE_PROFILE = "airline_profile"
+    KNOWLEDGE_ITEM = "knowledge_item"
+    PROCEDURE = "procedure"
+    EMD_RULE_NOTE = "emd_rule_note"
+    SOURCE = "source"
+
+
+class AgencyOverrideMode(str, Enum):
+    REPLACE = "replace"
+    AUGMENT = "augment"
+    ANNOTATE = "annotate"
+
+
+class AgencyOverrideStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ARCHIVED = "archived"
+
+
+class AirlineUsageContextType(str, Enum):
+    REQUEST = "request"
+    OFFER = "offer"
+    BOOKING = "booking"
+    TICKET = "ticket"
+    EMD = "emd"
+    INVOICE = "invoice"
+    MANUAL_SEARCH = "manual_search"
+
+
+class AirlineProfile(BaseDocument):
+    airline_code: str
+    icao_code: Optional[str] = None
+    airline_name: str
+    country: str
+    alliance: Optional[str] = None
+    status: AirlineStatus = AirlineStatus.ACTIVE
+    website_url: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    icao_code: Optional[str] = None
+    airline_name: str
+    country: str
+    alliance: Optional[str] = None
+    status: AirlineStatus = AirlineStatus.ACTIVE
+    website_url: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    icao_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    country: Optional[str] = None
+    alliance: Optional[str] = None
+    status: Optional[AirlineStatus] = None
+    website_url: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineKnowledgeItem(BaseDocument):
+    airline_id: str
+    category: AirlineKnowledgeCategory
+    title: str
+    summary: str
+    detailed_text: str
+    service_code: Optional[str] = None
+    passenger_type: Optional[str] = None
+    region_scope: Optional[str] = None
+    cabin_scope: Optional[str] = None
+    route_scope: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    source_ids: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+    client_visible_allowed: bool = False
+    internal_warning: bool = False
+    created_by_user_id: Optional[str] = None
+    reviewed_by_user_id: Optional[str] = None
+    published_at: Optional[datetime] = None
+
+
+class AirlineKnowledgeItemCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    category: AirlineKnowledgeCategory
+    title: str
+    summary: str
+    detailed_text: str
+    service_code: Optional[str] = None
+    passenger_type: Optional[str] = None
+    region_scope: Optional[str] = None
+    cabin_scope: Optional[str] = None
+    route_scope: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    source_ids: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list)
+    client_visible_allowed: bool = False
+    internal_warning: bool = False
+
+
+class AirlineKnowledgeItemUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    category: Optional[AirlineKnowledgeCategory] = None
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    detailed_text: Optional[str] = None
+    service_code: Optional[str] = None
+    passenger_type: Optional[str] = None
+    region_scope: Optional[str] = None
+    cabin_scope: Optional[str] = None
+    route_scope: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: Optional[KnowledgeReviewStatus] = None
+    confidence: Optional[KnowledgeConfidence] = None
+    source_ids: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    client_visible_allowed: Optional[bool] = None
+    internal_warning: Optional[bool] = None
+    reviewed_by_user_id: Optional[str] = None
+    published_at: Optional[datetime] = None
+
+
+class AirlineProcedure(BaseDocument):
+    airline_id: str
+    procedure_type: AirlineProcedureType
+    title: str
+    channel: AirlineProcedureChannel
+    contact_value: Optional[str] = None
+    instructions: str
+    required_fields: List[str] = Field(default_factory=list)
+    expected_response_time: Optional[str] = None
+    region_scope: Optional[str] = None
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    source_ids: List[str] = Field(default_factory=list)
+
+
+class AirlineProcedureCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    procedure_type: AirlineProcedureType
+    title: str
+    channel: AirlineProcedureChannel
+    contact_value: Optional[str] = None
+    instructions: str
+    required_fields: List[str] = Field(default_factory=list)
+    expected_response_time: Optional[str] = None
+    region_scope: Optional[str] = None
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    source_ids: List[str] = Field(default_factory=list)
+
+
+class AirlineProcedureUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    procedure_type: Optional[AirlineProcedureType] = None
+    title: Optional[str] = None
+    channel: Optional[AirlineProcedureChannel] = None
+    contact_value: Optional[str] = None
+    instructions: Optional[str] = None
+    required_fields: Optional[List[str]] = None
+    expected_response_time: Optional[str] = None
+    region_scope: Optional[str] = None
+    review_status: Optional[KnowledgeReviewStatus] = None
+    confidence: Optional[KnowledgeConfidence] = None
+    source_ids: Optional[List[str]] = None
+
+
+class AirlineEmdRuleNote(BaseDocument):
+    airline_id: str
+    service_code: str
+    service_name: str
+    rfic_code: Optional[str] = None
+    rfisc_code: Optional[str] = None
+    emd_type: EmdType = EmdType.UNKNOWN
+    reason_for_issuance: str
+    applies_to: AirlineEmdAppliesTo = AirlineEmdAppliesTo.OTHER
+    pricing_note: Optional[str] = None
+    issuance_note: Optional[str] = None
+    refundability_note: Optional[str] = None
+    source_ids: List[str] = Field(default_factory=list)
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+
+
+class AirlineEmdRuleNoteCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    service_code: str
+    service_name: str
+    rfic_code: Optional[str] = None
+    rfisc_code: Optional[str] = None
+    emd_type: EmdType = EmdType.UNKNOWN
+    reason_for_issuance: str
+    applies_to: AirlineEmdAppliesTo = AirlineEmdAppliesTo.OTHER
+    pricing_note: Optional[str] = None
+    issuance_note: Optional[str] = None
+    refundability_note: Optional[str] = None
+    source_ids: List[str] = Field(default_factory=list)
+    review_status: KnowledgeReviewStatus = KnowledgeReviewStatus.DRAFT
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+
+
+class AirlineEmdRuleNoteUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    service_code: Optional[str] = None
+    service_name: Optional[str] = None
+    rfic_code: Optional[str] = None
+    rfisc_code: Optional[str] = None
+    emd_type: Optional[EmdType] = None
+    reason_for_issuance: Optional[str] = None
+    applies_to: Optional[AirlineEmdAppliesTo] = None
+    pricing_note: Optional[str] = None
+    issuance_note: Optional[str] = None
+    refundability_note: Optional[str] = None
+    source_ids: Optional[List[str]] = None
+    review_status: Optional[KnowledgeReviewStatus] = None
+    confidence: Optional[KnowledgeConfidence] = None
+
+
+class AirlineKnowledgeSource(BaseDocument):
+    airline_id: Optional[str] = None
+    source_type: AirlineKnowledgeSourceType
+    title: str
+    url: Optional[str] = None
+    document_reference: Optional[str] = None
+    source_date: Optional[date] = None
+    captured_by_user_id: Optional[str] = None
+    reliability: SourceReliability = SourceReliability.MEDIUM
+    notes: Optional[str] = None
+
+
+class AirlineKnowledgeSourceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    source_type: AirlineKnowledgeSourceType
+    title: str
+    url: Optional[str] = None
+    document_reference: Optional[str] = None
+    source_date: Optional[date] = None
+    reliability: SourceReliability = SourceReliability.MEDIUM
+    notes: Optional[str] = None
+
+
+class AgencyAirlineOverride(BaseDocument):
+    agency_id: str
+    airline_id: str
+    target_type: AgencyOverrideTargetType
+    target_id: str
+    override_mode: AgencyOverrideMode = AgencyOverrideMode.ANNOTATE
+    title: Optional[str] = None
+    override_text: str
+    internal_warning: bool = False
+    applies_to_agency_only: bool = True
+    status: AgencyOverrideStatus = AgencyOverrideStatus.ACTIVE
+    created_by_user_id: Optional[str] = None
+
+
+class AgencyAirlineOverrideCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    target_type: AgencyOverrideTargetType
+    target_id: str
+    override_mode: AgencyOverrideMode = AgencyOverrideMode.ANNOTATE
+    title: Optional[str] = None
+    override_text: str
+    internal_warning: bool = False
+    applies_to_agency_only: bool = True
+    status: AgencyOverrideStatus = AgencyOverrideStatus.ACTIVE
+
+
+class AgencyAirlineOverrideUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    override_mode: Optional[AgencyOverrideMode] = None
+    title: Optional[str] = None
+    override_text: Optional[str] = None
+    internal_warning: Optional[bool] = None
+    applies_to_agency_only: Optional[bool] = None
+    status: Optional[AgencyOverrideStatus] = None
+
+
+class AirlineKnowledgeUsageEvent(BaseDocument):
+    agency_id: str
+    airline_id: str
+    target_type: AgencyOverrideTargetType
+    target_id: str
+    used_in_context_type: AirlineUsageContextType = AirlineUsageContextType.MANUAL_SEARCH
+    used_in_context_id: Optional[str] = None
+    actor_user_id: Optional[str] = None
+    note: Optional[str] = None
+
+
+class AirlineKnowledgeUsageEventCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    used_in_context_type: AirlineUsageContextType = AirlineUsageContextType.MANUAL_SEARCH
+    used_in_context_id: Optional[str] = None
+    note: Optional[str] = None
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
     key: str

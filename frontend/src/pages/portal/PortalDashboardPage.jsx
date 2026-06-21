@@ -18,16 +18,15 @@ export default function PortalDashboardPage() {
         <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Portal Layer</p>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Client portal reserved</h2>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">My Profile and Passengers</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Phase 1 reserves the portal route and layout only. Client accounts, passenger
-              permissions, requests, offers, tickets, EMDs, invoices, payments, and documents are
-              intentionally not available yet.
+              Phase 2 establishes the client/passenger CRM foundation. Production portal account
+              mapping is not implemented yet, so this area remains a safe read-only placeholder.
             </p>
           </section>
           <EmptyState
-            title="No portal workflows in Phase 1"
-            body="The next implementation steps must first add CRM and client/passenger relationships before portal records can be safely exposed."
+            title="Requests will appear here when portal access is connected"
+            body="Request submission and portal-visible request timelines wait for production auth and client/passenger permission mapping."
           />
         </div>
       </ProtectedRoute>

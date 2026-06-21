@@ -18,6 +18,15 @@ export async function apiPost(path, body = {}) {
   return readResponse(response)
 }
 
+export async function apiPut(path, body = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })
+  return readResponse(response)
+}
+
 async function readResponse(response) {
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {

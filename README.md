@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications and Phase 1 implementation foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, and Phase 6 Airline Intelligence foundation.
 
 ## Project Structure
 
@@ -24,17 +24,79 @@ This repository currently contains the Phase 0 architecture specifications and P
 - Core seed data for one platform owner, one demo agency, one agency owner membership, and foundation reference domains.
 - Minimal frontend route shell for `/`, `/login`, `/platform`, `/agency`, and `/portal`.
 
+## Phase 2 Includes
+
+- Agency-owned client profiles.
+- Agency-owned passenger profiles.
+- Many-to-many client/passenger relationship records.
+- Portal status fields on client profiles.
+- Relationship permission flags for view, edit, document upload, travel requests, payment, and notifications.
+- Non-destructive passenger merge audit.
+- Agency-scoped CRM CRUD APIs.
+- Agency CRM pages for clients, passengers, detail views, and relationship linking.
+- Seed data for individual, organization, and family/guardian CRM scenarios.
+
+## Phase 3 Includes
+
+- Agency-scoped travel requests.
+- Request passenger links with passenger profile snapshots.
+- Intended itinerary segments.
+- Requested services and service status tracking.
+- Request messages.
+- Request tasks.
+- Request timeline events.
+- Request audit events.
+- Staff UI routes for request list, creation, and detail workflows.
+
+## Phase 4 Includes
+
+- Agency-scoped manual offers.
+- Optional request-to-offer creation.
+- Offer passengers with snapshots.
+- Up to three route alternatives per offer.
+- Up to three fare options per route alternative.
+- Offer itinerary segments.
+- Offer price lines.
+- Manual service support checks.
+- Internal client-preview page.
+- Send action that snapshots the current offer content.
+- Offer timeline and audit events.
+
+## Phase 5 Includes
+
+- Agency-scoped booking tracking records.
+- Booking creation manually or from an offer.
+- Booking snapshots copied from selected offer route, fare option, passengers, segments, price lines, and service checks.
+- Booking passengers and booking segments.
+- Ticket records issued externally.
+- EMD records issued externally.
+- Invoices with derived totals from line items.
+- Manual payment records with received and reconciliation status.
+- Booking timeline events for operational and finance changes.
+- Staff UI routes for bookings, booking detail, invoices, invoice detail, and payments.
+
+## Phase 6 Includes
+
+- Platform-owned airline profiles.
+- Platform-owned airline knowledge items with category, service code, review status, confidence, tags, and sources.
+- Platform-owned airline procedures and contact/procedure instructions.
+- Platform-owned EMD/RFIC/RFISC support notes.
+- Platform-owned source/citation records.
+- Agency-owned airline overrides and annotations.
+- Agency knowledge usage events.
+- Platform maintenance UI for airlines, knowledge, procedures, EMD notes, and sources.
+- Agency search/detail UI for published airline intelligence.
+- Lightweight search links from request, offer, and booking detail pages.
+- Seeded fake/demo airline intelligence data.
+
 ## Intentionally Not Included Yet
 
-- CRM screens.
-- Client/passenger models.
-- Request workflow.
-- Offer builder.
-- Airline intelligence UI.
 - Client portal workflows.
 - Branded documents.
-- Payment processing.
-- Accounting.
+- Payment gateway processing.
+- Full accounting or ledger reconciliation.
+- Automated ticketing, GDS, NDC, OTA, or supplier integrations.
+- Airline scraping, automated policy evaluation, and automated pricing.
 
 ## Backend Setup
 
@@ -48,7 +110,7 @@ uvicorn server:app --reload
 
 The backend starts on `http://localhost:8000`.
 
-By default the API uses in-memory storage so Phase 1 can run without a database:
+By default the API uses in-memory storage so the current foundation can run without a database:
 
 ```bash
 AEROASSIST_DB_MODE=memory
@@ -102,6 +164,81 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - `PUT /api/agencies/{agency_id}/settings`
 - `GET /api/agencies/{agency_id}/staff`
 - `POST /api/agencies/{agency_id}/staff`
+- `GET /api/agencies/{agency_id}/clients`
+- `POST /api/agencies/{agency_id}/clients`
+- `GET /api/agencies/{agency_id}/clients/{client_id}`
+- `PUT /api/agencies/{agency_id}/clients/{client_id}`
+- `POST /api/agencies/{agency_id}/clients/{client_id}/archive`
+- `POST /api/agencies/{agency_id}/clients/{client_id}/restore`
+- `GET /api/agencies/{agency_id}/passengers`
+- `POST /api/agencies/{agency_id}/passengers`
+- `GET /api/agencies/{agency_id}/passengers/{passenger_id}`
+- `PUT /api/agencies/{agency_id}/passengers/{passenger_id}`
+- `POST /api/agencies/{agency_id}/passengers/{passenger_id}/archive`
+- `POST /api/agencies/{agency_id}/passengers/{passenger_id}/restore`
+- `POST /api/agencies/{agency_id}/passengers/{passenger_id}/merge`
+- `GET /api/agencies/{agency_id}/client-passenger-relationships`
+- `POST /api/agencies/{agency_id}/client-passenger-relationships`
+- `PUT /api/agencies/{agency_id}/client-passenger-relationships/{relationship_id}`
+- `POST /api/agencies/{agency_id}/client-passenger-relationships/{relationship_id}/archive`
+- `GET /api/agencies/{agency_id}/clients/{client_id}/passengers`
+- `GET /api/agencies/{agency_id}/passengers/{passenger_id}/clients`
+- `GET /api/agencies/{agency_id}/requests`
+- `POST /api/agencies/{agency_id}/requests`
+- `GET /api/agencies/{agency_id}/requests/{request_id}`
+- `PUT /api/agencies/{agency_id}/requests/{request_id}`
+- `POST /api/agencies/{agency_id}/requests/{request_id}/archive`
+- `POST /api/agencies/{agency_id}/requests/{request_id}/restore`
+- `POST /api/agencies/{agency_id}/requests/{request_id}/status`
+- `GET/POST /api/agencies/{agency_id}/requests/{request_id}/passengers`
+- `GET/POST /api/agencies/{agency_id}/requests/{request_id}/segments`
+- `GET/POST /api/agencies/{agency_id}/requests/{request_id}/services`
+- `GET/POST /api/agencies/{agency_id}/requests/{request_id}/messages`
+- `GET/POST /api/agencies/{agency_id}/requests/{request_id}/tasks`
+- `GET /api/agencies/{agency_id}/requests/{request_id}/timeline`
+- `GET /api/agencies/{agency_id}/offers`
+- `POST /api/agencies/{agency_id}/offers`
+- `GET /api/agencies/{agency_id}/offers/{offer_id}`
+- `PUT /api/agencies/{agency_id}/offers/{offer_id}`
+- `POST /api/agencies/{agency_id}/offers/{offer_id}/archive`
+- `POST /api/agencies/{agency_id}/offers/{offer_id}/restore`
+- `POST /api/agencies/{agency_id}/offers/{offer_id}/send`
+- `POST /api/agencies/{agency_id}/requests/{request_id}/create-offer`
+- Offer passenger, route alternative, segment, fare option, price line, service check, and timeline endpoints under `/api/agencies/{agency_id}/offers/{offer_id}`
+- `GET /api/agencies/{agency_id}/bookings`
+- `POST /api/agencies/{agency_id}/bookings`
+- `POST /api/agencies/{agency_id}/offers/{offer_id}/create-booking`
+- `GET /api/agencies/{agency_id}/bookings/{booking_id}`
+- `PUT /api/agencies/{agency_id}/bookings/{booking_id}`
+- `POST /api/agencies/{agency_id}/bookings/{booking_id}/archive`
+- `POST /api/agencies/{agency_id}/bookings/{booking_id}/cancel`
+- Booking passenger, segment, ticket, EMD, and timeline endpoints under `/api/agencies/{agency_id}/bookings/{booking_id}`
+- `GET /api/agencies/{agency_id}/invoices`
+- `POST /api/agencies/{agency_id}/invoices`
+- `GET /api/agencies/{agency_id}/invoices/{invoice_id}`
+- `PUT /api/agencies/{agency_id}/invoices/{invoice_id}`
+- `POST /api/agencies/{agency_id}/invoices/{invoice_id}/issue`
+- `POST /api/agencies/{agency_id}/invoices/{invoice_id}/void`
+- Invoice line item endpoints under `/api/agencies/{agency_id}/invoices/{invoice_id}`
+- `GET /api/agencies/{agency_id}/payments`
+- `POST /api/agencies/{agency_id}/payments`
+- `GET /api/agencies/{agency_id}/payments/{payment_id}`
+- `PUT /api/agencies/{agency_id}/payments/{payment_id}`
+- `POST /api/agencies/{agency_id}/payments/{payment_id}/mark-received`
+- `POST /api/agencies/{agency_id}/payments/{payment_id}/mark-reconciled`
+- `GET /api/platform/airlines`
+- `POST /api/platform/airlines`
+- `GET /api/platform/airlines/{airline_id}`
+- `PUT /api/platform/airlines/{airline_id}`
+- Platform knowledge, procedure, EMD note, and source endpoints under `/api/platform/airlines`
+- `GET /api/platform/airline-knowledge/{knowledge_id}`
+- `PUT /api/platform/airline-knowledge/{knowledge_id}`
+- `POST /api/platform/airline-knowledge/{knowledge_id}/publish`
+- `POST /api/platform/airline-knowledge/{knowledge_id}/archive`
+- `GET /api/agencies/{agency_id}/airline-intelligence/search`
+- `GET /api/agencies/{agency_id}/airlines/{airline_id}/intelligence`
+- `GET /api/agencies/{agency_id}/airline-knowledge/{knowledge_id}`
+- Agency override and usage endpoints under `/api/agencies/{agency_id}/airlines/{airline_id}` and `/api/agencies/{agency_id}/airline-knowledge/{knowledge_id}`
 - `GET /api/reference`
 - `GET /api/reference/{domain}`
 - `POST /api/reference/seed`
@@ -113,4 +250,4 @@ Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only 
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements only the platform and agency workspace foundation needed before later layers can safely add CRM, requests, offers, airline intelligence, documents, and portal access.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Branded documents, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

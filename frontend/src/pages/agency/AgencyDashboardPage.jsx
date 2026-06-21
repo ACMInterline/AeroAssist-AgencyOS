@@ -54,11 +54,36 @@ export default function AgencyDashboardPage() {
             </dl>
           </section>
           <section className="grid gap-4">
-            <EmptyState title="CRM coming next" body="Client and passenger records begin in Phase 3, after foundation setup." />
-            <EmptyState title="Requests coming next" body="Request intake and timelines are Phase 4 work." />
-            <EmptyState title="Offers coming next" body="Manual offer builder and snapshots are Phase 6 work." />
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/clients">
+              <h3 className="text-sm font-semibold text-slate-900">Clients</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Manage agency-owned client account/contact records.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/passengers">
+              <h3 className="text-sm font-semibold text-slate-900">Passengers</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Manage traveler profiles separately from clients.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/requests">
+              <h3 className="text-sm font-semibold text-slate-900">Requests</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Capture inquiries, intended segments, services, messages, tasks, and timeline events.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/offers">
+              <h3 className="text-sm font-semibold text-slate-900">Offers</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Build manual offers with route alternatives, fare options, price lines, and send snapshots.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/bookings">
+              <h3 className="text-sm font-semibold text-slate-900">Bookings</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Track PNRs, passengers, segments, tickets, EMDs, invoices, payments, and operational timeline.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/invoices">
+              <h3 className="text-sm font-semibold text-slate-900">Invoices</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Manage invoice line items, issued status, paid amount, and due amount without full accounting.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/payments">
+              <h3 className="text-sm font-semibold text-slate-900">Payments</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Record manual payments received outside AgencyOS and track reconciliation status.</p>
+            </a>
             <EmptyState title="Airline Intelligence later" body="Phase 5 starts with curated knowledge search, not airline policy automation." />
-            <EmptyState title="Documents and payments later" body="Document output and financial tracking arrive after core agency workflows." />
+            <EmptyState title="Branded documents later" body="Document output arrives after the operational tracking foundation." />
           </section>
         </div>
       </ProtectedRoute>

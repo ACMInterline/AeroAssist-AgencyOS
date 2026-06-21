@@ -1,4 +1,4 @@
-import { Building2, Settings, Users } from "lucide-react"
+import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileText, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
 
 export default function AgencyLayout({ children, user, agency }) {
   return (
@@ -12,15 +12,39 @@ export default function AgencyLayout({ children, user, agency }) {
           <nav className="flex items-center gap-2 text-sm">
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency">
               <Building2 className="h-4 w-4" />
-              Workspace
+              Dashboard
             </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency">
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/clients">
               <Users className="h-4 w-4" />
-              Staff
+              Clients
             </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency">
-              <Settings className="h-4 w-4" />
-              Settings
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/passengers">
+              <UserRound className="h-4 w-4" />
+              Passengers
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/requests">
+              <ClipboardList className="h-4 w-4" />
+              Requests
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/offers">
+              <FileText className="h-4 w-4" />
+              Offers
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/bookings">
+              <TicketsPlane className="h-4 w-4" />
+              Bookings
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/invoices">
+              <ReceiptText className="h-4 w-4" />
+              Invoices
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/payments">
+              <CreditCard className="h-4 w-4" />
+              Payments
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/airline-intelligence">
+              <BookOpenCheck className="h-4 w-4" />
+              Airline Intelligence
             </a>
           </nav>
           {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}

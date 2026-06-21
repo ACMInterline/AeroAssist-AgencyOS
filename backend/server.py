@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import database
-from routers import agencies, auth, platform, reference
+from routers import agencies, airline_intelligence, auth, bookings, clients, finance, offers, passengers, platform, reference, requests
 from services.seed_service import seed_core_data
 
 app = FastAPI(
@@ -39,4 +39,11 @@ async def audit_events() -> dict:
 app.include_router(auth.router)
 app.include_router(platform.router)
 app.include_router(agencies.router)
+app.include_router(clients.router)
+app.include_router(passengers.router)
+app.include_router(requests.router)
+app.include_router(offers.router)
+app.include_router(bookings.router)
+app.include_router(finance.router)
+app.include_router(airline_intelligence.router)
 app.include_router(reference.router)
