@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, and Phase 10 authentication/invitation foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, and Phase 11 controlled client portal actions.
 
 ## Project Structure
 
@@ -138,6 +138,16 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Invitation acceptance through `/api/auth/invitations/accept`.
 - Demo header fallback preserved only when `DEMO_AUTH_ENABLED=true`.
 
+## Phase 11 Includes
+
+- Portal request submission under the authenticated client context.
+- Portal client message submission on existing client-owned requests.
+- Portal offer accept/reject actions that create staff-review work but no bookings/tickets/payments.
+- Portal document acknowledgement records.
+- `PortalActionEvent` records for searchable client-originated actions.
+- Staff review endpoints and `/agency/portal-actions` UI.
+- Portal UI controls for new requests, messages, offer decisions, acknowledgements, and action history.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -244,7 +254,7 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 9 improves persistence and tenant-safety foundations, but it is not production readiness. Production use still requires real authentication, session/invitation flows, a formal permission matrix, deployment security review, secret management, backups, monitoring, operational runbooks, and broader automated tests.
+Phase 11 improves portal workflow foundations, but it is not production readiness. Production use still requires a formal permission matrix, migrations, deployment security review, secret management, backups, monitoring, operational runbooks, broader automated tests, notification/email decisions, and a stronger staff review workflow.
 
 ## Useful Endpoints
 
@@ -266,6 +276,8 @@ Phase 9 improves persistence and tenant-safety foundations, but it is not produc
 - `GET /api/agencies/{agency_id}/staff`
 - `POST /api/agencies/{agency_id}/staff`
 - `POST /api/agencies/{agency_id}/staff/invitations`
+- `GET /api/agencies/{agency_id}/portal-actions`
+- `POST /api/agencies/{agency_id}/portal-actions/{action_id}/process`
 - `GET /api/agencies/{agency_id}/clients`
 - `POST /api/agencies/{agency_id}/clients`
 - `GET /api/agencies/{agency_id}/clients/{client_id}`
@@ -358,13 +370,19 @@ Phase 9 improves persistence and tenant-safety foundations, but it is not produc
 - `GET /api/portal/passengers`
 - `GET /api/portal/passengers/{passenger_id}`
 - `GET /api/portal/requests`
+- `POST /api/portal/requests`
 - `GET /api/portal/requests/{request_id}`
+- `POST /api/portal/requests/{request_id}/messages`
 - `GET /api/portal/offers`
 - `GET /api/portal/offers/{offer_id}`
+- `POST /api/portal/offers/{offer_id}/accept`
+- `POST /api/portal/offers/{offer_id}/reject`
 - `GET /api/portal/bookings`
 - `GET /api/portal/bookings/{booking_id}`
 - `GET /api/portal/documents`
 - `GET /api/portal/documents/{document_id}`
+- `POST /api/portal/documents/{document_id}/acknowledge`
+- `GET /api/portal/actions`
 - `GET /api/portal/invoices`
 - `GET /api/portal/invoices/{invoice_id}`
 - `GET /api/portal/payments`
@@ -382,6 +400,14 @@ X-Demo-Client-Email: anna.client@example.com
 ```
 
 Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.com`. Bearer-token login is now preferred. These headers are only for local/demo visibility testing.
+
+## Portal Action Permission Rules
+
+- Portal actions use the authenticated portal account's `agency_id` and `client_id`; payloads cannot choose another tenant or client.
+- New portal requests may include only passengers with an active relationship that has `can_request_travel=true`, or an active `self` relationship.
+- Portal messages are always `client_visible`; clients cannot create internal notes.
+- Offer acceptance/rejection updates the offer and queues staff review. It does not create bookings, tickets, EMDs, invoices, or payments.
+- Document acknowledgement applies only to visible rendered documents for the current client and is idempotent.
 
 ## Canonical Layers
 

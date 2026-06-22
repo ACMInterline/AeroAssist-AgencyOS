@@ -63,6 +63,37 @@ class InvitationStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class PortalActionType(str, Enum):
+    REQUEST_SUBMITTED = "request_submitted"
+    MESSAGE_SENT = "message_sent"
+    OFFER_ACCEPTED = "offer_accepted"
+    OFFER_REJECTED = "offer_rejected"
+    DOCUMENT_ACKNOWLEDGED = "document_acknowledged"
+
+
+class PortalActionStatus(str, Enum):
+    RECEIVED = "received"
+    STAFF_REVIEW_REQUIRED = "staff_review_required"
+    PROCESSED = "processed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
+class PortalActionSourceEntityType(str, Enum):
+    REQUEST = "request"
+    OFFER = "offer"
+    DOCUMENT = "document"
+    CLIENT = "client"
+    PASSENGER = "passenger"
+
+
+class DocumentAcknowledgementType(str, Enum):
+    VIEWED = "viewed"
+    ACKNOWLEDGED = "acknowledged"
+    ACCEPTED_TERMS = "accepted_terms"
+    REJECTED = "rejected"
+
+
 class AgencyStatus(str, Enum):
     PROSPECT = "prospect"
     ONBOARDING = "onboarding"
@@ -321,6 +352,71 @@ class StaffInvitationCreate(BaseModel):
 class ClientPortalInvitationCreate(BaseModel):
     email: Optional[EmailStr] = None
     display_name: Optional[str] = None
+
+
+class PortalActionEvent(BaseDocument):
+    agency_id: str
+    client_id: str
+    portal_account_id: Optional[str] = None
+    actor_identity_id: Optional[str] = None
+    action_type: PortalActionType
+    source_entity_type: PortalActionSourceEntityType
+    source_entity_id: Optional[str] = None
+    status: PortalActionStatus = PortalActionStatus.STAFF_REVIEW_REQUIRED
+    summary: str
+    payload: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentAcknowledgement(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    rendered_document_id: str
+    client_id: str
+    portal_account_id: Optional[str] = None
+    acknowledged_by_identity_id: Optional[str] = None
+    acknowledgement_type: DocumentAcknowledgementType = DocumentAcknowledgementType.ACKNOWLEDGED
+    message: Optional[str] = None
+    created_at: datetime = Field(default_factory=now_utc)
+
+
+class PortalRequestSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    route_summary: Optional[str] = None
+    requested_departure_date: Optional[date] = None
+    requested_return_date: Optional[date] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    requested_services: List[str] = Field(default_factory=list)
+    client_notes: Optional[str] = None
+
+
+class PortalMessageSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    message_text: str
+    requires_follow_up: bool = True
+
+
+class PortalOfferDecisionSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: Optional[str] = None
+
+
+class PortalDocumentAcknowledgeSubmit(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    acknowledgement_type: DocumentAcknowledgementType = DocumentAcknowledgementType.ACKNOWLEDGED
+    message: Optional[str] = None
+
+
+class PortalActionProcessSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: PortalActionStatus = PortalActionStatus.PROCESSED
 
 
 class Agency(BaseDocument):

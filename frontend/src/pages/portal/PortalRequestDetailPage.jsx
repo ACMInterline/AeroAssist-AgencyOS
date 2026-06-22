@@ -3,18 +3,40 @@ import EmptyState from "../../components/EmptyState"
 import RequestStatusBadge from "../../components/RequestStatusBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import ClientPortalLayout from "../../layouts/ClientPortalLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 
 export default function PortalRequestDetailPage({ requestId }) {
   const [state, setState] = useState(null)
+  const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  useEffect(() => { Promise.all([apiGet("/api/portal/me"), apiGet(`/api/portal/requests/${requestId}`)]).then(([me, detail]) => setState({ me, ...detail })).catch((err) => setError(err.message)) }, [requestId])
+  async function load() {
+    const [me, detail] = await Promise.all([apiGet("/api/portal/me"), apiGet(`/api/portal/requests/${requestId}`)])
+    setState({ me, ...detail })
+  }
+  useEffect(() => { load().catch((err) => setError(err.message)) }, [requestId])
+  async function sendMessage(event) {
+    event.preventDefault()
+    setError("")
+    try {
+      await apiPost(`/api/portal/requests/${requestId}/messages`, { message_text: message, requires_follow_up: true })
+      setMessage("")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
   return (
     <ClientPortalLayout user={{ full_name: state?.me?.portal_account?.display_name }} brand={state?.me?.brand}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3"><div><a className="text-sm font-medium text-blue-700" href="/portal/requests">Back to requests</a><p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state.request.request_reference}</p><h2 className="text-2xl font-semibold text-slate-950">{state.request.title}</h2></div><RequestStatusBadge status={state.request.status} /></div>
           <section className="grid gap-4 md:grid-cols-3"><Info title="Overview" rows={[["Route", state.request.route_summary], ["Services", state.request.service_summary], ["Departure", state.request.requested_departure_date], ["Return", state.request.requested_return_date]]} /><Info title="Notes" rows={[["Client notes", state.request.client_notes], ["Agency note", state.request.client_visible_notes]]} /><Info title="Counts" rows={[["Passengers", state.passengers.length], ["Services", state.services.length], ["Messages", state.messages.length]]} /></section>
+          <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={sendMessage}>
+            <h3 className="font-semibold text-slate-950">Add message</h3>
+            <textarea className="mt-3 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={message} onChange={(event) => setMessage(event.target.value)} />
+            {error ? <p className="mt-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+            <button className="mt-3 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="submit">Send message</button>
+          </form>
           <Panel title="Messages"><Rows items={state.messages} empty="No client-visible messages" render={(item) => item.message_text} /></Panel>
           <Panel title="Timeline"><Rows items={state.timeline} empty="No client-visible timeline events" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>
         </div>

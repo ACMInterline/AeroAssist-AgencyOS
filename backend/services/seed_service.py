@@ -20,6 +20,7 @@ from models import (
     BookingTimelineEvent,
     ClientPassengerRelationship,
     ClientProfile,
+    DocumentAcknowledgement,
     DocumentTemplate,
     DocumentTimelineEvent,
     EMDRecord,
@@ -39,6 +40,7 @@ from models import (
     PlatformRole,
     PlatformUser,
     PortalAccessMapping,
+    PortalActionEvent,
     RequestMessage,
     RequestPassenger,
     RequestSegment,
@@ -144,6 +146,8 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     document_templates = db.collection("document_templates")
     rendered_documents = db.collection("rendered_documents")
     document_timeline = db.collection("document_timeline_events")
+    portal_action_events = db.collection("portal_action_events")
+    document_acknowledgements = db.collection("document_acknowledgements")
     references = db.collection("global_reference_records")
     audits = db.collection("audit_events")
     auth_identities = db.collection("auth_identities")
@@ -1093,6 +1097,143 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
             await seed_rendered("invoice", invoice["id"], "invoice_summary")
 
     await ensure_documents()
+
+    async def ensure_portal_action_examples() -> None:
+        portal_request = await requests.find_one({"agency_id": agency["id"], "request_reference": "REQ-PORTAL-DEMO-0001"})
+        if portal_request is None:
+            portal_request_model = TravelRequest(
+                agency_id=agency["id"],
+                client_id=individual_client["id"],
+                created_by_user_id=owner["id"],
+                request_reference="REQ-PORTAL-DEMO-0001",
+                title="Portal submitted Vienna assistance inquiry",
+                status="new",
+                priority="normal",
+                source="client_portal",
+                requested_departure_date=date.today(),
+                route_summary="Vienna to Amsterdam one-way",
+                service_summary="Wheelchair assistance; aisle seat preference",
+                passenger_count=1,
+                service_count=2,
+                client_notes="Submitted from the demo client portal.",
+                client_visible_notes="Your request was received and is waiting for agency review.",
+            )
+            portal_request = await requests.insert_one(portal_request_model.model_dump(mode="json"))
+            relationship = await relationships.find_one({"agency_id": agency["id"], "client_id": individual_client["id"], "passenger_id": anna_passenger["id"]})
+            await request_passengers.insert_one(
+                RequestPassenger(
+                    agency_id=agency["id"],
+                    request_id=portal_request["id"],
+                    passenger_id=anna_passenger["id"],
+                    client_passenger_relationship_id=relationship["id"] if relationship else None,
+                    is_primary_traveler=True,
+                    snapshot_display_name=anna_passenger["display_name"],
+                    snapshot_date_of_birth=anna_passenger["date_of_birth"],
+                    snapshot_passenger_type=anna_passenger["passenger_type"],
+                ).model_dump(mode="json")
+            )
+            for service_name in ["Wheelchair assistance", "Aisle seat preference"]:
+                await requested_services.insert_one(
+                    RequestedService(
+                        agency_id=agency["id"],
+                        request_id=portal_request["id"],
+                        service_code="PORTAL",
+                        service_name=service_name,
+                        service_category="portal_request",
+                        details=service_name,
+                        client_visible_summary=service_name,
+                    ).model_dump(mode="json")
+                )
+            await request_messages.insert_one(
+                RequestMessage(
+                    agency_id=agency["id"],
+                    request_id=portal_request["id"],
+                    sender_type="client",
+                    visibility="client_visible",
+                    message_text="Please confirm if wheelchair assistance is available.",
+                ).model_dump(mode="json")
+            )
+            await request_tasks.insert_one(
+                RequestTask(
+                    agency_id=agency["id"],
+                    request_id=portal_request["id"],
+                    title="Review portal-submitted request",
+                    description="Seeded portal action example for staff review.",
+                    visibility="internal",
+                ).model_dump(mode="json")
+            )
+            await request_timeline.insert_one(
+                RequestTimelineEvent(
+                    agency_id=agency["id"],
+                    request_id=portal_request["id"],
+                    event_type="portal.request_submitted",
+                    title="Request submitted",
+                    summary="Client submitted this request through the portal.",
+                    visibility="client_visible",
+                ).model_dump(mode="json")
+            )
+            created.append("portal_request")
+
+        portal_request_action = await portal_action_events.find_one({"agency_id": agency["id"], "source_entity_id": portal_request["id"], "action_type": "request_submitted"})
+        if portal_request_action is None:
+            portal_mapping = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": "anna.client@example.com"})
+            await portal_action_events.insert_one(
+                PortalActionEvent(
+                    agency_id=agency["id"],
+                    client_id=individual_client["id"],
+                    portal_account_id=portal_mapping["id"] if portal_mapping else None,
+                    action_type="request_submitted",
+                    source_entity_type="request",
+                    source_entity_id=portal_request["id"],
+                    summary="Submitted request REQ-PORTAL-DEMO-0001.",
+                    payload={"request_reference": portal_request["request_reference"], "seeded": True},
+                ).model_dump(mode="json")
+            )
+            created.append("portal_action:request_submitted")
+
+        document = await rendered_documents.find_one({"agency_id": agency["id"], "client_id": organization_client["id"], "client_visible": True})
+        if document:
+            existing_ack = await document_acknowledgements.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "client_id": organization_client["id"]})
+            portal_mapping = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": "travel@orbitex.example.com"})
+            if existing_ack is None:
+                await document_acknowledgements.insert_one(
+                    DocumentAcknowledgement(
+                        agency_id=agency["id"],
+                        rendered_document_id=document["id"],
+                        client_id=organization_client["id"],
+                        portal_account_id=portal_mapping["id"] if portal_mapping else None,
+                        acknowledgement_type="acknowledged",
+                        message="Seeded portal acknowledgement example.",
+                    ).model_dump(mode="json")
+                )
+                await document_timeline.insert_one(
+                    DocumentTimelineEvent(
+                        agency_id=agency["id"],
+                        rendered_document_id=document["id"],
+                        event_type="portal.document_acknowledged",
+                        title="Document acknowledged",
+                        summary="Seeded portal acknowledgement example.",
+                        visibility="client_visible",
+                    ).model_dump(mode="json")
+                )
+                created.append("document_acknowledgement")
+            ack_action = await portal_action_events.find_one({"agency_id": agency["id"], "source_entity_id": document["id"], "action_type": "document_acknowledged"})
+            if ack_action is None:
+                await portal_action_events.insert_one(
+                    PortalActionEvent(
+                        agency_id=agency["id"],
+                        client_id=organization_client["id"],
+                        portal_account_id=portal_mapping["id"] if portal_mapping else None,
+                        action_type="document_acknowledged",
+                        source_entity_type="document",
+                        source_entity_id=document["id"],
+                        summary=f"Acknowledged document {document['title']}.",
+                        payload={"document_type": document["document_type"], "seeded": True},
+                    ).model_dump(mode="json")
+                )
+                created.append("portal_action:document_acknowledged")
+
+    await ensure_portal_action_examples()
 
     if created:
         event = AuditEvent(

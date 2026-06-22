@@ -15,6 +15,7 @@ from models import (
     AgencyWorkspaceUpdate,
     AuditEvent,
     Invitation,
+    PortalActionProcessSubmit,
     PlatformUser,
     StaffInvitationCreate,
     now_utc,
@@ -287,3 +288,61 @@ async def create_staff(
         agency_id=agency_id,
     )
     return {"membership": membership_doc, "user": staff_user}
+
+
+@router.get("/{agency_id}/portal-actions")
+async def list_portal_actions(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(
+        db,
+        agency_id,
+        user,
+        ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    )
+    actions = await db.collection("portal_action_events").find_many({"agency_id": agency_id})
+    clients_by_id = {
+        client["id"]: client
+        for client in await db.collection("client_profiles").find_many({"agency_id": agency_id})
+    }
+    return {
+        "items": [
+            {
+                "action": action,
+                "client": clients_by_id.get(action.get("client_id")),
+            }
+            for action in actions
+        ]
+    }
+
+
+@router.post("/{agency_id}/portal-actions/{action_id}/process")
+async def process_portal_action(
+    agency_id: str,
+    action_id: str,
+    payload: PortalActionProcessSubmit | None = None,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin", "agency_agent"])
+    payload = payload or PortalActionProcessSubmit()
+    if payload.status not in {"processed", "cancelled", "archived"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Portal action can only be marked processed, cancelled, or archived.")
+    action = await db.collection("portal_action_events").update_one(
+        {"agency_id": agency_id, "id": action_id},
+        {"status": payload.status},
+    )
+    if action is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal action not found.")
+    await write_audit(
+        db,
+        event_type="portal_action.processed",
+        entity_type="portal_action_event",
+        entity_id=action_id,
+        summary=f"Marked portal action {payload.status}.",
+        actor_user_id=user["id"],
+        agency_id=agency_id,
+    )
+    return {"action": action}

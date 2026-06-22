@@ -4,17 +4,42 @@ import DocumentTypeBadge from "../../components/DocumentTypeBadge"
 import PortalSafeHtmlPreview from "../../components/PortalSafeHtmlPreview"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import ClientPortalLayout from "../../layouts/ClientPortalLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 
 export default function PortalDocumentDetailPage({ documentId }) {
   const [state, setState] = useState(null)
+  const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-  useEffect(() => { Promise.all([apiGet("/api/portal/me"), apiGet(`/api/portal/documents/${documentId}`)]).then(([me, detail]) => setState({ me, document: detail.document })).catch((err) => setError(err.message)) }, [documentId])
+  async function load() {
+    const [me, detail] = await Promise.all([apiGet("/api/portal/me"), apiGet(`/api/portal/documents/${documentId}`)])
+    setState({ me, document: detail.document, acknowledgement: detail.acknowledgement })
+  }
+  useEffect(() => { load().catch((err) => setError(err.message)) }, [documentId])
+  async function acknowledge() {
+    setError("")
+    try {
+      await apiPost(`/api/portal/documents/${documentId}/acknowledge`, { acknowledgement_type: "acknowledged", message: message || undefined })
+      setMessage("")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
   return (
     <ClientPortalLayout user={{ full_name: state?.me?.portal_account?.display_name }} brand={state?.me?.brand}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3"><div><a className="text-sm font-medium text-blue-700" href="/portal/documents">Back to documents</a><p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Read-only HTML preview</p><h2 className="text-2xl font-semibold text-slate-950">{state.document.title}</h2></div><div className="flex gap-2"><DocumentTypeBadge type={state.document.document_type} /><DocumentStatusBadge status={state.document.status} /></div></div>
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
+            <h3 className="font-semibold text-slate-950">Acknowledgement</h3>
+            {state.acknowledgement ? <p className="mt-3 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">Acknowledged on {state.acknowledgement.created_at}</p> : (
+              <div className="mt-3 space-y-3">
+                <textarea className="min-h-20 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Optional note" value={message} onChange={(event) => setMessage(event.target.value)} />
+                <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={acknowledge}>Acknowledge document</button>
+              </div>
+            )}
+            {error ? <p className="mt-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+          </section>
           <PortalSafeHtmlPreview html={state.document.rendered_html} />
         </div>
       </ProtectedRoute>

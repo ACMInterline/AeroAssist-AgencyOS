@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
+import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileCheck2, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -57,6 +57,10 @@ export default function AgencyLayout({ children, user, agency }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/documents">
               <Files className="h-4 w-4" />
               Documents
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/portal-actions">
+              <FileCheck2 className="h-4 w-4" />
+              Portal Actions
             </a>
           </nav>
           <div className="flex items-center gap-3">

@@ -168,6 +168,8 @@ AGENCY_OWNED_COLLECTIONS = [
     "document_templates",
     "rendered_documents",
     "document_timeline_events",
+    "portal_action_events",
+    "document_acknowledgements",
     "audit_events",
 ]
 
@@ -211,6 +213,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("source_entity_type", ASCENDING), ("source_entity_id", ASCENDING)],
         ],
+        "portal_action_events": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("status", ASCENDING)]],
+        "document_acknowledgements": [[("agency_id", ASCENDING), ("rendered_document_id", ASCENDING), ("client_id", ASCENDING)]],
         "audit_events": [[("agency_id", ASCENDING), ("entity_type", ASCENDING), ("entity_id", ASCENDING)]],
         "airline_knowledge_items": [[("airline_id", ASCENDING)], [("review_status", ASCENDING)]],
         "airline_procedures": [[("airline_id", ASCENDING)]],

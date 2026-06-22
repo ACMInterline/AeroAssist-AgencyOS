@@ -1,4 +1,4 @@
-import { Briefcase, ClipboardList, FileText, Home, ReceiptText, UserCircle, Users, WalletCards } from "lucide-react"
+import { Briefcase, ClipboardList, FileCheck2, FileText, Home, ReceiptText, UserCircle, Users, WalletCards } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -28,6 +28,7 @@ export default function ClientPortalLayout({ children, user, brand }) {
             <Nav href="/portal/documents" icon={<FileText className="h-4 w-4" />} label="Documents" />
             <Nav href="/portal/invoices" icon={<ReceiptText className="h-4 w-4" />} label="Invoices" />
             <Nav href="/portal/payments" icon={<WalletCards className="h-4 w-4" />} label="Payments" />
+            <Nav href="/portal/actions" icon={<FileCheck2 className="h-4 w-4" />} label="Actions" />
           </nav>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <UserCircle className="h-4 w-4" />

@@ -18,6 +18,7 @@ import OffersPage from "./pages/agency/OffersPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
 import PassengersPage from "./pages/agency/PassengersPage"
 import PaymentsPage from "./pages/agency/PaymentsPage"
+import AgencyPortalActionsPage from "./pages/agency/PortalActionsPage"
 import RequestCreatePage from "./pages/agency/RequestCreatePage"
 import RequestDetailPage from "./pages/agency/RequestDetailPage"
 import RequestsPage from "./pages/agency/RequestsPage"
@@ -27,6 +28,7 @@ import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailP
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
+import PortalActionsPage from "./pages/portal/PortalActionsPage"
 import PortalBookingsPage from "./pages/portal/PortalBookingsPage"
 import PortalDashboardPage from "./pages/portal/PortalDashboardPage"
 import PortalDocumentDetailPage from "./pages/portal/PortalDocumentDetailPage"
@@ -40,6 +42,7 @@ import PortalPassengersPage from "./pages/portal/PortalPassengersPage"
 import PortalPaymentsPage from "./pages/portal/PortalPaymentsPage"
 import PortalProfilePage from "./pages/portal/PortalProfilePage"
 import PortalRequestDetailPage from "./pages/portal/PortalRequestDetailPage"
+import PortalRequestCreatePage from "./pages/portal/PortalRequestCreatePage"
 import PortalRequestsPage from "./pages/portal/PortalRequestsPage"
 import HomePage from "./pages/public/HomePage"
 
@@ -52,10 +55,13 @@ const routes = {
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
   "/agency/document-templates": DocumentTemplatesPage,
+  "/agency/portal-actions": AgencyPortalActionsPage,
   "/portal": PortalDashboardPage,
+  "/portal/actions": PortalActionsPage,
   "/portal/profile": PortalProfilePage,
   "/portal/passengers": PortalPassengersPage,
   "/portal/requests": PortalRequestsPage,
+  "/portal/requests/new": PortalRequestCreatePage,
   "/portal/offers": PortalOffersPage,
   "/portal/bookings": PortalBookingsPage,
   "/portal/documents": PortalDocumentsPage,
@@ -134,6 +140,10 @@ export default function App() {
   const portalPassengerMatch = window.location.pathname.match(/^\/portal\/passengers\/([^/]+)$/)
   if (portalPassengerMatch) {
     return <PortalPassengerDetailPage passengerId={portalPassengerMatch[1]} />
+  }
+
+  if (window.location.pathname === "/portal/requests/new") {
+    return <PortalRequestCreatePage />
   }
 
   const portalRequestMatch = window.location.pathname.match(/^\/portal\/requests\/([^/]+)$/)

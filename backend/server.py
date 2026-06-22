@@ -8,7 +8,7 @@ from services.seed_service import seed_core_data
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 10 auth and invitations.",
+    description="AeroAssist AgencyOS API foundation through Phase 11 controlled portal actions.",
 )
 
 app.add_middleware(
