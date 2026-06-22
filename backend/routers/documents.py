@@ -1,4 +1,5 @@
 import base64
+import binascii
 from datetime import datetime, timezone
 from email.message import EmailMessage
 import re
@@ -75,7 +76,7 @@ async def write_document_timeline(db: Database, agency_id: str, document_id: str
 
 
 def safe_filename(value: str, suffix: str) -> str:
-    base = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-").lower() or "document"
+    base = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-._").lower() or "document"
     if not base.endswith(suffix):
         base = f"{base}{suffix}"
     return base
@@ -92,6 +93,7 @@ def public_export(export: dict) -> dict:
         "file_size_bytes": export.get("file_size_bytes"),
         "generated_at": export.get("generated_at"),
         "client_visible": export.get("client_visible"),
+        "error_message": export.get("error_message"),
         "created_at": export.get("created_at"),
         "updated_at": export.get("updated_at"),
     }
@@ -135,8 +137,12 @@ async def get_email_settings_or_default(db: Database, agency_id: str) -> dict:
 def export_download_response(export: dict) -> Response:
     if export.get("status") != "generated" or export.get("storage_mode") != "inline_base64" or not export.get("file_data_base64"):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file is not available.")
-    data = base64.b64decode(export["file_data_base64"].encode("ascii"))
-    headers = {"Content-Disposition": f"attachment; filename=\"{export['filename']}\""}
+    try:
+        data = base64.b64decode(export["file_data_base64"].encode("ascii"), validate=True)
+    except (binascii.Error, UnicodeEncodeError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file data is invalid.")
+    filename = safe_filename(export.get("filename") or "document", "")
+    headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
     return Response(content=data, media_type=export.get("content_type") or "application/octet-stream", headers=headers)
 
 
@@ -422,6 +428,7 @@ async def list_document_deliveries(agency_id: str, document_id: str, user: dict 
 async def get_document_delivery(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
+    await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
     return {"delivery": delivery}
 
 
@@ -436,6 +443,14 @@ async def send_document_delivery(agency_id: str, delivery_id: str, user: dict = 
 
     document = await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
     export = await get_export_or_404(db, agency_id, delivery["export_id"]) if delivery.get("export_id") else None
+    if export and export.get("rendered_document_id") != document["id"]:
+        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Delivery export does not belong to the selected document."})
+        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", updated["error_message"], {"delivery_id": delivery_id})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=updated["error_message"])
+    if export and export.get("status") != "generated":
+        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Delivery export file is not available."})
+        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", updated["error_message"], {"delivery_id": delivery_id})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=updated["error_message"])
     settings = await get_email_settings_or_default(db, agency_id)
     if settings.get("mode") == "disabled":
         updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Email sending is disabled for this agency."})

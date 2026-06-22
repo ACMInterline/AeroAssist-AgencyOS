@@ -1,5 +1,6 @@
 import base64
 from datetime import date, datetime, timezone
+import re
 from typing import Any, Dict, Iterable, List
 
 from database import Database
@@ -68,6 +69,13 @@ from services.document_rendering_service import render_document_payload
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
 DEMO_AGENCY_SLUG = "demo-aeroassist-travel"
 DEMO_PASSWORD = "DemoPass123!"
+
+
+def safe_seed_filename(value: str, suffix: str) -> str:
+    base = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip()).strip("-._").lower() or "document"
+    if not base.endswith(suffix):
+        base = f"{base}{suffix}"
+    return base
 
 
 def reference_record(domain: str, key: str, label: str, description: str = "", metadata: Dict[str, Any] | None = None) -> GlobalReferenceRecord:
@@ -1134,7 +1142,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         if document is None:
             return
 
-        filename = f"{document['title'].lower().replace(' ', '-')}.html"
+        filename = safe_seed_filename(document["title"], ".html")
         export = await document_exports.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "export_type": "print_html", "filename": filename})
         if export is None:
             html_data = (document.get("rendered_html") or "").encode("utf-8")

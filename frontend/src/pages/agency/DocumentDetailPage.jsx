@@ -136,6 +136,8 @@ export default function DocumentDetailPage({ documentId }) {
 
   const document = state?.document
   const sourceHref = document ? sourceLink(document) : "#"
+  const emailMode = state?.emailSettings?.mode || "disabled"
+  const emailSendingDisabled = emailMode === "disabled"
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -173,7 +175,7 @@ export default function DocumentDetailPage({ documentId }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="button" onClick={() => generateExport("print_html")}>Generate printable export</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => generateExport("pdf")}>Generate PDF</button>
+                  <button className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled title="PDF generation is not available until a server PDF renderer is configured.">PDF unavailable</button>
                 </div>
               </div>
               <p className="mt-3 text-xs text-slate-500">PDF generation requires a server PDF renderer. This installation supports printable HTML exports only.</p>
@@ -183,6 +185,7 @@ export default function DocumentDetailPage({ documentId }) {
                     <div>
                       <p className="font-medium text-slate-900">{item.filename}</p>
                       <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status} · {item.client_visible ? "portal visible" : "staff only"}</p>
+                      {item.error_message ? <p className="mt-1 text-rose-700">{item.error_message}</p> : null}
                     </div>
                     {item.status === "generated" ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" type="button" onClick={() => downloadExport(item.id)}>Download</button> : null}
                   </div>
@@ -214,6 +217,7 @@ export default function DocumentDetailPage({ documentId }) {
           <section className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-semibold text-slate-950">Deliveries</h3>
+              {emailSendingDisabled ? <p className="mt-1 text-sm text-slate-600">Email sending is disabled for this agency. Drafts can be prepared, but sending requires dev console or SMTP mode.</p> : null}
               <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
                 {(state.deliveries || []).length ? state.deliveries.map((item) => (
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
@@ -223,7 +227,7 @@ export default function DocumentDetailPage({ documentId }) {
                       {item.error_message ? <p className="mt-1 text-rose-700">{item.error_message}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {["draft", "queued", "failed"].includes(item.status) ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" type="button" onClick={() => sendDelivery(item.id)}>Send</button> : null}
+                      {["draft", "queued", "failed"].includes(item.status) ? <button className={emailSendingDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={emailSendingDisabled} title={emailSendingDisabled ? "Email sending is disabled for this agency." : ""} onClick={() => sendDelivery(item.id)}>Send</button> : null}
                       {["draft", "queued", "failed"].includes(item.status) ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => cancelDelivery(item.id)}>Cancel</button> : null}
                     </div>
                   </div>
