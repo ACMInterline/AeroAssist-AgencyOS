@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RefundExchangeStatusBadge from "../../components/RefundExchangeStatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -113,10 +113,6 @@ export default function RefundExchangeCaseCreatePage() {
     load().catch((err) => setError(err.message))
   }, [])
 
-  const selectedBooking = useMemo(() => (
-    state?.bookings?.find((item) => item.id === form.booking_id) || null
-  ), [state?.bookings, form.booking_id])
-
   function onFieldChange(name, value) {
     if (name === "source" && value === "manual") {
       setBookingDetail(null)
@@ -126,12 +122,13 @@ export default function RefundExchangeCaseCreatePage() {
 
   async function changeBooking(bookingId) {
     const nextBookingId = bookingId
+    const booking = state?.bookings?.find((item) => item.id === nextBookingId) || null
     onFieldChange("booking_id", nextBookingId)
     if (!nextBookingId) {
       setBookingDetail(null)
       return
     }
-    onFieldChange("client_id", selectedBooking?.client_id || "")
+    onFieldChange("client_id", booking?.client_id || "")
     if (state?.agency) {
       await loadBookingDetail(state.agency.id, nextBookingId)
     }
@@ -385,7 +382,7 @@ export default function RefundExchangeCaseCreatePage() {
                     <div className="space-y-2 text-sm">
                       {bookingDetail.passengers.length ? bookingDetail.passengers.map((item) => (
                         <label className="flex items-center gap-2" key={item.id}>
-                          <input type="checkbox" checked={form.link_passenger_ids.includes(item.id)} onChange={() => toggleSelection("link_passenger_ids", item.id)} />
+                          <input type="checkbox" checked={form.link_passenger_ids.includes(item.passenger_id)} onChange={() => toggleSelection("link_passenger_ids", item.passenger_id)} />
                           {item.snapshot_display_name} · {item.snapshot_passenger_type}
                         </label>
                       )) : <p className="text-slate-500">No passenger snapshots for booking.</p>}

@@ -79,6 +79,7 @@ async def require_read(db: Database, agency_id: str, user: dict) -> None:
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
+    await assert_agency_access(db, agency_id, user)
     if user.get("global_role") not in {"platform_owner", "platform_admin"}:
         await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
 
@@ -303,6 +304,18 @@ async def validate_item_link(db: Database, agency_id: str, case: dict, item_payl
         passenger = await db.collection("passenger_profiles").find_one({"agency_id": agency_id, "id": passenger_id})
         if not passenger:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passenger not found.")
+        if case_booking_id:
+            booking_passenger = await db.collection("booking_passengers").find_one(
+                {"agency_id": agency_id, "booking_id": case_booking_id, "passenger_id": passenger_id}
+            )
+            if not booking_passenger:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passenger must belong to the same booking as the case.")
+        elif case_client_id:
+            relationship = await db.collection("client_passenger_relationships").find_one(
+                {"agency_id": agency_id, "client_id": case_client_id, "passenger_id": passenger_id, "status": "active"}
+            )
+            if not relationship:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passenger must belong to the selected client.")
 
 
 def safe_client_case_item(item: dict) -> dict:
@@ -339,7 +352,6 @@ def safe_client_case_timeline(event: dict) -> dict:
         "event_type": event.get("event_type"),
         "title": event.get("title"),
         "summary": event.get("summary"),
-        "metadata": event.get("metadata"),
         "created_at": event.get("created_at"),
     }
 
@@ -416,7 +428,7 @@ async def list_cases(
 
     clients = {item["id"]: item for item in await db.collection("client_profiles").find_many({"agency_id": agency_id})}
     bookings = {item["id"]: item for item in await db.collection("bookings").find_many({"agency_id": agency_id})}
-    cases.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+    cases.sort(key=lambda item: _as_sort_value(item.get("updated_at")), reverse=True)
     return {
         "items": [
             {**case, "client": clients.get(case["client_id"]), "booking": bookings.get(case.get("booking_id"))}
@@ -793,7 +805,7 @@ async def list_case_items(
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
     items = await db.collection("refund_exchange_items").find_many({"agency_id": agency_id, "case_id": case_id})
-    items.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+    items.sort(key=lambda item: _as_sort_value(item.get("updated_at")), reverse=True)
     return {"items": items}
 
 
@@ -886,7 +898,7 @@ async def list_case_financial_lines(
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
     lines = await db.collection("refund_exchange_financial_lines").find_many({"agency_id": agency_id, "case_id": case_id})
-    lines.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+    lines.sort(key=lambda item: _as_sort_value(item.get("updated_at")), reverse=True)
     return {"items": lines}
 
 
@@ -975,7 +987,7 @@ async def list_case_messages(
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
     messages = await db.collection("refund_exchange_messages").find_many({"agency_id": agency_id, "case_id": case_id})
-    messages.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    messages.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
     return {"items": messages}
 
 
@@ -1031,7 +1043,7 @@ async def list_case_timeline(
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
     events = await db.collection("refund_exchange_timeline_events").find_many({"agency_id": agency_id, "case_id": case_id})
-    events.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    events.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
     return {"items": events}
 
 
@@ -1043,10 +1055,6 @@ async def list_portal_cases(
     agency_id = ctx["account"]["agency_id"]
     client_id = ctx["account"]["client_id"]
     cases = await db.collection("refund_exchange_cases").find_many({"agency_id": agency_id, "client_id": client_id, "client_visible": True})
-    cases_map = {
-        case["id"]: case
-        for case in cases
-    }
     bookings = {
         item["id"]: item
         for item in await db.collection("bookings").find_many({"agency_id": agency_id})

@@ -233,7 +233,7 @@ export default function RefundExchangeCaseDetailPage({ caseId }) {
     else if (itemForm.item_type === "emd") payload.emd_id = itemForm.ref_id || undefined
     else if (itemForm.item_type === "invoice") payload.invoice_id = itemForm.ref_id || undefined
     else if (itemForm.item_type === "payment") payload.payment_id = itemForm.ref_id || undefined
-    else if (itemForm.item_type === "booking_segment") payload.booking_segment_id = itemForm.ref_id || undefined
+    else if (itemForm.item_type === "booking_segment") payload.item_id = itemForm.ref_id || undefined
     else if (itemForm.item_type === "passenger") payload.passenger_id = itemForm.ref_id || undefined
     return payload
   }
