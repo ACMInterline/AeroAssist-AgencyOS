@@ -18,6 +18,7 @@ The repository currently contains:
 - Phase 7: Branded HTML document previews.
 - Phase 8: Read-only client portal visibility.
 - Phase 8 stabilization audit: repository registration, routing, seed, visibility, and build consistency review.
+- Phase 9: Production persistence and tenant hardening foundation.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -262,14 +263,25 @@ These are roadmap phases, not production-readiness claims. They should remain se
 
 ### Phase 9: Production Persistence And Tenant Hardening
 
-Recommended scope:
+Implemented foundation:
 
-- Database migrations.
-- Indexes and uniqueness constraints.
-- Tenant isolation test matrix.
+- MongoDB documented as the durable storage mode.
+- In-memory mode retained as local demo/dev fallback.
+- MongoDB startup index creation for agency-owned and global collections.
+- Immutable update-field protection for `id`, `_id`, `agency_id`, and `created_at`.
+- Reusable tenant and portal isolation helpers.
+- Portal-safe projection validation.
+- Seed idempotency smoke coverage.
+- Lightweight backend and portal isolation smoke scripts.
+- Phase 9 audit documentation.
+
+Still required for production readiness:
+
+- Formal migration framework.
+- Broader tenant isolation test matrix.
 - Seed/test fixture separation.
-- Persistence-mode validation beyond local in-memory storage.
-- Audit-event and support-access hardening.
+- Production support-access policy and audit hardening.
+- Deployment, backup, monitoring, and secret-management review.
 
 Avoid adding:
 
