@@ -1,5 +1,4 @@
-import base64
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import re
 from typing import Any, Dict, Iterable, List
 
@@ -25,6 +24,7 @@ from models import (
     ClientProfile,
     DocumentAcknowledgement,
     DocumentDelivery,
+    DocumentDeliveryAttempt,
     DocumentExport,
     DocumentTemplate,
     DocumentTimelineEvent,
@@ -64,6 +64,7 @@ from models import (
 )
 from security import hash_password, normalize_email
 from services.document_rendering_service import render_document_payload
+from services.file_storage_service import save_export_bytes
 
 
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
@@ -169,6 +170,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     rendered_documents = db.collection("rendered_documents")
     document_exports = db.collection("document_exports")
     document_deliveries = db.collection("document_deliveries")
+    document_delivery_attempts = db.collection("document_delivery_attempts")
     agency_email_settings = db.collection("agency_email_settings")
     document_timeline = db.collection("document_timeline_events")
     portal_action_events = db.collection("portal_action_events")
@@ -1146,22 +1148,25 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         export = await document_exports.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "export_type": "print_html", "filename": filename})
         if export is None:
             html_data = (document.get("rendered_html") or "").encode("utf-8")
-            export = await document_exports.insert_one(
-                DocumentExport(
-                    agency_id=agency["id"],
-                    rendered_document_id=document["id"],
-                    export_type="print_html",
-                    status="generated",
-                    filename=filename,
-                    content_type="text/html; charset=utf-8",
-                    storage_mode="inline_base64",
-                    file_data_base64=base64.b64encode(html_data).decode("ascii"),
-                    file_size_bytes=len(html_data),
-                    generated_by_user_id=owner["id"],
-                    generated_at=datetime.now(timezone.utc),
-                    client_visible=True,
-                ).model_dump(mode="json")
+            generated_at = datetime.now(timezone.utc)
+            export_model = DocumentExport(
+                agency_id=agency["id"],
+                rendered_document_id=document["id"],
+                export_type="print_html",
+                status="generated",
+                filename=filename,
+                content_type="text/html; charset=utf-8",
+                storage_mode="file_path",
+                retention_policy="keep_90_days",
+                retention_expires_at=generated_at + timedelta(days=90),
+                generated_by_user_id=owner["id"],
+                generated_at=generated_at,
+                generated_from_snapshot_at=document.get("rendered_at"),
+                client_visible=True,
             )
+            export_data = export_model.model_dump(mode="json")
+            export_data.update(save_export_bytes(agency["id"], export_model.id, filename, "text/html; charset=utf-8", html_data))
+            export = await document_exports.insert_one(export_data)
             await document_timeline.insert_one(
                 DocumentTimelineEvent(
                     agency_id=agency["id"],
@@ -1183,7 +1188,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
             }
         )
         if delivery is None:
-            await document_deliveries.insert_one(
+            delivery = await document_deliveries.insert_one(
                 DocumentDelivery(
                     agency_id=agency["id"],
                     rendered_document_id=document["id"],
@@ -1198,7 +1203,24 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                     sent_at=datetime.now(timezone.utc),
                     provider="dev_console",
                     provider_message_id="seed:dev-console-document-delivery",
+                    attempt_count=1,
+                    last_attempt_at=datetime.now(timezone.utc),
+                    retry_status="none",
                     client_visible=True,
+                ).model_dump(mode="json")
+            )
+            await document_delivery_attempts.insert_one(
+                DocumentDeliveryAttempt(
+                    agency_id=agency["id"],
+                    delivery_id=delivery["id"],
+                    rendered_document_id=document["id"],
+                    export_id=export["id"],
+                    attempt_number=1,
+                    status="sent",
+                    provider="dev_console",
+                    provider_message_id="seed:dev-console-document-delivery",
+                    started_at=delivery["sent_at"],
+                    completed_at=delivery["sent_at"],
                 ).model_dump(mode="json")
             )
             await document_timeline.insert_one(
@@ -1212,6 +1234,25 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                 ).model_dump(mode="json")
             )
             created.append("document_delivery:dev_console")
+        existing_attempt = await document_delivery_attempts.find_one({"agency_id": agency["id"], "delivery_id": delivery["id"], "attempt_number": 1})
+        if existing_attempt is None:
+            sent_at = delivery.get("sent_at") or datetime.now(timezone.utc)
+            await document_delivery_attempts.insert_one(
+                DocumentDeliveryAttempt(
+                    agency_id=agency["id"],
+                    delivery_id=delivery["id"],
+                    rendered_document_id=document["id"],
+                    export_id=export["id"],
+                    attempt_number=1,
+                    status="sent" if delivery.get("status") == "sent" else "failed",
+                    provider=delivery.get("provider") or "dev_console",
+                    provider_message_id=delivery.get("provider_message_id"),
+                    error_message=delivery.get("error_message"),
+                    started_at=sent_at,
+                    completed_at=sent_at,
+                ).model_dump(mode="json")
+            )
+            created.append("document_delivery_attempt:seed")
 
     await ensure_document_export_delivery_examples()
 

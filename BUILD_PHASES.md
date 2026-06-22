@@ -23,6 +23,7 @@ The repository currently contains:
 - Phase 11: Client portal controlled actions.
 - Phase 12: Refund and exchange tracking.
 - Phase 13: Printable document export and email delivery foundation.
+- Phase 14: Document delivery hardening.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -282,18 +283,43 @@ Out of scope:
 - Automatic delivery on document render.
 - Raw SMTP password storage.
 
+## Phase 14: Document Delivery Hardening
+
+Implemented foundations:
+
+- File-backed local storage abstraction for new generated document exports.
+- Export storage keys, storage bucket labels, checksums, and file size metadata.
+- Cleanup-ready retention policy and retention expiry metadata.
+- Archived export timestamps and actor tracking.
+- Delivery attempt records for staff-controlled send/retry actions.
+- Delivery attempt counters, retry state, and max-attempt tracking.
+- Email settings validation endpoint.
+- SMTP secret-reference requirement without storing raw credentials.
+- Staff UI for export storage, retention, checksum, delivery attempts, retry state, and email validation.
+- Portal read-only downloads preserved without public links or client-triggered sending.
+
+Out of scope:
+
+- Real PDF rendering, because no verified renderer dependency is installed in this environment.
+- Public share links.
+- Automatic or bulk email sending.
+- Background worker infrastructure.
+- Raw SMTP password storage.
+- Payment links, electronic signatures, document upload, and fiscal invoice compliance.
+
 ## Next Recommended Phases
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 14: Document Delivery Hardening
+### Phase 15: Production PDF Rendering And Delivery Infrastructure
 
 Recommended scope:
 
-- Real PDF rendering from the stabilized HTML document contract.
-- File storage and retention policy.
-- Email queue/retry behavior.
-- Production secret handling for SMTP or provider credentials.
+- Select and verify a real HTML-to-PDF renderer.
+- Add visual PDF QA checks and system dependency documentation.
+- Add external file storage/retention lifecycle if local disk is insufficient.
+- Add background queue/retry worker and provider webhook handling.
+- Add production secret resolver integration for SMTP or provider credentials.
 - Public/share link decision record if links are added later.
 - Document visibility and expiry controls.
 
@@ -301,7 +327,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 15: Airline Intelligence Versioning/Import Workflow
+### Phase 16: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -316,7 +342,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 16: Agency Website/CMS Publishing Foundation
+### Phase 17: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

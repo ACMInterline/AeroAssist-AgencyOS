@@ -2911,6 +2911,14 @@ class DocumentExportStorageMode(str, Enum):
     NOT_GENERATED = "not_generated"
 
 
+class DocumentExportRetentionPolicy(str, Enum):
+    NONE = "none"
+    KEEP_30_DAYS = "keep_30_days"
+    KEEP_90_DAYS = "keep_90_days"
+    KEEP_1_YEAR = "keep_1_year"
+    KEEP_UNTIL_ARCHIVED = "keep_until_archived"
+
+
 class DocumentDeliveryType(str, Enum):
     EMAIL = "email"
     MANUAL_DOWNLOAD = "manual_download"
@@ -2932,6 +2940,21 @@ class DocumentDeliveryProvider(str, Enum):
     MANUAL = "manual"
     DEV_CONSOLE = "dev_console"
     NONE = "none"
+
+
+class DocumentDeliveryRetryStatus(str, Enum):
+    NONE = "none"
+    RETRY_AVAILABLE = "retry_available"
+    RETRY_SCHEDULED = "retry_scheduled"
+    MAX_RETRIES_REACHED = "max_retries_reached"
+
+
+class DocumentDeliveryAttemptStatus(str, Enum):
+    PENDING = "pending"
+    SENDING = "sending"
+    SENT = "sent"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
 
 
 class AgencyEmailMode(str, Enum):
@@ -2956,9 +2979,17 @@ class DocumentExport(BaseDocument):
     storage_mode: DocumentExportStorageMode = DocumentExportStorageMode.NOT_GENERATED
     file_data_base64: Optional[str] = None
     file_path: Optional[str] = None
+    storage_key: Optional[str] = None
+    storage_bucket: Optional[str] = None
+    retention_policy: DocumentExportRetentionPolicy = DocumentExportRetentionPolicy.KEEP_90_DAYS
+    retention_expires_at: Optional[datetime] = None
+    checksum_sha256: Optional[str] = None
     file_size_bytes: Optional[int] = None
     generated_by_user_id: Optional[str] = None
     generated_at: Optional[datetime] = None
+    generated_from_snapshot_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    archived_by_user_id: Optional[str] = None
     error_message: Optional[str] = None
     client_visible: bool = False
 
@@ -2985,7 +3016,27 @@ class DocumentDelivery(BaseDocument):
     provider: DocumentDeliveryProvider = DocumentDeliveryProvider.NONE
     provider_message_id: Optional[str] = None
     error_message: Optional[str] = None
+    attempt_count: int = 0
+    last_attempt_at: Optional[datetime] = None
+    next_retry_at: Optional[datetime] = None
+    retry_status: DocumentDeliveryRetryStatus = DocumentDeliveryRetryStatus.NONE
+    max_attempts: int = 3
+    last_error_message: Optional[str] = None
     client_visible: bool = False
+
+
+class DocumentDeliveryAttempt(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    rendered_document_id: str
+    export_id: Optional[str] = None
+    attempt_number: int
+    status: DocumentDeliveryAttemptStatus = DocumentDeliveryAttemptStatus.PENDING
+    provider: DocumentDeliveryProvider = DocumentDeliveryProvider.NONE
+    provider_message_id: Optional[str] = None
+    error_message: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 
 class DocumentDeliveryCreate(BaseModel):
@@ -3009,9 +3060,12 @@ class AgencyEmailSettings(BaseDocument):
     smtp_port: Optional[int] = None
     smtp_username: Optional[str] = None
     smtp_password_secret_ref: Optional[str] = None
+    smtp_password_is_configured: bool = False
     smtp_use_tls: bool = True
     mode: AgencyEmailMode = AgencyEmailMode.DISABLED
     status: AgencyEmailSettingsStatus = AgencyEmailSettingsStatus.ACTIVE
+    verified_at: Optional[datetime] = None
+    last_validation_error: Optional[str] = None
 
 
 class AgencyEmailSettingsUpdate(BaseModel):
@@ -3024,6 +3078,7 @@ class AgencyEmailSettingsUpdate(BaseModel):
     smtp_port: Optional[int] = None
     smtp_username: Optional[str] = None
     smtp_password_secret_ref: Optional[str] = None
+    smtp_password_is_configured: Optional[bool] = None
     smtp_use_tls: Optional[bool] = None
     mode: Optional[AgencyEmailMode] = None
     status: Optional[AgencyEmailSettingsStatus] = None

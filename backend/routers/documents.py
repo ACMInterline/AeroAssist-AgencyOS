@@ -1,6 +1,4 @@
-import base64
-import binascii
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 import re
 import smtplib
@@ -16,13 +14,11 @@ from models import (
     AgencyEmailSettingsUpdate,
     BookingTimelineEvent,
     DocumentDelivery,
+    DocumentDeliveryAttempt,
     DocumentDeliveryCreate,
     DocumentDeliveryProvider,
-    DocumentDeliveryStatus,
     DocumentExport,
     DocumentExportCreate,
-    DocumentExportStatus,
-    DocumentExportStorageMode,
     DocumentExportType,
     DocumentTemplate,
     DocumentTemplateCreate,
@@ -34,6 +30,7 @@ from models import (
 )
 from routers.portal import portal_context
 from services.document_rendering_service import render_document_payload
+from services.file_storage_service import get_export_bytes, save_export_bytes
 from services.tenant_service import assert_agency_access, assert_portal_projection_safe, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["documents"])
@@ -90,13 +87,88 @@ def public_export(export: dict) -> dict:
         "status": export.get("status"),
         "filename": export.get("filename"),
         "content_type": export.get("content_type"),
+        "storage_mode": export.get("storage_mode"),
+        "storage_bucket": export.get("storage_bucket"),
+        "retention_policy": export.get("retention_policy"),
+        "retention_expires_at": export.get("retention_expires_at"),
+        "checksum_sha256": export.get("checksum_sha256"),
         "file_size_bytes": export.get("file_size_bytes"),
         "generated_at": export.get("generated_at"),
+        "generated_from_snapshot_at": export.get("generated_from_snapshot_at"),
+        "archived_at": export.get("archived_at"),
+        "archived_by_user_id": export.get("archived_by_user_id"),
         "client_visible": export.get("client_visible"),
         "error_message": export.get("error_message"),
         "created_at": export.get("created_at"),
         "updated_at": export.get("updated_at"),
     }
+
+
+def public_portal_export(export: dict) -> dict:
+    return {
+        "id": export["id"],
+        "rendered_document_id": export.get("rendered_document_id"),
+        "export_type": export.get("export_type"),
+        "status": export.get("status"),
+        "filename": export.get("filename"),
+        "content_type": export.get("content_type"),
+        "file_size_bytes": export.get("file_size_bytes"),
+        "generated_at": export.get("generated_at"),
+        "client_visible": export.get("client_visible"),
+        "created_at": export.get("created_at"),
+        "updated_at": export.get("updated_at"),
+    }
+
+
+def public_email_settings(settings: dict) -> dict:
+    return {
+        "id": settings.get("id"),
+        "agency_id": settings.get("agency_id"),
+        "sender_name": settings.get("sender_name"),
+        "sender_email": settings.get("sender_email"),
+        "reply_to_email": settings.get("reply_to_email"),
+        "smtp_host": settings.get("smtp_host"),
+        "smtp_port": settings.get("smtp_port"),
+        "smtp_username": settings.get("smtp_username"),
+        "smtp_password_is_configured": bool(settings.get("smtp_password_is_configured") or settings.get("smtp_password_secret_ref")),
+        "smtp_use_tls": settings.get("smtp_use_tls", True),
+        "mode": settings.get("mode"),
+        "status": settings.get("status"),
+        "verified_at": settings.get("verified_at"),
+        "last_validation_error": settings.get("last_validation_error"),
+        "created_at": settings.get("created_at"),
+        "updated_at": settings.get("updated_at"),
+    }
+
+
+def retention_expires_at(policy: str, generated_at: datetime) -> datetime | None:
+    if policy == "keep_30_days":
+        return generated_at + timedelta(days=30)
+    if policy == "keep_90_days":
+        return generated_at + timedelta(days=90)
+    if policy == "keep_1_year":
+        return generated_at + timedelta(days=365)
+    return None
+
+
+def validate_email_settings(settings: dict) -> tuple[bool, str | None]:
+    mode = settings.get("mode") or "disabled"
+    if mode == "disabled":
+        return True, None
+    if not settings.get("sender_name") or not settings.get("sender_email"):
+        return False, "Sender name and sender email are required."
+    if mode == "dev_console":
+        return True, None
+    if mode == "smtp":
+        if not settings.get("smtp_host") or not settings.get("smtp_port"):
+            return False, "SMTP host and port are required."
+        port = int(settings.get("smtp_port"))
+        if port < 1 or port > 65535:
+            return False, "SMTP port must be between 1 and 65535."
+        if not settings.get("smtp_password_secret_ref") and not settings.get("smtp_password_is_configured"):
+            return False, "SMTP requires a password secret reference before sending."
+        return False, "SMTP secret resolution is not implemented in this installation."
+    return False, "Unsupported email mode."
 
 
 async def get_document_or_404(db: Database, agency_id: str, document_id: str) -> dict:
@@ -135,22 +207,18 @@ async def get_email_settings_or_default(db: Database, agency_id: str) -> dict:
 
 
 def export_download_response(export: dict) -> Response:
-    if export.get("status") != "generated" or export.get("storage_mode") != "inline_base64" or not export.get("file_data_base64"):
+    if export.get("status") != "generated":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file is not available.")
-    try:
-        data = base64.b64decode(export["file_data_base64"].encode("ascii"), validate=True)
-    except (binascii.Error, UnicodeEncodeError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file data is invalid.")
+    data = get_export_bytes(export)
     filename = safe_filename(export.get("filename") or "document", "")
     headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}
     return Response(content=data, media_type=export.get("content_type") or "application/octet-stream", headers=headers)
 
 
 async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None) -> tuple[str, str | None]:
-    if not settings.get("smtp_host") or not settings.get("smtp_port"):
-        raise ValueError("SMTP host and port are required before sending.")
-    if settings.get("smtp_username") and settings.get("smtp_password_secret_ref"):
-        raise ValueError("SMTP password secret resolution is not implemented in this foundation.")
+    ok, error = validate_email_settings(settings)
+    if not ok:
+        raise ValueError(error or "SMTP settings are incomplete.")
 
     message = EmailMessage()
     message["From"] = f"{settings.get('sender_name') or 'Agency'} <{settings.get('sender_email')}>"
@@ -160,8 +228,8 @@ async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None
     message["Subject"] = delivery["subject"]
     message.set_content(delivery["message_text"])
 
-    if export and export.get("storage_mode") == "inline_base64" and export.get("file_data_base64"):
-        data = base64.b64decode(export["file_data_base64"].encode("ascii"))
+    if export:
+        data = get_export_bytes(export)
         content_type = (export.get("content_type") or "application/octet-stream").split(";", 1)[0]
         maintype, _, subtype = content_type.partition("/")
         message.add_attachment(data, maintype=maintype or "application", subtype=subtype or "octet-stream", filename=export.get("filename") or "document")
@@ -178,6 +246,125 @@ async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None
                 raise ValueError("SMTP username is configured, but no password secret resolver is available.")
             response = smtp.send_message(message)
     return "smtp", str(response) if response else None
+
+
+async def list_delivery_attempts(db: Database, agency_id: str, delivery_id: str) -> list[dict]:
+    attempts = await db.collection("document_delivery_attempts").find_many({"agency_id": agency_id, "delivery_id": delivery_id})
+    attempts.sort(key=lambda item: int(item.get("attempt_number", 0)), reverse=True)
+    return attempts
+
+
+def retry_status_for_failure(attempt_number: int, max_attempts: int) -> str:
+    return "max_retries_reached" if attempt_number >= max_attempts else "retry_available"
+
+
+async def create_delivery_attempt(db: Database, agency_id: str, delivery: dict, provider: str = "none") -> dict:
+    attempt_number = int(delivery.get("attempt_count") or 0) + 1
+    attempt = DocumentDeliveryAttempt(
+        agency_id=agency_id,
+        delivery_id=delivery["id"],
+        rendered_document_id=delivery["rendered_document_id"],
+        export_id=delivery.get("export_id"),
+        attempt_number=attempt_number,
+        status="sending",
+        provider=provider,
+        started_at=datetime.now(timezone.utc),
+    )
+    return await db.collection("document_delivery_attempts").insert_one(attempt.model_dump(mode="json"))
+
+
+async def fail_delivery_attempt(db: Database, agency_id: str, attempt: dict, delivery: dict, provider: str, error_message: str) -> dict:
+    now = datetime.now(timezone.utc)
+    updated_attempt = await db.collection("document_delivery_attempts").update_one(
+        {"agency_id": agency_id, "id": attempt["id"]},
+        {"status": "failed", "provider": provider, "error_message": error_message, "completed_at": now},
+    )
+    await db.collection("document_deliveries").update_one(
+        {"agency_id": agency_id, "id": delivery["id"]},
+        {
+            "status": "failed",
+            "provider": provider,
+            "error_message": error_message,
+            "last_error_message": error_message,
+            "attempt_count": attempt["attempt_number"],
+            "last_attempt_at": now,
+            "retry_status": retry_status_for_failure(attempt["attempt_number"], int(delivery.get("max_attempts") or 3)),
+        },
+    )
+    return updated_attempt
+
+
+async def mark_delivery_attempt_sent(db: Database, agency_id: str, attempt: dict, delivery: dict, provider: str, provider_message_id: str | None, user_id: str) -> dict:
+    now = datetime.now(timezone.utc)
+    updated_attempt = await db.collection("document_delivery_attempts").update_one(
+        {"agency_id": agency_id, "id": attempt["id"]},
+        {"status": "sent", "provider": provider, "provider_message_id": provider_message_id, "completed_at": now},
+    )
+    await db.collection("document_deliveries").update_one(
+        {"agency_id": agency_id, "id": delivery["id"]},
+        {
+            "status": "sent",
+            "provider": provider,
+            "provider_message_id": provider_message_id,
+            "sent_by_user_id": user_id,
+            "sent_at": now,
+            "error_message": None,
+            "last_error_message": None,
+            "attempt_count": attempt["attempt_number"],
+            "last_attempt_at": now,
+            "retry_status": "none",
+            "next_retry_at": None,
+        },
+    )
+    return updated_attempt
+
+
+async def process_delivery_send(db: Database, agency_id: str, delivery_id: str, user: dict) -> dict:
+    delivery = await get_delivery_or_404(db, agency_id, delivery_id)
+    if delivery.get("status") in {"sent", "cancelled", "archived"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery cannot be sent from its current status.")
+    if delivery.get("delivery_type") != "email":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only email deliveries can be sent.")
+    if int(delivery.get("attempt_count") or 0) >= int(delivery.get("max_attempts") or 3):
+        await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"retry_status": "max_retries_reached"})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum delivery attempts reached.")
+
+    document = await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
+    export = await get_export_or_404(db, agency_id, delivery["export_id"]) if delivery.get("export_id") else None
+    attempt = await create_delivery_attempt(db, agency_id, delivery)
+
+    def fail_detail(message: str, provider: str = "none") -> HTTPException:
+        return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+    try:
+        if export and export.get("rendered_document_id") != document["id"]:
+            raise ValueError("Delivery export does not belong to the selected document.")
+        if export and export.get("status") != "generated":
+            raise ValueError("Delivery export file is not available.")
+
+        settings = await get_email_settings_or_default(db, agency_id)
+        if settings.get("mode") == "disabled":
+            raise ValueError("Email sending is disabled for this agency.")
+
+        if settings.get("mode") == "dev_console":
+            provider = DocumentDeliveryProvider.DEV_CONSOLE.value
+            provider_message_id = f"dev-console:{delivery_id}:{attempt['attempt_number']}"
+        elif settings.get("mode") == "smtp":
+            provider, provider_message_id = await send_smtp_delivery(settings, delivery, export)
+        else:
+            raise ValueError("Unsupported email mode.")
+
+        await mark_delivery_attempt_sent(db, agency_id, attempt, delivery, provider, provider_message_id, user["id"])
+        updated = await get_delivery_or_404(db, agency_id, delivery_id)
+        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.sent", "Delivery sent", delivery["recipient_email"], {"delivery_id": delivery_id, "provider": provider, "attempt_id": attempt["id"]})
+        await write_audit(db, agency_id, user["id"], "document_delivery.sent", "document_delivery", delivery_id, "Document delivery sent.", {"rendered_document_id": document["id"], "provider": provider, "attempt_id": attempt["id"]})
+        return {"delivery": updated, "attempt": await db.collection("document_delivery_attempts").find_one({"agency_id": agency_id, "id": attempt["id"]})}
+    except Exception as exc:
+        provider = (settings.get("mode") if "settings" in locals() else "none") or "none"
+        error_message = str(exc)
+        await fail_delivery_attempt(db, agency_id, attempt, delivery, provider, error_message)
+        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", error_message, {"delivery_id": delivery_id, "attempt_id": attempt["id"]})
+        raise fail_detail(error_message, provider)
 
 
 async def write_source_timeline(db: Database, agency_id: str, document: dict, actor_user_id: str | None) -> None:
@@ -324,6 +511,7 @@ async def document_timeline(agency_id: str, document_id: str, user: dict = Depen
 async def create_document_export(agency_id: str, document_id: str, payload: DocumentExportCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     document = await get_document_or_404(db, agency_id, document_id)
+    now = datetime.now(timezone.utc)
     if payload.export_type == DocumentExportType.PDF:
         export = DocumentExport(
             agency_id=agency_id,
@@ -334,7 +522,9 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
             content_type="application/pdf",
             storage_mode="not_generated",
             generated_by_user_id=user["id"],
-            generated_at=datetime.now(timezone.utc),
+            generated_at=now,
+            generated_from_snapshot_at=document.get("rendered_at"),
+            retention_policy="none",
             error_message="PDF generation is not available because no reliable PDF renderer is installed.",
             client_visible=False,
         )
@@ -345,6 +535,7 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
 
     html = document.get("rendered_html") or ""
     data = html.encode("utf-8")
+    generated_at = datetime.now(timezone.utc)
     export = DocumentExport(
         agency_id=agency_id,
         rendered_document_id=document_id,
@@ -352,14 +543,17 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
         status="generated",
         filename=safe_filename(document["title"], ".html"),
         content_type="text/html; charset=utf-8",
-        storage_mode="inline_base64",
-        file_data_base64=base64.b64encode(data).decode("ascii"),
-        file_size_bytes=len(data),
+        storage_mode="file_path",
+        retention_policy="keep_90_days",
+        retention_expires_at=retention_expires_at("keep_90_days", generated_at),
         generated_by_user_id=user["id"],
-        generated_at=datetime.now(timezone.utc),
+        generated_at=generated_at,
+        generated_from_snapshot_at=document.get("rendered_at"),
         client_visible=payload.client_visible and bool(document.get("client_visible")),
     )
-    created = await db.collection("document_exports").insert_one(export.model_dump(mode="json"))
+    export_data = export.model_dump(mode="json")
+    export_data.update(save_export_bytes(agency_id, export.id, export.filename, export.content_type, data))
+    created = await db.collection("document_exports").insert_one(export_data)
     await write_document_timeline(db, agency_id, document_id, user["id"], "document_export.generated", "Printable export generated", created["filename"], {"export_id": created["id"], "export_type": created["export_type"]})
     await write_audit(db, agency_id, user["id"], "document_export.generated", "document_export", created["id"], "Generated printable document export.", {"rendered_document_id": document_id, "export_type": created["export_type"]})
     return {"export": public_export(created)}
@@ -394,7 +588,7 @@ async def download_document_export(agency_id: str, export_id: str, user: dict = 
 async def archive_document_export(agency_id: str, export_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     export = await get_export_or_404(db, agency_id, export_id)
-    updated = await db.collection("document_exports").update_one({"agency_id": agency_id, "id": export_id}, {"status": "archived"})
+    updated = await db.collection("document_exports").update_one({"agency_id": agency_id, "id": export_id}, {"status": "archived", "archived_at": datetime.now(timezone.utc), "archived_by_user_id": user["id"], "client_visible": False})
     await write_document_timeline(db, agency_id, export["rendered_document_id"], user["id"], "document_export.archived", "Document export archived", updated.get("filename"), {"export_id": export_id})
     await write_audit(db, agency_id, user["id"], "document_export.archived", "document_export", export_id, "Archived document export.", {"rendered_document_id": export["rendered_document_id"]})
     return {"export": public_export(updated)}
@@ -420,6 +614,8 @@ async def list_document_deliveries(agency_id: str, document_id: str, user: dict 
     await require_read(db, agency_id, user)
     await get_document_or_404(db, agency_id, document_id)
     items = await db.collection("document_deliveries").find_many({"agency_id": agency_id, "rendered_document_id": document_id})
+    for item in items:
+        item["attempts"] = await list_delivery_attempts(db, agency_id, item["id"])
     items.sort(key=lambda item: str(item.get("created_at", "")), reverse=True)
     return {"items": items}
 
@@ -429,52 +625,30 @@ async def get_document_delivery(agency_id: str, delivery_id: str, user: dict = D
     await require_read(db, agency_id, user)
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
     await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
-    return {"delivery": delivery}
+    return {"delivery": delivery, "attempts": await list_delivery_attempts(db, agency_id, delivery_id)}
 
 
 @router.post("/document-deliveries/{delivery_id}/send")
 async def send_document_delivery(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    return await process_delivery_send(db, agency_id, delivery_id, user)
+
+
+@router.post("/document-deliveries/{delivery_id}/retry")
+async def retry_document_delivery(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_write(db, agency_id, user)
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
-    if delivery.get("status") in {"sent", "cancelled", "archived"}:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery cannot be sent from its current status.")
-    if delivery.get("delivery_type") != "email":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only email deliveries can be sent.")
+    if delivery.get("retry_status") == "max_retries_reached":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum delivery attempts reached.")
+    return await process_delivery_send(db, agency_id, delivery_id, user)
 
-    document = await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
-    export = await get_export_or_404(db, agency_id, delivery["export_id"]) if delivery.get("export_id") else None
-    if export and export.get("rendered_document_id") != document["id"]:
-        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Delivery export does not belong to the selected document."})
-        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", updated["error_message"], {"delivery_id": delivery_id})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=updated["error_message"])
-    if export and export.get("status") != "generated":
-        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Delivery export file is not available."})
-        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", updated["error_message"], {"delivery_id": delivery_id})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=updated["error_message"])
-    settings = await get_email_settings_or_default(db, agency_id)
-    if settings.get("mode") == "disabled":
-        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": "none", "error_message": "Email sending is disabled for this agency."})
-        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", updated["error_message"], {"delivery_id": delivery_id})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=updated["error_message"])
 
-    now = datetime.now(timezone.utc)
-    try:
-        if settings.get("mode") == "dev_console":
-            provider = DocumentDeliveryProvider.DEV_CONSOLE.value
-            provider_message_id = f"dev-console:{delivery_id}"
-        elif settings.get("mode") == "smtp":
-            provider, provider_message_id = await send_smtp_delivery(settings, delivery, export)
-        else:
-            raise ValueError("Unsupported email mode.")
-        updates = {"status": "sent", "provider": provider, "provider_message_id": provider_message_id, "sent_by_user_id": user["id"], "sent_at": now, "error_message": None}
-        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, updates)
-        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.sent", "Delivery sent", delivery["recipient_email"], {"delivery_id": delivery_id, "provider": provider})
-        await write_audit(db, agency_id, user["id"], "document_delivery.sent", "document_delivery", delivery_id, "Document delivery sent.", {"rendered_document_id": document["id"], "provider": provider})
-        return {"delivery": updated}
-    except Exception as exc:
-        updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "failed", "provider": settings.get("mode") or "none", "error_message": str(exc)})
-        await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", str(exc), {"delivery_id": delivery_id})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+@router.get("/document-deliveries/{delivery_id}/attempts")
+async def get_document_delivery_attempts(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_read(db, agency_id, user)
+    delivery = await get_delivery_or_404(db, agency_id, delivery_id)
+    await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
+    return {"items": await list_delivery_attempts(db, agency_id, delivery_id)}
 
 
 @router.post("/document-deliveries/{delivery_id}/cancel")
@@ -492,7 +666,7 @@ async def cancel_document_delivery(agency_id: str, delivery_id: str, user: dict 
 @router.get("/email-settings")
 async def get_email_settings(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
-    return {"settings": await get_email_settings_or_default(db, agency_id)}
+    return {"settings": public_email_settings(await get_email_settings_or_default(db, agency_id))}
 
 
 @router.put("/email-settings")
@@ -502,6 +676,12 @@ async def update_email_settings(agency_id: str, payload: AgencyEmailSettingsUpda
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
+    if updates.get("smtp_password_secret_ref"):
+        updates["smtp_password_is_configured"] = True
+    candidate = {**(current or {}), **updates}
+    ok, validation_error = validate_email_settings(candidate)
+    updates["last_validation_error"] = validation_error
+    updates["verified_at"] = datetime.now(timezone.utc) if ok and candidate.get("mode") != "disabled" else None
     if current:
         updated = await db.collection("agency_email_settings").update_one({"agency_id": agency_id, "id": current["id"]}, updates)
     else:
@@ -514,7 +694,19 @@ async def update_email_settings(agency_id: str, payload: AgencyEmailSettingsUpda
         )
         updated = await db.collection("agency_email_settings").insert_one(model.model_dump(mode="json"))
     await write_audit(db, agency_id, user["id"], "agency_email_settings.updated", "agency_email_settings", updated["id"], "Updated agency email settings.", {"mode": updated.get("mode")})
-    return {"settings": updated}
+    return {"settings": public_email_settings(updated), "validation": {"ok": ok, "error": validation_error}}
+
+
+@router.post("/email-settings/validate")
+async def validate_agency_email_settings(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_template_write(db, agency_id, user)
+    settings = await get_email_settings_or_default(db, agency_id)
+    ok, validation_error = validate_email_settings(settings)
+    updated = await db.collection("agency_email_settings").update_one(
+        {"agency_id": agency_id, "id": settings["id"]},
+        {"last_validation_error": validation_error, "verified_at": datetime.now(timezone.utc) if ok and settings.get("mode") != "disabled" else None},
+    ) if settings.get("id") else settings
+    return {"settings": public_email_settings(updated), "validation": {"ok": ok, "error": validation_error}}
 
 
 @router.post("/offers/{offer_id}/render-document", status_code=status.HTTP_201_CREATED)
@@ -573,7 +765,7 @@ async def list_portal_document_exports(document_id: str, ctx: dict = Depends(por
             "status": "generated",
         }
     )
-    payload = {"items": [public_export(item) for item in exports]}
+    payload = {"items": [public_portal_export(item) for item in exports]}
     assert_portal_projection_safe(payload)
     return payload
 

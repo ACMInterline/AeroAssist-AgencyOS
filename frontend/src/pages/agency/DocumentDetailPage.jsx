@@ -102,12 +102,37 @@ export default function DocumentDetailPage({ documentId }) {
     }
   }
 
+  async function retryDelivery(deliveryId) {
+    setError("")
+    setNotice("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/document-deliveries/${deliveryId}/retry`)
+      setNotice("Delivery retry recorded.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+      await load().catch(() => null)
+    }
+  }
+
   async function cancelDelivery(deliveryId) {
     setError("")
     setNotice("")
     try {
       await apiPost(`/api/agencies/${state.agency.id}/document-deliveries/${deliveryId}/cancel`)
       setNotice("Delivery cancelled.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function validateEmailSettings() {
+    setError("")
+    setNotice("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/email-settings/validate`)
+      setNotice(result.validation?.ok ? "Email settings validated." : result.validation?.error || "Email settings need attention.")
       await load()
     } catch (err) {
       setError(err.message)
@@ -185,6 +210,9 @@ export default function DocumentDetailPage({ documentId }) {
                     <div>
                       <p className="font-medium text-slate-900">{item.filename}</p>
                       <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status} · {item.client_visible ? "portal visible" : "staff only"}</p>
+                      <p className="text-slate-500">Storage {item.storage_mode || "unknown"} · Retention {item.retention_policy || "not set"}</p>
+                      {item.retention_expires_at ? <p className="text-slate-500">Expires {new Date(item.retention_expires_at).toLocaleDateString()}</p> : null}
+                      {item.file_size_bytes ? <p className="text-slate-500">{item.file_size_bytes} bytes{item.checksum_sha256 ? ` · SHA-256 ${item.checksum_sha256.slice(0, 12)}...` : ""}</p> : null}
                       {item.error_message ? <p className="mt-1 text-rose-700">{item.error_message}</p> : null}
                     </div>
                     {item.status === "generated" ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" type="button" onClick={() => downloadExport(item.id)}>Download</button> : null}
@@ -223,11 +251,14 @@ export default function DocumentDetailPage({ documentId }) {
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
                     <div>
                       <p className="font-medium text-slate-900">{item.subject}</p>
-                      <p className="text-slate-500">{item.recipient_email} · {item.status} · {item.provider}</p>
-                      {item.error_message ? <p className="mt-1 text-rose-700">{item.error_message}</p> : null}
+                      <p className="text-slate-500">{item.recipient_email} · {item.status} · {item.provider} · attempts {item.attempt_count || 0}/{item.max_attempts || 3}</p>
+                      <p className="text-slate-500">Retry {item.retry_status || "none"}{item.last_attempt_at ? ` · last ${new Date(item.last_attempt_at).toLocaleString()}` : ""}</p>
+                      {(item.attempts || []).slice(0, 3).map((attempt) => <p className="text-xs text-slate-500" key={attempt.id}>Attempt {attempt.attempt_number}: {attempt.status} · {attempt.provider}{attempt.error_message ? ` · ${attempt.error_message}` : ""}</p>)}
+                      {item.last_error_message || item.error_message ? <p className="mt-1 text-rose-700">{item.last_error_message || item.error_message}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {["draft", "queued", "failed"].includes(item.status) ? <button className={emailSendingDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={emailSendingDisabled} title={emailSendingDisabled ? "Email sending is disabled for this agency." : ""} onClick={() => sendDelivery(item.id)}>Send</button> : null}
+                      {item.retry_status === "retry_available" ? <button className={emailSendingDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={emailSendingDisabled} title={emailSendingDisabled ? "Email sending is disabled for this agency." : ""} onClick={() => retryDelivery(item.id)}>Retry</button> : null}
                       {["draft", "queued", "failed"].includes(item.status) ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => cancelDelivery(item.id)}>Cancel</button> : null}
                     </div>
                   </div>
@@ -237,7 +268,9 @@ export default function DocumentDetailPage({ documentId }) {
 
             <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={saveEmailSettings}>
               <h3 className="font-semibold text-slate-950">Email Settings</h3>
-              <p className="mt-1 text-sm text-slate-600">Use dev console for local testing. SMTP stores only a password secret reference.</p>
+              <p className="mt-1 text-sm text-slate-600">Use dev console for local testing. SMTP requires production secret configuration and stores only a secret reference.</p>
+              <p className="mt-2 text-sm text-slate-600">Mode {state.emailSettings?.mode || "disabled"} · Secret configured {state.emailSettings?.smtp_password_is_configured ? "yes" : "no"}</p>
+              {state.emailSettings?.last_validation_error ? <p className="mt-1 text-sm text-rose-700">{state.emailSettings.last_validation_error}</p> : null}
               <div className="mt-4 grid gap-3">
                 <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={settingsForm.mode} onChange={(event) => setSettingsForm((current) => ({ ...current, mode: event.target.value }))}>
                   <option value="disabled">disabled</option>
@@ -257,7 +290,10 @@ export default function DocumentDetailPage({ documentId }) {
                   <input type="checkbox" checked={settingsForm.smtp_use_tls} onChange={(event) => setSettingsForm((current) => ({ ...current, smtp_use_tls: event.target.checked }))} />
                   Use TLS
                 </label>
-                <button className="justify-self-start rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="submit">Save email settings</button>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="submit">Save email settings</button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-blue-700" type="button" onClick={validateEmailSettings}>Validate settings</button>
+                </div>
               </div>
             </form>
           </section>

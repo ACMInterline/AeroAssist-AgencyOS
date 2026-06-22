@@ -60,7 +60,7 @@ export default function PortalDocumentDetailPage({ documentId }) {
                 <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
                   <div>
                     <p className="font-medium text-slate-900">{item.filename}</p>
-                    <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status}</p>
+                    <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status}{item.file_size_bytes ? ` · ${item.file_size_bytes} bytes` : ""}</p>
                   </div>
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" type="button" onClick={() => downloadExport(item.id)}>Download</button>
                 </div>
