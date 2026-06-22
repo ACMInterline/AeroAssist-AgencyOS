@@ -1,4 +1,12 @@
 import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
+import { apiDeleteSession } from "../lib/api"
+import { clearAuthSession } from "../lib/auth"
+
+async function logout() {
+  await apiDeleteSession().catch(() => null)
+  clearAuthSession()
+  window.location.href = "/login"
+}
 
 export default function AgencyLayout({ children, user, agency }) {
   return (
@@ -51,7 +59,10 @@ export default function AgencyLayout({ children, user, agency }) {
               Documents
             </a>
           </nav>
-          {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}
+          <div className="flex items-center gap-3">
+            {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}
+            <button className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>Logout</button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>

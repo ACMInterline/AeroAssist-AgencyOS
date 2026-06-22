@@ -18,6 +18,15 @@ export async function apiPost(path, body = {}) {
   return readResponse(response)
 }
 
+export async function apiDeleteSession() {
+  const response = await fetch(`${API_BASE}/api/auth/logout`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({}),
+  })
+  return readResponse(response)
+}
+
 export async function apiPut(path, body = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: "PUT",

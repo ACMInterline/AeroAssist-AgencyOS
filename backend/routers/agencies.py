@@ -1,6 +1,9 @@
+import os
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from auth import get_current_agency_context, get_current_user, require_platform_role
+from auth import DEMO_AUTH_ENABLED, get_current_agency_context, get_current_user, require_platform_role
 from database import Database, get_database
 from models import (
     Agency,
@@ -11,8 +14,12 @@ from models import (
     AgencyWorkspace,
     AgencyWorkspaceUpdate,
     AuditEvent,
+    Invitation,
     PlatformUser,
+    StaffInvitationCreate,
+    now_utc,
 )
+from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies", tags=["agencies"])
@@ -182,6 +189,57 @@ async def list_staff(
             for membership in memberships
         ]
     }
+
+
+@router.post("/{agency_id}/staff/invitations", status_code=status.HTTP_201_CREATED)
+async def create_staff_invitation(
+    agency_id: str,
+    payload: StaffInvitationCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    agency = await db.collection("agencies").find_one({"id": agency_id})
+    if agency is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
+
+    staff_user = await db.collection("platform_users").find_one({"email": payload.email})
+    if staff_user is None:
+        staff_user = await db.collection("platform_users").insert_one(
+            PlatformUser(email=payload.email, full_name=payload.full_name, status="invited").model_dump(mode="json")
+        )
+
+    membership = await db.collection("agency_staff_memberships").find_one(
+        {"agency_id": agency_id, "user_id": staff_user["id"]}
+    )
+    if membership is None:
+        membership = await db.collection("agency_staff_memberships").insert_one(
+            AgencyStaffMembership(
+                agency_id=agency_id,
+                user_id=staff_user["id"],
+                agency_role=payload.agency_role,
+                status="invited",
+            ).model_dump(mode="json")
+        )
+
+    raw_token = new_raw_token()
+    invitation = Invitation(
+        agency_id=agency_id,
+        invited_email=payload.email,
+        normalized_email=normalize_email(payload.email),
+        invitation_type="agency_staff",
+        target_role=payload.agency_role,
+        target_user_id=staff_user["id"],
+        invited_by_user_id=user["id"],
+        token_hash=hash_token(raw_token),
+        expires_at=now_utc() + timedelta(hours=int(os.getenv("INVITATION_EXPIRY_HOURS", "72"))),
+    )
+    invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
+    response = {"invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"}, "membership": membership}
+    if DEMO_AUTH_ENABLED or os.getenv("AEROASSIST_DB_MODE", "memory") == "memory":
+        response["dev_invitation_token"] = raw_token
+        response["dev_invitation_link"] = f"/login?invite={raw_token}"
+    return response
 
 
 @router.post("/{agency_id}/staff", status_code=status.HTTP_201_CREATED)

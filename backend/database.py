@@ -186,6 +186,9 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
         "airline_profiles": [[("airline_code", ASCENDING)], [("id", ASCENDING)]],
         "portal_access_mappings": [[("agency_id", ASCENDING), ("user_email", ASCENDING)]],
+        "auth_identities": [[("normalized_email", ASCENDING)], [("id", ASCENDING)]],
+        "auth_sessions": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
+        "invitations": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
     }
     for collection_name, index_specs in unique_indexes.items():
         for spec in index_specs:

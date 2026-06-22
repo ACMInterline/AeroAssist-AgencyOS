@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, and Phase 9 persistence/tenant hardening foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, and Phase 10 authentication/invitation foundation.
 
 ## Project Structure
 
@@ -125,6 +125,19 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Lightweight backend and portal isolation smoke scripts.
 - Phase 9 production-readiness warning and audit documentation.
 
+## Phase 10 Includes
+
+- `AuthIdentity`, `AuthSession`, and `Invitation` records.
+- Local password authentication with PBKDF2 password hashes.
+- Opaque bearer sessions stored as token hashes.
+- Platform, agency staff, and client portal login through `POST /api/auth/login`.
+- `GET /api/auth/me` role/context resolution for platform users, agency memberships, and portal mappings.
+- Logout/session revocation through `POST /api/auth/logout`.
+- Staff invitation creation under `/api/agencies/{agency_id}/staff/invitations`.
+- Client portal invitation creation under `/api/agencies/{agency_id}/clients/{client_id}/portal-invitation`.
+- Invitation acceptance through `/api/auth/invitations/accept`.
+- Demo header fallback preserved only when `DEMO_AUTH_ENABLED=true`.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -182,7 +195,7 @@ npm run dev
 
 The frontend starts on `http://localhost:5173`.
 
-## Seed Data
+## Authentication And Seed Data
 
 Seed data runs automatically on backend startup. It can also be triggered through:
 
@@ -191,12 +204,30 @@ curl -X POST http://localhost:8000/api/reference/seed \
   -H "X-Demo-User-Email: owner@aeroassist.dev"
 ```
 
-Seeded demo login:
+Seeded demo logins use password `DemoPass123!`:
 
-- Email: `owner@aeroassist.dev`
-- Role: `platform_owner`
+- Platform: `owner@aeroassist.dev`
+- Agency owner: `agency.owner@aeroassist.dev`
+- Agency agent: `agency.agent@aeroassist.dev`
+- Portal client: `anna.client@example.com`
+- Portal organization client: `travel@orbitex.example.com`
 
-Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only and must be replaced before production authentication.
+The login page at `/login` stores the returned bearer token in local storage and API requests send it as `Authorization: Bearer ...`.
+
+Development/demo header fallback can be enabled with:
+
+```bash
+DEMO_AUTH_ENABLED=true
+```
+
+When enabled, legacy headers such as `X-Demo-User-Email` and `X-Demo-Client-Email` still work for local testing. Disable this for production-like runs:
+
+```bash
+DEMO_AUTH_ENABLED=false
+AUTH_TOKEN_SECRET=replace-with-a-long-random-secret
+```
+
+Invitation endpoints store only token hashes. In local/demo mode the raw invitation token and `/login?invite=...` link are returned to support manual testing without email delivery. Production responses should not expose raw tokens unless an explicit development flag is enabled.
 
 The seed endpoint is development/demo tooling. Do not expose it in production without replacing demo auth and adding an explicit administrative control.
 
@@ -219,6 +250,10 @@ Phase 9 improves persistence and tenant-safety foundations, but it is not produc
 
 - `GET /api/health`
 - `GET /api/auth/me`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/invitations/accept`
+- `POST /api/auth/change-password`
 - `POST /api/auth/demo-login`
 - `GET /api/platform/health`
 - `GET /api/platform/summary`
@@ -230,12 +265,14 @@ Phase 9 improves persistence and tenant-safety foundations, but it is not produc
 - `PUT /api/agencies/{agency_id}/settings`
 - `GET /api/agencies/{agency_id}/staff`
 - `POST /api/agencies/{agency_id}/staff`
+- `POST /api/agencies/{agency_id}/staff/invitations`
 - `GET /api/agencies/{agency_id}/clients`
 - `POST /api/agencies/{agency_id}/clients`
 - `GET /api/agencies/{agency_id}/clients/{client_id}`
 - `PUT /api/agencies/{agency_id}/clients/{client_id}`
 - `POST /api/agencies/{agency_id}/clients/{client_id}/archive`
 - `POST /api/agencies/{agency_id}/clients/{client_id}/restore`
+- `POST /api/agencies/{agency_id}/clients/{client_id}/portal-invitation`
 - `GET /api/agencies/{agency_id}/passengers`
 - `POST /api/agencies/{agency_id}/passengers`
 - `GET /api/agencies/{agency_id}/passengers/{passenger_id}`
@@ -337,14 +374,14 @@ Phase 9 improves persistence and tenant-safety foundations, but it is not produc
 
 ## Portal Demo Access
 
-Phase 8 portal preview uses development-only headers:
+Portal preview can still use development-only headers when `DEMO_AUTH_ENABLED=true`:
 
 ```bash
 X-Demo-Role: portal_client
 X-Demo-Client-Email: anna.client@example.com
 ```
 
-Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.com`. These headers are only for local/demo visibility testing and must be replaced before production client authentication.
+Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.com`. Bearer-token login is now preferred. These headers are only for local/demo visibility testing.
 
 ## Canonical Layers
 

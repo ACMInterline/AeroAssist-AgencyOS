@@ -7,6 +7,7 @@ from models import (
     AgencyStaffMembership,
     AgencyWorkspace,
     AuditEvent,
+    AuthIdentity,
     AgencyAirlineOverride,
     AirlineEmdRuleNote,
     AirlineKnowledgeItem,
@@ -49,11 +50,13 @@ from models import (
     TicketRecord,
     TravelRequest,
 )
+from security import hash_password, normalize_email
 from services.document_rendering_service import render_document_payload
 
 
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
 DEMO_AGENCY_SLUG = "demo-aeroassist-travel"
+DEMO_PASSWORD = "DemoPass123!"
 
 
 def reference_record(domain: str, key: str, label: str, description: str = "", metadata: Dict[str, Any] | None = None) -> GlobalReferenceRecord:
@@ -143,6 +146,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     document_timeline = db.collection("document_timeline_events")
     references = db.collection("global_reference_records")
     audits = db.collection("audit_events")
+    auth_identities = db.collection("auth_identities")
 
     created: List[str] = []
 
@@ -189,6 +193,51 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         )
         await memberships.insert_one(membership_model.model_dump(mode="json"))
         created.append("agency_staff_membership")
+
+    async def ensure_platform_user(email: str, full_name: str, global_role: str | None = None) -> dict:
+        existing_user = await users.find_one({"email": email})
+        if existing_user:
+            return existing_user
+        user_model = PlatformUser(email=email, full_name=full_name, global_role=global_role, status="active")
+        created_user = await users.insert_one(user_model.model_dump(mode="json"))
+        created.append(f"platform_user:{email}")
+        return created_user
+
+    async def ensure_identity(email: str, identity_type: str) -> dict:
+        normalized = normalize_email(email)
+        existing_identity = await auth_identities.find_one({"normalized_email": normalized})
+        if existing_identity:
+            return existing_identity
+        identity = AuthIdentity(
+            email=email,
+            normalized_email=normalized,
+            password_hash=hash_password(DEMO_PASSWORD),
+            identity_type=identity_type,
+            status="active",
+        )
+        created_identity = await auth_identities.insert_one(identity.model_dump(mode="json"))
+        created.append(f"auth_identity:{email}")
+        return created_identity
+
+    agency_owner_user = await ensure_platform_user("agency.owner@aeroassist.dev", "Demo Agency Owner")
+    agency_agent_user = await ensure_platform_user("agency.agent@aeroassist.dev", "Demo Agency Agent")
+    for staff_user, role in [(agency_owner_user, "agency_owner"), (agency_agent_user, "agency_agent")]:
+        existing_staff = await memberships.find_one({"agency_id": agency["id"], "user_id": staff_user["id"]})
+        if existing_staff is None:
+            await memberships.insert_one(
+                AgencyStaffMembership(
+                    agency_id=agency["id"],
+                    user_id=staff_user["id"],
+                    agency_role=role,
+                    status="active",
+                    joined_at=staff_user["created_at"],
+                ).model_dump(mode="json")
+            )
+            created.append(f"agency_staff_membership:{staff_user['email']}")
+
+    await ensure_identity(DEMO_OWNER_EMAIL, "platform_user")
+    await ensure_identity("agency.owner@aeroassist.dev", "agency_staff")
+    await ensure_identity("agency.agent@aeroassist.dev", "agency_staff")
 
     for record in core_reference_records():
         existing = await references.find_one({"domain": record.domain, "key": record.key})
@@ -274,6 +323,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
             )
             await portal_mappings.insert_one(portal_mapping.model_dump(mode="json"))
             created.append(f"portal_mapping:{user_email}")
+        await ensure_identity(user_email, "client_portal")
 
     anna_passenger = await passengers.find_one({"agency_id": agency["id"], "display_name": "Anna Novak"})
     if anna_passenger is None:

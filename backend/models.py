@@ -31,9 +31,36 @@ class AgencyRole(str, Enum):
 
 class UserStatus(str, Enum):
     INVITED = "invited"
+    EMAIL_UNVERIFIED = "email_unverified"
     ACTIVE = "active"
     SUSPENDED = "suspended"
     ARCHIVED = "archived"
+
+
+class AuthIdentityType(str, Enum):
+    PLATFORM_USER = "platform_user"
+    AGENCY_STAFF = "agency_staff"
+    CLIENT_PORTAL = "client_portal"
+
+
+class AuthSessionStatus(str, Enum):
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+class InvitationType(str, Enum):
+    PLATFORM_USER = "platform_user"
+    AGENCY_STAFF = "agency_staff"
+    CLIENT_PORTAL = "client_portal"
+
+
+class InvitationStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+    CANCELLED = "cancelled"
 
 
 class AgencyStatus(str, Enum):
@@ -230,6 +257,70 @@ class PlatformUserCreate(BaseModel):
     full_name: str
     global_role: Optional[PlatformRole] = None
     status: UserStatus = UserStatus.ACTIVE
+
+
+class AuthIdentity(BaseDocument):
+    email: EmailStr
+    normalized_email: str
+    password_hash: str
+    identity_type: AuthIdentityType
+    status: UserStatus = UserStatus.INVITED
+    last_login_at: Optional[datetime] = None
+    failed_login_count: int = 0
+    password_reset_required: bool = False
+
+
+class AuthSession(BaseDocument):
+    identity_id: str
+    token_hash: str
+    status: AuthSessionStatus = AuthSessionStatus.ACTIVE
+    issued_at: datetime = Field(default_factory=now_utc)
+    expires_at: datetime
+    last_seen_at: Optional[datetime] = None
+    user_agent: Optional[str] = None
+    ip_address: Optional[str] = None
+
+
+class Invitation(BaseDocument):
+    agency_id: Optional[str] = None
+    invited_email: EmailStr
+    normalized_email: str
+    invitation_type: InvitationType
+    target_role: Optional[str] = None
+    target_client_id: Optional[str] = None
+    target_user_id: Optional[str] = None
+    invited_by_user_id: Optional[str] = None
+    status: InvitationStatus = InvitationStatus.PENDING
+    token_hash: str
+    expires_at: datetime
+    accepted_at: Optional[datetime] = None
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: Optional[str] = None
+    new_password: str
+
+
+class InvitationAcceptRequest(BaseModel):
+    token: str
+    password: str
+    display_name: Optional[str] = None
+
+
+class StaffInvitationCreate(BaseModel):
+    email: EmailStr
+    full_name: str
+    agency_role: AgencyRole = AgencyRole.AGENCY_AGENT
+
+
+class ClientPortalInvitationCreate(BaseModel):
+    email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
 
 
 class Agency(BaseDocument):

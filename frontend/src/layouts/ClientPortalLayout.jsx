@@ -1,4 +1,12 @@
 import { Briefcase, ClipboardList, FileText, Home, ReceiptText, UserCircle, Users, WalletCards } from "lucide-react"
+import { apiDeleteSession } from "../lib/api"
+import { clearAuthSession } from "../lib/auth"
+
+async function logout() {
+  await apiDeleteSession().catch(() => null)
+  clearAuthSession()
+  window.location.href = "/login"
+}
 
 export default function ClientPortalLayout({ children, user, brand }) {
   const primary = brand?.primary_color || "#2563eb"
@@ -24,6 +32,7 @@ export default function ClientPortalLayout({ children, user, brand }) {
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <UserCircle className="h-4 w-4" />
             {user?.full_name || "Demo user"}
+            <button className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>Logout</button>
           </div>
         </div>
       </header>

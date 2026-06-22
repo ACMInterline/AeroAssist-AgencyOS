@@ -3,6 +3,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 
+from auth import DEMO_AUTH_ENABLED, get_current_identity
 from database import Database, get_database
 from services.seed_service import seed_core_data
 from services.tenant_service import (
@@ -31,12 +32,21 @@ def brand_snapshot(workspace: dict | None, agency: dict | None) -> dict:
 
 
 async def portal_context(
+    authorization: Optional[str] = Header(default=None),
     x_demo_role: Optional[str] = Header(default=None),
     x_demo_client_email: Optional[str] = Header(default=None),
+    identity: dict = Depends(get_current_identity),
     db: Database = Depends(get_database),
 ) -> dict:
     await seed_core_data(db)
-    email = x_demo_client_email or DEFAULT_PORTAL_EMAIL
+    if authorization:
+        if identity.get("identity_type") != "client_portal":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Client portal identity required.")
+        email = identity["email"]
+    elif DEMO_AUTH_ENABLED:
+        email = x_demo_client_email or DEFAULT_PORTAL_EMAIL
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Portal login required.")
     resolved = await portal_client_context(db, email)
     mapping = resolved["account"]
     agency = resolved["agency"]

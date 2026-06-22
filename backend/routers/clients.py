@@ -1,18 +1,25 @@
+import os
+from datetime import timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import get_current_user
+from auth import DEMO_AUTH_ENABLED, get_current_user
 from database import Database, get_database
 from models import (
     AuditEvent,
     ClientPassengerRelationship,
     ClientPassengerRelationshipCreate,
     ClientPassengerRelationshipUpdate,
+    ClientPortalInvitationCreate,
     ClientProfile,
     ClientProfileCreate,
     ClientProfileUpdate,
+    Invitation,
+    PortalAccessMapping,
+    now_utc,
 )
+from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["clients"])
@@ -217,6 +224,74 @@ async def restore_client(
     )
     await write_audit(db, agency_id, user["id"], "client.restored", "client_profile", client_id, "Restored client.")
     return {"client": client}
+
+
+@router.post("/clients/{client_id}/portal-invitation", status_code=status.HTTP_201_CREATED)
+async def create_client_portal_invitation(
+    agency_id: str,
+    client_id: str,
+    payload: ClientPortalInvitationCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    client = await get_client_or_404(db, agency_id, client_id)
+    invited_email = payload.email or client.get("primary_email")
+    if not invited_email:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client portal invitation requires an email.")
+    display_name = payload.display_name or client.get("display_name") or invited_email
+
+    mapping = await db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "client_id": client_id})
+    if mapping is None:
+        mapping = await db.collection("portal_access_mappings").insert_one(
+            PortalAccessMapping(
+                agency_id=agency_id,
+                client_id=client_id,
+                user_email=invited_email,
+                portal_status="invited",
+                display_name=display_name,
+            ).model_dump(mode="json")
+        )
+    else:
+        mapping = await db.collection("portal_access_mappings").update_one(
+            {"id": mapping["id"]},
+            {"user_email": invited_email, "portal_status": "invited", "display_name": display_name},
+        )
+
+    client = await db.collection("client_profiles").update_one(
+        {"agency_id": agency_id, "id": client_id},
+        {"portal_status": "invited"},
+    )
+    raw_token = new_raw_token()
+    invitation = Invitation(
+        agency_id=agency_id,
+        invited_email=invited_email,
+        normalized_email=normalize_email(invited_email),
+        invitation_type="client_portal",
+        target_client_id=client_id,
+        invited_by_user_id=user["id"],
+        token_hash=hash_token(raw_token),
+        expires_at=now_utc() + timedelta(hours=int(os.getenv("INVITATION_EXPIRY_HOURS", "72"))),
+    )
+    invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
+    await write_audit(
+        db,
+        agency_id,
+        user["id"],
+        "client.portal_invited",
+        "client_profile",
+        client_id,
+        "Created client portal invitation.",
+    )
+    response = {
+        "client": client,
+        "portal_mapping": mapping,
+        "invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"},
+    }
+    if DEMO_AUTH_ENABLED or os.getenv("AEROASSIST_DB_MODE", "memory") == "memory":
+        response["dev_invitation_token"] = raw_token
+        response["dev_invitation_link"] = f"/login?invite={raw_token}"
+    return response
 
 
 @router.get("/client-passenger-relationships")
