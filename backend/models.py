@@ -2892,6 +2892,143 @@ class DocumentTimelineEvent(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class DocumentExportType(str, Enum):
+    PDF = "pdf"
+    PRINT_HTML = "print_html"
+
+
+class DocumentExportStatus(str, Enum):
+    PENDING = "pending"
+    GENERATED = "generated"
+    FAILED = "failed"
+    ARCHIVED = "archived"
+
+
+class DocumentExportStorageMode(str, Enum):
+    INLINE_BASE64 = "inline_base64"
+    FILE_PATH = "file_path"
+    EXTERNAL_STORAGE = "external_storage"
+    NOT_GENERATED = "not_generated"
+
+
+class DocumentDeliveryType(str, Enum):
+    EMAIL = "email"
+    MANUAL_DOWNLOAD = "manual_download"
+    PORTAL_VISIBLE = "portal_visible"
+    OTHER = "other"
+
+
+class DocumentDeliveryStatus(str, Enum):
+    DRAFT = "draft"
+    QUEUED = "queued"
+    SENT = "sent"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
+class DocumentDeliveryProvider(str, Enum):
+    SMTP = "smtp"
+    MANUAL = "manual"
+    DEV_CONSOLE = "dev_console"
+    NONE = "none"
+
+
+class AgencyEmailMode(str, Enum):
+    DISABLED = "disabled"
+    DEV_CONSOLE = "dev_console"
+    SMTP = "smtp"
+
+
+class AgencyEmailSettingsStatus(str, Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    ARCHIVED = "archived"
+
+
+class DocumentExport(BaseDocument):
+    agency_id: str
+    rendered_document_id: str
+    export_type: DocumentExportType
+    status: DocumentExportStatus = DocumentExportStatus.PENDING
+    filename: str
+    content_type: str
+    storage_mode: DocumentExportStorageMode = DocumentExportStorageMode.NOT_GENERATED
+    file_data_base64: Optional[str] = None
+    file_path: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    generated_by_user_id: Optional[str] = None
+    generated_at: Optional[datetime] = None
+    error_message: Optional[str] = None
+    client_visible: bool = False
+
+
+class DocumentExportCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    export_type: DocumentExportType = DocumentExportType.PRINT_HTML
+    client_visible: bool = False
+
+
+class DocumentDelivery(BaseDocument):
+    agency_id: str
+    rendered_document_id: str
+    export_id: Optional[str] = None
+    delivery_type: DocumentDeliveryType = DocumentDeliveryType.EMAIL
+    status: DocumentDeliveryStatus = DocumentDeliveryStatus.DRAFT
+    recipient_email: EmailStr
+    recipient_name: Optional[str] = None
+    subject: str
+    message_text: str
+    sent_by_user_id: Optional[str] = None
+    sent_at: Optional[datetime] = None
+    provider: DocumentDeliveryProvider = DocumentDeliveryProvider.NONE
+    provider_message_id: Optional[str] = None
+    error_message: Optional[str] = None
+    client_visible: bool = False
+
+
+class DocumentDeliveryCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    export_id: Optional[str] = None
+    delivery_type: DocumentDeliveryType = DocumentDeliveryType.EMAIL
+    recipient_email: EmailStr
+    recipient_name: Optional[str] = None
+    subject: str
+    message_text: str
+    client_visible: bool = False
+
+
+class AgencyEmailSettings(BaseDocument):
+    agency_id: str
+    sender_name: str
+    sender_email: EmailStr
+    reply_to_email: Optional[EmailStr] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password_secret_ref: Optional[str] = None
+    smtp_use_tls: bool = True
+    mode: AgencyEmailMode = AgencyEmailMode.DISABLED
+    status: AgencyEmailSettingsStatus = AgencyEmailSettingsStatus.ACTIVE
+
+
+class AgencyEmailSettingsUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    sender_name: Optional[str] = None
+    sender_email: Optional[EmailStr] = None
+    reply_to_email: Optional[EmailStr] = None
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = None
+    smtp_username: Optional[str] = None
+    smtp_password_secret_ref: Optional[str] = None
+    smtp_use_tls: Optional[bool] = None
+    mode: Optional[AgencyEmailMode] = None
+    status: Optional[AgencyEmailSettingsStatus] = None
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
     key: str

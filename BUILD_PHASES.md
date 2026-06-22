@@ -22,6 +22,7 @@ The repository currently contains:
 - Phase 10: Production authentication and invitation flow.
 - Phase 11: Client portal controlled actions.
 - Phase 12: Refund and exchange tracking.
+- Phase 13: Printable document export and email delivery foundation.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -260,25 +261,47 @@ Recorded in:
 
 - `PHASE_8_STABILIZATION_AUDIT.md`
 
+## Phase 13: Printable Document Export And Email Delivery Foundation
+
+Implemented foundations:
+
+- Document export records for existing rendered document snapshots.
+- Printable HTML export generation and authenticated downloads.
+- Friendly PDF-unavailable behavior when no reliable PDF renderer is installed.
+- Manual document delivery records.
+- Agency email settings with disabled, dev-console, and SMTP placeholder modes.
+- Dev-console send behavior for local/demo delivery audit.
+- Portal read-only export listing and download for client-visible documents/exports.
+- Staff document detail UI for exports, deliveries, and email settings.
+
+Out of scope:
+
+- Real PDF rendering dependency selection.
+- Public links.
+- Bulk or marketing email.
+- Automatic delivery on document render.
+- Raw SMTP password storage.
+
 ## Next Recommended Phases
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 13: PDF Export And Email Delivery
+### Phase 14: Document Delivery Hardening
 
 Recommended scope:
 
-- PDF rendering from the stabilized HTML document contract.
-- Email delivery for selected documents.
-- Delivery logs.
-- Public/share link decision record if links are added.
+- Real PDF rendering from the stabilized HTML document contract.
+- File storage and retention policy.
+- Email queue/retry behavior.
+- Production secret handling for SMTP or provider credentials.
+- Public/share link decision record if links are added later.
 - Document visibility and expiry controls.
 
 Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 14: Airline Intelligence Versioning/Import Workflow
+### Phase 15: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -293,7 +316,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 15: Agency Website/CMS Publishing Foundation
+### Phase 16: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

@@ -36,6 +36,28 @@ export async function apiPut(path, body = {}) {
   return readResponse(response)
 }
 
+export async function apiDownload(path) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: authHeaders(),
+  })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.detail || data.message || "Download failed")
+  }
+  const blob = await response.blob()
+  const disposition = response.headers.get("Content-Disposition") || ""
+  const match = disposition.match(/filename="?([^";]+)"?/)
+  const filename = match?.[1] || "download"
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+}
+
 async function readResponse(response) {
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {

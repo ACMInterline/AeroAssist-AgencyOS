@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, and Phase 12 refund/exchange tracking.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, and Phase 13 printable document export/email delivery foundation.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-12 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-13 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
@@ -160,13 +160,25 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Portal-only read-only endpoints and pages for client-visible case summaries, visible items, lines, messages, and timeline.
 - Seeded refund and exchange examples (tracking-only, no execution).
 
+## Phase 13 Includes
+
+- Document export records for already-rendered document snapshots.
+- Printable HTML exports stored as inline base64 and downloadable by staff.
+- Friendly PDF-unavailable behavior when no reliable PDF renderer is installed.
+- Document delivery records for manual staff-controlled delivery attempts.
+- Agency email settings with `disabled`, `dev_console`, and SMTP placeholder modes.
+- Dev-console send behavior that records delivery without sending real email.
+- Portal read-only export list/download for client-visible documents and exports.
+- Staff document detail controls for exports, deliveries, and email settings.
+- Seeded dev-console settings, printable export, and delivery example.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
 - Client request submission or editable portal workflows.
 - Offer acceptance/rejection workflows.
-- PDF document export.
-- Email/share/public document links.
+- Real PDF document generation.
+- Public share links.
 - Refund/exchange execution outside manual tracking.
 - Payment gateway processing.
 - Full accounting or ledger reconciliation.

@@ -4,15 +4,19 @@ import DocumentTypeBadge from "../../components/DocumentTypeBadge"
 import PortalSafeHtmlPreview from "../../components/PortalSafeHtmlPreview"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import ClientPortalLayout from "../../layouts/ClientPortalLayout"
-import { apiGet, apiPost } from "../../lib/api"
+import { apiDownload, apiGet, apiPost } from "../../lib/api"
 
 export default function PortalDocumentDetailPage({ documentId }) {
   const [state, setState] = useState(null)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   async function load() {
-    const [me, detail] = await Promise.all([apiGet("/api/portal/me"), apiGet(`/api/portal/documents/${documentId}`)])
-    setState({ me, document: detail.document, acknowledgement: detail.acknowledgement })
+    const [me, detail, exportsData] = await Promise.all([
+      apiGet("/api/portal/me"),
+      apiGet(`/api/portal/documents/${documentId}`),
+      apiGet(`/api/portal/documents/${documentId}/exports`),
+    ])
+    setState({ me, document: detail.document, acknowledgement: detail.acknowledgement, exports: exportsData.items })
   }
   useEffect(() => { load().catch((err) => setError(err.message)) }, [documentId])
   async function acknowledge() {
@@ -21,6 +25,14 @@ export default function PortalDocumentDetailPage({ documentId }) {
       await apiPost(`/api/portal/documents/${documentId}/acknowledge`, { acknowledgement_type: "acknowledged", message: message || undefined })
       setMessage("")
       await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+  async function downloadExport(exportId) {
+    setError("")
+    try {
+      await apiDownload(`/api/portal/document-exports/${exportId}/download`)
     } catch (err) {
       setError(err.message)
     }
@@ -39,6 +51,21 @@ export default function PortalDocumentDetailPage({ documentId }) {
               </div>
             )}
             {error ? <p className="mt-3 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+          </section>
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
+            <h3 className="font-semibold text-slate-950">Available downloads</h3>
+            <p className="mt-1 text-sm text-slate-600">Client-visible exports generated from the stored agency document snapshot.</p>
+            <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
+              {state.exports?.length ? state.exports.map((item) => (
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
+                  <div>
+                    <p className="font-medium text-slate-900">{item.filename}</p>
+                    <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status}</p>
+                  </div>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" type="button" onClick={() => downloadExport(item.id)}>Download</button>
+                </div>
+              )) : <p className="p-3 text-sm text-slate-500">No downloads are available yet.</p>}
+            </div>
           </section>
           <PortalSafeHtmlPreview html={state.document.rendered_html} />
         </div>

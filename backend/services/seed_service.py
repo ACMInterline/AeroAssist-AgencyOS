@@ -1,9 +1,11 @@
+import base64
 from datetime import date, datetime, timezone
 from typing import Any, Dict, Iterable, List
 
 from database import Database
 from models import (
     Agency,
+    AgencyEmailSettings,
     AgencyStaffMembership,
     AgencyWorkspace,
     AuditEvent,
@@ -21,6 +23,8 @@ from models import (
     ClientPassengerRelationship,
     ClientProfile,
     DocumentAcknowledgement,
+    DocumentDelivery,
+    DocumentExport,
     DocumentTemplate,
     DocumentTimelineEvent,
     EMDRecord,
@@ -155,6 +159,9 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     airline_overrides = db.collection("agency_airline_overrides")
     document_templates = db.collection("document_templates")
     rendered_documents = db.collection("rendered_documents")
+    document_exports = db.collection("document_exports")
+    document_deliveries = db.collection("document_deliveries")
+    agency_email_settings = db.collection("agency_email_settings")
     document_timeline = db.collection("document_timeline_events")
     portal_action_events = db.collection("portal_action_events")
     document_acknowledgements = db.collection("document_acknowledgements")
@@ -1107,6 +1114,98 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
             await seed_rendered("invoice", invoice["id"], "invoice_summary")
 
     await ensure_documents()
+
+    async def ensure_document_export_delivery_examples() -> None:
+        settings = await agency_email_settings.find_one({"agency_id": agency["id"], "status": "active"})
+        if settings is None:
+            settings = await agency_email_settings.insert_one(
+                AgencyEmailSettings(
+                    agency_id=agency["id"],
+                    sender_name=agency["name"],
+                    sender_email="demo-no-reply@aeroassist.dev",
+                    reply_to_email=owner["email"],
+                    mode="dev_console",
+                    status="active",
+                ).model_dump(mode="json")
+            )
+            created.append("agency_email_settings:dev_console")
+
+        document = await rendered_documents.find_one({"agency_id": agency["id"], "client_visible": True})
+        if document is None:
+            return
+
+        filename = f"{document['title'].lower().replace(' ', '-')}.html"
+        export = await document_exports.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "export_type": "print_html", "filename": filename})
+        if export is None:
+            html_data = (document.get("rendered_html") or "").encode("utf-8")
+            export = await document_exports.insert_one(
+                DocumentExport(
+                    agency_id=agency["id"],
+                    rendered_document_id=document["id"],
+                    export_type="print_html",
+                    status="generated",
+                    filename=filename,
+                    content_type="text/html; charset=utf-8",
+                    storage_mode="inline_base64",
+                    file_data_base64=base64.b64encode(html_data).decode("ascii"),
+                    file_size_bytes=len(html_data),
+                    generated_by_user_id=owner["id"],
+                    generated_at=datetime.now(timezone.utc),
+                    client_visible=True,
+                ).model_dump(mode="json")
+            )
+            await document_timeline.insert_one(
+                DocumentTimelineEvent(
+                    agency_id=agency["id"],
+                    rendered_document_id=document["id"],
+                    actor_user_id=owner["id"],
+                    event_type="document_export.seeded",
+                    title="Seeded printable export",
+                    summary=filename,
+                ).model_dump(mode="json")
+            )
+            created.append("document_export:print_html")
+
+        delivery = await document_deliveries.find_one(
+            {
+                "agency_id": agency["id"],
+                "rendered_document_id": document["id"],
+                "recipient_email": "anna.client@example.com",
+                "subject": "Demo document delivery",
+            }
+        )
+        if delivery is None:
+            await document_deliveries.insert_one(
+                DocumentDelivery(
+                    agency_id=agency["id"],
+                    rendered_document_id=document["id"],
+                    export_id=export["id"],
+                    delivery_type="email",
+                    status="sent",
+                    recipient_email="anna.client@example.com",
+                    recipient_name="Anna Client",
+                    subject="Demo document delivery",
+                    message_text="Demo dev-console delivery for a stored rendered document snapshot.",
+                    sent_by_user_id=owner["id"],
+                    sent_at=datetime.now(timezone.utc),
+                    provider="dev_console",
+                    provider_message_id="seed:dev-console-document-delivery",
+                    client_visible=True,
+                ).model_dump(mode="json")
+            )
+            await document_timeline.insert_one(
+                DocumentTimelineEvent(
+                    agency_id=agency["id"],
+                    rendered_document_id=document["id"],
+                    actor_user_id=owner["id"],
+                    event_type="document_delivery.seeded",
+                    title="Seeded dev-console delivery",
+                    summary="anna.client@example.com",
+                ).model_dump(mode="json")
+            )
+            created.append("document_delivery:dev_console")
+
+    await ensure_document_export_delivery_examples()
 
     async def ensure_portal_action_examples() -> None:
         portal_request = await requests.find_one({"agency_id": agency["id"], "request_reference": "REQ-PORTAL-DEMO-0001"})
