@@ -5,6 +5,13 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from database import Database, get_database
 from services.seed_service import seed_core_data
+from services.tenant_service import (
+    assert_portal_can_view_passenger,
+    assert_portal_owns_client_record,
+    assert_portal_projection_safe,
+    portal_client_context,
+    safe_public_projection,
+)
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
@@ -30,15 +37,15 @@ async def portal_context(
 ) -> dict:
     await seed_core_data(db)
     email = x_demo_client_email or DEFAULT_PORTAL_EMAIL
-    mapping = await db.collection("portal_access_mappings").find_one({"user_email": email})
-    if not mapping or mapping.get("portal_status") != "active":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Active demo portal account not found.")
-    agency = await db.collection("agencies").find_one({"id": mapping["agency_id"]})
-    client = await db.collection("client_profiles").find_one({"agency_id": mapping["agency_id"], "id": mapping["client_id"]})
-    if not agency or not client or client.get("status") == "archived":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal client context not found.")
-    workspace = await db.collection("agency_workspaces").find_one({"agency_id": mapping["agency_id"]})
-    await db.collection("portal_access_mappings").update_one({"id": mapping["id"]}, {"last_login_at": datetime.now(timezone.utc)})
+    resolved = await portal_client_context(db, email)
+    mapping = resolved["account"]
+    agency = resolved["agency"]
+    client = resolved["client"]
+    workspace = resolved["workspace"]
+    await db.collection("portal_access_mappings").update_one(
+        {"agency_id": mapping["agency_id"], "id": mapping["id"]},
+        {"last_login_at": datetime.now(timezone.utc)},
+    )
     return {
         "account": mapping,
         "agency": agency,
@@ -49,22 +56,37 @@ async def portal_context(
     }
 
 
+def safe_response(payload: dict) -> dict:
+    assert_portal_projection_safe(payload)
+    return payload
+
+
+def safe_portal_account(account: dict) -> dict:
+    return safe_public_projection(
+        account,
+        ["id", "user_email", "portal_status", "display_name", "last_login_at"],
+    )
+
+
 def safe_client(client: dict) -> dict:
-    return {
-        "id": client["id"],
-        "client_type": client.get("client_type"),
-        "display_name": client.get("display_name"),
-        "legal_name": client.get("legal_name"),
-        "primary_email": client.get("primary_email"),
-        "primary_phone": client.get("primary_phone"),
-        "country": client.get("country"),
-        "city": client.get("city"),
-        "preferred_language": client.get("preferred_language"),
-        "default_currency": client.get("default_currency"),
-        "portal_status": client.get("portal_status"),
-        "client_visible_notes": client.get("client_visible_notes"),
-        "status": client.get("status"),
-    }
+    return safe_public_projection(
+        client,
+        [
+            "id",
+            "client_type",
+            "display_name",
+            "legal_name",
+            "primary_email",
+            "primary_phone",
+            "country",
+            "city",
+            "preferred_language",
+            "default_currency",
+            "portal_status",
+            "client_visible_notes",
+            "status",
+        ],
+    )
 
 
 def safe_passenger(passenger: dict, relationship: dict | None = None) -> dict:
@@ -185,7 +207,7 @@ def safe_offer(offer: dict) -> dict:
         "total_max_amount": offer.get("total_max_amount"),
         "recommended_route_alternative_id": offer.get("recommended_route_alternative_id"),
         "recommended_fare_option_id": offer.get("recommended_fare_option_id"),
-        "sent_snapshot_available": bool(offer.get("sent_snapshot")),
+        "snapshot_available": bool(offer.get("sent_snapshot")),
     }
 
 
@@ -319,7 +341,7 @@ def safe_booking(booking: dict) -> dict:
         "amount_paid": booking.get("amount_paid"),
         "amount_due": booking.get("amount_due"),
         "client_visible_notes": booking.get("client_visible_notes"),
-        "booking_snapshot_available": bool(booking.get("booking_snapshot")),
+        "snapshot_available": bool(booking.get("booking_snapshot")),
     }
 
 
@@ -472,37 +494,25 @@ def safe_document(document: dict, include_html: bool = False) -> dict:
 
 
 async def visible_request_or_404(db: Database, ctx: dict, request_id: str) -> dict:
-    request = await db.collection("travel_requests").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "id": request_id})
-    if not request:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal request not found.")
-    return request
+    return await assert_portal_owns_client_record(db, ctx, "travel_requests", request_id, "Portal request not found.")
 
 
 async def visible_offer_or_404(db: Database, ctx: dict, offer_id: str) -> dict:
-    offer = await db.collection("offers").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "id": offer_id})
-    if not offer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal offer not found.")
-    return offer
+    return await assert_portal_owns_client_record(db, ctx, "offers", offer_id, "Portal offer not found.")
 
 
 async def visible_booking_or_404(db: Database, ctx: dict, booking_id: str) -> dict:
-    booking = await db.collection("bookings").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "id": booking_id})
-    if not booking:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal booking not found.")
-    return booking
+    return await assert_portal_owns_client_record(db, ctx, "bookings", booking_id, "Portal booking not found.")
 
 
 async def visible_invoice_or_404(db: Database, ctx: dict, invoice_id: str) -> dict:
-    invoice = await db.collection("invoices").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "id": invoice_id})
-    if not invoice:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal invoice not found.")
-    return invoice
+    return await assert_portal_owns_client_record(db, ctx, "invoices", invoice_id, "Portal invoice not found.")
 
 
 @router.get("/me")
 async def me(ctx: dict = Depends(portal_context)) -> dict:
-    return {
-        "portal_account": ctx["account"],
+    return safe_response({
+        "portal_account": safe_portal_account(ctx["account"]),
         "agency": ctx["agency"],
         "client": safe_client(ctx["client"]),
         "brand": ctx["brand"],
@@ -514,7 +524,7 @@ async def me(ctx: dict = Depends(portal_context)) -> dict:
             "font_family": ctx["brand"].get("font_family"),
         },
         "demo_notice": "Read-only portal preview. Development-only demo mapping.",
-    }
+    })
 
 
 @router.get("/dashboard")
@@ -529,7 +539,7 @@ async def dashboard(ctx: dict = Depends(portal_context), db: Database = Depends(
     payments = []
     for invoice in invoices:
         payments.extend([safe_payment(item) for item in await db.collection("payment_records").find_many({"agency_id": agency_id, "invoice_id": invoice["id"]})])
-    return {
+    return safe_response({
         "counts": {
             "requests": len(requests),
             "offers": len(offers),
@@ -546,36 +556,31 @@ async def dashboard(ctx: dict = Depends(portal_context), db: Database = Depends(
             "invoices": invoices[:5],
             "payments": payments[:5],
         },
-    }
+    })
 
 
 @router.get("/profile")
 async def profile(ctx: dict = Depends(portal_context)) -> dict:
-    return {"client": safe_client(ctx["client"]), "portal_account": ctx["account"], "brand": ctx["brand"]}
+    return safe_response({"client": safe_client(ctx["client"]), "portal_account": safe_portal_account(ctx["account"]), "brand": ctx["brand"]})
 
 
 @router.get("/passengers")
 async def passengers(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     relationships = await permitted_relationships(db, ctx)
     passengers_by_id = {item["id"]: item for item in await db.collection("passenger_profiles").find_many({"agency_id": ctx["account"]["agency_id"]})}
-    return {"items": [safe_passenger(passengers_by_id[item["passenger_id"]], item) for item in relationships if item["passenger_id"] in passengers_by_id and passengers_by_id[item["passenger_id"]].get("status") != "archived"]}
+    return safe_response({"items": [safe_passenger(passengers_by_id[item["passenger_id"]], item) for item in relationships if item["passenger_id"] in passengers_by_id and passengers_by_id[item["passenger_id"]].get("status") != "archived"]})
 
 
 @router.get("/passengers/{passenger_id}")
 async def passenger_detail(passenger_id: str, ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    relationships = {item["passenger_id"]: item for item in await permitted_relationships(db, ctx)}
-    if passenger_id not in relationships:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal passenger not found.")
-    passenger = await db.collection("passenger_profiles").find_one({"agency_id": ctx["account"]["agency_id"], "id": passenger_id})
-    if not passenger or passenger.get("status") == "archived":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal passenger not found.")
-    return {"passenger": safe_passenger(passenger, relationships[passenger_id])}
+    result = await assert_portal_can_view_passenger(db, ctx, passenger_id)
+    return safe_response({"passenger": safe_passenger(result["passenger"], result["relationship"])})
 
 
 @router.get("/requests")
 async def requests(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     items = await db.collection("travel_requests").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
-    return {"items": [safe_request(item) for item in items]}
+    return safe_response({"items": [safe_request(item) for item in items]})
 
 
 @router.get("/requests/{request_id}")
@@ -587,13 +592,13 @@ async def request_detail(request_id: str, ctx: dict = Depends(portal_context), d
     messages = [safe_request_message(item) for item in await db.collection("request_messages").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
     tasks = [safe_request_task(item) for item in await db.collection("request_tasks").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
     timeline = [safe_request_timeline_event(item) for item in await db.collection("request_timeline_events").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
-    return {"request": safe_request(request), "passengers": passengers, "services": services, "messages": messages, "tasks": tasks, "timeline": timeline}
+    return safe_response({"request": safe_request(request), "passengers": passengers, "services": services, "messages": messages, "tasks": tasks, "timeline": timeline})
 
 
 @router.get("/offers")
 async def offers(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     items = await db.collection("offers").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
-    return {"items": [safe_offer(item) for item in items]}
+    return safe_response({"items": [safe_offer(item) for item in items]})
 
 
 @router.get("/offers/{offer_id}")
@@ -606,13 +611,13 @@ async def offer_detail(offer_id: str, ctx: dict = Depends(portal_context), db: D
     fares = [safe_offer_fare_option(item) for item in await db.collection("offer_fare_options").find_many({"agency_id": ctx["account"]["agency_id"], "offer_id": offer_id})]
     price_lines = [safe_offer_price_line(item) for item in await db.collection("offer_price_lines").find_many({"agency_id": ctx["account"]["agency_id"], "offer_id": offer_id, "status": "active"}) if item.get("client_visible", True)]
     service_checks = [safe_offer_service_check(item) for item in await db.collection("offer_service_checks").find_many({"agency_id": ctx["account"]["agency_id"], "offer_id": offer_id, "status": "active"})]
-    return {"offer": safe_offer(offer), "passengers": passengers, "routes": routes, "segments": segments, "fare_options": fares, "price_lines": price_lines, "service_checks": service_checks}
+    return safe_response({"offer": safe_offer(offer), "passengers": passengers, "routes": routes, "segments": segments, "fare_options": fares, "price_lines": price_lines, "service_checks": service_checks})
 
 
 @router.get("/bookings")
 async def bookings(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     items = await db.collection("bookings").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
-    return {"items": [safe_booking(item) for item in items]}
+    return safe_response({"items": [safe_booking(item) for item in items]})
 
 
 @router.get("/bookings/{booking_id}")
@@ -623,13 +628,13 @@ async def booking_detail(booking_id: str, ctx: dict = Depends(portal_context), d
     segments = [safe_booking_segment(item) for item in await db.collection("booking_segments").find_many({"agency_id": ctx["account"]["agency_id"], "booking_id": booking_id})]
     tickets = [safe_ticket(item) for item in await db.collection("ticket_records").find_many({"agency_id": ctx["account"]["agency_id"], "booking_id": booking_id}) if not item.get("passenger_id") or item.get("passenger_id") in permitted]
     emds = [safe_emd(item) for item in await db.collection("emd_records").find_many({"agency_id": ctx["account"]["agency_id"], "booking_id": booking_id}) if not item.get("passenger_id") or item.get("passenger_id") in permitted]
-    return {"booking": safe_booking(booking), "passengers": passengers, "segments": segments, "tickets": tickets, "emds": emds}
+    return safe_response({"booking": safe_booking(booking), "passengers": passengers, "segments": segments, "tickets": tickets, "emds": emds})
 
 
 @router.get("/documents")
 async def documents(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     items = await db.collection("rendered_documents").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "client_visible": True})
-    return {"items": [safe_document(item) for item in items if item.get("status") != "archived"]}
+    return safe_response({"items": [safe_document(item) for item in items if item.get("status") != "archived"]})
 
 
 @router.get("/documents/{document_id}")
@@ -637,13 +642,13 @@ async def document_detail(document_id: str, ctx: dict = Depends(portal_context),
     document = await db.collection("rendered_documents").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "client_visible": True, "id": document_id})
     if not document or document.get("status") == "archived":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal document not found.")
-    return {"document": safe_document(document, include_html=True)}
+    return safe_response({"document": safe_document(document, include_html=True)})
 
 
 @router.get("/invoices")
 async def invoices(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     items = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
-    return {"items": [safe_invoice(item) for item in items]}
+    return safe_response({"items": [safe_invoice(item) for item in items]})
 
 
 @router.get("/invoices/{invoice_id}")
@@ -651,7 +656,7 @@ async def invoice_detail(invoice_id: str, ctx: dict = Depends(portal_context), d
     invoice = await visible_invoice_or_404(db, ctx, invoice_id)
     lines = [safe_invoice_line_item(item) for item in await db.collection("invoice_line_items").find_many({"agency_id": ctx["account"]["agency_id"], "invoice_id": invoice_id}) if item.get("client_visible", True)]
     payments = [safe_payment(item) for item in await db.collection("payment_records").find_many({"agency_id": ctx["account"]["agency_id"], "invoice_id": invoice_id})]
-    return {"invoice": safe_invoice(invoice), "line_items": lines, "payments": payments}
+    return safe_response({"invoice": safe_invoice(invoice), "line_items": lines, "payments": payments})
 
 
 @router.get("/payments")
@@ -659,4 +664,4 @@ async def payments(ctx: dict = Depends(portal_context), db: Database = Depends(g
     invoices = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
     invoice_ids = {item["id"] for item in invoices}
     items = await db.collection("payment_records").find_many({"agency_id": ctx["account"]["agency_id"]})
-    return {"items": [safe_payment(item) for item in items if item.get("invoice_id") in invoice_ids]}
+    return safe_response({"items": [safe_payment(item) for item in items if item.get("invoice_id") in invoice_ids]})

@@ -11,7 +11,7 @@ async def health() -> dict:
     return {
         "ok": True,
         "service": "AeroAssist AgencyOS API",
-        "phase": "phase_8_client_portal_visibility_foundation",
+        "phase": "phase_9_persistence_tenant_hardening_foundation",
     }
 
 
@@ -60,6 +60,7 @@ async def summary(
             "Airline Intelligence foundation",
             "Branded HTML document output foundation",
             "Read-only client portal visibility foundation",
+            "Persistence and tenant hardening foundation",
         ],
         "not_yet_implemented": [
             "Production client portal authentication",

@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, and Phase 8 read-only client portal visibility foundation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, and Phase 9 persistence/tenant hardening foundation.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, and implemented Phase 1-8 routers.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-9 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
@@ -114,6 +114,17 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Portal dashboard, profile, passengers, requests, offers, bookings, documents, invoices, and payments pages.
 - Seeded demo portal accounts for the individual and organization sample clients.
 
+## Phase 9 Includes
+
+- MongoDB documented as the durable storage path.
+- In-memory storage kept as a local dev/demo fallback only.
+- Mongo startup index creation for core global and agency-owned collections.
+- Immutable update-field protection for `id`, `_id`, `agency_id`, and `created_at`.
+- Reusable tenant helpers for agency context, agency record assertions, agency filters, portal client context, portal passenger access, portal-owned record checks, and portal-safe projections.
+- Portal response projection validation to catch internal field keys before response return.
+- Lightweight backend and portal isolation smoke scripts.
+- Phase 9 production-readiness warning and audit documentation.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -138,7 +149,7 @@ uvicorn server:app --reload
 
 The backend starts on `http://localhost:8000`.
 
-By default the API uses in-memory storage so the current foundation can run without a database:
+By default the API uses in-memory storage so the current foundation can run without a database. This is only a local demo/dev fallback; data is lost on restart:
 
 ```bash
 AEROASSIST_DB_MODE=memory
@@ -150,6 +161,16 @@ To use MongoDB locally:
 docker compose up -d mongo
 AEROASSIST_DB_MODE=mongo uvicorn server:app --reload
 ```
+
+MongoDB mode is the documented durable storage path for this phase. Startup creates recommended indexes for agency-owned collections, global records, portal mappings, airline intelligence, documents, and audit events. The environment variables are:
+
+```bash
+AEROASSIST_DB_MODE=mongo
+MONGODB_URL=mongodb://localhost:27017
+MONGODB_DATABASE=aeroassist_agencyos
+```
+
+Do not commit real database credentials or production secrets.
 
 ## Frontend Setup
 
@@ -176,6 +197,23 @@ Seeded demo login:
 - Role: `platform_owner`
 
 Phase 1 demo auth uses the `X-Demo-User-Email` header. This is development-only and must be replaced before production authentication.
+
+The seed endpoint is development/demo tooling. Do not expose it in production without replacing demo auth and adding an explicit administrative control.
+
+## Smoke Scripts
+
+With the backend running:
+
+```bash
+python3 backend/scripts/smoke_backend.py
+python3 backend/scripts/check_portal_isolation.py
+```
+
+The backend smoke calls the seed endpoint twice and verifies counts remain stable, then exercises core module list/detail endpoints. The portal isolation smoke checks both seeded portal clients, verifies cross-client detail denial, and scans portal JSON for internal field names.
+
+## Production Readiness Warning
+
+Phase 9 improves persistence and tenant-safety foundations, but it is not production readiness. Production use still requires real authentication, session/invitation flows, a formal permission matrix, deployment security review, secret management, backups, monitoring, operational runbooks, and broader automated tests.
 
 ## Useful Endpoints
 
