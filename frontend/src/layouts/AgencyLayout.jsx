@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileCheck2, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users } from "lucide-react"
+import { BookOpenCheck, Building2, ClipboardList, CreditCard, FileCheck2, FileText, Files, ReceiptText, TicketsPlane, UserRound, Users, Repeat2 } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -49,6 +49,10 @@ export default function AgencyLayout({ children, user, agency }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/payments">
               <CreditCard className="h-4 w-4" />
               Payments
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/refunds-exchanges">
+              <Repeat2 className="h-4 w-4" />
+              Refunds / Exchanges
             </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency/airline-intelligence">
               <BookOpenCheck className="h-4 w-4" />

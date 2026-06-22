@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import database
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, platform, portal, reference, requests
+from routers import platform
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, requests
 from services.seed_service import seed_core_data
 
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 11 controlled portal actions.",
+    description="AeroAssist AgencyOS API foundation through Phase 12 refund and exchange tracking.",
 )
 
 app.add_middleware(
@@ -47,5 +48,7 @@ app.include_router(bookings.router)
 app.include_router(finance.router)
 app.include_router(airline_intelligence.router)
 app.include_router(documents.router)
+app.include_router(refunds_exchanges.router)
+app.include_router(refunds_exchanges.portal_router)
 app.include_router(portal.router)
 app.include_router(reference.router)

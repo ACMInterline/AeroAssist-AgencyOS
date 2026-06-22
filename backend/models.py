@@ -1452,6 +1452,376 @@ class OfferTimelineEvent(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+
+class RefundExchangeCaseType(str, Enum):
+    REFUND = "refund"
+    EXCHANGE = "exchange"
+    VOID = "void"
+    SCHEDULE_CHANGE = "schedule_change"
+    INVOLUNTARY_CHANGE = "involuntary_change"
+    CANCELLATION = "cancellation"
+    OTHER = "other"
+
+
+class RefundExchangeCaseStatus(str, Enum):
+    DRAFT = "draft"
+    CLIENT_REQUESTED = "client_requested"
+    REVIEW_NEEDED = "review_needed"
+    CHECKING_SUPPLIER_RULES = "checking_supplier_rules"
+    WAITING_FOR_CLIENT = "waiting_for_client"
+    WAITING_FOR_SUPPLIER = "waiting_for_supplier"
+    APPROVED = "approved"
+    PROCESSING_EXTERNALLY = "processing_externally"
+    COMPLETED = "completed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
+class RefundExchangeCasePriority(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class RefundExchangeCaseReasonCategory(str, Enum):
+    CLIENT_REQUEST = "client_request"
+    ILLNESS = "illness"
+    VISA_DOCUMENT_ISSUE = "visa_document_issue"
+    SCHEDULE_CHANGE = "schedule_change"
+    DISRUPTION = "disruption"
+    DUPLICATE_BOOKING = "duplicate_booking"
+    WRONG_NAME = "wrong_name"
+    FARE_RULE_CHANGE = "fare_rule_change"
+    AGENCY_ERROR = "agency_error"
+    AIRLINE_ERROR = "airline_error"
+    OTHER = "other"
+
+
+class RefundExchangeItemType(str, Enum):
+    TICKET = "ticket"
+    EMD = "emd"
+    INVOICE = "invoice"
+    PAYMENT = "payment"
+    BOOKING_SEGMENT = "booking_segment"
+    PASSENGER = "passenger"
+    OTHER = "other"
+
+
+class RefundExchangeItemStatus(str, Enum):
+    PENDING = "pending"
+    ELIGIBLE = "eligible"
+    NOT_ELIGIBLE = "not_eligible"
+    SUBMITTED = "submitted"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    PROCESSED = "processed"
+    CANCELLED = "cancelled"
+
+
+class RefundExchangeMessageSenderType(str, Enum):
+    STAFF = "staff"
+    CLIENT = "client"
+    SYSTEM = "system"
+
+
+class RefundExchangeMessageVisibility(str, Enum):
+    INTERNAL = "internal"
+    CLIENT_VISIBLE = "client_visible"
+
+
+class RefundExchangeTimelineVisibility(str, Enum):
+    INTERNAL = "internal"
+    CLIENT_VISIBLE = "client_visible"
+
+
+class RefundExchangeFinancialLineType(str, Enum):
+    REFUNDABLE_FARE = "refundable_fare"
+    REFUNDABLE_TAXES = "refundable_taxes"
+    AIRLINE_PENALTY = "airline_penalty"
+    SUPPLIER_FEE = "supplier_fee"
+    AGENCY_FEE = "agency_fee"
+    EXCHANGE_FARE_DIFFERENCE = "exchange_fare_difference"
+    EXCHANGE_TAX_DIFFERENCE = "exchange_tax_difference"
+    PAYMENT_REFUND = "payment_refund"
+    CREDIT_VOUCHER = "credit_voucher"
+    DISCOUNT = "discount"
+    OTHER = "other"
+
+
+class RefundExchangeFinancialDirection(str, Enum):
+    DUE_TO_CLIENT = "due_to_client"
+    DUE_FROM_CLIENT = "due_from_client"
+    NEUTRAL = "neutral"
+
+
+class RefundExchangeCase(BaseDocument):
+    agency_id: str
+    case_reference: str
+    case_type: RefundExchangeCaseType
+    client_id: str
+    booking_id: str | None = None
+    request_id: str | None = None
+    offer_id: str | None = None
+    created_by_user_id: str | None = None
+    assigned_user_id: str | None = None
+    status: RefundExchangeCaseStatus = RefundExchangeCaseStatus.DRAFT
+    priority: RefundExchangeCasePriority = RefundExchangeCasePriority.NORMAL
+    reason_category: RefundExchangeCaseReasonCategory = RefundExchangeCaseReasonCategory.OTHER
+    client_reason_text: str | None = None
+    internal_summary: str | None = None
+    client_visible_summary: str | None = None
+    supplier_reference: str | None = None
+    expected_supplier_response_at: datetime | None = None
+    deadline_at: datetime | None = None
+    estimated_refund_amount: float | None = 0
+    estimated_penalty_amount: float | None = 0
+    estimated_exchange_difference_amount: float | None = 0
+    estimated_agency_fee_amount: float | None = 0
+    estimated_total_due_from_client: float | None = 0
+    estimated_total_due_to_client: float | None = 0
+    final_refund_amount: float | None = None
+    final_penalty_amount: float | None = None
+    final_exchange_difference_amount: float | None = None
+    final_agency_fee_amount: float | None = None
+    final_total_due_from_client: float | None = None
+    final_total_due_to_client: float | None = None
+    currency: str = "EUR"
+    client_visible: bool = True
+    completed_at: datetime | None = None
+    cancelled_at: datetime | None = None
+
+
+class RefundExchangeCaseCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    client_id: str
+    case_type: RefundExchangeCaseType
+    status: RefundExchangeCaseStatus = RefundExchangeCaseStatus.DRAFT
+    priority: RefundExchangeCasePriority = RefundExchangeCasePriority.NORMAL
+    reason_category: RefundExchangeCaseReasonCategory = RefundExchangeCaseReasonCategory.OTHER
+    booking_id: str | None = None
+    request_id: str | None = None
+    offer_id: str | None = None
+    assigned_user_id: str | None = None
+    client_reason_text: str | None = None
+    internal_summary: str | None = None
+    client_visible_summary: str | None = None
+    supplier_reference: str | None = None
+    expected_supplier_response_at: datetime | None = None
+    deadline_at: datetime | None = None
+    estimated_refund_amount: float | None = None
+    estimated_penalty_amount: float | None = None
+    estimated_exchange_difference_amount: float | None = None
+    estimated_agency_fee_amount: float | None = None
+    estimated_total_due_from_client: float | None = None
+    estimated_total_due_to_client: float | None = None
+    final_refund_amount: float | None = None
+    final_penalty_amount: float | None = None
+    final_exchange_difference_amount: float | None = None
+    final_agency_fee_amount: float | None = None
+    final_total_due_from_client: float | None = None
+    final_total_due_to_client: float | None = None
+    currency: str = "EUR"
+    client_visible: bool = True
+
+
+class RefundExchangeCaseUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    case_type: RefundExchangeCaseType | None = None
+    priority: RefundExchangeCasePriority | None = None
+    reason_category: RefundExchangeCaseReasonCategory | None = None
+    assigned_user_id: str | None = None
+    client_reason_text: str | None = None
+    internal_summary: str | None = None
+    client_visible_summary: str | None = None
+    supplier_reference: str | None = None
+    expected_supplier_response_at: datetime | None = None
+    deadline_at: datetime | None = None
+    estimated_refund_amount: float | None = None
+    estimated_penalty_amount: float | None = None
+    estimated_exchange_difference_amount: float | None = None
+    estimated_agency_fee_amount: float | None = None
+    estimated_total_due_from_client: float | None = None
+    estimated_total_due_to_client: float | None = None
+    final_refund_amount: float | None = None
+    final_penalty_amount: float | None = None
+    final_exchange_difference_amount: float | None = None
+    final_agency_fee_amount: float | None = None
+    final_total_due_from_client: float | None = None
+    final_total_due_to_client: float | None = None
+    currency: str | None = None
+    client_visible: bool | None = None
+
+
+class RefundExchangeCaseStatusUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: RefundExchangeCaseStatus
+
+
+class RefundExchangeFromBookingCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    case_type: RefundExchangeCaseType
+    reason_category: RefundExchangeCaseReasonCategory = RefundExchangeCaseReasonCategory.OTHER
+    priority: RefundExchangeCasePriority = RefundExchangeCasePriority.NORMAL
+    status: RefundExchangeCaseStatus = RefundExchangeCaseStatus.CLIENT_REQUESTED
+    client_reason_text: str | None = None
+    internal_summary: str | None = None
+    client_visible_summary: str | None = None
+    supplier_reference: str | None = None
+    expected_supplier_response_at: datetime | None = None
+    deadline_at: datetime | None = None
+    estimated_refund_amount: float | None = None
+    estimated_penalty_amount: float | None = None
+    estimated_exchange_difference_amount: float | None = None
+    estimated_agency_fee_amount: float | None = None
+    estimated_total_due_from_client: float | None = None
+    estimated_total_due_to_client: float | None = None
+    currency: str = "EUR"
+    client_visible: bool = True
+    link_ticket_ids: list[str] = Field(default_factory=list)
+    link_emd_ids: list[str] = Field(default_factory=list)
+    link_invoice_ids: list[str] = Field(default_factory=list)
+    link_payment_ids: list[str] = Field(default_factory=list)
+    link_passenger_ids: list[str] = Field(default_factory=list)
+
+
+class RefundExchangeItem(BaseDocument):
+    agency_id: str
+    case_id: str
+    item_type: RefundExchangeItemType
+    item_id: str | None = None
+    passenger_id: str | None = None
+    ticket_id: str | None = None
+    emd_id: str | None = None
+    invoice_id: str | None = None
+    payment_id: str | None = None
+    description: str
+    status: RefundExchangeItemStatus = RefundExchangeItemStatus.PENDING
+    estimated_amount: float = 0
+    final_amount: float | None = None
+    currency: str = "EUR"
+    internal_notes: str | None = None
+    client_visible_notes: str | None = None
+
+class RefundExchangeItemCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_type: RefundExchangeItemType
+    item_id: str | None = None
+    passenger_id: str | None = None
+    ticket_id: str | None = None
+    emd_id: str | None = None
+    invoice_id: str | None = None
+    payment_id: str | None = None
+    description: str
+    status: RefundExchangeItemStatus = RefundExchangeItemStatus.PENDING
+    estimated_amount: float = 0
+    final_amount: float | None = None
+    currency: str = "EUR"
+    internal_notes: str | None = None
+    client_visible_notes: str | None = None
+
+
+class RefundExchangeItemUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_type: RefundExchangeItemType | None = None
+    status: RefundExchangeItemStatus | None = None
+    item_id: str | None = None
+    passenger_id: str | None = None
+    ticket_id: str | None = None
+    emd_id: str | None = None
+    invoice_id: str | None = None
+    payment_id: str | None = None
+    description: str | None = None
+    estimated_amount: float | None = None
+    final_amount: float | None = None
+    currency: str | None = None
+    internal_notes: str | None = None
+    client_visible_notes: str | None = None
+
+
+class RefundExchangeMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    case_id: str
+    sender_user_id: Optional[str] = None
+    sender_type: RefundExchangeMessageSenderType = RefundExchangeMessageSenderType.STAFF
+    visibility: RefundExchangeMessageVisibility = RefundExchangeMessageVisibility.INTERNAL
+    message_text: str
+    created_at: datetime = Field(default_factory=now_utc)
+    updated_at: datetime = Field(default_factory=now_utc)
+
+
+class RefundExchangeMessageCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    sender_user_id: Optional[str] = None
+    sender_type: RefundExchangeMessageSenderType = RefundExchangeMessageSenderType.STAFF
+    visibility: RefundExchangeMessageVisibility = RefundExchangeMessageVisibility.INTERNAL
+    message_text: str
+
+
+class RefundExchangeTimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    case_id: str
+    event_type: str
+    actor_user_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    visibility: RefundExchangeTimelineVisibility = RefundExchangeTimelineVisibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=now_utc)
+
+
+class RefundExchangeFinancialLine(BaseDocument):
+    agency_id: str
+    case_id: str
+    line_type: RefundExchangeFinancialLineType
+    description: str
+    amount: float = 0
+    currency: str = "EUR"
+    direction: RefundExchangeFinancialDirection = RefundExchangeFinancialDirection.NEUTRAL
+    supplier_pass_through: bool = False
+    client_visible: bool = True
+    internal_notes: str | None = None
+
+
+class RefundExchangeFinancialLineCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    line_type: RefundExchangeFinancialLineType
+    description: str
+    amount: float = 0
+    currency: str = "EUR"
+    direction: RefundExchangeFinancialDirection = RefundExchangeFinancialDirection.NEUTRAL
+    supplier_pass_through: bool = False
+    client_visible: bool = True
+    internal_notes: str | None = None
+
+
+class RefundExchangeFinancialLineUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    line_type: RefundExchangeFinancialLineType | None = None
+    description: str | None = None
+    amount: float | None = None
+    currency: str | None = None
+    direction: RefundExchangeFinancialDirection | None = None
+    supplier_pass_through: bool | None = None
+    client_visible: bool | None = None
+    internal_notes: str | None = None
+
 class BookingStatus(str, Enum):
     DRAFT = "draft"
     PENDING_RESERVATION = "pending_reservation"

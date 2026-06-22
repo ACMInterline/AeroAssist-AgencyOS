@@ -37,6 +37,11 @@ from models import (
     OfferTimelineEvent,
     PaymentRecord,
     PassengerProfile,
+    RefundExchangeCase,
+    RefundExchangeFinancialLine,
+    RefundExchangeItem,
+    RefundExchangeMessage,
+    RefundExchangeTimelineEvent,
     PlatformRole,
     PlatformUser,
     PortalAccessMapping,
@@ -137,6 +142,11 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     invoice_line_items = db.collection("invoice_line_items")
     payment_records = db.collection("payment_records")
     booking_timeline = db.collection("booking_timeline_events")
+    refund_exchange_cases = db.collection("refund_exchange_cases")
+    refund_exchange_items = db.collection("refund_exchange_items")
+    refund_exchange_financial_lines = db.collection("refund_exchange_financial_lines")
+    refund_exchange_messages = db.collection("refund_exchange_messages")
+    refund_exchange_timeline = db.collection("refund_exchange_timeline_events")
     airline_profiles = db.collection("airline_profiles")
     airline_knowledge_items = db.collection("airline_knowledge_items")
     airline_procedures = db.collection("airline_procedures")
@@ -1234,6 +1244,300 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                 created.append("portal_action:document_acknowledged")
 
     await ensure_portal_action_examples()
+
+    async def ensure_refund_exchange_examples() -> None:
+        offer_booking = await bookings.find_one({"agency_id": agency["id"], "booking_reference": "BKG-DEMO-0001"})
+        if offer_booking is None:
+            return
+
+        refund_ticket = await ticket_records.find_one({"agency_id": agency["id"], "booking_id": offer_booking["id"], "ticket_number": "2571234567890"})
+        offer_invoice = await invoices.find_one({"agency_id": agency["id"], "invoice_number": "INV-DEMO-0001"})
+        offer_payment = await payment_records.find_one({"agency_id": agency["id"], "invoice_id": offer_invoice["id"]}) if offer_invoice else None
+
+        manual_booking = await bookings.find_one({"agency_id": agency["id"], "booking_reference": "BKG-DEMO-0002"})
+        manual_ticket = await ticket_records.find_one({"agency_id": agency["id"], "booking_id": manual_booking["id"]}) if manual_booking else None
+
+        refund_case = await refund_exchange_cases.find_one({"agency_id": agency["id"], "case_reference": "REC-SEED-0001"})
+        if refund_case is None:
+            refund_case = await refund_exchange_cases.insert_one(
+                RefundExchangeCase(
+                    agency_id=agency["id"],
+                    case_reference="REC-SEED-0001",
+                    case_type="refund",
+                    client_id=offer_booking["client_id"],
+                    booking_id=offer_booking["id"],
+                    request_id=offer_booking.get("request_id"),
+                    offer_id=offer_booking.get("offer_id"),
+                    created_by_user_id=owner["id"],
+                    assigned_user_id=owner["id"],
+                    status="review_needed",
+                    priority="high",
+                    reason_category="wrong_name",
+                    client_reason_text="Customer reported incorrect last name was entered in the ticketing output.",
+                    internal_summary="Customer noticed last-name mismatch in issued ticket.",
+                    client_visible_summary="We are checking this as a name correction request.",
+                    supplier_reference="DEMO-SUP-REF-REFUND",
+                    estimated_refund_amount=120,
+                    estimated_penalty_amount=25,
+                    estimated_exchange_difference_amount=0,
+                    estimated_agency_fee_amount=15,
+                    estimated_total_due_from_client=0,
+                    estimated_total_due_to_client=95,
+                    final_refund_amount=None,
+                    final_penalty_amount=None,
+                    currency="EUR",
+                    client_visible=True,
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_case:refund")
+
+            if refund_ticket:
+                await refund_exchange_items.insert_one(
+                    RefundExchangeItem(
+                        agency_id=agency["id"],
+                        case_id=refund_case["id"],
+                        item_type="ticket",
+                        item_id=refund_ticket["id"],
+                        passenger_id=refund_ticket.get("passenger_id"),
+                        ticket_id=refund_ticket["id"],
+                        description=f"Ticket {refund_ticket['ticket_number']}",
+                        status="not_eligible",
+                        estimated_amount=120,
+                        currency="EUR",
+                    ).model_dump(mode="json")
+                )
+                created.append("refund_exchange_item:ticket")
+
+            if offer_invoice:
+                await refund_exchange_items.insert_one(
+                    RefundExchangeItem(
+                        agency_id=agency["id"],
+                        case_id=refund_case["id"],
+                        item_type="invoice",
+                        item_id=offer_invoice["id"],
+                        invoice_id=offer_invoice["id"],
+                        description=f"Invoice {offer_invoice['invoice_number']}",
+                        status="pending",
+                        estimated_amount=470,
+                        currency="EUR",
+                    ).model_dump(mode="json")
+                )
+                created.append("refund_exchange_item:invoice")
+
+            if offer_payment:
+                await refund_exchange_items.insert_one(
+                    RefundExchangeItem(
+                        agency_id=agency["id"],
+                        case_id=refund_case["id"],
+                        item_type="payment",
+                        item_id=offer_payment["id"],
+                        payment_id=offer_payment["id"],
+                        description=f"Payment {offer_payment.get('external_reference', offer_payment['id'])}",
+                        status="pending",
+                        estimated_amount=470,
+                        currency="EUR",
+                    ).model_dump(mode="json")
+                )
+                created.append("refund_exchange_item:payment")
+
+            for line_payload in [
+                {
+                    "line_type": "refundable_fare",
+                    "description": "Refundable fare baseline",
+                    "amount": 370,
+                    "direction": "due_to_client",
+                },
+                {
+                    "line_type": "airline_penalty",
+                    "description": "Cancellation fee estimate",
+                    "amount": 25,
+                    "direction": "due_from_client",
+                },
+                {
+                    "line_type": "agency_fee",
+                    "description": "Agency handling fee",
+                    "amount": 15,
+                    "direction": "neutral",
+                },
+            ]:
+                await refund_exchange_financial_lines.insert_one(
+                    RefundExchangeFinancialLine(
+                        agency_id=agency["id"],
+                        case_id=refund_case["id"],
+                        client_visible=True,
+                        supplier_pass_through=False,
+                        **line_payload,
+                    ).model_dump(mode="json")
+                )
+            created.append("refund_exchange_financial_line:refund")
+
+            await refund_exchange_messages.insert_one(
+                RefundExchangeMessage(
+                    agency_id=agency["id"],
+                    case_id=refund_case["id"],
+                    sender_type="staff",
+                    visibility="internal",
+                    message_text="Captured manual notes: first step is booking check with supplier.",
+                ).model_dump(mode="json")
+            )
+            await refund_exchange_messages.insert_one(
+                RefundExchangeMessage(
+                    agency_id=agency["id"],
+                    case_id=refund_case["id"],
+                    sender_type="staff",
+                    visibility="client_visible",
+                    message_text="We are reviewing your refund request. We will update you once we confirm the exact amount.",
+                ).model_dump(mode="json")
+            )
+            created.extend(["refund_exchange_message:internal", "refund_exchange_message:client_visible"])
+
+            await refund_exchange_timeline.insert_one(
+                RefundExchangeTimelineEvent(
+                    agency_id=agency["id"],
+                    case_id=refund_case["id"],
+                    event_type="case.created",
+                    actor_user_id=owner["id"],
+                    title="Case created from booking",
+                    summary="Manual review case created for ticket name correction.",
+                    visibility="internal",
+                ).model_dump(mode="json")
+            )
+            await refund_exchange_timeline.insert_one(
+                RefundExchangeTimelineEvent(
+                    agency_id=agency["id"],
+                    case_id=refund_case["id"],
+                    event_type="case.timeline.client_update",
+                    actor_user_id=owner["id"],
+                    title="Client visible summary added",
+                    summary="Client-visible summary added for the request.",
+                    visibility="client_visible",
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_timeline:seed")
+
+            await booking_timeline.insert_one(
+                BookingTimelineEvent(
+                    agency_id=agency["id"],
+                    booking_id=offer_booking["id"],
+                    actor_user_id=owner["id"],
+                    event_type="refund_exchange.case_linked",
+                    title="Refund/exchange case linked to booking",
+                    summary=f"case {refund_case['case_reference']}",
+                    visibility="internal",
+                ).model_dump(mode="json")
+            )
+
+        exchange_case = await refund_exchange_cases.find_one({"agency_id": agency["id"], "case_reference": "REC-SEED-0002"})
+        if exchange_case is None and manual_booking:
+            exchange_case = await refund_exchange_cases.insert_one(
+                RefundExchangeCase(
+                    agency_id=agency["id"],
+                    case_reference="REC-SEED-0002",
+                    case_type="exchange",
+                    client_id=manual_booking["client_id"],
+                    booking_id=manual_booking["id"],
+                    created_by_user_id=owner["id"],
+                    assigned_user_id=owner["id"],
+                    status="client_requested",
+                    priority="normal",
+                    reason_category="schedule_change",
+                    client_reason_text="Customer asked to move first segment to alternative date.",
+                    internal_summary="Need schedule change handling and fare difference update.",
+                    client_visible_summary="We are handling your schedule change request.",
+                    estimated_exchange_difference_amount=55,
+                    estimated_refund_amount=0,
+                    estimated_penalty_amount=10,
+                    estimated_agency_fee_amount=20,
+                    estimated_total_due_from_client=85,
+                    estimated_total_due_to_client=0,
+                    currency="EUR",
+                    client_visible=True,
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_case:exchange")
+
+            if manual_ticket:
+                await refund_exchange_items.insert_one(
+                    RefundExchangeItem(
+                        agency_id=agency["id"],
+                        case_id=exchange_case["id"],
+                        item_type="ticket",
+                        item_id=manual_ticket["id"],
+                        ticket_id=manual_ticket["id"],
+                        description=f"Ticket {manual_ticket['ticket_number']}",
+                        status="submitted",
+                        estimated_amount=185,
+                        currency="EUR",
+                    ).model_dump(mode="json")
+                )
+                created.append("refund_exchange_item:exchange_ticket")
+
+            await refund_exchange_items.insert_one(
+                RefundExchangeItem(
+                    agency_id=agency["id"],
+                    case_id=exchange_case["id"],
+                    item_type="other",
+                    description="Requested new schedule on manual booking",
+                    status="pending",
+                    estimated_amount=85,
+                    currency="EUR",
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_item:exchange_other")
+
+            await refund_exchange_financial_lines.insert_one(
+                RefundExchangeFinancialLine(
+                    agency_id=agency["id"],
+                    case_id=exchange_case["id"],
+                    line_type="exchange_fare_difference",
+                    description="Fare difference estimate for reissue",
+                    amount=55,
+                    currency="EUR",
+                    direction="due_from_client",
+                    client_visible=True,
+                    supplier_pass_through=False,
+                ).model_dump(mode="json")
+            )
+            await refund_exchange_financial_lines.insert_one(
+                RefundExchangeFinancialLine(
+                    agency_id=agency["id"],
+                    case_id=exchange_case["id"],
+                    line_type="airline_penalty",
+                    description="Fee estimate for date change request",
+                    amount=10,
+                    currency="EUR",
+                    direction="due_from_client",
+                    client_visible=True,
+                    supplier_pass_through=False,
+                ).model_dump(mode="json")
+            )
+            created.extend(["refund_exchange_financial_line:exchange", "refund_exchange_financial_line:exchange_penalty"])
+
+            await refund_exchange_messages.insert_one(
+                RefundExchangeMessage(
+                    agency_id=agency["id"],
+                    case_id=exchange_case["id"],
+                    sender_type="staff",
+                    visibility="client_visible",
+                    message_text="Schedule change request is being prepared. We will confirm fare impact.",
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_message:exchange_client")
+
+            await refund_exchange_timeline.insert_one(
+                RefundExchangeTimelineEvent(
+                    agency_id=agency["id"],
+                    case_id=exchange_case["id"],
+                    event_type="case.created",
+                    actor_user_id=owner["id"],
+                    title="Case created from booking",
+                    summary="Exchange case seeded for schedule change scenario.",
+                    visibility="internal",
+                ).model_dump(mode="json")
+            )
+            created.append("refund_exchange_timeline:exchange")
+
+    await ensure_refund_exchange_examples()
 
     if created:
         event = AuditEvent(

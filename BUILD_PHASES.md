@@ -19,6 +19,9 @@ The repository currently contains:
 - Phase 8: Read-only client portal visibility.
 - Phase 8 stabilization audit: repository registration, routing, seed, visibility, and build consistency review.
 - Phase 9: Production persistence and tenant hardening foundation.
+- Phase 10: Production authentication and invitation flow.
+- Phase 11: Client portal controlled actions.
+- Phase 12: Refund and exchange tracking.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -261,80 +264,6 @@ Recorded in:
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 9: Production Persistence And Tenant Hardening
-
-Implemented foundation:
-
-- MongoDB documented as the durable storage mode.
-- In-memory mode retained as local demo/dev fallback.
-- MongoDB startup index creation for agency-owned and global collections.
-- Immutable update-field protection for `id`, `_id`, `agency_id`, and `created_at`.
-- Reusable tenant and portal isolation helpers.
-- Portal-safe projection validation.
-- Seed idempotency smoke coverage.
-- Lightweight backend and portal isolation smoke scripts.
-- Phase 9 audit documentation.
-
-Still required for production readiness:
-
-- Formal migration framework.
-- Broader tenant isolation test matrix.
-- Seed/test fixture separation.
-- Production support-access policy and audit hardening.
-- Deployment, backup, monitoring, and secret-management review.
-
-Avoid adding:
-
-- New product workflows.
-- Payment, email, PDF, or airline automation side effects.
-
-### Phase 10: Production Authentication And Invitation Flow
-
-Recommended scope:
-
-- Production staff authentication.
-- Portal account identity model hardening.
-- Client invitation flow.
-- Session/token handling.
-- Password/SSO/MFA decisions.
-- Account status transitions and audit events.
-
-Avoid adding:
-
-- Client workflow actions beyond authentication and invitation lifecycle.
-
-### Phase 11: Client Portal Controlled Actions
-
-Recommended scope:
-
-- Controlled request submission.
-- Offer acceptance/rejection or request-changes workflow.
-- Document acknowledgement.
-- Client-visible message/task responses where explicitly allowed.
-- Relationship-permission checks for each action.
-- Staff-review gates for sensitive client-entered data.
-
-Avoid adding:
-
-- Payment checkout.
-- Public links.
-- PDF/email delivery unless those phases are already complete.
-
-### Phase 12: Refund And Exchange Tracking
-
-Recommended scope:
-
-- Refund/exchange case records.
-- Original ticket/EMD/invoice/payment references.
-- Penalty, fare difference, tax difference, service fee, and refund tracking.
-- Case timeline and client-visible summaries.
-- Branded refund/exchange document render support after the case model is stable.
-
-Avoid adding:
-
-- Automated airline refund/exchange execution.
-- Supplier/GDS/NDC integration.
-
 ### Phase 13: PDF Export And Email Delivery
 
 Recommended scope:
@@ -386,7 +315,7 @@ Avoid adding:
 - Keep staff workflows manual unless a later phase explicitly adds automation.
 - Keep Airline Intelligence as decision support until versioning, source review, and production authorization are hardened.
 - Keep tickets, EMDs, payments, and documents as tracking/output layers until external integrations are intentionally designed.
-- Keep portal visibility and portal actions separate: visibility is complete for Phase 8, controlled actions are future Phase 11 work.
+- Keep portal visibility and portal actions aligned with scope boundaries: read-only visibility is complete for Phase 8, and controlled portal actions are implemented in Phase 11.
 - Keep roadmap numbering distinct from production readiness.
 
 ## Scope Risks To Continue Watching

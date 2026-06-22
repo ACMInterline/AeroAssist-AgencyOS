@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, and Phase 11 controlled client portal actions.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, and Phase 12 refund/exchange tracking.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-9 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-12 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
@@ -148,6 +148,18 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Staff review endpoints and `/agency/portal-actions` UI.
 - Portal UI controls for new requests, messages, offer decisions, acknowledgements, and action history.
 
+## Phase 12 Includes
+
+- Refund/exchange case records linked to bookings, tickets, EMDs, invoices, payments, and client context.
+- Manual estimate and final financial fields on case records.
+- Manual financial lines for refundable fares, taxes, penalties, fees, differences, and offsets.
+- Linked items with case-level statuses and notes.
+- Case timeline and message history for auditability.
+- Staff case status and lifecycle actions (`draft`, `review`, `completed`, `archived`, etc.).
+- Optional case creation from booking with optional linked ticket/EMD/invoice/payment/passenger records.
+- Portal-only read-only endpoints and pages for client-visible case summaries, visible items, lines, messages, and timeline.
+- Seeded refund and exchange examples (tracking-only, no execution).
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -155,6 +167,7 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Offer acceptance/rejection workflows.
 - PDF document export.
 - Email/share/public document links.
+- Refund/exchange execution outside manual tracking.
 - Payment gateway processing.
 - Full accounting or ledger reconciliation.
 - Automated ticketing, GDS, NDC, OTA, or supplier integrations.
@@ -254,7 +267,7 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 11 improves portal workflow foundations, but it is not production readiness. Production use still requires a formal permission matrix, migrations, deployment security review, secret management, backups, monitoring, operational runbooks, broader automated tests, notification/email decisions, and a stronger staff review workflow.
+Phase 12 adds operational manual refund/exchange tracking, but it is not production readiness. Production use still requires a formal permission matrix, migrations, deployment security review, secret management, backups, monitoring, operational runbooks, broader automated tests, notification/email decisions, and a stronger staff review workflow.
 
 ## Useful Endpoints
 
@@ -341,6 +354,22 @@ Phase 11 improves portal workflow foundations, but it is not production readines
 - `PUT /api/agencies/{agency_id}/payments/{payment_id}`
 - `POST /api/agencies/{agency_id}/payments/{payment_id}/mark-received`
 - `POST /api/agencies/{agency_id}/payments/{payment_id}/mark-reconciled`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases/{case_id}`
+- `PUT /api/agencies/{agency_id}/refund-exchange-cases/{case_id}`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/status`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/archive`
+- `POST /api/agencies/{agency_id}/bookings/{booking_id}/create-refund-exchange-case`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/items`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/items`
+- `PUT /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/items/{item_id}`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/financial-lines`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/financial-lines`
+- `PUT /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/financial-lines/{line_id}`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/messages`
+- `POST /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/messages`
+- `GET /api/agencies/{agency_id}/refund-exchange-cases/{case_id}/timeline`
 - `GET /api/platform/airlines`
 - `POST /api/platform/airlines`
 - `GET /api/platform/airlines/{airline_id}`
@@ -386,6 +415,8 @@ Phase 11 improves portal workflow foundations, but it is not production readines
 - `GET /api/portal/invoices`
 - `GET /api/portal/invoices/{invoice_id}`
 - `GET /api/portal/payments`
+- `GET /api/portal/refund-exchange-cases`
+- `GET /api/portal/refund-exchange-cases/{case_id}`
 - `GET /api/reference`
 - `GET /api/reference/{domain}`
 - `POST /api/reference/seed`
