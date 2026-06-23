@@ -23,7 +23,14 @@ export default function DocumentDetailPage({ documentId }) {
       apiGet(`/api/agencies/${context.agency.id}/email-settings`),
       apiGet(`/api/agencies/${context.agency.id}/document-export-capabilities`),
     ])
-    setState({ ...context, ...detail, exports: exportsData.items, deliveries: deliveriesData.items, emailSettings: settingsData.settings, exportCapabilities: capabilitiesData })
+    const diagnosticsEntries = await Promise.all(
+      deliveriesData.items.map((item) =>
+        apiGet(`/api/agencies/${context.agency.id}/document-deliveries/${item.id}/diagnostics`)
+          .then((result) => [item.id, result.diagnostics])
+          .catch((err) => [item.id, { next_allowed_action: "unknown", last_error_message: err.message }])
+      )
+    )
+    setState({ ...context, ...detail, exports: exportsData.items, deliveries: deliveriesData.items, deliveryDiagnostics: Object.fromEntries(diagnosticsEntries), emailSettings: settingsData.settings, exportCapabilities: capabilitiesData })
     setSettingsForm({
       sender_name: settingsData.settings.sender_name || "",
       sender_email: settingsData.settings.sender_email || "",
@@ -32,7 +39,7 @@ export default function DocumentDetailPage({ documentId }) {
       smtp_host: settingsData.settings.smtp_host || "",
       smtp_port: settingsData.settings.smtp_port || "",
       smtp_username: settingsData.settings.smtp_username || "",
-      smtp_password_secret_ref: settingsData.settings.smtp_password_secret_ref || "",
+      smtp_password_secret_ref: "",
       smtp_use_tls: settingsData.settings.smtp_use_tls !== false,
     })
     setDeliveryForm((current) => ({
@@ -251,31 +258,39 @@ export default function DocumentDetailPage({ documentId }) {
               <h3 className="font-semibold text-slate-950">Deliveries</h3>
               {emailSendingDisabled ? <p className="mt-1 text-sm text-slate-600">Email sending is disabled for this agency. Drafts can be prepared, but sending requires dev console or SMTP mode.</p> : null}
               <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
-                {(state.deliveries || []).length ? state.deliveries.map((item) => (
+                {(state.deliveries || []).length ? state.deliveries.map((item) => {
+                  const diagnostics = state.deliveryDiagnostics?.[item.id] || {}
+                  const sendDisabled = emailSendingDisabled || diagnostics.next_allowed_action !== "send"
+                  const retryDisabled = emailSendingDisabled || diagnostics.next_allowed_action !== "retry"
+                  return (
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
                     <div>
                       <p className="font-medium text-slate-900">{item.subject}</p>
                       <p className="text-slate-500">{item.recipient_email} · {item.status} · {item.provider} · attempts {item.attempt_count || 0}/{item.max_attempts || 3}</p>
                       <p className="text-slate-500">Retry {item.retry_status || "none"}{item.last_attempt_at ? ` · last ${new Date(item.last_attempt_at).toLocaleString()}` : ""}</p>
                       <p className="text-slate-500">Processing {item.processing_state || "manual_only"}{item.queued_at ? ` · queued ${new Date(item.queued_at).toLocaleString()}` : ""}{item.scheduled_for ? ` · scheduled ${new Date(item.scheduled_for).toLocaleString()}` : ""}</p>
+                      <p className="text-slate-500">Next action {diagnostics.next_allowed_action || "unknown"} · attachment {diagnostics.attachment?.valid === false ? "invalid" : "valid"}</p>
                       {item.locked_at ? <p className="text-slate-500">Locked {new Date(item.locked_at).toLocaleString()}</p> : null}
                       {(item.attempts || []).slice(0, 3).map((attempt) => <p className="text-xs text-slate-500" key={attempt.id}>Attempt {attempt.attempt_number}: {attempt.status} · {attempt.provider}{attempt.error_message ? ` · ${attempt.error_message}` : ""}</p>)}
-                      {item.last_error_message || item.error_message ? <p className="mt-1 text-rose-700">{item.last_error_message || item.error_message}</p> : null}
+                      {diagnostics.email?.validation_error ? <p className="mt-1 text-amber-700">{diagnostics.email.validation_error}</p> : null}
+                      {diagnostics.last_error_message || item.last_error_message || item.error_message ? <p className="mt-1 text-rose-700">{diagnostics.last_error_message || item.last_error_message || item.error_message}</p> : null}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {["draft", "queued", "failed"].includes(item.status) ? <button className={emailSendingDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={emailSendingDisabled} title={emailSendingDisabled ? "Email sending is disabled for this agency." : ""} onClick={() => sendDelivery(item.id)}>Send</button> : null}
-                      {item.retry_status === "retry_available" ? <button className={emailSendingDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={emailSendingDisabled} title={emailSendingDisabled ? "Email sending is disabled for this agency." : ""} onClick={() => retryDelivery(item.id)}>Retry</button> : null}
+                      {["draft", "queued"].includes(item.status) ? <button className={sendDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={sendDisabled} title={sendDisabled ? "Delivery diagnostics must allow send." : ""} onClick={() => sendDelivery(item.id)}>Send</button> : null}
+                      {item.retry_status === "retry_available" ? <button className={retryDisabled ? "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" : "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700"} type="button" disabled={retryDisabled} title={retryDisabled ? "Delivery diagnostics must allow retry." : ""} onClick={() => retryDelivery(item.id)}>Retry</button> : null}
                       {["draft", "queued", "failed"].includes(item.status) ? <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => cancelDelivery(item.id)}>Cancel</button> : null}
                     </div>
                   </div>
-                )) : <p className="p-3 text-sm text-slate-500">No deliveries yet.</p>}
+                )}) : <p className="p-3 text-sm text-slate-500">No deliveries yet.</p>}
               </div>
             </div>
 
             <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={saveEmailSettings}>
               <h3 className="font-semibold text-slate-950">Email Settings</h3>
-              <p className="mt-1 text-sm text-slate-600">Use dev console for local testing. SMTP requires production secret configuration and stores only a secret reference.</p>
-              <p className="mt-2 text-sm text-slate-600">Mode {state.emailSettings?.mode || "disabled"} · Secret configured {state.emailSettings?.smtp_password_is_configured ? "yes" : "no"}</p>
+              <p className="mt-1 text-sm text-slate-600">Use dev console for local testing. SMTP password is resolved from environment secret reference.</p>
+              <p className="mt-2 text-sm text-slate-600">Manual staff-controlled delivery · No automatic sending · No public link</p>
+              <p className="mt-2 text-sm text-slate-600">Mode {state.emailSettings?.mode || "disabled"} · Secret configured {state.emailSettings?.smtp_password_is_configured ? "yes" : "no"} · Secret resolved {state.emailSettings?.smtp_password_secret_resolved ? "yes" : "no"}</p>
+              {state.emailSettings?.smtp_password_secret_ref_masked ? <p className="mt-1 text-sm text-slate-600">Secret reference {state.emailSettings.smtp_password_secret_ref_masked}</p> : null}
               {state.emailSettings?.last_validation_error ? <p className="mt-1 text-sm text-rose-700">{state.emailSettings.last_validation_error}</p> : null}
               <div className="mt-4 grid gap-3">
                 <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={settingsForm.mode} onChange={(event) => setSettingsForm((current) => ({ ...current, mode: event.target.value }))}>

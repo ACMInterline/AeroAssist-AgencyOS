@@ -25,6 +25,7 @@ The repository currently contains:
 - Phase 13: Printable document export and email delivery foundation.
 - Phase 14: Document delivery hardening.
 - Phase 15: Production PDF rendering and delivery infrastructure.
+- Phase 16: Production delivery operations and secret resolution.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -330,16 +331,37 @@ Out of scope:
 - Background workers and provider webhooks.
 - Raw SMTP password storage or production secret resolver integration.
 
+## Phase 16: Production Delivery Operations And Secret Resolution
+
+Implemented foundations:
+
+- Environment-only SMTP secret resolution for references in the form `env:VARIABLE_NAME`.
+- Staff-controlled SMTP sending when agency email settings validate and the referenced password environment variable resolves.
+- No SMTP secret values are returned by API responses, logs, diagnostics, or readiness checks.
+- Staff delivery diagnostics endpoint with attachment validity, email mode, secret-resolution status, retry state, attempt counts, last safe error, and next allowed action.
+- Retry governance that requires `retry_available`, respects `max_attempts`, and remains manual.
+- Production readiness script for deployment checks around demo auth, MongoDB, export storage, ReportLab, CORS, and SMTP secret refs.
+- Staff UI display for masked SMTP secret refs, secret resolution status, diagnostics, and next allowed delivery action.
+
+Out of scope:
+
+- Public share links.
+- Automatic sending, background workers, cron, provider webhooks, or bounce handling.
+- Client-triggered delivery.
+- Mass/marketing email.
+- Raw SMTP password storage.
+- Payment links, uploads, signatures, airline/GDS/NDC integrations, refund/payment/ticketing execution, or fiscal invoice compliance.
+
 ## Next Recommended Phases
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 16: Production Delivery Operations And Secret Resolution
+### Phase 17: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
-- Add production secret resolver integration for SMTP or email provider credentials.
-- Add delivery queue worker design and manual operational controls.
+- Add email provider integration strategy beyond direct SMTP if needed.
+- Add delivery queue worker design with explicit admin controls.
 - Add provider webhook/bounce handling.
 - Add external file storage/retention lifecycle if local disk is insufficient.
 - Add visual PDF QA checks if browser-grade rendering is adopted later.
@@ -350,7 +372,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 17: Airline Intelligence Versioning/Import Workflow
+### Phase 18: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -365,7 +387,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 18: Agency Website/CMS Publishing Foundation
+### Phase 19: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

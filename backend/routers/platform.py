@@ -11,7 +11,7 @@ async def health() -> dict:
     return {
         "ok": True,
         "service": "AeroAssist AgencyOS API",
-        "phase": "phase_11_controlled_portal_actions_foundation",
+        "phase": "phase_16_production_delivery_operations_secret_resolution",
     }
 
 
@@ -47,6 +47,9 @@ async def summary(
             "airline_overrides": await db.collection("agency_airline_overrides").count(),
             "document_templates": await db.collection("document_templates").count(),
             "rendered_documents": await db.collection("rendered_documents").count(),
+            "document_exports": await db.collection("document_exports").count(),
+            "document_deliveries": await db.collection("document_deliveries").count(),
+            "document_delivery_attempts": await db.collection("document_delivery_attempts").count(),
             "reference_records": await db.collection("global_reference_records").count(),
             "audit_events": await db.collection("audit_events").count(),
         },
@@ -63,11 +66,17 @@ async def summary(
             "Persistence and tenant hardening foundation",
             "Authentication and invitation foundation",
             "Controlled client portal actions foundation",
+            "Refund and exchange tracking foundation",
+            "Printable document export and manual delivery foundation",
+            "Document delivery hardening foundation",
+            "Production PDF rendering and delivery infrastructure foundation",
+            "Production delivery operations and secret resolution foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
             "Payment gateway integration",
-            "PDF export and public document links",
+            "Public document links",
+            "Automatic document sending or provider webhooks",
             "Automatic booking, ticketing, or airline execution from portal actions",
         ],
     }

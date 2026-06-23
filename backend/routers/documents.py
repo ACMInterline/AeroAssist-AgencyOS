@@ -32,6 +32,7 @@ from routers.portal import portal_context
 from services.document_rendering_service import render_document_payload
 from services.file_storage_service import get_export_bytes, save_export_bytes
 from services.pdf_rendering_service import pdf_capabilities, render_pdf_from_html
+from services.secret_service import check_secret, mask_secret_ref, resolve_secret
 from services.tenant_service import assert_agency_access, assert_portal_projection_safe, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["documents"])
@@ -122,6 +123,7 @@ def public_portal_export(export: dict) -> dict:
 
 
 def public_email_settings(settings: dict) -> dict:
+    secret_check = check_secret(settings.get("smtp_password_secret_ref")) if settings.get("smtp_password_secret_ref") else None
     return {
         "id": settings.get("id"),
         "agency_id": settings.get("agency_id"),
@@ -132,6 +134,8 @@ def public_email_settings(settings: dict) -> dict:
         "smtp_port": settings.get("smtp_port"),
         "smtp_username": settings.get("smtp_username"),
         "smtp_password_is_configured": bool(settings.get("smtp_password_is_configured") or settings.get("smtp_password_secret_ref")),
+        "smtp_password_secret_ref_masked": mask_secret_ref(settings.get("smtp_password_secret_ref")),
+        "smtp_password_secret_resolved": bool(secret_check and secret_check.ok),
         "smtp_use_tls": settings.get("smtp_use_tls", True),
         "mode": settings.get("mode"),
         "status": settings.get("status"),
@@ -178,9 +182,14 @@ def validate_email_settings(settings: dict) -> tuple[bool, str | None]:
             return False, "SMTP port must be a number."
         if port < 1 or port > 65535:
             return False, "SMTP port must be between 1 and 65535."
-        if not settings.get("smtp_password_secret_ref") and not settings.get("smtp_password_is_configured"):
+        if not settings.get("smtp_username"):
+            return False, "SMTP username is required for authenticated SMTP sending."
+        if not settings.get("smtp_password_secret_ref"):
             return False, "SMTP requires a password secret reference before sending."
-        return False, "SMTP secret resolution is not implemented in this installation."
+        secret_check = check_secret(settings.get("smtp_password_secret_ref"))
+        if not secret_check.ok:
+            return False, secret_check.diagnostic or "SMTP password secret could not be resolved."
+        return True, None
     return False, "Unsupported email mode."
 
 
@@ -233,6 +242,9 @@ async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None
     ok, error = validate_email_settings(settings)
     if not ok:
         raise ValueError(error or "SMTP settings are incomplete.")
+    password = resolve_secret(settings.get("smtp_password_secret_ref"))
+    if not password:
+        raise ValueError("SMTP password secret could not be resolved.")
 
     message = EmailMessage()
     message["From"] = f"{settings.get('sender_name') or 'Agency'} <{settings.get('sender_email')}>"
@@ -251,13 +263,11 @@ async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None
     if settings.get("smtp_use_tls", True):
         with smtplib.SMTP(settings["smtp_host"], int(settings["smtp_port"]), timeout=15) as smtp:
             smtp.starttls()
-            if settings.get("smtp_username"):
-                raise ValueError("SMTP username is configured, but no password secret resolver is available.")
+            smtp.login(settings["smtp_username"], password)
             response = smtp.send_message(message)
     else:
         with smtplib.SMTP(settings["smtp_host"], int(settings["smtp_port"]), timeout=15) as smtp:
-            if settings.get("smtp_username"):
-                raise ValueError("SMTP username is configured, but no password secret resolver is available.")
+            smtp.login(settings["smtp_username"], password)
             response = smtp.send_message(message)
     return "smtp", str(response) if response else None
 
@@ -271,6 +281,65 @@ def validate_delivery_attachment(export: dict | None, document: dict) -> None:
         raise ValueError("Delivery export file is not available.")
     validate_export_metadata_for_download(export)
     get_export_bytes(export)
+
+
+def safe_attachment_diagnostic(export: dict | None, document: dict) -> dict:
+    if not export:
+        return {"attached": False, "valid": True, "message": "No export attachment selected."}
+    try:
+        validate_delivery_attachment(export, document)
+        return {
+            "attached": True,
+            "valid": True,
+            "export_id": export.get("id"),
+            "export_type": export.get("export_type"),
+            "content_type": export.get("content_type"),
+            "file_size_bytes": export.get("file_size_bytes"),
+            "message": "Attachment is valid for delivery.",
+        }
+    except Exception as exc:
+        return {
+            "attached": True,
+            "valid": False,
+            "export_id": export.get("id"),
+            "export_type": export.get("export_type"),
+            "content_type": export.get("content_type"),
+            "message": str(exc),
+        }
+
+
+def next_delivery_action(delivery: dict, attachment_valid: bool, email_send_ready: bool) -> str:
+    if delivery.get("status") == "sent":
+        return "none_sent"
+    if delivery.get("status") == "cancelled":
+        return "none_cancelled"
+    if delivery.get("status") == "archived":
+        return "none_archived"
+    if delivery.get("retry_status") == "max_retries_reached":
+        return "none_max_attempts_reached"
+    if not attachment_valid:
+        return "fix_attachment"
+    if not email_send_ready:
+        return "fix_email_settings"
+    if delivery.get("retry_status") == "retry_available":
+        return "retry"
+    if delivery.get("status") in {"draft", "queued"}:
+        return "send"
+    if delivery.get("status") == "sending":
+        return "wait_for_manual_attempt"
+    return "none"
+
+
+def safe_delivery_error_message(exc: Exception, settings: dict | None = None) -> str:
+    message = str(exc) or "Delivery failed."
+    if settings and settings.get("smtp_password_secret_ref"):
+        try:
+            secret_value = resolve_secret(settings.get("smtp_password_secret_ref"))
+        except Exception:
+            secret_value = None
+        if secret_value:
+            message = message.replace(secret_value, "[secret]")
+    return message[:500]
 
 
 async def list_delivery_attempts(db: Database, agency_id: str, delivery_id: str) -> list[dict]:
@@ -399,7 +468,7 @@ async def process_delivery_send(db: Database, agency_id: str, delivery_id: str, 
         return {"delivery": updated, "attempt": await db.collection("document_delivery_attempts").find_one({"agency_id": agency_id, "id": attempt["id"]})}
     except Exception as exc:
         provider = (settings.get("mode") if "settings" in locals() else "none") or "none"
-        error_message = str(exc)
+        error_message = safe_delivery_error_message(exc, settings if "settings" in locals() else None)
         await fail_delivery_attempt(db, agency_id, attempt, delivery, provider, error_message)
         await write_document_timeline(db, agency_id, document["id"], user["id"], "document_delivery.failed", "Delivery failed", error_message, {"delivery_id": delivery_id, "attempt_id": attempt["id"]})
         raise fail_detail(error_message, provider)
@@ -559,7 +628,6 @@ async def document_export_capabilities(agency_id: str, user: dict = Depends(get_
 async def create_document_export(agency_id: str, document_id: str, payload: DocumentExportCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     document = await get_document_or_404(db, agency_id, document_id)
-    now = datetime.now(timezone.utc)
     if payload.export_type == DocumentExportType.PDF:
         pdf_result = render_pdf_from_html(document.get("rendered_html") or "", document.get("title") or "Document", agency_id, document_id)
         if pdf_result.ok and pdf_result.data:
@@ -595,7 +663,6 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
             content_type="application/pdf",
             storage_mode="not_generated",
             generated_by_user_id=user["id"],
-            generated_at=now,
             generated_from_snapshot_at=document.get("rendered_at"),
             retention_policy="none",
             error_message=pdf_result.diagnostic or "PDF generation is not available in this installation.",
@@ -701,6 +768,42 @@ async def get_document_delivery(agency_id: str, delivery_id: str, user: dict = D
     return {"delivery": delivery, "attempts": await list_delivery_attempts(db, agency_id, delivery_id)}
 
 
+@router.get("/document-deliveries/{delivery_id}/diagnostics")
+async def get_document_delivery_diagnostics(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_read(db, agency_id, user)
+    delivery = await get_delivery_or_404(db, agency_id, delivery_id)
+    document = await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
+    export = await get_export_or_404(db, agency_id, delivery["export_id"]) if delivery.get("export_id") else None
+    attachment = safe_attachment_diagnostic(export, document)
+    settings = await get_email_settings_or_default(db, agency_id)
+    email_ok, email_error = validate_email_settings(settings)
+    email_send_ready = email_ok and settings.get("mode") != "disabled"
+    secret_check = check_secret(settings.get("smtp_password_secret_ref")) if settings.get("smtp_password_secret_ref") else None
+    diagnostics = {
+        "delivery_id": delivery["id"],
+        "status": delivery.get("status"),
+        "processing_state": delivery.get("processing_state"),
+        "retry_status": delivery.get("retry_status"),
+        "attempt_count": delivery.get("attempt_count") or 0,
+        "max_attempts": delivery.get("max_attempts") or 3,
+        "locked": bool(delivery.get("locked_at")),
+        "last_error_message": delivery.get("last_error_message") or delivery.get("error_message"),
+        "attachment": attachment,
+        "email": {
+            "mode": settings.get("mode") or "disabled",
+            "valid": email_ok,
+            "send_ready": email_send_ready,
+            "validation_error": email_error,
+            "smtp_secret_ref_masked": mask_secret_ref(settings.get("smtp_password_secret_ref")),
+            "smtp_secret_configured": bool(settings.get("smtp_password_secret_ref")),
+            "smtp_secret_resolved": bool(secret_check and secret_check.ok),
+            "smtp_secret_diagnostic": secret_check.diagnostic if secret_check else "Secret reference is not configured.",
+        },
+    }
+    diagnostics["next_allowed_action"] = next_delivery_action(delivery, attachment["valid"], email_send_ready)
+    return {"diagnostics": diagnostics}
+
+
 @router.post("/document-deliveries/{delivery_id}/send")
 async def send_document_delivery(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
@@ -713,6 +816,8 @@ async def retry_document_delivery(agency_id: str, delivery_id: str, user: dict =
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
     if delivery.get("retry_status") == "max_retries_reached":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum delivery attempts reached.")
+    if delivery.get("retry_status") != "retry_available":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery is not currently retryable.")
     return await process_delivery_send(db, agency_id, delivery_id, user)
 
 
