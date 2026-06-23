@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 20 Hostinger VPS first deployment preparation.",
+    description="AeroAssist AgencyOS API foundation through Phase 21 production bootstrap and go-live hardening.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_20_hostinger_vps_first_deployment_preparation",
+        "phase": "phase_21_production_bootstrap_go_live_hardening",
     }
 
 
@@ -96,7 +96,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_20_hostinger_vps_first_deployment_preparation",
+        "phase": "phase_21_production_bootstrap_go_live_hardening",
         "config": config,
         "database": database_status,
         "storage": storage,

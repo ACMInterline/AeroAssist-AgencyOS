@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_20_hostinger_vps_first_deployment_preparation",
+        "phase": "phase_21_production_bootstrap_go_live_hardening",
     }
 
 
@@ -78,6 +78,7 @@ async def summary(
             "Docker and Hostinger VPS packaging foundation",
             "VPS reverse proxy, TLS, backup, and operations runbook foundation",
             "Hostinger VPS first deployment preparation foundation",
+            "Production bootstrap and go-live hardening foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

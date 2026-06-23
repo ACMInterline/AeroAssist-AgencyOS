@@ -1,6 +1,6 @@
 # First Hostinger VPS Deployment Checklist
 
-Use this as the linear first-deploy path. It assumes a fresh Hostinger managed VPS and the Phase 18/19 Docker Compose deployment.
+Use this as the linear first-deploy path. It assumes a Hostinger managed VPS and the Phase 18-21 Docker Compose deployment.
 
 No real secrets, domain values, or certificate files belong in this repository.
 
@@ -12,12 +12,12 @@ SSH into the VPS:
 ssh root@your-vps-ip
 ```
 
-Choose the app directory:
+Choose the app directory. The verified Hostinger deployment path is `/opt/aeroassist-agencyos`:
 
 ```bash
-sudo mkdir -p /opt/aeroassist
-sudo chown "$USER":"$USER" /opt/aeroassist
-cd /opt/aeroassist
+sudo mkdir -p /opt/aeroassist-agencyos
+sudo chown "$USER":"$USER" /opt/aeroassist-agencyos
+cd /opt
 ```
 
 ## 2. Install Prerequisites
@@ -42,9 +42,9 @@ If `docker info` fails for a non-root user, log out and back in after adding the
 ## 3. Clone Repository
 
 ```bash
-cd /opt/aeroassist
-git clone <your-repo-url> AeroAssist-AgencyOS
-cd AeroAssist-AgencyOS
+cd /opt
+git clone https://github.com/ACMInterline/AeroAssist-AgencyOS.git aeroassist-agencyos
+cd /opt/aeroassist-agencyos
 git checkout main
 git rev-parse HEAD
 ```
@@ -89,7 +89,7 @@ Do not commit `.env.production`.
 Run preflight before starting services:
 
 ```bash
-APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS \
+APP_DIR=/opt/aeroassist-agencyos \
 deploy/hostinger/scripts/preflight.sh
 ```
 
@@ -127,6 +127,17 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
 ```
 
 Do not continue until readiness is healthy.
+
+## 7a. Create First Platform Owner
+
+Only run this when no production owner exists yet:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec backend \
+  python scripts/create_first_platform_owner.py
+```
+
+The script prompts for owner email, full name, password, and password confirmation. It does not print the password and refuses to run if auth identities already exist.
 
 ## 8. Host Nginx And TLS
 

@@ -8,7 +8,7 @@ It does not add DNS automation, real certificate issuance in the repo, monitorin
 
 `docker-compose.production.yml` runs:
 
-- `frontend`: nginx serving the built Vite app on port `80`.
+- `frontend`: nginx serving the built Vite app on the configured `FRONTEND_HTTP_PORT`.
 - `backend`: FastAPI/Uvicorn on internal port `8000`.
 - `mongo`: MongoDB 7 with a named data volume.
 
@@ -53,8 +53,8 @@ Log out and back in after adding your user to the Docker group.
 ## Clone And Configure
 
 ```bash
-git clone <your-repo-url> AeroAssist-AgencyOS
-cd AeroAssist-AgencyOS
+git clone https://github.com/ACMInterline/AeroAssist-AgencyOS.git /opt/aeroassist-agencyos
+cd /opt/aeroassist-agencyos
 cp .env.production.example .env.production
 chmod 600 .env.production
 ```
@@ -108,7 +108,7 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 Or use the Phase 19 helper:
 
 ```bash
-APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS deploy/hostinger/scripts/deploy.sh
+APP_DIR=/opt/aeroassist-agencyos deploy/hostinger/scripts/deploy.sh
 ```
 
 Check service status:
@@ -156,6 +156,28 @@ sudo certbot --nginx -d agencyos.example.com -d www.agencyos.example.com
 ```
 
 Replace placeholders with the real domain before enabling.
+
+## First Platform Owner Bootstrap
+
+If no production auth identities exist yet, create the first platform owner with:
+
+```bash
+cd /opt/aeroassist-agencyos
+docker compose --env-file .env.production -f docker-compose.production.yml exec backend \
+  python scripts/create_first_platform_owner.py
+```
+
+The script prompts for credentials, does not print the password, and refuses to run if auth identities already exist. It does not seed demo data or create agencies/workspaces.
+
+## Temporary Port 8080 Mode
+
+The verified first deployment currently exposes AgencyOS at:
+
+```text
+http://72.62.52.129:8080
+```
+
+The older AeroAssist app still owns public port `80` from `/opt/aeroassist`. Port `8080` is temporary and should not be the final production exposure.
 
 ## Smoke Checks
 
@@ -262,6 +284,7 @@ Use:
 deploy/hostinger/OPERATIONS_RUNBOOK.md
 deploy/hostinger/POST_DEPLOYMENT_SECURITY_CHECKLIST.md
 deploy/hostinger/TROUBLESHOOTING.md
+deploy/hostinger/REAL_DEPLOYMENT_NOTES.md
 ```
 
 These cover host folder layout, TLS setup, deploy/update, restart/status/logs, backups, restore, rollback, smoke tests, post-deployment security verification, and troubleshooting.

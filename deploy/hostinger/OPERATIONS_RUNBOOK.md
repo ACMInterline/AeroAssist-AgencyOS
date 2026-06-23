@@ -9,11 +9,14 @@ It does not add product functionality, monitoring services, CI/CD, background wo
 Recommended VPS layout:
 
 ```text
-/opt/aeroassist/AeroAssist-AgencyOS
+/opt/aeroassist-agencyos
+/opt/aeroassist
 /var/backups/aeroassist
 /etc/nginx/sites-available/aeroassist.conf
 /etc/nginx/sites-enabled/aeroassist.conf
 ```
+
+`/opt/aeroassist` is the older app path and must not be modified by AgencyOS operations.
 
 Repository deployment helpers live under:
 
@@ -32,7 +35,7 @@ deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
 ```
 
 1. Install Docker Engine and Docker Compose plugin.
-2. Clone the repository into `/opt/aeroassist/AeroAssist-AgencyOS`.
+2. Clone the repository into `/opt/aeroassist-agencyos`.
 3. Copy `.env.production.example` to `.env.production`.
 4. Set a real `AUTH_TOKEN_SECRET`.
 5. Set `PUBLIC_APP_URL`, `FRONTEND_URL`, and `CORS_ALLOWED_ORIGINS` to the production domain.
@@ -83,7 +86,7 @@ Use your real domain, not the placeholder.
 From the repo:
 
 ```bash
-APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS \
+APP_DIR=/opt/aeroassist-agencyos \
 APP_BASE_URL=https://agencyos.example.com \
 RUN_SMOKE=true \
 deploy/hostinger/scripts/deploy.sh
@@ -198,7 +201,7 @@ High-level process:
 Code rollback without data restore:
 
 ```bash
-cd /opt/aeroassist/AeroAssist-AgencyOS
+cd /opt/aeroassist-agencyos
 git log --oneline -10
 git checkout <previous-good-commit>
 UPDATE_GIT=false deploy/hostinger/scripts/deploy.sh
@@ -217,6 +220,90 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
 ```
 
 Readiness must not expose secret values.
+
+## First Platform Owner Bootstrap
+
+Run only when no production owner exists:
+
+```bash
+cd /opt/aeroassist-agencyos
+docker compose --env-file .env.production -f docker-compose.production.yml exec backend \
+  python scripts/create_first_platform_owner.py
+```
+
+The script refuses to run if auth identities already exist unless a controlled recovery action uses `--allow-existing-identities`. It does not print passwords, enable seed, create demo accounts, or create agencies/workspaces.
+
+## Pending VPS Reboot Verification
+
+Ubuntu reported `*** System restart required ***` after the first deployment. Use this procedure during an approved maintenance window.
+
+Before reboot:
+
+```bash
+cd /opt/aeroassist-agencyos
+deploy/hostinger/scripts/status.sh
+TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_mongo.sh
+TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_exports.sh
+curl http://72.62.52.129:8080/api/health
+curl http://72.62.52.129:8080/api/readiness
+curl -I http://72.62.52.129/
+```
+
+Reboot only after backups and health checks pass:
+
+```bash
+sudo reboot
+```
+
+After reconnecting:
+
+```bash
+cd /opt/aeroassist-agencyos
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+curl http://72.62.52.129:8080/api/health
+curl http://72.62.52.129:8080/api/readiness
+curl -I http://72.62.52.129/
+APP_BASE_URL=http://72.62.52.129:8080 deploy/hostinger/scripts/smoke_production.sh
+```
+
+Verify owner login manually in the browser. If AgencyOS containers did not auto-start:
+
+```bash
+cd /opt/aeroassist-agencyos
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+```
+
+Do not stop or modify the older `/opt/aeroassist` app unless explicitly planned.
+
+## Nginx/TLS Migration From Temporary 8080
+
+Current temporary AgencyOS URL:
+
+```text
+http://72.62.52.129:8080
+```
+
+Future HTTPS migration plan:
+
+1. Choose final domain or subdomain.
+2. Point DNS A record to `72.62.52.129`.
+3. Decide how the older app on port `80` should be handled:
+   - keep it on a separate domain/subdomain,
+   - move it,
+   - or replace it.
+4. Set AgencyOS `FRONTEND_HTTP_PORT=127.0.0.1:8080`.
+5. Update `.env.production`:
+   - `CORS_ALLOWED_ORIGINS=https://your-domain.example`
+   - `FRONTEND_URL=https://your-domain.example`
+   - `PUBLIC_APP_URL=https://your-domain.example`
+6. Apply `deploy/hostinger/nginx/aeroassist.conf.example` after editing placeholders.
+7. Run `sudo nginx -t`.
+8. Reload nginx.
+9. Obtain TLS with certbot only after DNS points correctly.
+10. Recreate frontend/backend if env values changed.
+11. Run production smoke tests.
 
 ## Incident Checklist
 

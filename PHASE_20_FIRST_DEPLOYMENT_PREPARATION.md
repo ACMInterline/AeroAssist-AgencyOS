@@ -88,4 +88,4 @@ The troubleshooting guide covers:
 
 ## Exact Next Recommended Phase
 
-Phase 21 should be Backup Automation And Lightweight Monitoring Readiness: add backup retention policy, optional off-server backup target integration, restore drill checklist, uptime/log review guidance, and alerting design without adding paid monitoring services by default.
+Phase 21 should be Production Bootstrap And Go-Live Hardening: add an official first-owner bootstrap script, hide production demo UI affordances, record the real temporary deployment state, harden the real deployment path defaults, and document the pending VPS reboot plus nginx/TLS migration plan.

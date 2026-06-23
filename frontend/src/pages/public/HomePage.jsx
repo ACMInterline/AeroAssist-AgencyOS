@@ -1,5 +1,7 @@
 import PublicLayout from "../../layouts/PublicLayout"
 
+const isProduction = import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production"
+
 export default function HomePage() {
   return (
     <PublicLayout>
@@ -16,7 +18,7 @@ export default function HomePage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/login">
-              Open demo login
+              {isProduction ? "Sign in" : "Open demo login"}
             </a>
             <a className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800" href="/platform">
               View platform foundation

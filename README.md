@@ -2,7 +2,7 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, Phase 18 Docker/Hostinger VPS packaging, Phase 19 VPS operations runbooks, and Phase 20 first deployment preparation.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, Phase 18 Docker/Hostinger VPS packaging, Phase 19 VPS operations runbooks, Phase 20 first deployment preparation, and Phase 21 production bootstrap/go-live hardening.
 
 ## Project Structure
 
@@ -242,6 +242,15 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Deploy helper now runs preflight before git update, build, or service start.
 - Phase 20 implementation note in `PHASE_20_FIRST_DEPLOYMENT_PREPARATION.md`.
 
+## Phase 21 Includes
+
+- Official first platform owner bootstrap script at `backend/scripts/create_first_platform_owner.py`.
+- Production frontend hides demo login labels, demo account cards, and demo credential defaults.
+- Hostinger scripts default to the real deployment path `/opt/aeroassist-agencyos` while preserving `APP_DIR` overrides.
+- Real deployment notes in `deploy/hostinger/REAL_DEPLOYMENT_NOTES.md`.
+- VPS reboot verification procedure in `deploy/hostinger/OPERATIONS_RUNBOOK.md`.
+- Temporary `:8080` exposure and future nginx/TLS migration plan documented.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -406,7 +415,15 @@ deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
 Then run the non-mutating preflight before starting services:
 
 ```bash
-APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS deploy/hostinger/scripts/preflight.sh
+APP_DIR=/opt/aeroassist-agencyos deploy/hostinger/scripts/preflight.sh
+```
+
+To bootstrap the first production platform owner when no auth identities exist:
+
+```bash
+cd /opt/aeroassist-agencyos
+docker compose --env-file .env.production -f docker-compose.production.yml exec backend \
+  python scripts/create_first_platform_owner.py
 ```
 
 ## Smoke Scripts
@@ -422,7 +439,7 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 20 adds first-deployment checklists, preflight, post-deployment security checks, and troubleshooting, but it is not a complete operations stack. Production use still requires migrations, automated backup retention/off-server backup policy, monitoring/alerting, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
+Phase 21 adds production bootstrap and go-live hardening, but it is not a complete operations stack. Production use still requires final nginx/TLS/domain routing, pending VPS reboot verification, migrations, automated backup retention/off-server backup policy, monitoring/alerting, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
 
 ## Useful Endpoints
 
@@ -604,4 +621,4 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Phase 19 adds reverse proxy/TLS templates, backup scripts, restore guidance, and operations runbooks. Phase 20 adds first-deployment checklists, preflight, security checks, and troubleshooting. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Phase 19 adds reverse proxy/TLS templates, backup scripts, restore guidance, and operations runbooks. Phase 20 adds first-deployment checklists, preflight, security checks, and troubleshooting. Phase 21 adds production owner bootstrap, go-live deployment notes, reboot verification, and nginx/TLS migration hardening. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

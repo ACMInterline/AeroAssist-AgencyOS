@@ -1,5 +1,7 @@
 import { Plane } from "lucide-react"
 
+const isProduction = import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production"
+
 export default function PublicLayout({ children }) {
   return (
     <div className="min-h-screen bg-slate-50">
@@ -10,7 +12,7 @@ export default function PublicLayout({ children }) {
             AeroAssist AgencyOS
           </a>
           <nav className="flex items-center gap-4 text-sm text-slate-600">
-            <a href="/login">Demo login</a>
+            <a href="/login">{isProduction ? "Sign in" : "Demo login"}</a>
             <a href="/platform">Platform</a>
             <a href="/agency">Agency</a>
           </nav>

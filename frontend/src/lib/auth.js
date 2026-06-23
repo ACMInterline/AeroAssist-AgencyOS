@@ -2,6 +2,7 @@ const AUTH_SESSION_KEY = "aeroassist.authSession"
 const AUTH_CONTEXT_KEY = "aeroassist.authContext"
 const DEMO_EMAIL_KEY = "aeroassist.demoEmail"
 const DEMO_PORTAL_EMAIL_KEY = "aeroassist.demoPortalEmail"
+const isProduction = import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production"
 
 export function getAuthSession() {
   const raw = localStorage.getItem(AUTH_SESSION_KEY)
@@ -42,9 +43,11 @@ export function setDemoPortalEmail(email) {
 export function authHeaders() {
   const headers = {
     "Content-Type": "application/json",
-    "X-Demo-User-Email": getDemoEmail(),
-    "X-Demo-Role": "portal_client",
-    "X-Demo-Client-Email": getDemoPortalEmail(),
+  }
+  if (!isProduction) {
+    headers["X-Demo-User-Email"] = getDemoEmail()
+    headers["X-Demo-Role"] = "portal_client"
+    headers["X-Demo-Client-Email"] = getDemoPortalEmail()
   }
   const session = getAuthSession()
   if (session?.access_token) {

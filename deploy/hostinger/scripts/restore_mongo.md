@@ -7,7 +7,7 @@ This is intentionally a manual runbook, not an automatic destructive script.
 Set:
 
 ```bash
-APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS
+APP_DIR=/opt/aeroassist-agencyos
 ENV_FILE=.env.production
 COMPOSE_FILE=docker-compose.production.yml
 BACKUP_DIR=/var/backups/aeroassist/YYYYMMDDTHHMMSSZ

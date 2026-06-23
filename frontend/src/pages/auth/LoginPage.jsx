@@ -11,10 +11,12 @@ const demoAccounts = [
   ["Portal company", "travel@orbitex.example.com"],
 ]
 
+const isProduction = import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production"
+
 export default function LoginPage() {
   const invite = new URLSearchParams(window.location.search).get("invite")
-  const [email, setEmail] = useState("owner@aeroassist.dev")
-  const [password, setPassword] = useState("DemoPass123!")
+  const [email, setEmail] = useState(isProduction ? "" : "owner@aeroassist.dev")
+  const [password, setPassword] = useState(isProduction ? "" : "DemoPass123!")
   const [displayName, setDisplayName] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
@@ -28,9 +30,11 @@ export default function LoginPage() {
         ? await apiPost("/api/auth/invitations/accept", { token: invite, password, display_name: displayName || undefined })
         : await apiPost("/api/auth/login", { email, password })
       setAuthSession(result.session, result.auth)
-      setDemoEmail(result.auth?.user?.email || email)
-      if (result.auth?.identity?.identity_type === "client_portal") {
-        setDemoPortalEmail(result.auth.identity.email)
+      if (!isProduction) {
+        setDemoEmail(result.auth?.user?.email || email)
+        if (result.auth?.identity?.identity_type === "client_portal") {
+          setDemoPortalEmail(result.auth.identity.email)
+        }
       }
       setMessage("Signed in.")
       const type = result.auth?.identity?.identity_type
@@ -53,7 +57,7 @@ export default function LoginPage() {
 
   return (
     <PublicLayout>
-      <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-[1fr_280px]">
+      <div className={`mx-auto grid max-w-4xl gap-6 ${isProduction ? "" : "md:grid-cols-[1fr_280px]"}`}>
         <section className="rounded-lg border border-slate-200 bg-white p-6">
           <h1 className="text-xl font-semibold text-slate-950">{invite ? "Accept invitation" : "Sign in"}</h1>
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
@@ -80,17 +84,19 @@ export default function LoginPage() {
           {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
           {error ? <p className="mt-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
         </section>
-        <aside className="rounded-lg border border-slate-200 bg-white p-5">
-          <h2 className="text-sm font-semibold text-slate-950">Demo accounts</h2>
-          <div className="mt-4 space-y-2">
-            {demoAccounts.map(([label, accountEmail]) => (
-              <button className="w-full rounded-md border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" key={accountEmail} type="button" onClick={() => useDemo(accountEmail)}>
-                <span className="block font-medium text-slate-900">{label}</span>
-                <span className="text-xs text-slate-500">{accountEmail}</span>
-              </button>
-            ))}
-          </div>
-        </aside>
+        {!isProduction ? (
+          <aside className="rounded-lg border border-slate-200 bg-white p-5">
+            <h2 className="text-sm font-semibold text-slate-950">Demo accounts</h2>
+            <div className="mt-4 space-y-2">
+              {demoAccounts.map(([label, accountEmail]) => (
+                <button className="w-full rounded-md border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" key={accountEmail} type="button" onClick={() => useDemo(accountEmail)}>
+                  <span className="block font-medium text-slate-900">{label}</span>
+                  <span className="text-xs text-slate-500">{accountEmail}</span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        ) : null}
       </div>
     </PublicLayout>
   )
