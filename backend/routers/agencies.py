@@ -1,9 +1,9 @@
-import os
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import DEMO_AUTH_ENABLED, get_current_agency_context, get_current_user, require_platform_role
+from config import get_settings
 from database import Database, get_database
 from models import (
     Agency,
@@ -233,11 +233,11 @@ async def create_staff_invitation(
         target_user_id=staff_user["id"],
         invited_by_user_id=user["id"],
         token_hash=hash_token(raw_token),
-        expires_at=now_utc() + timedelta(hours=int(os.getenv("INVITATION_EXPIRY_HOURS", "72"))),
+        expires_at=now_utc() + timedelta(hours=get_settings().invitation_expiry_hours),
     )
     invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
     response = {"invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"}, "membership": membership}
-    if DEMO_AUTH_ENABLED or os.getenv("AEROASSIST_DB_MODE", "memory") == "memory":
+    if DEMO_AUTH_ENABLED and not get_settings().is_production:
         response["dev_invitation_token"] = raw_token
         response["dev_invitation_link"] = f"/login?invite={raw_token}"
     return response

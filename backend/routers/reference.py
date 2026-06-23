@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import require_platform_role
+from config import get_settings
 from database import Database, get_database
 from models import GlobalReferenceCreate, GlobalReferenceRecord
 from services.seed_service import seed_core_data
@@ -37,5 +38,7 @@ async def seed_reference(
     user: dict = Depends(require_platform_role(["platform_owner", "platform_admin"])),
     db: Database = Depends(get_database),
 ) -> dict:
+    if not get_settings().seed_endpoint_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Seed endpoint is disabled.")
     result = await seed_core_data(db)
     return {"ok": True, "seed": result, "actor_user_id": user["id"]}

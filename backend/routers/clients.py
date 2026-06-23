@@ -1,10 +1,10 @@
-import os
 from datetime import timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from auth import DEMO_AUTH_ENABLED, get_current_user
+from config import get_settings
 from database import Database, get_database
 from models import (
     AuditEvent,
@@ -271,7 +271,7 @@ async def create_client_portal_invitation(
         target_client_id=client_id,
         invited_by_user_id=user["id"],
         token_hash=hash_token(raw_token),
-        expires_at=now_utc() + timedelta(hours=int(os.getenv("INVITATION_EXPIRY_HOURS", "72"))),
+        expires_at=now_utc() + timedelta(hours=get_settings().invitation_expiry_hours),
     )
     invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
     await write_audit(
@@ -288,7 +288,7 @@ async def create_client_portal_invitation(
         "portal_mapping": mapping,
         "invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"},
     }
-    if DEMO_AUTH_ENABLED or os.getenv("AEROASSIST_DB_MODE", "memory") == "memory":
+    if DEMO_AUTH_ENABLED and not get_settings().is_production:
         response["dev_invitation_token"] = raw_token
         response["dev_invitation_link"] = f"/login?invite={raw_token}"
     return response

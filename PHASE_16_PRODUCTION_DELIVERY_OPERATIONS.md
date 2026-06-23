@@ -146,4 +146,4 @@ Run for this phase:
 
 ## Exact Next Recommended Phase
 
-Phase 17 should be Delivery Provider Operations And Object Storage Lifecycle: add provider webhook/bounce handling, explicit admin-controlled queue worker design, object-storage lifecycle policy, retention cleanup, and operational monitoring before considering public links or automated delivery.
+Phase 17 should be Production Configuration Hardening: centralize production env handling, startup checks, health/readiness reporting, demo/seed gates, CORS, logging, storage path checks, MongoDB config checks, frontend API URL handling, and deployment documentation before adding provider operations or object-storage lifecycle automation.

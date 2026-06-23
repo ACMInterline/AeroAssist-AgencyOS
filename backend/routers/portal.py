@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from auth import DEMO_AUTH_ENABLED, get_current_identity
+from config import get_settings
 from database import Database, get_database
 from models import (
     AuditEvent,
@@ -57,7 +58,8 @@ async def portal_context(
     identity: dict = Depends(get_current_identity),
     db: Database = Depends(get_database),
 ) -> dict:
-    await seed_core_data(db)
+    if get_settings().seed_on_startup:
+        await seed_core_data(db)
     if authorization:
         if identity.get("identity_type") != "client_portal":
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Client portal identity required.")

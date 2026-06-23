@@ -1,8 +1,9 @@
 import base64
 import hashlib
 import hmac
-import os
 import secrets
+
+from config import get_settings
 
 
 PBKDF2_ITERATIONS = 210_000
@@ -40,5 +41,5 @@ def new_raw_token() -> str:
 
 
 def hash_token(token: str) -> str:
-    secret = os.getenv("AUTH_TOKEN_SECRET", "local-dev-auth-token-secret-change-me")
+    secret = get_settings().auth_token_secret or "local-dev-auth-token-secret-change-me"
     return hmac.new(secret.encode("utf-8"), token.encode("utf-8"), hashlib.sha256).hexdigest()
