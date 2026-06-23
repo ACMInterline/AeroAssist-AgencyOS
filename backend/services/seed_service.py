@@ -207,7 +207,10 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     if workspace is None:
         workspace_model = AgencyWorkspace(
             agency_id=agency["id"],
+            name=agency["name"],
             brand_name=agency["name"],
+            default_currency=agency["default_currency"],
+            timezone=agency["timezone"],
             primary_color="#2563eb",
             secondary_color="#0f172a",
         )

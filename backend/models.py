@@ -458,7 +458,11 @@ class AgencyUpdate(BaseModel):
 
 class AgencyWorkspace(BaseDocument):
     agency_id: str
+    name: Optional[str] = None
     brand_name: str
+    status: UserStatus = UserStatus.ACTIVE
+    default_currency: Optional[str] = None
+    timezone: Optional[str] = None
     logo_url: Optional[str] = None
     primary_color: str = "#2563eb"
     secondary_color: str = "#0f172a"
@@ -467,10 +471,24 @@ class AgencyWorkspace(BaseDocument):
     portal_status: PortalStatus = PortalStatus.NOT_CONFIGURED
 
 
+class AgencyWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    name: str
+    brand_name: Optional[str] = None
+    default_currency: str = "EUR"
+    timezone: str = "Europe/Bratislava"
+    status: UserStatus = UserStatus.ACTIVE
+
+
 class AgencyWorkspaceUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    name: Optional[str] = None
     brand_name: Optional[str] = None
+    status: Optional[UserStatus] = None
+    default_currency: Optional[str] = None
+    timezone: Optional[str] = None
     logo_url: Optional[str] = None
     primary_color: Optional[str] = None
     secondary_color: Optional[str] = None

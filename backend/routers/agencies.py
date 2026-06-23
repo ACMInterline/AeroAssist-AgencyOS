@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import DEMO_AUTH_ENABLED, get_current_agency_context, get_current_user, require_platform_role
-from config import get_settings
+from config import get_settings as get_app_settings
 from database import Database, get_database
 from models import (
     Agency,
@@ -12,6 +12,7 @@ from models import (
     AgencyStaffMembership,
     AgencyUpdate,
     AgencyWorkspace,
+    AgencyWorkspaceCreate,
     AgencyWorkspaceUpdate,
     AuditEvent,
     Invitation,
@@ -28,6 +29,10 @@ router = APIRouter(prefix="/api/agencies", tags=["agencies"])
 
 def clean_updates(payload: AgencyUpdate | AgencyWorkspaceUpdate) -> dict:
     return payload.model_dump(exclude_unset=True, mode="json")
+
+
+def normalize_name(value: str) -> str:
+    return " ".join(value.strip().lower().split())
 
 
 async def write_audit(
@@ -67,7 +72,22 @@ async def list_agencies(
             for agency in await db.collection("agencies").find_many()
             if agency["id"] in agency_ids
         ]
-    return {"items": agencies}
+    workspace_counts = {}
+    staff_counts = {}
+    for workspace in await db.collection("agency_workspaces").find_many():
+        workspace_counts[workspace["agency_id"]] = workspace_counts.get(workspace["agency_id"], 0) + 1
+    for membership in await db.collection("agency_staff_memberships").find_many():
+        staff_counts[membership["agency_id"]] = staff_counts.get(membership["agency_id"], 0) + 1
+    return {
+        "items": [
+            {
+                **agency,
+                "workspace_count": workspace_counts.get(agency["id"], 0),
+                "staff_membership_count": staff_counts.get(agency["id"], 0),
+            }
+            for agency in agencies
+        ]
+    }
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -76,14 +96,26 @@ async def create_agency(
     user: dict = Depends(require_platform_role(["platform_owner", "platform_admin"])),
     db: Database = Depends(get_database),
 ) -> dict:
+    if not payload.name.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agency name is required.")
+    if not payload.legal_name.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agency legal name is required.")
+    if not payload.default_currency.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Default currency is required.")
+    if not payload.country.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Country is required.")
+    if not payload.timezone.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Timezone is required.")
+
     existing = await db.collection("agencies").find_one({"slug": payload.slug})
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Agency slug already exists.")
+    existing_names = await db.collection("agencies").find_many()
+    if any(normalize_name(agency.get("name", "")) == normalize_name(payload.name) for agency in existing_names):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Agency name already exists.")
 
     agency = Agency(**payload.model_dump(mode="json"))
     agency_doc = await db.collection("agencies").insert_one(agency.model_dump(mode="json"))
-    workspace = AgencyWorkspace(agency_id=agency.id, brand_name=agency.name)
-    workspace_doc = await db.collection("agency_workspaces").insert_one(workspace.model_dump(mode="json"))
     await write_audit(
         db,
         event_type="agency.created",
@@ -93,12 +125,21 @@ async def create_agency(
         actor_user_id=user["id"],
         agency_id=agency.id,
     )
-    return {"agency": agency_doc, "settings": workspace_doc}
+    return {"agency": agency_doc}
 
 
 @router.get("/{agency_id}")
-async def get_agency(context: dict = Depends(get_current_agency_context)) -> dict:
-    return {"agency": context["agency"], "membership": context["membership"]}
+async def get_agency(context: dict = Depends(get_current_agency_context), db: Database = Depends(get_database)) -> dict:
+    workspaces = await db.collection("agency_workspaces").find_many({"agency_id": context["agency"]["id"]})
+    memberships = await db.collection("agency_staff_memberships").find_many({"agency_id": context["agency"]["id"]})
+    return {
+        "agency": {
+            **context["agency"],
+            "workspace_count": len(workspaces),
+            "staff_membership_count": len(memberships),
+        },
+        "membership": context["membership"],
+    }
 
 
 @router.put("/{agency_id}")
@@ -114,6 +155,18 @@ async def update_agency(
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
+    if "name" in updates and not str(updates["name"]).strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agency name is required.")
+    if "legal_name" in updates and not str(updates["legal_name"]).strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agency legal name is required.")
+    if "slug" in updates:
+        existing_slug = await db.collection("agencies").find_one({"slug": updates["slug"]})
+        if existing_slug and existing_slug["id"] != agency_id:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Agency slug already exists.")
+    if "name" in updates:
+        existing_names = await db.collection("agencies").find_many()
+        if any(agency["id"] != agency_id and normalize_name(agency.get("name", "")) == normalize_name(updates["name"]) for agency in existing_names):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Agency name already exists.")
 
     agency = await db.collection("agencies").update_one({"id": agency_id}, updates)
     if agency is None:
@@ -137,6 +190,79 @@ async def get_settings(context: dict = Depends(get_current_agency_context), db: 
     if settings is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency settings not found.")
     return {"settings": settings}
+
+
+@router.get("/{agency_id}/workspaces")
+async def list_workspaces(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(
+        db,
+        agency_id,
+        user,
+        ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    )
+    return {"items": await db.collection("agency_workspaces").find_many({"agency_id": agency_id})}
+
+
+@router.post("/{agency_id}/workspaces", status_code=status.HTTP_201_CREATED)
+async def create_workspace(
+    agency_id: str,
+    payload: AgencyWorkspaceCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    agency = await db.collection("agencies").find_one({"id": agency_id})
+    if agency is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
+    if not payload.name.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Workspace name is required.")
+    if not payload.default_currency.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Default currency is required.")
+    if not payload.timezone.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Timezone is required.")
+    workspaces = await db.collection("agency_workspaces").find_many({"agency_id": agency_id})
+    if any(normalize_name(workspace.get("name") or workspace.get("brand_name", "")) == normalize_name(payload.name) for workspace in workspaces):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Workspace name already exists for this agency.")
+
+    workspace = AgencyWorkspace(
+        agency_id=agency_id,
+        name=payload.name,
+        brand_name=payload.brand_name or payload.name,
+        status=payload.status,
+        default_currency=payload.default_currency,
+        timezone=payload.timezone,
+    )
+    workspace_doc = await db.collection("agency_workspaces").insert_one(workspace.model_dump(mode="json"))
+
+    existing_membership = await db.collection("agency_staff_memberships").find_one(
+        {"agency_id": agency_id, "user_id": user["id"]}
+    )
+    owner_membership = existing_membership
+    if user.get("global_role") in {"platform_owner", "platform_admin"} and existing_membership is None:
+        owner_membership = await db.collection("agency_staff_memberships").insert_one(
+            AgencyStaffMembership(
+                agency_id=agency_id,
+                user_id=user["id"],
+                agency_role="agency_owner",
+                status="active",
+                joined_at=now_utc(),
+            ).model_dump(mode="json")
+        )
+
+    await write_audit(
+        db,
+        event_type="agency.workspace_created",
+        entity_type="agency_workspace",
+        entity_id=workspace.id,
+        summary=f"Created workspace {workspace.name}.",
+        actor_user_id=user["id"],
+        agency_id=agency_id,
+    )
+    return {"workspace": workspace_doc, "owner_membership": owner_membership}
 
 
 @router.put("/{agency_id}/settings")
@@ -233,11 +359,21 @@ async def create_staff_invitation(
         target_user_id=staff_user["id"],
         invited_by_user_id=user["id"],
         token_hash=hash_token(raw_token),
-        expires_at=now_utc() + timedelta(hours=get_settings().invitation_expiry_hours),
+        expires_at=now_utc() + timedelta(hours=get_app_settings().invitation_expiry_hours),
     )
     invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
+    await write_audit(
+        db,
+        event_type="agency.staff_invitation_created",
+        entity_type="invitation",
+        entity_id=invitation.id,
+        summary=f"Prepared staff invitation for {payload.email}.",
+        actor_user_id=user["id"],
+        agency_id=agency_id,
+        metadata={"agency_role": payload.agency_role},
+    )
     response = {"invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"}, "membership": membership}
-    if DEMO_AUTH_ENABLED and not get_settings().is_production:
+    if DEMO_AUTH_ENABLED and not get_app_settings().is_production:
         response["dev_invitation_token"] = raw_token
         response["dev_invitation_link"] = f"/login?invite={raw_token}"
     return response

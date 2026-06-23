@@ -31,6 +31,7 @@ The repository currently contains:
 - Phase 19: VPS reverse proxy, TLS, backup, and operations runbook.
 - Phase 20: Hostinger VPS first deployment preparation.
 - Phase 21: Production bootstrap and go-live hardening.
+- Phase 22: Production onboarding and agency setup.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -489,7 +490,34 @@ Out of scope:
 - CI/CD.
 - Background workers, provider webhooks, automatic sending, public links, uploads, or payment links.
 
-### Phase 22: Backup Automation And Lightweight Monitoring Readiness
+### Phase 22: Production Onboarding And Agency Setup
+
+Goal: Let the live production platform owner create and manage the first real agency/workspace from the UI without demo seed data or manual database scripts.
+
+Implemented foundations:
+
+- Platform agency list and create flow.
+- Platform agency detail page for editing agency basics.
+- Explicit first-workspace creation flow from agency detail.
+- Workspace list/create API under `/api/agencies/{agency_id}/workspaces`.
+- Agency list/detail workspace and staff counts.
+- Safe platform-owner agency membership creation when the first workspace is created.
+- Staff invitation preparation without automatic email sending or production token exposure.
+- Production onboarding informational flags in platform summary.
+- Production notes for `https://avio.my`, stopped/preserved old app, and no demo seed.
+
+Out of scope:
+
+- Demo seed or fake customer/operational data.
+- Automatic staff invitation sending.
+- Payment gateway integration.
+- GDS/NDC/airline integrations.
+- CMS/website publishing.
+- Public sharing.
+- Document upload.
+- CI/CD or monitoring stack.
+
+### Phase 23: Backup Automation And Lightweight Monitoring Readiness
 
 Recommended scope:
 
@@ -504,7 +532,7 @@ Avoid adding:
 
 - Provider webhooks, queue workers, public links, payment links, object storage, or CI/CD unless explicitly scoped.
 
-### Phase 23: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 24: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -535,7 +563,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 25: Agency Website/CMS Publishing Foundation
+### Phase 26: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

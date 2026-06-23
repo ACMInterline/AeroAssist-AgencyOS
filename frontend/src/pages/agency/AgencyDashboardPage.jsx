@@ -4,6 +4,7 @@ import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
+import { loadCurrentAgency } from "../../lib/agency"
 
 export default function AgencyDashboardPage() {
   const [state, setState] = useState(null)
@@ -11,12 +12,12 @@ export default function AgencyDashboardPage() {
 
   useEffect(() => {
     async function loadAgency() {
-      const me = await apiGet("/api/auth/me")
-      const agencies = await apiGet("/api/agencies")
-      const agency = agencies.items[0]
-      const settings = agency ? await apiGet(`/api/agencies/${agency.id}/settings`) : null
+      const context = await loadCurrentAgency()
+      const agency = context.agency
+      const workspaces = agency ? await apiGet(`/api/agencies/${agency.id}/workspaces`) : { items: [] }
+      const settings = workspaces.items[0] || null
       const staff = agency ? await apiGet(`/api/agencies/${agency.id}/staff`) : { items: [] }
-      setState({ me, agency, settings: settings?.settings, staff: staff.items })
+      setState({ me: context.me, agency, settings, staff: staff.items })
     }
     loadAgency().catch((err) => setError(err.message))
   }, [])
@@ -24,6 +25,9 @@ export default function AgencyDashboardPage() {
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
+        {!state?.agency ? (
+          <EmptyState title="No agency workspace yet" body="Create your first agency workspace from Platform > Agencies to begin operating AeroAssist." />
+        ) : (
         <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -82,10 +86,17 @@ export default function AgencyDashboardPage() {
               <h3 className="text-sm font-semibold text-slate-900">Payments</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">Record manual payments received outside AgencyOS and track reconciliation status.</p>
             </a>
-            <EmptyState title="Airline Intelligence later" body="Phase 5 starts with curated knowledge search, not airline policy automation." />
-            <EmptyState title="Branded documents later" body="Document output arrives after the operational tracking foundation." />
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/airline-intelligence">
+              <h3 className="text-sm font-semibold text-slate-900">Airline Intelligence</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Search published platform knowledge and maintain agency-specific annotations.</p>
+            </a>
+            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/documents">
+              <h3 className="text-sm font-semibold text-slate-900">Documents</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Review rendered documents, export files, and manual delivery records.</p>
+            </a>
           </section>
         </div>
+        )}
       </ProtectedRoute>
     </AgencyLayout>
   )

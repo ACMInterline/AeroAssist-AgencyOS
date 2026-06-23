@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_21_production_bootstrap_go_live_hardening",
+        "phase": "phase_22_production_onboarding_agency_setup",
     }
 
 
@@ -23,12 +23,17 @@ async def summary(
     user: dict = Depends(require_platform_role(["platform_owner", "platform_admin", "platform_support"])),
     db: Database = Depends(get_database),
 ) -> dict:
+    platform_owner_count = await db.collection("platform_users").count({"global_role": "platform_owner", "status": "active"})
+    agency_count = await db.collection("agencies").count()
+    workspace_count = await db.collection("agency_workspaces").count()
+    staff_membership_count = await db.collection("agency_staff_memberships").count()
+    staff_invitation_count = await db.collection("invitations").count({"invitation_type": "agency_staff"})
     return {
         "current_user": user,
         "counts": {
-            "agencies": await db.collection("agencies").count(),
-            "workspaces": await db.collection("agency_workspaces").count(),
-            "staff_memberships": await db.collection("agency_staff_memberships").count(),
+            "agencies": agency_count,
+            "workspaces": workspace_count,
+            "staff_memberships": staff_membership_count,
             "clients": await db.collection("client_profiles").count(),
             "passengers": await db.collection("passenger_profiles").count(),
             "relationships": await db.collection("client_passenger_relationships").count(),
@@ -56,6 +61,13 @@ async def summary(
             "reference_records": await db.collection("global_reference_records").count(),
             "audit_events": await db.collection("audit_events").count(),
         },
+        "production_onboarding": {
+            "platform_owner_exists": platform_owner_count > 0,
+            "agency_exists": agency_count > 0,
+            "workspace_exists": workspace_count > 0,
+            "staff_membership_or_invitation_exists": staff_membership_count > 0 or staff_invitation_count > 0,
+            "staff_invitations": staff_invitation_count,
+        },
         "implemented_layers": [
             "AeroAssist Global / Platform Owner",
             "Agency Workspace foundation",
@@ -79,6 +91,7 @@ async def summary(
             "VPS reverse proxy, TLS, backup, and operations runbook foundation",
             "Hostinger VPS first deployment preparation foundation",
             "Production bootstrap and go-live hardening foundation",
+            "Production onboarding and agency setup foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
