@@ -31,6 +31,7 @@ from models import (
 from routers.portal import portal_context
 from services.document_rendering_service import render_document_payload
 from services.file_storage_service import get_export_bytes, save_export_bytes
+from services.pdf_rendering_service import pdf_capabilities, render_pdf_from_html
 from services.tenant_service import assert_agency_access, assert_portal_projection_safe, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["documents"])
@@ -261,6 +262,17 @@ async def send_smtp_delivery(settings: dict, delivery: dict, export: dict | None
     return "smtp", str(response) if response else None
 
 
+def validate_delivery_attachment(export: dict | None, document: dict) -> None:
+    if not export:
+        return
+    if export.get("rendered_document_id") != document["id"]:
+        raise ValueError("Delivery export does not belong to the selected document.")
+    if export.get("status") != "generated":
+        raise ValueError("Delivery export file is not available.")
+    validate_export_metadata_for_download(export)
+    get_export_bytes(export)
+
+
 async def list_delivery_attempts(db: Database, agency_id: str, delivery_id: str) -> list[dict]:
     attempts = await db.collection("document_delivery_attempts").find_many({"agency_id": agency_id, "delivery_id": delivery_id})
     attempts.sort(key=lambda item: int(item.get("attempt_number", 0)), reverse=True)
@@ -350,10 +362,7 @@ async def process_delivery_send(db: Database, agency_id: str, delivery_id: str, 
         return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
 
     try:
-        if export and export.get("rendered_document_id") != document["id"]:
-            raise ValueError("Delivery export does not belong to the selected document.")
-        if export and export.get("status") != "generated":
-            raise ValueError("Delivery export file is not available.")
+        validate_delivery_attachment(export, document)
 
         settings = await get_email_settings_or_default(db, agency_id)
         if settings.get("mode") == "disabled":
@@ -520,12 +529,47 @@ async def document_timeline(agency_id: str, document_id: str, user: dict = Depen
     return {"items": await db.collection("document_timeline_events").find_many({"agency_id": agency_id, "rendered_document_id": document_id})}
 
 
+@router.get("/document-export-capabilities")
+async def document_export_capabilities(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_read(db, agency_id, user)
+    pdf = pdf_capabilities()
+    return {
+        "print_html": {"available": True, "engine": "stored_rendered_html", "diagnostic": "Printable HTML exports are generated from stored rendered document snapshots."},
+        "pdf": pdf,
+    }
+
+
 @router.post("/documents/{document_id}/exports", status_code=status.HTTP_201_CREATED)
 async def create_document_export(agency_id: str, document_id: str, payload: DocumentExportCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     document = await get_document_or_404(db, agency_id, document_id)
     now = datetime.now(timezone.utc)
     if payload.export_type == DocumentExportType.PDF:
+        pdf_result = render_pdf_from_html(document.get("rendered_html") or "", document.get("title") or "Document", agency_id, document_id)
+        if pdf_result.ok and pdf_result.data:
+            generated_at = datetime.now(timezone.utc)
+            export = DocumentExport(
+                agency_id=agency_id,
+                rendered_document_id=document_id,
+                export_type="pdf",
+                status="generated",
+                filename=safe_filename(document["title"], ".pdf"),
+                content_type="application/pdf",
+                storage_mode="file_path",
+                retention_policy="keep_90_days",
+                retention_expires_at=retention_expires_at("keep_90_days", generated_at),
+                generated_by_user_id=user["id"],
+                generated_at=generated_at,
+                generated_from_snapshot_at=document.get("rendered_at"),
+                client_visible=payload.client_visible and bool(document.get("client_visible")),
+            )
+            export_data = export.model_dump(mode="json")
+            export_data.update(save_export_bytes(agency_id, export.id, export.filename, export.content_type, pdf_result.data))
+            created = await db.collection("document_exports").insert_one(export_data)
+            await write_document_timeline(db, agency_id, document_id, user["id"], "document_export.generated", "PDF export generated", created["filename"], {"export_id": created["id"], "export_type": created["export_type"], "renderer": pdf_result.engine_name})
+            await write_audit(db, agency_id, user["id"], "document_export.generated", "document_export", created["id"], "Generated PDF document export.", {"rendered_document_id": document_id, "export_type": created["export_type"], "renderer": pdf_result.engine_name})
+            return {"export": public_export(created)}
+
         export = DocumentExport(
             agency_id=agency_id,
             rendered_document_id=document_id,
@@ -538,13 +582,13 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
             generated_at=now,
             generated_from_snapshot_at=document.get("rendered_at"),
             retention_policy="none",
-            error_message="PDF generation is not available because no reliable PDF renderer is installed.",
+            error_message=pdf_result.diagnostic or "PDF generation is not available in this installation.",
             client_visible=False,
         )
         created = await db.collection("document_exports").insert_one(export.model_dump(mode="json"))
         await write_document_timeline(db, agency_id, document_id, user["id"], "document_export.failed", "PDF export unavailable", created["error_message"], {"export_id": created["id"]})
         await write_audit(db, agency_id, user["id"], "document_export.failed", "document_export", created["id"], "PDF export requested but unavailable.", {"rendered_document_id": document_id})
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="PDF generation is not available in this installation. Use print_html export.")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=created["error_message"])
 
     html = document.get("rendered_html") or ""
     data = html.encode("utf-8")
@@ -668,9 +712,9 @@ async def get_document_delivery_attempts(agency_id: str, delivery_id: str, user:
 async def cancel_document_delivery(agency_id: str, delivery_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
-    if delivery.get("status") == "sent":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Sent deliveries cannot be cancelled.")
-    updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "cancelled"})
+    if delivery.get("status") not in {"draft", "queued", "failed"} and delivery.get("retry_status") != "retry_available":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery cannot be cancelled from its current status.")
+    updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "cancelled", "retry_status": "none", "next_retry_at": None})
     await write_document_timeline(db, agency_id, delivery["rendered_document_id"], user["id"], "document_delivery.cancelled", "Delivery cancelled", delivery["recipient_email"], {"delivery_id": delivery_id})
     await write_audit(db, agency_id, user["id"], "document_delivery.cancelled", "document_delivery", delivery_id, "Cancelled document delivery.", {"rendered_document_id": delivery["rendered_document_id"]})
     return {"delivery": updated}

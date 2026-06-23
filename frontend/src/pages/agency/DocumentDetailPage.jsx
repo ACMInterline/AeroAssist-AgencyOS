@@ -16,13 +16,14 @@ export default function DocumentDetailPage({ documentId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, exportsData, deliveriesData, settingsData] = await Promise.all([
+    const [detail, exportsData, deliveriesData, settingsData, capabilitiesData] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/documents/${documentId}`),
       apiGet(`/api/agencies/${context.agency.id}/documents/${documentId}/exports`),
       apiGet(`/api/agencies/${context.agency.id}/documents/${documentId}/deliveries`),
       apiGet(`/api/agencies/${context.agency.id}/email-settings`),
+      apiGet(`/api/agencies/${context.agency.id}/document-export-capabilities`),
     ])
-    setState({ ...context, ...detail, exports: exportsData.items, deliveries: deliveriesData.items, emailSettings: settingsData.settings })
+    setState({ ...context, ...detail, exports: exportsData.items, deliveries: deliveriesData.items, emailSettings: settingsData.settings, exportCapabilities: capabilitiesData })
     setSettingsForm({
       sender_name: settingsData.settings.sender_name || "",
       sender_email: settingsData.settings.sender_email || "",
@@ -163,6 +164,8 @@ export default function DocumentDetailPage({ documentId }) {
   const sourceHref = document ? sourceLink(document) : "#"
   const emailMode = state?.emailSettings?.mode || "disabled"
   const emailSendingDisabled = emailMode === "disabled"
+  const pdfCapability = state?.exportCapabilities?.pdf
+  const pdfAvailable = Boolean(pdfCapability?.available)
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -200,18 +203,19 @@ export default function DocumentDetailPage({ documentId }) {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="button" onClick={() => generateExport("print_html")}>Generate printable export</button>
-                  <button className="rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled title="PDF generation is not available until a server PDF renderer is configured.">PDF unavailable</button>
+                  <button className={pdfAvailable ? "rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-blue-700" : "rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-400"} type="button" disabled={!pdfAvailable} title={pdfCapability?.diagnostic || "PDF generation is not available."} onClick={() => generateExport("pdf")}>{pdfAvailable ? "Generate PDF" : "PDF unavailable"}</button>
                 </div>
               </div>
-              <p className="mt-3 text-xs text-slate-500">PDF generation requires a server PDF renderer. This installation supports printable HTML exports only.</p>
+              <p className="mt-3 text-xs text-slate-500">PDF renderer: {pdfCapability?.engine || "unknown"} · {pdfCapability?.diagnostic || "Capability not loaded."}</p>
               <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
                 {(state.exports || []).length ? state.exports.map((item) => (
                   <div className="flex flex-wrap items-center justify-between gap-3 p-3 text-sm" key={item.id}>
                     <div>
                       <p className="font-medium text-slate-900">{item.filename}</p>
-                      <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status} · {item.client_visible ? "portal visible" : "staff only"}</p>
+                      <p className="text-slate-500">{item.export_type.replaceAll("_", " ")} · {item.status} · {item.content_type || "unknown"} · {item.client_visible ? "portal visible" : "staff only"}</p>
                       <p className="text-slate-500">Storage {item.storage_mode || "unknown"} · Retention {item.retention_policy || "not set"}</p>
                       {item.retention_expires_at ? <p className="text-slate-500">Expires {new Date(item.retention_expires_at).toLocaleDateString()}</p> : null}
+                      {item.generated_at ? <p className="text-slate-500">Generated {new Date(item.generated_at).toLocaleString()}</p> : null}
                       {item.file_size_bytes ? <p className="text-slate-500">{item.file_size_bytes} bytes{item.checksum_sha256 ? ` · SHA-256 ${item.checksum_sha256.slice(0, 12)}...` : ""}</p> : null}
                       {item.error_message ? <p className="mt-1 text-rose-700">{item.error_message}</p> : null}
                     </div>

@@ -65,6 +65,7 @@ from models import (
 from security import hash_password, normalize_email
 from services.document_rendering_service import render_document_payload
 from services.file_storage_service import get_export_bytes, save_export_bytes
+from services.pdf_rendering_service import pdf_capabilities, render_pdf_from_html
 
 
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
@@ -1188,6 +1189,45 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                 storage_updates["error_message"] = None
                 export = await document_exports.update_one({"agency_id": agency["id"], "id": export["id"]}, storage_updates)
                 created.append("document_export:file_restored")
+
+        pdf_caps = pdf_capabilities()
+        if pdf_caps.get("available"):
+            pdf_filename = safe_seed_filename(document["title"], ".pdf")
+            pdf_export = await document_exports.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "export_type": "pdf", "filename": pdf_filename})
+            if pdf_export is None:
+                pdf_result = render_pdf_from_html(document.get("rendered_html") or "", document.get("title") or "Document", agency["id"], document["id"])
+                if pdf_result.ok and pdf_result.data:
+                    generated_at = datetime.now(timezone.utc)
+                    pdf_model = DocumentExport(
+                        agency_id=agency["id"],
+                        rendered_document_id=document["id"],
+                        export_type="pdf",
+                        status="generated",
+                        filename=pdf_filename,
+                        content_type="application/pdf",
+                        storage_mode="file_path",
+                        retention_policy="keep_90_days",
+                        retention_expires_at=generated_at + timedelta(days=90),
+                        generated_by_user_id=owner["id"],
+                        generated_at=generated_at,
+                        generated_from_snapshot_at=document.get("rendered_at"),
+                        client_visible=True,
+                    )
+                    pdf_data = pdf_model.model_dump(mode="json")
+                    pdf_data.update(save_export_bytes(agency["id"], pdf_model.id, pdf_filename, "application/pdf", pdf_result.data))
+                    await document_exports.insert_one(pdf_data)
+                    created.append("document_export:pdf")
+            elif pdf_export.get("storage_mode") == "file_path":
+                try:
+                    get_export_bytes(pdf_export)
+                except Exception:
+                    pdf_result = render_pdf_from_html(document.get("rendered_html") or "", document.get("title") or "Document", agency["id"], document["id"])
+                    if pdf_result.ok and pdf_result.data:
+                        storage_updates = save_export_bytes(agency["id"], pdf_export["id"], pdf_export["filename"], "application/pdf", pdf_result.data)
+                        storage_updates["status"] = "generated"
+                        storage_updates["error_message"] = None
+                        await document_exports.update_one({"agency_id": agency["id"], "id": pdf_export["id"]}, storage_updates)
+                        created.append("document_export:pdf_file_restored")
 
         delivery = await document_deliveries.find_one(
             {

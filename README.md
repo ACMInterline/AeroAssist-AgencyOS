@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, and Phase 14 document delivery hardening.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, and Phase 15 production PDF rendering/delivery infrastructure.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-14 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-15 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
@@ -184,12 +184,22 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Staff UI visibility for storage, retention, checksum, attempts, retry state, and email validation state.
 - Portal read-only download behavior preserved without send/share controls.
 
+## Phase 15 Includes
+
+- ReportLab-based simplified PDF export generation from stored rendered HTML snapshots.
+- `GET /api/agencies/{agency_id}/document-export-capabilities` for staff export capability diagnostics.
+- File-backed PDF exports with `application/pdf`, checksum, file size, retention metadata, and safe storage keys.
+- Portal read-only downloads for generated client-visible PDF and printable HTML exports.
+- Stronger delivery attachment validation before staff-triggered send/retry.
+- Safe dev-console delivery attempts preserved; SMTP remains guarded by secret-resolver limitations.
+- Seeded PDF export only when the ReportLab renderer is available.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
 - Client request submission or editable portal workflows.
 - Offer acceptance/rejection workflows.
-- Real PDF document generation.
+- Pixel-perfect browser HTML-to-PDF rendering and legal/fiscal invoice compliance.
 - Public share links.
 - Refund/exchange execution outside manual tracking.
 - Payment gateway processing.
@@ -472,4 +482,4 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Real PDF rendering, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Pixel-perfect browser PDF rendering, gateway payments, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

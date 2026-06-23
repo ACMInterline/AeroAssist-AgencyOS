@@ -24,6 +24,7 @@ The repository currently contains:
 - Phase 12: Refund and exchange tracking.
 - Phase 13: Printable document export and email delivery foundation.
 - Phase 14: Document delivery hardening.
+- Phase 15: Production PDF rendering and delivery infrastructure.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -307,19 +308,41 @@ Out of scope:
 - Raw SMTP password storage.
 - Payment links, electronic signatures, document upload, and fiscal invoice compliance.
 
+## Phase 15: Production PDF Rendering And Delivery Infrastructure
+
+Implemented foundations:
+
+- ReportLab-based simplified PDF renderer for stored rendered HTML snapshots.
+- Staff export capability endpoint with renderer diagnostics.
+- PDF exports saved through the Phase 14 file storage abstraction.
+- PDF export metadata with `application/pdf`, file size, checksum, retention policy, and safe storage keys.
+- Portal read-only PDF and printable HTML downloads for generated client-visible exports.
+- Delivery attachment validation before staff-triggered send/retry.
+- Staff UI export capability status and PDF generation control.
+- Seeded PDF export only when the ReportLab renderer is available.
+
+Out of scope:
+
+- Pixel-perfect browser HTML-to-PDF rendering.
+- Legal/fiscal invoice compliance claims.
+- Public share links.
+- Automatic or client-triggered sending.
+- Background workers and provider webhooks.
+- Raw SMTP password storage or production secret resolver integration.
+
 ## Next Recommended Phases
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 15: Production PDF Rendering And Delivery Infrastructure
+### Phase 16: Production Delivery Operations And Secret Resolution
 
 Recommended scope:
 
-- Select and verify a real HTML-to-PDF renderer.
-- Add visual PDF QA checks and system dependency documentation.
+- Add production secret resolver integration for SMTP or email provider credentials.
+- Add delivery queue worker design and manual operational controls.
+- Add provider webhook/bounce handling.
 - Add external file storage/retention lifecycle if local disk is insufficient.
-- Add background queue/retry worker and provider webhook handling.
-- Add production secret resolver integration for SMTP or provider credentials.
+- Add visual PDF QA checks if browser-grade rendering is adopted later.
 - Public/share link decision record if links are added later.
 - Document visibility and expiry controls.
 
@@ -327,7 +350,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 16: Airline Intelligence Versioning/Import Workflow
+### Phase 17: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -342,7 +365,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 17: Agency Website/CMS Publishing Foundation
+### Phase 18: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 
