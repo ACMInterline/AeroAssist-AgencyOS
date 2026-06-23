@@ -28,6 +28,12 @@ Persistent volumes:
 
 ## VPS Prerequisites
 
+For the first deployment, follow the full checklist:
+
+```text
+deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
+```
+
 Install Docker Engine and the Compose plugin if your VPS image does not already include them:
 
 ```bash
@@ -94,6 +100,7 @@ Do not commit `.env.production`.
 Use the production env file for Compose interpolation and container env:
 
 ```bash
+deploy/hostinger/scripts/preflight.sh
 docker compose --env-file .env.production -f docker-compose.production.yml build
 docker compose --env-file .env.production -f docker-compose.production.yml up -d
 ```
@@ -253,9 +260,11 @@ Use:
 
 ```text
 deploy/hostinger/OPERATIONS_RUNBOOK.md
+deploy/hostinger/POST_DEPLOYMENT_SECURITY_CHECKLIST.md
+deploy/hostinger/TROUBLESHOOTING.md
 ```
 
-It covers host folder layout, TLS setup, deploy/update, restart/status/logs, backups, restore, rollback, smoke tests, and incident checks.
+These cover host folder layout, TLS setup, deploy/update, restart/status/logs, backups, restore, rollback, smoke tests, post-deployment security verification, and troubleshooting.
 
 ## External Mongo Option
 

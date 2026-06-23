@@ -1,0 +1,227 @@
+# First Hostinger VPS Deployment Checklist
+
+Use this as the linear first-deploy path. It assumes a fresh Hostinger managed VPS and the Phase 18/19 Docker Compose deployment.
+
+No real secrets, domain values, or certificate files belong in this repository.
+
+## 1. VPS Access
+
+SSH into the VPS:
+
+```bash
+ssh root@your-vps-ip
+```
+
+Choose the app directory:
+
+```bash
+sudo mkdir -p /opt/aeroassist
+sudo chown "$USER":"$USER" /opt/aeroassist
+cd /opt/aeroassist
+```
+
+## 2. Install Prerequisites
+
+Install baseline packages:
+
+```bash
+sudo apt update
+sudo apt install -y git curl ca-certificates gnupg nginx certbot python3-certbot-nginx
+```
+
+Install Docker Engine and Compose plugin using Docker's official repository, then verify:
+
+```bash
+docker --version
+docker compose version
+docker info
+```
+
+If `docker info` fails for a non-root user, log out and back in after adding the user to the Docker group.
+
+## 3. Clone Repository
+
+```bash
+cd /opt/aeroassist
+git clone <your-repo-url> AeroAssist-AgencyOS
+cd AeroAssist-AgencyOS
+git checkout main
+git rev-parse HEAD
+```
+
+Record the commit hash in your deployment notes.
+
+## 4. Create `.env.production`
+
+```bash
+cp .env.production.example .env.production
+chmod 600 .env.production
+nano .env.production
+```
+
+Required checks:
+
+- `APP_ENV=production`
+- `AEROASSIST_DB_MODE=mongo`
+- `MONGODB_URL=mongodb://mongo:27017`
+- `MONGODB_DATABASE=aeroassist_agencyos`
+- `DEMO_AUTH_ENABLED=false`
+- `SEED_ON_STARTUP=false`
+- `SEED_ENDPOINT_ENABLED=false`
+- `AUTH_TOKEN_SECRET` is a real generated secret, not the example placeholder
+- `DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports`
+- `CORS_ALLOWED_ORIGINS=https://your-domain.example`
+- `FRONTEND_URL=https://your-domain.example`
+- `PUBLIC_APP_URL=https://your-domain.example`
+- `FRONTEND_HTTP_PORT=127.0.0.1:8080`
+- `VITE_API_BASE_URL=` remains blank when frontend nginx proxies `/api`
+
+Generate an auth secret:
+
+```bash
+openssl rand -hex 32
+```
+
+Do not commit `.env.production`.
+
+## 5. Preflight
+
+Run preflight before starting services:
+
+```bash
+APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS \
+deploy/hostinger/scripts/preflight.sh
+```
+
+Preflight verifies:
+
+- repository layout,
+- `.env.production`,
+- Docker and Compose availability,
+- required production env vars without printing secrets,
+- backup root writability,
+- Compose config,
+- Docker daemon reachability.
+
+## 6. First Start
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml build
+docker compose --env-file .env.production -f docker-compose.production.yml up -d
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+```
+
+Check logs:
+
+```bash
+SERVICE=backend deploy/hostinger/scripts/logs.sh
+```
+
+## 7. Local Readiness Before TLS
+
+```bash
+curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8080/api/health
+curl http://127.0.0.1:8080/api/readiness
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T backend python scripts/check_production_readiness.py
+```
+
+Do not continue until readiness is healthy.
+
+## 8. Host Nginx And TLS
+
+Copy the nginx template:
+
+```bash
+sudo cp deploy/hostinger/nginx/aeroassist.conf.example /etc/nginx/sites-available/aeroassist.conf
+sudo nano /etc/nginx/sites-available/aeroassist.conf
+```
+
+Replace:
+
+- `agencyos.example.com`
+- `www.agencyos.example.com`
+- certificate paths if needed
+
+Enable and test:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/aeroassist.conf /etc/nginx/sites-enabled/aeroassist.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+When DNS points to the VPS:
+
+```bash
+sudo certbot --nginx -d your-domain.example -d www.your-domain.example
+sudo certbot renew --dry-run
+```
+
+## 9. Production Smoke
+
+```bash
+APP_BASE_URL=https://your-domain.example deploy/hostinger/scripts/smoke_production.sh
+```
+
+Optional staging-only smoke with demo seed tooling:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.production.yml exec -T backend \
+  env AEROASSIST_SMOKE_BASE_URL=http://frontend python scripts/check_portal_isolation.py
+```
+
+Do not enable demo seed tooling on a live production tenant just to run this optional smoke.
+
+## 10. Manual App Verification
+
+Verify:
+
+- platform login,
+- agency login,
+- portal login,
+- portal cross-client denial if test accounts exist,
+- document export generation,
+- document export download,
+- `/api/readiness` does not expose secret values,
+- SMTP secret refs are masked if SMTP is configured.
+
+## 11. First Backup
+
+```bash
+TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_mongo.sh
+TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_exports.sh
+```
+
+Copy backup files off the VPS according to your operational policy.
+
+## 12. Record Deployment
+
+Record:
+
+```bash
+date -u
+git rev-parse HEAD
+docker compose --env-file .env.production -f docker-compose.production.yml images
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+sudo certbot certificates
+```
+
+## 13. Rollback Checklist
+
+For code rollback:
+
+```bash
+git log --oneline -10
+git checkout <previous-good-commit>
+UPDATE_GIT=false RUN_PREFLIGHT=true deploy/hostinger/scripts/deploy.sh
+```
+
+For data rollback, follow:
+
+```text
+deploy/hostinger/scripts/restore_mongo.md
+```
+
+Never restore data without a maintenance window and a fresh backup of the current state.

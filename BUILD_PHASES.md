@@ -29,6 +29,7 @@ The repository currently contains:
 - Phase 17: Production configuration hardening.
 - Phase 18: Docker and Hostinger VPS packaging.
 - Phase 19: VPS reverse proxy, TLS, backup, and operations runbook.
+- Phase 20: Hostinger VPS first deployment preparation.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -436,7 +437,32 @@ Out of scope:
 - Migrations framework.
 - Background workers, provider webhooks, automatic sending, public links, uploads, or payment links.
 
-### Phase 20: Backup Automation And Lightweight Monitoring Readiness
+### Phase 20: Hostinger VPS First Deployment Preparation
+
+Goal: Make the first Hostinger VPS deployment executable without guessing by adding final pre-deployment checklists, preflight validation, troubleshooting, and post-deployment verification.
+
+Implemented foundations:
+
+- First deployment checklist with exact command sequence.
+- `.env.production` creation and validation checklist.
+- VPS directory layout and prerequisite checklist.
+- Non-mutating preflight script that validates repo layout, env values, Docker/Compose availability, Compose config, and backup root writability.
+- Deploy helper preflight integration before git update, build, or service start.
+- Post-deployment security checklist.
+- Troubleshooting guide for Docker, ports, frontend/backend proxy, CORS, Mongo, storage, PDF, SMTP refs, nginx, certbot, and document export downloads.
+- First backup, rollback, deployed-commit recording, and post-deployment verification steps.
+
+Out of scope:
+
+- Actual server deployment.
+- Real domains, secrets, or certificate issuance.
+- Backup scheduler.
+- Monitoring services.
+- CI/CD.
+- DNS automation.
+- Background workers, provider webhooks, automatic sending, public links, uploads, or payment links.
+
+### Phase 21: Backup Automation And Lightweight Monitoring Readiness
 
 Recommended scope:
 
@@ -451,7 +477,7 @@ Avoid adding:
 
 - Provider webhooks, queue workers, public links, payment links, object storage, or CI/CD unless explicitly scoped.
 
-### Phase 21: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 22: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -467,7 +493,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 22: Airline Intelligence Versioning/Import Workflow
+### Phase 23: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -482,7 +508,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 23: Agency Website/CMS Publishing Foundation
+### Phase 24: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

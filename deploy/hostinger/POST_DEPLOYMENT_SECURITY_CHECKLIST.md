@@ -1,0 +1,75 @@
+# Post-Deployment Security Checklist
+
+Run this after the first deployment and after major operational changes.
+
+## Environment
+
+- `APP_ENV=production`
+- `AEROASSIST_DB_MODE=mongo`
+- `DEMO_AUTH_ENABLED=false`
+- `SEED_ON_STARTUP=false`
+- `SEED_ENDPOINT_ENABLED=false`
+- `AUTH_TOKEN_SECRET` is not an example placeholder
+- `CORS_ALLOWED_ORIGINS` has no wildcard and no localhost values
+- `PUBLIC_APP_URL` and `FRONTEND_URL` use the public HTTPS domain
+- `FRONTEND_HTTP_PORT=127.0.0.1:8080` when host nginx terminates TLS
+- `.env.production` is mode `600` or otherwise not world-readable
+- `.env.production` is not committed to git
+
+## Network Exposure
+
+- Host nginx owns public `80/443`
+- frontend container is bound to `127.0.0.1:8080`
+- backend port `8000` is not publicly exposed
+- MongoDB port `27017` is not publicly exposed
+- host firewall allows only required SSH/HTTP/HTTPS access
+
+## App Checks
+
+- `/api/health` returns `ok=true`
+- `/api/readiness` returns `ok=true`
+- readiness output does not include secret values
+- platform login verified
+- agency login verified
+- portal login verified
+- portal cross-client denial verified where test data exists
+- document export generation verified
+- document export download verified
+- SMTP secret references are masked and never display raw secret values
+
+## Data And Storage
+
+- `mongo_data` volume exists
+- `document_exports` volume exists
+- document exports survive container restart
+- MongoDB data survives container restart
+- first Mongo backup completed
+- first document export backup completed
+- backup checksums generated
+- off-server copy policy decided
+
+## TLS And Nginx
+
+- nginx config passes `sudo nginx -t`
+- TLS certificate issued for the real domain
+- `sudo certbot renew --dry-run` passes
+- HTTP redirects to HTTPS
+- public app loads over HTTPS
+
+## Repository Hygiene
+
+- `.env.production` is untracked
+- `.local/` is untracked
+- no real SMTP password appears in repo search
+- no production auth secret appears in repo search
+
+Useful checks:
+
+```bash
+git status --short
+git ls-files .env.production .local
+sudo nginx -t
+sudo certbot certificates
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+APP_BASE_URL=https://your-domain.example deploy/hostinger/scripts/smoke_production.sh
+```

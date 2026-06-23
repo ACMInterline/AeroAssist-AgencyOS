@@ -101,4 +101,4 @@ It does not use real credentials and does not send email.
 
 ## Exact Next Recommended Phase
 
-Phase 20 should be Backup Automation And Lightweight Monitoring Readiness: add documented retention policy, optional off-server backup target integration, uptime/log review checklist, and alerting design before provider webhooks, workers, public links, or object-storage lifecycle automation.
+Phase 20 should be Hostinger VPS First Deployment Preparation: add the final first-run checklist, preflight validation, environment checklist, real-server smoke checklist, rollback checklist, post-deployment security checklist, and troubleshooting guide before the actual first VPS deployment.

@@ -8,12 +8,18 @@ BRANCH="${BRANCH:-main}"
 UPDATE_GIT="${UPDATE_GIT:-true}"
 RUN_SMOKE="${RUN_SMOKE:-false}"
 APP_BASE_URL="${APP_BASE_URL:-}"
+RUN_PREFLIGHT="${RUN_PREFLIGHT:-true}"
 
 cd "$APP_DIR"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "FAIL: $ENV_FILE is missing. Copy .env.production.example and set production values." >&2
   exit 1
+fi
+
+if [[ "$RUN_PREFLIGHT" == "true" ]]; then
+  APP_DIR="$APP_DIR" ENV_FILE="$ENV_FILE" COMPOSE_FILE="$COMPOSE_FILE" \
+    deploy/hostinger/scripts/preflight.sh
 fi
 
 if [[ "$UPDATE_GIT" == "true" ]]; then

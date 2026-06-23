@@ -25,6 +25,12 @@ deploy/hostinger/scripts/
 
 ## First Setup Checklist
 
+For the detailed first-run command sequence, use:
+
+```text
+deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
+```
+
 1. Install Docker Engine and Docker Compose plugin.
 2. Clone the repository into `/opt/aeroassist/AeroAssist-AgencyOS`.
 3. Copy `.env.production.example` to `.env.production`.
@@ -32,9 +38,10 @@ deploy/hostinger/scripts/
 5. Set `PUBLIC_APP_URL`, `FRONTEND_URL`, and `CORS_ALLOWED_ORIGINS` to the production domain.
 6. Use `FRONTEND_HTTP_PORT=127.0.0.1:8080` when host nginx terminates TLS.
 7. Keep `DEMO_AUTH_ENABLED=false`, `SEED_ON_STARTUP=false`, and `SEED_ENDPOINT_ENABLED=false`.
-8. Build and start Compose.
-9. Configure host nginx and TLS.
-10. Run readiness and smoke checks.
+8. Run `deploy/hostinger/scripts/preflight.sh`.
+9. Build and start Compose.
+10. Configure host nginx and TLS.
+11. Run readiness and smoke checks.
 
 ## Reverse Proxy And TLS
 
@@ -85,6 +92,7 @@ deploy/hostinger/scripts/deploy.sh
 The deploy script:
 
 - verifies `.env.production`,
+- runs preflight by default,
 - optionally pulls latest `main`,
 - validates Compose config,
 - builds images,
@@ -93,6 +101,7 @@ The deploy script:
 - optionally runs the production smoke test.
 
 Set `UPDATE_GIT=false` to deploy the already-checked-out commit.
+Set `RUN_PREFLIGHT=false` only for an intentional emergency override.
 
 ## Restart, Status, Logs
 
@@ -241,3 +250,13 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 - No CI/CD.
 - No object storage.
 - No background workers, provider webhooks, automatic sending, public links, uploads, payment links, or airline integrations.
+
+## First Deployment And Troubleshooting
+
+Use:
+
+```text
+deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
+deploy/hostinger/POST_DEPLOYMENT_SECURITY_CHECKLIST.md
+deploy/hostinger/TROUBLESHOOTING.md
+```
