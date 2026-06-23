@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
 import PlatformLayout from "../../layouts/PlatformLayout"
@@ -34,10 +33,20 @@ export default function PlatformDashboardPage() {
               ))}
             </dl>
           </section>
-          <EmptyState
-            title="Next platform modules"
-            body="Airline intelligence editing, full template libraries, subscription tooling, and support workflows are intentionally not implemented in Phase 1."
-          />
+          <section className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-slate-950">Production Onboarding</h3>
+            <div className="mt-4 grid gap-3">
+              {Object.entries(summary?.production_onboarding || {}).map(([label, value]) => (
+                <div className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3 text-sm" key={label}>
+                  <span className="font-medium text-slate-700">{label.replaceAll("_", " ")}</span>
+                  <StatusBadge status={typeof value === "boolean" ? (value ? "active" : "pending") : String(value)} />
+                </div>
+              ))}
+            </div>
+            <a className="mt-5 inline-flex rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/platform/agencies">
+              Manage agencies
+            </a>
+          </section>
         </div>
       </ProtectedRoute>
     </PlatformLayout>
