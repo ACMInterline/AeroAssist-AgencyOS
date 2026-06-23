@@ -1253,6 +1253,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                     sent_at=datetime.now(timezone.utc),
                     provider="dev_console",
                     provider_message_id="seed:dev-console-document-delivery",
+                    processing_state="completed",
                     attempt_count=1,
                     last_attempt_at=datetime.now(timezone.utc),
                     retry_status="none",

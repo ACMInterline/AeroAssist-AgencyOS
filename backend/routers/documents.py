@@ -314,6 +314,9 @@ async def fail_delivery_attempt(db: Database, agency_id: str, attempt: dict, del
             "attempt_count": attempt["attempt_number"],
             "last_attempt_at": now,
             "retry_status": retry_status_for_failure(attempt["attempt_number"], int(delivery.get("max_attempts") or 3)),
+            "locked_at": None,
+            "locked_by": None,
+            "processing_state": "failed",
         },
     )
     return updated_attempt
@@ -339,6 +342,9 @@ async def mark_delivery_attempt_sent(db: Database, agency_id: str, attempt: dict
             "last_attempt_at": now,
             "retry_status": "none",
             "next_retry_at": None,
+            "locked_at": None,
+            "locked_by": None,
+            "processing_state": "completed",
         },
     )
     return updated_attempt
@@ -356,6 +362,16 @@ async def process_delivery_send(db: Database, agency_id: str, delivery_id: str, 
 
     document = await get_document_or_404(db, agency_id, delivery["rendered_document_id"])
     export = await get_export_or_404(db, agency_id, delivery["export_id"]) if delivery.get("export_id") else None
+    await db.collection("document_deliveries").update_one(
+        {"agency_id": agency_id, "id": delivery_id},
+        {
+            "status": "sending",
+            "locked_at": datetime.now(timezone.utc),
+            "locked_by": user["id"],
+            "processing_state": "processing",
+            "last_error_message": None,
+        },
+    )
     attempt = await create_delivery_attempt(db, agency_id, delivery)
 
     def fail_detail(message: str, provider: str = "none") -> HTTPException:
@@ -714,7 +730,10 @@ async def cancel_document_delivery(agency_id: str, delivery_id: str, user: dict 
     delivery = await get_delivery_or_404(db, agency_id, delivery_id)
     if delivery.get("status") not in {"draft", "queued", "failed"} and delivery.get("retry_status") != "retry_available":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Delivery cannot be cancelled from its current status.")
-    updated = await db.collection("document_deliveries").update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "cancelled", "retry_status": "none", "next_retry_at": None})
+    updated = await db.collection("document_deliveries").update_one(
+        {"agency_id": agency_id, "id": delivery_id},
+        {"status": "cancelled", "retry_status": "none", "next_retry_at": None, "locked_at": None, "locked_by": None, "processing_state": "manual_only"},
+    )
     await write_document_timeline(db, agency_id, delivery["rendered_document_id"], user["id"], "document_delivery.cancelled", "Delivery cancelled", delivery["recipient_email"], {"delivery_id": delivery_id})
     await write_audit(db, agency_id, user["id"], "document_delivery.cancelled", "document_delivery", delivery_id, "Cancelled document delivery.", {"rendered_document_id": delivery["rendered_document_id"]})
     return {"delivery": updated}

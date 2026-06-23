@@ -2929,6 +2929,7 @@ class DocumentDeliveryType(str, Enum):
 class DocumentDeliveryStatus(str, Enum):
     DRAFT = "draft"
     QUEUED = "queued"
+    SENDING = "sending"
     SENT = "sent"
     FAILED = "failed"
     CANCELLED = "cancelled"
@@ -2955,6 +2956,14 @@ class DocumentDeliveryAttemptStatus(str, Enum):
     SENT = "sent"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
+
+class DocumentDeliveryProcessingState(str, Enum):
+    MANUAL_ONLY = "manual_only"
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class AgencyEmailMode(str, Enum):
@@ -3016,6 +3025,11 @@ class DocumentDelivery(BaseDocument):
     provider: DocumentDeliveryProvider = DocumentDeliveryProvider.NONE
     provider_message_id: Optional[str] = None
     error_message: Optional[str] = None
+    queued_at: Optional[datetime] = None
+    locked_at: Optional[datetime] = None
+    locked_by: Optional[str] = None
+    scheduled_for: Optional[datetime] = None
+    processing_state: DocumentDeliveryProcessingState = DocumentDeliveryProcessingState.MANUAL_ONLY
     attempt_count: int = 0
     last_attempt_at: Optional[datetime] = None
     next_retry_at: Optional[datetime] = None

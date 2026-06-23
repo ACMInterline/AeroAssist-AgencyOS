@@ -257,6 +257,8 @@ export default function DocumentDetailPage({ documentId }) {
                       <p className="font-medium text-slate-900">{item.subject}</p>
                       <p className="text-slate-500">{item.recipient_email} · {item.status} · {item.provider} · attempts {item.attempt_count || 0}/{item.max_attempts || 3}</p>
                       <p className="text-slate-500">Retry {item.retry_status || "none"}{item.last_attempt_at ? ` · last ${new Date(item.last_attempt_at).toLocaleString()}` : ""}</p>
+                      <p className="text-slate-500">Processing {item.processing_state || "manual_only"}{item.queued_at ? ` · queued ${new Date(item.queued_at).toLocaleString()}` : ""}{item.scheduled_for ? ` · scheduled ${new Date(item.scheduled_for).toLocaleString()}` : ""}</p>
+                      {item.locked_at ? <p className="text-slate-500">Locked {new Date(item.locked_at).toLocaleString()}</p> : null}
                       {(item.attempts || []).slice(0, 3).map((attempt) => <p className="text-xs text-slate-500" key={attempt.id}>Attempt {attempt.attempt_number}: {attempt.status} · {attempt.provider}{attempt.error_message ? ` · ${attempt.error_message}` : ""}</p>)}
                       {item.last_error_message || item.error_message ? <p className="mt-1 text-rose-700">{item.last_error_message || item.error_message}</p> : null}
                     </div>
