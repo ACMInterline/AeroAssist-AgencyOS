@@ -1,8 +1,8 @@
 # Hostinger VPS Deployment
 
-This guide packages AeroAssist AgencyOS with Docker Compose for a single Hostinger managed VPS.
+This guide packages AeroAssist AgencyOS with Docker Compose for a single Hostinger managed VPS and links to the Phase 19 operations assets.
 
-It does not add TLS automation, DNS management, backups, monitoring, CI/CD, object storage, background workers, provider webhooks, public links, payment processing, or airline/GDS/NDC integrations.
+It does not add DNS automation, real certificate issuance in the repo, monitoring, CI/CD, object storage, background workers, provider webhooks, public links, payment processing, or airline/GDS/NDC integrations.
 
 ## Architecture
 
@@ -13,6 +13,13 @@ It does not add TLS automation, DNS management, backups, monitoring, CI/CD, obje
 - `mongo`: MongoDB 7 with a named data volume.
 
 The frontend container proxies `/api/*` to the backend service, so `VITE_API_BASE_URL` can stay blank when the frontend is the public entry point.
+
+Recommended production mode after Phase 19:
+
+- Host nginx owns public ports `80` and `443`.
+- The frontend container binds to `127.0.0.1:8080`.
+- Host nginx proxies to the frontend container.
+- The frontend container proxies `/api` to the backend container.
 
 Persistent volumes:
 
@@ -65,6 +72,7 @@ Required production values:
 - `DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports`
 - `CORS_ALLOWED_ORIGINS` set to your frontend origin, for example `https://agencyos.example.com`.
 - `FRONTEND_URL` and `PUBLIC_APP_URL` set to the same public origin.
+- `FRONTEND_HTTP_PORT=127.0.0.1:8080` when using host nginx/TLS.
 
 Generate an auth secret:
 
@@ -90,6 +98,12 @@ docker compose --env-file .env.production -f docker-compose.production.yml build
 docker compose --env-file .env.production -f docker-compose.production.yml up -d
 ```
 
+Or use the Phase 19 helper:
+
+```bash
+APP_DIR=/opt/aeroassist/AeroAssist-AgencyOS deploy/hostinger/scripts/deploy.sh
+```
+
 Check service status:
 
 ```bash
@@ -102,8 +116,8 @@ docker compose --env-file .env.production -f docker-compose.production.yml logs 
 From the VPS:
 
 ```bash
-curl http://127.0.0.1/api/health
-curl http://127.0.0.1/api/readiness
+curl http://127.0.0.1:8080/api/health
+curl http://127.0.0.1:8080/api/readiness
 ```
 
 Run the production readiness script inside the backend container:
@@ -113,6 +127,28 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
 ```
 
 The script prints masked secret references only.
+
+## Host Nginx And TLS
+
+Use:
+
+```text
+deploy/hostinger/nginx/aeroassist.conf.example
+```
+
+Basic setup:
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+sudo cp deploy/hostinger/nginx/aeroassist.conf.example /etc/nginx/sites-available/aeroassist.conf
+sudo nano /etc/nginx/sites-available/aeroassist.conf
+sudo ln -s /etc/nginx/sites-available/aeroassist.conf /etc/nginx/sites-enabled/aeroassist.conf
+sudo nginx -t
+sudo systemctl reload nginx
+sudo certbot --nginx -d agencyos.example.com -d www.agencyos.example.com
+```
+
+Replace placeholders with the real domain before enabling.
 
 ## Smoke Checks
 
@@ -127,6 +163,12 @@ docker compose --env-file .env.production -f docker-compose.production.yml exec 
 ```
 
 These scripts rely on seeded demo data and the seed endpoint. They are for staging or local production-like validation, not for a live production tenant unless you intentionally enable seed tooling in a controlled maintenance window.
+
+For live production endpoint checks without credentials:
+
+```bash
+APP_BASE_URL=https://agencyos.example.com deploy/hostinger/scripts/smoke_production.sh
+```
 
 ## Verify The App
 
@@ -160,6 +202,14 @@ Restart:
 docker compose --env-file .env.production -f docker-compose.production.yml up -d
 ```
 
+Helper scripts:
+
+```bash
+deploy/hostinger/scripts/restart.sh
+deploy/hostinger/scripts/status.sh
+SERVICE=backend deploy/hostinger/scripts/logs.sh
+```
+
 Update safely:
 
 ```bash
@@ -169,15 +219,53 @@ docker compose --env-file .env.production -f docker-compose.production.yml up -d
 docker compose --env-file .env.production -f docker-compose.production.yml exec backend python scripts/check_production_readiness.py
 ```
 
+Phase 19 deploy helper:
+
+```bash
+APP_BASE_URL=https://agencyos.example.com RUN_SMOKE=true deploy/hostinger/scripts/deploy.sh
+```
+
+## Backups And Restore
+
+MongoDB backup:
+
+```bash
+deploy/hostinger/scripts/backup_mongo.sh
+```
+
+Document export backup:
+
+```bash
+deploy/hostinger/scripts/backup_exports.sh
+```
+
+Restore is intentionally manual because it can overwrite data:
+
+```text
+deploy/hostinger/scripts/restore_mongo.md
+```
+
+Run backups before every production update and store off-server copies according to your operational policy.
+
+## Operations Runbook
+
+Use:
+
+```text
+deploy/hostinger/OPERATIONS_RUNBOOK.md
+```
+
+It covers host folder layout, TLS setup, deploy/update, restart/status/logs, backups, restore, rollback, smoke tests, and incident checks.
+
 ## External Mongo Option
 
 To use an external MongoDB service, set `MONGODB_URL` in `.env.production` and either leave the bundled `mongo` service unused or remove it from a local override compose file. Keep `AEROASSIST_DB_MODE=mongo`.
 
 ## Known Limitations
 
-- No TLS automation or nginx host-level reverse proxy is included.
 - No DNS setup is included.
-- No backup automation is included.
+- No real certificate files or issued certificates are included.
+- No automated backup retention or off-server backup storage is included.
 - No monitoring stack is included.
 - No migration framework is included.
 - No object-storage lifecycle is included.

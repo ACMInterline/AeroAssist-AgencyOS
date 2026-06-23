@@ -28,6 +28,7 @@ The repository currently contains:
 - Phase 16: Production delivery operations and secret resolution.
 - Phase 17: Production configuration hardening.
 - Phase 18: Docker and Hostinger VPS packaging.
+- Phase 19: VPS reverse proxy, TLS, backup, and operations runbook.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -411,21 +412,46 @@ Out of scope:
 
 ### Phase 19: VPS Reverse Proxy, TLS, Backup, And Operations Runbook
 
+Goal: Add safe server-side operational assets around the Docker Compose deployment without adding product functionality.
+
+Implemented foundations:
+
+- Host-level nginx reverse proxy template with TLS/certbot placeholders.
+- Documentation for direct-container and host-nginx deployment modes.
+- Safe deploy, restart, status, and log helper scripts.
+- Timestamped MongoDB backup script using `mongodump`.
+- Timestamped document export backup script using the backend mounted export volume.
+- Manual restore guidance with explicit checksum verification and maintenance-window steps.
+- Production smoke script for frontend, health, readiness, and login availability.
+- Operations runbook covering update, rollback, incident checks, and known limitations.
+
+Out of scope:
+
+- Live DNS setup.
+- Real certificate issuance or committed certificate files.
+- Paid monitoring stack services.
+- CI/CD deployment automation.
+- Kubernetes.
+- Object storage.
+- Migrations framework.
+- Background workers, provider webhooks, automatic sending, public links, uploads, or payment links.
+
+### Phase 20: Backup Automation And Lightweight Monitoring Readiness
+
 Recommended scope:
 
-- Host-level reverse proxy/TLS guidance.
-- Domain and DNS checklist.
-- Backup and restore procedures for MongoDB and document exports.
-- Operational log review and incident checklist.
-- Manual update and rollback runbooks.
-- Basic VPS firewall hardening notes.
+- Backup retention policy and rotation safeguards.
+- Optional off-server backup target integration.
+- Restore drill checklist.
+- Lightweight uptime and log review guidance.
+- Alerting design without adding a paid monitoring stack by default.
+- Disk-space and certificate-expiry operational checks.
 
 Avoid adding:
 
-- Monitoring stack automation unless explicitly scoped.
-- Provider webhooks, queue workers, public links, payment links, or object storage.
+- Provider webhooks, queue workers, public links, payment links, object storage, or CI/CD unless explicitly scoped.
 
-### Phase 20: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 21: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -441,7 +467,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 21: Airline Intelligence Versioning/Import Workflow
+### Phase 22: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -456,7 +482,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 22: Agency Website/CMS Publishing Foundation
+### Phase 23: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

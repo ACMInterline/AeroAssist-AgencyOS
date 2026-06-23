@@ -2,13 +2,14 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, and Phase 18 Docker/Hostinger VPS packaging.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, Phase 18 Docker/Hostinger VPS packaging, and Phase 19 VPS operations runbooks.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, Dockerfile, and implemented Phase 1-18 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, Dockerfile, and implemented Phase 1-19 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `docker-compose.production.yml` production Compose packaging for frontend, backend, MongoDB, and mounted document export storage.
+- `deploy/hostinger/` nginx template, backup scripts, deployment helpers, smoke test, and operations runbook.
 - `*.md` root specification documents.
 
 ## Phase 1 Includes
@@ -222,6 +223,16 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Mounted named volumes for MongoDB data and document exports.
 - Hostinger VPS deployment guide in `DEPLOYMENT_HOSTINGER_VPS.md`.
 
+## Phase 19 Includes
+
+- Host-level nginx reverse proxy template with TLS/certbot placeholders.
+- Hostinger operations runbook in `deploy/hostinger/OPERATIONS_RUNBOOK.md`.
+- Safe deploy, restart, status, and logs helper scripts.
+- Timestamped MongoDB and document export backup scripts.
+- Manual restore guidance for MongoDB and document exports.
+- Production smoke-test script for frontend, health, readiness, and login availability.
+- Rollback, update, log inspection, and incident checklist documentation.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -362,9 +373,20 @@ docker compose --env-file .env.production -f docker-compose.production.yml build
 docker compose --env-file .env.production -f docker-compose.production.yml up -d
 ```
 
-The default Compose stack exposes the frontend on port `80`. The frontend nginx container serves the static app and proxies `/api` to the backend service. MongoDB data is stored in the `mongo_data` volume, and document exports are stored in the `document_exports` volume mounted at `/var/lib/aeroassist/document_exports` in the backend container.
+The default Hostinger/TLS posture binds the frontend container to `127.0.0.1:8080` and lets host nginx own public ports `80` and `443`. The frontend nginx container serves the static app and proxies `/api` to the backend service. MongoDB data is stored in the `mongo_data` volume, and document exports are stored in the `document_exports` volume mounted at `/var/lib/aeroassist/document_exports` in the backend container.
 
 See `DEPLOYMENT_HOSTINGER_VPS.md` for VPS prerequisites, env setup, readiness checks, logs, smoke checks, updates, and limitations.
+
+Phase 19 operations helpers live under `deploy/hostinger/scripts`:
+
+```bash
+deploy/hostinger/scripts/deploy.sh
+deploy/hostinger/scripts/backup_mongo.sh
+deploy/hostinger/scripts/backup_exports.sh
+APP_BASE_URL=https://agencyos.example.com deploy/hostinger/scripts/smoke_production.sh
+```
+
+Use `deploy/hostinger/nginx/aeroassist.conf.example` as the host-level nginx/TLS template.
 
 ## Smoke Scripts
 
@@ -379,7 +401,7 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 18 adds Docker/Compose packaging for a Hostinger-style VPS, but it is not a complete operations stack. Production use still requires migrations, backups, monitoring, host-level reverse proxy/TLS configuration, operational runbooks, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
+Phase 19 adds host-level reverse proxy/TLS templates, backup scripts, restore guidance, smoke checks, and operations runbooks, but it is not a complete operations stack. Production use still requires migrations, automated backup retention/off-server backup policy, monitoring/alerting, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
 
 ## Useful Endpoints
 
@@ -561,4 +583,4 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Phase 19 adds reverse proxy/TLS templates, backup scripts, restore guidance, and operations runbooks. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

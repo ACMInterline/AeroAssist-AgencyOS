@@ -97,4 +97,4 @@ Recommended validation:
 
 ## Exact Next Recommended Phase
 
-Phase 19 should be VPS Reverse Proxy, TLS, Backup, And Operations Runbook: add host-level TLS/domain guidance, backup/restore procedures, operational log review, and update/rollback runbooks before adding provider webhooks, workers, public links, or object-storage lifecycle automation.
+Phase 19 should be VPS Reverse Proxy, TLS, Backup, And Operations Runbook: add host-level TLS/domain guidance, backup/restore procedures, operational log review, smoke-test scripts, and update/rollback runbooks before adding provider webhooks, workers, public links, or object-storage lifecycle automation.
