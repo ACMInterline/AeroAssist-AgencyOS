@@ -151,6 +151,15 @@ def retention_expires_at(policy: str, generated_at: datetime) -> datetime | None
     return None
 
 
+def validate_export_metadata_for_download(export: dict) -> None:
+    export_type = export.get("export_type")
+    content_type = export.get("content_type") or ""
+    if export_type == "print_html" and not content_type.startswith("text/html"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export content type does not match printable HTML.")
+    if export_type == "pdf" and content_type != "application/pdf":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export content type does not match PDF.")
+
+
 def validate_email_settings(settings: dict) -> tuple[bool, str | None]:
     mode = settings.get("mode") or "disabled"
     if mode == "disabled":
@@ -162,7 +171,10 @@ def validate_email_settings(settings: dict) -> tuple[bool, str | None]:
     if mode == "smtp":
         if not settings.get("smtp_host") or not settings.get("smtp_port"):
             return False, "SMTP host and port are required."
-        port = int(settings.get("smtp_port"))
+        try:
+            port = int(settings.get("smtp_port"))
+        except (TypeError, ValueError):
+            return False, "SMTP port must be a number."
         if port < 1 or port > 65535:
             return False, "SMTP port must be between 1 and 65535."
         if not settings.get("smtp_password_secret_ref") and not settings.get("smtp_password_is_configured"):
@@ -209,6 +221,7 @@ async def get_email_settings_or_default(db: Database, agency_id: str) -> dict:
 def export_download_response(export: dict) -> Response:
     if export.get("status") != "generated":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file is not available.")
+    validate_export_metadata_for_download(export)
     data = get_export_bytes(export)
     filename = safe_filename(export.get("filename") or "document", "")
     headers = {"Content-Disposition": f"attachment; filename=\"{filename}\""}

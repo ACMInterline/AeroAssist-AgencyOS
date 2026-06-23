@@ -9,7 +9,7 @@ from services.seed_service import seed_core_data
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 12 refund and exchange tracking.",
+    description="AeroAssist AgencyOS API foundation through Phase 14 document delivery hardening.",
 )
 
 app.add_middleware(

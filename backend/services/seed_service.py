@@ -64,7 +64,7 @@ from models import (
 )
 from security import hash_password, normalize_email
 from services.document_rendering_service import render_document_payload
-from services.file_storage_service import save_export_bytes
+from services.file_storage_service import get_export_bytes, save_export_bytes
 
 
 DEMO_OWNER_EMAIL = "owner@aeroassist.dev"
@@ -1178,6 +1178,16 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
                 ).model_dump(mode="json")
             )
             created.append("document_export:print_html")
+        elif export.get("storage_mode") == "file_path":
+            try:
+                get_export_bytes(export)
+            except Exception:
+                html_data = (document.get("rendered_html") or "").encode("utf-8")
+                storage_updates = save_export_bytes(agency["id"], export["id"], export["filename"], export.get("content_type") or "text/html; charset=utf-8", html_data)
+                storage_updates["status"] = "generated"
+                storage_updates["error_message"] = None
+                export = await document_exports.update_one({"agency_id": agency["id"], "id": export["id"]}, storage_updates)
+                created.append("document_export:file_restored")
 
         delivery = await document_deliveries.find_one(
             {

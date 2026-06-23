@@ -75,6 +75,9 @@ def get_export_bytes(export_record: dict) -> bytes:
     checksum = export_record.get("checksum_sha256")
     if checksum and compute_checksum(data) != checksum:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file checksum verification failed.")
+    expected_size = export_record.get("file_size_bytes")
+    if expected_size is not None and len(data) != int(expected_size):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Export file size verification failed.")
     return data
 
 
