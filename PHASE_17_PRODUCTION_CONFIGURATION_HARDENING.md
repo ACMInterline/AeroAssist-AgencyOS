@@ -138,4 +138,4 @@ Recommended production posture:
 
 ## Exact Next Recommended Phase
 
-Phase 18 should be Delivery Provider Operations And Object Storage Lifecycle: add provider/bounce handling strategy, explicit admin-controlled queue worker design, object-storage lifecycle policy, retention cleanup, and operational monitoring before considering public links or automated delivery.
+Phase 18 should be Docker And Hostinger VPS Packaging: add backend/frontend Dockerfiles, production Docker Compose, mounted document-export storage, health checks, production env alignment, and a Hostinger VPS deployment runbook before adding provider operations or object-storage lifecycle automation.

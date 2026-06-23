@@ -27,6 +27,7 @@ The repository currently contains:
 - Phase 15: Production PDF rendering and delivery infrastructure.
 - Phase 16: Production delivery operations and secret resolution.
 - Phase 17: Production configuration hardening.
+- Phase 18: Docker and Hostinger VPS packaging.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -381,7 +382,50 @@ Out of scope:
 - Public links.
 - Automatic sending, provider webhooks, background workers, or object-storage lifecycle automation.
 
-### Phase 18: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 18: Docker And Hostinger VPS Packaging
+
+Goal: Package the already-built app for Hostinger managed VPS deployment using Docker Compose without adding product workflows.
+
+Implemented foundations:
+
+- Backend Dockerfile for FastAPI/Uvicorn and Python dependencies.
+- Frontend Dockerfile for Vite build and nginx static serving.
+- nginx `/api` proxy from frontend container to backend container.
+- Production Docker Compose file with frontend, backend, and MongoDB services.
+- Compose health checks for MongoDB, backend health, and frontend serving.
+- Named volumes for MongoDB data and document export storage.
+- Production env template alignment for Compose defaults.
+- Hostinger VPS deployment runbook.
+
+Out of scope:
+
+- TLS certificate automation.
+- Domain/DNS management.
+- Backup automation.
+- Monitoring stack.
+- CI/CD pipeline.
+- Kubernetes.
+- Object storage.
+- Public links.
+- Worker queues, provider webhooks, or automatic sending.
+
+### Phase 19: VPS Reverse Proxy, TLS, Backup, And Operations Runbook
+
+Recommended scope:
+
+- Host-level reverse proxy/TLS guidance.
+- Domain and DNS checklist.
+- Backup and restore procedures for MongoDB and document exports.
+- Operational log review and incident checklist.
+- Manual update and rollback runbooks.
+- Basic VPS firewall hardening notes.
+
+Avoid adding:
+
+- Monitoring stack automation unless explicitly scoped.
+- Provider webhooks, queue workers, public links, payment links, or object storage.
+
+### Phase 20: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -397,7 +441,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 19: Airline Intelligence Versioning/Import Workflow
+### Phase 21: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -412,7 +456,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 20: Agency Website/CMS Publishing Foundation
+### Phase 22: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 
