@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from auth import get_current_user, require_platform_role
+from config import get_settings
 from database import Database, get_database
 
 router = APIRouter(prefix="/api/platform", tags=["platform"])
@@ -8,10 +9,12 @@ router = APIRouter(prefix="/api/platform", tags=["platform"])
 
 @router.get("/health")
 async def health() -> dict:
+    settings = get_settings()
     return {
         "ok": True,
         "service": "AeroAssist AgencyOS API",
-        "phase": "phase_16_production_delivery_operations_secret_resolution",
+        "app_env": settings.app_env,
+        "phase": "phase_17_production_configuration_hardening",
     }
 
 
@@ -71,6 +74,7 @@ async def summary(
             "Document delivery hardening foundation",
             "Production PDF rendering and delivery infrastructure foundation",
             "Production delivery operations and secret resolution foundation",
+            "Production configuration hardening foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

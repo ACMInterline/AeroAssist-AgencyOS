@@ -1,9 +1,9 @@
-import os
 from datetime import datetime, timedelta
 from typing import Callable, Iterable, Optional
 
 from fastapi import Depends, Header, HTTPException, Request, status
 
+from config import get_settings
 from database import Database, get_database
 from models import AuthIdentity, AuthSession, now_utc
 from security import hash_password, hash_token, new_raw_token, normalize_email, verify_password
@@ -11,10 +11,11 @@ from services.seed_service import DEMO_OWNER_EMAIL, seed_core_data
 from services.tenant_service import assert_agency_access, require_any_agency_role, require_any_platform_role
 
 
-DEMO_AUTH_ENABLED = os.getenv("DEMO_AUTH_ENABLED", "true").lower() in {"1", "true", "yes"}
+SETTINGS = get_settings()
+DEMO_AUTH_ENABLED = SETTINGS.demo_auth_enabled
 DEMO_PASSWORD = "DemoPass123!"
-DEFAULT_TOKEN_EXPIRY_MINUTES = int(os.getenv("TOKEN_EXPIRY_MINUTES", "720"))
-DEFAULT_INVITATION_EXPIRY_HOURS = int(os.getenv("INVITATION_EXPIRY_HOURS", "72"))
+DEFAULT_TOKEN_EXPIRY_MINUTES = SETTINGS.token_expiry_minutes
+DEFAULT_INVITATION_EXPIRY_HOURS = SETTINGS.invitation_expiry_hours
 
 def token_response(raw_token: str, session: dict) -> dict:
     return {
@@ -102,7 +103,8 @@ async def get_current_identity(
     x_demo_user_email: Optional[str] = Header(default=None),
     db: Database = Depends(get_database),
 ) -> dict:
-    await seed_core_data(db)
+    if get_settings().seed_on_startup:
+        await seed_core_data(db)
     if authorization and authorization.lower().startswith("bearer "):
         raw_token = authorization.split(" ", 1)[1].strip()
         session = await db.collection("auth_sessions").find_one({"token_hash": hash_token(raw_token)})

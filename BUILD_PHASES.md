@@ -26,6 +26,7 @@ The repository currently contains:
 - Phase 14: Document delivery hardening.
 - Phase 15: Production PDF rendering and delivery infrastructure.
 - Phase 16: Production delivery operations and secret resolution.
+- Phase 17: Production configuration hardening.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -356,7 +357,31 @@ Out of scope:
 
 These are roadmap phases, not production-readiness claims. They should remain separate so each security, data, and external-side-effect boundary can be reviewed independently.
 
-### Phase 17: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 17: Production Configuration Hardening
+
+Goal: Prepare the app for safe VPS deployment by centralizing environment handling and exposing runtime readiness without adding business workflow features.
+
+Implemented foundations:
+
+- Central backend config service for app env, demo auth, seed gates, MongoDB, CORS, storage, logging, public URLs, token settings, and SMTP secret refs.
+- Strict production startup checks for unsafe database mode, demo auth, seed behavior, wildcard/local CORS, placeholder auth secrets, and export storage writability.
+- Lightweight `/api/health` and safe `/api/readiness` summaries for app env, config, database, storage, PDF capability, and SMTP secret reference diagnostics.
+- Production-disabled startup seed and seed endpoint defaults.
+- Frontend API base URL handling that avoids localhost fallback in production builds.
+- Production readiness script aligned with runtime config checks.
+- Production env example and Hostinger/VPS deployment checklist documentation.
+
+Out of scope:
+
+- Docker packaging.
+- VPS deployment scripts.
+- nginx/TLS/domain setup.
+- Backups.
+- Monitoring stack.
+- Public links.
+- Automatic sending, provider webhooks, background workers, or object-storage lifecycle automation.
+
+### Phase 18: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -372,7 +397,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 18: Airline Intelligence Versioning/Import Workflow
+### Phase 19: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -387,7 +412,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 19: Agency Website/CMS Publishing Foundation
+### Phase 20: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

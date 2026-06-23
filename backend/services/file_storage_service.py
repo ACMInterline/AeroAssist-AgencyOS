@@ -1,17 +1,16 @@
 import base64
 import binascii
 import hashlib
-import os
 from pathlib import Path
 from uuid import uuid4
 
 from fastapi import HTTPException, status
 
+from config import get_settings
+
 
 def storage_root() -> Path:
-    configured = os.getenv("DOCUMENT_EXPORT_STORAGE_DIR")
-    root = Path(configured).expanduser() if configured else Path(__file__).resolve().parents[2] / ".local" / "document_exports"
-    root = root.resolve()
+    root = get_settings().document_export_storage_dir
     root.mkdir(parents=True, exist_ok=True)
     return root
 

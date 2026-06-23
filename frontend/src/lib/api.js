@@ -1,6 +1,8 @@
 import { authHeaders } from "./auth"
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production" ? "" : "http://localhost:8000")
 
 export async function apiGet(path) {
   const response = await fetch(`${API_BASE}${path}`, {

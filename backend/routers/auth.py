@@ -12,6 +12,7 @@ from auth import (
     safe_identity,
     token_response,
 )
+from config import get_settings
 from database import Database, get_database
 from models import (
     ChangePasswordRequest,
@@ -49,7 +50,8 @@ async def read_me(
 
 @router.post("/login")
 async def login(payload: LoginRequest, request: Request, db: Database = Depends(get_database)) -> dict:
-    await seed_core_data(db)
+    if get_settings().seed_on_startup:
+        await seed_core_data(db)
     normalized = normalize_email(payload.email)
     identity = await db.collection("auth_identities").find_one({"normalized_email": normalized})
     if not identity or not verify_password(payload.password, identity.get("password_hash", "")):
@@ -86,7 +88,8 @@ async def logout(authorization: str | None = Header(default=None), db: Database 
 async def demo_login(payload: LoginRequest, request: Request, db: Database = Depends(get_database)) -> dict:
     if not DEMO_AUTH_ENABLED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo auth is disabled.")
-    await seed_core_data(db)
+    if get_settings().seed_on_startup:
+        await seed_core_data(db)
     identity = await db.collection("auth_identities").find_one({"normalized_email": normalize_email(payload.email)})
     if identity is None:
         user = await db.collection("platform_users").find_one({"email": payload.email})

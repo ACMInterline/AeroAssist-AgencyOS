@@ -1,22 +1,28 @@
-import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
 from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, requests
+from services.pdf_rendering_service import pdf_capabilities
+from services.secret_service import check_secret
 from services.seed_service import seed_core_data
+
+settings = get_settings()
+configure_logging(settings)
 
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 16 production delivery operations and secret resolution.",
+    description="AeroAssist AgencyOS API foundation through Phase 17 production configuration hardening.",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()],
+    allow_origins=settings.cors_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,13 +31,83 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup() -> None:
+    assert_startup_safe(get_settings())
     await database.connect()
-    await seed_core_data(database)
+    if get_settings().seed_on_startup:
+        await seed_core_data(database)
 
 
 @app.get("/api/health")
 async def root_health() -> dict:
-    return {"ok": True, "service": "AeroAssist AgencyOS API"}
+    settings = get_settings()
+    return {
+        "ok": True,
+        "service": "AeroAssist AgencyOS API",
+        "app_env": settings.app_env,
+        "phase": "phase_17_production_configuration_hardening",
+    }
+
+
+def storage_status() -> dict:
+    settings = get_settings()
+    root: Path = settings.document_export_storage_dir
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        probe = root / ".aeroassist-readiness-test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink(missing_ok=True)
+        return {"ok": True, "configured": True, "writable": True, "diagnostic": "Document export storage is writable."}
+    except OSError:
+        return {"ok": False, "configured": True, "writable": False, "diagnostic": "Document export storage is not writable."}
+
+
+def delivery_config_status() -> dict:
+    settings = get_settings()
+    refs = []
+    for secret_ref in settings.smtp_secret_refs:
+        result = check_secret(secret_ref)
+        refs.append(
+            {
+                "ok": result.ok,
+                "configured": result.configured,
+                "resolved": result.resolved,
+                "diagnostic": result.diagnostic,
+                "secret_ref_masked": result.secret_ref_masked,
+            }
+        )
+    return {
+        "smtp_secret_refs_configured": len(refs),
+        "smtp_secret_refs_resolved": sum(1 for ref in refs if ref["resolved"]),
+        "smtp_secret_refs": refs,
+        "automatic_sending_enabled": False,
+    }
+
+
+@app.get("/api/readiness")
+async def readiness() -> dict:
+    settings = get_settings()
+    config = validate_config(settings, include_storage=False)
+    storage = storage_status()
+    database_status = await database.readiness()
+    pdf = pdf_capabilities()
+    delivery = delivery_config_status()
+    ok = config["ok"] and storage["ok"] and database_status["ok"]
+    return {
+        "ok": ok,
+        "service": "AeroAssist AgencyOS API",
+        "app_env": settings.app_env,
+        "phase": "phase_17_production_configuration_hardening",
+        "config": config,
+        "database": database_status,
+        "storage": storage,
+        "pdf": {
+            "available": pdf.get("available"),
+            "engine": pdf.get("engine"),
+            "engine_version": pdf.get("engine_version"),
+            "diagnostic": pdf.get("diagnostic"),
+        },
+        "delivery": delivery,
+    }
 
 
 @app.get("/api/audit-events")

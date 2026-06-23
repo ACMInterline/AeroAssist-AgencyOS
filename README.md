@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, and Phase 16 production delivery operations/secret resolution.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, and Phase 17 production configuration hardening.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-16 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, and implemented Phase 1-17 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `*.md` root specification documents.
 
@@ -203,6 +203,15 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Production readiness script at `backend/scripts/check_production_readiness.py`.
 - Staff UI visibility for delivery diagnostics, next allowed action, masked secret reference, and secret resolution status.
 
+## Phase 17 Includes
+
+- Centralized production configuration in `backend/config.py`.
+- Strict production startup validation for MongoDB, demo auth, seed paths, CORS, auth secret, logging, and export storage.
+- `GET /api/health` and `GET /api/readiness` with safe app, database, config, storage, PDF, and delivery summaries.
+- Production-disabled startup seeding and seed endpoint defaults.
+- Frontend API base URL handling that avoids localhost fallback in production builds.
+- Hardened production readiness script and `.env.production.example`.
+
 ## Intentionally Not Included Yet
 
 - Production client portal authentication, invitations, sessions, or account security.
@@ -247,8 +256,13 @@ MongoDB mode is the documented durable storage path for this phase. Startup crea
 AEROASSIST_DB_MODE=mongo
 MONGODB_URL=mongodb://localhost:27017
 MONGODB_DATABASE=aeroassist_agencyos
+APP_ENV=development
+DEMO_AUTH_ENABLED=true
+SEED_ON_STARTUP=true
+SEED_ENDPOINT_ENABLED=true
 DOCUMENT_EXPORT_STORAGE_DIR=.local/document_exports
 CORS_ALLOWED_ORIGINS=https://your-agencyos.example
+LOG_LEVEL=INFO
 AGENCY_SMTP_PASSWORD=
 SMTP_SECRET_REFS=env:AGENCY_SMTP_PASSWORD
 ```
@@ -267,7 +281,7 @@ The frontend starts on `http://localhost:5173`.
 
 ## Authentication And Seed Data
 
-Seed data runs automatically on backend startup. It can also be triggered through:
+In development, seed data runs automatically on backend startup when `SEED_ON_STARTUP=true`. It can also be triggered through the seed endpoint when `SEED_ENDPOINT_ENABLED=true`:
 
 ```bash
 curl -X POST http://localhost:8000/api/reference/seed \
@@ -295,11 +309,38 @@ When enabled, legacy headers such as `X-Demo-User-Email` and `X-Demo-Client-Emai
 ```bash
 DEMO_AUTH_ENABLED=false
 AUTH_TOKEN_SECRET=replace-with-a-long-random-secret
+SEED_ON_STARTUP=false
+SEED_ENDPOINT_ENABLED=false
 ```
 
 Invitation endpoints store only token hashes. In local/demo mode the raw invitation token and `/login?invite=...` link are returned to support manual testing without email delivery. Production responses should not expose raw tokens unless an explicit development flag is enabled.
 
-The seed endpoint is development/demo tooling. Do not expose it in production without replacing demo auth and adding an explicit administrative control.
+The seed endpoint is development/demo tooling and is disabled by default in production. First production platform owner creation should be handled by a controlled maintenance process or one-off administrative script, not by exposing demo seed data publicly.
+
+## Production Configuration
+
+Use `.env.production.example` as the Hostinger VPS checklist. Required production posture:
+
+- `APP_ENV=production`
+- `AEROASSIST_DB_MODE=mongo`
+- `MONGODB_URL` and `MONGODB_DATABASE` configured
+- `DEMO_AUTH_ENABLED=false`
+- `SEED_ON_STARTUP=false`
+- `SEED_ENDPOINT_ENABLED=false`
+- non-placeholder `AUTH_TOKEN_SECRET`
+- explicit writable `DOCUMENT_EXPORT_STORAGE_DIR`
+- `CORS_ALLOWED_ORIGINS` set to the deployed frontend origin, never `*` or localhost
+- SMTP passwords stored only in environment variables and referenced by agency settings as `env:VARIABLE_NAME`
+
+Run:
+
+```bash
+python3 backend/scripts/check_production_readiness.py
+```
+
+`APP_ENV=production` makes critical readiness failures return a nonzero exit code. The script prints only masked secret references.
+
+Frontend production builds should set `VITE_API_BASE_URL` when the API is on a different origin. If `VITE_API_BASE_URL` is omitted in a production build, the frontend uses same-origin `/api` calls rather than falling back to localhost.
 
 ## Smoke Scripts
 
@@ -314,11 +355,12 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 16 adds environment-secret SMTP resolution and delivery diagnostics, but it is not full production readiness. Production use still requires a formal permission matrix, migrations, deployment security review, backups, monitoring, operational runbooks, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
+Phase 17 hardens configuration, startup safety, readiness checks, seed/demo gates, and deployment documentation, but it is not a complete VPS deployment package. Production use still requires migrations, backups, monitoring, reverse proxy/TLS configuration, operational runbooks, broader automated tests, provider webhook/bounce handling decisions, and object-storage lifecycle policy.
 
 ## Useful Endpoints
 
 - `GET /api/health`
+- `GET /api/readiness`
 - `GET /api/auth/me`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
@@ -495,4 +537,4 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution, delivery diagnostics, and production configuration checks. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

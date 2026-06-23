@@ -1,7 +1,8 @@
-import os
 from copy import deepcopy
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from config import get_settings
 
 
 IMMUTABLE_UPDATE_FIELDS = {"id", "_id", "agency_id", "created_at"}
@@ -99,9 +100,13 @@ class MongoCollection:
 
 class Database:
     def __init__(self) -> None:
-        self.mode = os.getenv("AEROASSIST_DB_MODE", "memory")
+        settings = get_settings()
+        self.mode = settings.db_mode
+        self.mongodb_url = settings.mongodb_url
+        self.mongodb_database = settings.mongodb_database
         self._memory_collections: Dict[str, InMemoryCollection] = {}
         self._mongo_database: Optional[Any] = None
+        self._mongo_client: Optional[Any] = None
 
     async def connect(self) -> None:
         if self.mode != "mongo":
@@ -109,11 +114,21 @@ class Database:
 
         from motor.motor_asyncio import AsyncIOMotorClient
 
-        mongo_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-        database_name = os.getenv("MONGODB_DATABASE", "aeroassist_agencyos")
-        client = AsyncIOMotorClient(mongo_url)
-        self._mongo_database = client[database_name]
+        client = AsyncIOMotorClient(self.mongodb_url)
+        self._mongo_client = client
+        self._mongo_database = client[self.mongodb_database]
         await ensure_mongo_indexes(self._mongo_database)
+
+    async def readiness(self) -> Dict[str, Any]:
+        if self.mode != "mongo":
+            return {"ok": True, "mode": self.mode, "diagnostic": "In-memory database is available."}
+        if self._mongo_client is None or self._mongo_database is None:
+            return {"ok": False, "mode": self.mode, "diagnostic": "MongoDB is not connected."}
+        try:
+            await self._mongo_client.admin.command("ping")
+        except Exception as exc:
+            return {"ok": False, "mode": self.mode, "diagnostic": f"MongoDB ping failed: {exc.__class__.__name__}"}
+        return {"ok": True, "mode": self.mode, "database": self.mongodb_database, "diagnostic": "MongoDB ping succeeded."}
 
     def collection(self, name: str) -> InMemoryCollection | MongoCollection:
         if self.mode == "mongo":
