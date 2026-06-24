@@ -33,6 +33,7 @@ The repository currently contains:
 - Phase 21: Production bootstrap and go-live hardening.
 - Phase 22: Production onboarding and agency setup.
 - Phase 23: Backup automation and lightweight monitoring readiness.
+- Phase 24: Staff invitation acceptance and team access hardening.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -535,7 +536,26 @@ Avoid adding:
 - Provider webhooks, queue workers, public links, payment links, object storage, or CI/CD unless explicitly scoped.
 - External monitoring SaaS, alerting service, automated restore, or old app deletion.
 
-### Phase 24: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 24: Staff Invitation Acceptance And Team Access Hardening
+
+Implemented scope:
+
+- Staff invitation records with workspace scope, invited name, accepted/revoked metadata, and token-hash-only storage.
+- One-time raw invitation token and acceptance URL returned only from create response.
+- Staff invitation list and revoke endpoints without token exposure.
+- Public token validation endpoint with minimal invitation metadata.
+- Invitation-only staff account activation and membership creation.
+- Role restrictions preventing platform owner or agency owner invitation through this flow.
+- Audit events for invitation creation, revocation, acceptance, and membership creation without token material.
+- Platform agency UI for invitation creation, one-time link copying, invitation listing, and revocation.
+- Public `/invite/accept` page for invitation validation and password setup.
+- Staff invitation smoke script.
+
+Avoid adding:
+
+- Public registration, automatic email sending, external email/SaaS dependencies, mass team management, membership removal, or platform owner invitation flow.
+
+### Phase 25: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -551,7 +571,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 24: Airline Intelligence Versioning/Import Workflow
+### Phase 26: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -566,7 +586,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 26: Agency Website/CMS Publishing Foundation
+### Phase 27: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

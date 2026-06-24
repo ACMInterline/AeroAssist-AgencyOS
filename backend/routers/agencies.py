@@ -1,8 +1,8 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import DEMO_AUTH_ENABLED, get_current_agency_context, get_current_user, require_platform_role
+from auth import get_current_agency_context, get_current_user, require_platform_role
 from config import get_settings as get_app_settings
 from database import Database, get_database
 from models import (
@@ -25,6 +25,9 @@ from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies", tags=["agencies"])
+
+SAFE_STAFF_INVITE_ROLES = {"agency_admin", "agency_agent", "agency_accountant", "agency_readonly"}
+AGENCY_ADMIN_INVITE_ROLES = {"agency_agent", "agency_accountant", "agency_readonly"}
 
 
 def clean_updates(payload: AgencyUpdate | AgencyWorkspaceUpdate) -> dict:
@@ -55,6 +58,36 @@ async def write_audit(
         metadata=metadata or {},
     )
     await db.collection("audit_events").insert_one(event.model_dump(mode="json"))
+
+
+def parse_dt(value: object) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, str):
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return now_utc()
+
+
+def safe_invitation(invitation: dict) -> dict:
+    blocked = {"token_hash"}
+    return {key: value for key, value in invitation.items() if key not in blocked}
+
+
+def accept_url(raw_token: str) -> str:
+    base_url = str(get_app_settings().public_app_url or "").rstrip("/")
+    path = f"/invite/accept?token={raw_token}"
+    return f"{base_url}{path}" if base_url else path
+
+
+async def require_staff_invitation_permission(db: Database, agency_id: str, user: dict, target_role: str) -> dict:
+    membership = await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    if target_role not in SAFE_STAFF_INVITE_ROLES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role cannot be invited through this flow.")
+    if user.get("global_role") in {"platform_owner", "platform_admin"}:
+        return membership
+    if membership.get("agency_role") == "agency_admin" and target_role not in AGENCY_ADMIN_INVITE_ROLES:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Agency admins cannot invite equal or higher roles.")
+    return membership
 
 
 @router.get("")
@@ -325,38 +358,57 @@ async def create_staff_invitation(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    target_role = str(payload.agency_role)
+    await require_staff_invitation_permission(db, agency_id, user, target_role)
     agency = await db.collection("agencies").find_one({"id": agency_id})
     if agency is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
 
-    staff_user = await db.collection("platform_users").find_one({"email": payload.email})
-    if staff_user is None:
-        staff_user = await db.collection("platform_users").insert_one(
-            PlatformUser(email=payload.email, full_name=payload.full_name, status="invited").model_dump(mode="json")
-        )
+    if payload.workspace_id:
+        workspace = await db.collection("agency_workspaces").find_one({"agency_id": agency_id, "id": payload.workspace_id})
+        if workspace is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Workspace must belong to the agency.")
 
-    membership = await db.collection("agency_staff_memberships").find_one(
-        {"agency_id": agency_id, "user_id": staff_user["id"]}
+    normalized = normalize_email(str(payload.email))
+    existing_identity = await db.collection("auth_identities").find_one({"normalized_email": normalized})
+    existing_user = await db.collection("platform_users").find_one({"email": normalized})
+    if existing_user:
+        existing_membership = await db.collection("agency_staff_memberships").find_one(
+            {"agency_id": agency_id, "user_id": existing_user["id"]}
+        )
+        if existing_membership and existing_membership.get("status") == "active":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Active staff membership already exists.")
+
+    pending_invitation = await db.collection("invitations").find_one(
+        {
+            "agency_id": agency_id,
+            "workspace_id": payload.workspace_id,
+            "normalized_email": normalized,
+            "target_role": target_role,
+            "invitation_type": "agency_staff",
+            "status": "pending",
+        }
     )
-    if membership is None:
-        membership = await db.collection("agency_staff_memberships").insert_one(
-            AgencyStaffMembership(
-                agency_id=agency_id,
-                user_id=staff_user["id"],
-                agency_role=payload.agency_role,
-                status="invited",
-            ).model_dump(mode="json")
+    if pending_invitation:
+        expires_at = parse_dt(pending_invitation["expires_at"])
+        if expires_at > now_utc():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="A pending invitation already exists for this email, workspace, and role.")
+        await db.collection("invitations").update_one(
+            {"id": pending_invitation["id"]},
+            {"status": "expired"},
         )
 
     raw_token = new_raw_token()
+    invited_name = payload.invited_name or payload.full_name
     invitation = Invitation(
         agency_id=agency_id,
-        invited_email=payload.email,
-        normalized_email=normalize_email(payload.email),
+        workspace_id=payload.workspace_id,
+        invited_email=normalized,
+        invited_name=invited_name,
+        normalized_email=normalized,
         invitation_type="agency_staff",
-        target_role=payload.agency_role,
-        target_user_id=staff_user["id"],
+        target_role=target_role,
+        target_user_id=existing_user["id"] if existing_user else None,
         invited_by_user_id=user["id"],
         token_hash=hash_token(raw_token),
         expires_at=now_utc() + timedelta(hours=get_app_settings().invitation_expiry_hours),
@@ -364,19 +416,79 @@ async def create_staff_invitation(
     invitation_doc = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
     await write_audit(
         db,
-        event_type="agency.staff_invitation_created",
+        event_type="invitation_created",
         entity_type="invitation",
         entity_id=invitation.id,
-        summary=f"Prepared staff invitation for {payload.email}.",
+        summary=f"Prepared staff invitation for {normalized}.",
         actor_user_id=user["id"],
         agency_id=agency_id,
-        metadata={"agency_role": payload.agency_role},
+        metadata={
+            "agency_role": target_role,
+            "workspace_id": payload.workspace_id,
+            "existing_identity": bool(existing_identity),
+        },
     )
-    response = {"invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"}, "membership": membership}
-    if DEMO_AUTH_ENABLED and not get_app_settings().is_production:
-        response["dev_invitation_token"] = raw_token
-        response["dev_invitation_link"] = f"/login?invite={raw_token}"
-    return response
+    return {
+        "invitation": safe_invitation(invitation_doc),
+        "one_time_token": raw_token,
+        "accept_url": accept_url(raw_token),
+        "delivery": {"automatic_email_sent": False, "manual_delivery_required": True},
+    }
+
+
+@router.get("/{agency_id}/staff/invitations")
+async def list_staff_invitations(
+    agency_id: str,
+    workspace_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    filters = {"agency_id": agency_id, "invitation_type": "agency_staff"}
+    if workspace_id:
+        workspace = await db.collection("agency_workspaces").find_one({"agency_id": agency_id, "id": workspace_id})
+        if workspace is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Workspace must belong to the agency.")
+        filters["workspace_id"] = workspace_id
+    invitations = await db.collection("invitations").find_many(filters)
+    return {"items": [safe_invitation(invitation) for invitation in invitations]}
+
+
+@router.post("/{agency_id}/staff/invitations/{invitation_id}/revoke")
+async def revoke_staff_invitation(
+    agency_id: str,
+    invitation_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_any_agency_role(db, agency_id, user, ["agency_owner", "agency_admin"])
+    invitation = await db.collection("invitations").find_one(
+        {"agency_id": agency_id, "id": invitation_id, "invitation_type": "agency_staff"}
+    )
+    if invitation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found.")
+    if invitation.get("status") == "accepted":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Accepted invitations cannot be revoked.")
+    if invitation.get("status") != "pending":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only pending invitations can be revoked.")
+
+    updated = await db.collection("invitations").update_one(
+        {"id": invitation_id, "status": "pending"},
+        {"status": "revoked", "revoked_at": now_utc(), "revoked_by_user_id": user["id"]},
+    )
+    if updated is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Invitation is no longer pending.")
+    await write_audit(
+        db,
+        event_type="invitation_revoked",
+        entity_type="invitation",
+        entity_id=invitation_id,
+        summary=f"Revoked staff invitation for {invitation.get('normalized_email')}.",
+        actor_user_id=user["id"],
+        agency_id=agency_id,
+        metadata={"workspace_id": invitation.get("workspace_id"), "agency_role": invitation.get("target_role")},
+    )
+    return {"invitation": safe_invitation(updated)}
 
 
 @router.post("/{agency_id}/staff", status_code=status.HTTP_201_CREATED)

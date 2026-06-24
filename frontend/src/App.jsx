@@ -26,6 +26,7 @@ import RequestCreatePage from "./pages/agency/RequestCreatePage"
 import RequestDetailPage from "./pages/agency/RequestDetailPage"
 import RequestsPage from "./pages/agency/RequestsPage"
 import LoginPage from "./pages/auth/LoginPage"
+import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
 import AirlinesPage from "./pages/platform/AirlinesPage"
@@ -55,6 +56,7 @@ import HomePage from "./pages/public/HomePage"
 
 const routes = {
   "/": HomePage,
+  "/invite/accept": InviteAcceptPage,
   "/login": LoginPage,
   "/platform": PlatformDashboardPage,
   "/platform/agencies": PlatformAgenciesPage,

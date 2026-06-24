@@ -314,17 +314,23 @@ class AuthSession(BaseDocument):
 
 class Invitation(BaseDocument):
     agency_id: Optional[str] = None
+    workspace_id: Optional[str] = None
     invited_email: EmailStr
+    invited_name: Optional[str] = None
     normalized_email: str
     invitation_type: InvitationType
     target_role: Optional[str] = None
     target_client_id: Optional[str] = None
     target_user_id: Optional[str] = None
+    accepted_by_user_id: Optional[str] = None
+    accepted_by_identity_id: Optional[str] = None
     invited_by_user_id: Optional[str] = None
     status: InvitationStatus = InvitationStatus.PENDING
     token_hash: str
     expires_at: datetime
     accepted_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    revoked_by_user_id: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -340,12 +346,17 @@ class ChangePasswordRequest(BaseModel):
 class InvitationAcceptRequest(BaseModel):
     token: str
     password: str
+    email: Optional[EmailStr] = None
     display_name: Optional[str] = None
 
 
 class StaffInvitationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
     email: EmailStr
-    full_name: str
+    invited_name: Optional[str] = None
+    full_name: Optional[str] = None
+    workspace_id: Optional[str] = None
     agency_role: AgencyRole = AgencyRole.AGENCY_AGENT
 
 
@@ -499,11 +510,16 @@ class AgencyWorkspaceUpdate(BaseModel):
 
 class AgencyStaffMembership(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     user_id: str
+    identity_id: Optional[str] = None
+    email: Optional[EmailStr] = None
+    normalized_email: Optional[str] = None
     agency_role: AgencyRole
     status: UserStatus = UserStatus.INVITED
     invited_at: Optional[datetime] = Field(default_factory=now_utc)
     joined_at: Optional[datetime] = None
+    created_from_invitation_id: Optional[str] = None
 
 
 class AgencyStaffCreate(BaseModel):

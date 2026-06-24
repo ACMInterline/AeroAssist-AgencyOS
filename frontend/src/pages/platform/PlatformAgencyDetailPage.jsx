@@ -6,13 +6,14 @@ import PlatformLayout from "../../layouts/PlatformLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { rememberSelectedAgency } from "../../lib/agency"
 
-const roleOptions = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
+const roleOptions = ["agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
 
 export default function PlatformAgencyDetailPage({ agencyId }) {
   const [state, setState] = useState(null)
   const [agencyForm, setAgencyForm] = useState(null)
   const [workspaceForm, setWorkspaceForm] = useState(null)
-  const [inviteForm, setInviteForm] = useState({ email: "", full_name: "", agency_role: "agency_owner" })
+  const [inviteForm, setInviteForm] = useState({ email: "", invited_name: "", agency_role: "agency_agent", workspace_id: "" })
+  const [createdInvite, setCreatedInvite] = useState(null)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
 
@@ -21,7 +22,8 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
     const agency = await apiGet(`/api/agencies/${agencyId}`)
     const workspaces = await apiGet(`/api/agencies/${agencyId}/workspaces`)
     const staff = await apiGet(`/api/agencies/${agencyId}/staff`)
-    setState({ summary, agency: agency.agency, workspaces: workspaces.items, staff: staff.items })
+    const invitations = await apiGet(`/api/agencies/${agencyId}/staff/invitations`)
+    setState({ summary, agency: agency.agency, workspaces: workspaces.items, staff: staff.items, invitations: invitations.items })
     setAgencyForm({
       name: agency.agency.name,
       legal_name: agency.agency.legal_name,
@@ -74,13 +76,39 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
     setError("")
     setMessage("")
     try {
-      await apiPost(`/api/agencies/${agencyId}/staff/invitations`, inviteForm)
-      setInviteForm({ email: "", full_name: "", agency_role: "agency_owner" })
-      setMessage("Invitation created; delivery pending/manual.")
+      const payload = {
+        ...inviteForm,
+        invited_name: inviteForm.invited_name || undefined,
+        workspace_id: inviteForm.workspace_id || undefined,
+      }
+      const result = await apiPost(`/api/agencies/${agencyId}/staff/invitations`, payload)
+      setCreatedInvite(result)
+      setInviteForm({ email: "", invited_name: "", agency_role: "agency_agent", workspace_id: "" })
+      setMessage("Invitation created. Copy the acceptance link now.")
       await load()
     } catch (err) {
       setError(err.message)
     }
+  }
+
+  async function revokeInvitation(invitationId) {
+    if (!window.confirm("Revoke this pending invitation?")) return
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${agencyId}/staff/invitations/${invitationId}/revoke`, {})
+      setMessage("Invitation revoked.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function copyInviteLink() {
+    if (!createdInvite?.accept_url) return
+    const url = createdInvite.accept_url.startsWith("http") ? createdInvite.accept_url : `${window.location.origin}${createdInvite.accept_url}`
+    await navigator.clipboard.writeText(url)
+    setMessage("Acceptance link copied.")
   }
 
   function enterWorkspace() {
@@ -109,6 +137,16 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
               </div>
             </div>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
+            {createdInvite?.accept_url ? (
+              <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-semibold text-amber-900">This link is shown once. Copy it now.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <input className="min-w-0 flex-1 rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-800" readOnly value={createdInvite.accept_url.startsWith("http") ? createdInvite.accept_url : `${window.location.origin}${createdInvite.accept_url}`} />
+                  <button className="rounded-md bg-amber-700 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={copyInviteLink}>Copy link</button>
+                </div>
+                <p className="mt-2 text-xs text-amber-800">Raw invitation tokens are not shown again after refresh.</p>
+              </div>
+            ) : null}
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
@@ -190,10 +228,17 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
             </section>
 
             <section className="rounded-lg border border-slate-200 bg-white p-6">
-              <h3 className="text-sm font-semibold text-slate-950">Prepare Staff Invitation</h3>
+              <h3 className="text-sm font-semibold text-slate-950">Create Staff Invitation</h3>
               <form className="mt-4 grid gap-4" onSubmit={createInvitation}>
                 <Input label="Email" value={inviteForm.email} onChange={(value) => setInviteForm((current) => ({ ...current, email: value }))} required type="email" />
-                <Input label="Full name" value={inviteForm.full_name} onChange={(value) => setInviteForm((current) => ({ ...current, full_name: value }))} required />
+                <Input label="Invited name" value={inviteForm.invited_name} onChange={(value) => setInviteForm((current) => ({ ...current, invited_name: value }))} />
+                <label className="block text-sm font-medium text-slate-700">
+                  Workspace
+                  <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={inviteForm.workspace_id} onChange={(event) => setInviteForm((current) => ({ ...current, workspace_id: event.target.value }))}>
+                    <option value="">Agency-wide access</option>
+                    {state?.workspaces?.map((workspace) => <option key={workspace.id} value={workspace.id}>{workspace.name || workspace.brand_name}</option>)}
+                  </select>
+                </label>
                 <label className="block text-sm font-medium text-slate-700">
                   Role
                   <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={inviteForm.agency_role} onChange={(event) => setInviteForm((current) => ({ ...current, agency_role: event.target.value }))}>
@@ -205,10 +250,44 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
               </form>
             </section>
           </div>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-6">
+            <h3 className="text-sm font-semibold text-slate-950">Staff Invitations</h3>
+            {state?.invitations?.length ? (
+              <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
+                {state.invitations.map((invitation) => (
+                  <div className="grid gap-3 p-4 lg:grid-cols-[1fr_auto]" key={invitation.id}>
+                    <div>
+                      <p className="font-semibold text-slate-950">{invitation.invited_name || invitation.invited_email}</p>
+                      <p className="mt-1 text-sm text-slate-600">{invitation.invited_email}</p>
+                      <p className="mt-1 text-xs text-slate-500">{invitation.target_role?.replaceAll("_", " ")} · expires {formatDate(invitation.expires_at)}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge status={invitation.status} />
+                      {invitation.status === "pending" ? (
+                        <button className="rounded-md border border-rose-200 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50" type="button" onClick={() => revokeInvitation(invitation.id)}>
+                          Revoke
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-4">
+                <EmptyState title="No invitations yet" body="Create an invitation when a real staff member is ready to join." />
+              </div>
+            )}
+          </section>
         </div>
       </ProtectedRoute>
     </PlatformLayout>
   )
+}
+
+function formatDate(value) {
+  if (!value) return "not set"
+  return new Date(value).toLocaleString()
 }
 
 function Input({ label, value, onChange, required = false, type = "text" }) {
