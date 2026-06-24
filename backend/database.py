@@ -232,6 +232,7 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "platform_users": [[("email", ASCENDING)]],
         "agencies": [[("slug", ASCENDING)], [("id", ASCENDING)]],
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
+        "reference_domain_metadata": [[("domain", ASCENDING)], [("id", ASCENDING)]],
         "reference_data_suggestions": [[("id", ASCENDING)]],
         "reference_import_batches": [[("id", ASCENDING)]],
         "global_field_definitions": [[("field_key", ASCENDING)], [("id", ASCENDING)]],

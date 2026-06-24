@@ -4314,6 +4314,66 @@ class GlobalReferenceUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class ReferenceDomainMetadata(BaseDocument):
+    domain: str
+    label: str
+    description: Optional[str] = None
+    category: str = "reference"
+    is_active: bool = True
+    sort_order: int = 100
+    metadata_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+
+
+class ReferenceDomainMetadataCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    domain: str
+    label: str
+    description: Optional[str] = None
+    category: str = "reference"
+    is_active: bool = True
+    sort_order: int = 100
+    metadata_schema_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ReferenceDomainMetadataUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+    metadata_schema_json: Optional[Dict[str, Any]] = None
+
+
+class PlatformReferenceRecordCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    domain: str
+    code: str
+    label: str
+    description: Optional[str] = None
+    aliases: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
+
+
+class PlatformReferenceRecordUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = None
+    label: Optional[str] = None
+    description: Optional[str] = None
+    aliases: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
 class ServiceCatalogueRecord(BaseDocument):
     service_code: str
     service_label: str
@@ -4424,6 +4484,16 @@ class ReferenceImportBatchCreate(BaseModel):
     filename: str
     csv_text: str
     dry_run: bool = False
+
+
+class PlatformReferenceImportRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scope: ReferenceImportBatchScope = ReferenceImportBatchScope.GLOBAL
+    domain: str
+    filename: str
+    csv_text: str
+    dry_run: bool = True
 
 
 class GlobalFieldDefinition(BaseDocument):

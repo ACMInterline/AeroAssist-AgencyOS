@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_34_1_global_field_library_agency_form_profiles`
+- API phase reports `phase_34_2_platform_reference_data_console_enriched_countries`
 - platform login verified
 - agency login verified
 - portal login verified
@@ -37,6 +37,8 @@ Run this after the first deployment and after major operational changes.
 - document export generation verified
 - document export download verified
 - agency users cannot create global reference records; reference suggestions require platform review
+- agency users cannot access `/api/platform/reference/*` management/import/export/review endpoints
+- platform reference country validation rejects invalid ISO/IATA and over-limit airport/airline arrays
 - agency form profiles cannot hide system-required fields or expose internal-only fields publicly
 - SMTP secret references are masked and never display raw secret values
 

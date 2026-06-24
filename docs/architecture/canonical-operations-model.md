@@ -96,6 +96,8 @@ Reference Data is global, platform-owned master data:
 - Platform owners/admins review suggestions and may approve, reject, request more information, merge, or archive them.
 - Manual `reference_import_batches` validate and import global records without destructive deletes or startup seeding.
 - Agency-local overrides, when introduced, must be clearly local and must not be confused with global master records.
+- Phase 34.2 adds the platform-only `/platform/reference` management console and keeps agency reference pages consume-and-suggest only.
+- Enriched country metadata remains on `global_reference_records.metadata_json` for legacy compatibility while exposing structured platform editor fields.
 
 The same governance shape is reserved for future airline policy learning:
 

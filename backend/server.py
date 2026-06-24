@@ -6,9 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests, websites
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_reference, portal, refunds_exchanges, reference, request_intakes, requests, websites
 from services.pdf_rendering_service import pdf_capabilities
-from services.reference_data_service import REFERENCE_DOMAINS
+from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
 
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 34.1 global field library and agency form profiles.",
+    description="AeroAssist AgencyOS API foundation through Phase 34.2 platform reference data console and enriched countries.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_1_global_field_library_agency_form_profiles",
+        "phase": "phase_34_2_platform_reference_data_console_enriched_countries",
     }
 
 
@@ -112,6 +112,11 @@ async def readiness() -> dict:
     website_origin_intake_count = await database.collection("request_intakes").count({"source": "agency_website"})
     reference_records = await database.collection("global_reference_records").find_many()
     active_reference_record_count = len([item for item in reference_records if item.get("is_active", True)])
+    country_reference_records = [item for item in reference_records if item.get("domain") == "countries"]
+    country_record_count = len(country_reference_records)
+    enriched_country_record_count = len([item for item in country_reference_records if country_enrichment_complete(item.get("metadata_json") or item.get("metadata") or {})])
+    countries_missing_iso3_count = len([item for item in country_reference_records if not (item.get("metadata_json") or item.get("metadata") or {}).get("iso3_code")])
+    countries_missing_capital_iata_count = len([item for item in country_reference_records if not (item.get("metadata_json") or item.get("metadata") or {}).get("capital_iata_code")])
     service_catalogue_record_count = await database.collection("service_catalogue").count()
     pending_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "pending_review"})
     approved_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "approved"})
@@ -136,7 +141,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_1_global_field_library_agency_form_profiles",
+        "phase": "phase_34_2_platform_reference_data_console_enriched_countries",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -206,6 +211,20 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Reference data is globally governed; suggestions and imports are manual, reviewed, and informational for readiness.",
         },
+        "platform_reference_console": {
+            "platform_reference_console_enabled": True,
+            "enriched_country_schema_enabled": True,
+            "platform_reference_import_enabled": True,
+            "platform_reference_export_enabled": True,
+            "platform_reference_suggestion_review_enabled": True,
+            "country_record_count": country_record_count,
+            "enriched_country_record_count": enriched_country_record_count,
+            "countries_missing_iso3_count": countries_missing_iso3_count,
+            "countries_missing_capital_iata_count": countries_missing_capital_iata_count,
+            "reference_record_card_enabled": True,
+            "readiness_required": False,
+            "diagnostic": "Platform reference management is owner-controlled; enriched country quality gaps are informational.",
+        },
         "segment_scoped_requests": {
             "segment_scoped_services_enabled": True,
             "request_service_normalization_enabled": True,
@@ -263,6 +282,7 @@ app.include_router(websites.router)
 app.include_router(websites.public_router)
 app.include_router(portal.router)
 app.include_router(reference.router)
+app.include_router(platform_reference.router)
 app.include_router(form_profiles.router)
 app.include_router(form_profiles.agency_router)
 app.include_router(form_profiles.public_router)

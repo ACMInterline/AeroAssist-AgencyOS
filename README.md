@@ -417,6 +417,14 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - `/agency/settings/forms` field menu UI and foundational public/admin request form integration.
 - Phase 34.1 implementation note in `PHASE_34_1_GLOBAL_FIELD_LIBRARY_AGENCY_FORM_PROFILES.md`.
 
+## Phase 34.2 Includes
+
+- Platform-only Reference Data Management Console at `/platform/reference`.
+- Enriched country metadata on legacy-compatible `global_reference_records.metadata_json`.
+- Platform-owned domain metadata, global record cards, suggestion review, dry-run/committed import, and CSV/JSON export.
+- Agency reference data page remains consume-and-suggest only.
+- Phase 34.2 implementation note in `PHASE_34_2_PLATFORM_REFERENCE_DATA_CONSOLE_ENRICHED_COUNTRIES.md`.
+
 ## Intentionally Not Included Yet
 
 - Public share links.

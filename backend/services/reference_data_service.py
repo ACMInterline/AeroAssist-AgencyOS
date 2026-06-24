@@ -1,6 +1,7 @@
 import csv
 import hashlib
 import json
+import re
 from io import StringIO
 from typing import Any
 
@@ -44,9 +45,77 @@ SERVICE_FAMILIES = [
 
 REFERENCE_BOOTSTRAP_RECORDS = {
     "countries": [
-        {"code": "BG", "label": "Bulgaria", "aliases": ["Republic of Bulgaria"], "sort_order": 10},
-        {"code": "US", "label": "United States", "aliases": ["USA", "United States of America"], "sort_order": 20},
-        {"code": "GB", "label": "United Kingdom", "aliases": ["UK", "Great Britain"], "sort_order": 30},
+        {
+            "code": "BG",
+            "label": "Bulgaria",
+            "aliases": ["Republic of Bulgaria"],
+            "sort_order": 10,
+            "metadata_json": {
+                "iso2_code": "BG",
+                "iso3_code": "BGR",
+                "continent": "Europe",
+                "capital_city": "Sofia",
+                "capital_iata_code": "SOF",
+                "major_airports": ["SOF", "VAR", "BOJ"],
+                "official_languages": ["Bulgarian"],
+                "currency_name": "Bulgarian lev",
+                "currency_iso_code": "BGN",
+                "national_carrier": {"name": "Bulgaria Air", "iata_code": "FB"},
+                "major_airlines": [{"name": "Bulgaria Air", "iata_code": "FB"}],
+                "data_quality_status": "draft",
+                "source_notes": "Seed metadata for platform review.",
+            },
+        },
+        {
+            "code": "US",
+            "label": "United States",
+            "aliases": ["USA", "United States of America"],
+            "sort_order": 20,
+            "metadata_json": {
+                "iso2_code": "US",
+                "iso3_code": "USA",
+                "continent": "North America",
+                "capital_city": "Washington, D.C.",
+                "capital_iata_code": "DCA",
+                "major_airports": ["JFK", "LAX", "ORD"],
+                "official_languages": ["English"],
+                "currency_name": "US dollar",
+                "currency_iso_code": "USD",
+                "national_carrier": {"name": "No single designated national carrier"},
+                "major_airlines": [
+                    {"name": "American Airlines", "iata_code": "AA"},
+                    {"name": "Delta Air Lines", "iata_code": "DL"},
+                    {"name": "United Airlines", "iata_code": "UA"},
+                ],
+                "data_quality_status": "draft",
+                "source_notes": "Seed metadata for platform review.",
+            },
+        },
+        {
+            "code": "GB",
+            "label": "United Kingdom",
+            "aliases": ["UK", "Great Britain"],
+            "sort_order": 30,
+            "metadata_json": {
+                "iso2_code": "GB",
+                "iso3_code": "GBR",
+                "continent": "Europe",
+                "capital_city": "London",
+                "capital_iata_code": "LHR",
+                "major_airports": ["LHR", "LGW", "MAN"],
+                "official_languages": ["English"],
+                "currency_name": "Pound sterling",
+                "currency_iso_code": "GBP",
+                "national_carrier": {"name": "British Airways", "iata_code": "BA"},
+                "major_airlines": [
+                    {"name": "British Airways", "iata_code": "BA"},
+                    {"name": "Virgin Atlantic", "iata_code": "VS"},
+                    {"name": "easyJet", "iata_code": "U2"},
+                ],
+                "data_quality_status": "draft",
+                "source_notes": "Seed metadata for platform review.",
+            },
+        },
     ],
     "cities": [
         {"code": "SOFIA", "label": "Sofia", "metadata_json": {"country_code": "BG"}, "sort_order": 10},
@@ -201,6 +270,265 @@ def safe_reference_import_batch(record: dict[str, Any]) -> dict[str, Any]:
     return {**record, "error_report_json": record.get("error_report_json") or {}}
 
 
+DATA_QUALITY_STATUSES = {"draft", "verified", "needs_review", "deprecated"}
+COUNTRY_METADATA_FIELDS = [
+    "iso2_code",
+    "iso3_code",
+    "continent",
+    "capital_city",
+    "capital_iata_code",
+    "major_airports",
+    "official_languages",
+    "currency_name",
+    "currency_iso_code",
+    "population_estimate",
+    "population_estimate_year",
+    "national_carrier",
+    "major_airlines",
+    "travel_notes",
+    "data_quality_status",
+    "source_notes",
+    "updated_by_user_id",
+    "reviewed_by_user_id",
+    "reviewed_at",
+]
+COUNTRY_IMPORT_COLUMNS = {
+    *COUNTRY_METADATA_FIELDS,
+    "national_carrier_name",
+    "national_carrier_iata_code",
+    "major_airport_1",
+    "major_airport_2",
+    "major_airport_3",
+    "official_language_1",
+    "official_language_2",
+    "official_language_3",
+    "major_airline_1_name",
+    "major_airline_1_iata_code",
+    "major_airline_2_name",
+    "major_airline_2_iata_code",
+    "major_airline_3_name",
+    "major_airline_3_iata_code",
+}
+REFERENCE_DOMAIN_METADATA_SCHEMAS = {
+    "countries": {
+        "label": "Country enrichment metadata",
+        "fields": COUNTRY_METADATA_FIELDS,
+        "array_max": 3,
+        "quality_statuses": sorted(DATA_QUALITY_STATUSES),
+    }
+}
+
+
+def _row_prefix(row_number: int | None) -> str:
+    return f"Row {row_number}: " if row_number else ""
+
+
+def _blank(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _split_values(value: Any) -> list[str]:
+    if _blank(value):
+        return []
+    if isinstance(value, list):
+        values: list[str] = []
+        for item in value:
+            values.extend(_split_values(item))
+        return values
+    if isinstance(value, str):
+        if value.strip().startswith("["):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(item).strip() for item in parsed if not _blank(item)]
+            except json.JSONDecodeError:
+                pass
+        return [item.strip() for item in re.split(r"[|,;]", value) if item.strip()]
+    return [str(value).strip()]
+
+
+def _validate_max_three(values: list[Any], field: str, errors: list[str], row_number: int | None) -> list[Any]:
+    if len(values) > 3:
+        errors.append(f"{_row_prefix(row_number)}{field} supports at most 3 values.")
+        return values[:3]
+    return values
+
+
+def _uppercase_code(value: Any, pattern: str, field: str, errors: list[str], row_number: int | None) -> str | None:
+    if _blank(value):
+        return None
+    code = str(value).strip().upper()
+    if not re.fullmatch(pattern, code):
+        errors.append(f"{_row_prefix(row_number)}{field} must match {pattern}.")
+    return code
+
+
+def _parse_optional_int(value: Any, field: str, errors: list[str], row_number: int | None) -> int | None:
+    if _blank(value):
+        return None
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        errors.append(f"{_row_prefix(row_number)}{field} must be an integer.")
+        return None
+
+
+def _normalize_airport_list(value: Any, errors: list[str], row_number: int | None) -> list[str]:
+    airports = [_uppercase_code(item, r"[A-Z]{3}", "airport IATA code", errors, row_number) for item in _split_values(value)]
+    return _validate_max_three([item for item in airports if item], "major_airports", errors, row_number)
+
+
+def _normalize_language_list(value: Any, errors: list[str], row_number: int | None) -> list[str]:
+    return _validate_max_three(_split_values(value), "official_languages", errors, row_number)
+
+
+def _normalize_airline(value: Any, errors: list[str], row_number: int | None) -> dict[str, Any] | None:
+    if _blank(value):
+        return None
+    airline = value if isinstance(value, dict) else {"name": str(value).strip()}
+    name = str(airline.get("name") or "").strip()
+    iata = _uppercase_code(airline.get("iata_code"), r"[A-Z0-9]{2}", "airline IATA code", errors, row_number)
+    if not name and not iata:
+        return None
+    return {"name": name or None, "iata_code": iata}
+
+
+def _normalize_airline_list(value: Any, errors: list[str], row_number: int | None) -> list[dict[str, Any]]:
+    if _blank(value):
+        return []
+    if isinstance(value, str) and value.strip().startswith("["):
+        try:
+            parsed = json.loads(value)
+            value = parsed if isinstance(parsed, list) else value
+        except json.JSONDecodeError:
+            pass
+    if isinstance(value, str):
+        items = []
+        for item in _split_values(value):
+            if ":" in item:
+                name, iata = item.rsplit(":", 1)
+                items.append({"name": name.strip(), "iata_code": iata.strip()})
+            else:
+                items.append({"name": item})
+    elif isinstance(value, list):
+        items = []
+        for item in value:
+            if isinstance(item, list):
+                items.extend(item)
+            else:
+                items.append(item)
+    else:
+        items = [value]
+    airlines = [_normalize_airline(item, errors, row_number) for item in items]
+    return _validate_max_three([item for item in airlines if item], "major_airlines", errors, row_number)
+
+
+def country_enrichment_complete(metadata: dict[str, Any] | None) -> bool:
+    metadata = metadata or {}
+    return all(
+        [
+            metadata.get("iso3_code"),
+            metadata.get("capital_iata_code"),
+            metadata.get("currency_iso_code"),
+            metadata.get("major_airports"),
+            metadata.get("national_carrier"),
+        ]
+    )
+
+
+def normalize_country_metadata(raw: dict[str, Any] | None, errors: list[str] | None = None, row_number: int | None = None) -> dict[str, Any]:
+    errors = errors if errors is not None else []
+    raw = raw or {}
+    normalized = {
+        key: value
+        for key, value in raw.items()
+        if key not in COUNTRY_IMPORT_COLUMNS and not _blank(value)
+    }
+
+    simple_fields = [
+        "continent",
+        "capital_city",
+        "currency_name",
+        "travel_notes",
+        "source_notes",
+        "updated_by_user_id",
+        "reviewed_by_user_id",
+        "reviewed_at",
+    ]
+    for field in simple_fields:
+        if not _blank(raw.get(field)):
+            normalized[field] = str(raw[field]).strip()
+
+    iso2 = _uppercase_code(raw.get("iso2_code"), r"[A-Z]{2}", "iso2_code", errors, row_number)
+    iso3 = _uppercase_code(raw.get("iso3_code"), r"[A-Z]{3}", "iso3_code", errors, row_number)
+    capital_iata = _uppercase_code(raw.get("capital_iata_code"), r"[A-Z]{3}", "capital_iata_code", errors, row_number)
+    currency_iso = _uppercase_code(raw.get("currency_iso_code"), r"[A-Z]{3}", "currency_iso_code", errors, row_number)
+    for key, value in {
+        "iso2_code": iso2,
+        "iso3_code": iso3,
+        "capital_iata_code": capital_iata,
+        "currency_iso_code": currency_iso,
+    }.items():
+        if value:
+            normalized[key] = value
+
+    population_estimate = _parse_optional_int(raw.get("population_estimate"), "population_estimate", errors, row_number)
+    population_year = _parse_optional_int(raw.get("population_estimate_year"), "population_estimate_year", errors, row_number)
+    if population_estimate is not None:
+        normalized["population_estimate"] = population_estimate
+    if population_year is not None:
+        normalized["population_estimate_year"] = population_year
+
+    data_quality_status = str(raw.get("data_quality_status") or "draft").strip().lower()
+    if data_quality_status not in DATA_QUALITY_STATUSES:
+        errors.append(f"{_row_prefix(row_number)}data_quality_status must be one of {', '.join(sorted(DATA_QUALITY_STATUSES))}.")
+    normalized["data_quality_status"] = data_quality_status
+
+    airport_values = [raw.get("major_airports")]
+    airport_values.extend(raw.get(f"major_airport_{index}") for index in range(1, 4))
+    major_airports = _normalize_airport_list([value for value in airport_values if not _blank(value)], errors, row_number)
+    if major_airports:
+        normalized["major_airports"] = major_airports
+
+    language_values = [raw.get("official_languages")]
+    language_values.extend(raw.get(f"official_language_{index}") for index in range(1, 4))
+    languages = _normalize_language_list([value for value in language_values if not _blank(value)], errors, row_number)
+    if languages:
+        normalized["official_languages"] = languages
+
+    national_carrier = raw.get("national_carrier")
+    if _blank(national_carrier) and (not _blank(raw.get("national_carrier_name")) or not _blank(raw.get("national_carrier_iata_code"))):
+        national_carrier = {
+            "name": raw.get("national_carrier_name"),
+            "iata_code": raw.get("national_carrier_iata_code"),
+        }
+    normalized_carrier = _normalize_airline(national_carrier, errors, row_number)
+    if normalized_carrier:
+        normalized["national_carrier"] = normalized_carrier
+
+    airline_values = [raw.get("major_airlines")]
+    for index in range(1, 4):
+        if not _blank(raw.get(f"major_airline_{index}_name")) or not _blank(raw.get(f"major_airline_{index}_iata_code")):
+            airline_values.append(
+                {
+                    "name": raw.get(f"major_airline_{index}_name"),
+                    "iata_code": raw.get(f"major_airline_{index}_iata_code"),
+                }
+            )
+    major_airlines = _normalize_airline_list([value for value in airline_values if not _blank(value)], errors, row_number)
+    if major_airlines:
+        normalized["major_airlines"] = major_airlines
+
+    return normalized
+
+
+def normalize_reference_metadata_for_domain(domain: str, metadata: dict[str, Any] | None, row_number: int | None = None) -> tuple[dict[str, Any], list[str]]:
+    errors: list[str] = []
+    if domain == "countries":
+        return normalize_country_metadata(metadata, errors, row_number), errors
+    return metadata or {}, errors
+
+
 async def audit_reference_event(
     db: Database,
     event_type: str,
@@ -223,7 +551,7 @@ async def audit_reference_event(
 
 REQUIRED_IMPORT_COLUMNS = {"domain", "code", "label"}
 OPTIONAL_IMPORT_COLUMNS = {"description", "aliases", "sort_order", "is_active", "metadata_json"}
-SUPPORTED_IMPORT_COLUMNS = REQUIRED_IMPORT_COLUMNS | OPTIONAL_IMPORT_COLUMNS
+SUPPORTED_IMPORT_COLUMNS = REQUIRED_IMPORT_COLUMNS | OPTIONAL_IMPORT_COLUMNS | COUNTRY_IMPORT_COLUMNS
 
 
 def parse_bool(value: str | None, default: bool = True) -> bool:
@@ -250,6 +578,14 @@ def parse_metadata(value: str | None, row_number: int, errors: list[str]) -> dic
         errors.append(f"Row {row_number}: metadata_json must be an object.")
         return {}
     return parsed
+
+
+def extract_country_metadata_from_row(row: dict[str, Any], metadata_json: dict[str, Any]) -> dict[str, Any]:
+    enriched = dict(metadata_json)
+    for column in COUNTRY_IMPORT_COLUMNS:
+        if column in row and not _blank(row.get(column)):
+            enriched[column] = row.get(column)
+    return enriched
 
 
 async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> dict[str, Any]:
@@ -286,6 +622,9 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
             duplicate_codes.append(code)
         seen_codes.add(code)
         metadata_json = parse_metadata(row.get("metadata_json"), row_number, row_errors)
+        if domain == "countries":
+            metadata_json, metadata_errors = normalize_reference_metadata_for_domain(domain, extract_country_metadata_from_row(row, metadata_json), row_number)
+            row_errors.extend(metadata_errors)
         try:
             sort_order = int(row.get("sort_order") or 100)
         except ValueError:

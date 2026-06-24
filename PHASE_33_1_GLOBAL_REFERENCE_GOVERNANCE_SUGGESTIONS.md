@@ -36,6 +36,10 @@ The same governance pattern is reserved for future airline policy learning:
 
 Phase 34.1 applies the same platform-owned governance principle to form fields: AeroAssist owns canonical field definitions and agencies configure only presentation/profile settings. Reference Data remains the source for controlled select lists, while form profiles decide where approved fields appear.
 
+## Phase 34.2 Relationship
+
+Phase 34.2 moves global Reference Data management into the platform owner layer at `/platform/reference`, adds domain metadata and enriched country fields, and preserves `/agency/reference` as a consume-and-suggest surface only. The legacy `POST /api/reference/import-batches` path remains compatible, while the platform console adds enriched country CSV columns and export tooling.
+
 ## Known Limits
 
 - No full airline policy engine is implemented.

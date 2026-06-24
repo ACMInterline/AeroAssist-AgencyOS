@@ -1,4 +1,4 @@
-import { Building2, Plane, ShieldCheck } from "lucide-react"
+import { Building2, Database, Plane, ShieldCheck } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -33,6 +33,10 @@ export default function PlatformLayout({ children, user }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airlines">
               <Plane className="h-4 w-4" />
               Airlines / Knowledge
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/reference">
+              <Database className="h-4 w-4" />
+              Reference Data
             </a>
           </nav>
           <div className="flex items-center gap-3">

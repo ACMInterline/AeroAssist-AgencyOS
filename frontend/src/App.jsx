@@ -41,6 +41,7 @@ import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
+import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
 import PortalActionsPage from "./pages/portal/PortalActionsPage"
 import PortalBookingsPage from "./pages/portal/PortalBookingsPage"
@@ -70,6 +71,7 @@ const routes = {
   "/platform": PlatformDashboardPage,
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/airlines": AirlinesPage,
+  "/platform/reference": PlatformReferenceDataPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -202,6 +204,11 @@ export default function App() {
   const platformAgencyMatch = window.location.pathname.match(/^\/platform\/agencies\/([^/]+)$/)
   if (platformAgencyMatch) {
     return <PlatformAgencyDetailPage agencyId={platformAgencyMatch[1]} />
+  }
+
+  const platformReferenceRecordMatch = window.location.pathname.match(/^\/platform\/reference\/records\/([^/]+)$/)
+  if (platformReferenceRecordMatch) {
+    return <PlatformReferenceDataPage recordId={platformReferenceRecordMatch[1]} />
   }
 
   const portalPassengerMatch = window.location.pathname.match(/^\/portal\/passengers\/([^/]+)$/)

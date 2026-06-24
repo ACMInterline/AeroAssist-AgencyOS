@@ -22,6 +22,7 @@ from services.reference_data_service import (
     bootstrap_reference_data,
     create_reference_import_batch,
     normalize_reference_code,
+    normalize_reference_metadata_for_domain,
     safe_reference_import_batch,
     safe_reference_record,
     safe_reference_suggestion,
@@ -67,6 +68,13 @@ def matches_service_query(record: dict[str, Any], query: str) -> bool:
         record.get("default_ssr_code"),
     ]
     return any(needle in str(value).lower() for value in haystack if value)
+
+
+def normalize_metadata_or_raise(domain: str, metadata: dict[str, Any] | None) -> dict[str, Any]:
+    normalized, errors = normalize_reference_metadata_for_domain(domain, metadata or {})
+    if errors:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+    return normalized
 
 
 async def require_reference_manager(user: dict, payload_scope: str | None = None) -> None:
@@ -116,6 +124,7 @@ async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_use
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Suggested code is required for approval.")
         existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+        metadata_json = normalize_metadata_or_raise(domain, suggestion.get("suggested_metadata_json") or {})
         payload = {
             "domain": domain,
             "code": code,
@@ -123,8 +132,8 @@ async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_use
             "label": suggestion["suggested_label"],
             "description": suggestion.get("suggested_description"),
             "aliases": suggestion.get("suggested_aliases") or [],
-            "metadata_json": suggestion.get("suggested_metadata_json") or {},
-            "metadata": suggestion.get("suggested_metadata_json") or {},
+            "metadata_json": metadata_json,
+            "metadata": metadata_json,
             "source_type": "platform",
             "is_active": True,
             "updated_by_user_id": reviewer_user_id,
@@ -134,12 +143,13 @@ async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_use
         else:
             approved_record = await db.collection("global_reference_records").insert_one(GlobalReferenceRecord(**{**payload, "created_by_user_id": reviewer_user_id}).model_dump(mode="json"))
     elif suggestion_type == "correction":
+        metadata_json = normalize_metadata_or_raise(domain, suggestion.get("suggested_metadata_json") or {})
         updates = {
             "label": suggestion.get("suggested_label"),
             "description": suggestion.get("suggested_description"),
             "aliases": suggestion.get("suggested_aliases") or [],
-            "metadata_json": suggestion.get("suggested_metadata_json") or {},
-            "metadata": suggestion.get("suggested_metadata_json") or {},
+            "metadata_json": metadata_json,
+            "metadata": metadata_json,
             "updated_by_user_id": reviewer_user_id,
         }
         if suggestion.get("suggested_code"):
@@ -483,7 +493,7 @@ async def create_reference_record_for_domain(
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference record already exists.")
     payload_dict = payload.model_dump(mode="json")
-    metadata_json = payload_dict.get("metadata_json") or payload_dict.get("metadata") or {}
+    metadata_json = normalize_metadata_or_raise(domain, payload_dict.get("metadata_json") or payload_dict.get("metadata") or {})
     record = GlobalReferenceRecord(
         **{
             **payload_dict,
@@ -535,8 +545,10 @@ async def update_reference_record(
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference code already exists.")
         updates["code"] = code
         updates["key"] = code
-    if "metadata_json" in updates:
-        updates["metadata"] = updates["metadata_json"]
+    if "metadata_json" in updates or "metadata" in updates:
+        metadata_json = normalize_metadata_or_raise(domain, updates.get("metadata_json") or updates.get("metadata") or {})
+        updates["metadata_json"] = metadata_json
+        updates["metadata"] = metadata_json
     updates["updated_by_user_id"] = user["id"]
     updated = await db.collection("global_reference_records").update_one({"id": record_id}, updates)
     await audit_reference_event(db, "reference_data.updated", "global_reference_record", record_id, f"Reference record {domain}:{record_id} updated.", user["id"], {"domain": domain})
