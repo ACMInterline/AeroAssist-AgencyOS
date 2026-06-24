@@ -6,7 +6,7 @@ Phase 28.1 upgrades the internal agency workspace from a broad top-nav layout in
 
 - Added a persistent desktop sidebar for agency workspace navigation.
 - Added responsive mobile drawer navigation with keyboard-accessible buttons.
-- Added active-route highlighting and disabled coming-soon nav items for Website/CMS and Offers/Pricing scope.
+- Added active-route highlighting and disabled coming-soon nav affordances; Website/CMS was enabled later in Phase 29.
 - Added a compact top bar with workspace context, manual-operations badge, create-request action, and account/logout area.
 - Added sidebar collapse behavior on desktop.
 - Reused Phase 28 brand name/logo and CSS variable theme settings across the shell.
@@ -26,9 +26,8 @@ Phase 28.1 upgrades the internal agency workspace from a broad top-nav layout in
 - Documents
 - Settings
 
-## Coming Soon Navigation
+## Coming Soon Navigation At Phase 28.1
 
-- Website / CMS
 - Offers / Pricing
 
 Coming-soon entries are rendered disabled and do not navigate.

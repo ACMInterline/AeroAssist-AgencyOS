@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 28.1 agency app shell and visual polish.",
+    description="AeroAssist AgencyOS API foundation through Phase 29 agency website builder and CMS foundation.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_28_1_app_shell_sidebar_visual_polish",
+        "phase": "phase_29_agency_website_builder_cms_foundation",
     }
 
 
@@ -102,6 +102,9 @@ async def readiness() -> dict:
         ]
     )
     branding_settings_count = await database.collection("agency_branding_settings").count()
+    website_settings_count = await database.collection("agency_website_settings").count()
+    published_website_count = await database.collection("agency_website_settings").count({"status": "active"})
+    website_page_count = await database.collection("agency_website_pages").count()
     branded_logo_count = len(
         [
             item
@@ -114,7 +117,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_28_1_app_shell_sidebar_visual_polish",
+        "phase": "phase_29_agency_website_builder_cms_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -137,6 +140,13 @@ async def readiness() -> dict:
             "logo_configured_agencies": branded_logo_count,
             "readiness_required": False,
             "diagnostic": "Agency branding settings are optional and do not affect service readiness.",
+        },
+        "agency_websites": {
+            "configured_websites": website_settings_count,
+            "active_websites": published_website_count,
+            "website_pages": website_page_count,
+            "readiness_required": False,
+            "diagnostic": "Agency website builder content is optional and does not affect service readiness.",
         },
         "pdf": {
             "available": pdf.get("available"),
@@ -170,5 +180,7 @@ app.include_router(documents.storage_router)
 app.include_router(documents.portal_router)
 app.include_router(refunds_exchanges.router)
 app.include_router(refunds_exchanges.portal_router)
+app.include_router(websites.router)
+app.include_router(websites.public_router)
 app.include_router(portal.router)
 app.include_router(reference.router)

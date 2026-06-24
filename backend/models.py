@@ -125,6 +125,29 @@ class WebsiteStatus(str, Enum):
     SUSPENDED = "suspended"
 
 
+class WebsitePageStatus(str, Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+class WebsitePageType(str, Enum):
+    HOME = "home"
+    ABOUT = "about"
+    SERVICES = "services"
+    CONTACT = "contact"
+    CUSTOM = "custom"
+
+
+class WebsiteSectionType(str, Enum):
+    HERO = "hero"
+    TEXT = "text"
+    SERVICES = "services"
+    CTA = "cta"
+    CONTACT = "contact"
+    INTAKE_LINK = "intake_link"
+
+
 class PortalStatus(str, Enum):
     NOT_CONFIGURED = "not_configured"
     ACTIVE = "active"
@@ -663,6 +686,94 @@ class AgencyLogoUpload(BaseModel):
     filename: str
     content_type: str
     data_base64: str
+
+
+class AgencyWebsiteSettings(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    site_name: str
+    slug: str
+    tagline: Optional[str] = None
+    status: WebsiteStatus = WebsiteStatus.DRAFT
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    show_request_cta: bool = True
+    published_at: Optional[datetime] = None
+    updated_by_user_id: Optional[str] = None
+    updated_by_email: Optional[EmailStr] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AgencyWebsiteSettingsUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workspace_id: Optional[str] = None
+    site_name: Optional[str] = None
+    slug: Optional[str] = None
+    tagline: Optional[str] = None
+    status: Optional[WebsiteStatus] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    show_request_cta: Optional[bool] = None
+
+
+class AgencyWebsiteSection(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    section_type: WebsiteSectionType = WebsiteSectionType.TEXT
+    eyebrow: Optional[str] = None
+    heading: str
+    body: Optional[str] = None
+    cta_label: Optional[str] = None
+    cta_href: Optional[str] = None
+    items: List[str] = Field(default_factory=list)
+    sort_order: int = 0
+
+
+class AgencyWebsitePage(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    page_type: WebsitePageType = WebsitePageType.CUSTOM
+    title: str
+    slug: str
+    status: WebsitePageStatus = WebsitePageStatus.DRAFT
+    sections: List[AgencyWebsiteSection] = Field(default_factory=list)
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    published_at: Optional[datetime] = None
+    updated_by_user_id: Optional[str] = None
+    updated_by_email: Optional[EmailStr] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AgencyWebsitePageCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workspace_id: Optional[str] = None
+    page_type: WebsitePageType = WebsitePageType.CUSTOM
+    title: str
+    slug: str
+    status: WebsitePageStatus = WebsitePageStatus.DRAFT
+    sections: List[AgencyWebsiteSection] = Field(default_factory=list)
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+
+
+class AgencyWebsitePageUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workspace_id: Optional[str] = None
+    page_type: Optional[WebsitePageType] = None
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    status: Optional[WebsitePageStatus] = None
+    sections: Optional[List[AgencyWebsiteSection]] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
 
 
 class AgencyStaffMembership(BaseDocument):

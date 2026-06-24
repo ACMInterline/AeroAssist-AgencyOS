@@ -41,6 +41,7 @@ The repository currently contains:
 - Phase 27.2: Assistance assessment driven SSR recommendation.
 - Phase 28: Agency branding, theme, and UI personalization settings.
 - Phase 28.1: AgencyOS app shell, sidebar navigation, and visual polish stabilization.
+- Phase 29: Agency website builder / CMS foundation.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -664,7 +665,7 @@ Implemented scope:
 
 - Persistent desktop sidebar for agency admins and agents.
 - Responsive mobile drawer navigation and desktop sidebar collapse.
-- Active-route highlighting and disabled coming-soon items for Website/CMS and Offers/Pricing.
+- Active-route highlighting and disabled coming-soon affordances; Website/CMS is enabled in Phase 29.
 - Top bar with workspace context, primary create-request action, manual operations badge, and account/logout area.
 - Theme-aware app background, cards, buttons, fields, status surfaces, focus states, and responsive table overflow.
 - Dashboard, request list, request detail, intake queue, and request builder layout polish.
@@ -673,7 +674,23 @@ Avoid adding:
 
 - CMS publishing, pricing automation, airline integrations, external UI libraries, arbitrary CSS injection, or automated delivery.
 
-### Phase 29: Operational Request Workspace Hardening
+### Phase 29: Agency Website Builder / CMS Foundation
+
+Implemented scope:
+
+- Agency-owned website settings for site name, slug, tagline, status, SEO text, contact details, and request CTA visibility.
+- Controlled website pages with draft, published, and archived lifecycle states.
+- Controlled section blocks for hero, text, services, CTA, contact, and intake link content.
+- Agency CMS UI at `/agency/website` with settings, page creation, section editing, publish/archive, and live preview.
+- Public JSON endpoint and public frontend renderer at `/site/{slug}` for active websites only.
+- Sidebar Website/CMS navigation enabled.
+- Readiness/platform website counts.
+
+Avoid adding:
+
+- Custom CSS/JS/HTML embeds, domain routing changes, pricing automation, airline integrations, external UI libraries, or automatic delivery.
+
+### Phase 30: Operational Request Workspace Hardening
 
 Recommended scope:
 
@@ -687,7 +704,7 @@ Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
 
-### Phase 30: Airline Intelligence Versioning/Import Workflow
+### Phase 31: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -702,7 +719,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 31: Agency Website/CMS Publishing Foundation
+### Phase 32: Agency Website/CMS Publishing Hardening
 
 Recommended scope:
 

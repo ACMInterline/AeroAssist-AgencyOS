@@ -157,6 +157,8 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_workspaces",
     "agency_branding_settings",
     "agency_branding_assets",
+    "agency_website_settings",
+    "agency_website_pages",
     "client_profiles",
     "request_intakes",
     "portal_access_mappings",

@@ -29,6 +29,7 @@ import RequestDetailPage from "./pages/agency/RequestDetailPage"
 import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
 import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
 import RequestsPage from "./pages/agency/RequestsPage"
+import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
 import LoginPage from "./pages/auth/LoginPage"
 import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
@@ -57,6 +58,7 @@ import PortalRequestsPage from "./pages/portal/PortalRequestsPage"
 import PortalRefundExchangeCaseDetailPage from "./pages/portal/PortalRefundExchangeCaseDetailPage"
 import PortalRefundExchangeCasesPage from "./pages/portal/PortalRefundExchangeCasesPage"
 import HomePage from "./pages/public/HomePage"
+import PublicAgencyWebsitePage from "./pages/public/PublicAgencyWebsitePage"
 
 const routes = {
   "/": HomePage,
@@ -67,6 +69,7 @@ const routes = {
   "/platform/airlines": AirlinesPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
+  "/agency/website": WebsiteBuilderPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
   "/agency/document-storage": DocumentStoragePage,
@@ -90,6 +93,11 @@ const routes = {
 }
 
 export default function App() {
+  const publicWebsiteMatch = window.location.pathname.match(/^\/site\/([^/]+)$/)
+  if (publicWebsiteMatch) {
+    return <PublicAgencyWebsitePage slug={publicWebsiteMatch[1]} />
+  }
+
   if (window.location.pathname === "/agency/requests/new") {
     return <RequestCreatePage />
   }
