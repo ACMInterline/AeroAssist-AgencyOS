@@ -29,6 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
+- API phase reports `phase_24_staff_invitation_acceptance_team_access_hardening`
 - platform login verified
 - agency login verified
 - portal login verified
@@ -36,6 +37,16 @@ Run this after the first deployment and after major operational changes.
 - document export generation verified
 - document export download verified
 - SMTP secret references are masked and never display raw secret values
+
+## Staff Invitations
+
+- staff invitation creation returns a one-time acceptance link only to the creator
+- staff invitation list does not include raw token or `token_hash`
+- invalid invitation token validation fails safely
+- pending invitation revoke works
+- revoked invitation cannot be accepted
+- accepted invitation creates exactly one active staff membership
+- audit events do not include raw invitation token or `token_hash`
 
 ## Data And Storage
 

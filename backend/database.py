@@ -211,6 +211,7 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "agencies": [[("slug", ASCENDING)], [("id", ASCENDING)]],
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
         "airline_profiles": [[("airline_code", ASCENDING)], [("id", ASCENDING)]],
+        "agency_staff_memberships": [[("agency_id", ASCENDING), ("user_id", ASCENDING)]],
         "portal_access_mappings": [[("agency_id", ASCENDING), ("user_email", ASCENDING)]],
         "auth_identities": [[("normalized_email", ASCENDING)], [("id", ASCENDING)]],
         "auth_sessions": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
@@ -222,6 +223,10 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
 
     compound_indexes = {
         "client_profiles": [[("agency_id", ASCENDING), ("primary_email", ASCENDING)]],
+        "invitations": [
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("normalized_email", ASCENDING), ("target_role", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
         "passenger_profiles": [[("agency_id", ASCENDING), ("display_name", ASCENDING)]],
         "client_passenger_relationships": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
