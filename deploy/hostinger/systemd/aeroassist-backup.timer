@@ -1,0 +1,10 @@
+[Unit]
+Description=Run AeroAssist AgencyOS backup daily
+
+[Timer]
+OnCalendar=*-*-* 02:15:00 UTC
+Persistent=true
+Unit=aeroassist-backup.service
+
+[Install]
+WantedBy=timers.target

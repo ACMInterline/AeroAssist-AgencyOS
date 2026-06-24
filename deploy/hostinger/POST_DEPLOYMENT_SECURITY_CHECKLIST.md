@@ -46,6 +46,8 @@ Run this after the first deployment and after major operational changes.
 - first Mongo backup completed
 - first document export backup completed
 - backup checksums generated
+- `deploy/hostinger/scripts/verify_backups.sh` passes for the latest MongoDB backup
+- `deploy/hostinger/scripts/prune_backups.sh` dry-run reviewed before any `--apply`
 - off-server copy policy decided
 
 ## TLS And Nginx
@@ -55,6 +57,16 @@ Run this after the first deployment and after major operational changes.
 - `sudo certbot renew --dry-run` passes
 - HTTP redirects to HTTPS
 - public app loads over HTTPS
+- `certbot.timer` is active
+
+## Phase 23 Operations
+
+- `deploy/hostinger/scripts/healthcheck.sh` exits `0`
+- `deploy/hostinger/scripts/status_full.sh` prints no secrets
+- `aeroassist-backup.timer` installed only after operator approval
+- `aeroassist-backup-verify.timer` installed only after operator approval
+- `systemctl list-timers 'aeroassist-backup*'` shows expected daily schedule if timers are enabled
+- old `/opt/aeroassist` path is preserved and old app containers are stopped
 
 ## Repository Hygiene
 
@@ -71,5 +83,7 @@ git ls-files .env.production .local
 sudo nginx -t
 sudo certbot certificates
 docker compose --env-file .env.production -f docker-compose.production.yml ps
-APP_BASE_URL=https://your-domain.example deploy/hostinger/scripts/smoke_production.sh
+APP_BASE_URL=https://avio.my deploy/hostinger/scripts/smoke_production.sh
+deploy/hostinger/scripts/healthcheck.sh
+deploy/hostinger/scripts/verify_backups.sh
 ```

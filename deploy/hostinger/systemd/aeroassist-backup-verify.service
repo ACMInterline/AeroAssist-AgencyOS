@@ -1,0 +1,10 @@
+[Unit]
+Description=Verify AeroAssist AgencyOS backups
+After=aeroassist-backup.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/aeroassist-agencyos
+ExecStart=/opt/aeroassist-agencyos/deploy/hostinger/scripts/verify_backups.sh
+User=root
+Group=root

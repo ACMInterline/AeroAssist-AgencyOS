@@ -1,6 +1,6 @@
 # Hostinger VPS Deployment
 
-This guide packages AeroAssist AgencyOS with Docker Compose for a single Hostinger managed VPS and links to the Phase 19 operations assets.
+This guide packages AeroAssist AgencyOS with Docker Compose for a single Hostinger managed VPS and links to the Phase 19 through Phase 23 operations assets.
 
 It does not add DNS automation, real certificate issuance in the repo, monitoring, CI/CD, object storage, background workers, provider webhooks, public links, payment processing, or airline/GDS/NDC integrations.
 
@@ -14,7 +14,7 @@ It does not add DNS automation, real certificate issuance in the repo, monitorin
 
 The frontend container proxies `/api/*` to the backend service, so `VITE_API_BASE_URL` can stay blank when the frontend is the public entry point.
 
-Recommended production mode after Phase 19:
+Recommended production mode after Phase 23:
 
 - Host nginx owns public ports `80` and `443`.
 - The frontend container binds to `127.0.0.1:8080`.
@@ -256,16 +256,40 @@ APP_BASE_URL=https://agencyos.example.com RUN_SMOKE=true deploy/hostinger/script
 
 ## Backups And Restore
 
-MongoDB backup:
+Combined MongoDB and document export backup:
+
+```bash
+deploy/hostinger/scripts/backup_all.sh
+```
+
+MongoDB-only backup:
 
 ```bash
 deploy/hostinger/scripts/backup_mongo.sh
 ```
 
-Document export backup:
+Document export-only backup:
 
 ```bash
 deploy/hostinger/scripts/backup_exports.sh
+```
+
+Verify latest backups:
+
+```bash
+deploy/hostinger/scripts/verify_backups.sh
+```
+
+Preview conservative retention pruning:
+
+```bash
+deploy/hostinger/scripts/prune_backups.sh
+```
+
+Apply conservative retention pruning:
+
+```bash
+deploy/hostinger/scripts/prune_backups.sh --apply
 ```
 
 Restore is intentionally manual because it can overwrite data:
@@ -275,6 +299,43 @@ deploy/hostinger/scripts/restore_mongo.md
 ```
 
 Run backups before every production update and store off-server copies according to your operational policy.
+
+## Backup Timer
+
+Phase 23 includes root-owned systemd unit templates. They are not installed automatically.
+
+Install the daily backup and verification timers:
+
+```bash
+sudo cp deploy/hostinger/systemd/aeroassist-backup.service /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup.timer /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup-verify.service /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup-verify.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now aeroassist-backup.timer
+sudo systemctl enable --now aeroassist-backup-verify.timer
+```
+
+Check or disable timers:
+
+```bash
+systemctl list-timers 'aeroassist-backup*'
+systemctl status aeroassist-backup.timer
+systemctl status aeroassist-backup-verify.timer
+sudo systemctl disable --now aeroassist-backup.timer
+sudo systemctl disable --now aeroassist-backup-verify.timer
+```
+
+## Lightweight Health And Status
+
+Run the Phase 23 host healthcheck and full status snapshot:
+
+```bash
+deploy/hostinger/scripts/healthcheck.sh
+deploy/hostinger/scripts/status_full.sh
+```
+
+The healthcheck validates Docker, nginx, `certbot.timer`, Compose health, `https://avio.my`, `https://www.avio.my` canonical redirect, `/api/health`, `/api/readiness`, local-only frontend binding on `127.0.0.1:8080`, nginx ownership of ports `80/443`, and old app stopped/preserved status.
 
 ## Operations Runbook
 
@@ -297,8 +358,9 @@ To use an external MongoDB service, set `MONGODB_URL` in `.env.production` and e
 
 - No DNS setup is included.
 - No real certificate files or issued certificates are included.
-- No automated backup retention or off-server backup storage is included.
-- No monitoring stack is included.
+- No off-server backup storage is included.
+- No external monitoring stack or alerting service is included.
+- No automated restore is included.
 - No migration framework is included.
 - No object-storage lifecycle is included.
 - No background workers, automatic sending, provider webhooks, public links, uploads, payment links, or airline integrations are included.

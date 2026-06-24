@@ -1,0 +1,14 @@
+[Unit]
+Description=AeroAssist AgencyOS daily backup
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/aeroassist-agencyos
+ExecStart=/opt/aeroassist-agencyos/deploy/hostinger/scripts/backup_all.sh
+User=root
+Group=root
+Nice=5
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

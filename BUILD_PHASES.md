@@ -32,6 +32,7 @@ The repository currently contains:
 - Phase 20: Hostinger VPS first deployment preparation.
 - Phase 21: Production bootstrap and go-live hardening.
 - Phase 22: Production onboarding and agency setup.
+- Phase 23: Backup automation and lightweight monitoring readiness.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -519,18 +520,20 @@ Out of scope:
 
 ### Phase 23: Backup Automation And Lightweight Monitoring Readiness
 
-Recommended scope:
+Implemented scope:
 
-- Backup retention policy and rotation safeguards.
-- Optional off-server backup target integration.
-- Restore drill checklist.
-- Lightweight uptime and log review guidance.
-- Alerting design without adding a paid monitoring stack by default.
-- Disk-space and certificate-expiry operational checks.
+- Combined MongoDB and document export backup script.
+- Backup checksum verification and age checks with MongoDB freshness failure.
+- Conservative dry-run-first backup pruning with explicit `--apply`.
+- Root-owned systemd service/timer templates for daily backup and verification.
+- Lightweight host healthcheck for Docker, nginx, certbot, Compose health, canonical domain routing, API health/readiness, local-only frontend binding, nginx-owned public ports, and old app stopped/preserved status.
+- Full operational status script with git commit, app phase, containers, nginx, certbot timer, disk usage, latest backups, domain redirect summary, and old app state.
+- Phase 23 production operations documentation.
 
 Avoid adding:
 
 - Provider webhooks, queue workers, public links, payment links, object storage, or CI/CD unless explicitly scoped.
+- External monitoring SaaS, alerting service, automated restore, or old app deletion.
 
 ### Phase 24: Delivery Provider Operations And Object Storage Lifecycle
 

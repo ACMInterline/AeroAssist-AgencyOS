@@ -234,3 +234,73 @@ Likely fix:
 - Confirm `document_exports` named volume is mounted.
 - Confirm export files were not lost during container rebuild.
 - Restore from `backup_exports.sh` output if needed.
+
+## Backup Verification Fails
+
+Symptoms:
+
+- `verify_backups.sh` reports missing MongoDB backup
+- checksum verification fails
+- latest MongoDB backup is older than the configured threshold
+
+Inspect:
+
+```bash
+sudo ls -la /var/backups/aeroassist
+sudo find /var/backups/aeroassist -maxdepth 2 -type f | sort | tail -20
+deploy/hostinger/scripts/verify_backups.sh
+journalctl -u aeroassist-backup.service --no-pager -n 100
+```
+
+Likely fix:
+
+- Run `deploy/hostinger/scripts/backup_all.sh` manually.
+- Confirm `/var/backups/aeroassist` is writable by root.
+- Confirm Docker Compose services are healthy before the backup.
+- Do not delete or edit backup artifacts manually unless a restore plan exists.
+
+## Backup Timer Does Not Run
+
+Symptoms:
+
+- no new timestamped backup directory appears
+- `systemctl list-timers 'aeroassist-backup*'` does not show the timer
+
+Inspect:
+
+```bash
+systemctl status aeroassist-backup.timer
+systemctl status aeroassist-backup.service
+journalctl -u aeroassist-backup.service --no-pager -n 100
+```
+
+Likely fix:
+
+- Reinstall the unit files from `deploy/hostinger/systemd`.
+- Run `sudo systemctl daemon-reload`.
+- Enable the timer with `sudo systemctl enable --now aeroassist-backup.timer`.
+- Keep unit files root-owned and free of secrets.
+
+## Healthcheck Fails
+
+Symptoms:
+
+- `healthcheck.sh` exits nonzero
+- public canonical URL or API readiness fails
+- frontend is not bound to `127.0.0.1:8080`
+
+Inspect:
+
+```bash
+deploy/hostinger/scripts/healthcheck.sh
+deploy/hostinger/scripts/status_full.sh
+sudo ss -tulpn | grep -E ':80|:443|:8080'
+docker compose --env-file .env.production -f docker-compose.production.yml ps
+```
+
+Likely fix:
+
+- Confirm nginx owns public ports `80/443`.
+- Confirm `FRONTEND_HTTP_PORT=127.0.0.1:8080`.
+- Restart Docker Compose services if any are unhealthy.
+- Restart nginx only after `sudo nginx -t` passes.

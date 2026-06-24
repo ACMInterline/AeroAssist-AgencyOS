@@ -1,6 +1,6 @@
 # AeroAssist Hostinger Operations Runbook
 
-This runbook is for operating the Phase 18 Docker Compose deployment on a Hostinger managed VPS.
+This runbook is for operating the Phase 18 Docker Compose deployment and Phase 23 backup/health readiness assets on a Hostinger managed VPS.
 
 It does not add product functionality, monitoring services, CI/CD, background workers, provider webhooks, public links, uploads, payment links, or airline integrations.
 
@@ -118,6 +118,7 @@ Status:
 
 ```bash
 deploy/hostinger/scripts/status.sh
+deploy/hostinger/scripts/status_full.sh
 ```
 
 All logs:
@@ -152,7 +153,13 @@ It does not use real credentials.
 
 ## Backups
 
-Backups are timestamped under `/var/backups/aeroassist` by default. No script deletes old backups automatically.
+Backups are timestamped under `/var/backups/aeroassist` by default. Phase 23 adds combined backup, verification, and conservative dry-run-first pruning.
+
+Combined MongoDB and document exports:
+
+```bash
+deploy/hostinger/scripts/backup_all.sh
+```
 
 MongoDB:
 
@@ -169,12 +176,59 @@ deploy/hostinger/scripts/backup_exports.sh
 Recommended before every production update:
 
 ```bash
-TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_mongo.sh
-TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_exports.sh
+deploy/hostinger/scripts/backup_all.sh
+```
+
+Verify backups:
+
+```bash
+deploy/hostinger/scripts/verify_backups.sh
+```
+
+Preview pruning:
+
+```bash
+deploy/hostinger/scripts/prune_backups.sh
+```
+
+Apply pruning:
+
+```bash
+deploy/hostinger/scripts/prune_backups.sh --apply
 ```
 
 Store off-server copies according to your operational policy. This phase does not add automated remote backup storage.
+
+## Backup Timer
+
+The backup timer is installed by an operator, not by application startup.
+
+```bash
+sudo cp deploy/hostinger/systemd/aeroassist-backup.service /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup.timer /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup-verify.service /etc/systemd/system/
+sudo cp deploy/hostinger/systemd/aeroassist-backup-verify.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now aeroassist-backup.timer
+sudo systemctl enable --now aeroassist-backup-verify.timer
+```
+
+Check status:
+
+```bash
+systemctl list-timers 'aeroassist-backup*'
+systemctl status aeroassist-backup.timer
+systemctl status aeroassist-backup-verify.timer
+journalctl -u aeroassist-backup.service --no-pager -n 100
+journalctl -u aeroassist-backup-verify.service --no-pager -n 100
+```
+
+Disable:
+
+```bash
+sudo systemctl disable --now aeroassist-backup.timer
+sudo systemctl disable --now aeroassist-backup-verify.timer
+```
 
 ## Restore
 
@@ -214,12 +268,16 @@ Do not automate destructive rollback until migrations and backup verification po
 ## Health And Readiness
 
 ```bash
-curl https://agencyos.example.com/api/health
-curl https://agencyos.example.com/api/readiness
+curl https://avio.my/api/health
+curl https://avio.my/api/readiness
 docker compose --env-file .env.production -f docker-compose.production.yml exec -T backend python scripts/check_production_readiness.py
+deploy/hostinger/scripts/healthcheck.sh
+deploy/hostinger/scripts/status_full.sh
 ```
 
 Readiness must not expose secret values.
+
+The Phase 23 healthcheck validates Docker, nginx, `certbot.timer`, Compose service health, canonical `https://avio.my` routing, API health/readiness, local-only frontend binding on `127.0.0.1:8080`, nginx ownership of public ports `80/443`, and the stopped/preserved old app state.
 
 ## First Platform Owner Bootstrap
 
