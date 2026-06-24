@@ -220,12 +220,31 @@ class RequestPriority(str, Enum):
 class RequestSource(str, Enum):
     STAFF_CREATED = "staff_created"
     WEBSITE_FORM = "website_form"
+    PUBLIC_WEBSITE = "public_website"
     CLIENT_PORTAL = "client_portal"
     PHONE = "phone"
     EMAIL = "email"
     WHATSAPP = "whatsapp"
     WALK_IN = "walk_in"
     IMPORTED = "imported"
+    INTERNAL = "internal"
+
+
+class RequestIntakeSource(str, Enum):
+    PUBLIC_WEBSITE = "public_website"
+    STAFF_MANUAL = "staff_manual"
+    IMPORTED = "imported"
+    INTERNAL = "internal"
+    CLIENT_PORTAL = "client_portal"
+
+
+class RequestIntakeStatus(str, Enum):
+    NEW = "new"
+    TRIAGED = "triaged"
+    CONVERTED = "converted"
+    REJECTED = "rejected"
+    DUPLICATE = "duplicate"
+    ARCHIVED = "archived"
 
 
 class RequestPassengerRole(str, Enum):
@@ -779,6 +798,8 @@ class TravelRequest(BaseDocument):
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
+    source_intake_id: Optional[str] = None
+    intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     closed_at: Optional[datetime] = None
 
 
@@ -799,6 +820,8 @@ class TravelRequestCreate(BaseModel):
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
+    source_intake_id: Optional[str] = None
+    intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TravelRequestUpdate(BaseModel):
@@ -817,6 +840,116 @@ class TravelRequestUpdate(BaseModel):
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
+    source_intake_id: Optional[str] = None
+    intake_payload_snapshot: Optional[Dict[str, Any]] = None
+
+
+class RequestIntakeContactSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    organization: Optional[str] = None
+    marketing_consent: bool = False
+    data_processing_consent: bool = False
+    privacy_policy_accepted: bool = False
+
+
+class RequestIntakeTravelSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    passenger_count: int = 1
+    itinerary_notes: Optional[str] = None
+
+
+class RequestIntakeServiceSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    selected_service_categories: List[str] = Field(default_factory=list)
+    mobility_assistance: bool = False
+    medical_travel: bool = False
+    pet_travel: bool = False
+    child_or_unaccompanied_minor: bool = False
+    special_baggage: bool = False
+    documents_or_visa: bool = False
+    disruption_or_claims: bool = False
+    booking_or_planning: bool = False
+    other: bool = False
+    other_details: Optional[str] = None
+
+
+class RequestIntake(BaseDocument):
+    agency_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    reference_code: str
+    source: RequestIntakeSource = RequestIntakeSource.PUBLIC_WEBSITE
+    status: RequestIntakeStatus = RequestIntakeStatus.NEW
+    contact_snapshot: RequestIntakeContactSnapshot
+    travel_summary: RequestIntakeTravelSummary
+    service_summary: RequestIntakeServiceSummary
+    canonical_payload: Dict[str, Any] = Field(default_factory=dict)
+    raw_payload: Dict[str, Any] = Field(default_factory=dict)
+    normalized_payload: Optional[Dict[str, Any]] = None
+    priority: RequestPriority = RequestPriority.NORMAL
+    assigned_to: Optional[str] = None
+    triage_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+    converted_request_id: Optional[str] = None
+    converted_at: Optional[datetime] = None
+    converted_by: Optional[str] = None
+    duplicate_of_intake_id: Optional[str] = None
+    action_reason: Optional[str] = None
+
+
+class PublicRequestIntakeCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    contact: RequestIntakeContactSnapshot
+    travel: RequestIntakeTravelSummary
+    services: RequestIntakeServiceSummary
+    request_details: Optional[str] = None
+
+
+class StaffRequestIntakeCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    source: RequestIntakeSource = RequestIntakeSource.STAFF_MANUAL
+    contact: RequestIntakeContactSnapshot
+    travel: RequestIntakeTravelSummary
+    services: RequestIntakeServiceSummary
+    priority: RequestPriority = RequestPriority.NORMAL
+    assigned_to: Optional[str] = None
+    triage_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+    request_details: Optional[str] = None
+
+
+class RequestIntakeTriageUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    priority: Optional[RequestPriority] = None
+    assigned_to: Optional[str] = None
+    triage_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class RequestIntakeAction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: Optional[str] = None
+    duplicate_of_intake_id: Optional[str] = None
 
 
 class RequestStatusUpdate(BaseModel):

@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_25_document_storage_lifecycle_delivery_provider_readiness`
+- API phase reports `phase_26_request_intake_operational_request_stabilization`
 - platform login verified
 - agency login verified
 - portal login verified

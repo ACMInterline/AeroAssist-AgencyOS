@@ -50,8 +50,10 @@ class InMemoryCollection:
         self.documents[clean["id"]] = clean
         return serialize_document(clean)
 
-    async def update_one(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        updates = sanitize_updates(updates)
+    async def update_one(self, filters: Dict[str, Any], updates: Dict[str, Any], allow_agency_update: bool = False) -> Optional[Dict[str, Any]]:
+        updates = serialize_document(updates) if allow_agency_update else sanitize_updates(updates)
+        if allow_agency_update:
+            updates = {key: value for key, value in updates.items() if key not in {"id", "_id", "created_at"}}
         for document_id, document in self.documents.items():
             if matches_filter(document, filters):
                 updated = serialize_document(document)
@@ -82,10 +84,12 @@ class MongoCollection:
         await self.collection.insert_one(clean)
         return serialize_document(clean)
 
-    async def update_one(self, filters: Dict[str, Any], updates: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    async def update_one(self, filters: Dict[str, Any], updates: Dict[str, Any], allow_agency_update: bool = False) -> Optional[Dict[str, Any]]:
         from pymongo import ReturnDocument
 
-        updates = sanitize_updates(updates)
+        updates = serialize_document(updates) if allow_agency_update else sanitize_updates(updates)
+        if allow_agency_update:
+            updates = {key: value for key, value in updates.items() if key not in {"id", "_id", "created_at"}}
         updates["updated_at"] = datetime.now(timezone.utc)
         result = await self.collection.find_one_and_update(
             filters,
@@ -152,6 +156,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_staff_memberships",
     "agency_workspaces",
     "client_profiles",
+    "request_intakes",
     "portal_access_mappings",
     "passenger_profiles",
     "client_passenger_relationships",

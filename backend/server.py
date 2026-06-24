@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, requests
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests
 from services.pdf_rendering_service import pdf_capabilities
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 25 document storage lifecycle and delivery provider readiness.",
+    description="AeroAssist AgencyOS API foundation through Phase 26 request intake operational stabilization.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
+        "phase": "phase_26_request_intake_operational_request_stabilization",
     }
 
 
@@ -91,12 +91,22 @@ async def readiness() -> dict:
     database_status = await database.readiness()
     pdf = pdf_capabilities()
     delivery = delivery_config_status()
+    intake_count = await database.collection("request_intakes").count()
+    new_intake_count = await database.collection("request_intakes").count({"status": "new"})
+    converted_intake_count = await database.collection("request_intakes").count({"status": "converted"})
+    open_request_count = len(
+        [
+            item
+            for item in await database.collection("travel_requests").find_many()
+            if item.get("status") not in {"closed", "cancelled", "archived"}
+        ]
+    )
     ok = config["ok"] and storage["ok"] and database_status["ok"]
     return {
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
+        "phase": "phase_26_request_intake_operational_request_stabilization",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -106,6 +116,13 @@ async def readiness() -> dict:
             "public_links_enabled": False,
             "object_storage_enabled": False,
             "diagnostic": "Automatic delivery providers are disabled or not configured in Phase 25.",
+        },
+        "request_intake": {
+            "total_intakes": intake_count,
+            "new_intakes": new_intake_count,
+            "converted_intakes": converted_intake_count,
+            "open_operational_requests": open_request_count,
+            "diagnostic": "Request intake counts are informational and do not affect readiness.",
         },
         "pdf": {
             "available": pdf.get("available"),
@@ -127,6 +144,8 @@ app.include_router(platform.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
+app.include_router(request_intakes.public_router)
+app.include_router(request_intakes.staff_router)
 app.include_router(requests.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)

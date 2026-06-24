@@ -2,11 +2,11 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, Phase 18 Docker/Hostinger VPS packaging, Phase 19 VPS operations runbooks, Phase 20 first deployment preparation, Phase 21 production bootstrap/go-live hardening, Phase 22 production onboarding/agency setup, Phase 23 backup automation/lightweight monitoring readiness, Phase 24 staff invitation acceptance/team access hardening, and Phase 25 document storage lifecycle/delivery provider readiness.
+This repository currently contains the Phase 0 architecture specifications, Phase 1 implementation foundation, Phase 2 CRM/client-passenger relationship foundation, Phase 3 request intake foundation, Phase 4 manual offer builder foundation, Phase 5 booking/finance tracking foundation, Phase 6 Airline Intelligence foundation, Phase 7 branded HTML document output foundation, Phase 8 read-only client portal visibility foundation, Phase 9 persistence/tenant hardening foundation, Phase 10 authentication/invitation foundation, Phase 11 controlled client portal actions, Phase 12 refund/exchange tracking, Phase 13 printable document export/email delivery foundation, Phase 14 document delivery hardening, Phase 15 production PDF rendering/delivery infrastructure, Phase 16 production delivery operations/secret resolution, Phase 17 production configuration hardening, Phase 18 Docker/Hostinger VPS packaging, Phase 19 VPS operations runbooks, Phase 20 first deployment preparation, Phase 21 production bootstrap/go-live hardening, Phase 22 production onboarding/agency setup, Phase 23 backup automation/lightweight monitoring readiness, Phase 24 staff invitation acceptance/team access hardening, Phase 25 document storage lifecycle/delivery provider readiness, and Phase 26 request intake operational request stabilization.
 
 ## Project Structure
 
-- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, Dockerfile, and implemented Phase 1-25 foundations.
+- `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, Dockerfile, and implemented Phase 1-26 foundations.
 - `frontend/` Vite/React route shell for public, platform, agency, and portal layers.
 - `docker-compose.production.yml` production Compose packaging for frontend, backend, MongoDB, and mounted document export storage.
 - `deploy/hostinger/` nginx template, backup scripts, deployment helpers, smoke test, and operations runbook.
@@ -291,6 +291,15 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Hostinger storage check script at `deploy/hostinger/scripts/check_storage.sh`.
 - Phase 25 implementation note in `PHASE_25_DOCUMENT_STORAGE_LIFECYCLE_DELIVERY_PROVIDER_READINESS.md`.
 
+## Phase 26 Includes
+
+- Public request intake endpoint at `POST /api/public/request-intakes` with safe confirmation responses.
+- Staff request intake queue/detail, triage, reject/archive/duplicate, and conversion endpoints under `/api/request-intakes`.
+- Conversion service that creates canonical operational requests with `source_intake_id`, payload snapshots, route/service summaries, and duplicate conversion guard.
+- Portal request submission now creates request intakes first instead of direct operational requests.
+- Public homepage intake form plus agency intake queue/detail UI.
+- Phase 26 implementation note in `PHASE_26_REQUEST_INTAKE_OPERATIONAL_REQUEST_STABILIZATION.md`.
+
 ## Intentionally Not Included Yet
 
 - Public share links.
@@ -480,7 +489,7 @@ The backend smoke calls the seed endpoint twice and verifies counts remain stabl
 
 ## Production Readiness Warning
 
-Phase 25 adds document storage lifecycle and delivery provider readiness, but it is not a complete operations stack. Production use still requires migrations, off-server backup policy, alerting decisions, broader automated tests, provider webhook/bounce handling decisions, real object-storage integration decisions, automatic invite delivery decisions, and broader team management.
+Phase 26 adds request intake and explicit operational conversion hardening, but it is not a complete operations stack. Production use still requires migrations, off-server backup policy, alerting decisions, broader automated tests, provider webhook/bounce handling decisions, real object-storage integration decisions, automatic invite delivery decisions, broader team management, and deeper post-conversion request workspace hardening.
 
 ## Useful Endpoints
 
@@ -544,6 +553,15 @@ Phase 25 adds document storage lifecycle and delivery provider readiness, but it
 - `POST /api/agencies/{agency_id}/requests/{request_id}/archive`
 - `POST /api/agencies/{agency_id}/requests/{request_id}/restore`
 - `POST /api/agencies/{agency_id}/requests/{request_id}/status`
+- `POST /api/public/request-intakes`
+- `GET /api/request-intakes`
+- `POST /api/request-intakes`
+- `GET /api/request-intakes/{intake_id}`
+- `PATCH /api/request-intakes/{intake_id}/triage`
+- `POST /api/request-intakes/{intake_id}/convert`
+- `POST /api/request-intakes/{intake_id}/reject`
+- `POST /api/request-intakes/{intake_id}/archive`
+- `POST /api/request-intakes/{intake_id}/mark-duplicate`
 - `GET/POST /api/agencies/{agency_id}/requests/{request_id}/passengers`
 - `GET/POST /api/agencies/{agency_id}/requests/{request_id}/segments`
 - `GET/POST /api/agencies/{agency_id}/requests/{request_id}/services`
@@ -663,6 +681,7 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 
 - Portal actions use the authenticated portal account's `agency_id` and `client_id`; payloads cannot choose another tenant or client.
 - New portal requests may include only passengers with an active relationship that has `can_request_travel=true`, or an active `self` relationship.
+- Public and portal request submissions are stored as request intakes first; staff must explicitly triage and convert them before an operational request exists.
 - Portal messages are always `client_visible`; clients cannot create internal notes.
 - Offer acceptance/rejection updates the offer and queues staff review. It does not create bookings, tickets, EMDs, invoices, or payments.
 - Document acknowledgement applies only to visible rendered documents for the current client and is idempotent.
@@ -674,4 +693,4 @@ Seeded portal emails are `anna.client@example.com` and `travel@orbitex.example.c
 - Airline Intelligence.
 - Client / Passenger Portal.
 
-Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Phase 19 adds reverse proxy/TLS templates, backup scripts, restore guidance, and operations runbooks. Phase 20 adds first-deployment checklists, preflight, security checks, and troubleshooting. Phase 21 adds production owner bootstrap, go-live deployment notes, reboot verification, and nginx/TLS migration hardening. Phase 22 adds production agency onboarding, first-workspace setup, and staff invitation preparation. Phase 23 adds combined backup automation, checksum/age verification, conservative pruning, systemd timer templates, and lightweight host health/status scripts. Phase 24 adds staff invitation acceptance, one-time manual invite links, token-safe listing/validation/revocation, role restrictions, and invitation-only account activation. Phase 25 adds document storage lifecycle metadata, safe storage health/list/action APIs, delivery provider readiness placeholders, and a storage operations UI while keeping automatic delivery and public links disabled. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.
+Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CRM client/passenger relationship foundations. Phase 3 adds request intake, messages, tasks, and timeline foundations. Phase 4 adds manual offer building and send snapshots. Phase 5 adds manual booking, ticket, EMD, invoice, and payment tracking. Phase 6 adds Airline Intelligence as source-backed decision support with agency overrides. Phase 7 adds branded HTML document previews from immutable render-time snapshots. Phase 8 adds read-only client portal visibility over already-created agency records. Phase 13 adds printable HTML exports and a manual email delivery foundation. Phase 14 hardens export storage, retention metadata, and delivery attempt tracking. Phase 15 adds simplified ReportLab PDF exports from stored snapshots. Phase 16 adds staff-controlled SMTP secret resolution and delivery diagnostics. Phase 17 hardens production configuration, readiness checks, and deployment env handling. Phase 18 adds Docker/Compose packaging for Hostinger VPS deployment. Phase 19 adds reverse proxy/TLS templates, backup scripts, restore guidance, and operations runbooks. Phase 20 adds first-deployment checklists, preflight, security checks, and troubleshooting. Phase 21 adds production owner bootstrap, go-live deployment notes, reboot verification, and nginx/TLS migration hardening. Phase 22 adds production agency onboarding, first-workspace setup, and staff invitation preparation. Phase 23 adds combined backup automation, checksum/age verification, conservative pruning, systemd timer templates, and lightweight host health/status scripts. Phase 24 adds staff invitation acceptance, one-time manual invite links, token-safe listing/validation/revocation, role restrictions, and invitation-only account activation. Phase 25 adds document storage lifecycle metadata, safe storage health/list/action APIs, delivery provider readiness placeholders, and a storage operations UI while keeping automatic delivery and public links disabled. Phase 26 adds public/portal request intake records, staff triage actions, explicit conversion into canonical operational requests, source intake linkage, and duplicate conversion guards. Pixel-perfect browser PDF rendering, gateway payments, automatic delivery, public links, production integrations, automated policy evaluation, automated pricing, and airline scraping are still intentionally outside the current implementation.

@@ -142,6 +142,7 @@ export default function RequestDetailPage({ requestId }) {
               ["Source", state?.request?.source?.replaceAll("_", " ")],
               ["Route", state?.request?.route_summary || "Not set"],
               ["Services", state?.request?.service_summary || "Not set"],
+              ["Source intake", state?.request?.source_intake_id ? <a className="text-blue-700 underline" href={`/agency/request-intakes/${state.request.source_intake_id}`}>Open intake</a> : "None"],
             ]} />
             <div className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-semibold text-slate-950">Status</h3>

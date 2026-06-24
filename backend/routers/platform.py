@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
+        "phase": "phase_26_request_intake_operational_request_stabilization",
     }
 
 
@@ -28,6 +28,12 @@ async def summary(
     workspace_count = await db.collection("agency_workspaces").count()
     staff_membership_count = await db.collection("agency_staff_memberships").count()
     staff_invitation_count = await db.collection("invitations").count({"invitation_type": "agency_staff"})
+    request_intakes = await db.collection("request_intakes").find_many()
+    open_operational_requests = [
+        item
+        for item in await db.collection("travel_requests").find_many()
+        if item.get("status") not in {"closed", "cancelled", "archived"}
+    ]
     return {
         "current_user": user,
         "counts": {
@@ -37,7 +43,11 @@ async def summary(
             "clients": await db.collection("client_profiles").count(),
             "passengers": await db.collection("passenger_profiles").count(),
             "relationships": await db.collection("client_passenger_relationships").count(),
+            "request_intakes": len(request_intakes),
+            "new_request_intakes": len([item for item in request_intakes if item.get("status") == "new"]),
+            "converted_request_intakes": len([item for item in request_intakes if item.get("status") == "converted"]),
             "requests": await db.collection("travel_requests").count(),
+            "open_operational_requests": len(open_operational_requests),
             "request_tasks": await db.collection("request_tasks").count(),
             "offers": await db.collection("offers").count(),
             "offer_routes": await db.collection("offer_route_alternatives").count(),
@@ -95,6 +105,7 @@ async def summary(
             "Backup automation and lightweight monitoring readiness foundation",
             "Staff invitation acceptance and team access hardening foundation",
             "Document storage lifecycle and delivery provider readiness foundation",
+            "Request intake triage and operational request conversion foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

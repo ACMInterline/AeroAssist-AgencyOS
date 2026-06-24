@@ -17,15 +17,13 @@ from models import (
     PortalOfferDecisionSubmit,
     PortalRequestSubmit,
     RequestMessage,
-    RequestPassenger,
     RequestTask,
     RequestTimelineEvent,
-    RequestedService,
-    TravelRequest,
     new_id,
     now_utc,
 )
 from services.seed_service import seed_core_data
+from services.request_intake_conversion_service import create_intake
 from services.tenant_service import (
     assert_portal_can_view_passenger,
     assert_portal_owns_client_record,
@@ -765,89 +763,63 @@ async def submit_request(payload: PortalRequestSubmit, ctx: dict = Depends(porta
     if forbidden_ids:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="One or more passengers cannot be used for portal request submission.")
 
-    agency_id = ctx["account"]["agency_id"]
-    request = TravelRequest(
-        agency_id=agency_id,
-        client_id=ctx["account"]["client_id"],
-        created_by_user_id=ctx.get("identity", {}).get("id") if ctx.get("identity") else ctx["account"]["id"],
-        request_reference=next_request_reference(),
-        title=payload.title,
-        status="new",
-        priority="normal",
-        source="client_portal",
-        requested_departure_date=payload.requested_departure_date,
-        requested_return_date=payload.requested_return_date,
-        route_summary=payload.route_summary,
-        service_summary="; ".join(payload.requested_services) if payload.requested_services else None,
-        passenger_count=len(requested_passenger_ids),
-        service_count=len(payload.requested_services),
-        client_notes=payload.client_notes,
-        client_visible_notes="Submitted through the client portal. The agency will review it manually.",
-    )
-    request_doc = await db.collection("travel_requests").insert_one(request.model_dump(mode="json"))
-
-    passengers_by_id = {
-        item["id"]: item
-        for item in await db.collection("passenger_profiles").find_many({"agency_id": agency_id})
-        if item["id"] in requested_passenger_ids
-    }
-    for index, passenger_id in enumerate(requested_passenger_ids):
-        passenger = passengers_by_id.get(passenger_id)
+    for passenger_id in requested_passenger_ids:
+        passenger = await db.collection("passenger_profiles").find_one({"agency_id": ctx["account"]["agency_id"], "id": passenger_id})
         if not passenger or passenger.get("status") == "archived":
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Selected passenger is not available.")
-        relationship = requested_relationships[passenger_id]
-        await db.collection("request_passengers").insert_one(
-            RequestPassenger(
-                agency_id=agency_id,
-                request_id=request_doc["id"],
-                passenger_id=passenger_id,
-                client_passenger_relationship_id=relationship["id"],
-                role_in_request="traveler",
-                is_primary_traveler=index == 0,
-                snapshot_display_name=passenger["display_name"],
-                snapshot_date_of_birth=passenger["date_of_birth"],
-                snapshot_passenger_type=passenger["passenger_type"],
-            ).model_dump(mode="json")
-        )
 
-    for service_text in payload.requested_services:
-        cleaned = service_text.strip()
-        if cleaned:
-            await db.collection("requested_services").insert_one(
-                RequestedService(
-                    agency_id=agency_id,
-                    request_id=request_doc["id"],
-                    service_code="PORTAL",
-                    service_name=cleaned[:80],
-                    service_category="portal_request",
-                    details=cleaned,
-                    client_visible_summary=cleaned,
-                ).model_dump(mode="json")
-            )
-
-    if payload.client_notes:
-        await db.collection("request_messages").insert_one(
-            RequestMessage(
-                agency_id=agency_id,
-                request_id=request_doc["id"],
-                sender_type="client",
-                visibility="client_visible",
-                message_text=payload.client_notes,
-            ).model_dump(mode="json")
-        )
-    await create_staff_review_task(db, ctx, request_doc["id"], "Review portal-submitted request", "Client submitted a new request through the portal.")
-    await write_request_timeline(db, ctx, request_doc["id"], "portal.request_submitted", "Request submitted", "Client submitted this request through the portal.")
+    client = ctx["client"]
+    intake = await create_intake(
+        db,
+        source="client_portal",
+        agency_id=ctx["account"]["agency_id"],
+        workspace_id=ctx.get("workspace", {}).get("id") if ctx.get("workspace") else None,
+        contact={
+            "name": client["display_name"],
+            "email": client.get("primary_email"),
+            "phone": client.get("primary_phone"),
+            "organization": client.get("legal_name"),
+            "marketing_consent": bool(client.get("marketing_consent")),
+            "data_processing_consent": bool(client.get("data_processing_consent")),
+            "privacy_policy_accepted": bool(client.get("data_processing_consent")),
+        },
+        travel={
+            "origin": None,
+            "destination": None,
+            "departure_date": payload.requested_departure_date,
+            "return_date": payload.requested_return_date,
+            "passenger_count": max(len(requested_passenger_ids), 1),
+            "itinerary_notes": payload.route_summary,
+        },
+        services={
+            "selected_service_categories": payload.requested_services,
+            "mobility_assistance": False,
+            "medical_travel": False,
+            "pet_travel": False,
+            "child_or_unaccompanied_minor": False,
+            "special_baggage": False,
+            "documents_or_visa": False,
+            "disruption_or_claims": False,
+            "booking_or_planning": True,
+            "other": False,
+            "other_details": None,
+        },
+        request_details="\n\n".join([item for item in [payload.title, payload.client_notes] if item]),
+        client_visible_notes="Submitted through the client portal. The agency will review it manually.",
+        raw_payload={**payload.model_dump(mode="json"), "passenger_ids": requested_passenger_ids, "portal_account_id": ctx["account"]["id"], "client_id": ctx["account"]["client_id"]},
+        actor_user_id=ctx.get("identity", {}).get("id") if ctx.get("identity") else ctx["account"]["id"],
+    )
     action = await create_portal_action(
         db,
         ctx,
         "request_submitted",
-        "request",
-        request_doc["id"],
-        f"Submitted request {request_doc['request_reference']}.",
-        {"request_reference": request_doc["request_reference"], "passenger_count": len(requested_passenger_ids), "service_count": len(payload.requested_services)},
+        "request_intake",
+        intake["id"],
+        f"Submitted request intake {intake['reference_code']}.",
+        {"intake_reference": intake["reference_code"], "passenger_count": len(requested_passenger_ids), "service_count": len(payload.requested_services)},
     )
-    await write_audit(db, ctx, "portal.request_submitted", "travel_request", request_doc["id"], "Client submitted a portal request.")
-    return safe_response({"request": safe_request(request_doc), "action": safe_portal_action(action)})
+    await write_audit(db, ctx, "portal.request_submitted", "request_intake", intake["id"], "Client submitted a portal request intake.")
+    return safe_response({"intake": {"id": intake["id"], "reference_code": intake["reference_code"], "status": "received"}, "action": safe_portal_action(action)})
 
 
 @router.get("/requests/{request_id}")

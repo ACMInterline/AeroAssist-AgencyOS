@@ -55,7 +55,7 @@ export default function RequestsPage() {
             </select>
             <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })}>
               <option value="">All sources</option>
-              {["staff_created", "website_form", "client_portal", "phone", "email", "whatsapp", "walk_in", "imported"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+              {["staff_created", "website_form", "public_website", "client_portal", "phone", "email", "whatsapp", "walk_in", "imported", "internal"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
             </select>
           </section>
           {filtered.length ? (

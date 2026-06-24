@@ -572,23 +572,37 @@ Avoid adding:
 
 - Automatic email sending, external object storage, public document links, external SaaS dependencies, provider webhooks, hard-delete API, or background workers.
 
-### Phase 26: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 26: Request Intake Operational Request Stabilization
 
-Recommended scope:
+Implemented scope:
 
-- Add email provider integration strategy beyond direct SMTP if needed.
-- Add delivery queue worker design with explicit admin controls.
-- Add provider webhook/bounce handling.
-- Add external file storage/retention lifecycle if local disk is insufficient.
-- Add visual PDF QA checks if browser-grade rendering is adopted later.
-- Public/share link decision record if links are added later.
-- Document visibility and expiry controls.
+- Public and portal submissions are stored as request intakes before operational conversion.
+- Additive request intake model with contact, travel, service, triage, raw/canonical payload, and conversion metadata.
+- Public-safe intake endpoint with safe confirmation response and no privileged field acceptance.
+- Staff intake queue/detail, triage, reject/archive/duplicate, and explicit convert actions.
+- Conversion service creates canonical operational requests with source intake linkage and duplicate conversion guard.
+- Platform/readiness summaries expose intake and open operational request counts.
+- Smoke script for request intake conversion safety and idempotency.
 
 Avoid adding:
 
-- Payment gateway links unless explicitly included in a later payment phase.
+- Airline integrations, pricing automation, payment gateways, automatic email sending, public document links, customer portal account creation, external SaaS dependencies, demo auth, or seed endpoint re-enablement.
 
-### Phase 27: Airline Intelligence Versioning/Import Workflow
+### Phase 27: Operational Request Workspace Hardening
+
+Recommended scope:
+
+- Passenger/profile enrichment from converted intake data.
+- Duplicate detection assistance without automatic merging.
+- Better staff work queues for converted operational requests.
+- Intake-to-client matching review UI.
+- Request note/task templates for complex assistance cases.
+
+Avoid adding:
+
+- Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
+
+### Phase 28: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -603,7 +617,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 28: Agency Website/CMS Publishing Foundation
+### Phase 29: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

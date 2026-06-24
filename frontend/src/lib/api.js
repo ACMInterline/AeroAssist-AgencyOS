@@ -38,6 +38,15 @@ export async function apiPut(path, body = {}) {
   return readResponse(response)
 }
 
+export async function apiPatch(path, body = {}) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  })
+  return readResponse(response)
+}
+
 export async function apiDownload(path) {
   const response = await fetch(`${API_BASE}${path}`, {
     headers: authHeaders(),

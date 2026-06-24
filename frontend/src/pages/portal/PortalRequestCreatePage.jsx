@@ -37,7 +37,7 @@ export default function PortalRequestCreatePage() {
         requested_services: form.requested_services.split("\n").map((item) => item.trim()).filter(Boolean),
         client_notes: form.client_notes || undefined,
       })
-      setSuccess(result.request)
+      setSuccess(result.intake)
     } catch (err) {
       setError(err.message)
     }
@@ -53,7 +53,7 @@ export default function PortalRequestCreatePage() {
           </div>
           {success ? (
             <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
-              Request submitted. <a className="font-semibold underline" href={`/portal/requests/${success.id}`}>Open {success.request_reference}</a>
+              We received your request. Our team will review it. Reference: <span className="font-semibold">{success.reference_code}</span>
             </section>
           ) : (
             <form className="space-y-5 rounded-lg border border-slate-200 bg-white p-6" onSubmit={submit}>

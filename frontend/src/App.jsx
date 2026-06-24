@@ -25,6 +25,8 @@ import PaymentsPage from "./pages/agency/PaymentsPage"
 import AgencyPortalActionsPage from "./pages/agency/PortalActionsPage"
 import RequestCreatePage from "./pages/agency/RequestCreatePage"
 import RequestDetailPage from "./pages/agency/RequestDetailPage"
+import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
+import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
 import RequestsPage from "./pages/agency/RequestsPage"
 import LoginPage from "./pages/auth/LoginPage"
 import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
@@ -68,6 +70,7 @@ const routes = {
   "/agency/document-storage": DocumentStoragePage,
   "/agency/document-templates": DocumentTemplatesPage,
   "/agency/portal-actions": AgencyPortalActionsPage,
+  "/agency/request-intakes": RequestIntakesListPage,
   "/agency/refunds-exchanges": RefundExchangeCasesPage,
   "/agency/refunds-exchanges/new": RefundExchangeCaseCreatePage,
   "/portal": PortalDashboardPage,
@@ -118,6 +121,11 @@ export default function App() {
   const requestMatch = window.location.pathname.match(/^\/agency\/requests\/([^/]+)$/)
   if (requestMatch) {
     return <RequestDetailPage requestId={requestMatch[1]} />
+  }
+
+  const requestIntakeMatch = window.location.pathname.match(/^\/agency\/request-intakes\/([^/]+)$/)
+  if (requestIntakeMatch) {
+    return <RequestIntakeDetailPage intakeId={requestIntakeMatch[1]} />
   }
 
   const offerMatch = window.location.pathname.match(/^\/agency\/offers\/([^/]+)$/)
