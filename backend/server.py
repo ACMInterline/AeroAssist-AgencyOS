@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 33 reference data core and service catalogue.",
+    description="AeroAssist AgencyOS API foundation through Phase 33.1 global reference governance, suggestions, and bulk import readiness.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_reference_data_core_service_catalogue",
+        "phase": "phase_33_1_global_reference_governance_suggestions",
     }
 
 
@@ -113,6 +113,14 @@ async def readiness() -> dict:
     reference_records = await database.collection("global_reference_records").find_many()
     active_reference_record_count = len([item for item in reference_records if item.get("is_active", True)])
     service_catalogue_record_count = await database.collection("service_catalogue").count()
+    pending_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "pending_review"})
+    approved_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "approved"})
+    reference_import_batch_count = await database.collection("reference_import_batches").count()
+    normalized_request_segment_count = await database.collection("request_segments").count()
+    normalized_request_passenger_count = await database.collection("request_passengers").count()
+    normalized_passenger_segment_service_count = await database.collection("request_passenger_segment_services").count()
+    normalized_request_pet_count = await database.collection("request_pets").count()
+    normalized_request_special_item_count = await database.collection("request_special_items").count()
     branded_logo_count = len(
         [
             item
@@ -125,7 +133,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_reference_data_core_service_catalogue",
+        "phase": "phase_33_1_global_reference_governance_suggestions",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -182,12 +190,29 @@ async def readiness() -> dict:
         "reference_data": {
             "reference_data_enabled": True,
             "service_catalogue_enabled": True,
+            "global_reference_governance_enabled": True,
+            "reference_suggestion_queue_enabled": True,
+            "reference_bulk_import_enabled": True,
             "reference_domain_count": len(REFERENCE_DOMAINS),
             "active_reference_record_count": active_reference_record_count,
             "service_catalogue_record_count": service_catalogue_record_count,
+            "pending_reference_suggestion_count": pending_reference_suggestion_count,
+            "approved_reference_suggestion_count": approved_reference_suggestion_count,
+            "reference_import_batch_count": reference_import_batch_count,
             "reference_bootstrap_available": True,
             "readiness_required": False,
-            "diagnostic": "Reference data and service catalogue are operational lookups; bootstrap is manual and idempotent.",
+            "diagnostic": "Reference data is globally governed; suggestions and imports are manual, reviewed, and informational for readiness.",
+        },
+        "segment_scoped_requests": {
+            "segment_scoped_services_enabled": True,
+            "request_service_normalization_enabled": True,
+            "normalized_request_segment_count": normalized_request_segment_count,
+            "normalized_request_passenger_count": normalized_request_passenger_count,
+            "normalized_passenger_segment_service_count": normalized_passenger_segment_service_count,
+            "normalized_request_pet_count": normalized_request_pet_count,
+            "normalized_request_special_item_count": normalized_request_special_item_count,
+            "readiness_required": False,
+            "diagnostic": "Segment-scoped services, pets, and special items are informational and may be zero before request normalization.",
         },
         "pdf": {
             "available": pdf.get("available"),

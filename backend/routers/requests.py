@@ -31,6 +31,7 @@ from models import (
     TravelRequestCreate,
     TravelRequestUpdate,
 )
+from services.request_normalization_service import normalize_request_children
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["requests"])
@@ -114,9 +115,11 @@ async def update_counts(db: Database, agency_id: str, request_id: str) -> dict:
     passenger_count = await db.collection("request_passengers").count({"agency_id": agency_id, "request_id": request_id, "status": "active"})
     services = await db.collection("requested_services").find_many({"agency_id": agency_id, "request_id": request_id})
     service_count = len([service for service in services if service.get("status") != "cancelled"])
+    pet_count = await db.collection("request_pets").count({"agency_id": agency_id, "request_id": request_id, "status": "active"})
+    item_count = await db.collection("request_special_items").count({"agency_id": agency_id, "request_id": request_id, "status": "active"})
     return await db.collection("travel_requests").update_one(
         {"agency_id": agency_id, "id": request_id},
-        {"passenger_count": passenger_count, "service_count": service_count},
+        {"passenger_count": passenger_count, "service_count": service_count, "pet_count": pet_count, "special_service_count": service_count + pet_count + item_count},
     )
 
 
@@ -189,6 +192,16 @@ async def create_inline_client(db: Database, agency_id: str, payload) -> dict:
 
 
 async def create_inline_passenger(db: Database, agency_id: str, client_id: str, payload, index: int) -> dict:
+    if payload.passenger_link_mode == "unresolved" and not payload.passenger_id and not payload.first_name and not payload.display_name:
+        return {
+            "passenger": {
+                "id": None,
+                "display_name": payload.display_name or f"Unresolved passenger {index + 1}",
+                "date_of_birth": payload.date_of_birth or date(1900, 1, 1),
+                "passenger_type": PASSENGER_TYPE_MAP.get(payload.passenger_type, "ADT"),
+            },
+            "relationship": None,
+        }
     if payload.passenger_id:
         passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
     else:
@@ -257,6 +270,10 @@ async def create_request_from_builder(
 ) -> dict:
     await require_write(db, agency_id, user)
     for service in payload.services:
+        if not service.applies_to_all_segments and not service.segment_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Service rows require at least one exact segment.")
+        if not service.applies_to_all_passengers and not service.passenger_ids:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Service rows require at least one exact passenger.")
         if service.category == "mobility_assistance" and service.details.get("assessment_version") == "v2_assessment_driven":
             suggested = service.details.get("suggested_ssr_code")
             confirmed = service.details.get("confirmed_ssr_code")
@@ -294,12 +311,14 @@ async def create_request_from_builder(
         resolved = await create_inline_passenger(db, agency_id, client["id"], passenger_payload, index)
         passenger = resolved["passenger"]
         relationship = resolved["relationship"]
-        passenger_id_map[passenger_payload.passenger_id or f"inline-{index}"] = passenger["id"]
+        if passenger.get("id"):
+            passenger_id_map[passenger_payload.passenger_id or f"inline-{index}"] = passenger["id"]
         request_passenger = RequestPassenger(
             agency_id=agency_id,
             request_id=created_request["id"],
-            passenger_id=passenger["id"],
-            client_passenger_relationship_id=relationship["id"],
+            passenger_id=passenger.get("id"),
+            passenger_link_mode=passenger_payload.passenger_link_mode if not passenger.get("id") else "existing",
+            client_passenger_relationship_id=relationship["id"] if relationship else None,
             role_in_request="traveler",
             is_primary_traveler=index == 0,
             service_needs_summary=compact_text(passenger_payload.mobility_notes or passenger_payload.medical_notes or passenger_payload.notes, 1000),
@@ -371,6 +390,8 @@ async def create_request_from_builder(
         requested_services.append(await db.collection("requested_services").insert_one(service.model_dump(mode="json")))
 
     updated_request = await update_counts(db, agency_id, created_request["id"])
+    normalized = await normalize_request_children(db, agency_id, created_request["id"], payload, user["id"])
+    updated_request = normalized["request"]
     await write_audit(db, agency_id, user["id"], "request.builder_created", "travel_request", created_request["id"], f"Created structured request {created_request['request_reference']}.", {"passengers": len(request_passengers), "segments": len(request_segments), "services": len(requested_services)})
     await write_timeline(db, agency_id, created_request["id"], user["id"], "request.builder_created", "Operational request builder completed", service_summary)
     return {
@@ -379,6 +400,7 @@ async def create_request_from_builder(
         "passengers": request_passengers,
         "segments": request_segments,
         "services": requested_services,
+        "normalized": normalized,
     }
 
 
@@ -438,10 +460,29 @@ async def get_request(agency_id: str, request_id: str, user: dict = Depends(get_
         "passengers": await db.collection("request_passengers").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
         "segments": await db.collection("request_segments").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
         "services": await db.collection("requested_services").find_many({"agency_id": agency_id, "request_id": request_id}),
+        "case_flags": await db.collection("request_case_flags").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
+        "passenger_segment_services": await db.collection("request_passenger_segment_services").find_many({"agency_id": agency_id, "request_id": request_id}),
+        "pets": await db.collection("request_pets").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
+        "pet_segment_transport": await db.collection("request_pet_segment_transport").find_many({"agency_id": agency_id, "request_id": request_id}),
+        "special_items": await db.collection("request_special_items").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
+        "special_item_segments": await db.collection("request_special_item_segments").find_many({"agency_id": agency_id, "request_id": request_id}),
         "messages": await db.collection("request_messages").find_many({"agency_id": agency_id, "request_id": request_id}),
         "tasks": await db.collection("request_tasks").find_many({"agency_id": agency_id, "request_id": request_id}),
         "timeline": await db.collection("request_timeline_events").find_many({"agency_id": agency_id, "request_id": request_id}),
     }
+
+
+@router.post("/requests/{request_id}/normalize")
+async def normalize_request(
+    agency_id: str,
+    request_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    result = await normalize_request_children(db, agency_id, request_id, actor_user_id=user["id"])
+    await write_timeline(db, agency_id, request_id, user["id"], "request.normalized", "Request normalized", "Segment-scoped services, pets, special items, and flags updated.")
+    return result
 
 
 @router.put("/requests/{request_id}")

@@ -16,6 +16,7 @@ from models import (
     RequestedService,
     TravelRequest,
 )
+from services.request_normalization_service import normalize_request_children
 
 
 SERVICE_LABELS = {
@@ -379,6 +380,26 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         {"agency_id": intake["agency_id"], "id": created_request["id"]},
         {"passenger_count": len(request_passengers), "service_count": len(services)},
     )
+    normalized_payload = {
+        "passengers": [{"request_passenger_key": f"inline-{index}"} for index, _ in enumerate(request_passengers)],
+        "segments": [{"segment_key": str(index + 1), "sequence": index + 1} for index, _ in enumerate(request_segment_ids)],
+        "services": [
+            {
+                "category": "mobility_assistance" if "mobility" in service_name.lower() else "pet_travel" if "pet" in service_name.lower() else "special_baggage" if "baggage" in service_name.lower() else "other",
+                "service_code": "manual_review" if "mobility" in service_name.lower() else service_name.upper().replace(" ", "_").replace("/", "_")[:32],
+                "applies_to_all_passengers": True,
+                "applies_to_all_segments": True,
+                "details": {"source": "request_intake", "pending_information": True},
+                "notes": normalized.get("request_details"),
+            }
+            for service_name in services
+        ],
+    }
+    if request_segment_ids and any("pet" in service_name.lower() for service_name in services):
+        normalized_payload["pets"] = [{"pet_key": "intake-pet-1", "species": "dog", "requested_transport_mode": "petc", "documentation_status": "pending_information"}]
+    if request_segment_ids and any("baggage" in service_name.lower() for service_name in services):
+        normalized_payload["special_items"] = [{"item_key": "intake-item-1", "item_category_code": "other", "description": "Special baggage details pending", "documentation_status": "pending_information"}]
+    created_request = (await normalize_request_children(db, intake["agency_id"], created_request["id"], normalized_payload, actor_user_id))["request"]
 
     converted_at = datetime.now(timezone.utc)
     updated_intake = await db.collection("request_intakes").update_one(

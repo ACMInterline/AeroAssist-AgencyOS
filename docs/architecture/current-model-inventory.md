@@ -14,10 +14,10 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `RequestPassenger` | `request_passengers` | Passenger snapshot in request | Agency | Request + passenger | Request traveler | Canonical |
 | `RequestSegment` | `request_segments` | Segment-first itinerary request structure | Agency | Request, future trip segment | Itinerary segment | Canonical |
 | `RequestedService` | `requested_services` | Requested assistance/service | Agency | Request, passengers, segments | Service request | Transitional toward Phase 34 catalogue-backed applicability |
-| `RequestPassengerSegmentService` | `request_passenger_segment_services` | Explicit passenger+segment service applicability | Agency | Request, service, passenger, segment | Service applicability | Foundation |
-| `RequestCaseFlag` | `request_case_flags` | Operational flags/risk/attention markers | Agency | Request | Case flags | Foundation |
-| `RequestPet`, `RequestPetSegmentTransport` | `request_pets`, `request_pet_segment_transport` | Pet/service animal request and segment transport applicability | Agency | Request, passenger, segment | Pet transport | Foundation |
-| `RequestSpecialItem`, `RequestSpecialItemSegment` | `request_special_items`, `request_special_item_segments` | Special item and segment applicability | Agency | Request, passenger, segment | Special baggage/items | Foundation |
+| `RequestPassengerSegmentService` | `request_passenger_segment_services` | Explicit passenger+segment service applicability with service catalogue/family metadata | Agency/workspace | Request, service, passenger, segment | Service applicability | Canonical foundation |
+| `RequestCaseFlag` | `request_case_flags` | Derived and manual operational flags/risk/attention markers | Agency/workspace | Request, normalized children | Case flags | Canonical foundation |
+| `RequestPet`, `RequestPetSegmentTransport` | `request_pets`, `request_pet_segment_transport` | Pet/service animal request and segment transport applicability | Agency/workspace | Request, passenger, segment | Pet transport | Canonical foundation |
+| `RequestSpecialItem`, `RequestSpecialItemSegment` | `request_special_items`, `request_special_item_segments` | Special item and segment transport applicability | Agency/workspace | Request, passenger, segment | Special baggage/items | Canonical foundation |
 | `TripDossier`, `TripPassenger`, `TripSegment` | `trip_dossiers`, `trip_passengers`, `trip_segments` | Canonical trip dossier placeholders | Agency | Requests, passengers, segments, future bookings/offers | Trip/dossier | Foundation |
 | Offer models | `offers`, `offer_*` collections | Manual offer foundation | Agency | Request, passengers, routes, fares, services | Offer/comparison | Legacy-compatible foundation |
 | Booking/ticket/EMD models | `bookings`, `booking_passengers`, `booking_segments`, `ticket_records`, `emd_records` | Booking and document mirror/tracking | Agency | Requests/bookings/passengers/segments | Booking/GDS mirror | Transitional |
@@ -27,6 +27,8 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `RequestMessage`, `RequestTask`, timeline models | `request_messages`, `request_tasks`, timeline collections | Communications, staff tasks, activity | Agency | Request | Communications/tasks/activity | Canonical request-level foundation |
 | Airline intelligence models | `airline_profiles`, `airline_knowledge_items`, `airline_procedures`, `airline_emd_rule_notes`, `agency_airline_overrides` | Airline policy/decision support | Global + agency overrides | Airlines, sources, overrides | Airline policies | Canonical foundation |
 | `GlobalReferenceRecord` | `global_reference_records` | Controlled master lookup domains | Global, agency-ready | Reference domains, request/builders/documents | Reference data | Canonical foundation |
+| `ReferenceDataSuggestion` | `reference_data_suggestions` | Agency-submitted reference additions/corrections awaiting platform review | Agency submission, platform review | Global reference records, agencies, reviewers | Reference governance suggestions | Canonical foundation |
+| `ReferenceImportBatch` | `reference_import_batches` | Manual CSV import validation/import audit trail | Platform | Global reference records, audit events | Reference governance import | Canonical foundation |
 | `ServiceCatalogueRecord` | `service_catalogue` | Service catalogue lookup with SSR/scoping/policy metadata | Global | Requested services, future segment applicability, airline policy checks | Service catalogue | Canonical foundation |
 | Branding/logo/media models | `agency_branding_settings`, `agency_branding_assets`, `agency_website_media_assets` | Controlled branding and public-safe assets | Agency | Website/public renderer | Branding/media | Canonical |
 | Website/CMS models | `agency_website_settings`, `agency_website_pages` | Public website settings/pages/sections | Agency | Branding/media/intakes | Public CMS | Canonical |
@@ -37,5 +39,8 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 
 - Current stack remains FastAPI/Pydantic, repository-backed Mongo/in-memory database, React frontend, and Docker deployment.
 - Collection names are not destructively renamed for blueprint alignment.
-- Trip dossier and segment-scoped applicability classes are additive placeholders for future UI/API phases.
+- Segment-scoped request service, pet, and special item classes are now populated by Phase 34 normalization.
+- Trip dossier classes remain additive placeholders for future UI/API phases.
+- Reference Data is platform-owned global master data; agency suggestions improve it only after platform review.
 - Reference Data is intentionally separate from Airline Intelligence policy rules; it supplies lookup values and service catalogue metadata, not airline-specific acceptance decisions.
+- Future policy learning should mirror the suggestion workflow through agency-local overrides, evidence, and reviewed promotion to global policy rules.

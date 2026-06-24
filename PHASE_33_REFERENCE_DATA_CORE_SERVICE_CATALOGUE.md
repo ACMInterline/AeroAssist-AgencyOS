@@ -20,6 +20,10 @@ Phase 33 adds the first controlled Reference Data Core and Service Catalogue fou
 - Agency-scoped overrides are model-ready but intentionally deferred until a dedicated agency override workflow.
 - No pricing automation, policy scoring, airline execution, GDS/NDC integration, or external provider calls are introduced.
 
+## Phase 33.1 Governance Addendum
+
+Phase 33.1 keeps these records platform-owned and adds `reference_data_suggestions` plus `reference_import_batches`. Agencies may suggest new or corrected values, but only platform reviewers can promote approved suggestions into global records. Manual CSV imports remain additive and audited; they do not run automatically and do not destructively reset lookup data.
+
 ## Validation
 
 - `backend/scripts/smoke_reference_data_core.py` verifies bootstrap idempotency, domain APIs, search, invalid-domain rejection, service catalogue families, activation/deactivation behavior, payload safety, and readiness fields.

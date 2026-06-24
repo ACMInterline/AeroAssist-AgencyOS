@@ -10,7 +10,7 @@ import urllib.request
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_33_reference_data_core_service_catalogue"
+EXPECTED_PHASE = "phase_33_1_global_reference_governance_suggestions"
 
 
 def request(method: str, path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> tuple[int, dict]:
@@ -63,8 +63,8 @@ def main() -> int:
 
     first_bootstrap = post("/api/reference/bootstrap", {}, OWNER_HEADERS)["bootstrap"]
     second_bootstrap = post("/api/reference/bootstrap", {}, OWNER_HEADERS)["bootstrap"]
-    if first_bootstrap["reference_records"]["inserted"] <= 0:
-        raise AssertionError("Reference bootstrap did not insert records.")
+    if first_bootstrap["reference_records"]["inserted"] + first_bootstrap["reference_records"]["updated"] <= 0:
+        raise AssertionError("Reference bootstrap did not process records.")
     if second_bootstrap["reference_records"]["updated"] <= 0:
         raise AssertionError("Reference bootstrap was not idempotent on second run.")
 

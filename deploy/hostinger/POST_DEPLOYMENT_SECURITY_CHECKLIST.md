@@ -29,13 +29,14 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_33_reference_data_core_service_catalogue`
+- API phase reports `phase_33_1_global_reference_governance_suggestions`
 - platform login verified
 - agency login verified
 - portal login verified
 - portal cross-client denial verified where test data exists
 - document export generation verified
 - document export download verified
+- agency users cannot create global reference records; reference suggestions require platform review
 - SMTP secret references are masked and never display raw secret values
 
 ## Staff Invitations

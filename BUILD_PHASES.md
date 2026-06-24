@@ -47,6 +47,8 @@ The repository currently contains:
 - Phase 31: CMS media library, website image assets, and public website visual polish.
 - Phase 32: Blueprint alignment and canonical operations model.
 - Phase 33: Reference data core and service catalogue.
+- Phase 33.1: Global reference data governance, bulk import, and agency suggestion queue.
+- Phase 34: Segment-scoped request services, pets, and special items.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -769,13 +771,30 @@ Avoid adding:
 
 - Automated pricing, airline policy scoring, GDS execution, external lookup providers, or automatic startup seeding.
 
+### Phase 33.1: Global Reference Data Governance, Bulk Import, And Agency Suggestion Queue
+
+Implemented scope:
+
+- Platform-owned global Reference Data governance with agency suggestions separated from approved master records.
+- `reference_data_suggestions` review queue with pending, needs-more-information, approved, rejected, merged, and archived states.
+- `reference_import_batches` for manual CSV validation/import with file hashes, error reports, inserted/updated/skipped counts, and audit events.
+- Owner endpoints for global record management, suggestion review, and import batch listing/detail.
+- Agency reference UI tabs for global records, service catalogue, own suggestions, owner-only imports, and owner-only review queue.
+- Future policy-governance documentation reserving local overrides, evidence, and promotion from agency policy suggestions to global rules.
+
+Avoid adding:
+
+- Airline policy engine execution, automated pricing, external data provider ingestion, scraping, GDS/NDC integration, or destructive seed/reset workflows.
+
 ### Phase 34: Segment-Scoped Request Services, Pets, And Special Items
 
-Recommended scope:
+Implemented scope:
 
-- UI/API workflows for passenger + segment scoped services.
-- Pet transport and special item segment applicability records.
-- Request case flags and validation against service catalogue requirements.
+- Request normalization service that creates passenger + segment scoped services, pet segment transport, special item segment transport, and derived case flags.
+- Operational request builder UX for exact passenger and segment service assignment, plus structured pet and special item capture.
+- Request detail view sections for canonical child records and source payload snapshots.
+- Public intake conversion compatibility with pending-information placeholder normalization where simplified forms lack exact SSR details.
+- Readiness and smoke coverage for normalized request child counts, idempotency, and invalid scoping validation.
 
 Avoid adding:
 

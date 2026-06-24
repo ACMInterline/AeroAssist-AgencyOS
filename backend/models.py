@@ -1220,6 +1220,7 @@ class PassengerMergeAudit(BaseModel):
 
 class TravelRequest(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     client_id: str
     created_by_user_id: str
     trip_id: Optional[str] = None
@@ -1235,6 +1236,16 @@ class TravelRequest(BaseDocument):
     service_summary: Optional[str] = None
     passenger_count: int = 0
     service_count: int = 0
+    pet_count: int = 0
+    special_service_count: int = 0
+    origin_summary: Optional[str] = None
+    destination_summary: Optional[str] = None
+    first_departure_date: Optional[date] = None
+    last_arrival_date: Optional[date] = None
+    requires_medical_review: bool = False
+    requires_airline_policy_review: bool = False
+    requires_document_followup: bool = False
+    has_existing_passenger_links: bool = False
     urgency_reason: Optional[str] = None
     client_notes: Optional[str] = None
     internal_notes: Optional[str] = None
@@ -1475,46 +1486,76 @@ class TripSegment(BaseDocument):
 
 class RequestCaseFlag(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
     flag_code: str
     flag_label: str
     severity: str = "info"
     source: str = "manual"
     details: Optional[str] = None
+    generated_key: Optional[str] = None
     status: str = "active"
 
 
 class RequestPassengerSegmentService(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
-    requested_service_id: str
+    travel_request_id: Optional[str] = None
+    requested_service_id: Optional[str] = None
     request_passenger_id: Optional[str] = None
     request_segment_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_family_code: Optional[str] = None
     service_code: str
+    service_label: Optional[str] = None
+    service_details_json: Dict[str, Any] = Field(default_factory=dict)
     applicability_status: str = "requested"
+    generated_key: Optional[str] = None
     notes: Optional[str] = None
 
 
 class RequestPet(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
+    request_passenger_id: Optional[str] = None
     passenger_id: Optional[str] = None
     pet_name: Optional[str] = None
     species: str
+    breed: Optional[str] = None
+    breed_free_text: Optional[str] = None
+    snub_nosed_flag: bool = False
+    age_months: Optional[int] = None
+    pet_weight_kg: Optional[float] = None
+    container_weight_kg: Optional[float] = None
+    combined_weight_kg: Optional[float] = None
+    requested_transport_mode: Optional[str] = None
+    carrier_dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    documentation_status: Optional[str] = None
+    special_requirements: Optional[str] = None
     carrier_required: bool = True
     service_animal: bool = False
+    generated_key: Optional[str] = None
     notes: Optional[str] = None
     status: str = "active"
 
 
 class RequestPetSegmentTransport(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
     request_pet_id: str
     request_segment_id: str
+    service_catalogue_id: Optional[str] = None
+    requested_transport_mode: Optional[str] = None
     transport_mode: Optional[str] = None
+    generated_key: Optional[str] = None
     status: str = "requested"
     raw_policy_snapshot: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
@@ -1522,31 +1563,52 @@ class RequestPetSegmentTransport(BaseDocument):
 
 class RequestSpecialItem(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
+    request_passenger_id: Optional[str] = None
     owner_passenger_id: Optional[str] = None
     item_type: str
+    item_category_code: Optional[str] = None
+    item_name: Optional[str] = None
     description: str
+    quantity: int = 1
+    weight_kg: Optional[float] = None
+    dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    battery_type: Optional[str] = None
+    battery_wh: Optional[float] = None
+    transport_location: Optional[str] = None
+    usage_in_cabin_flag: bool = False
+    special_handling_instructions: Optional[str] = None
+    documentation_status: Optional[str] = None
     dimensions_text: Optional[str] = None
     weight_text: Optional[str] = None
     requires_policy_check: bool = True
+    generated_key: Optional[str] = None
     notes: Optional[str] = None
     status: str = "active"
 
 
 class RequestSpecialItemSegment(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
     request_special_item_id: str
     request_segment_id: str
+    transport_location: Optional[str] = None
     applicability_status: str = "requested"
+    generated_key: Optional[str] = None
     raw_policy_snapshot: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
 
 
 class RequestPassenger(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
-    passenger_id: str
+    travel_request_id: Optional[str] = None
+    passenger_id: Optional[str] = None
     passenger_link_mode: PassengerLinkMode = PassengerLinkMode.EXISTING
     client_passenger_relationship_id: Optional[str] = None
     role_in_request: RequestPassengerRole = RequestPassengerRole.TRAVELER
@@ -1581,7 +1643,9 @@ class RequestPassengerUpdate(BaseModel):
 
 class RequestSegment(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
     trip_segment_id: Optional[str] = None
     sequence: int
     origin_text: str
@@ -1658,12 +1722,17 @@ class RequestSegmentUpdate(BaseModel):
 
 class RequestedService(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     request_id: str
+    travel_request_id: Optional[str] = None
     request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_family_code: Optional[str] = None
     service_code: str
     service_name: str
     service_category: str
+    service_details_json: Dict[str, Any] = Field(default_factory=dict)
     status: RequestedServiceStatus = RequestedServiceStatus.REQUESTED
     details: Optional[str] = None
     detail_payload: Dict[str, Any] = Field(default_factory=dict)
@@ -1735,6 +1804,7 @@ class OperationalRequestBuilderPassenger(BaseModel):
 
     passenger_id: Optional[str] = None
     passenger_link_mode: PassengerLinkMode = PassengerLinkMode.UNRESOLVED
+    request_passenger_key: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     display_name: Optional[str] = None
@@ -1749,6 +1819,7 @@ class OperationalRequestBuilderSegment(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     sequence: int
+    segment_key: Optional[str] = None
     origin_text: str
     destination_text: str
     departure_date: Optional[date] = None
@@ -1766,11 +1837,80 @@ class OperationalRequestBuilderService(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     category: OperationalServiceCategory
+    service_code: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_family_code: Optional[str] = None
     details: Dict[str, Any] = Field(default_factory=dict)
     passenger_ids: List[str] = Field(default_factory=list)
     segment_ids: List[str] = Field(default_factory=list)
     applies_to_all_passengers: bool = True
     applies_to_all_segments: bool = True
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderPetSegment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    segment_key: Optional[str] = None
+    request_segment_id: Optional[str] = None
+    requested_transport_mode: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderPet(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pet_key: Optional[str] = None
+    request_passenger_key: Optional[str] = None
+    request_passenger_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    pet_name: Optional[str] = None
+    species: str = "dog"
+    breed: Optional[str] = None
+    breed_free_text: Optional[str] = None
+    snub_nosed_flag: bool = False
+    age_months: Optional[int] = None
+    pet_weight_kg: Optional[float] = None
+    container_weight_kg: Optional[float] = None
+    combined_weight_kg: Optional[float] = None
+    requested_transport_mode: Optional[str] = "petc"
+    carrier_dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    documentation_status: Optional[str] = None
+    special_requirements: Optional[str] = None
+    segment_transports: List[OperationalRequestBuilderPetSegment] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderSpecialItemSegment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    segment_key: Optional[str] = None
+    request_segment_id: Optional[str] = None
+    transport_location: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderSpecialItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    item_key: Optional[str] = None
+    request_passenger_key: Optional[str] = None
+    request_passenger_id: Optional[str] = None
+    owner_passenger_id: Optional[str] = None
+    item_category_code: str = "other"
+    item_name: Optional[str] = None
+    description: str = "Special item"
+    quantity: int = 1
+    weight_kg: Optional[float] = None
+    dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    battery_type: Optional[str] = None
+    battery_wh: Optional[float] = None
+    transport_location: Optional[str] = "checked_baggage"
+    usage_in_cabin_flag: bool = False
+    special_handling_instructions: Optional[str] = None
+    documentation_status: Optional[str] = None
+    segment_transports: List[OperationalRequestBuilderSpecialItemSegment] = Field(default_factory=list)
     notes: Optional[str] = None
 
 
@@ -1787,6 +1927,8 @@ class OperationalRequestBuilderCreate(BaseModel):
     route_notes: Optional[str] = None
     segments: List[OperationalRequestBuilderSegment] = Field(default_factory=list)
     services: List[OperationalRequestBuilderService] = Field(default_factory=list)
+    pets: List[OperationalRequestBuilderPet] = Field(default_factory=list)
+    special_items: List[OperationalRequestBuilderSpecialItem] = Field(default_factory=list)
     title: Optional[str] = None
     status: RequestStatus = RequestStatus.NEW
     priority: RequestPriority = RequestPriority.NORMAL
@@ -4010,6 +4152,46 @@ class ReferenceRecordSourceType(str, Enum):
     IMPORT = "import"
 
 
+class ReferenceSuggestionType(str, Enum):
+    NEW_RECORD = "new_record"
+    CORRECTION = "correction"
+    DEACTIVATION_REQUEST = "deactivation_request"
+    MERGE_REQUEST = "merge_request"
+    MISSING_DOMAIN_VALUE = "missing_domain_value"
+
+
+class ReferenceSuggestionSourceContext(str, Enum):
+    ADMIN_FORM = "admin_form"
+    REQUEST_BUILDER = "request_builder"
+    IMPORT = "import"
+    MANUAL_REFERENCE_PAGE = "manual_reference_page"
+    POLICY_OVERRIDE_FUTURE = "policy_override_future"
+    OTHER = "other"
+
+
+class ReferenceSuggestionStatus(str, Enum):
+    PENDING_REVIEW = "pending_review"
+    NEEDS_MORE_INFORMATION = "needs_more_information"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    MERGED = "merged"
+    ARCHIVED = "archived"
+
+
+class ReferenceImportBatchScope(str, Enum):
+    GLOBAL = "global"
+    AGENCY_SUGGESTION_BATCH = "agency_suggestion_batch"
+
+
+class ReferenceImportBatchStatus(str, Enum):
+    UPLOADED = "uploaded"
+    VALIDATED = "validated"
+    PARTIALLY_VALID = "partially_valid"
+    IMPORTED = "imported"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
 class ServiceCatalogueBeneficiaryType(str, Enum):
     PASSENGER = "passenger"
     PET = "pet"
@@ -4116,6 +4298,80 @@ class ServiceCatalogueCreate(BaseModel):
     sort_order: int = 100
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
     source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.PLATFORM
+
+
+class ReferenceDataSuggestion(BaseDocument):
+    submitting_agency_id: str
+    submitting_workspace_id: Optional[str] = None
+    submitted_by_user_id: str
+    domain: str
+    suggested_code: Optional[str] = None
+    suggested_label: str
+    suggested_description: Optional[str] = None
+    suggested_aliases: List[str] = Field(default_factory=list)
+    suggested_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    suggestion_type: ReferenceSuggestionType = ReferenceSuggestionType.NEW_RECORD
+    target_reference_record_id: Optional[str] = None
+    source_context: ReferenceSuggestionSourceContext = ReferenceSuggestionSourceContext.MANUAL_REFERENCE_PAGE
+    evidence_note: Optional[str] = None
+    evidence_file_ids: List[str] = Field(default_factory=list)
+    status: ReferenceSuggestionStatus = ReferenceSuggestionStatus.PENDING_REVIEW
+    reviewer_user_id: Optional[str] = None
+    reviewer_note: Optional[str] = None
+    approved_reference_record_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class ReferenceDataSuggestionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    submitting_agency_id: str
+    submitting_workspace_id: Optional[str] = None
+    domain: str
+    suggested_code: Optional[str] = None
+    suggested_label: str
+    suggested_description: Optional[str] = None
+    suggested_aliases: List[str] = Field(default_factory=list)
+    suggested_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    suggestion_type: ReferenceSuggestionType = ReferenceSuggestionType.NEW_RECORD
+    target_reference_record_id: Optional[str] = None
+    source_context: ReferenceSuggestionSourceContext = ReferenceSuggestionSourceContext.MANUAL_REFERENCE_PAGE
+    evidence_note: Optional[str] = None
+    evidence_file_ids: List[str] = Field(default_factory=list)
+
+
+class ReferenceSuggestionReview(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reviewer_note: Optional[str] = None
+    merge_into_reference_record_id: Optional[str] = None
+
+
+class ReferenceImportBatch(BaseDocument):
+    uploaded_by_user_id: str
+    scope: ReferenceImportBatchScope = ReferenceImportBatchScope.GLOBAL
+    domain: str
+    filename: str
+    file_hash: str
+    status: ReferenceImportBatchStatus = ReferenceImportBatchStatus.UPLOADED
+    total_rows: int = 0
+    valid_rows: int = 0
+    invalid_rows: int = 0
+    inserted_count: int = 0
+    updated_count: int = 0
+    skipped_count: int = 0
+    error_report_json: Dict[str, Any] = Field(default_factory=dict)
+    completed_at: Optional[datetime] = None
+
+
+class ReferenceImportBatchCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scope: ReferenceImportBatchScope = ReferenceImportBatchScope.GLOBAL
+    domain: str
+    filename: str
+    csv_text: str
+    dry_run: bool = False
 
 
 class AuditEvent(BaseModel):

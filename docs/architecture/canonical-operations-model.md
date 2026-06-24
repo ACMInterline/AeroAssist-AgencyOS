@@ -45,7 +45,18 @@ This document defines the target canonical operations model for AgencyOS. It tra
 - Passenger link modes are `existing`, `new_inline`, or `unresolved`.
 - Segment records are canonical for itinerary shape; summary fields are display conveniences.
 - Requested services should use passenger and segment scoping rather than unstructured notes whenever possible.
-- Mobility/medical/pet/special-item details can use Phase 33 Reference Data and service catalogue values while deeper policy checks are implemented separately.
+- Mobility/medical/pet/special-item details use Phase 33 Reference Data and Phase 34 normalized child records while deeper airline policy checks are implemented separately.
+
+## Phase 34 Request Normalization
+
+Phase 34 implements the canonical request child model:
+
+- `request_segments` remain the segment-first itinerary source for requests.
+- `request_passengers` are request-context beneficiary rows and may remain unresolved until staff can link or create a master passenger profile.
+- `request_passenger_segment_services` records bind one passenger, one segment, and one service catalogue/service-family context.
+- `request_pets` stores request/passenger-linked animal details, while `request_pet_segment_transport` stores exact segment transport applicability.
+- `request_special_items` stores request/passenger-linked item details, while `request_special_item_segments` stores exact segment transport applicability.
+- `request_case_flags` summarize medical, document, pet, special-item, and scoped-service conditions but do not replace exact child records.
 
 ## Service Catalogue
 
@@ -75,3 +86,20 @@ Implemented service families:
 
 Airline-specific rules, lead times, acceptance criteria, source documents, and exceptions remain in Airline Intelligence rather than Reference Data.
 Sports equipment, musical instruments, fragile/valuable items, oxygen, POC, stretcher, extra seat, pet, and mobility-device handling are service catalogue records within those families.
+
+## Phase 33.1 Reference Data Governance
+
+Reference Data is global, platform-owned master data:
+
+- Approved `global_reference_records` are available to all agencies and are the canonical lookup source.
+- Agency users may submit `reference_data_suggestions`, but suggestions are not active globally until reviewed.
+- Platform owners/admins review suggestions and may approve, reject, request more information, merge, or archive them.
+- Manual `reference_import_batches` validate and import global records without destructive deletes or startup seeding.
+- Agency-local overrides, when introduced, must be clearly local and must not be confused with global master records.
+
+The same governance shape is reserved for future airline policy learning:
+
+- `agency_policy_overrides` remain agency-local.
+- `policy_rule_suggestions` will allow agencies to submit evidence-backed improvements.
+- `policy_evidence` preserves source material for reviewer decisions.
+- Approved policy suggestions may become global policy rules; rejected suggestions remain local/rejected/archived.

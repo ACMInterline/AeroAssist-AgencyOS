@@ -1,7 +1,11 @@
+import csv
+import hashlib
+import json
+from io import StringIO
 from typing import Any
 
 from database import Database
-from models import AuditEvent, GlobalReferenceRecord, ServiceCatalogueRecord
+from models import AuditEvent, GlobalReferenceRecord, ReferenceImportBatch, ServiceCatalogueRecord, now_utc
 
 
 REFERENCE_DOMAINS = {
@@ -189,6 +193,14 @@ def safe_reference_record(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def safe_reference_suggestion(record: dict[str, Any]) -> dict[str, Any]:
+    return {**record, "suggested_metadata_json": record.get("suggested_metadata_json") or {}}
+
+
+def safe_reference_import_batch(record: dict[str, Any]) -> dict[str, Any]:
+    return {**record, "error_report_json": record.get("error_report_json") or {}}
+
+
 async def audit_reference_event(
     db: Database,
     event_type: str,
@@ -207,6 +219,169 @@ async def audit_reference_event(
         metadata=metadata or {},
     )
     await db.collection("audit_events").insert_one(event.model_dump(mode="json"))
+
+
+REQUIRED_IMPORT_COLUMNS = {"domain", "code", "label"}
+OPTIONAL_IMPORT_COLUMNS = {"description", "aliases", "sort_order", "is_active", "metadata_json"}
+SUPPORTED_IMPORT_COLUMNS = REQUIRED_IMPORT_COLUMNS | OPTIONAL_IMPORT_COLUMNS
+
+
+def parse_bool(value: str | None, default: bool = True) -> bool:
+    if value is None or str(value).strip() == "":
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "active"}
+
+
+def parse_aliases(value: str | None) -> list[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.replace("|", ",").split(",") if item.strip()]
+
+
+def parse_metadata(value: str | None, row_number: int, errors: list[str]) -> dict[str, Any]:
+    if not value or not value.strip():
+        return {}
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        errors.append(f"Row {row_number}: metadata_json is not valid JSON.")
+        return {}
+    if not isinstance(parsed, dict):
+        errors.append(f"Row {row_number}: metadata_json must be an object.")
+        return {}
+    return parsed
+
+
+async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> dict[str, Any]:
+    ensure_domain = domain in REFERENCE_DOMAINS
+    if not ensure_domain:
+        return {"rows": [], "total_rows": 0, "valid_rows": 0, "invalid_rows": 0, "errors": [f"Unsupported reference domain: {domain}"], "duplicate_codes": []}
+
+    reader = csv.DictReader(StringIO(csv_text.strip()))
+    fieldnames = set(reader.fieldnames or [])
+    missing = sorted(REQUIRED_IMPORT_COLUMNS - fieldnames)
+    unsupported = sorted(fieldnames - SUPPORTED_IMPORT_COLUMNS)
+    errors: list[str] = []
+    if missing:
+        errors.append(f"Missing required columns: {', '.join(missing)}.")
+    if unsupported:
+        errors.append(f"Unsupported columns ignored: {', '.join(unsupported)}.")
+
+    rows: list[dict[str, Any]] = []
+    seen_codes: set[str] = set()
+    duplicate_codes: list[str] = []
+    for row_number, row in enumerate(reader, start=2):
+        row_errors: list[str] = []
+        row_domain = (row.get("domain") or "").strip()
+        code = normalize_reference_code(row.get("code") or "")
+        label = (row.get("label") or "").strip()
+        if row_domain != domain:
+            row_errors.append(f"Row {row_number}: domain must be {domain}.")
+        if not code:
+            row_errors.append(f"Row {row_number}: code is required.")
+        if not label:
+            row_errors.append(f"Row {row_number}: label is required.")
+        if code in seen_codes:
+            row_errors.append(f"Row {row_number}: duplicate code {code} within file.")
+            duplicate_codes.append(code)
+        seen_codes.add(code)
+        metadata_json = parse_metadata(row.get("metadata_json"), row_number, row_errors)
+        try:
+            sort_order = int(row.get("sort_order") or 100)
+        except ValueError:
+            row_errors.append(f"Row {row_number}: sort_order must be an integer.")
+            sort_order = 100
+        rows.append(
+            {
+                "row_number": row_number,
+                "valid": not row_errors,
+                "errors": row_errors,
+                "record": {
+                    "domain": domain,
+                    "code": code,
+                    "label": label,
+                    "description": (row.get("description") or "").strip() or None,
+                    "aliases": parse_aliases(row.get("aliases")),
+                    "sort_order": sort_order,
+                    "is_active": parse_bool(row.get("is_active"), True),
+                    "metadata_json": metadata_json,
+                    "source_type": "import",
+                },
+            }
+        )
+        errors.extend(row_errors)
+
+    valid_rows = len([row for row in rows if row["valid"]])
+    return {
+        "rows": rows,
+        "total_rows": len(rows),
+        "valid_rows": valid_rows,
+        "invalid_rows": len(rows) - valid_rows,
+        "errors": errors,
+        "duplicate_codes": sorted(set(duplicate_codes)),
+    }
+
+
+async def create_reference_import_batch(
+    db: Database,
+    domain: str,
+    filename: str,
+    csv_text: str,
+    scope: str,
+    actor_user_id: str,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    validation = await validate_reference_csv(db, domain, csv_text)
+    file_hash = hashlib.sha256(csv_text.encode("utf-8")).hexdigest()
+    status = "validated" if validation["invalid_rows"] == 0 else "partially_valid"
+    if validation["total_rows"] == 0 or validation["valid_rows"] == 0:
+        status = "failed"
+    batch = ReferenceImportBatch(
+        uploaded_by_user_id=actor_user_id,
+        scope=scope,
+        domain=domain,
+        filename=filename,
+        file_hash=file_hash,
+        status=status,
+        total_rows=validation["total_rows"],
+        valid_rows=validation["valid_rows"],
+        invalid_rows=validation["invalid_rows"],
+        error_report_json={"errors": validation["errors"], "duplicate_codes": validation["duplicate_codes"], "dry_run": dry_run},
+    )
+    created = await db.collection("reference_import_batches").insert_one(batch.model_dump(mode="json"))
+    await audit_reference_event(db, "reference_import_batch_uploaded", "reference_import_batch", created["id"], f"Reference import batch uploaded for {domain}.", actor_user_id, {"domain": domain, "scope": scope, "filename": filename})
+    await audit_reference_event(db, "reference_import_batch_validated", "reference_import_batch", created["id"], f"Reference import batch validated for {domain}.", actor_user_id, {"valid_rows": validation["valid_rows"], "invalid_rows": validation["invalid_rows"]})
+
+    if dry_run or status == "failed":
+        if status == "failed":
+            await audit_reference_event(db, "reference_import_batch_failed", "reference_import_batch", created["id"], f"Reference import batch failed validation for {domain}.", actor_user_id, created["error_report_json"])
+        return safe_reference_import_batch(created)
+
+    inserted_count = 0
+    updated_count = 0
+    skipped_count = validation["invalid_rows"]
+    for row in validation["rows"]:
+        if not row["valid"]:
+            continue
+        result = await upsert_reference_record(db, domain, row["record"], actor_user_id)
+        if result == "inserted":
+            inserted_count += 1
+        elif result == "updated":
+            updated_count += 1
+        else:
+            skipped_count += 1
+    imported = await db.collection("reference_import_batches").update_one(
+        {"id": created["id"]},
+        {
+            "status": "imported",
+            "inserted_count": inserted_count,
+            "updated_count": updated_count,
+            "skipped_count": skipped_count,
+            "completed_at": now_utc(),
+        },
+    )
+    await audit_reference_event(db, "reference_import_batch_imported", "reference_import_batch", created["id"], f"Reference import batch imported for {domain}.", actor_user_id, {"inserted_count": inserted_count, "updated_count": updated_count, "skipped_count": skipped_count})
+    return safe_reference_import_batch(imported or created)
 
 
 async def upsert_reference_record(db: Database, domain: str, payload: dict[str, Any], actor_user_id: str | None = None) -> str:

@@ -5,17 +5,30 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from auth import get_current_user, require_platform_role
 from config import get_settings
 from database import Database, get_database
-from models import GlobalReferenceCreate, GlobalReferenceRecord, GlobalReferenceUpdate
+from models import (
+    GlobalReferenceCreate,
+    GlobalReferenceRecord,
+    GlobalReferenceUpdate,
+    ReferenceDataSuggestion,
+    ReferenceDataSuggestionCreate,
+    ReferenceImportBatchCreate,
+    ReferenceSuggestionReview,
+    now_utc,
+)
 from services.reference_data_service import (
     REFERENCE_DOMAINS,
     SERVICE_FAMILIES,
     audit_reference_event,
     bootstrap_reference_data,
+    create_reference_import_batch,
     normalize_reference_code,
+    safe_reference_import_batch,
     safe_reference_record,
+    safe_reference_suggestion,
     sort_records,
 )
 from services.seed_service import seed_core_data
+from services.tenant_service import assert_agency_access
 
 router = APIRouter(prefix="/api/reference", tags=["reference"])
 
@@ -63,6 +76,99 @@ async def require_reference_manager(user: dict, payload_scope: str | None = None
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Agency-scoped reference overrides are reserved for a future agency settings phase.")
     if user.get("global_role") not in {"platform_owner", "platform_admin"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Platform owner or admin role is required.")
+
+
+def is_platform_owner(user: dict) -> bool:
+    return user.get("global_role") in {"platform_owner", "platform_admin"}
+
+
+async def require_platform_reference_owner(user: dict) -> None:
+    if not is_platform_owner(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Platform owner or admin role is required.")
+
+
+async def get_suggestion_for_actor(db: Database, suggestion_id: str, user: dict) -> dict:
+    suggestion = await db.collection("reference_data_suggestions").find_one({"id": suggestion_id})
+    if not suggestion:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference suggestion not found.")
+    if is_platform_owner(user):
+        return suggestion
+    await assert_agency_access(db, suggestion["submitting_agency_id"], user)
+    if suggestion.get("submitted_by_user_id") != user["id"]:
+        membership = await db.collection("agency_staff_memberships").find_one({"agency_id": suggestion["submitting_agency_id"], "user_id": user["id"], "status": "active"})
+        if not membership or membership.get("agency_role") not in {"agency_owner", "agency_admin"}:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the submitting agency or platform owner can view this suggestion.")
+    return suggestion
+
+
+async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_user_id: str, reviewer_note: str | None = None, merge_into_reference_record_id: str | None = None) -> tuple[dict, dict | None, str]:
+    suggestion_type = suggestion.get("suggestion_type")
+    domain = suggestion["domain"]
+    target_id = merge_into_reference_record_id or suggestion.get("target_reference_record_id")
+    approved_record: dict | None = None
+    final_status = "approved"
+
+    if suggestion_type in {"correction", "deactivation_request", "merge_request"} and not target_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Target reference record is required for this suggestion type.")
+
+    if suggestion_type in {"new_record", "missing_domain_value"}:
+        code = normalize_reference_code(suggestion.get("suggested_code") or "")
+        if not code:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Suggested code is required for approval.")
+        existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+        payload = {
+            "domain": domain,
+            "code": code,
+            "key": code,
+            "label": suggestion["suggested_label"],
+            "description": suggestion.get("suggested_description"),
+            "aliases": suggestion.get("suggested_aliases") or [],
+            "metadata_json": suggestion.get("suggested_metadata_json") or {},
+            "metadata": suggestion.get("suggested_metadata_json") or {},
+            "source_type": "platform",
+            "is_active": True,
+            "updated_by_user_id": reviewer_user_id,
+        }
+        if existing:
+            approved_record = await db.collection("global_reference_records").update_one({"id": existing["id"]}, payload)
+        else:
+            approved_record = await db.collection("global_reference_records").insert_one(GlobalReferenceRecord(**{**payload, "created_by_user_id": reviewer_user_id}).model_dump(mode="json"))
+    elif suggestion_type == "correction":
+        updates = {
+            "label": suggestion.get("suggested_label"),
+            "description": suggestion.get("suggested_description"),
+            "aliases": suggestion.get("suggested_aliases") or [],
+            "metadata_json": suggestion.get("suggested_metadata_json") or {},
+            "metadata": suggestion.get("suggested_metadata_json") or {},
+            "updated_by_user_id": reviewer_user_id,
+        }
+        if suggestion.get("suggested_code"):
+            code = normalize_reference_code(suggestion["suggested_code"])
+            conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+            if conflict and conflict["id"] != target_id:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Suggested code conflicts with another global record.")
+            updates.update({"code": code, "key": code})
+        approved_record = await db.collection("global_reference_records").update_one({"domain": domain, "id": target_id}, updates)
+    elif suggestion_type == "deactivation_request":
+        approved_record = await db.collection("global_reference_records").update_one({"domain": domain, "id": target_id}, {"is_active": False, "updated_by_user_id": reviewer_user_id})
+    elif suggestion_type == "merge_request":
+        approved_record = await db.collection("global_reference_records").find_one({"domain": domain, "id": target_id})
+        final_status = "merged"
+
+    if suggestion_type in {"correction", "deactivation_request", "merge_request"} and not approved_record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target reference record not found.")
+
+    reviewed = await db.collection("reference_data_suggestions").update_one(
+        {"id": suggestion["id"]},
+        {
+            "status": final_status,
+            "reviewer_user_id": reviewer_user_id,
+            "reviewer_note": reviewer_note,
+            "approved_reference_record_id": approved_record["id"] if approved_record else None,
+            "reviewed_at": now_utc(),
+        },
+    )
+    return reviewed or suggestion, approved_record, final_status
 
 
 @router.get("/domains")
@@ -157,6 +263,167 @@ async def seed_reference(
     result = await seed_core_data(db)
     reference_result = await bootstrap_reference_data(db, user["id"])
     return {"ok": True, "seed": result, "reference_bootstrap": reference_result, "actor_user_id": user["id"]}
+
+
+@router.post("/import-batches", status_code=status.HTTP_201_CREATED)
+async def create_import_batch(
+    payload: ReferenceImportBatchCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    ensure_domain(payload.domain)
+    await require_platform_reference_owner(user)
+    if payload.scope != "global":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Agency suggestion batch imports are reserved for a future import UI phase.")
+    batch = await create_reference_import_batch(db, payload.domain, payload.filename, payload.csv_text, payload.scope.value if hasattr(payload.scope, "value") else payload.scope, user["id"], payload.dry_run)
+    return {"batch": batch, "actor_user_id": user["id"]}
+
+
+@router.get("/import-batches")
+async def list_import_batches(
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    items = [safe_reference_import_batch(item) for item in await db.collection("reference_import_batches").find_many()]
+    return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
+
+
+@router.get("/import-batches/{batch_id}")
+async def get_import_batch(
+    batch_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    batch = await db.collection("reference_import_batches").find_one({"id": batch_id})
+    if not batch:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference import batch not found.")
+    return {"batch": safe_reference_import_batch(batch), "actor_user_id": user["id"]}
+
+
+@router.post("/suggestions", status_code=status.HTTP_201_CREATED)
+async def create_reference_suggestion(
+    payload: ReferenceDataSuggestionCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    ensure_domain(payload.domain)
+    await assert_agency_access(db, payload.submitting_agency_id, user)
+    code = normalize_reference_code(payload.suggested_code or "") or None
+    if payload.target_reference_record_id:
+        target = await db.collection("global_reference_records").find_one({"domain": payload.domain, "id": payload.target_reference_record_id})
+        if not target:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target reference record not found.")
+    suggestion = ReferenceDataSuggestion(
+        **{
+            **payload.model_dump(mode="json"),
+            "suggested_code": code,
+            "submitted_by_user_id": user["id"],
+            "status": "pending_review",
+        }
+    )
+    created = await db.collection("reference_data_suggestions").insert_one(suggestion.model_dump(mode="json"))
+    await audit_reference_event(db, "reference_suggestion_created", "reference_data_suggestion", created["id"], f"Reference suggestion submitted for {payload.domain}.", user["id"], {"domain": payload.domain, "suggestion_type": payload.suggestion_type.value if hasattr(payload.suggestion_type, "value") else payload.suggestion_type, "submitting_agency_id": payload.submitting_agency_id})
+    return {"suggestion": safe_reference_suggestion(created), "actor_user_id": user["id"]}
+
+
+@router.get("/suggestions")
+async def list_reference_suggestions(
+    status_filter: str | None = Query(default=None, alias="status"),
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters: dict[str, Any] = {}
+    if status_filter:
+        filters["status"] = status_filter
+    if is_platform_owner(user):
+        if agency_id:
+            filters["submitting_agency_id"] = agency_id
+    else:
+        if agency_id:
+            await assert_agency_access(db, agency_id, user)
+            filters["submitting_agency_id"] = agency_id
+        else:
+            memberships = await db.collection("agency_staff_memberships").find_many({"user_id": user["id"], "status": "active"})
+            agency_ids = {item["agency_id"] for item in memberships}
+            items = [safe_reference_suggestion(item) for item in await db.collection("reference_data_suggestions").find_many(filters) if item.get("submitting_agency_id") in agency_ids]
+            return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
+    items = [safe_reference_suggestion(item) for item in await db.collection("reference_data_suggestions").find_many(filters)]
+    return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
+
+
+@router.get("/suggestions/{suggestion_id}")
+async def get_reference_suggestion(
+    suggestion_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    suggestion = await get_suggestion_for_actor(db, suggestion_id, user)
+    return {"suggestion": safe_reference_suggestion(suggestion), "actor_user_id": user["id"]}
+
+
+@router.patch("/suggestions/{suggestion_id}/approve")
+async def approve_reference_suggestion(
+    suggestion_id: str,
+    payload: ReferenceSuggestionReview,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    suggestion = await get_suggestion_for_actor(db, suggestion_id, user)
+    if suggestion.get("status") not in {"pending_review", "needs_more_information"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only pending suggestions can be approved.")
+    reviewed, record, final_status = await apply_suggestion_approval(db, suggestion, user["id"], payload.reviewer_note, payload.merge_into_reference_record_id)
+    await audit_reference_event(db, "reference_suggestion_reviewed", "reference_data_suggestion", suggestion_id, f"Reference suggestion {final_status}.", user["id"], {"status": final_status})
+    await audit_reference_event(db, "reference_suggestion_approved", "reference_data_suggestion", suggestion_id, f"Reference suggestion approved for {suggestion['domain']}.", user["id"], {"approved_reference_record_id": record["id"] if record else None})
+    if record:
+        await audit_reference_event(db, "reference_record_promoted_from_suggestion", "global_reference_record", record["id"], f"Global reference record promoted from suggestion {suggestion_id}.", user["id"], {"suggestion_id": suggestion_id, "domain": suggestion["domain"]})
+    return {"suggestion": safe_reference_suggestion(reviewed), "record": safe_reference_record(record) if record else None, "actor_user_id": user["id"]}
+
+
+@router.patch("/suggestions/{suggestion_id}/reject")
+async def reject_reference_suggestion(
+    suggestion_id: str,
+    payload: ReferenceSuggestionReview,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    suggestion = await get_suggestion_for_actor(db, suggestion_id, user)
+    reviewed = await db.collection("reference_data_suggestions").update_one({"id": suggestion_id}, {"status": "rejected", "reviewer_user_id": user["id"], "reviewer_note": payload.reviewer_note, "reviewed_at": now_utc()})
+    await audit_reference_event(db, "reference_suggestion_reviewed", "reference_data_suggestion", suggestion_id, "Reference suggestion reviewed.", user["id"], {"status": "rejected"})
+    await audit_reference_event(db, "reference_suggestion_rejected", "reference_data_suggestion", suggestion_id, f"Reference suggestion rejected for {suggestion['domain']}.", user["id"], {"domain": suggestion["domain"]})
+    return {"suggestion": safe_reference_suggestion(reviewed or suggestion), "actor_user_id": user["id"]}
+
+
+@router.patch("/suggestions/{suggestion_id}/needs-more-information")
+async def request_reference_suggestion_information(
+    suggestion_id: str,
+    payload: ReferenceSuggestionReview,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    suggestion = await get_suggestion_for_actor(db, suggestion_id, user)
+    reviewed = await db.collection("reference_data_suggestions").update_one({"id": suggestion_id}, {"status": "needs_more_information", "reviewer_user_id": user["id"], "reviewer_note": payload.reviewer_note, "reviewed_at": now_utc()})
+    await audit_reference_event(db, "reference_suggestion_reviewed", "reference_data_suggestion", suggestion_id, "Reference suggestion marked needs more information.", user["id"], {"status": "needs_more_information"})
+    return {"suggestion": safe_reference_suggestion(reviewed or suggestion), "actor_user_id": user["id"]}
+
+
+@router.patch("/suggestions/{suggestion_id}/archive")
+async def archive_reference_suggestion(
+    suggestion_id: str,
+    payload: ReferenceSuggestionReview,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_reference_owner(user)
+    suggestion = await get_suggestion_for_actor(db, suggestion_id, user)
+    reviewed = await db.collection("reference_data_suggestions").update_one({"id": suggestion_id}, {"status": "archived", "reviewer_user_id": user["id"], "reviewer_note": payload.reviewer_note, "reviewed_at": now_utc()})
+    await audit_reference_event(db, "reference_suggestion_reviewed", "reference_data_suggestion", suggestion_id, "Reference suggestion archived.", user["id"], {"status": "archived"})
+    return {"suggestion": safe_reference_suggestion(reviewed or suggestion), "actor_user_id": user["id"]}
 
 
 @router.get("/{domain}/search")

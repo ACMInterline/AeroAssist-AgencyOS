@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_reference_data_core_service_catalogue",
+        "phase": "phase_33_1_global_reference_governance_suggestions",
     }
 
 
@@ -82,7 +82,15 @@ async def summary(
             "document_deliveries": await db.collection("document_deliveries").count(),
             "document_delivery_attempts": await db.collection("document_delivery_attempts").count(),
             "reference_records": await db.collection("global_reference_records").count(),
+            "reference_suggestions": await db.collection("reference_data_suggestions").count(),
+            "pending_reference_suggestions": await db.collection("reference_data_suggestions").count({"status": "pending_review"}),
+            "reference_import_batches": await db.collection("reference_import_batches").count(),
             "service_catalogue_records": await db.collection("service_catalogue").count(),
+            "request_passenger_segment_services": await db.collection("request_passenger_segment_services").count(),
+            "request_pets": await db.collection("request_pets").count(),
+            "request_pet_segment_transport": await db.collection("request_pet_segment_transport").count(),
+            "request_special_items": await db.collection("request_special_items").count(),
+            "request_special_item_segments": await db.collection("request_special_item_segments").count(),
             "audit_events": await db.collection("audit_events").count(),
         },
         "production_onboarding": {
@@ -131,6 +139,8 @@ async def summary(
             "CMS media library, website image assets, and public website visual polish",
             "Blueprint alignment and canonical operations model foundation",
             "Reference data core and service catalogue foundation",
+            "Global reference governance, suggestion queue, and bulk import foundation",
+            "Segment-scoped request services, pets, and special items foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

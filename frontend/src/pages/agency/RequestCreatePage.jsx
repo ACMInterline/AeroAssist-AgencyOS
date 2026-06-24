@@ -3,6 +3,7 @@ import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { fetchReferenceDomain, fetchServiceCatalogue } from "../../lib/referenceData"
 
 const serviceCategories = [
   "mobility_assistance",
@@ -50,6 +51,8 @@ const batteryDeviceTypes = new Set(["electric_wheelchair_powerchair", "mobility_
 const blankPassenger = () => ({ passenger_id: "", first_name: "", last_name: "", display_name: "", date_of_birth: "", passenger_type: "adult", mobility_notes: "", medical_notes: "", notes: "" })
 const blankSegment = () => ({ sequence: 1, origin_text: "", destination_text: "", departure_date: "", departure_time_window: "", arrival_date: "", arrival_time_window: "", marketing_airline: "", operating_airline: "", flight_number: "", cabin_preference: "", notes: "" })
 const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: { assessment_version: "v2_assessment_driven", passenger_context_tags: [], functional_assessment: {}, confirmed_ssr_code: "use_suggested", own_mobility_device: "no", own_device_details: {}, battery_details: {} } })
+const blankPet = () => ({ pet_name: "", species: "dog", breed: "", breed_free_text: "", requested_transport_mode: "petc", pet_weight_kg: "", container_weight_kg: "", combined_weight_kg: "", documentation_status: "pending_information", segment_keys: ["1"], notes: "" })
+const blankSpecialItem = () => ({ item_category_code: "other", item_name: "", description: "", quantity: 1, weight_kg: "", transport_location: "checked_baggage", documentation_status: "pending_information", segment_keys: ["1"], notes: "" })
 
 export default function RequestCreatePage() {
   const [state, setState] = useState(null)
@@ -76,17 +79,22 @@ export default function RequestCreatePage() {
     passengers: [blankPassenger()],
     segments: [blankSegment()],
     services: [blankService()],
+    pets: [],
+    special_items: [],
   })
   const [error, setError] = useState("")
 
   useEffect(() => {
     async function load() {
       const context = await loadCurrentAgency()
-      const [clients, passengers] = await Promise.all([
+      const [clients, passengers, serviceCatalogue, petSpecies, specialItemCategories] = await Promise.all([
         apiGet(`/api/agencies/${context.agency.id}/clients`),
         apiGet(`/api/agencies/${context.agency.id}/passengers`),
+        fetchServiceCatalogue().catch(() => ({ items: [] })),
+        fetchReferenceDomain("pet_species").catch(() => ({ items: [] })),
+        fetchReferenceDomain("special_item_categories").catch(() => ({ items: [] })),
       ])
-      setState({ ...context, clients: clients.items, passengers: passengers.items })
+      setState({ ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], petSpecies: petSpecies.items || [], specialItemCategories: specialItemCategories.items || [] })
       setForm((current) => ({ ...current, client_id: clients.items[0]?.id || "" }))
     }
     load().catch((err) => setError(err.message))
@@ -120,6 +128,8 @@ export default function RequestCreatePage() {
     if (form.client_mode === "inline" && (!form.client_name || (!form.client_email && !form.client_phone))) return "Inline client requires name and email or phone."
     if (!form.segments.some((segment) => segment.origin_text && segment.destination_text) && !(form.origin && form.destination)) return "Add at least one route segment or origin/destination."
     if (!form.services.length) return "Select at least one service category."
+    if (form.services.some((service) => !service.applies_to_all_segments && !service.segment_ids.length)) return "Every service must be assigned to at least one exact segment."
+    if (form.services.some((service) => !service.applies_to_all_passengers && !service.passenger_ids.length)) return "Every service must be assigned to at least one exact passenger."
     const mobilityOverrideMissingReason = form.services.some((service) => {
       if (service.category !== "mobility_assistance") return false
       const recommendation = recommendMobilitySsr(service.details || {})
@@ -146,21 +156,47 @@ export default function RequestCreatePage() {
         organization: form.client_organization || undefined,
         notes: form.client_notes || undefined,
       },
-      passengers: form.passengers.filter((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name).map(cleanObject),
+      passengers: form.passengers.filter((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name || passenger.passenger_link_mode === "unresolved").map((passenger, index) => cleanObject({ ...passenger, request_passenger_key: `inline-${index}`, passenger_link_mode: passenger.passenger_id ? "existing" : (passenger.first_name || passenger.display_name ? "new_inline" : "unresolved") })),
       trip_type: form.trip_type,
       origin: form.origin || undefined,
       destination: form.destination || undefined,
       departure_date: form.departure_date || undefined,
       return_date: form.return_date || undefined,
       route_notes: form.route_notes || undefined,
-      segments: form.segments.filter((segment) => segment.origin_text && segment.destination_text).map((segment, index) => cleanObject({ ...segment, sequence: Number(segment.sequence) || index + 1 })),
+      segments: form.segments.filter((segment) => segment.origin_text && segment.destination_text).map((segment, index) => cleanObject({ ...segment, segment_key: String(Number(segment.sequence) || index + 1), sequence: Number(segment.sequence) || index + 1 })),
       services: form.services.map((service) => cleanObject({
         category: service.category,
+        service_code: service.service_code || undefined,
+        service_catalogue_id: service.service_catalogue_id || undefined,
+        service_family_code: service.service_family_code || undefined,
         details: serviceDetails(service),
         applies_to_all_passengers: service.applies_to_all_passengers,
         applies_to_all_segments: service.applies_to_all_segments,
+        passenger_ids: service.applies_to_all_passengers ? [] : service.passenger_ids,
+        segment_ids: service.applies_to_all_segments ? [] : service.segment_ids,
         notes: service.notes || undefined,
       })),
+      pets: form.pets.map((pet, index) => {
+        const { segment_keys, ...petPayload } = pet
+        return cleanObject({
+          pet_key: `pet-${index}`,
+          ...petPayload,
+          pet_weight_kg: numericOrUndefined(pet.pet_weight_kg),
+          container_weight_kg: numericOrUndefined(pet.container_weight_kg),
+          combined_weight_kg: numericOrUndefined(pet.combined_weight_kg),
+          segment_transports: (segment_keys || []).map((key) => ({ segment_key: key, requested_transport_mode: pet.requested_transport_mode })),
+        })
+      }),
+      special_items: form.special_items.map((item, index) => {
+        const { segment_keys, ...itemPayload } = item
+        return cleanObject({
+          item_key: `item-${index}`,
+          ...itemPayload,
+          quantity: Number(item.quantity || 1),
+          weight_kg: numericOrUndefined(item.weight_kg),
+          segment_transports: (segment_keys || []).map((key) => ({ segment_key: key, transport_location: item.transport_location })),
+        })
+      }),
       title: form.title || derivedTitle || undefined,
       status: form.status,
       source: form.source,
@@ -189,7 +225,7 @@ export default function RequestCreatePage() {
           <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
             <aside className="hidden xl:block">
               <div className="sticky top-24 rounded-lg border border-slate-200 bg-white p-3">
-                {["Client", "Passengers", "Itinerary", "Services", "Summary"].map((item, index) => (
+                {["Client", "Passengers", "Itinerary", "Services", "Pets", "Special items", "Summary"].map((item, index) => (
                   <a className="block rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" href={`#builder-${index + 1}`} key={item}>{index + 1}. {item}</a>
                 ))}
               </div>
@@ -263,10 +299,16 @@ export default function RequestCreatePage() {
               {form.services.map((service, index) => (
                 <div className="rounded-md border border-slate-100 p-3" key={index}>
                   <div className="grid gap-3 md:grid-cols-3">
-                    <Select label="Service category" value={service.category} onChange={(value) => updateArray("services", index, { category: value })} options={serviceCategories.map((item) => [item, item.replaceAll("_", " ")])} />
+                    <Select label="Service catalogue" value={service.service_catalogue_id || ""} onChange={(value) => {
+                      const selected = (state?.serviceCatalogue || []).find((item) => item.id === value)
+                      updateArray("services", index, { service_catalogue_id: value, service_code: selected?.service_code || "", service_family_code: selected?.service_family_code || service.service_family_code, category: familyToCategory(selected?.service_family_code) || service.category })
+                    }} options={[["", "Manual category"], ...(state?.serviceCatalogue || []).map((item) => [item.id, `${item.service_code} · ${item.service_label}`])]} />
+                    <Select label="Service category" value={service.category} onChange={(value) => updateArray("services", index, { category: value, service_family_code: categoryToFamily(value) })} options={serviceCategories.map((item) => [item, item.replaceAll("_", " ")])} />
                     <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={service.applies_to_all_passengers} onChange={(event) => updateArray("services", index, { applies_to_all_passengers: event.target.checked })} /> All passengers</label>
                     <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={service.applies_to_all_segments} onChange={(event) => updateArray("services", index, { applies_to_all_segments: event.target.checked })} /> All segments</label>
                   </div>
+                  {!service.applies_to_all_passengers ? <CheckboxGroup title="Assign to passengers" values={passengerKeys(form.passengers)} selected={service.passenger_ids} onToggle={(value) => updateArray("services", index, { passenger_ids: toggleValue(service.passenger_ids, value) })} /> : null}
+                  {!service.applies_to_all_segments ? <CheckboxGroup title="Assign to segments" values={segmentKeys(form.segments)} selected={service.segment_ids} onToggle={(value) => updateArray("services", index, { segment_ids: toggleValue(service.segment_ids, value) })} /> : null}
                   <ConditionalServiceFields service={service} onChange={(patch) => updateArray("services", index, { details: { ...service.details, ...patch } })} />
                   <TextArea label={service.category === "mobility_assistance" ? "Additional mobility notes" : "Service notes"} value={service.notes} onChange={(value) => updateArray("services", index, { notes: value })} />
                   {form.services.length > 1 ? <button className="mt-2 text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("services", index)}>Remove service</button> : null}
@@ -275,7 +317,44 @@ export default function RequestCreatePage() {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("services", blankService)}>Add service</button>
             </Section>
 
-            <Section id="builder-5" eyebrow="Review" title="5. Notes and summary">
+            <Section id="builder-5" eyebrow="Pets" title="5. Pets and animal transport">
+              {form.pets.map((pet, index) => (
+                <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
+                  <Field label="Pet name" value={pet.pet_name} onChange={(value) => updateArray("pets", index, { pet_name: value })} />
+                  <Select label="Species" value={pet.species} onChange={(value) => updateArray("pets", index, { species: value })} options={(state?.petSpecies?.length ? state.petSpecies.map((item) => [item.code, item.label]) : [["dog", "Dog"], ["cat", "Cat"]])} />
+                  <Field label="Breed" value={pet.breed_free_text || pet.breed} onChange={(value) => updateArray("pets", index, { breed_free_text: value })} />
+                  <Select label="Transport" value={pet.requested_transport_mode} onChange={(value) => updateArray("pets", index, { requested_transport_mode: value })} options={[["petc", "PETC cabin"], ["avih", "AVIH hold"], ["manifest_cargo_advisory", "Cargo advisory"]]} />
+                  <Field label="Pet kg" type="number" value={pet.pet_weight_kg} onChange={(value) => updateArray("pets", index, { pet_weight_kg: value })} />
+                  <Field label="Container kg" type="number" value={pet.container_weight_kg} onChange={(value) => updateArray("pets", index, { container_weight_kg: value })} />
+                  <Field label="Combined kg" type="number" value={pet.combined_weight_kg} onChange={(value) => updateArray("pets", index, { combined_weight_kg: value })} />
+                  <Field label="Documents" value={pet.documentation_status} onChange={(value) => updateArray("pets", index, { documentation_status: value })} />
+                  <CheckboxGroup title="Transport segments" values={segmentKeys(form.segments)} selected={pet.segment_keys || []} onToggle={(value) => updateArray("pets", index, { segment_keys: toggleValue(pet.segment_keys || [], value) })} />
+                  <TextArea label="Pet requirements" value={pet.notes} onChange={(value) => updateArray("pets", index, { notes: value })} />
+                  <button className="text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("pets", index)}>Remove pet</button>
+                </div>
+              ))}
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("pets", blankPet)}>Add pet</button>
+            </Section>
+
+            <Section id="builder-6" eyebrow="Special items" title="6. Special items and equipment">
+              {form.special_items.map((item, index) => (
+                <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
+                  <Select label="Category" value={item.item_category_code} onChange={(value) => updateArray("special_items", index, { item_category_code: value })} options={(state?.specialItemCategories?.length ? state.specialItemCategories.map((entry) => [entry.code, entry.label]) : [["sports_equipment", "Sports equipment"], ["musical_instrument", "Musical instrument"], ["fragile_item", "Fragile item"], ["other", "Other"]])} />
+                  <Field label="Item name" value={item.item_name} onChange={(value) => updateArray("special_items", index, { item_name: value })} />
+                  <Field label="Description" value={item.description} onChange={(value) => updateArray("special_items", index, { description: value })} required />
+                  <Field label="Quantity" type="number" value={item.quantity} onChange={(value) => updateArray("special_items", index, { quantity: value })} />
+                  <Field label="Weight kg" type="number" value={item.weight_kg} onChange={(value) => updateArray("special_items", index, { weight_kg: value })} />
+                  <Select label="Transport location" value={item.transport_location} onChange={(value) => updateArray("special_items", index, { transport_location: value })} options={[["passenger_cabin", "Passenger cabin"], ["baggage_hold", "Baggage hold"], ["extra_seat", "Extra seat"], ["checked_baggage", "Checked baggage"], ["cargo_advisory", "Cargo advisory"]]} />
+                  <Field label="Documents" value={item.documentation_status} onChange={(value) => updateArray("special_items", index, { documentation_status: value })} />
+                  <CheckboxGroup title="Transport segments" values={segmentKeys(form.segments)} selected={item.segment_keys || []} onToggle={(value) => updateArray("special_items", index, { segment_keys: toggleValue(item.segment_keys || [], value) })} />
+                  <TextArea label="Handling instructions" value={item.notes} onChange={(value) => updateArray("special_items", index, { notes: value })} />
+                  <button className="text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("special_items", index)}>Remove item</button>
+                </div>
+              ))}
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("special_items", blankSpecialItem)}>Add special item</button>
+            </Section>
+
+            <Section id="builder-7" eyebrow="Review" title="7. Notes and summary">
               <div className="grid gap-3 md:grid-cols-3">
                 <Select label="Status" value={form.status} onChange={(value) => setField("status", value)} options={["draft", "new", "triage"].map((item) => [item, item])} />
                 <Select label="Priority" value={form.priority} onChange={(value) => setField("priority", value)} options={["low", "normal", "high", "urgent"].map((item) => [item, item])} />
@@ -321,6 +400,45 @@ function serviceDetails(service) {
 
 function cleanObject(value) {
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== "" && item !== undefined && item !== null))
+}
+
+function numericOrUndefined(value) {
+  return value === "" || value === undefined || value === null ? undefined : Number(value)
+}
+
+function passengerKeys(passengers) {
+  return passengers.map((passenger, index) => [`inline-${index}`, passenger.display_name || passenger.first_name || passenger.passenger_id || `Passenger ${index + 1}`])
+}
+
+function segmentKeys(segments) {
+  return segments.filter((segment) => segment.origin_text && segment.destination_text).map((segment, index) => {
+    const key = String(Number(segment.sequence) || index + 1)
+    return [key, `${key}. ${segment.origin_text} → ${segment.destination_text}`]
+  })
+}
+
+function categoryToFamily(category) {
+  return {
+    mobility_assistance: "wheelchair_mobility",
+    medical_travel: "medical_assistance",
+    pet_travel: "pets_animals",
+    unaccompanied_minor: "minor_assistance",
+    child_travel_support: "minor_assistance",
+    special_baggage: "special_items",
+    sports_equipment: "special_items",
+    airport_assistance: "sensory_assistance",
+  }[category] || undefined
+}
+
+function familyToCategory(family) {
+  return {
+    wheelchair_mobility: "mobility_assistance",
+    medical_assistance: "medical_travel",
+    pets_animals: "pet_travel",
+    minor_assistance: "unaccompanied_minor",
+    special_items: "special_baggage",
+    sensory_assistance: "airport_assistance",
+  }[family] || undefined
 }
 
 function toggleValue(values, value) {
@@ -378,6 +496,23 @@ function TextArea({ label, value, onChange }) {
 
 function Select({ label, value, onChange, options, required = false }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} required={required} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></label>
+}
+
+function CheckboxGroup({ title, values, selected, onToggle }) {
+  return (
+    <div className="mt-3 rounded-md border border-slate-100 p-3 md:col-span-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      <div className="mt-2 flex flex-wrap gap-3">
+        {values.map(([value, label]) => (
+          <label className="flex items-center gap-2 text-sm text-slate-700" key={value}>
+            <input type="checkbox" checked={(selected || []).includes(value)} onChange={() => onToggle(value)} />
+            {label}
+          </label>
+        ))}
+      </div>
+      {!values.length ? <p className="mt-2 text-xs text-amber-700">Add itinerary segments first.</p> : null}
+    </div>
+  )
 }
 
 function ServiceCard({ title, body, children }) {

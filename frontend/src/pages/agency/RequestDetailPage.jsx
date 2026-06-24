@@ -143,9 +143,18 @@ export default function RequestDetailPage({ requestId }) {
               ["Priority", state?.request?.priority],
               ["Source", state?.request?.source?.replaceAll("_", " ")],
               ["Route", state?.request?.route_summary || "Not set"],
+              ["Passengers", state?.request?.passenger_count ?? 0],
+              ["Pets", state?.request?.pet_count ?? 0],
+              ["Special services", state?.request?.special_service_count ?? 0],
               ["Trip type", state?.request?.trip_type?.replaceAll("_", " ") || "unknown"],
               ["Services", state?.request?.service_summary || "Not set"],
               ["Source intake", state?.request?.source_intake_id ? <a className="text-blue-700 underline" href={`/agency/request-intakes/${state.request.source_intake_id}`}>Open intake</a> : "None"],
+            ]} />
+            <InfoCard title="Operational flags" rows={[
+              ["Medical review", state?.request?.requires_medical_review ? "Required" : "No"],
+              ["Policy review", state?.request?.requires_airline_policy_review ? "Required" : "No"],
+              ["Document follow-up", state?.request?.requires_document_followup ? "Required" : "No"],
+              ["Existing passenger links", state?.request?.has_existing_passenger_links ? "Yes" : "No"],
             ]} />
             <div className="rounded-lg border border-slate-200 bg-white p-5">
               <h3 className="font-semibold text-slate-950">Status</h3>
@@ -168,6 +177,9 @@ export default function RequestDetailPage({ requestId }) {
             airlineCode={state.segments.find((segment) => segment.preferred_airline_code)?.preferred_airline_code}
             serviceCodes={state.services.map((service) => service.service_code)}
           />
+          <Panel title="Case flags">
+            <List items={state.case_flags} empty="No derived case flags yet" render={(item) => `${item.flag_label} · ${item.severity} · ${item.source}`} />
+          </Panel>
           <Panel title="Passengers">
             <form className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={addPassenger}>
               <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={forms.passenger_id} onChange={(event) => setField("passenger_id", event.target.value)}>
@@ -198,6 +210,34 @@ export default function RequestDetailPage({ requestId }) {
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add service</button>
             </form>
             <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.service_category, item.detail_payload)}` : ""}`} />
+          </Panel>
+          <Panel title="Passenger-segment services">
+            <List items={state.passenger_segment_services} empty="No normalized passenger-segment services yet" render={(item) => {
+              const passenger = state.passengers.find((entry) => entry.id === item.request_passenger_id)
+              const segment = state.segments.find((entry) => entry.id === item.request_segment_id)
+              return `${passenger?.snapshot_display_name || "Passenger"} · ${segment ? `${segment.origin_text} → ${segment.destination_text}` : "Segment"} · ${item.service_code} · ${item.applicability_status.replaceAll("_", " ")}${item.service_family_code ? ` · ${item.service_family_code.replaceAll("_", " ")}` : ""}`
+            }} />
+          </Panel>
+          <section className="grid gap-4 lg:grid-cols-2">
+            <Panel title="Pets and segment transport">
+              <List items={state.pets} empty="No pets captured yet" render={(item) => `${item.pet_name || "Pet"} · ${item.species}${item.breed || item.breed_free_text ? ` · ${item.breed || item.breed_free_text}` : ""} · ${item.requested_transport_mode || "mode pending"}`} />
+              <List items={state.pet_segment_transport} empty="No pet segment transport rows yet" render={(item) => {
+                const pet = state.pets.find((entry) => entry.id === item.request_pet_id)
+                const segment = state.segments.find((entry) => entry.id === item.request_segment_id)
+                return `${pet?.pet_name || "Pet"} · ${segment ? `${segment.origin_text} → ${segment.destination_text}` : "Segment"} · ${item.requested_transport_mode || item.transport_mode || "pending"}`
+              }} />
+            </Panel>
+            <Panel title="Special items and segment transport">
+              <List items={state.special_items} empty="No special items captured yet" render={(item) => `${item.item_name || item.item_category_code || item.item_type} · ${item.description} · ${item.transport_location || "location pending"}`} />
+              <List items={state.special_item_segments} empty="No item segment transport rows yet" render={(item) => {
+                const specialItem = state.special_items.find((entry) => entry.id === item.request_special_item_id)
+                const segment = state.segments.find((entry) => entry.id === item.request_segment_id)
+                return `${specialItem?.item_name || specialItem?.item_category_code || "Item"} · ${segment ? `${segment.origin_text} → ${segment.destination_text}` : "Segment"} · ${item.transport_location || "pending"}`
+              }} />
+            </Panel>
+          </section>
+          <Panel title="Source payload / snapshot">
+            {Object.keys(state.request?.builder_payload_snapshot || {}).length ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.builder_payload_snapshot, null, 2)}</pre> : state.request?.intake_payload_snapshot ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.intake_payload_snapshot, null, 2)}</pre> : <EmptyState title="No source snapshot" body="Legacy requests may not have a builder or intake snapshot." />}
           </Panel>
           <section className="grid gap-4 lg:grid-cols-2">
             <Panel title="Messages">
