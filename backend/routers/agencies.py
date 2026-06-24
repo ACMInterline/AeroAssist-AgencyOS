@@ -1,5 +1,8 @@
 import base64
+import hashlib
+from io import BytesIO
 from datetime import datetime, timedelta
+from pathlib import PurePath
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -8,6 +11,7 @@ from config import get_settings as get_app_settings
 from database import Database, get_database
 from models import (
     Agency,
+    AgencyBrandingLogoAsset,
     AgencyBrandingSettings,
     AgencyBrandingSettingsUpdate,
     AgencyCreate,
@@ -36,6 +40,13 @@ BRANDING_READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_a
 BRANDING_WRITE_ROLES = ["agency_owner", "agency_admin"]
 MAX_LOGO_BYTES = 2 * 1024 * 1024
 SAFE_LOGO_TYPES = {"image/png", "image/jpeg", "image/webp"}
+SAFE_LOGO_EXTENSIONS = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+LOGO_VARIANT_SPECS = {
+    "square": (512, 512, "contain"),
+    "compact": (256, 256, "contain"),
+    "horizontal": (512, 160, "contain"),
+    "favicon": (128, 128, "contain"),
+}
 
 FONT_OPTIONS = {
     "inter": {"label": "Inter", "stack": "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"},
@@ -115,6 +126,249 @@ def safe_invitation(invitation: dict) -> dict:
     return {key: value for key, value in invitation.items() if key not in blocked}
 
 
+def safe_filename(value: str) -> str:
+    name = PurePath(value or "logo").name.strip() or "logo"
+    return "".join(char for char in name if char.isalnum() or char in {"-", "_", "."})[:100] or "logo"
+
+
+def validate_logo_upload_metadata(filename: str, content_type: str, logo_bytes: bytes) -> None:
+    extension = PurePath(filename or "").suffix.lower()
+    if content_type not in SAFE_LOGO_TYPES or extension not in SAFE_LOGO_EXTENSIONS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo must be PNG, JPEG, or WEBP. SVG is not accepted.")
+    if SAFE_LOGO_EXTENSIONS[extension] != content_type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo file extension and MIME type do not match.")
+    detected_type = None
+    if logo_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        detected_type = "image/png"
+    elif logo_bytes.startswith(b"\xff\xd8\xff"):
+        detected_type = "image/jpeg"
+    elif len(logo_bytes) >= 12 and logo_bytes[:4] == b"RIFF" and logo_bytes[8:12] == b"WEBP":
+        detected_type = "image/webp"
+    if detected_type != content_type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo bytes do not match the declared image type.")
+
+
+def logo_data_url(asset: dict | None) -> str | None:
+    if not asset:
+        return None
+    data = asset.get("data_base64")
+    mime_type = asset.get("mime_type")
+    if not data or not mime_type:
+        return None
+    return f"data:{mime_type};base64,{data}"
+
+
+def safe_logo_asset(asset: dict) -> dict:
+    return {
+        "id": asset.get("id"),
+        "storage_record_id": asset.get("storage_record_id"),
+        "original_asset_id": asset.get("original_asset_id"),
+        "variant_key": asset.get("variant_key"),
+        "mime_type": asset.get("mime_type"),
+        "width_px": asset.get("width_px"),
+        "height_px": asset.get("height_px"),
+        "file_size_bytes": asset.get("file_size_bytes"),
+        "checksum_sha256": asset.get("checksum_sha256"),
+        "created_at": asset.get("created_at"),
+        "updated_at": asset.get("updated_at"),
+        "created_by_user_id": asset.get("created_by_user_id"),
+        "is_public_safe": asset.get("is_public_safe", False),
+        "public_usage_allowed": asset.get("public_usage_allowed", False),
+        "transparent_background_preserved": asset.get("transparent_background_preserved", False),
+        "fit_mode": asset.get("fit_mode", "contain"),
+        "url": logo_data_url(asset) if asset.get("is_public_safe") and asset.get("public_usage_allowed") else None,
+    }
+
+
+def safe_logo_assets(assets: list[dict]) -> dict:
+    by_variant = {asset["variant_key"]: safe_logo_asset(asset) for asset in assets if asset.get("variant_key")}
+    return {
+        "variants": by_variant,
+        "preferred": by_variant.get("horizontal") or by_variant.get("square") or by_variant.get("compact"),
+        "sidebar": by_variant.get("compact") or by_variant.get("square"),
+        "public_header": by_variant.get("horizontal") or by_variant.get("square") or by_variant.get("compact"),
+        "favicon": by_variant.get("favicon"),
+    }
+
+
+def safe_public_logo_asset(asset: dict) -> dict:
+    return {
+        "variant_key": asset.get("variant_key"),
+        "mime_type": asset.get("mime_type"),
+        "width_px": asset.get("width_px"),
+        "height_px": asset.get("height_px"),
+        "file_size_bytes": asset.get("file_size_bytes"),
+        "url": logo_data_url(asset),
+    }
+
+
+def safe_public_logo_assets(assets: list[dict]) -> dict:
+    by_variant = {asset["variant_key"]: safe_public_logo_asset(asset) for asset in assets if asset.get("variant_key")}
+    return {
+        "variants": by_variant,
+        "preferred": by_variant.get("horizontal") or by_variant.get("square") or by_variant.get("compact"),
+        "sidebar": by_variant.get("compact") or by_variant.get("square"),
+        "public_header": by_variant.get("horizontal") or by_variant.get("square") or by_variant.get("compact"),
+        "favicon": by_variant.get("favicon"),
+    }
+
+
+def public_safe_branding(branding: dict, assets: list[dict] | None = None, fallback_name: str | None = None) -> dict:
+    public_assets = [
+        asset
+        for asset in (assets or [])
+        if asset.get("is_public_safe") and asset.get("public_usage_allowed") and branding.get("logo_public_usage_allowed", True)
+    ]
+    logo_assets = safe_public_logo_assets(public_assets)
+    header_logo = logo_assets.get("public_header")
+    return {
+        "brand_name": branding.get("brand_name") or fallback_name,
+        "logo_url": header_logo.get("url") if header_logo else None,
+        "logo_variant": header_logo.get("variant_key") if header_logo else None,
+        "logo_assets": logo_assets,
+        "logo_public_usage_allowed": bool(branding.get("logo_public_usage_allowed", True)),
+        "theme_mode": branding.get("theme_mode", "light"),
+        "color_palette_key": branding.get("color_palette_key", "aero_blue"),
+    }
+
+
+def safe_branding(branding: dict, assets: list[dict] | None = None) -> dict:
+    allowed = {
+        "id",
+        "agency_id",
+        "workspace_id",
+        "logo_storage_record_id",
+        "logo_url",
+        "logo_fit_mode",
+        "preferred_logo_usage",
+        "logo_public_usage_allowed",
+        "brand_name",
+        "font_family_key",
+        "corner_radius_key",
+        "density_key",
+        "theme_mode",
+        "color_palette_key",
+        "field_style_key",
+        "button_style_key",
+        "calendar_style_key",
+        "card_style_key",
+        "created_at",
+        "updated_at",
+        "updated_by_user_id",
+        "updated_by_email",
+        "audit_metadata",
+    }
+    clean = {key: value for key, value in branding.items() if key in allowed}
+    clean["logo_assets"] = safe_logo_assets(assets or [])
+    clean["public_branding"] = public_safe_branding(clean, assets or [], clean.get("brand_name"))
+    return clean
+
+
+def prepared_logo_assets(
+    agency_id: str,
+    branding_settings_id: str,
+    filename: str,
+    content_type: str,
+    logo_bytes: bytes,
+    user: dict,
+    fit_mode: str,
+) -> list[AgencyBrandingLogoAsset]:
+    try:
+        from PIL import Image, ImageOps, UnidentifiedImageError
+    except ImportError as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logo image preparation requires Pillow on the server.") from exc
+
+    try:
+        image = Image.open(BytesIO(logo_bytes))
+        image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo image could not be decoded.") from exc
+
+    if image.width < 1 or image.height < 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo image dimensions are invalid.")
+
+    has_alpha = image.mode in {"RGBA", "LA"} or "transparency" in image.info
+    normalized = ImageOps.exif_transpose(image)
+    normalized = normalized.convert("RGBA" if has_alpha else "RGB")
+    now = now_utc()
+    checksum = hashlib.sha256(logo_bytes).hexdigest()
+    base_id = f"brand_asset_{now.strftime('%Y%m%d%H%M%S%f')}"
+    safe_name = safe_filename(filename)
+
+    def png_bytes(source: object) -> bytes:
+        output = BytesIO()
+        source.save(output, format="PNG", optimize=True)
+        return output.getvalue()
+
+    original_png = png_bytes(normalized)
+    original_asset = AgencyBrandingLogoAsset(
+        id=f"{base_id}_original",
+        agency_id=agency_id,
+        branding_settings_id=branding_settings_id,
+        storage_record_id=f"{base_id}_original",
+        variant_key="original",
+        filename=safe_name,
+        mime_type="image/png",
+        width_px=normalized.width,
+        height_px=normalized.height,
+        file_size_bytes=len(original_png),
+        checksum_sha256=hashlib.sha256(original_png).hexdigest(),
+        data_base64=base64.b64encode(original_png).decode("ascii"),
+        created_by_user_id=user["id"],
+        created_by_email=user.get("email"),
+        is_public_safe=False,
+        public_usage_allowed=False,
+        transparent_background_preserved=has_alpha,
+        fit_mode=fit_mode,
+        created_at=now,
+        updated_at=now,
+    )
+    assets = [original_asset]
+
+    for variant_key, (width, height, default_fit) in LOGO_VARIANT_SPECS.items():
+        variant_fit = fit_mode or default_fit
+        canvas_mode = "RGBA" if has_alpha else "RGB"
+        background = (255, 255, 255, 0) if has_alpha else (255, 255, 255)
+        canvas = Image.new(canvas_mode, (width, height), background)
+        working = normalized.copy()
+        if variant_fit == "cover":
+            working = ImageOps.fit(working, (width, height), method=Image.Resampling.LANCZOS, centering=(0.5, 0.5))
+            canvas.paste(working, (0, 0), working if has_alpha else None)
+        else:
+            if variant_fit == "center" and working.width <= width and working.height <= height:
+                resized = working
+            else:
+                resized = ImageOps.contain(working, (width, height), method=Image.Resampling.LANCZOS)
+            canvas.paste(resized, ((width - resized.width) // 2, (height - resized.height) // 2), resized if has_alpha else None)
+        data = png_bytes(canvas)
+        assets.append(
+            AgencyBrandingLogoAsset(
+                id=f"{base_id}_{variant_key}",
+                agency_id=agency_id,
+                branding_settings_id=branding_settings_id,
+                storage_record_id=f"{base_id}_{variant_key}",
+                original_asset_id=original_asset.id,
+                variant_key=variant_key,
+                filename=f"{variant_key}-{safe_name.rsplit('.', 1)[0]}.png",
+                mime_type="image/png",
+                width_px=width,
+                height_px=height,
+                file_size_bytes=len(data),
+                checksum_sha256=hashlib.sha256(data).hexdigest(),
+                data_base64=base64.b64encode(data).decode("ascii"),
+                created_by_user_id=user["id"],
+                created_by_email=user.get("email"),
+                is_public_safe=True,
+                public_usage_allowed=True,
+                transparent_background_preserved=has_alpha,
+                fit_mode=fit_mode,
+                created_at=now,
+                updated_at=now,
+            )
+        )
+    return assets
+
+
 def branding_design_options() -> dict:
     return {
         "fonts": FONT_OPTIONS,
@@ -130,6 +384,8 @@ def branding_design_options() -> dict:
         "button_styles": ["solid", "soft", "outline"],
         "calendar_styles": ["native_polished", "compact", "card"],
         "card_styles": ["flat", "raised", "outline"],
+        "logo_fit_modes": ["contain", "cover", "center"],
+        "preferred_logo_usage": ["square", "horizontal", "compact"],
     }
 
 
@@ -160,11 +416,22 @@ def default_branding_settings(agency: dict, workspace: dict | None = None) -> di
     return defaults.model_dump(mode="json")
 
 
-def branding_response(branding: dict, include_options: bool = True) -> dict:
+async def load_logo_assets(db: Database, agency_id: str, branding: dict | None = None) -> list[dict]:
+    settings_id = (branding or {}).get("id")
+    filters = {"agency_id": agency_id}
+    if settings_id:
+        filters["branding_settings_id"] = settings_id
+    return await db.collection("agency_branding_assets").find_many(filters)
+
+
+def branding_response(branding: dict, include_options: bool = True, assets: list[dict] | None = None) -> dict:
+    clean_branding = safe_branding(branding, assets or [])
     payload = {
-        "branding": branding,
+        "branding": clean_branding,
         "computed_theme": computed_branding_theme(branding),
-        "logo_configured": bool(branding.get("logo_storage_record_id") and branding.get("logo_url")),
+        "logo_configured": bool(clean_branding.get("logo_storage_record_id") and clean_branding.get("logo_url")),
+        "logo_variant_generation_enabled": True,
+        "public_safe_logo_serving_enabled": True,
     }
     if include_options:
         payload["design_options"] = branding_design_options()
@@ -347,7 +614,20 @@ async def get_branding_settings(
 ) -> dict:
     await require_branding_read(db, agency_id, user)
     branding = await load_branding_or_default(db, agency_id)
-    return branding_response(branding)
+    return branding_response(branding, assets=[])
+
+
+@router.get("/{agency_id}/branding/public")
+async def get_public_branding_settings(
+    agency_id: str,
+    db: Database = Depends(get_database),
+) -> dict:
+    website = await db.collection("agency_website_settings").find_one({"agency_id": agency_id, "status": "active"})
+    if website is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Published website not found.")
+    branding = await load_branding_or_default(db, agency_id)
+    assets = await load_logo_assets(db, agency_id, branding)
+    return {"branding": public_safe_branding(branding, assets, website.get("site_name"))}
 
 
 @router.put("/{agency_id}/branding")
@@ -363,6 +643,9 @@ async def update_branding_settings(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No branding fields provided.")
     if "brand_name" in updates and updates["brand_name"] is not None and not str(updates["brand_name"]).strip():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Brand name cannot be blank.")
+    for unsafe_field in {"custom_css", "custom_js", "raw_html", "logo_file_path", "external_script_url"}:
+        if unsafe_field in updates:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Branding cannot include arbitrary CSS, JS, HTML, filesystem paths, or external script URLs.")
     if updates.get("workspace_id"):
         workspace = await db.collection("agency_workspaces").find_one(
             {"agency_id": agency_id, "id": updates["workspace_id"]}
@@ -383,6 +666,7 @@ async def update_branding_settings(
             "audit_metadata": audit_metadata,
         }
     )
+    public_usage_changed = existing and "logo_public_usage_allowed" in updates and updates["logo_public_usage_allowed"] != existing.get("logo_public_usage_allowed", True)
     if existing:
         branding = await db.collection("agency_branding_settings").update_one({"id": existing["id"]}, updates)
     else:
@@ -402,7 +686,24 @@ async def update_branding_settings(
         agency_id=agency_id,
         metadata=audit_metadata,
     )
-    return branding_response(branding)
+    if public_usage_changed:
+        await write_audit(
+            db,
+            event_type="agency_logo_public_usage_changed",
+            entity_type="agency_branding_settings",
+            entity_id=branding["id"],
+            summary="Changed agency logo public usage permission.",
+            actor_user_id=user["id"],
+            agency_id=agency_id,
+            metadata={"public_usage_allowed": branding.get("logo_public_usage_allowed", True)},
+        )
+    assets = await load_logo_assets(db, agency_id, branding)
+    if {"preferred_logo_usage", "logo_fit_mode", "logo_public_usage_allowed"}.intersection(updates) and assets:
+        preferred = next((asset for asset in assets if asset.get("variant_key") == branding.get("preferred_logo_usage")), None)
+        preferred = preferred or next((asset for asset in assets if asset.get("variant_key") == "horizontal"), None)
+        if preferred:
+            branding = await db.collection("agency_branding_settings").update_one({"id": branding["id"]}, {"logo_url": logo_data_url(preferred)})
+    return branding_response(branding, assets=assets)
 
 
 @router.post("/{agency_id}/branding/reset")
@@ -427,6 +728,9 @@ async def reset_branding_settings(
         {
             "logo_storage_record_id": None,
             "logo_url": None,
+            "logo_fit_mode": "contain",
+            "preferred_logo_usage": "horizontal",
+            "logo_public_usage_allowed": True,
             "updated_by_user_id": user["id"],
             "updated_by_email": user.get("email"),
             "audit_metadata": {"reset_to_defaults": True, "logo_removed": bool(existing and existing.get("logo_url"))},
@@ -448,7 +752,7 @@ async def reset_branding_settings(
         agency_id=agency_id,
         metadata={"reset_to_defaults": True},
     )
-    return branding_response(branding)
+    return branding_response(branding, assets=[])
 
 
 @router.post("/{agency_id}/branding/logo")
@@ -459,8 +763,6 @@ async def upload_branding_logo(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_branding_write(db, agency_id, user)
-    if payload.content_type not in SAFE_LOGO_TYPES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo must be PNG, JPEG, or WEBP. SVG is not accepted.")
     try:
         logo_bytes = base64.b64decode(payload.data_base64, validate=True)
     except ValueError as exc:
@@ -469,6 +771,7 @@ async def upload_branding_logo(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo file is empty.")
     if len(logo_bytes) > MAX_LOGO_BYTES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Logo file must be 2MB or smaller.")
+    validate_logo_upload_metadata(payload.filename, payload.content_type, logo_bytes)
 
     existing = await db.collection("agency_branding_settings").find_one({"agency_id": agency_id})
     if not existing:
@@ -478,30 +781,28 @@ async def upload_branding_logo(
         existing = await db.collection("agency_branding_settings").insert_one(
             AgencyBrandingSettings(agency_id=agency_id, brand_name=agency.get("name")).model_dump(mode="json")
         )
-    asset = await db.collection("agency_branding_assets").insert_one(
-        {
-            "id": f"brand_asset_{now_utc().strftime('%Y%m%d%H%M%S%f')}",
-            "agency_id": agency_id,
-            "branding_settings_id": existing["id"],
-            "filename": payload.filename,
-            "content_type": payload.content_type,
-            "size_bytes": len(logo_bytes),
-            "data_base64": payload.data_base64,
-            "created_at": now_utc(),
-            "updated_at": now_utc(),
-            "created_by_user_id": user["id"],
-            "created_by_email": user.get("email"),
-            "public": False,
-        }
-    )
+    fit_mode = existing.get("logo_fit_mode") or "contain"
+    prepared_assets = prepared_logo_assets(agency_id, existing["id"], payload.filename, payload.content_type, logo_bytes, user, fit_mode)
+    inserted_assets = []
+    for asset_model in prepared_assets:
+        inserted_assets.append(await db.collection("agency_branding_assets").insert_one(asset_model.model_dump(mode="json")))
+    asset = next(item for item in inserted_assets if item["variant_key"] == "original")
+    public_asset = next(item for item in inserted_assets if item["variant_key"] == (existing.get("preferred_logo_usage") or "horizontal"))
+    if not public_asset:
+        public_asset = next(item for item in inserted_assets if item["variant_key"] == "horizontal")
     branding = await db.collection("agency_branding_settings").update_one(
         {"id": existing["id"]},
         {
             "logo_storage_record_id": asset["id"],
-            "logo_url": f"data:{payload.content_type};base64,{payload.data_base64}",
+            "logo_url": logo_data_url(public_asset),
             "updated_by_user_id": user["id"],
             "updated_by_email": user.get("email"),
-            "audit_metadata": {"logo_content_type": payload.content_type, "logo_size_bytes": len(logo_bytes), "public": False},
+            "audit_metadata": {
+                "logo_content_type": payload.content_type,
+                "logo_size_bytes": len(logo_bytes),
+                "variants_generated": [item["variant_key"] for item in inserted_assets],
+                "public_usage_allowed": True,
+            },
         },
     )
     await write_audit(
@@ -512,9 +813,27 @@ async def upload_branding_logo(
         summary="Uploaded agency branding logo.",
         actor_user_id=user["id"],
         agency_id=agency_id,
-        metadata={"content_type": payload.content_type, "size_bytes": len(logo_bytes), "public": False},
+        metadata={"content_type": payload.content_type, "size_bytes": len(logo_bytes), "variants_generated": len(inserted_assets)},
     )
-    return branding_response(branding)
+    for generated in inserted_assets:
+        if generated["variant_key"] != "original":
+            await write_audit(
+                db,
+                event_type="agency_logo_variant_generated",
+                entity_type="agency_branding_asset",
+                entity_id=generated["id"],
+                summary=f"Generated {generated['variant_key']} agency logo variant.",
+                actor_user_id=user["id"],
+                agency_id=agency_id,
+                metadata={
+                    "variant_key": generated["variant_key"],
+                    "width_px": generated["width_px"],
+                    "height_px": generated["height_px"],
+                    "mime_type": generated["mime_type"],
+                    "public_usage_allowed": generated["public_usage_allowed"],
+                },
+            )
+    return branding_response(branding, assets=inserted_assets)
 
 
 @router.delete("/{agency_id}/branding/logo")
@@ -548,7 +867,61 @@ async def remove_branding_logo(
         agency_id=agency_id,
         metadata={"previous_logo_storage_record_id": existing.get("logo_storage_record_id")},
     )
-    return branding_response(branding)
+    return branding_response(branding, assets=[])
+
+
+@router.post("/{agency_id}/branding/logo/regenerate")
+async def regenerate_branding_logo_variants(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_branding_write(db, agency_id, user)
+    branding = await db.collection("agency_branding_settings").find_one({"agency_id": agency_id})
+    if not branding or not branding.get("logo_storage_record_id"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No logo is configured for this agency.")
+    original = await db.collection("agency_branding_assets").find_one({"id": branding["logo_storage_record_id"], "agency_id": agency_id})
+    if not original or not original.get("data_base64"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Original logo asset is not available for regeneration.")
+    logo_bytes = base64.b64decode(original["data_base64"], validate=True)
+    prepared_assets = prepared_logo_assets(
+        agency_id,
+        branding["id"],
+        original.get("filename") or "logo.png",
+        original.get("mime_type") or "image/png",
+        logo_bytes,
+        user,
+        branding.get("logo_fit_mode") or "contain",
+    )
+    inserted_assets = []
+    for asset_model in prepared_assets:
+        inserted_assets.append(await db.collection("agency_branding_assets").insert_one(asset_model.model_dump(mode="json")))
+    original_asset = next(item for item in inserted_assets if item["variant_key"] == "original")
+    public_asset = next((item for item in inserted_assets if item["variant_key"] == (branding.get("preferred_logo_usage") or "horizontal")), None)
+    public_asset = public_asset or next(item for item in inserted_assets if item["variant_key"] == "horizontal")
+    updated = await db.collection("agency_branding_settings").update_one(
+        {"id": branding["id"]},
+        {
+            "logo_storage_record_id": original_asset["id"],
+            "logo_url": logo_data_url(public_asset),
+            "updated_by_user_id": user["id"],
+            "updated_by_email": user.get("email"),
+            "audit_metadata": {"logo_variants_regenerated": True, "variants_generated": [item["variant_key"] for item in inserted_assets]},
+        },
+    )
+    for generated in inserted_assets:
+        if generated["variant_key"] != "original":
+            await write_audit(
+                db,
+                event_type="agency_logo_variant_generated",
+                entity_type="agency_branding_asset",
+                entity_id=generated["id"],
+                summary=f"Regenerated {generated['variant_key']} agency logo variant.",
+                actor_user_id=user["id"],
+                agency_id=agency_id,
+                metadata={"variant_key": generated["variant_key"], "width_px": generated["width_px"], "height_px": generated["height_px"]},
+            )
+    return branding_response(updated, assets=inserted_assets)
 
 
 @router.get("/{agency_id}/settings")

@@ -37,6 +37,7 @@ export default function AgencyLayout({ children, user, agency }) {
   const [collapsed, setCollapsed] = useState(false)
   const themeStyle = agencyThemeStyle(agency)
   const brandName = agency?.branding?.brand_name || agency?.name || "AeroAssist"
+  const sidebarLogo = agency?.branding?.logo_assets?.sidebar?.url || agency?.branding?.logo_url
   const initials = brandName.slice(0, 2).toUpperCase()
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/agency"
   const pageTitle = useMemo(() => {
@@ -47,8 +48,8 @@ export default function AgencyLayout({ children, user, agency }) {
   const sidebar = (
     <aside className={`aa-sidebar flex h-full flex-col border-r ${collapsed ? "w-[92px]" : "w-[286px]"}`} style={{ background: "var(--aa-shell)", borderColor: "var(--aa-border)" }}>
       <div className="flex items-center gap-3 border-b px-4 py-4" style={{ borderColor: "var(--aa-border)" }}>
-        {agency?.branding?.logo_url ? (
-          <img className="h-11 w-11 shrink-0 rounded-md border object-contain p-1" src={agency.branding.logo_url} alt={`${brandName} logo`} style={{ borderColor: "var(--aa-border)", background: "var(--aa-muted-bg)" }} />
+        {sidebarLogo ? (
+          <img className="h-11 w-11 shrink-0 rounded-md border object-contain p-1" src={sidebarLogo} alt={`${brandName} logo`} style={{ borderColor: "var(--aa-border)", background: "var(--aa-muted-bg)" }} />
         ) : (
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-sm font-bold" style={{ background: "var(--aa-muted-bg)", color: "var(--aa-primary)" }}>
             {initials}

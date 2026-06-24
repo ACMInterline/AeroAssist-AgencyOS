@@ -22,6 +22,7 @@ from models import (
 )
 from services.request_intake_conversion_service import create_intake
 from services.tenant_service import assert_agency_access, require_any_agency_role
+from routers.agencies import load_logo_assets, public_safe_branding
 
 router = APIRouter(prefix="/api/agencies/{agency_id}/website", tags=["agency-websites"])
 public_router = APIRouter(prefix="/api/public/websites", tags=["public-websites"])
@@ -355,14 +356,10 @@ async def public_website(slug: str, db: Database = Depends(get_database)) -> dic
     pages = await db.collection("agency_website_pages").find_many({"agency_id": agency_id, "status": "published"})
     pages.sort(key=lambda page: (page.get("page_type") != "home", page.get("title", "")))
     branding = await db.collection("agency_branding_settings").find_one({"agency_id": agency_id})
+    logo_assets = await load_logo_assets(db, agency_id, branding or {}) if branding else []
     return {
         "settings": safe_settings(settings),
-        "branding": {
-            "brand_name": (branding or {}).get("brand_name") or settings.get("site_name"),
-            "logo_url": (branding or {}).get("logo_url"),
-            "theme_mode": (branding or {}).get("theme_mode", "light"),
-            "color_palette_key": (branding or {}).get("color_palette_key", "aero_blue"),
-        },
+        "branding": public_safe_branding(branding or {}, logo_assets, settings.get("site_name")),
         "navigation": [{"title": page["title"], "slug": page["slug"], "page_type": page.get("page_type")} for page in pages],
         "pages": [safe_page(page) for page in pages],
     }

@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 30 public website publishing and intake forms.",
+    description="AeroAssist AgencyOS API foundation through Phase 30.1 branding and logo asset stabilization.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_30_public_website_publishing_intake_forms_cms_blocks",
+        "phase": "phase_30_1_branding_logo_asset_settings_stabilization",
     }
 
 
@@ -102,6 +102,7 @@ async def readiness() -> dict:
         ]
     )
     branding_settings_count = await database.collection("agency_branding_settings").count()
+    branding_logo_asset_count = await database.collection("agency_branding_assets").count()
     website_settings_count = await database.collection("agency_website_settings").count()
     published_website_count = await database.collection("agency_website_settings").count({"status": "active"})
     website_page_count = await database.collection("agency_website_pages").count()
@@ -118,7 +119,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_30_public_website_publishing_intake_forms_cms_blocks",
+        "phase": "phase_30_1_branding_logo_asset_settings_stabilization",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -137,8 +138,13 @@ async def readiness() -> dict:
             "diagnostic": "Request intake counts are informational and do not affect readiness.",
         },
         "agency_branding": {
-            "configured_agencies": branding_settings_count,
-            "logo_configured_agencies": branded_logo_count,
+            "branding_enabled": True,
+            "logo_assets_enabled": True,
+            "logo_variant_generation_enabled": True,
+            "public_safe_logo_serving_enabled": True,
+            "configured_agency_branding_count": branding_settings_count,
+            "configured_logo_count": branded_logo_count,
+            "logo_asset_count": branding_logo_asset_count,
             "readiness_required": False,
             "diagnostic": "Agency branding settings are optional and do not affect service readiness.",
         },

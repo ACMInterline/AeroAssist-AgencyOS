@@ -235,6 +235,28 @@ class BrandingCardStyleKey(str, Enum):
     OUTLINE = "outline"
 
 
+class BrandingLogoFitMode(str, Enum):
+    CONTAIN = "contain"
+    COVER = "cover"
+    CENTER = "center"
+
+
+class BrandingLogoUsageKey(str, Enum):
+    SQUARE = "square"
+    HORIZONTAL = "horizontal"
+    COMPACT = "compact"
+
+
+class BrandingLogoVariantKey(str, Enum):
+    ORIGINAL = "original"
+    SQUARE = "square"
+    HORIZONTAL = "horizontal"
+    COMPACT = "compact"
+    FAVICON = "favicon"
+    DARK = "dark"
+    LIGHT = "light"
+
+
 class ClientType(str, Enum):
     INDIVIDUAL = "individual"
     FAMILY_HOUSEHOLD = "family_household"
@@ -661,6 +683,9 @@ class AgencyBrandingSettings(BaseDocument):
     workspace_id: Optional[str] = None
     logo_storage_record_id: Optional[str] = None
     logo_url: Optional[str] = None
+    logo_fit_mode: BrandingLogoFitMode = BrandingLogoFitMode.CONTAIN
+    preferred_logo_usage: BrandingLogoUsageKey = BrandingLogoUsageKey.HORIZONTAL
+    logo_public_usage_allowed: bool = True
     brand_name: Optional[str] = None
     font_family_key: BrandingFontKey = BrandingFontKey.INTER
     corner_radius_key: BrandingRadiusKey = BrandingRadiusKey.ROUNDED
@@ -681,6 +706,9 @@ class AgencyBrandingSettingsUpdate(BaseModel):
 
     workspace_id: Optional[str] = None
     brand_name: Optional[str] = None
+    logo_fit_mode: Optional[BrandingLogoFitMode] = None
+    preferred_logo_usage: Optional[BrandingLogoUsageKey] = None
+    logo_public_usage_allowed: Optional[bool] = None
     font_family_key: Optional[BrandingFontKey] = None
     corner_radius_key: Optional[BrandingRadiusKey] = None
     density_key: Optional[BrandingDensityKey] = None
@@ -698,6 +726,27 @@ class AgencyLogoUpload(BaseModel):
     filename: str
     content_type: str
     data_base64: str
+
+
+class AgencyBrandingLogoAsset(BaseDocument):
+    agency_id: str
+    branding_settings_id: str
+    storage_record_id: Optional[str] = None
+    original_asset_id: Optional[str] = None
+    variant_key: BrandingLogoVariantKey
+    filename: str
+    mime_type: str
+    width_px: int
+    height_px: int
+    file_size_bytes: int
+    checksum_sha256: str
+    data_base64: str
+    created_by_user_id: Optional[str] = None
+    created_by_email: Optional[EmailStr] = None
+    is_public_safe: bool = False
+    public_usage_allowed: bool = False
+    transparent_background_preserved: bool = False
+    fit_mode: BrandingLogoFitMode = BrandingLogoFitMode.CONTAIN
 
 
 class AgencyWebsiteSettings(BaseDocument):

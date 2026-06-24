@@ -43,6 +43,7 @@ The repository currently contains:
 - Phase 28.1: AgencyOS app shell, sidebar navigation, and visual polish stabilization.
 - Phase 29: Agency website builder / CMS foundation.
 - Phase 30: Public website publishing, intake forms, and CMS content blocks.
+- Phase 30.1: Branding, logo asset management, and agency settings stabilization.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -706,6 +707,21 @@ Implemented scope:
 Avoid adding:
 
 - Custom domain automation, raw HTML/CSS/JS, iframe embeds, advanced media library/public media delivery, pricing automation, airline integrations, or automatic email.
+
+### Phase 30.1: Branding, Logo Asset Management, And Agency Settings Stabilization
+
+Implemented scope:
+
+- Dedicated logo asset records with original, square, compact, horizontal, and favicon variants.
+- Server-side logo validation and preparation with PNG/JPEG/WEBP only, 2MB limit, decoded-image verification, SVG rejection, metadata stripping, and PNG derivative generation.
+- Controlled logo fit, preferred usage, and public-usage settings in `/agency/settings`.
+- Public website branding uses only public-safe generated derivatives.
+- Agency shell uses compact/sidebar logo variants with stable object-fit rendering.
+- Readiness/platform summaries expose branding/logo capability flags and configured counts.
+
+Avoid adding:
+
+- External image services, arbitrary CSS/JS, SVG execution, advanced media library, custom domain automation, background removal, pricing automation, airline integrations, or automatic delivery.
 
 ### Phase 31: Operational Request Workspace Hardening
 

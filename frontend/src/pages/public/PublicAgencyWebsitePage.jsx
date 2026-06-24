@@ -43,12 +43,14 @@ export default function PublicAgencyWebsitePage({ slug, pageSlug, requestMode = 
 }
 
 function SiteHeader({ site, slug }) {
+  const publicLogo = site.branding?.logo_assets?.public_header?.url || site.branding?.logo_url
+  const brandName = site.branding?.brand_name || site.settings.site_name
   return (
     <header className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-4">
       <a className="flex items-center gap-3" href={`/site/${slug}`}>
-        {site.branding?.logo_url ? <img className="h-11 w-11 rounded-md border object-contain p-1" src={site.branding.logo_url} alt={`${site.settings.site_name} logo`} /> : null}
+        {publicLogo ? <img className="h-12 max-w-[220px] rounded-md border object-contain p-1" src={publicLogo} alt={`${brandName} logo`} /> : null}
         <div>
-          <p className="text-lg font-semibold text-slate-950">{site.settings.site_name}</p>
+          <p className="text-lg font-semibold text-slate-950">{brandName}</p>
           <p className="text-sm text-slate-600">{site.settings.tagline}</p>
         </div>
       </a>

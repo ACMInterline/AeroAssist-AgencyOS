@@ -63,7 +63,7 @@ def assert_no_storage_path(payload: dict) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_30_public_website_publishing_intake_forms_cms_blocks":
+    if health.get("phase") != "phase_30_1_branding_logo_asset_settings_stabilization":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]
@@ -81,6 +81,7 @@ def main() -> int:
 
     put(f"/api/agencies/{agency_id}/branding", {"font_family_key": "comic_sans"}, OWNER_HEADERS, 422)
     put(f"/api/agencies/{agency_id}/branding", {"custom_css": "body{display:none}"}, OWNER_HEADERS, 422)
+    put(f"/api/agencies/{agency_id}/branding", {"color_palette_key": "javascript:alert(1)"}, OWNER_HEADERS, 422)
 
     updated = put(
         f"/api/agencies/{agency_id}/branding",
@@ -95,6 +96,9 @@ def main() -> int:
             "button_style_key": "soft",
             "calendar_style_key": "native_polished",
             "card_style_key": "raised",
+            "logo_fit_mode": "contain",
+            "preferred_logo_usage": "horizontal",
+            "logo_public_usage_allowed": True,
         },
         OWNER_HEADERS,
     )
@@ -108,18 +112,74 @@ def main() -> int:
         OWNER_HEADERS,
         400,
     )
+    post(
+        f"/api/agencies/{agency_id}/branding/logo",
+        {"filename": "logo.txt", "content_type": "image/png", "data_base64": ONE_BY_ONE_PNG},
+        OWNER_HEADERS,
+        400,
+    )
+    post(
+        f"/api/agencies/{agency_id}/branding/logo",
+        {"filename": "logo.png", "content_type": "image/png", "data_base64": base64.b64encode(b"not an image").decode("ascii")},
+        OWNER_HEADERS,
+        400,
+    )
     logo = post(
         f"/api/agencies/{agency_id}/branding/logo",
         {"filename": "logo.png", "content_type": "image/png", "data_base64": ONE_BY_ONE_PNG},
         OWNER_HEADERS,
     )
     assert_no_storage_path(logo)
+    variants = logo["branding"]["logo_assets"]["variants"]
     if not logo["logo_configured"] or not logo["branding"]["logo_url"].startswith("data:image/png;base64,"):
         raise AssertionError("Safe logo upload did not configure a controlled logo reference.")
+    for variant in ["original", "square", "compact", "horizontal", "favicon"]:
+        if variant not in variants:
+            raise AssertionError(f"Missing generated logo variant: {variant}")
+    if variants["original"].get("url") or variants["original"].get("public_usage_allowed"):
+        raise AssertionError("Original logo asset should not be public-safe in API responses.")
+    if variants["horizontal"].get("width_px") != 512 or variants["horizontal"].get("height_px") != 160:
+        raise AssertionError("Horizontal logo variant dimensions are incorrect.")
+
+    regen = post(f"/api/agencies/{agency_id}/branding/logo/regenerate", {}, OWNER_HEADERS)
+    assert_no_storage_path(regen)
+    if "horizontal" not in regen["branding"]["logo_assets"]["variants"]:
+        raise AssertionError("Logo regeneration did not return generated variants.")
+
+    slug = f"branding-smoke-{agency_id[-6:].lower()}"
+    put(
+        f"/api/agencies/{agency_id}/website",
+        {"site_name": "Branding Smoke", "slug": slug, "tagline": "Public branding smoke.", "status": "draft"},
+        OWNER_HEADERS,
+    )
+    page = post(
+        f"/api/agencies/{agency_id}/website/pages",
+        {
+            "title": "Branding",
+            "slug": "branding",
+            "page_type": "custom",
+            "sections": [{"section_type": "hero", "heading": "Branding smoke", "body": "Published page for public-safe branding."}],
+        },
+        OWNER_HEADERS,
+        201,
+    )["page"]
+    post(f"/api/agencies/{agency_id}/website/pages/{page['id']}/publish", {}, OWNER_HEADERS)
+    put(f"/api/agencies/{agency_id}/website", {"status": "active"}, OWNER_HEADERS)
+    public_branding = get(f"/api/agencies/{agency_id}/branding/public")
+    assert_no_storage_path(public_branding)
+    if not public_branding["branding"]["logo_url"] or "original" in json.dumps(public_branding["branding"].get("logo_assets", {}).get("public_header", {})):
+        raise AssertionError("Public-safe branding endpoint did not expose the safe header logo only.")
+    public_site = get(f"/api/public/websites/{slug}")
+    if not public_site["branding"].get("logo_url"):
+        raise AssertionError("Public website did not expose safe logo branding.")
+    post(f"/api/agencies/{agency_id}/website/unpublish", {}, OWNER_HEADERS)
+    post(f"/api/agencies/{agency_id}/website/pages/{page['id']}/archive", {}, OWNER_HEADERS)
 
     removed = delete(f"/api/agencies/{agency_id}/branding/logo", OWNER_HEADERS)
     if removed["logo_configured"] or removed["branding"].get("logo_url"):
         raise AssertionError("Logo remove did not clear branding logo.")
+    if removed["branding"]["public_branding"].get("logo_url"):
+        raise AssertionError("Logo remove leaked an old public branding logo.")
 
     reset = post(f"/api/agencies/{agency_id}/branding/reset", {}, OWNER_HEADERS)
     if reset["branding"]["font_family_key"] != "inter" or reset["branding"]["color_palette_key"] != "aero_blue":
