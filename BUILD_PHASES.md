@@ -42,6 +42,7 @@ The repository currently contains:
 - Phase 28: Agency branding, theme, and UI personalization settings.
 - Phase 28.1: AgencyOS app shell, sidebar navigation, and visual polish stabilization.
 - Phase 29: Agency website builder / CMS foundation.
+- Phase 30: Public website publishing, intake forms, and CMS content blocks.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -690,7 +691,23 @@ Avoid adding:
 
 - Custom CSS/JS/HTML embeds, domain routing changes, pricing automation, airline integrations, external UI libraries, or automatic delivery.
 
-### Phase 30: Operational Request Workspace Hardening
+### Phase 30: Public Website Publishing, Intake Forms, And CMS Content Blocks
+
+Implemented scope:
+
+- Richer controlled CMS section blocks for hero, service cards, feature grids, process steps, FAQ, contact CTAs, request-form CTAs, testimonials, trust badges, image/text, contact details, and legal text.
+- Type-aware section editing, delete, and move up/down controls in the agency website builder.
+- Explicit publish/unpublish site endpoints.
+- Published inner page rendering at `/site/{slug}/{pageSlug}`.
+- Public website request form at `/site/{slug}/request` that creates `request_intakes` with website source metadata.
+- Intake queue/detail source display for website CMS requests.
+- Audit events for section updates, reorders, site publishing, site unpublishing, page publishing, and public website intake submission.
+
+Avoid adding:
+
+- Custom domain automation, raw HTML/CSS/JS, iframe embeds, advanced media library/public media delivery, pricing automation, airline integrations, or automatic email.
+
+### Phase 31: Operational Request Workspace Hardening
 
 Recommended scope:
 
@@ -704,7 +721,7 @@ Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
 
-### Phase 31: Airline Intelligence Versioning/Import Workflow
+### Phase 32: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -719,7 +736,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 32: Agency Website/CMS Publishing Hardening
+### Phase 33: Agency Website/CMS Publishing Hardening
 
 Recommended scope:
 

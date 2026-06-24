@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 29 agency website builder and CMS foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 30 public website publishing and intake forms.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_29_agency_website_builder_cms_foundation",
+        "phase": "phase_30_public_website_publishing_intake_forms_cms_blocks",
     }
 
 
@@ -105,6 +105,7 @@ async def readiness() -> dict:
     website_settings_count = await database.collection("agency_website_settings").count()
     published_website_count = await database.collection("agency_website_settings").count({"status": "active"})
     website_page_count = await database.collection("agency_website_pages").count()
+    website_origin_intake_count = await database.collection("request_intakes").count({"source": "agency_website"})
     branded_logo_count = len(
         [
             item
@@ -117,7 +118,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_29_agency_website_builder_cms_foundation",
+        "phase": "phase_30_public_website_publishing_intake_forms_cms_blocks",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -142,9 +143,13 @@ async def readiness() -> dict:
             "diagnostic": "Agency branding settings are optional and do not affect service readiness.",
         },
         "agency_websites": {
+            "cms_enabled": True,
+            "public_site_renderer_enabled": True,
+            "public_website_intake_enabled": True,
             "configured_websites": website_settings_count,
             "active_websites": published_website_count,
             "website_pages": website_page_count,
+            "website_origin_intakes": website_origin_intake_count,
             "readiness_required": False,
             "diagnostic": "Agency website builder content is optional and does not affect service readiness.",
         },

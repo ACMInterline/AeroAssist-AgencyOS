@@ -83,11 +83,14 @@ function IntakeCard({ intake }) {
           <h3 className="mt-1 font-semibold text-slate-950 group-hover:text-blue-700">{contact.name || "Unnamed contact"}</h3>
           <p className="mt-1 text-sm text-slate-600">{route}</p>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{intake.status}</span>
+        <div className="flex flex-wrap gap-2">
+          {intake.source === "agency_website" ? <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Website CMS</span> : null}
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{intake.status}</span>
+        </div>
       </div>
       <div className="mt-4 grid gap-2 text-sm text-slate-600 md:grid-cols-4">
         <span>Priority: {intake.priority}</span>
-        <span>Source: {intake.source?.replaceAll("_", " ")}</span>
+        <span>Source: {intake.source?.replaceAll("_", " ")}{intake.source_site_slug ? ` · ${intake.source_site_slug}${intake.source_page_slug ? `/${intake.source_page_slug}` : ""}` : ""}</span>
         <span>Passengers: {travel.passenger_count || 1}</span>
         <span>Services: {(services.selected_service_categories || []).join(", ") || "review needed"}</span>
       </div>

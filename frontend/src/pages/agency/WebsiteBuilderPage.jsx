@@ -6,16 +6,25 @@ import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const pageTypes = ["home", "about", "services", "contact", "custom"]
-const sectionTypes = ["hero", "text", "services", "cta", "contact", "intake_link"]
+const sectionTypes = ["hero", "service_cards", "feature_grid", "process_steps", "faq", "contact_cta", "request_form_cta", "testimonials", "trust_badges", "image_text", "contact_details", "legal_text", "text"]
 
 const blankSection = () => ({
   section_type: "text",
   eyebrow: "",
   heading: "New section",
+  headline: "",
+  subheadline: "",
   body: "",
   cta_label: "",
   cta_href: "",
+  primary_cta_label: "",
+  primary_cta_target: "",
+  secondary_cta_label: "",
+  secondary_cta_target: "",
+  alignment: "left",
+  image_position: "right",
   items: [],
+  cards: [],
   sort_order: 0,
 })
 
@@ -66,6 +75,25 @@ export default function WebsiteBuilderPage() {
       ...current,
       sections: (current.sections || []).map((section, sectionIndex) => sectionIndex === index ? { ...section, ...patch } : section),
     }))
+  }
+
+  function moveSection(index, direction) {
+    setPageForm((current) => {
+      const sections = [...(current.sections || [])]
+      const target = index + direction
+      if (target < 0 || target >= sections.length) return current
+      const [section] = sections.splice(index, 1)
+      sections.splice(target, 0, section)
+      return { ...current, sections }
+    })
+  }
+
+  function updateSectionCards(index, value) {
+    const cards = value.split("\n").map((line) => {
+      const [title, description = "", extra = ""] = line.split("|").map((item) => item.trim())
+      return title ? { title, description, icon_key: extra, question: title, answer: description, quote: description, name: title, label: title } : null
+    }).filter(Boolean)
+    updateSection(index, { cards })
   }
 
   async function saveSettings(event) {
@@ -145,6 +173,30 @@ export default function WebsiteBuilderPage() {
     }
   }
 
+  async function publishSite() {
+    setError("")
+    setMessage("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/website/publish`)
+      setSettings(result.settings)
+      setMessage("Site published.")
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function unpublishSite() {
+    setError("")
+    setMessage("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/website/unpublish`)
+      setSettings(result.settings)
+      setMessage("Site unpublished.")
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   async function archivePage() {
     setError("")
     setMessage("")
@@ -169,7 +221,11 @@ export default function WebsiteBuilderPage() {
                 <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Agency website builder</h2>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Create controlled public website content from safe sections. No custom code, CMS publishing automation, pricing, or domain routing changes are included in this phase.</p>
               </div>
-              {settings?.slug ? <a className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" href={`/site/${settings.slug}`} target="_blank" rel="noreferrer">Open public preview</a> : null}
+              <div className="flex flex-wrap gap-2">
+                {settings?.slug ? <a className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" href={`/site/${settings.slug}`} target="_blank" rel="noreferrer">Open public site</a> : null}
+                <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={publishSite}>Publish site</button>
+                <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={unpublishSite}>Take offline</button>
+              </div>
             </div>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
             {error ? <p className="mt-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
@@ -254,17 +310,35 @@ export default function WebsiteBuilderPage() {
                 <div className="space-y-3">
                   {(pageForm.sections || []).map((section, index) => (
                     <div className="rounded-lg border border-slate-200 p-4" key={index}>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Section {index + 1}</span>
+                        <div className="flex gap-2">
+                          <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold" type="button" onClick={() => moveSection(index, -1)}>Move up</button>
+                          <button className="rounded-md border border-slate-200 px-2 py-1 text-xs font-semibold" type="button" onClick={() => moveSection(index, 1)}>Move down</button>
+                        </div>
+                      </div>
                       <div className="grid gap-3 md:grid-cols-3">
                         <Select label="Section type" value={section.section_type} onChange={(value) => updateSection(index, { section_type: value })} options={sectionTypes} />
                         <Field label="Eyebrow" value={section.eyebrow || ""} onChange={(value) => updateSection(index, { eyebrow: value })} />
                         <Field label="Heading" value={section.heading || ""} onChange={(value) => updateSection(index, { heading: value })} required />
                       </div>
+                      {section.section_type === "hero" || section.section_type === "image_text" ? (
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
+                          <Field label="Headline" value={section.headline || ""} onChange={(value) => updateSection(index, { headline: value })} />
+                          <Field label="Subheadline" value={section.subheadline || ""} onChange={(value) => updateSection(index, { subheadline: value })} />
+                          <Select label="Alignment" value={section.alignment || "left"} onChange={(value) => updateSection(index, { alignment: value })} options={["left", "center"]} />
+                          <Select label="Image position" value={section.image_position || "right"} onChange={(value) => updateSection(index, { image_position: value })} options={["left", "right"]} />
+                        </div>
+                      ) : null}
                       <TextArea label="Body" value={section.body || ""} onChange={(value) => updateSection(index, { body: value })} />
                       <div className="grid gap-3 md:grid-cols-2">
-                        <Field label="CTA label" value={section.cta_label || ""} onChange={(value) => updateSection(index, { cta_label: value })} />
-                        <Field label="CTA href" value={section.cta_href || ""} onChange={(value) => updateSection(index, { cta_href: value })} />
+                        <Field label="Primary CTA label" value={section.primary_cta_label || section.cta_label || ""} onChange={(value) => updateSection(index, { primary_cta_label: value, cta_label: value })} />
+                        <Field label="Primary CTA target" value={section.primary_cta_target || section.cta_href || ""} onChange={(value) => updateSection(index, { primary_cta_target: value, cta_href: value })} help="Use /request for the website request form." />
+                        <Field label="Secondary CTA label" value={section.secondary_cta_label || ""} onChange={(value) => updateSection(index, { secondary_cta_label: value })} />
+                        <Field label="Secondary CTA target" value={section.secondary_cta_target || ""} onChange={(value) => updateSection(index, { secondary_cta_target: value })} />
                       </div>
                       <TextArea label="List items, one per line" value={(section.items || []).join("\n")} onChange={(value) => updateSection(index, { items: value.split("\n").map((item) => item.trim()).filter(Boolean) })} />
+                      <TextArea label="Cards / FAQ / testimonials, one per line as title | description | icon/context" value={(section.cards || []).map((card) => [card.title || card.question || card.name || card.label, card.description || card.answer || card.quote, card.icon_key || card.role_or_context].filter(Boolean).join(" | ")).join("\n")} onChange={(value) => updateSectionCards(index, value)} />
                       <button className="mt-2 text-sm font-semibold text-rose-700" type="button" onClick={() => setPage("sections", (pageForm.sections || []).filter((_, itemIndex) => itemIndex !== index))}>Remove section</button>
                     </div>
                   ))}

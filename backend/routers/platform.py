@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_29_agency_website_builder_cms_foundation",
+        "phase": "phase_30_public_website_publishing_intake_forms_cms_blocks",
     }
 
 
@@ -47,6 +47,7 @@ async def summary(
             "agency_website_settings": len(website_settings),
             "active_agency_websites": len([item for item in website_settings if item.get("status") == "active"]),
             "agency_website_pages": await db.collection("agency_website_pages").count(),
+            "website_origin_intakes": await db.collection("request_intakes").count({"source": "agency_website"}),
             "clients": await db.collection("client_profiles").count(),
             "passengers": await db.collection("passenger_profiles").count(),
             "relationships": await db.collection("client_passenger_relationships").count(),
@@ -119,6 +120,7 @@ async def summary(
             "Agency branding, theme, and UI personalization foundation",
             "AgencyOS app shell, sidebar navigation, and visual polish stabilization",
             "Agency website builder and CMS foundation",
+            "Public website publishing, intake forms, and CMS content blocks",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

@@ -146,6 +146,17 @@ class WebsiteSectionType(str, Enum):
     CTA = "cta"
     CONTACT = "contact"
     INTAKE_LINK = "intake_link"
+    SERVICE_CARDS = "service_cards"
+    FEATURE_GRID = "feature_grid"
+    PROCESS_STEPS = "process_steps"
+    FAQ = "faq"
+    CONTACT_CTA = "contact_cta"
+    REQUEST_FORM_CTA = "request_form_cta"
+    TESTIMONIALS = "testimonials"
+    TRUST_BADGES = "trust_badges"
+    IMAGE_TEXT = "image_text"
+    CONTACT_DETAILS = "contact_details"
+    LEGAL_TEXT = "legal_text"
 
 
 class PortalStatus(str, Enum):
@@ -325,6 +336,7 @@ class RequestSource(str, Enum):
 
 class RequestIntakeSource(str, Enum):
     PUBLIC_WEBSITE = "public_website"
+    AGENCY_WEBSITE = "agency_website"
     STAFF_MANUAL = "staff_manual"
     IMPORTED = "imported"
     INTERNAL = "internal"
@@ -727,10 +739,20 @@ class AgencyWebsiteSection(BaseModel):
     section_type: WebsiteSectionType = WebsiteSectionType.TEXT
     eyebrow: Optional[str] = None
     heading: str
+    headline: Optional[str] = None
+    subheadline: Optional[str] = None
     body: Optional[str] = None
     cta_label: Optional[str] = None
     cta_href: Optional[str] = None
+    primary_cta_label: Optional[str] = None
+    primary_cta_target: Optional[str] = None
+    secondary_cta_label: Optional[str] = None
+    secondary_cta_target: Optional[str] = None
+    image_asset_id: Optional[str] = None
+    alignment: Optional[str] = None
+    image_position: Optional[str] = None
     items: List[str] = Field(default_factory=list)
+    cards: List[Dict[str, Any]] = Field(default_factory=list)
     sort_order: int = 0
 
 
@@ -1141,6 +1163,10 @@ class RequestIntakeServiceSummary(BaseModel):
 class RequestIntake(BaseDocument):
     agency_id: Optional[str] = None
     workspace_id: Optional[str] = None
+    source_site_slug: Optional[str] = None
+    source_page_slug: Optional[str] = None
+    source_website_profile_id: Optional[str] = None
+    source_website_page_id: Optional[str] = None
     reference_code: str
     source: RequestIntakeSource = RequestIntakeSource.PUBLIC_WEBSITE
     status: RequestIntakeStatus = RequestIntakeStatus.NEW

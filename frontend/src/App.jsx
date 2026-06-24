@@ -93,6 +93,16 @@ const routes = {
 }
 
 export default function App() {
+  const publicWebsiteRequestMatch = window.location.pathname.match(/^\/site\/([^/]+)\/request$/)
+  if (publicWebsiteRequestMatch) {
+    return <PublicAgencyWebsitePage slug={publicWebsiteRequestMatch[1]} requestMode />
+  }
+
+  const publicWebsitePageMatch = window.location.pathname.match(/^\/site\/([^/]+)\/([^/]+)$/)
+  if (publicWebsitePageMatch) {
+    return <PublicAgencyWebsitePage slug={publicWebsitePageMatch[1]} pageSlug={publicWebsitePageMatch[2]} />
+  }
+
   const publicWebsiteMatch = window.location.pathname.match(/^\/site\/([^/]+)$/)
   if (publicWebsiteMatch) {
     return <PublicAgencyWebsitePage slug={publicWebsiteMatch[1]} />

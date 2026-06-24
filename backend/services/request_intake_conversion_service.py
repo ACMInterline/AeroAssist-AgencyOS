@@ -109,6 +109,7 @@ async def create_intake(
     client_visible_notes: Optional[str] = None,
     raw_payload: Optional[dict] = None,
     actor_user_id: Optional[str] = None,
+    source_metadata: Optional[dict] = None,
 ) -> dict:
     if not agency_id:
         default_context = await default_agency_context(db)
@@ -120,9 +121,16 @@ async def create_intake(
         "services": services,
         "request_details": request_details,
     }
+    source_metadata = source_metadata or {}
+    if source_metadata:
+        canonical_payload["source_metadata"] = source_metadata
     intake = RequestIntake(
         agency_id=agency_id,
         workspace_id=workspace_id,
+        source_site_slug=source_metadata.get("source_site_slug"),
+        source_page_slug=source_metadata.get("source_page_slug"),
+        source_website_profile_id=source_metadata.get("source_website_profile_id"),
+        source_website_page_id=source_metadata.get("source_website_page_id"),
         reference_code=await next_intake_reference(db),
         source=source,
         contact_snapshot=contact,

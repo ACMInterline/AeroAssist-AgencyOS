@@ -80,6 +80,7 @@ export default function RequestIntakeDetailPage({ intakeId }) {
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{intake?.reference_code}</p>
               <h2 className="text-2xl font-semibold text-slate-950">{contact.name || "Request intake"}</h2>
               <p className="mt-1 text-sm text-slate-600">Status: {intake?.status} · Source: {intake?.source?.replaceAll("_", " ")}</p>
+              {intake?.source === "agency_website" ? <p className="mt-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Website CMS form · {intake.source_site_slug}{intake.source_page_slug ? `/${intake.source_page_slug}` : ""}</p> : null}
             </div>
             <div className="flex flex-wrap gap-2">
               {convertedId ? <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/requests/${convertedId}`}>Open request</a> : <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="button" onClick={convert}>Convert to request</button>}
@@ -92,6 +93,7 @@ export default function RequestIntakeDetailPage({ intakeId }) {
             <InfoCard title="Contact" rows={[["Name", contact.name], ["Email", contact.email || "Not provided"], ["Phone", contact.phone || "Not provided"], ["Organization", contact.organization || "None"]]} />
             <InfoCard title="Travel" rows={[["Origin", travel.origin || "Not set"], ["Destination", travel.destination || "Not set"], ["Departure", travel.departure_date || "Not set"], ["Return", travel.return_date || "Not set"], ["Passengers", travel.passenger_count || 1], ["Notes", travel.itinerary_notes || "None"]]} />
             <InfoCard title="Services" rows={[["Selected", (services.selected_service_categories || []).join(", ") || "None"], ["Mobility", yesNo(services.mobility_assistance)], ["Medical", yesNo(services.medical_travel)], ["Pet travel", yesNo(services.pet_travel)], ["Special baggage", yesNo(services.special_baggage)], ["Other", services.other_details || yesNo(services.other)]]} />
+            {intake?.source === "agency_website" ? <InfoCard title="Website source" rows={[["Site slug", intake.source_site_slug || "Not set"], ["Page slug", intake.source_page_slug || "Not set"], ["Website profile", intake.source_website_profile_id || "Not set"], ["Page id", intake.source_website_page_id || "Not set"]]} /> : null}
           </section>
           <form className="space-y-4 rounded-lg border border-slate-200 bg-white p-5" onSubmit={saveTriage}>
             <h3 className="font-semibold text-slate-950">Triage</h3>
