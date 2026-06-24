@@ -1,0 +1,37 @@
+# AgencyOS Blueprint Alignment Gap Map
+
+AgencyOS remains on the current FastAPI, Mongo-compatible repository layer, React, and Docker architecture. PocketBase-style wording in the original “Travel Agency Micro-ERP + CRM Blueprint” is treated as schema and business-domain inspiration only, not as a platform migration instruction.
+
+## Summary
+
+AgencyOS already surpasses the blueprint in production deployment readiness, backup automation, agency branding/theme controls, CMS/public website publishing, logo/media handling, app shell/sidebar polish, request intake, and structured operational request building.
+
+| Blueprint area | Current AgencyOS status | Existing files/models/routes | Gap | Recommended phase | Risk level | Notes |
+|---|---|---|---|---|---|---|
+| CRM clients | Implemented foundation | `ClientProfile`, `ClientPassengerRelationship`, `backend/routers/clients.py` | Needs richer account roles and segmentation later | Phase 34+ | Low | Payer/requester must remain separate from beneficiaries. |
+| Passenger registry | Implemented foundation | `PassengerProfile`, passenger routes | Needs deeper identity reconciliation and document readiness | Phase 34+ | Medium | Passenger is canonical person/traveler registry, not always the payer. |
+| Requests/intake | Implemented and ahead | `RequestIntake`, `TravelRequest`, request/intake routers | Needs full segment-scoped service model UI | Phase 34 | Medium | Public, portal, and staff UX should share canonical intake semantics. |
+| Trips/dossiers | Foundation placeholders added | `TripDossier`, `TripPassenger`, `TripSegment` | No trip UI/workflow yet | Phase 35 | Medium | Trip is dossier shell; request id must not be used as trip id. |
+| Offers/comparison | Partial legacy/foundation | offer models/routes | Needs modern comparison matrix and trip attachment rules | Phase 36 | High | Offers may exist before trip but accepted offers should attach early. |
+| Bookings/GDS mirror | Tracking foundation exists | `Booking`, `BookingSegment`, booking routes | No GDS import/mirror workflow | Phase 37 | High | Imported records must preserve raw source payloads. |
+| Tickets mirror | Tracking foundation exists | `TicketRecord` | Needs GDS/ticket mirror provenance | Phase 37 | High | Mirror records should not imply ticketing integration. |
+| EMD mirror | Tracking foundation exists | `EMDRecord` | Needs GDS/EMD mirror provenance | Phase 37 | High | EMD knowledge exists separately from EMD records. |
+| Invoices/payments | Tracking foundation exists | `Invoice`, `InvoiceLineItem`, `PaymentRecord` | No payment gateway/accounting reconciliation | Phase 38 | High | Do not expand into payment processing prematurely. |
+| Documents/templates | Strong foundation | document template/export/delivery models/routes | Needs template builder and broader generation UX | Phase 39 | Medium | Current delivery remains controlled/manual. |
+| Claims/service cases | Partial | refund/exchange cases, portal actions | Needs generic claims/service-case abstraction if required | Phase 40+ | Medium | Avoid mixing refund/exchange domain with all service cases. |
+| Reference data | Partial global reference records | `global_reference_records`, reference router | Needs formal service catalogue | Phase 33 | Medium | Service catalogue drives scoping, SSR defaults, checks, and schemas. |
+| Airline policies | Implemented as intelligence foundation | airline profile/knowledge/procedure/EMD rule models | Needs versioned/import workflow and policy-rule separation | Phase 43 | High | Airline policy rule is separate from service catalogue. |
+| Communications/tasks/activity | Implemented request-level foundation | `RequestMessage`, `RequestTask`, timeline/audit models | Needs unified activity timeline across trip/client/documents | Phase 40 | Medium | Keep visibility rules explicit. |
+| Portal/client accounts | Partial and controlled | portal auth/mappings/actions/routes | Needs broader client portal foundation | Phase 41 | High | Portal actions must remain controlled; no auto-ticketing. |
+| Reports/dashboard | Partial | dashboards/counts/readiness/platform summary | Needs formal reporting layer | Phase 42 | Medium | Avoid automated decisioning before policy governance. |
+| Automation/suggestions | Partial SSR advisory | assistance assessment recommendation logic | Needs suggestion engine boundaries and auditability | Phase 42 | High | Suggestions must remain staff-confirmed unless future phase says otherwise. |
+| Public website/CMS | Surpasses blueprint | website settings/pages/media/public renderer/routes | Needs custom domains/SEO only later | Phase 34+ | Low | No raw HTML/CSS/JS. |
+| Branding/theme/media | Surpasses blueprint | branding/logo/media models/routes/UI | Could move binary assets to object storage later | Future ops phase | Low | Public-safe derivatives only. |
+| Security/audit/backup/deployment | Surpasses blueprint | auth/session/invitation/audit/deploy/backup scripts | Needs broader automated test coverage and migration strategy | Ongoing | Medium | Production stack remains FastAPI/Mongo/React/Docker. |
+
+## Non-Destructive Alignment Strategy
+
+- Keep existing collection names and add fields/models only where safe.
+- Treat current request/booking/invoice modules as existing foundations, not as data to be migrated or renamed.
+- Add trip dossier and segment-scoped applicability foundations before adding UI workflows.
+- Do not import GDS records or execute external integrations until mirror provenance and raw-payload retention rules are implemented.

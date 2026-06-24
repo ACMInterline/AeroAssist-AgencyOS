@@ -404,6 +404,39 @@ class TripType(str, Enum):
     UNKNOWN = "unknown"
 
 
+class SubmissionChannel(str, Enum):
+    PUBLIC_WEBSITE = "public_website"
+    AGENCY_WEBSITE = "agency_website"
+    CLIENT_PORTAL = "client_portal"
+    STAFF_CONSOLE = "staff_console"
+    IMPORT = "import"
+    API = "api"
+    UNKNOWN = "unknown"
+
+
+class AccountOriginAtSubmission(str, Enum):
+    EXISTING_CLIENT = "existing_client"
+    NEW_PUBLIC_CONTACT = "new_public_contact"
+    PORTAL_ACCOUNT = "portal_account"
+    STAFF_CREATED = "staff_created"
+    IMPORTED = "imported"
+    UNKNOWN = "unknown"
+
+
+class PassengerLinkMode(str, Enum):
+    EXISTING = "existing"
+    NEW_INLINE = "new_inline"
+    UNRESOLVED = "unresolved"
+
+
+class TripStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    ARCHIVED = "archived"
+
+
 class OperationalServiceCategory(str, Enum):
     MOBILITY_ASSISTANCE = "mobility_assistance"
     MEDICAL_TRAVEL = "medical_travel"
@@ -1189,6 +1222,7 @@ class TravelRequest(BaseDocument):
     agency_id: str
     client_id: str
     created_by_user_id: str
+    trip_id: Optional[str] = None
     request_reference: str
     title: str
     status: RequestStatus = RequestStatus.NEW
@@ -1207,6 +1241,10 @@ class TravelRequest(BaseDocument):
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: SubmissionChannel = SubmissionChannel.STAFF_CONSOLE
+    account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.STAFF_CREATED
+    canonical_alignment_notes: Dict[str, Any] = Field(default_factory=dict)
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     closed_at: Optional[datetime] = None
@@ -1216,6 +1254,7 @@ class TravelRequestCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     client_id: str
+    trip_id: Optional[str] = None
     title: str
     status: RequestStatus = RequestStatus.NEW
     priority: RequestPriority = RequestPriority.NORMAL
@@ -1231,6 +1270,10 @@ class TravelRequestCreate(BaseModel):
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: SubmissionChannel = SubmissionChannel.STAFF_CONSOLE
+    account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.STAFF_CREATED
+    canonical_alignment_notes: Dict[str, Any] = Field(default_factory=dict)
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
 
@@ -1239,6 +1282,7 @@ class TravelRequestUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     title: Optional[str] = None
+    trip_id: Optional[str] = None
     status: Optional[RequestStatus] = None
     priority: Optional[RequestPriority] = None
     source: Optional[RequestSource] = None
@@ -1253,6 +1297,10 @@ class TravelRequestUpdate(BaseModel):
     client_visible_notes: Optional[str] = None
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: Optional[SubmissionChannel] = None
+    account_origin_at_submission: Optional[AccountOriginAtSubmission] = None
+    canonical_alignment_notes: Optional[Dict[str, Any]] = None
     intake_payload_snapshot: Optional[Dict[str, Any]] = None
     builder_payload_snapshot: Optional[Dict[str, Any]] = None
 
@@ -1303,6 +1351,9 @@ class RequestIntake(BaseDocument):
     source_page_slug: Optional[str] = None
     source_website_profile_id: Optional[str] = None
     source_website_page_id: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: SubmissionChannel = SubmissionChannel.UNKNOWN
+    account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.UNKNOWN
     reference_code: str
     source: RequestIntakeSource = RequestIntakeSource.PUBLIC_WEBSITE
     status: RequestIntakeStatus = RequestIntakeStatus.NEW
@@ -1331,6 +1382,9 @@ class PublicRequestIntakeCreate(BaseModel):
     travel: RequestIntakeTravelSummary
     services: RequestIntakeServiceSummary
     request_details: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: SubmissionChannel = SubmissionChannel.PUBLIC_WEBSITE
+    account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.NEW_PUBLIC_CONTACT
 
 
 class StaffRequestIntakeCreate(BaseModel):
@@ -1339,6 +1393,9 @@ class StaffRequestIntakeCreate(BaseModel):
     agency_id: Optional[str] = None
     workspace_id: Optional[str] = None
     source: RequestIntakeSource = RequestIntakeSource.STAFF_MANUAL
+    source_entry_path: Optional[str] = None
+    submission_channel: SubmissionChannel = SubmissionChannel.STAFF_CONSOLE
+    account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.STAFF_CREATED
     contact: RequestIntakeContactSnapshot
     travel: RequestIntakeTravelSummary
     services: RequestIntakeServiceSummary
@@ -1376,10 +1433,121 @@ class RequestStatusUpdate(BaseModel):
     summary: Optional[str] = None
 
 
+class TripDossier(BaseDocument):
+    agency_id: str
+    client_id: Optional[str] = None
+    primary_request_id: Optional[str] = None
+    trip_reference: str
+    title: str
+    status: TripStatus = TripStatus.DRAFT
+    dossier_summary: Optional[str] = None
+    raw_source_payloads: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class TripPassenger(BaseDocument):
+    agency_id: str
+    trip_id: str
+    passenger_id: str
+    request_passenger_id: Optional[str] = None
+    role_in_trip: RequestPassengerRole = RequestPassengerRole.TRAVELER
+    snapshot_display_name: str
+    status: str = "active"
+
+
+class TripSegment(BaseDocument):
+    agency_id: str
+    trip_id: str
+    request_segment_id: Optional[str] = None
+    sequence: int
+    origin_text: str
+    destination_text: str
+    departure_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    marketing_airline: Optional[str] = None
+    operating_airline: Optional[str] = None
+    flight_number: Optional[str] = None
+    raw_source_payload: Dict[str, Any] = Field(default_factory=dict)
+    status: str = "active"
+
+
+class RequestCaseFlag(BaseDocument):
+    agency_id: str
+    request_id: str
+    flag_code: str
+    flag_label: str
+    severity: str = "info"
+    source: str = "manual"
+    details: Optional[str] = None
+    status: str = "active"
+
+
+class RequestPassengerSegmentService(BaseDocument):
+    agency_id: str
+    request_id: str
+    requested_service_id: str
+    request_passenger_id: Optional[str] = None
+    request_segment_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    service_code: str
+    applicability_status: str = "requested"
+    notes: Optional[str] = None
+
+
+class RequestPet(BaseDocument):
+    agency_id: str
+    request_id: str
+    passenger_id: Optional[str] = None
+    pet_name: Optional[str] = None
+    species: str
+    carrier_required: bool = True
+    service_animal: bool = False
+    notes: Optional[str] = None
+    status: str = "active"
+
+
+class RequestPetSegmentTransport(BaseDocument):
+    agency_id: str
+    request_id: str
+    request_pet_id: str
+    request_segment_id: str
+    transport_mode: Optional[str] = None
+    status: str = "requested"
+    raw_policy_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+
+
+class RequestSpecialItem(BaseDocument):
+    agency_id: str
+    request_id: str
+    owner_passenger_id: Optional[str] = None
+    item_type: str
+    description: str
+    dimensions_text: Optional[str] = None
+    weight_text: Optional[str] = None
+    requires_policy_check: bool = True
+    notes: Optional[str] = None
+    status: str = "active"
+
+
+class RequestSpecialItemSegment(BaseDocument):
+    agency_id: str
+    request_id: str
+    request_special_item_id: str
+    request_segment_id: str
+    applicability_status: str = "requested"
+    raw_policy_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+
+
 class RequestPassenger(BaseDocument):
     agency_id: str
     request_id: str
     passenger_id: str
+    passenger_link_mode: PassengerLinkMode = PassengerLinkMode.EXISTING
     client_passenger_relationship_id: Optional[str] = None
     role_in_request: RequestPassengerRole = RequestPassengerRole.TRAVELER
     is_primary_traveler: bool = False
@@ -1394,6 +1562,7 @@ class RequestPassengerCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     passenger_id: str
+    passenger_link_mode: PassengerLinkMode = PassengerLinkMode.EXISTING
     client_passenger_relationship_id: Optional[str] = None
     role_in_request: RequestPassengerRole = RequestPassengerRole.TRAVELER
     is_primary_traveler: bool = False
@@ -1404,6 +1573,7 @@ class RequestPassengerUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     client_passenger_relationship_id: Optional[str] = None
+    passenger_link_mode: Optional[PassengerLinkMode] = None
     role_in_request: Optional[RequestPassengerRole] = None
     is_primary_traveler: Optional[bool] = None
     service_needs_summary: Optional[str] = None
@@ -1412,6 +1582,7 @@ class RequestPassengerUpdate(BaseModel):
 class RequestSegment(BaseDocument):
     agency_id: str
     request_id: str
+    trip_segment_id: Optional[str] = None
     sequence: int
     origin_text: str
     origin_airport_code: Optional[str] = None
@@ -1438,6 +1609,7 @@ class RequestSegmentCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     sequence: int
+    trip_segment_id: Optional[str] = None
     origin_text: str
     origin_airport_code: Optional[str] = None
     origin_city: Optional[str] = None
@@ -1462,6 +1634,7 @@ class RequestSegmentUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     sequence: Optional[int] = None
+    trip_segment_id: Optional[str] = None
     origin_text: Optional[str] = None
     origin_airport_code: Optional[str] = None
     origin_city: Optional[str] = None
@@ -1486,6 +1659,7 @@ class RequestSegmentUpdate(BaseModel):
 class RequestedService(BaseDocument):
     agency_id: str
     request_id: str
+    request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
     service_code: str
     service_name: str
@@ -1507,6 +1681,7 @@ class RequestedServiceCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     passenger_id: Optional[str] = None
+    request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     service_code: str
     service_name: str
     service_category: str
@@ -1527,6 +1702,7 @@ class RequestedServiceUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     passenger_id: Optional[str] = None
+    request_passenger_segment_service_ids: Optional[List[str]] = None
     service_code: Optional[str] = None
     service_name: Optional[str] = None
     service_category: Optional[str] = None
@@ -1558,6 +1734,7 @@ class OperationalRequestBuilderPassenger(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     passenger_id: Optional[str] = None
+    passenger_link_mode: PassengerLinkMode = PassengerLinkMode.UNRESOLVED
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     display_name: Optional[str] = None

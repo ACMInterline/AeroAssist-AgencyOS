@@ -45,6 +45,7 @@ The repository currently contains:
 - Phase 30: Public website publishing, intake forms, and CMS content blocks.
 - Phase 30.1: Branding, logo asset management, and agency settings stabilization.
 - Phase 31: CMS media library, website image assets, and public website visual polish.
+- Phase 32: Blueprint alignment and canonical operations model.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -739,50 +740,140 @@ Avoid adding:
 
 - Arbitrary HTML/CSS/JS, external CMS/media SaaS, external image editing APIs, custom domain automation, payments, pricing, airline integrations, or automatic delivery.
 
-### Phase 32: Operational Request Workspace Hardening
+### Phase 32: Blueprint Alignment And Canonical Operations Model
 
-Recommended scope:
+Implemented scope:
 
-- Section-level editing after structured request creation.
-- Passenger/profile matching and reconciliation from converted intake data.
-- Richer per-passenger/per-segment service relation UI.
-- Better staff work queues for converted operational requests.
-- Request note/task templates for complex assistance cases.
-
-Avoid adding:
-
-- Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
-
-### Phase 33: Airline Intelligence Versioning/Import Workflow
-
-Recommended scope:
-
-- Immutable published knowledge versions.
-- Import/review workflow for pasted or uploaded source material.
-- Source provenance and reviewer gates.
-- Agency override conflict review.
-- Usage snapshots that reference specific knowledge versions.
+- Formal blueprint alignment and gap map for the Travel Agency Micro-ERP + CRM blueprint.
+- Canonical operations model documenting clients, passengers, requests, trips, offers, bookings, tickets, EMDs, invoices, documents, tasks, communications, activities, reference data, and airline policy rules.
+- Current model inventory mapping FastAPI/Pydantic classes and Mongo-compatible collection names to blueprint entities.
+- Additive trip dossier and segment-scoped request foundation models without destructive collection renames.
+- Readiness/platform flags documenting blueprint alignment readiness.
 
 Avoid adding:
 
-- Automatic scraping without human review.
-- Automated policy scoring or pricing decisions.
+- PocketBase migration, destructive data migrations, GDS integrations, pricing, payment gateways, expanded portal workflows, or full trip/offer UI.
 
-### Phase 34: Agency Website/CMS Publishing Hardening
+### Phase 33: Reference Data Core And Service Catalogue
 
 Recommended scope:
 
-- Controlled agency website settings.
-- Basic hosted public pages.
-- Template-driven content sections.
-- Portal entry links and request-intake entry points.
-- Brand/contact/legal page configuration.
+- Service catalogue with service code, service family, default SSR, beneficiary type, scoping requirements, policy/document/manual-pricing flags, input schemas, and active status.
+- Controlled service family taxonomy for mobility, medical, sensory support, escorts, pets, special baggage, sports equipment, musical instruments, fragile/valuable items, and oxygen/POC.
+- Admin/reference maintenance APIs and seed/import workflow.
 
 Avoid adding:
 
-- Complex drag/drop site building.
-- Blog automation.
-- Custom design tooling.
+- Automated pricing, airline policy scoring, or GDS execution.
+
+### Phase 34: Segment-Scoped Request Services, Pets, And Special Items
+
+Recommended scope:
+
+- UI/API workflows for passenger + segment scoped services.
+- Pet transport and special item segment applicability records.
+- Request case flags and validation against service catalogue requirements.
+
+Avoid adding:
+
+- Airline booking execution, automated pricing, or policy automation.
+
+### Phase 35: Trip Dossier Foundation
+
+Recommended scope:
+
+- Trip dossier creation/attachment from accepted/commercialized work.
+- Trip passenger/segment views and request-to-trip linkage.
+- Dossier activity timeline and document/task attachment points.
+
+Avoid adding:
+
+- GDS import, ticketing execution, or automatic fulfillment.
+
+### Phase 36: Offer Builder And Comparison Matrix
+
+Recommended scope:
+
+- Modern offer comparison matrix aligned to request segments, services, passengers, and trip attachment rules.
+- Offer acceptance/commercialization workflow that attaches to trip early.
+
+Avoid adding:
+
+- Live fare search, supplier booking, or payment capture.
+
+### Phase 37: Booking/Ticket/EMD Mirror Records
+
+Recommended scope:
+
+- Mirror records for booking, ticket, and EMD state with raw source payload preservation.
+- Manual import/reconciliation workflow and provenance metadata.
+
+Avoid adding:
+
+- Direct GDS commands, NDC execution, or automated ticketing.
+
+### Phase 38: Invoices And Payments
+
+Recommended scope:
+
+- Invoice/payment workflow hardening around existing finance tracking models.
+- Payment status, reconciliation metadata, and client-visible summaries.
+
+Avoid adding:
+
+- Payment gateway processing unless explicitly authorized.
+
+### Phase 39: Document Template Builder And Generation
+
+Recommended scope:
+
+- Broader document template builder, generation flows, and request/trip/document snapshot alignment.
+
+Avoid adding:
+
+- Public document links or automatic delivery beyond existing controlled foundations.
+
+### Phase 40: Communications, Tasks, And Activity Timeline
+
+Recommended scope:
+
+- Unified communications/tasks/activity across request, trip, document, booking, and client contexts.
+- Visibility and audit rules for internal/client-visible communication.
+
+Avoid adding:
+
+- Automatic external sending unless delivery governance is ready.
+
+### Phase 41: Client Portal Foundation
+
+Recommended scope:
+
+- Broader authenticated portal foundation aligned to canonical request/trip/document visibility.
+- Portal intake UX sharing canonical intake model.
+
+Avoid adding:
+
+- Client-side operational execution or automatic supplier actions.
+
+### Phase 42: Reporting And Automation Suggestions
+
+Recommended scope:
+
+- Operational reports, dashboard KPIs, and staff-confirmed automation suggestions.
+
+Avoid adding:
+
+- Unreviewed automated decisions, pricing, or airline execution.
+
+### Phase 43: Airline Policy Knowledge Base
+
+Recommended scope:
+
+- Versioned airline policy rule knowledge base, import/review workflow, source provenance, and usage snapshots.
+
+Avoid adding:
+
+- Automatic scraping or policy enforcement without human review.
 
 ## Roadmap Guardrails
 

@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_31_cms_media_library_public_website_visual_polish`
+- API phase reports `phase_32_blueprint_alignment_canonical_operations_model`
 - platform login verified
 - agency login verified
 - portal login verified

@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 31 CMS media and public website polish.",
+    description="AeroAssist AgencyOS API foundation through Phase 32 blueprint alignment and canonical operations model.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_31_cms_media_library_public_website_visual_polish",
+        "phase": "phase_32_blueprint_alignment_canonical_operations_model",
     }
 
 
@@ -121,7 +121,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_31_cms_media_library_public_website_visual_polish",
+        "phase": "phase_32_blueprint_alignment_canonical_operations_model",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -165,6 +165,15 @@ async def readiness() -> dict:
             "website_origin_intakes": website_origin_intake_count,
             "readiness_required": False,
             "diagnostic": "Agency website builder content is optional and does not affect service readiness.",
+        },
+        "blueprint_alignment": {
+            "blueprint_alignment_documented": True,
+            "canonical_operations_model_documented": True,
+            "current_model_inventory_documented": True,
+            "trip_dossier_foundation_ready": True,
+            "reference_data_phase_ready": True,
+            "readiness_required": False,
+            "diagnostic": "Blueprint alignment is documented and additive foundations are informational only.",
         },
         "pdf": {
             "available": pdf.get("available"),
