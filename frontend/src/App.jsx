@@ -30,6 +30,7 @@ import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
 import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
 import RequestsPage from "./pages/agency/RequestsPage"
 import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
+import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
 import LoginPage from "./pages/auth/LoginPage"
 import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
@@ -70,6 +71,7 @@ const routes = {
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
+  "/agency/website/media": WebsiteMediaLibraryPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
   "/agency/document-storage": DocumentStoragePage,

@@ -23,6 +23,7 @@ const blankSection = () => ({
   secondary_cta_target: "",
   alignment: "left",
   image_position: "right",
+  image_asset_id: "",
   items: [],
   cards: [],
   sort_order: 0,
@@ -32,6 +33,7 @@ export default function WebsiteBuilderPage() {
   const [state, setState] = useState(null)
   const [settings, setSettings] = useState(null)
   const [pages, setPages] = useState([])
+  const [mediaAssets, setMediaAssets] = useState([])
   const [selectedPageId, setSelectedPageId] = useState("")
   const [pageForm, setPageForm] = useState(null)
   const [newPage, setNewPage] = useState({ title: "Home", slug: "home", page_type: "home" })
@@ -40,13 +42,15 @@ export default function WebsiteBuilderPage() {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [website, pageList] = context.agency ? await Promise.all([
+    const [website, pageList, mediaList] = context.agency ? await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/website`),
       apiGet(`/api/agencies/${context.agency.id}/website/pages`),
-    ]) : [{ settings: null }, { items: [] }]
+      apiGet(`/api/agencies/${context.agency.id}/website/media`),
+    ]) : [{ settings: null }, { items: [] }, { items: [] }]
     setState(context)
     setSettings(website.settings)
     setPages(pageList.items)
+    setMediaAssets(mediaList.items.filter((asset) => asset.status === "active" && asset.public_usage_allowed))
     const firstPage = pageList.items[0] || null
     setSelectedPageId((current) => current || firstPage?.id || "")
     setPageForm(firstPage)
@@ -225,6 +229,7 @@ export default function WebsiteBuilderPage() {
                 {settings?.slug ? <a className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" href={`/site/${settings.slug}`} target="_blank" rel="noreferrer">Open public site</a> : null}
                 <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={publishSite}>Publish site</button>
                 <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={unpublishSite}>Take offline</button>
+                <a className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700" href="/agency/website/media">Media library</a>
               </div>
             </div>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
@@ -330,6 +335,13 @@ export default function WebsiteBuilderPage() {
                           <Select label="Image position" value={section.image_position || "right"} onChange={(value) => updateSection(index, { image_position: value })} options={["left", "right"]} />
                         </div>
                       ) : null}
+                      {["hero", "image_text", "service_cards", "testimonials", "trust_badges", "contact_cta"].includes(section.section_type) ? (
+                        <MediaPicker
+                          assets={mediaAssets}
+                          value={section.image_asset_id || ""}
+                          onChange={(value) => updateSection(index, { image_asset_id: value })}
+                        />
+                      ) : null}
                       <TextArea label="Body" value={section.body || ""} onChange={(value) => updateSection(index, { body: value })} />
                       <div className="grid gap-3 md:grid-cols-2">
                         <Field label="Primary CTA label" value={section.primary_cta_label || section.cta_label || ""} onChange={(value) => updateSection(index, { primary_cta_label: value, cta_label: value })} />
@@ -346,7 +358,7 @@ export default function WebsiteBuilderPage() {
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => setPage("sections", [...(pageForm.sections || []), blankSection()])}>Add section</button>
               </form>
 
-              <WebsitePreview settings={settings} page={pageForm} />
+              <WebsitePreview settings={settings} page={pageForm} mediaAssets={mediaAssets} />
             </div>
           ) : null}
         </div>
@@ -355,7 +367,8 @@ export default function WebsiteBuilderPage() {
   )
 }
 
-function WebsitePreview({ settings, page }) {
+function WebsitePreview({ settings, page, mediaAssets }) {
+  const mediaById = Object.fromEntries((mediaAssets || []).map((asset) => [asset.id, asset]))
   return (
     <aside className="rounded-lg border border-slate-200 bg-white p-5">
       <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Live Preview</p>
@@ -370,6 +383,7 @@ function WebsitePreview({ settings, page }) {
             <section className="rounded-md border border-slate-200 p-4" key={index}>
               {section.eyebrow ? <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">{section.eyebrow}</p> : null}
               <h4 className="mt-1 font-semibold text-slate-950">{section.heading}</h4>
+              {section.image_asset_id && mediaById[section.image_asset_id]?.thumbnail_url ? <img className="mt-3 max-h-40 w-full rounded-md object-cover" src={mediaById[section.image_asset_id].thumbnail_url} alt={mediaById[section.image_asset_id].alt_text} /> : null}
               {section.body ? <p className="mt-2 text-sm leading-6 text-slate-600">{section.body}</p> : null}
               {section.items?.length ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-600">{section.items.map((item) => <li key={item}>{item}</li>)}</ul> : null}
               {section.cta_label ? <span className="mt-3 inline-flex rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white">{section.cta_label}</span> : null}
@@ -391,4 +405,30 @@ function TextArea({ label, value, onChange }) {
 
 function Select({ label, value, onChange, options }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>{options.map((option) => <option key={option} value={option}>{option.replaceAll("_", " ")}</option>)}</select></label>
+}
+
+function MediaPicker({ assets, value, onChange }) {
+  const selected = assets.find((asset) => asset.id === value)
+  return (
+    <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Section image</p>
+          <p className="text-xs text-slate-500">Choose a public-safe image from the CMS media library. No raw image URLs are accepted.</p>
+        </div>
+        <a className="text-xs font-semibold text-blue-700" href="/agency/website/media">Manage media</a>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-[120px_1fr_auto]">
+        <div className="flex h-24 items-center justify-center overflow-hidden rounded-md bg-white">
+          {selected?.thumbnail_url ? <img className="h-full w-full object-cover" src={selected.thumbnail_url} alt={selected.alt_text} /> : <span className="text-xs text-slate-500">No image</span>}
+        </div>
+        <select className="h-fit rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
+          <option value="">No section image</option>
+          {assets.map((asset) => <option value={asset.id} key={asset.id}>{asset.title} · {asset.usage_context}</option>)}
+        </select>
+        <button className="h-fit rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => onChange("")}>Clear</button>
+      </div>
+      {selected ? <p className="mt-2 text-xs text-slate-500">Alt text: {selected.alt_text}</p> : null}
+    </div>
+  )
 }

@@ -44,6 +44,7 @@ The repository currently contains:
 - Phase 29: Agency website builder / CMS foundation.
 - Phase 30: Public website publishing, intake forms, and CMS content blocks.
 - Phase 30.1: Branding, logo asset management, and agency settings stabilization.
+- Phase 31: CMS media library, website image assets, and public website visual polish.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -723,7 +724,22 @@ Avoid adding:
 
 - External image services, arbitrary CSS/JS, SVG execution, advanced media library, custom domain automation, background removal, pricing automation, airline integrations, or automatic delivery.
 
-### Phase 31: Operational Request Workspace Hardening
+### Phase 31: CMS Media Library, Website Image Assets, And Public Website Visual Polish
+
+Implemented scope:
+
+- Agency-scoped CMS media library separate from logo assets.
+- Safe PNG/JPEG/WEBP upload with 5MB limit, magic-byte checks, decoded-image verification, EXIF stripping, and generated thumbnail/card/hero/original-safe variants.
+- Controlled media management UI at `/agency/website/media`.
+- Section image picker for image-capable website sections.
+- Public website responses include only referenced active public-safe media assets.
+- Public website renderer and request form visual polish.
+
+Avoid adding:
+
+- Arbitrary HTML/CSS/JS, external CMS/media SaaS, external image editing APIs, custom domain automation, payments, pricing, airline integrations, or automatic delivery.
+
+### Phase 32: Operational Request Workspace Hardening
 
 Recommended scope:
 
@@ -737,7 +753,7 @@ Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
 
-### Phase 32: Airline Intelligence Versioning/Import Workflow
+### Phase 33: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -752,7 +768,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 33: Agency Website/CMS Publishing Hardening
+### Phase 34: Agency Website/CMS Publishing Hardening
 
 Recommended scope:
 

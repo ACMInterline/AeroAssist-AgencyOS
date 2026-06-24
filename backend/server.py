@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 30.1 branding and logo asset stabilization.",
+    description="AeroAssist AgencyOS API foundation through Phase 31 CMS media and public website polish.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_30_1_branding_logo_asset_settings_stabilization",
+        "phase": "phase_31_cms_media_library_public_website_visual_polish",
     }
 
 
@@ -106,6 +106,8 @@ async def readiness() -> dict:
     website_settings_count = await database.collection("agency_website_settings").count()
     published_website_count = await database.collection("agency_website_settings").count({"status": "active"})
     website_page_count = await database.collection("agency_website_pages").count()
+    media_asset_count = await database.collection("agency_website_media_assets").count()
+    public_media_asset_count = await database.collection("agency_website_media_assets").count({"status": "active", "public_usage_allowed": True, "is_public_safe": True})
     website_origin_intake_count = await database.collection("request_intakes").count({"source": "agency_website"})
     branded_logo_count = len(
         [
@@ -119,7 +121,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_30_1_branding_logo_asset_settings_stabilization",
+        "phase": "phase_31_cms_media_library_public_website_visual_polish",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -152,9 +154,14 @@ async def readiness() -> dict:
             "cms_enabled": True,
             "public_site_renderer_enabled": True,
             "public_website_intake_enabled": True,
+            "cms_media_library_enabled": True,
+            "public_safe_media_enabled": True,
+            "image_variant_generation_enabled": True,
             "configured_websites": website_settings_count,
             "active_websites": published_website_count,
             "website_pages": website_page_count,
+            "media_asset_count": media_asset_count,
+            "public_media_asset_count": public_media_asset_count,
             "website_origin_intakes": website_origin_intake_count,
             "readiness_required": False,
             "diagnostic": "Agency website builder content is optional and does not affect service readiness.",

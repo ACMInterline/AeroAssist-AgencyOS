@@ -1,4 +1,8 @@
+import base64
+import hashlib
 import re
+from io import BytesIO
+from pathlib import PurePath
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +13,9 @@ from models import (
     AgencyWebsitePage,
     AgencyWebsitePageCreate,
     AgencyWebsitePageUpdate,
+    AgencyWebsiteMediaAsset,
+    AgencyWebsiteMediaUpdate,
+    AgencyWebsiteMediaUpload,
     AgencyWebsiteSettings,
     AgencyWebsiteSettingsUpdate,
     AuditEvent,
@@ -22,7 +29,7 @@ from models import (
 )
 from services.request_intake_conversion_service import create_intake
 from services.tenant_service import assert_agency_access, require_any_agency_role
-from routers.agencies import load_logo_assets, public_safe_branding
+from routers.agencies import computed_branding_theme, load_logo_assets, public_safe_branding
 
 router = APIRouter(prefix="/api/agencies/{agency_id}/website", tags=["agency-websites"])
 public_router = APIRouter(prefix="/api/public/websites", tags=["public-websites"])
@@ -31,6 +38,10 @@ READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant
 WRITE_ROLES = ["agency_owner", "agency_admin"]
 SLUG_PATTERN = re.compile(r"^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$")
 DANGEROUS_TEXT = re.compile(r"(<\s*/?\s*(script|style|iframe|object|embed|link|meta)\b|javascript:|data:text/html)", re.IGNORECASE)
+MAX_MEDIA_BYTES = 5 * 1024 * 1024
+SAFE_IMAGE_TYPES = {"image/png", "image/jpeg", "image/webp"}
+SAFE_IMAGE_EXTENSIONS = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+MEDIA_VARIANT_WIDTHS = {"thumbnail": 320, "card": 640, "hero": 1600, "original_safe": None}
 ALLOWED_SECTION_FIELDS = {
     "hero": {"section_type", "eyebrow", "heading", "headline", "subheadline", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "secondary_cta_label", "secondary_cta_target", "image_asset_id", "alignment", "items", "cards", "sort_order"},
     "text": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
@@ -38,14 +49,14 @@ ALLOWED_SECTION_FIELDS = {
     "cta": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "items", "cards", "sort_order"},
     "contact": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
     "intake_link": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "items", "cards", "sort_order"},
-    "service_cards": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
+    "service_cards": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "image_asset_id", "sort_order"},
     "feature_grid": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
     "process_steps": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
     "faq": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
-    "contact_cta": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "items", "cards", "sort_order"},
+    "contact_cta": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "items", "cards", "image_asset_id", "sort_order"},
     "request_form_cta": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "primary_cta_label", "primary_cta_target", "items", "cards", "sort_order"},
-    "testimonials": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
-    "trust_badges": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
+    "testimonials": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "image_asset_id", "sort_order"},
+    "trust_badges": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "image_asset_id", "sort_order"},
     "image_text": {"section_type", "eyebrow", "heading", "headline", "body", "cta_label", "cta_href", "items", "cards", "image_asset_id", "image_position", "sort_order"},
     "contact_details": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
     "legal_text": {"section_type", "eyebrow", "heading", "body", "cta_label", "cta_href", "items", "cards", "sort_order"},
@@ -81,6 +92,174 @@ def validate_safe_text(value: Any) -> None:
             validate_safe_text(item)
 
 
+def safe_filename(value: str) -> str:
+    name = PurePath(value or "media").name.strip() or "media"
+    return "".join(char for char in name if char.isalnum() or char in {"-", "_", "."})[:120] or "media"
+
+
+def detect_image_type(data: bytes) -> str | None:
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def validate_media_upload(payload: AgencyWebsiteMediaUpload, media_bytes: bytes) -> None:
+    if payload.content_type not in SAFE_IMAGE_TYPES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website media must be PNG, JPEG, or WEBP. SVG is not accepted.")
+    extension = PurePath(payload.filename or "").suffix.lower()
+    if extension not in SAFE_IMAGE_EXTENSIONS or SAFE_IMAGE_EXTENSIONS[extension] != payload.content_type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website media extension and MIME type must match PNG, JPEG, or WEBP.")
+    if detect_image_type(media_bytes) != payload.content_type:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website media bytes do not match the declared image type.")
+    if payload.asset_type not in {"image", "background", "illustration", "icon"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only image-like media assets are renderable in this phase.")
+    if not payload.title.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Media title is required.")
+    if not payload.alt_text.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Alt text is required for public website images.")
+
+
+def prepare_media_variants(media_bytes: bytes) -> tuple[int, int, list[dict]]:
+    try:
+        from PIL import Image, ImageOps, UnidentifiedImageError
+    except ImportError as exc:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Website media image preparation requires Pillow on the server.") from exc
+    try:
+        image = Image.open(BytesIO(media_bytes))
+        image.load()
+    except (UnidentifiedImageError, OSError) as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website media image could not be decoded.") from exc
+    has_alpha = image.mode in {"RGBA", "LA"} or "transparency" in image.info
+    normalized = ImageOps.exif_transpose(image).convert("RGBA" if has_alpha else "RGB")
+    variants = []
+    for variant_key, target_width in MEDIA_VARIANT_WIDTHS.items():
+        working = normalized.copy()
+        if target_width and working.width > target_width:
+            ratio = target_width / working.width
+            working = working.resize((target_width, max(1, int(working.height * ratio))), Image.Resampling.LANCZOS)
+        output = BytesIO()
+        working.save(output, format="PNG", optimize=True)
+        data = output.getvalue()
+        variants.append(
+            {
+                "variant_key": variant_key,
+                "mime_type": "image/png",
+                "width_px": working.width,
+                "height_px": working.height,
+                "file_size_bytes": len(data),
+                "checksum_sha256": hashlib.sha256(data).hexdigest(),
+                "data_base64": base64.b64encode(data).decode("ascii"),
+                "is_public_safe": True,
+            }
+        )
+    return normalized.width, normalized.height, variants
+
+
+def variant_url(variant: dict | None) -> str | None:
+    if not variant:
+        return None
+    return f"data:{variant.get('mime_type')};base64,{variant.get('data_base64')}" if variant.get("data_base64") and variant.get("mime_type") else None
+
+
+def safe_media_asset(asset: dict, include_private_preview: bool = True) -> dict:
+    variants = {
+        variant.get("variant_key"): {
+            "variant_key": variant.get("variant_key"),
+            "mime_type": variant.get("mime_type"),
+            "width_px": variant.get("width_px"),
+            "height_px": variant.get("height_px"),
+            "file_size_bytes": variant.get("file_size_bytes"),
+            "checksum_sha256": variant.get("checksum_sha256"),
+            "url": variant_url(variant) if include_private_preview and variant.get("is_public_safe") else None,
+        }
+        for variant in asset.get("variants", [])
+        if variant.get("variant_key")
+    }
+    return {
+        "id": asset.get("id"),
+        "agency_id": asset.get("agency_id"),
+        "website_profile_id": asset.get("website_profile_id"),
+        "storage_record_id": asset.get("storage_record_id"),
+        "asset_type": asset.get("asset_type"),
+        "title": asset.get("title"),
+        "alt_text": asset.get("alt_text"),
+        "caption": asset.get("caption"),
+        "usage_context": asset.get("usage_context"),
+        "mime_type": asset.get("mime_type"),
+        "width_px": asset.get("width_px"),
+        "height_px": asset.get("height_px"),
+        "file_size_bytes": asset.get("file_size_bytes"),
+        "checksum_sha256": asset.get("checksum_sha256"),
+        "original_filename": asset.get("original_filename"),
+        "public_usage_allowed": asset.get("public_usage_allowed", False),
+        "is_public_safe": asset.get("is_public_safe", False),
+        "status": asset.get("status", "active"),
+        "created_at": asset.get("created_at"),
+        "updated_at": asset.get("updated_at"),
+        "created_by_user_id": asset.get("created_by_user_id"),
+        "updated_by_user_id": asset.get("updated_by_user_id"),
+        "variants": variants,
+        "thumbnail_url": variants.get("thumbnail", {}).get("url"),
+        "card_url": variants.get("card", {}).get("url"),
+        "hero_url": variants.get("hero", {}).get("url"),
+    }
+
+
+def public_media_asset(asset: dict) -> dict | None:
+    if asset.get("status") != "active" or not asset.get("is_public_safe") or not asset.get("public_usage_allowed"):
+        return None
+    variants = {
+        variant.get("variant_key"): {
+            "variant_key": variant.get("variant_key"),
+            "mime_type": variant.get("mime_type"),
+            "width_px": variant.get("width_px"),
+            "height_px": variant.get("height_px"),
+            "file_size_bytes": variant.get("file_size_bytes"),
+            "url": variant_url(variant),
+        }
+        for variant in asset.get("variants", [])
+        if variant.get("variant_key") and variant.get("is_public_safe")
+    }
+    return {
+        "id": asset.get("id"),
+        "asset_type": asset.get("asset_type"),
+        "title": asset.get("title"),
+        "alt_text": asset.get("alt_text"),
+        "caption": asset.get("caption"),
+        "usage_context": asset.get("usage_context"),
+        "width_px": asset.get("width_px"),
+        "height_px": asset.get("height_px"),
+        "variants": variants,
+        "thumbnail_url": variants.get("thumbnail", {}).get("url"),
+        "card_url": variants.get("card", {}).get("url"),
+        "hero_url": variants.get("hero", {}).get("url"),
+    }
+
+
+def collect_section_media_ids(pages: list[dict]) -> set[str]:
+    asset_ids = set()
+    for page in pages:
+        for section in page.get("sections", []):
+            if section.get("image_asset_id"):
+                asset_ids.add(section["image_asset_id"])
+            for card in section.get("cards", []):
+                if isinstance(card, dict) and card.get("image_asset_id"):
+                    asset_ids.add(card["image_asset_id"])
+    return asset_ids
+
+
+async def validate_section_media_refs(db: Database, agency_id: str, sections: list[dict]) -> None:
+    asset_ids = collect_section_media_ids([{"sections": sections}])
+    for asset_id in asset_ids:
+        asset = await db.collection("agency_website_media_assets").find_one({"agency_id": agency_id, "id": asset_id, "status": "active"})
+        if not asset or not asset.get("is_public_safe") or not asset.get("public_usage_allowed"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website section image must reference an active public-safe media asset.")
+
+
 def clean_section(section: dict) -> dict:
     section = {
         key: value
@@ -98,8 +277,6 @@ def clean_section(section: dict) -> dict:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Hero alignment must be left or center.")
     if section.get("image_position") and section["image_position"] not in {"left", "right"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image position must be left or right.")
-    if section.get("image_asset_id"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Media library assets are not public in this phase.")
     cleaned = {key: value for key, value in section.items() if key in allowed}
     for card in cleaned.get("cards", []):
         if not isinstance(card, dict):
@@ -241,6 +418,94 @@ async def update_website_settings(agency_id: str, payload: AgencyWebsiteSettings
     return {"settings": safe_settings(settings)}
 
 
+@router.get("/media")
+async def list_media_assets(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_read(db, agency_id, user)
+    assets = await db.collection("agency_website_media_assets").find_many({"agency_id": agency_id})
+    assets.sort(key=lambda item: item.get("created_at", ""), reverse=True)
+    pages = await db.collection("agency_website_pages").find_many({"agency_id": agency_id})
+    used_ids = collect_section_media_ids(pages)
+    items = []
+    for asset in assets:
+        safe = safe_media_asset(asset)
+        safe["used_in_published_content"] = asset["id"] in used_ids
+        items.append(safe)
+    return {"items": items}
+
+
+@router.post("/media", status_code=status.HTTP_201_CREATED)
+async def upload_media_asset(agency_id: str, payload: AgencyWebsiteMediaUpload, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        media_bytes = base64.b64decode(payload.data_base64, validate=True)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Media data must be valid base64.") from exc
+    if not media_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Media file is empty.")
+    if len(media_bytes) > MAX_MEDIA_BYTES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Website media file must be 5MB or smaller.")
+    validate_media_upload(payload, media_bytes)
+    width, height, variants = prepare_media_variants(media_bytes)
+    settings = await db.collection("agency_website_settings").find_one({"agency_id": agency_id})
+    asset = AgencyWebsiteMediaAsset(
+        agency_id=agency_id,
+        website_profile_id=(settings or {}).get("id"),
+        storage_record_id=f"website_media_{now_utc().strftime('%Y%m%d%H%M%S%f')}",
+        asset_type=payload.asset_type,
+        title=payload.title.strip(),
+        alt_text=payload.alt_text.strip(),
+        caption=payload.caption,
+        usage_context=payload.usage_context,
+        mime_type="image/png",
+        width_px=width,
+        height_px=height,
+        file_size_bytes=len(media_bytes),
+        checksum_sha256=hashlib.sha256(media_bytes).hexdigest(),
+        original_filename=safe_filename(payload.filename),
+        public_usage_allowed=payload.public_usage_allowed,
+        is_public_safe=True,
+        variants=variants,
+        created_by_user_id=user["id"],
+        created_by_email=user.get("email"),
+        updated_by_user_id=user["id"],
+        updated_by_email=user.get("email"),
+        audit_metadata={"variants_generated": [variant["variant_key"] for variant in variants], "svg_allowed": False},
+    )
+    created = await db.collection("agency_website_media_assets").insert_one(asset.model_dump(mode="json"))
+    await write_audit(db, agency_id, user["id"], "website_media_uploaded", "agency_website_media_asset", created["id"], "Uploaded website media asset.", {"mime_type": created["mime_type"], "size_bytes": len(media_bytes), "variants_generated": len(variants)})
+    return {"asset": safe_media_asset(created)}
+
+
+@router.put("/media/{asset_id}")
+async def update_media_asset(agency_id: str, asset_id: str, payload: AgencyWebsiteMediaUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_write(db, agency_id, user)
+    updates = clean_updates(payload)
+    validate_safe_text(updates)
+    if "title" in updates and updates["title"] is not None and not str(updates["title"]).strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Media title cannot be blank.")
+    if "alt_text" in updates and updates["alt_text"] is not None and not str(updates["alt_text"]).strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Alt text is required for public website images.")
+    updates.update({"updated_by_user_id": user["id"], "updated_by_email": user.get("email")})
+    asset = await db.collection("agency_website_media_assets").update_one({"agency_id": agency_id, "id": asset_id}, updates)
+    if not asset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media asset not found.")
+    await write_audit(db, agency_id, user["id"], "website_media_updated", "agency_website_media_asset", asset_id, "Updated website media asset.", {"fields": sorted(updates.keys())})
+    return {"asset": safe_media_asset(asset)}
+
+
+@router.delete("/media/{asset_id}")
+async def archive_media_asset(agency_id: str, asset_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_write(db, agency_id, user)
+    asset = await db.collection("agency_website_media_assets").update_one(
+        {"agency_id": agency_id, "id": asset_id},
+        {"status": "archived", "public_usage_allowed": False, "updated_by_user_id": user["id"], "updated_by_email": user.get("email")},
+    )
+    if not asset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media asset not found.")
+    await write_audit(db, agency_id, user["id"], "website_media_archived", "agency_website_media_asset", asset_id, "Archived website media asset.")
+    return {"asset": safe_media_asset(asset)}
+
+
 @router.get("/pages")
 async def list_pages(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
@@ -255,6 +520,7 @@ async def create_page(agency_id: str, payload: AgencyWebsitePageCreate, user: di
     data = payload.model_dump(mode="json")
     validate_safe_text(data)
     data["sections"] = clean_sections(data.get("sections") or [])
+    await validate_section_media_refs(db, agency_id, data["sections"])
     data["slug"] = validate_slug(data["slug"])
     existing = await db.collection("agency_website_pages").find_one({"agency_id": agency_id, "slug": data["slug"]})
     if existing:
@@ -279,6 +545,7 @@ async def update_page(agency_id: str, page_id: str, payload: AgencyWebsitePageUp
     validate_safe_text(updates)
     if "sections" in updates:
         updates["sections"] = clean_sections(updates.get("sections") or [])
+        await validate_section_media_refs(db, agency_id, updates["sections"])
     if "slug" in updates and updates["slug"]:
         updates["slug"] = validate_slug(updates["slug"])
         existing = await db.collection("agency_website_pages").find_one({"agency_id": agency_id, "slug": updates["slug"]})
@@ -357,9 +624,18 @@ async def public_website(slug: str, db: Database = Depends(get_database)) -> dic
     pages.sort(key=lambda page: (page.get("page_type") != "home", page.get("title", "")))
     branding = await db.collection("agency_branding_settings").find_one({"agency_id": agency_id})
     logo_assets = await load_logo_assets(db, agency_id, branding or {}) if branding else []
+    media_ids = collect_section_media_ids(pages)
+    media_assets = {}
+    for media_id in media_ids:
+        asset = await db.collection("agency_website_media_assets").find_one({"agency_id": agency_id, "id": media_id})
+        safe_asset = public_media_asset(asset or {})
+        if safe_asset:
+            media_assets[media_id] = safe_asset
     return {
         "settings": safe_settings(settings),
         "branding": public_safe_branding(branding or {}, logo_assets, settings.get("site_name")),
+        "computed_theme": computed_branding_theme(branding or {}),
+        "media_assets": media_assets,
         "navigation": [{"title": page["title"], "slug": page["slug"], "page_type": page.get("page_type")} for page in pages],
         "pages": [safe_page(page) for page in pages],
     }

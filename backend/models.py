@@ -257,6 +257,29 @@ class BrandingLogoVariantKey(str, Enum):
     LIGHT = "light"
 
 
+class WebsiteMediaAssetType(str, Enum):
+    IMAGE = "image"
+    ICON = "icon"
+    DOCUMENT = "document"
+    BACKGROUND = "background"
+    ILLUSTRATION = "illustration"
+
+
+class WebsiteMediaUsageContext(str, Enum):
+    HERO = "hero"
+    SECTION_IMAGE = "section_image"
+    CARD_IMAGE = "card_image"
+    GALLERY = "gallery"
+    BACKGROUND = "background"
+    DOCUMENT = "document"
+    GENERAL = "general"
+
+
+class WebsiteMediaStatus(str, Enum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
 class ClientType(str, Enum):
     INDIVIDUAL = "individual"
     FAMILY_HOUSEHOLD = "family_household"
@@ -803,6 +826,70 @@ class AgencyWebsiteSection(BaseModel):
     items: List[str] = Field(default_factory=list)
     cards: List[Dict[str, Any]] = Field(default_factory=list)
     sort_order: int = 0
+
+
+class AgencyWebsiteMediaVariant(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    variant_key: str
+    mime_type: str
+    width_px: int
+    height_px: int
+    file_size_bytes: int
+    checksum_sha256: str
+    data_base64: str
+    is_public_safe: bool = True
+
+
+class AgencyWebsiteMediaAsset(BaseDocument):
+    agency_id: str
+    website_profile_id: Optional[str] = None
+    storage_record_id: Optional[str] = None
+    asset_type: WebsiteMediaAssetType = WebsiteMediaAssetType.IMAGE
+    title: str
+    alt_text: str
+    caption: Optional[str] = None
+    usage_context: WebsiteMediaUsageContext = WebsiteMediaUsageContext.GENERAL
+    mime_type: str
+    width_px: int
+    height_px: int
+    file_size_bytes: int
+    checksum_sha256: str
+    original_filename: str
+    public_usage_allowed: bool = True
+    is_public_safe: bool = True
+    status: WebsiteMediaStatus = WebsiteMediaStatus.ACTIVE
+    variants: List[AgencyWebsiteMediaVariant] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+    created_by_email: Optional[EmailStr] = None
+    updated_by_user_id: Optional[str] = None
+    updated_by_email: Optional[EmailStr] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AgencyWebsiteMediaUpload(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    filename: str
+    content_type: str
+    data_base64: str
+    title: str
+    alt_text: str
+    caption: Optional[str] = None
+    asset_type: WebsiteMediaAssetType = WebsiteMediaAssetType.IMAGE
+    usage_context: WebsiteMediaUsageContext = WebsiteMediaUsageContext.GENERAL
+    public_usage_allowed: bool = True
+
+
+class AgencyWebsiteMediaUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    title: Optional[str] = None
+    alt_text: Optional[str] = None
+    caption: Optional[str] = None
+    usage_context: Optional[WebsiteMediaUsageContext] = None
+    public_usage_allowed: Optional[bool] = None
+    status: Optional[WebsiteMediaStatus] = None
 
 
 class AgencyWebsitePage(BaseDocument):

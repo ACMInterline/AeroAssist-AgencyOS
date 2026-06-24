@@ -159,6 +159,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_branding_assets",
     "agency_website_settings",
     "agency_website_pages",
+    "agency_website_media_assets",
     "client_profiles",
     "request_intakes",
     "portal_access_mappings",
