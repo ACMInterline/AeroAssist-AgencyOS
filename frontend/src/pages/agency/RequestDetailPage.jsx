@@ -6,6 +6,15 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
+const mobilityAssistanceMeanings = {
+  WCHR: "Can walk and use stairs; wheelchair needed for airport distance.",
+  WCHS: "Can walk short distances; cannot use stairs.",
+  WCHC: "Cannot walk; full assistance to/from aircraft seat.",
+  meet_and_assist: "Meet and assist only; wheelchair may not be required.",
+  unknown: "Needs staff assessment.",
+  to_be_assessed: "Needs staff assessment.",
+}
+
 export default function RequestDetailPage({ requestId }) {
   const [state, setState] = useState(null)
   const [forms, setForms] = useState({
@@ -195,7 +204,7 @@ export default function RequestDetailPage({ requestId }) {
               <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Category" value={forms.service_category} onChange={(event) => setField("service_category", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add service</button>
             </form>
-            <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.detail_payload)}` : ""}`} />
+            <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.service_category, item.detail_payload)}` : ""}`} />
           </Panel>
           <section className="grid gap-4 lg:grid-cols-2">
             <Panel title="Messages">
@@ -222,8 +231,28 @@ export default function RequestDetailPage({ requestId }) {
   )
 }
 
-function detailSummary(details) {
-  return Object.entries(details).slice(0, 4).map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value)}`).join(" · ")
+function detailSummary(category, details) {
+  if (category === "mobility_assistance") {
+    const assistanceCode = details.assistance_code || details.wheelchair_type || "unknown"
+    const ownDevice = details.own_mobility_device || (details.battery_wheelchair ? "electric wheelchair / powerchair" : "no")
+    const parts = [`${assistanceCode}: ${mobilityAssistanceMeanings[assistanceCode] || mobilityAssistanceMeanings.unknown}`]
+    if (ownDevice && ownDevice !== "no") {
+      parts.push(`own device: ${String(ownDevice).replaceAll("_", " ")}`)
+      const dimensions = [details.length_cm, details.width_cm, details.height_cm].filter(Boolean).join("×")
+      if (details.weight_kg) parts.push(`${details.weight_kg} kg`)
+      if (dimensions) parts.push(`${dimensions} cm`)
+    }
+    if (["electric_wheelchair_powerchair", "mobility_scooter"].includes(details.own_mobility_device)) {
+      const battery = [details.battery_type, details.battery_watt_hours ? `${details.battery_watt_hours} Wh` : null, details.battery_removable ? `removable: ${details.battery_removable}` : null].filter(Boolean).join(", ")
+      if (battery) parts.push(`battery: ${battery.replaceAll("_", " ")}`)
+    }
+    return parts.join(" · ")
+  }
+  return Object.entries(details)
+    .filter(([, value]) => value !== "" && value !== null && value !== undefined)
+    .slice(0, 4)
+    .map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value)}`)
+    .join(" · ")
 }
 
 function Panel({ title, children }) {

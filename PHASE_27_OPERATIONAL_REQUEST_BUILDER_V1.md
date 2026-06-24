@@ -9,6 +9,7 @@ Phase 27 replaces the internal generic request form with a structured Operationa
 - Inline passenger creation and existing passenger selection.
 - Structured itinerary storage with trip type, route summary, segment rows, airline/flight placeholders, cabin/class, dates, and notes.
 - Structured service categories with conditional detail payloads.
+- Corrected Phase 27.1 mobility assistance structure with separate assistance code, optional boarding/transfer clarifiers, own mobility device details, and conditional battery fields.
 - Service relationships to all passengers/all segments by default, stored as `passenger_ids`, `segment_ids`, and all-scope flags.
 - Request `builder_payload_snapshot` preservation for audit/debug continuity.
 - Request detail display for trip type and service detail summaries.
@@ -63,6 +64,7 @@ Phase 27 replaces the internal generic request form with a structured Operationa
 - Service relationships default to all passengers/all segments in the V1 UI.
 - Inline client creation without email uses an internal placeholder email because existing client profiles require `primary_email`.
 - Builder V1 does not yet provide rich edit-in-place flows for all structured sections after creation.
+- Mobility assistance does not yet perform airline-specific validation or reference-data-driven taxonomy checks.
 
 ## Next Recommended Phase
 

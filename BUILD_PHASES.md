@@ -605,6 +605,21 @@ Avoid adding:
 
 - GDS/NDC/airline integrations, automatic pricing, booking/PNR creation, payment gateways, automatic email, public document links, or external provider calls.
 
+### Phase 27.1: Mobility Assistance Logic And Builder UX Correction
+
+Implemented scope:
+
+- Replaced incorrect mobility fields with `assistance_code` for WCHR/WCHS/WCHC/MAAS/unknown.
+- Separated transfer and boarding clarifiers from the assistance code.
+- Added conditional own mobility device details.
+- Added battery fields only for electric wheelchair/powerchair and mobility scooter cases.
+- Improved request builder service-card layout for mobility assistance.
+- Updated request detail summaries and intake conversion defaults for mobility payloads.
+
+Avoid adding:
+
+- Airline-specific validation, pricing, airline integration, public links, external dependencies, or automated delivery.
+
 ### Phase 28: Operational Request Workspace Hardening
 
 Recommended scope:

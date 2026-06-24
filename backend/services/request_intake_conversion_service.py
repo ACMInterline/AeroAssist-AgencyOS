@@ -331,6 +331,13 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         request_segment_ids.append(segment_doc["id"])
 
     for service_name in services:
+        service_detail_payload = {
+            "source": "request_intake",
+            "intake_reference": intake.get("reference_code"),
+            "request_details": normalized.get("request_details"),
+        }
+        if "mobility" in service_name.lower():
+            service_detail_payload.update({"assistance_code": "unknown", "own_mobility_device": "unknown"})
         service = RequestedService(
             agency_id=intake["agency_id"],
             request_id=created_request["id"],
@@ -338,11 +345,7 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
             service_name=service_name,
             service_category="intake",
             details=normalized.get("request_details"),
-            detail_payload={
-                "source": "request_intake",
-                "intake_reference": intake.get("reference_code"),
-                "request_details": normalized.get("request_details"),
-            },
+            detail_payload=service_detail_payload,
             passenger_ids=[item["passenger_id"] for item in request_passengers],
             segment_ids=request_segment_ids,
             applies_to_all_passengers=True,

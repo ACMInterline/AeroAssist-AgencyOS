@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_27_operational_request_builder_v1`
+- API phase reports `phase_27_1_mobility_assistance_logic_request_builder_ux_correction`
 - platform login verified
 - agency login verified
 - portal login verified

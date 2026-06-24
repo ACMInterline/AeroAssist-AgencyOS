@@ -90,9 +90,23 @@ def builder_payload(email: str) -> dict:
             {
                 "category": "mobility_assistance",
                 "details": {
-                    "wheelchair_requested": True,
-                    "wheelchair_type": "WCHS",
-                    "can_walk_stairs": False,
+                    "assistance_code": "WCHS",
+                    "can_transfer_to_aircraft_seat": "yes",
+                    "can_walk_short_distance": "yes",
+                    "needs_aisle_chair": "unknown",
+                    "needs_lift_or_stair_assistance": "yes",
+                    "own_mobility_device": "electric_wheelchair_powerchair",
+                    "device_type": "electric_wheelchair_powerchair",
+                    "brand_model": "Example Powerchair",
+                    "weight_kg": "34",
+                    "length_cm": "100",
+                    "width_cm": "62",
+                    "height_cm": "88",
+                    "foldable_or_collapsible": "no",
+                    "battery_type": "lithium_ion",
+                    "battery_removable": "yes",
+                    "battery_watt_hours": "280",
+                    "battery_documentation_available": "yes",
                 },
                 "applies_to_all_passengers": True,
                 "applies_to_all_segments": True,
@@ -130,7 +144,7 @@ def public_intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_27_operational_request_builder_v1":
+    if health.get("phase") != "phase_27_1_mobility_assistance_logic_request_builder_ux_correction":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]
@@ -152,6 +166,11 @@ def main() -> int:
         raise AssertionError("Trip type was not stored.")
     if not detail["services"][0].get("detail_payload"):
         raise AssertionError("Service detail payload was not stored.")
+    mobility_payload = detail["services"][0]["detail_payload"]
+    if mobility_payload.get("assistance_code") != "WCHS" or mobility_payload.get("own_mobility_device") != "electric_wheelchair_powerchair":
+        raise AssertionError("Corrected mobility assistance payload was not stored.")
+    if mobility_payload.get("battery_type") != "lithium_ion":
+        raise AssertionError("Electric mobility device battery details were not stored.")
     if not detail["services"][0].get("passenger_ids") or not detail["services"][0].get("segment_ids"):
         raise AssertionError("Service passenger/segment relationships were not stored.")
 

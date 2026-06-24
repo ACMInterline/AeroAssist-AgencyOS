@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_operational_request_builder_v1",
+        "phase": "phase_27_1_mobility_assistance_logic_request_builder_ux_correction",
     }
 
 
@@ -107,6 +107,7 @@ async def summary(
             "Document storage lifecycle and delivery provider readiness foundation",
             "Request intake triage and operational request conversion foundation",
             "Operational request builder V1 foundation",
+            "Mobility assistance logic and request builder UX correction",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

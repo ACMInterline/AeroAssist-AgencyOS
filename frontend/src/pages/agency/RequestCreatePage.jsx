@@ -21,9 +21,30 @@ const serviceCategories = [
   "other",
 ]
 
+const assistanceCodes = {
+  WCHR: "Can walk and use stairs; wheelchair needed for airport distance.",
+  WCHS: "Can walk short distances; cannot use stairs.",
+  WCHC: "Cannot walk; full assistance to/from aircraft seat.",
+  meet_and_assist: "Meet and assist only; wheelchair may not be required.",
+  unknown: "Needs staff assessment before confirming airline/airport handling.",
+  to_be_assessed: "Needs staff assessment before confirming airline/airport handling.",
+}
+
+const triStateOptions = [["unknown", "Unknown"], ["yes", "Yes"], ["no", "No"]]
+const ownMobilityDeviceOptions = [
+  ["no", "No"],
+  ["manual_wheelchair", "Manual wheelchair"],
+  ["electric_wheelchair_powerchair", "Electric wheelchair / powerchair"],
+  ["mobility_scooter", "Mobility scooter"],
+  ["walker_rollator_crutches", "Walker / rollator / crutches"],
+  ["other", "Other"],
+  ["unknown", "Unknown"],
+]
+const batteryDeviceTypes = new Set(["electric_wheelchair_powerchair", "mobility_scooter"])
+
 const blankPassenger = () => ({ passenger_id: "", first_name: "", last_name: "", display_name: "", date_of_birth: "", passenger_type: "adult", mobility_notes: "", medical_notes: "", notes: "" })
 const blankSegment = () => ({ sequence: 1, origin_text: "", destination_text: "", departure_date: "", departure_time_window: "", arrival_date: "", arrival_time_window: "", marketing_airline: "", operating_airline: "", flight_number: "", cabin_preference: "", notes: "" })
-const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: {} })
+const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: { assistance_code: "unknown", own_mobility_device: "no" } })
 
 export default function RequestCreatePage() {
   const [state, setState] = useState(null)
@@ -227,7 +248,7 @@ export default function RequestCreatePage() {
                     <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={service.applies_to_all_segments} onChange={(event) => updateArray("services", index, { applies_to_all_segments: event.target.checked })} /> All segments</label>
                   </div>
                   <ConditionalServiceFields service={service} onChange={(patch) => updateArray("services", index, { details: { ...service.details, ...patch } })} />
-                  <TextArea label="Service notes" value={service.notes} onChange={(value) => updateArray("services", index, { notes: value })} />
+                  <TextArea label={service.category === "mobility_assistance" ? "Additional mobility notes" : "Service notes"} value={service.notes} onChange={(value) => updateArray("services", index, { notes: value })} />
                   {form.services.length > 1 ? <button className="mt-2 text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("services", index)}>Remove service</button> : null}
                 </div>
               ))}
@@ -277,10 +298,85 @@ function Select({ label, value, onChange, options, required = false }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} required={required} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></label>
 }
 
+function ServiceCard({ title, body, children }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
+      <p className="mt-1 text-xs leading-5 text-slate-600">{body}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  )
+}
+
 function ConditionalServiceFields({ service, onChange }) {
   const details = service.details || {}
   if (service.category === "mobility_assistance") {
-    return <div className="mt-3 grid gap-3 md:grid-cols-3"><Check label="Wheelchair requested" checked={details.wheelchair_requested} onChange={(value) => onChange({ wheelchair_requested: value })} /><Select label="Wheelchair type" value={details.wheelchair_type || "unknown"} onChange={(value) => onChange({ wheelchair_type: value })} options={["WCHR", "WCHS", "WCHC", "own_wheelchair", "unknown"].map((item) => [item, item])} /><Check label="Can walk stairs" checked={details.can_walk_stairs} onChange={(value) => onChange({ can_walk_stairs: value })} /><Check label="Battery wheelchair" checked={details.battery_wheelchair} onChange={(value) => onChange({ battery_wheelchair: value })} /><Field label="Assistance level" value={details.assistance_level || ""} onChange={(value) => onChange({ assistance_level: value })} /></div>
+    const assistanceCode = details.assistance_code || details.wheelchair_type || "unknown"
+    const ownDevice = details.own_mobility_device || (details.battery_wheelchair ? "electric_wheelchair_powerchair" : "no")
+    const showDeviceDetails = ownDevice && ownDevice !== "no"
+    const showBatteryDetails = batteryDeviceTypes.has(ownDevice)
+    return (
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <ServiceCard title="Assistance required" body="Choose the operational assistance code separately from any personal mobility device.">
+          <Select
+            label="Required assistance code"
+            value={assistanceCode}
+            onChange={(value) => onChange({ assistance_code: value })}
+            options={[
+              ["WCHR", "WCHR"],
+              ["WCHS", "WCHS"],
+              ["WCHC", "WCHC"],
+              ["meet_and_assist", "MAAS / meet and assist"],
+              ["unknown", "Unknown"],
+              ["to_be_assessed", "To be assessed"],
+            ]}
+          />
+          <p className="mt-2 rounded-md bg-blue-50 p-3 text-xs leading-5 text-blue-900">{assistanceCodes[assistanceCode] || assistanceCodes.unknown}</p>
+        </ServiceCard>
+        <ServiceCard title="Operational details" body="Optional clarifiers for edge cases; these do not replace the assistance code.">
+          <div className="grid gap-3">
+            <Select label="Can transfer to aircraft seat?" value={details.can_transfer_to_aircraft_seat || "unknown"} onChange={(value) => onChange({ can_transfer_to_aircraft_seat: value })} options={triStateOptions} />
+            <Select label="Can walk short distance?" value={details.can_walk_short_distance || "unknown"} onChange={(value) => onChange({ can_walk_short_distance: value })} options={triStateOptions} />
+            <Select label="Needs aisle chair?" value={details.needs_aisle_chair || "unknown"} onChange={(value) => onChange({ needs_aisle_chair: value })} options={triStateOptions} />
+            <Select label="Needs lift/stair assistance?" value={details.needs_lift_or_stair_assistance || "unknown"} onChange={(value) => onChange({ needs_lift_or_stair_assistance: value })} options={triStateOptions} />
+          </div>
+        </ServiceCard>
+        <ServiceCard title="Own mobility device" body="Capture personal device details only when the passenger travels with one.">
+          <Select label="Travelling with own mobility device?" value={ownDevice} onChange={(value) => onChange({ own_mobility_device: value, device_type: value === "no" ? "" : value })} options={ownMobilityDeviceOptions} />
+          {showDeviceDetails ? (
+            <div className="mt-3 grid gap-3">
+              <Field label="Brand / model" value={details.brand_model || ""} onChange={(value) => onChange({ brand_model: value })} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label="Weight kg" type="number" value={details.weight_kg || ""} onChange={(value) => onChange({ weight_kg: value })} />
+                <Select label="Foldable / collapsible" value={details.foldable_or_collapsible || "unknown"} onChange={(value) => onChange({ foldable_or_collapsible: value })} options={triStateOptions} />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <Field label="Length cm" type="number" value={details.length_cm || ""} onChange={(value) => onChange({ length_cm: value })} />
+                <Field label="Width cm" type="number" value={details.width_cm || ""} onChange={(value) => onChange({ width_cm: value })} />
+                <Field label="Height cm" type="number" value={details.height_cm || ""} onChange={(value) => onChange({ height_cm: value })} />
+              </div>
+              <Field label="Device notes" value={details.device_notes || ""} onChange={(value) => onChange({ device_notes: value })} />
+            </div>
+          ) : null}
+          {showBatteryDetails ? (
+            <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
+              <p className="text-sm font-semibold text-amber-950">Battery details</p>
+              <div className="mt-3 grid gap-3">
+                <Select label="Battery type" value={details.battery_type || "unknown"} onChange={(value) => onChange({ battery_type: value })} options={[["dry_gel_sealed_lead_acid", "Dry / gel / sealed lead acid"], ["lithium_ion", "Lithium ion"], ["spillable_wet_cell", "Spillable wet cell"], ["unknown", "Unknown"]]} />
+                <Select label="Battery removable?" value={details.battery_removable || "unknown"} onChange={(value) => onChange({ battery_removable: value })} options={triStateOptions} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Field label="Watt hours" type="number" value={details.battery_watt_hours || ""} onChange={(value) => onChange({ battery_watt_hours: value })} />
+                  <Field label="Voltage" type="number" value={details.battery_voltage || ""} onChange={(value) => onChange({ battery_voltage: value })} />
+                  <Field label="Amp hours" type="number" value={details.battery_amp_hours || ""} onChange={(value) => onChange({ battery_amp_hours: value })} />
+                </div>
+                <Select label="Spare battery carried?" value={details.spare_battery_carried || "unknown"} onChange={(value) => onChange({ spare_battery_carried: value })} options={triStateOptions} />
+                <Select label="Battery documentation available?" value={details.battery_documentation_available || "unknown"} onChange={(value) => onChange({ battery_documentation_available: value })} options={triStateOptions} />
+              </div>
+            </div>
+          ) : null}
+        </ServiceCard>
+      </div>
+    )
   }
   if (service.category === "medical_travel") {
     return <div className="mt-3 grid gap-3 md:grid-cols-4"><Check label="Medical clearance" checked={details.medical_clearance_needed} onChange={(value) => onChange({ medical_clearance_needed: value })} /><Check label="Oxygen needed" checked={details.oxygen_needed} onChange={(value) => onChange({ oxygen_needed: value })} /><Check label="Stretcher needed" checked={details.stretcher_needed} onChange={(value) => onChange({ stretcher_needed: value })} /><Check label="Companion required" checked={details.companion_required} onChange={(value) => onChange({ companion_required: value })} /><Field label="Fit-to-fly status" value={details.fit_to_fly_status || ""} onChange={(value) => onChange({ fit_to_fly_status: value })} /></div>
