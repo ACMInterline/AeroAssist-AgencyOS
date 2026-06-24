@@ -45,11 +45,11 @@ This document defines the target canonical operations model for AgencyOS. It tra
 - Passenger link modes are `existing`, `new_inline`, or `unresolved`.
 - Segment records are canonical for itinerary shape; summary fields are display conveniences.
 - Requested services should use passenger and segment scoping rather than unstructured notes whenever possible.
-- Mobility/medical/pet/special-item details can live in detail payload snapshots until full Reference Data and policy checks are implemented.
+- Mobility/medical/pet/special-item details can use Phase 33 Reference Data and service catalogue values while deeper policy checks are implemented separately.
 
-## Service Catalogue Target
+## Service Catalogue
 
-The Phase 33 `service_catalogue` target should include:
+Phase 33 implements `service_catalogue` as controlled master lookup data. It includes:
 
 - `service_code`
 - `service_label`
@@ -63,21 +63,15 @@ The Phase 33 `service_catalogue` target should include:
 - `input_schema_json`
 - `is_active`
 
-Target service families:
+Implemented service families:
 
 - `wheelchair_mobility`
-- `medical_support`
-- `visual_support`
-- `hearing_support`
-- `cognitive_support`
-- `escort_support`
-- `stretcher_extra_seat`
-- `passenger_of_size`
-- `pet_transport`
-- `service_animal`
-- `umnr`
-- `special_baggage`
-- `sports_equipment`
-- `musical_instruments`
-- `fragile_valuable`
-- `oxygen_poc`
+- `sensory_assistance`
+- `medical_assistance`
+- `seating_space`
+- `pets_animals`
+- `minor_assistance`
+- `special_items`
+
+Airline-specific rules, lead times, acceptance criteria, source documents, and exceptions remain in Airline Intelligence rather than Reference Data.
+Sports equipment, musical instruments, fragile/valuable items, oxygen, POC, stretcher, extra seat, pet, and mobility-device handling are service catalogue records within those families.

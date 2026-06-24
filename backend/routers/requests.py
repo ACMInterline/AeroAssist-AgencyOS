@@ -402,7 +402,7 @@ async def list_requests(
         filters["source"] = source
     items = [item for item in await db.collection("travel_requests").find_many(filters) if matches_search(item, search)]
     clients = {client["id"]: client for client in await db.collection("client_profiles").find_many({"agency_id": agency_id})}
-    items.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
+    items.sort(key=lambda item: str(item.get("updated_at") or ""), reverse=True)
     return {"items": [{**item, "client": clients.get(item["client_id"])} for item in items]}
 
 

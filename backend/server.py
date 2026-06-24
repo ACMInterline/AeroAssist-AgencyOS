@@ -8,6 +8,7 @@ from database import database
 from routers import platform
 from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests, websites
 from services.pdf_rendering_service import pdf_capabilities
+from services.reference_data_service import REFERENCE_DOMAINS
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
 
@@ -17,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 32 blueprint alignment and canonical operations model.",
+    description="AeroAssist AgencyOS API foundation through Phase 33 reference data core and service catalogue.",
 )
 
 app.add_middleware(
@@ -44,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_32_blueprint_alignment_canonical_operations_model",
+        "phase": "phase_33_reference_data_core_service_catalogue",
     }
 
 
@@ -109,6 +110,9 @@ async def readiness() -> dict:
     media_asset_count = await database.collection("agency_website_media_assets").count()
     public_media_asset_count = await database.collection("agency_website_media_assets").count({"status": "active", "public_usage_allowed": True, "is_public_safe": True})
     website_origin_intake_count = await database.collection("request_intakes").count({"source": "agency_website"})
+    reference_records = await database.collection("global_reference_records").find_many()
+    active_reference_record_count = len([item for item in reference_records if item.get("is_active", True)])
+    service_catalogue_record_count = await database.collection("service_catalogue").count()
     branded_logo_count = len(
         [
             item
@@ -121,7 +125,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_32_blueprint_alignment_canonical_operations_model",
+        "phase": "phase_33_reference_data_core_service_catalogue",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -174,6 +178,16 @@ async def readiness() -> dict:
             "reference_data_phase_ready": True,
             "readiness_required": False,
             "diagnostic": "Blueprint alignment is documented and additive foundations are informational only.",
+        },
+        "reference_data": {
+            "reference_data_enabled": True,
+            "service_catalogue_enabled": True,
+            "reference_domain_count": len(REFERENCE_DOMAINS),
+            "active_reference_record_count": active_reference_record_count,
+            "service_catalogue_record_count": service_catalogue_record_count,
+            "reference_bootstrap_available": True,
+            "readiness_required": False,
+            "diagnostic": "Reference data and service catalogue are operational lookups; bootstrap is manual and idempotent.",
         },
         "pdf": {
             "available": pdf.get("available"),

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Building2, ClipboardList, Files, Globe2, Inbox, Menu, Palette, Plus, Settings, Sparkles, UserRound, Users } from "lucide-react"
+import { Building2, ClipboardList, Database, Files, Globe2, Inbox, Menu, Palette, Plus, Settings, Sparkles, UserRound, Users } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 import { agencyThemeStyle } from "../lib/theme"
@@ -17,6 +17,7 @@ const secondaryNav = [
   { label: "Team", description: "Staff access", href: "/agency", icon: Users, badge: "Dashboard" },
   { label: "Website / CMS", description: "Public content", href: "/agency/website", icon: Globe2 },
   { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: Files },
+  { label: "Reference Data", description: "Lookups and services", href: "/agency/reference", icon: Database },
   { label: "Offers / Pricing", description: "Coming soon", icon: Sparkles, disabled: true },
   { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: Settings },
 ]

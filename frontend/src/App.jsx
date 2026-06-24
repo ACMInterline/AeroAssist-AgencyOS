@@ -20,6 +20,7 @@ import OffersPage from "./pages/agency/OffersPage"
 import RefundExchangeCaseCreatePage from "./pages/agency/RefundExchangeCaseCreatePage"
 import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetailPage"
 import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
+import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
 import PassengersPage from "./pages/agency/PassengersPage"
 import PaymentsPage from "./pages/agency/PaymentsPage"
@@ -72,6 +73,7 @@ const routes = {
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
   "/agency/website/media": WebsiteMediaLibraryPage,
+  "/agency/reference": ReferenceDataPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
   "/agency/document-storage": DocumentStoragePage,

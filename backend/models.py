@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
 def now_utc() -> datetime:
@@ -3998,24 +3998,124 @@ class AgencyEmailSettingsUpdate(BaseModel):
     status: Optional[AgencyEmailSettingsStatus] = None
 
 
+class ReferenceRecordScope(str, Enum):
+    GLOBAL = "global"
+    AGENCY = "agency"
+
+
+class ReferenceRecordSourceType(str, Enum):
+    SYSTEM = "system"
+    PLATFORM = "platform"
+    AGENCY = "agency"
+    IMPORT = "import"
+
+
+class ServiceCatalogueBeneficiaryType(str, Enum):
+    PASSENGER = "passenger"
+    PET = "pet"
+    SPECIAL_ITEM = "special_item"
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
+    code: Optional[str] = None
     key: str
     label: str
+    workspace_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: ReferenceRecordScope = ReferenceRecordScope.GLOBAL
     description: Optional[str] = None
+    aliases: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.SYSTEM
+    updated_by_user_id: Optional[str] = None
+    created_by_user_id: Optional[str] = None
     is_active: bool = True
+
+    @model_validator(mode="after")
+    def align_code_and_key(self) -> "GlobalReferenceRecord":
+        if self.code is None:
+            self.code = self.key
+        if not self.key and self.code:
+            self.key = self.code
+        return self
 
 
 class GlobalReferenceCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    domain: str
-    key: str
+    domain: Optional[str] = None
+    code: Optional[str] = None
+    key: Optional[str] = None
     label: str
+    workspace_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: ReferenceRecordScope = ReferenceRecordScope.GLOBAL
     description: Optional[str] = None
+    aliases: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.PLATFORM
     is_active: bool = True
+
+
+class GlobalReferenceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = None
+    key: Optional[str] = None
+    label: Optional[str] = None
+    workspace_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: Optional[ReferenceRecordScope] = None
+    description: Optional[str] = None
+    aliases: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    source_type: Optional[ReferenceRecordSourceType] = None
+    is_active: Optional[bool] = None
+
+
+class ServiceCatalogueRecord(BaseDocument):
+    service_code: str
+    service_label: str
+    service_family_code: str
+    default_ssr_code: Optional[str] = None
+    beneficiary_type: ServiceCatalogueBeneficiaryType = ServiceCatalogueBeneficiaryType.PASSENGER
+    requires_segment_scoping: bool = True
+    requires_policy_check: bool = True
+    requires_document_check: bool = False
+    requires_manual_pricing: bool = False
+    input_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
+    sort_order: int = 100
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.SYSTEM
+    updated_by_user_id: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class ServiceCatalogueCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    service_code: str
+    service_label: str
+    service_family_code: str
+    default_ssr_code: Optional[str] = None
+    beneficiary_type: ServiceCatalogueBeneficiaryType = ServiceCatalogueBeneficiaryType.PASSENGER
+    requires_segment_scoping: bool = True
+    requires_policy_check: bool = True
+    requires_document_check: bool = False
+    requires_manual_pricing: bool = False
+    input_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    is_active: bool = True
+    sort_order: int = 100
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.PLATFORM
 
 
 class AuditEvent(BaseModel):

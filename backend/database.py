@@ -230,6 +230,7 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "platform_users": [[("email", ASCENDING)]],
         "agencies": [[("slug", ASCENDING)], [("id", ASCENDING)]],
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
+        "service_catalogue": [[("service_code", ASCENDING)], [("id", ASCENDING)]],
         "airline_profiles": [[("airline_code", ASCENDING)], [("id", ASCENDING)]],
         "agency_staff_memberships": [[("agency_id", ASCENDING), ("user_id", ASCENDING)]],
         "portal_access_mappings": [[("agency_id", ASCENDING), ("user_email", ASCENDING)]],

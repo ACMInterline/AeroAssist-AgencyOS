@@ -13,7 +13,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `TravelRequest` | `travel_requests` | Operational request/work demand | Agency | Client, passengers, segments, services, optional trip | Request/case | Canonical |
 | `RequestPassenger` | `request_passengers` | Passenger snapshot in request | Agency | Request + passenger | Request traveler | Canonical |
 | `RequestSegment` | `request_segments` | Segment-first itinerary request structure | Agency | Request, future trip segment | Itinerary segment | Canonical |
-| `RequestedService` | `requested_services` | Requested assistance/service | Agency | Request, passengers, segments | Service request | Transitional toward Phase 33/34 catalogue |
+| `RequestedService` | `requested_services` | Requested assistance/service | Agency | Request, passengers, segments | Service request | Transitional toward Phase 34 catalogue-backed applicability |
 | `RequestPassengerSegmentService` | `request_passenger_segment_services` | Explicit passenger+segment service applicability | Agency | Request, service, passenger, segment | Service applicability | Foundation |
 | `RequestCaseFlag` | `request_case_flags` | Operational flags/risk/attention markers | Agency | Request | Case flags | Foundation |
 | `RequestPet`, `RequestPetSegmentTransport` | `request_pets`, `request_pet_segment_transport` | Pet/service animal request and segment transport applicability | Agency | Request, passenger, segment | Pet transport | Foundation |
@@ -26,7 +26,8 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | Document models | `document_templates`, `rendered_documents`, `document_exports`, `document_deliveries`, `document_storage_records` | Templates, render snapshots, exports, delivery attempts | Agency | Requests/offers/bookings/invoices | Documents/templates | Canonical foundation |
 | `RequestMessage`, `RequestTask`, timeline models | `request_messages`, `request_tasks`, timeline collections | Communications, staff tasks, activity | Agency | Request | Communications/tasks/activity | Canonical request-level foundation |
 | Airline intelligence models | `airline_profiles`, `airline_knowledge_items`, `airline_procedures`, `airline_emd_rule_notes`, `agency_airline_overrides` | Airline policy/decision support | Global + agency overrides | Airlines, sources, overrides | Airline policies | Canonical foundation |
-| Reference records | `global_reference_records` | Generic reference lookups | Global | Reference domains | Reference data | Transitional pending Phase 33 catalogue |
+| `GlobalReferenceRecord` | `global_reference_records` | Controlled master lookup domains | Global, agency-ready | Reference domains, request/builders/documents | Reference data | Canonical foundation |
+| `ServiceCatalogueRecord` | `service_catalogue` | Service catalogue lookup with SSR/scoping/policy metadata | Global | Requested services, future segment applicability, airline policy checks | Service catalogue | Canonical foundation |
 | Branding/logo/media models | `agency_branding_settings`, `agency_branding_assets`, `agency_website_media_assets` | Controlled branding and public-safe assets | Agency | Website/public renderer | Branding/media | Canonical |
 | Website/CMS models | `agency_website_settings`, `agency_website_pages` | Public website settings/pages/sections | Agency | Branding/media/intakes | Public CMS | Canonical |
 | Portal models | `portal_access_mappings`, `portal_action_events`, `document_acknowledgements` | Controlled client portal visibility/actions | Agency/client | Client, documents, actions | Portal/client accounts | Transitional |
@@ -37,3 +38,4 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 - Current stack remains FastAPI/Pydantic, repository-backed Mongo/in-memory database, React frontend, and Docker deployment.
 - Collection names are not destructively renamed for blueprint alignment.
 - Trip dossier and segment-scoped applicability classes are additive placeholders for future UI/API phases.
+- Reference Data is intentionally separate from Airline Intelligence policy rules; it supplies lookup values and service catalogue metadata, not airline-specific acceptance decisions.

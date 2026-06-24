@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_32_blueprint_alignment_canonical_operations_model",
+        "phase": "phase_33_reference_data_core_service_catalogue",
     }
 
 
@@ -82,6 +82,7 @@ async def summary(
             "document_deliveries": await db.collection("document_deliveries").count(),
             "document_delivery_attempts": await db.collection("document_delivery_attempts").count(),
             "reference_records": await db.collection("global_reference_records").count(),
+            "service_catalogue_records": await db.collection("service_catalogue").count(),
             "audit_events": await db.collection("audit_events").count(),
         },
         "production_onboarding": {
@@ -129,6 +130,7 @@ async def summary(
             "Branding, logo asset management, and agency settings stabilization",
             "CMS media library, website image assets, and public website visual polish",
             "Blueprint alignment and canonical operations model foundation",
+            "Reference data core and service catalogue foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

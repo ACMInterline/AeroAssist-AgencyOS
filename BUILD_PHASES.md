@@ -46,6 +46,7 @@ The repository currently contains:
 - Phase 30.1: Branding, logo asset management, and agency settings stabilization.
 - Phase 31: CMS media library, website image assets, and public website visual polish.
 - Phase 32: Blueprint alignment and canonical operations model.
+- Phase 33: Reference data core and service catalogue.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -756,15 +757,17 @@ Avoid adding:
 
 ### Phase 33: Reference Data Core And Service Catalogue
 
-Recommended scope:
+Implemented scope:
 
-- Service catalogue with service code, service family, default SSR, beneficiary type, scoping requirements, policy/document/manual-pricing flags, input schemas, and active status.
-- Controlled service family taxonomy for mobility, medical, sensory support, escorts, pets, special baggage, sports equipment, musical instruments, fragile/valuable items, and oxygen/POC.
-- Admin/reference maintenance APIs and seed/import workflow.
+- Controlled reference data domains for countries, cities, airports, airlines, currencies, timezones, languages, operational classifications, assistance classifications, pets, and special-item categories.
+- `service_catalogue` records with service code, family, default SSR, beneficiary type, segment scoping, policy/document/manual-pricing flags, input schemas, active status, sort order, and metadata.
+- Manual idempotent bootstrap workflow through `backend/scripts/bootstrap_reference_data.py` and platform-owned `/api/reference/bootstrap`.
+- Authenticated reference APIs for domain discovery, listing, search, create/update, activation/deactivation, and service catalogue family/search views.
+- Agency UI at `/agency/reference` for Reference Data and grouped service catalogue visibility.
 
 Avoid adding:
 
-- Automated pricing, airline policy scoring, or GDS execution.
+- Automated pricing, airline policy scoring, GDS execution, external lookup providers, or automatic startup seeding.
 
 ### Phase 34: Segment-Scoped Request Services, Pets, And Special Items
 
