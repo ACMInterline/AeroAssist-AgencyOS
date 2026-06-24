@@ -21,16 +21,21 @@ const serviceCategories = [
   "other",
 ]
 
-const assistanceCodes = {
-  WCHR: "Can walk and use stairs; wheelchair needed for airport distance.",
-  WCHS: "Can walk short distances; cannot use stairs.",
-  WCHC: "Cannot walk; full assistance to/from aircraft seat.",
-  meet_and_assist: "Meet and assist only; wheelchair may not be required.",
-  unknown: "Needs staff assessment before confirming airline/airport handling.",
-  to_be_assessed: "Needs staff assessment before confirming airline/airport handling.",
-}
-
 const triStateOptions = [["unknown", "Unknown"], ["yes", "Yes"], ["no", "No"]]
+const ssrCodeOptions = [["use_suggested", "Use suggested"], ["WCHR", "WCHR"], ["WCHS", "WCHS"], ["WCHC", "WCHC"], ["MAAS", "MAAS"], ["MEDA", "MEDA"], ["BLND", "BLND"], ["DEAF", "DEAF"], ["OTHER", "OTHER"], ["manual_review", "Manual review"]]
+const contextTagOptions = [
+  ["prm", "PRM / reduced mobility"],
+  ["src", "SRC / senior citizen"],
+  ["temporary_injury", "Temporary injury"],
+  ["medical_condition", "Medical condition"],
+  ["blind_visual_impairment", "Blind or visually impaired"],
+  ["deaf_hard_of_hearing", "Deaf or hard of hearing"],
+  ["cognitive_neurodivergent", "Cognitive / neurodivergent assistance"],
+  ["pregnancy", "Pregnancy"],
+  ["child_young_passenger", "Child / young passenger support"],
+  ["unaccompanied_minor", "Unaccompanied minor"],
+  ["other", "Other"],
+]
 const ownMobilityDeviceOptions = [
   ["no", "No"],
   ["manual_wheelchair", "Manual wheelchair"],
@@ -44,7 +49,7 @@ const batteryDeviceTypes = new Set(["electric_wheelchair_powerchair", "mobility_
 
 const blankPassenger = () => ({ passenger_id: "", first_name: "", last_name: "", display_name: "", date_of_birth: "", passenger_type: "adult", mobility_notes: "", medical_notes: "", notes: "" })
 const blankSegment = () => ({ sequence: 1, origin_text: "", destination_text: "", departure_date: "", departure_time_window: "", arrival_date: "", arrival_time_window: "", marketing_airline: "", operating_airline: "", flight_number: "", cabin_preference: "", notes: "" })
-const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: { assistance_code: "unknown", own_mobility_device: "no" } })
+const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: { assessment_version: "v2_assessment_driven", passenger_context_tags: [], functional_assessment: {}, confirmed_ssr_code: "use_suggested", own_mobility_device: "no", own_device_details: {}, battery_details: {} } })
 
 export default function RequestCreatePage() {
   const [state, setState] = useState(null)
@@ -115,6 +120,13 @@ export default function RequestCreatePage() {
     if (form.client_mode === "inline" && (!form.client_name || (!form.client_email && !form.client_phone))) return "Inline client requires name and email or phone."
     if (!form.segments.some((segment) => segment.origin_text && segment.destination_text) && !(form.origin && form.destination)) return "Add at least one route segment or origin/destination."
     if (!form.services.length) return "Select at least one service category."
+    const mobilityOverrideMissingReason = form.services.some((service) => {
+      if (service.category !== "mobility_assistance") return false
+      const recommendation = recommendMobilitySsr(service.details || {})
+      const confirmed = service.details?.confirmed_ssr_code === "use_suggested" ? recommendation.code : service.details?.confirmed_ssr_code || recommendation.code
+      return confirmed !== recommendation.code && !service.details?.override_reason
+    })
+    if (mobilityOverrideMissingReason) return "Mobility SSR overrides require an override reason."
     return ""
   }
 
@@ -275,11 +287,62 @@ export default function RequestCreatePage() {
 }
 
 function serviceDetails(service) {
-  return cleanObject(service.details || {})
+  if (service.category !== "mobility_assistance") return cleanObject(service.details || {})
+  const details = service.details || {}
+  const recommendation = recommendMobilitySsr(details)
+  const confirmed = details.confirmed_ssr_code === "use_suggested" ? recommendation.code : details.confirmed_ssr_code || recommendation.code
+  return cleanObject({
+    assessment_version: "v2_assessment_driven",
+    passenger_context_tags: details.passenger_context_tags || [],
+    passenger_context_notes: details.passenger_context_notes || undefined,
+    functional_assessment: cleanObject(details.functional_assessment || {}),
+    suggested_ssr_code: recommendation.code,
+    suggested_ssr_reason: recommendation.reason,
+    recommendation_confidence: recommendation.confidence,
+    confirmed_ssr_code: confirmed,
+    override_reason: confirmed !== recommendation.code ? details.override_reason : undefined,
+    final_assistance_label: details.final_assistance_label || undefined,
+    own_mobility_device: details.own_mobility_device || "no",
+    own_device_details: (details.own_mobility_device && details.own_mobility_device !== "no") ? cleanObject({ device_type: details.own_mobility_device, ...(details.own_device_details || {}) }) : {},
+    battery_details: batteryDeviceTypes.has(details.own_mobility_device) ? cleanObject(details.battery_details || {}) : {},
+  })
 }
 
 function cleanObject(value) {
   return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== "" && item !== undefined && item !== null))
+}
+
+function toggleValue(values, value) {
+  return values.includes(value) ? values.filter((item) => item !== value) : [...values, value]
+}
+
+function recommendMobilitySsr(details = {}) {
+  const tags = details.passenger_context_tags || []
+  const assessment = details.functional_assessment || {}
+  const wheelchairRequired = assessment.needs_wheelchair_for_distance === "yes" || assessment.needs_wheelchair_to_aircraft_door === "yes"
+  const noWheelchair = assessment.needs_wheelchair_for_distance === "no" && assessment.needs_wheelchair_to_aircraft_door === "no" && assessment.needs_assistance_into_aircraft_seat !== "yes" && assessment.needs_aisle_chair !== "yes"
+  if (assessment.needs_assistance_into_aircraft_seat === "yes" || assessment.needs_aisle_chair === "yes" || assessment.can_transfer_independently_to_aircraft_seat === "no" || assessment.can_walk_short_distances === "no") {
+    return { code: "WCHC", confidence: "high", reason: "Passenger cannot walk/self-transfer fully or needs aisle chair / seat assistance." }
+  }
+  if (assessment.can_climb_aircraft_stairs === "no" || assessment.can_board_without_lift_or_stair_assistance === "no" || assessment.needs_wheelchair_to_aircraft_door === "yes") {
+    return { code: "WCHS", confidence: "high", reason: "Passenger can manage short distance but cannot use stairs or needs assistance to aircraft door." }
+  }
+  if (wheelchairRequired && assessment.can_walk_short_distances === "yes" && assessment.can_climb_aircraft_stairs === "yes") {
+    return { code: "WCHR", confidence: "high", reason: "Passenger can walk/use stairs but needs wheelchair for airport distance." }
+  }
+  if (tags.includes("medical_condition") || assessment.medical_clearance_needed === "yes" || assessment.oxygen_needed === "yes" || assessment.stretcher_needed === "yes") {
+    return { code: "MEDA", confidence: "medium", reason: "Medical context or medical assistance indicators require staff review for MEDA handling." }
+  }
+  if (tags.includes("blind_visual_impairment") && noWheelchair) {
+    return { code: "BLND", confidence: "medium", reason: "Visual impairment selected and no wheelchair need indicated." }
+  }
+  if (tags.includes("deaf_hard_of_hearing") && noWheelchair) {
+    return { code: "DEAF", confidence: "medium", reason: "Hearing impairment selected and no wheelchair need indicated." }
+  }
+  if (assessment.needs_escort_meet_and_assist_only === "yes" && noWheelchair) {
+    return { code: "MAAS", confidence: "medium", reason: "Passenger needs navigation/escort support only; wheelchair is not indicated." }
+  }
+  return { code: "manual_review", confidence: "manual_review", reason: "Information is insufficient or conflicting; staff should assess manually." }
 }
 
 function Section({ title, children }) {
@@ -311,66 +374,87 @@ function ServiceCard({ title, body, children }) {
 function ConditionalServiceFields({ service, onChange }) {
   const details = service.details || {}
   if (service.category === "mobility_assistance") {
-    const assistanceCode = details.assistance_code || details.wheelchair_type || "unknown"
-    const ownDevice = details.own_mobility_device || (details.battery_wheelchair ? "electric_wheelchair_powerchair" : "no")
+    const assessment = details.functional_assessment || {}
+    const ownDevice = details.own_mobility_device || "no"
+    const ownDeviceDetails = details.own_device_details || {}
+    const batteryDetails = details.battery_details || {}
+    const recommendation = recommendMobilitySsr(details)
+    const confirmed = details.confirmed_ssr_code || "use_suggested"
+    const finalCode = confirmed === "use_suggested" ? recommendation.code : confirmed
+    const overrideRequired = confirmed !== "use_suggested" && finalCode !== recommendation.code
     const showDeviceDetails = ownDevice && ownDevice !== "no"
     const showBatteryDetails = batteryDeviceTypes.has(ownDevice)
     return (
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <ServiceCard title="Assistance required" body="Choose the operational assistance code separately from any personal mobility device.">
-          <Select
-            label="Required assistance code"
-            value={assistanceCode}
-            onChange={(value) => onChange({ assistance_code: value })}
-            options={[
-              ["WCHR", "WCHR"],
-              ["WCHS", "WCHS"],
-              ["WCHC", "WCHC"],
-              ["meet_and_assist", "MAAS / meet and assist"],
-              ["unknown", "Unknown"],
-              ["to_be_assessed", "To be assessed"],
-            ]}
-          />
-          <p className="mt-2 rounded-md bg-blue-50 p-3 text-xs leading-5 text-blue-900">{assistanceCodes[assistanceCode] || assistanceCodes.unknown}</p>
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <ServiceCard title="Passenger context" body="Capture why assistance may be needed. Do not include sensitive medical detail unless operationally required.">
+          <p className="rounded-md bg-amber-50 p-3 text-xs leading-5 text-amber-900">V1 applies mobility services to all selected passengers by default. Per-passenger assignment is planned for a later editing pass.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {contextTagOptions.map(([value, label]) => (
+              <label className="flex items-center gap-2 text-sm text-slate-700" key={value}>
+                <input type="checkbox" checked={(details.passenger_context_tags || []).includes(value)} onChange={() => onChange({ passenger_context_tags: toggleValue(details.passenger_context_tags || [], value) })} />
+                {label}
+              </label>
+            ))}
+          </div>
+          <TextArea label="Reason / diagnosis / operational context" value={details.passenger_context_notes || ""} onChange={(value) => onChange({ passenger_context_notes: value })} />
         </ServiceCard>
-        <ServiceCard title="Operational details" body="Optional clarifiers for edge cases; these do not replace the assistance code.">
-          <div className="grid gap-3">
-            <Select label="Can transfer to aircraft seat?" value={details.can_transfer_to_aircraft_seat || "unknown"} onChange={(value) => onChange({ can_transfer_to_aircraft_seat: value })} options={triStateOptions} />
-            <Select label="Can walk short distance?" value={details.can_walk_short_distance || "unknown"} onChange={(value) => onChange({ can_walk_short_distance: value })} options={triStateOptions} />
-            <Select label="Needs aisle chair?" value={details.needs_aisle_chair || "unknown"} onChange={(value) => onChange({ needs_aisle_chair: value })} options={triStateOptions} />
-            <Select label="Needs lift/stair assistance?" value={details.needs_lift_or_stair_assistance || "unknown"} onChange={(value) => onChange({ needs_lift_or_stair_assistance: value })} options={triStateOptions} />
+        <ServiceCard title="Functional assessment" body="Answer the operational capability questions first. SSR/service code is suggested from these answers.">
+          <div className="grid gap-3 md:grid-cols-2">
+            <Select label="Can walk through terminal without wheelchair?" value={assessment.can_walk_terminal_without_wheelchair || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, can_walk_terminal_without_wheelchair: value } })} options={triStateOptions} />
+            <Select label="Can walk short distances?" value={assessment.can_walk_short_distances || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, can_walk_short_distances: value } })} options={triStateOptions} />
+            <Select label="Can climb aircraft stairs?" value={assessment.can_climb_aircraft_stairs || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, can_climb_aircraft_stairs: value } })} options={triStateOptions} />
+            <Select label="Can board without lift/stair assistance?" value={assessment.can_board_without_lift_or_stair_assistance || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, can_board_without_lift_or_stair_assistance: value } })} options={triStateOptions} />
+            <Select label="Can transfer independently to aircraft seat?" value={assessment.can_transfer_independently_to_aircraft_seat || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, can_transfer_independently_to_aircraft_seat: value } })} options={triStateOptions} />
+            <Select label="Needs wheelchair for airport distance?" value={assessment.needs_wheelchair_for_distance || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, needs_wheelchair_for_distance: value } })} options={triStateOptions} />
+            <Select label="Needs wheelchair to/from aircraft door?" value={assessment.needs_wheelchair_to_aircraft_door || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, needs_wheelchair_to_aircraft_door: value } })} options={triStateOptions} />
+            <Select label="Needs assistance into aircraft seat?" value={assessment.needs_assistance_into_aircraft_seat || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, needs_assistance_into_aircraft_seat: value } })} options={triStateOptions} />
+            <Select label="Needs aisle chair?" value={assessment.needs_aisle_chair || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, needs_aisle_chair: value } })} options={triStateOptions} />
+            <Select label="Needs escort / meet-and-assist only?" value={assessment.needs_escort_meet_and_assist_only || "unknown"} onChange={(value) => onChange({ functional_assessment: { ...assessment, needs_escort_meet_and_assist_only: value } })} options={triStateOptions} />
           </div>
         </ServiceCard>
-        <ServiceCard title="Own mobility device" body="Capture personal device details only when the passenger travels with one.">
-          <Select label="Travelling with own mobility device?" value={ownDevice} onChange={(value) => onChange({ own_mobility_device: value, device_type: value === "no" ? "" : value })} options={ownMobilityDeviceOptions} />
+        <ServiceCard title="Suggested SSR / service code" body="Derived from assessment answers. This does not transmit anything to an airline.">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Suggested code</p>
+            <p className="mt-1 text-2xl font-semibold text-blue-950">{recommendation.code}</p>
+            <p className="mt-2 text-sm leading-6 text-blue-900">{recommendation.reason}</p>
+            <p className="mt-2 text-xs font-medium text-blue-800">Confidence: {recommendation.confidence.replaceAll("_", " ")}</p>
+          </div>
+        </ServiceCard>
+        <ServiceCard title="Staff confirmation" body="Use the suggestion or override it. Overrides should include an operational reason.">
+          <Select label="Confirmed SSR/service code" value={confirmed} onChange={(value) => onChange({ confirmed_ssr_code: value })} options={ssrCodeOptions} />
+          {overrideRequired ? <Field label="Override reason" value={details.override_reason || ""} onChange={(value) => onChange({ override_reason: value })} required /> : null}
+          <Field label="Final assistance label / operational notes" value={details.final_assistance_label || ""} onChange={(value) => onChange({ final_assistance_label: value })} />
+        </ServiceCard>
+        <ServiceCard title="Own mobility device" body="Supplemental device details; this is separate from the assistance SSR recommendation.">
+          <Select label="Travelling with own wheelchair or mobility device?" value={ownDevice} onChange={(value) => onChange({ own_mobility_device: value, own_device_details: value === "no" ? {} : { ...ownDeviceDetails, device_type: value }, battery_details: batteryDeviceTypes.has(value) ? batteryDetails : {} })} options={ownMobilityDeviceOptions} />
           {showDeviceDetails ? (
             <div className="mt-3 grid gap-3">
-              <Field label="Brand / model" value={details.brand_model || ""} onChange={(value) => onChange({ brand_model: value })} />
+              <Field label="Brand / model" value={ownDeviceDetails.brand_model || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, brand_model: value } })} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Weight kg" type="number" value={details.weight_kg || ""} onChange={(value) => onChange({ weight_kg: value })} />
-                <Select label="Foldable / collapsible" value={details.foldable_or_collapsible || "unknown"} onChange={(value) => onChange({ foldable_or_collapsible: value })} options={triStateOptions} />
+                <Field label="Weight kg" type="number" value={ownDeviceDetails.weight_kg || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, weight_kg: value } })} />
+                <Select label="Foldable / collapsible" value={ownDeviceDetails.foldable_or_collapsible || "unknown"} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, foldable_or_collapsible: value } })} options={triStateOptions} />
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <Field label="Length cm" type="number" value={details.length_cm || ""} onChange={(value) => onChange({ length_cm: value })} />
-                <Field label="Width cm" type="number" value={details.width_cm || ""} onChange={(value) => onChange({ width_cm: value })} />
-                <Field label="Height cm" type="number" value={details.height_cm || ""} onChange={(value) => onChange({ height_cm: value })} />
+                <Field label="Length cm" type="number" value={ownDeviceDetails.length_cm || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, length_cm: value } })} />
+                <Field label="Width cm" type="number" value={ownDeviceDetails.width_cm || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, width_cm: value } })} />
+                <Field label="Height cm" type="number" value={ownDeviceDetails.height_cm || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, height_cm: value } })} />
               </div>
-              <Field label="Device notes" value={details.device_notes || ""} onChange={(value) => onChange({ device_notes: value })} />
+              <Field label="Device notes" value={ownDeviceDetails.notes || ""} onChange={(value) => onChange({ own_device_details: { ...ownDeviceDetails, notes: value } })} />
             </div>
           ) : null}
           {showBatteryDetails ? (
             <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-3">
               <p className="text-sm font-semibold text-amber-950">Battery details</p>
               <div className="mt-3 grid gap-3">
-                <Select label="Battery type" value={details.battery_type || "unknown"} onChange={(value) => onChange({ battery_type: value })} options={[["dry_gel_sealed_lead_acid", "Dry / gel / sealed lead acid"], ["lithium_ion", "Lithium ion"], ["spillable_wet_cell", "Spillable wet cell"], ["unknown", "Unknown"]]} />
-                <Select label="Battery removable?" value={details.battery_removable || "unknown"} onChange={(value) => onChange({ battery_removable: value })} options={triStateOptions} />
+                <Select label="Battery type" value={batteryDetails.battery_type || "unknown"} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_type: value } })} options={[["dry_gel_sealed_lead_acid", "Dry / gel / sealed lead acid"], ["lithium_ion", "Lithium ion"], ["spillable_wet_cell", "Spillable wet cell"], ["unknown", "Unknown"]]} />
+                <Select label="Battery removable?" value={batteryDetails.battery_removable || "unknown"} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_removable: value } })} options={triStateOptions} />
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <Field label="Watt hours" type="number" value={details.battery_watt_hours || ""} onChange={(value) => onChange({ battery_watt_hours: value })} />
-                  <Field label="Voltage" type="number" value={details.battery_voltage || ""} onChange={(value) => onChange({ battery_voltage: value })} />
-                  <Field label="Amp hours" type="number" value={details.battery_amp_hours || ""} onChange={(value) => onChange({ battery_amp_hours: value })} />
+                  <Field label="Watt hours" type="number" value={batteryDetails.battery_watt_hours || ""} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_watt_hours: value } })} />
+                  <Field label="Voltage" type="number" value={batteryDetails.battery_voltage || ""} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_voltage: value } })} />
+                  <Field label="Amp hours" type="number" value={batteryDetails.battery_amp_hours || ""} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_amp_hours: value } })} />
                 </div>
-                <Select label="Spare battery carried?" value={details.spare_battery_carried || "unknown"} onChange={(value) => onChange({ spare_battery_carried: value })} options={triStateOptions} />
-                <Select label="Battery documentation available?" value={details.battery_documentation_available || "unknown"} onChange={(value) => onChange({ battery_documentation_available: value })} options={triStateOptions} />
+                <Select label="Spare battery carried?" value={batteryDetails.spare_battery_carried || "unknown"} onChange={(value) => onChange({ battery_details: { ...batteryDetails, spare_battery_carried: value } })} options={triStateOptions} />
+                <Select label="Battery documentation available?" value={batteryDetails.battery_documentation_available || "unknown"} onChange={(value) => onChange({ battery_details: { ...batteryDetails, battery_documentation_available: value } })} options={triStateOptions} />
               </div>
             </div>
           ) : null}

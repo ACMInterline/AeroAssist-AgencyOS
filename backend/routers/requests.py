@@ -256,6 +256,12 @@ async def create_request_from_builder(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
+    for service in payload.services:
+        if service.category == "mobility_assistance" and service.details.get("assessment_version") == "v2_assessment_driven":
+            suggested = service.details.get("suggested_ssr_code")
+            confirmed = service.details.get("confirmed_ssr_code")
+            if suggested and confirmed and confirmed != suggested and not service.details.get("override_reason"):
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mobility SSR override reason is required when confirmed code differs from suggested code.")
     client = await create_inline_client(db, agency_id, payload.client)
     route_summary = route_summary_from_payload(payload)
     service_labels = [SERVICE_LABELS.get(service.category, service.category.replace("_", " ")) for service in payload.services]

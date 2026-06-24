@@ -10,6 +10,7 @@ Phase 27 replaces the internal generic request form with a structured Operationa
 - Structured itinerary storage with trip type, route summary, segment rows, airline/flight placeholders, cabin/class, dates, and notes.
 - Structured service categories with conditional detail payloads.
 - Corrected Phase 27.1 mobility assistance structure with separate assistance code, optional boarding/transfer clarifiers, own mobility device details, and conditional battery fields.
+- Phase 27.2 assessment-driven SSR recommendation where WCHR/WCHS/WCHC/MAAS/MEDA/BLND/DEAF are suggested from functional assessment answers and confirmed by staff.
 - Service relationships to all passengers/all segments by default, stored as `passenger_ids`, `segment_ids`, and all-scope flags.
 - Request `builder_payload_snapshot` preservation for audit/debug continuity.
 - Request detail display for trip type and service detail summaries.

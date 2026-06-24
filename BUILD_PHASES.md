@@ -620,6 +620,21 @@ Avoid adding:
 
 - Airline-specific validation, pricing, airline integration, public links, external dependencies, or automated delivery.
 
+### Phase 27.2: Assistance Assessment Driven SSR Recommendation
+
+Implemented scope:
+
+- Replaced code-first mobility assistance selection with assessment-first questions.
+- Added passenger context tags and functional mobility assessment fields.
+- Added frontend SSR/service recommendation for WCHR, WCHS, WCHC, MAAS, MEDA, BLND, DEAF, and manual review.
+- Added staff confirmation and override reason requirement.
+- Preserved own mobility device and conditional battery details as supplemental data.
+- Updated intake conversion to create manual-review assessment payloads for mobility intakes without detail.
+
+Avoid adding:
+
+- Airline-specific validation, reference-data taxonomy, automated SSR transmission, pricing, airline integration, public links, or automated delivery.
+
 ### Phase 28: Operational Request Workspace Hardening
 
 Recommended scope:

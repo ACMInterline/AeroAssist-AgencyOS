@@ -6,15 +6,6 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
-const mobilityAssistanceMeanings = {
-  WCHR: "Can walk and use stairs; wheelchair needed for airport distance.",
-  WCHS: "Can walk short distances; cannot use stairs.",
-  WCHC: "Cannot walk; full assistance to/from aircraft seat.",
-  meet_and_assist: "Meet and assist only; wheelchair may not be required.",
-  unknown: "Needs staff assessment.",
-  to_be_assessed: "Needs staff assessment.",
-}
-
 export default function RequestDetailPage({ requestId }) {
   const [state, setState] = useState(null)
   const [forms, setForms] = useState({
@@ -233,9 +224,36 @@ export default function RequestDetailPage({ requestId }) {
 
 function detailSummary(category, details) {
   if (category === "mobility_assistance") {
-    const assistanceCode = details.assistance_code || details.wheelchair_type || "unknown"
+    if (details.assessment_version === "v2_assessment_driven") {
+      const tags = (details.passenger_context_tags || []).map((tag) => tag.replaceAll("_", " ")).join(", ")
+      const assessment = details.functional_assessment || {}
+      const ownDevice = details.own_mobility_device
+      const ownDeviceDetails = details.own_device_details || {}
+      const batteryDetails = details.battery_details || {}
+      const parts = [
+        tags ? `context: ${tags}` : null,
+        `suggested: ${details.suggested_ssr_code || "manual_review"}`,
+        details.suggested_ssr_reason ? `reason: ${details.suggested_ssr_reason}` : null,
+        `confirmed: ${details.confirmed_ssr_code || details.suggested_ssr_code || "manual_review"}`,
+        details.override_reason ? `override: ${details.override_reason}` : null,
+      ].filter(Boolean)
+      const assessmentSummary = Object.entries(assessment).filter(([, value]) => value && value !== "unknown").slice(0, 4).map(([key, value]) => `${key.replaceAll("_", " ")}: ${value}`).join("; ")
+      if (assessmentSummary) parts.push(`assessment: ${assessmentSummary}`)
+      if (ownDevice && ownDevice !== "no") {
+        parts.push(`own device: ${String(ownDevice).replaceAll("_", " ")}`)
+        const dimensions = [ownDeviceDetails.length_cm, ownDeviceDetails.width_cm, ownDeviceDetails.height_cm].filter(Boolean).join("×")
+        if (ownDeviceDetails.weight_kg) parts.push(`${ownDeviceDetails.weight_kg} kg`)
+        if (dimensions) parts.push(`${dimensions} cm`)
+      }
+      if (["electric_wheelchair_powerchair", "mobility_scooter"].includes(ownDevice)) {
+        const battery = [batteryDetails.battery_type, batteryDetails.battery_watt_hours ? `${batteryDetails.battery_watt_hours} Wh` : null, batteryDetails.battery_removable ? `removable: ${batteryDetails.battery_removable}` : null].filter(Boolean).join(", ")
+        if (battery) parts.push(`battery: ${battery.replaceAll("_", " ")}`)
+      }
+      return parts.join(" · ")
+    }
+    const legacyCode = details.assistance_code || details.wheelchair_type || "unknown"
     const ownDevice = details.own_mobility_device || (details.battery_wheelchair ? "electric wheelchair / powerchair" : "no")
-    const parts = [`${assistanceCode}: ${mobilityAssistanceMeanings[assistanceCode] || mobilityAssistanceMeanings.unknown}`]
+    const parts = [`legacy assistance code: ${legacyCode}`]
     if (ownDevice && ownDevice !== "no") {
       parts.push(`own device: ${String(ownDevice).replaceAll("_", " ")}`)
       const dimensions = [details.length_cm, details.width_cm, details.height_cm].filter(Boolean).join("×")

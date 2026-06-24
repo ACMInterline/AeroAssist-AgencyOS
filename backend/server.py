@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_1_mobility_assistance_logic_request_builder_ux_correction",
+        "phase": "phase_27_2_assistance_assessment_ssr_recommendation",
     }
 
 
@@ -106,7 +106,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_1_mobility_assistance_logic_request_builder_ux_correction",
+        "phase": "phase_27_2_assistance_assessment_ssr_recommendation",
         "config": config,
         "database": database_status,
         "storage": storage,

@@ -337,7 +337,20 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
             "request_details": normalized.get("request_details"),
         }
         if "mobility" in service_name.lower():
-            service_detail_payload.update({"assistance_code": "unknown", "own_mobility_device": "unknown"})
+            service_detail_payload.update(
+                {
+                    "assessment_version": "v2_assessment_driven",
+                    "passenger_context_tags": ["unknown"],
+                    "functional_assessment": {},
+                    "suggested_ssr_code": "manual_review",
+                    "suggested_ssr_reason": "Mobility assistance was requested through intake without functional assessment details.",
+                    "recommendation_confidence": "manual_review",
+                    "confirmed_ssr_code": "manual_review",
+                    "own_mobility_device": "unknown",
+                    "own_device_details": {},
+                    "battery_details": {},
+                }
+            )
         service = RequestedService(
             agency_id=intake["agency_id"],
             request_id=created_request["id"],

@@ -2,6 +2,8 @@
 
 Phase 27.1 corrects the mobility assistance service model in the Operational Request Builder V1.
 
+Phase 27.2 supersedes the code-first part of this flow: WCHR/WCHS/WCHC are now recommended from assessment answers rather than selected as the primary input.
+
 ## Corrected Mobility Logic
 
 - `assistance_code` now captures the required airport/airline assistance:
@@ -42,3 +44,5 @@ Phase 27.1 corrects the mobility assistance service model in the Operational Req
 - No airline-specific validation.
 - No reference-data-driven mobility taxonomy.
 - No pricing, airline integration, or automated delivery.
+
+See `PHASE_27_2_ASSISTANCE_ASSESSMENT_SSR_RECOMMENDATION.md` for the current assessment-driven SSR recommendation flow.
