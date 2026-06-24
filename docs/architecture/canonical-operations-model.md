@@ -103,3 +103,16 @@ The same governance shape is reserved for future airline policy learning:
 - `policy_rule_suggestions` will allow agencies to submit evidence-backed improvements.
 - `policy_evidence` preserves source material for reviewer decisions.
 - Approved policy suggestions may become global policy rules; rejected suggestions remain local/rejected/archived.
+
+## Phase 34.1 Field Library And Form Profiles
+
+The Global Field Library is platform-owned schema governance:
+
+- `global_field_definitions` define canonical field keys, canonical payload paths, field families/types, safety flags, required levels, validation metadata, and agency override permissions.
+- Agencies configure `agency_form_profiles` and `agency_form_field_settings` to control display, labels, helper text, order, optional required overrides, and custom questions.
+- Agencies cannot change canonical meaning, service logic, SSR interpretation, policy formulas, pricing formulas, or system-required compliance fields.
+- `system_required` fields cannot be hidden.
+- `internal_only` fields cannot be exposed in public contexts.
+- Agency custom questions normalize under `agency_custom_fields` in canonical payloads.
+
+Form profiles are a UI/presentation layer over canonical request payloads. They do not replace backend validation or the canonical request/intake models.

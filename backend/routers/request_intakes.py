@@ -101,6 +101,7 @@ async def submit_public_request_intake(payload: PublicRequestIntakeCreate, db: D
         travel=payload.travel.model_dump(mode="json"),
         services=payload.services.model_dump(mode="json"),
         request_details=clean_text(payload.request_details, 3000),
+        agency_custom_fields=payload.agency_custom_fields,
         raw_payload=payload.model_dump(mode="json"),
     )
     return {"intake": safe_public_intake(intake), "message": "We received your request. Our team will review it."}
@@ -163,6 +164,7 @@ async def create_staff_request_intake(payload: StaffRequestIntakeCreate, user: d
         travel=payload.travel.model_dump(mode="json"),
         services=payload.services.model_dump(mode="json"),
         request_details=clean_text(payload.request_details, 3000),
+        agency_custom_fields=payload.agency_custom_fields,
         priority=payload.priority,
         assigned_to=payload.assigned_to,
         triage_notes=payload.triage_notes,

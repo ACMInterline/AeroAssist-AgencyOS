@@ -32,6 +32,10 @@ The same governance pattern is reserved for future airline policy learning:
 - Approved rules can become global policy rules available to all agencies.
 - Rejected rules remain local, rejected, or archived and do not affect global behavior.
 
+## Phase 34.1 Relationship
+
+Phase 34.1 applies the same platform-owned governance principle to form fields: AeroAssist owns canonical field definitions and agencies configure only presentation/profile settings. Reference Data remains the source for controlled select lists, while form profiles decide where approved fields appear.
+
 ## Known Limits
 
 - No full airline policy engine is implemented.

@@ -682,6 +682,7 @@ async def submit_website_request(slug: str, payload: PublicRequestIntakeCreate, 
         travel=travel,
         services=services,
         request_details=payload.request_details,
+        agency_custom_fields=payload.agency_custom_fields,
         raw_payload={**payload.model_dump(mode="json"), **metadata},
         source_metadata=metadata,
     )

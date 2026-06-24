@@ -49,6 +49,7 @@ The repository currently contains:
 - Phase 33: Reference data core and service catalogue.
 - Phase 33.1: Global reference data governance, bulk import, and agency suggestion queue.
 - Phase 34: Segment-scoped request services, pets, and special items.
+- Phase 34.1: Global field library and agency form profiles.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -799,6 +800,21 @@ Implemented scope:
 Avoid adding:
 
 - Airline booking execution, automated pricing, or policy automation.
+
+### Phase 34.1: Global Field Library And Agency Form Profiles
+
+Implemented scope:
+
+- Platform-owned `global_field_definitions` for canonical field paths, families, types, safety flags, required levels, and agency override permissions.
+- Agency-owned `agency_form_profiles` and `agency_form_field_settings` for public, portal, admin, offer-client, and offer-PDF field menus.
+- Effective profile service that enforces system-required locks, internal/public safety, label override permissions, and required override permissions.
+- Agency custom questions stored under the canonical `agency_custom_fields` payload namespace.
+- `/agency/settings/forms` UI for profile lists, grouped field settings, safety badges, and custom questions.
+- Foundational public website request form and admin request builder profile lookup with safe fallback to existing behavior.
+
+Avoid adding:
+
+- Full drag/drop builder, pricing formula editor, airline policy form generator, portal expansion, offer builder, GDS/NDC integrations, invoices, or payments.
 
 ### Phase 35: Trip Dossier Foundation
 

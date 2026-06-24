@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import PublicLayout from "../../layouts/PublicLayout"
 import { apiGet, apiPost } from "../../lib/api"
+import { fetchPublicEffectiveFormProfile } from "../../lib/formProfiles"
 import { agencyThemeStyle } from "../../lib/theme"
 
 const serviceOptions = ["booking_or_planning", "mobility_assistance", "medical_travel", "pet_travel", "child_or_unaccompanied_minor", "special_baggage", "documents_or_visa", "disruption_or_claims", "other"]
@@ -137,9 +138,24 @@ function ContactDetails({ settings }) {
 }
 
 function WebsiteRequestForm({ site, slug, pageSlug }) {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", organization: "", origin: "", destination: "", departure_date: "", passenger_count: 1, service: "booking_or_planning", message: "", consent: false })
+  const [form, setForm] = useState({ name: "", email: "", phone: "", organization: "", origin: "", destination: "", departure_date: "", passenger_count: 1, service: "booking_or_planning", message: "", consent: false, agency_custom_fields: {} })
+  const [profile, setProfile] = useState(null)
   const [success, setSuccess] = useState(null)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    const agencyId = site.settings?.agency_id
+    if (!agencyId) return
+    fetchPublicEffectiveFormProfile(agencyId, "public_request").then(setProfile).catch(() => setProfile({ fallback: true, fields: [] }))
+  }, [site.settings?.agency_id])
+
+  function visible(fieldKey, fallback = true) {
+    if (!profile || profile.fallback) return fallback
+    const field = (profile.fields || []).find((item) => item.field_key === fieldKey)
+    return field ? field.visible !== false : fallback
+  }
+
+  const customFields = (profile?.fields || []).filter((field) => field.custom_field && field.visible)
 
   async function submit(event) {
     event.preventDefault()
@@ -150,6 +166,7 @@ function WebsiteRequestForm({ site, slug, pageSlug }) {
         travel: { origin: form.origin || undefined, destination: form.destination || undefined, departure_date: form.departure_date || undefined, passenger_count: Number(form.passenger_count) || 1, itinerary_notes: form.message || undefined },
         services: { selected_service_categories: [form.service.replaceAll("_", " ")], [form.service]: true },
         request_details: form.message || undefined,
+        agency_custom_fields: form.agency_custom_fields,
       })
       setSuccess(result.intake)
     } catch (err) {
@@ -167,13 +184,14 @@ function WebsiteRequestForm({ site, slug, pageSlug }) {
           <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
           <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} />
           <Field label="Phone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} />
-          <Field label="Organization" value={form.organization} onChange={(value) => setForm({ ...form, organization: value })} />
-          <Field label="Departure / origin" value={form.origin} onChange={(value) => setForm({ ...form, origin: value })} />
-          <Field label="Arrival / destination" value={form.destination} onChange={(value) => setForm({ ...form, destination: value })} />
-          <Field label="Travel date" type="date" value={form.departure_date} onChange={(value) => setForm({ ...form, departure_date: value })} />
+          {visible("client_context.client_id", true) ? <Field label="Organization" value={form.organization} onChange={(value) => setForm({ ...form, organization: value })} /> : null}
+          {visible("itinerary_segments.origin") ? <Field label="Departure / origin" value={form.origin} onChange={(value) => setForm({ ...form, origin: value })} /> : null}
+          {visible("itinerary_segments.destination") ? <Field label="Arrival / destination" value={form.destination} onChange={(value) => setForm({ ...form, destination: value })} /> : null}
+          {visible("itinerary_segments.departure_date") ? <Field label="Travel date" type="date" value={form.departure_date} onChange={(value) => setForm({ ...form, departure_date: value })} /> : null}
           <Field label="Passengers" type="number" value={form.passenger_count} onChange={(value) => setForm({ ...form, passenger_count: value })} />
-          <label className="block text-sm font-medium text-slate-700">Assistance interest<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })}>{serviceOptions.map((item) => <option value={item} key={item}>{item.replaceAll("_", " ")}</option>)}</select></label>
-          <label className="block text-sm font-medium text-slate-700 md:col-span-2">Message<textarea className="mt-2 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.message} required onChange={(event) => setForm({ ...form, message: event.target.value })} /></label>
+          {visible("services.service_family") ? <label className="block text-sm font-medium text-slate-700">Assistance interest<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })}>{serviceOptions.map((item) => <option value={item} key={item}>{item.replaceAll("_", " ")}</option>)}</select></label> : null}
+          {visible("itinerary_segments.notes") ? <label className="block text-sm font-medium text-slate-700 md:col-span-2">Message<textarea className="mt-2 min-h-28 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.message} required onChange={(event) => setForm({ ...form, message: event.target.value })} /></label> : null}
+          {customFields.map((field) => <CustomField field={field} value={form.agency_custom_fields[field.field_key] || ""} onChange={(value) => setForm({ ...form, agency_custom_fields: { ...form.agency_custom_fields, [field.field_key]: value } })} key={field.field_key} />)}
           <label className="flex gap-3 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700 md:col-span-2"><input type="checkbox" checked={form.consent} onChange={(event) => setForm({ ...form, consent: event.target.checked })} required /> I consent to this agency reviewing my request, processing the information provided, and contacting me about this request.</label>
           {error ? <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-800 md:col-span-2">{error}</p> : null}
           <button className="rounded-full px-5 py-3 text-sm font-semibold text-white shadow-sm md:w-fit" style={{ background: "var(--aa-primary)" }} type="submit">Submit website request</button>
@@ -191,4 +209,15 @@ function normalizeTarget(value, slug) {
 
 function Field({ label, value, onChange, type = "text", required = false }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<input className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type={type} value={value} required={required} onChange={(event) => onChange(event.target.value)} /></label>
+}
+
+function CustomField({ field, value, onChange }) {
+  const type = field.field_type === "boolean" ? "checkbox" : field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"
+  if (field.field_type === "textarea") {
+    return <label className="block text-sm font-medium text-slate-700 md:col-span-2">{field.effective_label}<textarea className="mt-2 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} required={field.required} onChange={(event) => onChange(event.target.value)} /></label>
+  }
+  if (field.field_type === "boolean") {
+    return <label className="flex gap-3 rounded-2xl bg-slate-50 p-4 text-sm text-slate-700 md:col-span-2"><input type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} required={field.required} /> {field.effective_label}</label>
+  }
+  return <Field label={field.effective_label} type={type} value={value} required={field.required} onChange={onChange} />
 }

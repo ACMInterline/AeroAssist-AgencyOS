@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
-EXPECTED_PHASE = "phase_33_1_global_reference_governance_suggestions"
+EXPECTED_PHASE = "phase_34_1_global_field_library_agency_form_profiles"
 
 
 def request(method: str, path: str, body: dict | None = None, expect: int | None = None) -> tuple[int, dict]:

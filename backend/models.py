@@ -1393,6 +1393,7 @@ class PublicRequestIntakeCreate(BaseModel):
     travel: RequestIntakeTravelSummary
     services: RequestIntakeServiceSummary
     request_details: Optional[str] = None
+    agency_custom_fields: Dict[str, Any] = Field(default_factory=dict)
     source_entry_path: Optional[str] = None
     submission_channel: SubmissionChannel = SubmissionChannel.PUBLIC_WEBSITE
     account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.NEW_PUBLIC_CONTACT
@@ -1416,6 +1417,7 @@ class StaffRequestIntakeCreate(BaseModel):
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
     request_details: Optional[str] = None
+    agency_custom_fields: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RequestIntakeTriageUpdate(BaseModel):
@@ -1935,6 +1937,7 @@ class OperationalRequestBuilderCreate(BaseModel):
     source: RequestSource = RequestSource.STAFF_CREATED
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    agency_custom_fields: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RequestMessage(BaseDocument):
@@ -4192,6 +4195,55 @@ class ReferenceImportBatchStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class FieldFamily(str, Enum):
+    CONTACT = "contact"
+    CLIENT_CONTEXT = "client_context"
+    PASSENGER = "passenger"
+    ITINERARY_SEGMENT = "itinerary_segment"
+    SERVICE = "service"
+    PET = "pet"
+    SPECIAL_ITEM = "special_item"
+    DOCUMENT = "document"
+    PRICING = "pricing"
+    OFFER_DISPLAY = "offer_display"
+    CONSENT = "consent"
+    INTERNAL_ADMIN = "internal_admin"
+
+
+class FieldType(str, Enum):
+    TEXT = "text"
+    TEXTAREA = "textarea"
+    EMAIL = "email"
+    PHONE = "phone"
+    NUMBER = "number"
+    DATE = "date"
+    DATETIME = "datetime"
+    BOOLEAN = "boolean"
+    SELECT = "select"
+    MULTISELECT = "multiselect"
+    REFERENCE_SELECT = "reference_select"
+    FILE = "file"
+    JSON = "json"
+
+
+class FieldRequiredLevel(str, Enum):
+    SYSTEM_REQUIRED = "system_required"
+    POLICY_REQUIRED = "policy_required"
+    RECOMMENDED = "recommended"
+    OPTIONAL = "optional"
+    INTERNAL_ONLY = "internal_only"
+
+
+class FormContext(str, Enum):
+    PUBLIC_REQUEST = "public_request"
+    PORTAL_REQUEST = "portal_request"
+    ADMIN_REQUEST = "admin_request"
+    OFFER_CLIENT_VIEW = "offer_client_view"
+    OFFER_PDF = "offer_pdf"
+    TRIP_INTAKE = "trip_intake"
+    SERVICE_SPECIFIC = "service_specific"
+
+
 class ServiceCatalogueBeneficiaryType(str, Enum):
     PASSENGER = "passenger"
     PET = "pet"
@@ -4372,6 +4424,160 @@ class ReferenceImportBatchCreate(BaseModel):
     filename: str
     csv_text: str
     dry_run: bool = False
+
+
+class GlobalFieldDefinition(BaseDocument):
+    field_key: str
+    canonical_path: str
+    field_family: FieldFamily
+    field_type: FieldType
+    label: str
+    help_text: Optional[str] = None
+    description: Optional[str] = None
+    reference_domain: Optional[str] = None
+    service_family_code: Optional[str] = None
+    required_level: FieldRequiredLevel = FieldRequiredLevel.OPTIONAL
+    public_safe: bool = False
+    portal_safe: bool = False
+    admin_safe: bool = True
+    can_be_hidden_by_agency: bool = True
+    can_be_required_by_agency: bool = True
+    can_label_be_overridden: bool = True
+    validation_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    default_display_order: int = 100
+    is_active: bool = True
+
+
+class GlobalFieldDefinitionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    field_key: str
+    canonical_path: str
+    field_family: FieldFamily
+    field_type: FieldType
+    label: str
+    help_text: Optional[str] = None
+    description: Optional[str] = None
+    reference_domain: Optional[str] = None
+    service_family_code: Optional[str] = None
+    required_level: FieldRequiredLevel = FieldRequiredLevel.OPTIONAL
+    public_safe: bool = False
+    portal_safe: bool = False
+    admin_safe: bool = True
+    can_be_hidden_by_agency: bool = True
+    can_be_required_by_agency: bool = True
+    can_label_be_overridden: bool = True
+    validation_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    default_display_order: int = 100
+    is_active: bool = True
+
+
+class GlobalFieldDefinitionUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    canonical_path: Optional[str] = None
+    field_family: Optional[FieldFamily] = None
+    field_type: Optional[FieldType] = None
+    label: Optional[str] = None
+    help_text: Optional[str] = None
+    description: Optional[str] = None
+    reference_domain: Optional[str] = None
+    service_family_code: Optional[str] = None
+    required_level: Optional[FieldRequiredLevel] = None
+    public_safe: Optional[bool] = None
+    portal_safe: Optional[bool] = None
+    admin_safe: Optional[bool] = None
+    can_be_hidden_by_agency: Optional[bool] = None
+    can_be_required_by_agency: Optional[bool] = None
+    can_label_be_overridden: Optional[bool] = None
+    validation_schema_json: Optional[Dict[str, Any]] = None
+    default_display_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
+class AgencyFormProfile(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    profile_key: str
+    name: str
+    form_context: FormContext
+    service_family_code: Optional[str] = None
+    is_default: bool = False
+    is_active: bool = True
+    created_by_user_id: Optional[str] = None
+
+
+class AgencyFormProfileCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workspace_id: Optional[str] = None
+    profile_key: str
+    name: str
+    form_context: FormContext
+    service_family_code: Optional[str] = None
+    is_default: bool = False
+    is_active: bool = True
+
+
+class AgencyFormProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    workspace_id: Optional[str] = None
+    profile_key: Optional[str] = None
+    name: Optional[str] = None
+    form_context: Optional[FormContext] = None
+    service_family_code: Optional[str] = None
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+
+class AgencyFormFieldSetting(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    form_profile_id: str
+    global_field_definition_id: Optional[str] = None
+    field_key: str
+    enabled: bool = True
+    visible: bool = True
+    required_override: Optional[bool] = None
+    label_override: Optional[str] = None
+    help_text_override: Optional[str] = None
+    placeholder_override: Optional[str] = None
+    display_order: int = 100
+    section_key: str = "general"
+    section_label_override: Optional[str] = None
+    custom_field: bool = False
+    custom_field_schema_json: Optional[Dict[str, Any]] = None
+    visibility_condition_json: Optional[Dict[str, Any]] = None
+    validation_override_json: Optional[Dict[str, Any]] = None
+
+
+class AgencyFormFieldSettingInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    global_field_definition_id: Optional[str] = None
+    field_key: str
+    enabled: bool = True
+    visible: bool = True
+    required_override: Optional[bool] = None
+    label_override: Optional[str] = None
+    help_text_override: Optional[str] = None
+    placeholder_override: Optional[str] = None
+    display_order: int = 100
+    section_key: str = "general"
+    section_label_override: Optional[str] = None
+    custom_field: bool = False
+    custom_field_schema_json: Optional[Dict[str, Any]] = None
+    visibility_condition_json: Optional[Dict[str, Any]] = None
+    validation_override_json: Optional[Dict[str, Any]] = None
+
+
+class AgencyFormFieldSettingsUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fields: List[AgencyFormFieldSettingInput] = Field(default_factory=list)
 
 
 class AuditEvent(BaseModel):

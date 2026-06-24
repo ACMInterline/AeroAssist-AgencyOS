@@ -36,3 +36,7 @@ Phase 34 makes request services, pets, and special items structurally canonical 
 - No offer builder expansion.
 - No GDS/NDC import or execution.
 - No client portal expansion.
+
+## Phase 34.1 Relationship
+
+Phase 34.1 adds Global Field Library and Agency Form Profiles on top of these canonical request structures. Agencies may change display, labels, order, optional required flags, and `agency_custom_fields`, but cannot change segment-scoped service meaning, SSR interpretation, policy requirements, pricing foundations, or system-required request fields.

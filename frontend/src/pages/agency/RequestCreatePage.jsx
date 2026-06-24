@@ -3,6 +3,7 @@ import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { fetchAgencyFormProfiles, fetchEffectiveAgencyFormProfile } from "../../lib/formProfiles"
 import { fetchReferenceDomain, fetchServiceCatalogue } from "../../lib/referenceData"
 
 const serviceCategories = [
@@ -76,6 +77,7 @@ export default function RequestCreatePage() {
     route_notes: "",
     internal_notes: "",
     client_visible_notes: "",
+    agency_custom_fields: {},
     passengers: [blankPassenger()],
     segments: [blankSegment()],
     services: [blankService()],
@@ -94,7 +96,10 @@ export default function RequestCreatePage() {
         fetchReferenceDomain("pet_species").catch(() => ({ items: [] })),
         fetchReferenceDomain("special_item_categories").catch(() => ({ items: [] })),
       ])
-      setState({ ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], petSpecies: petSpecies.items || [], specialItemCategories: specialItemCategories.items || [] })
+      const profileList = await fetchAgencyFormProfiles(context.agency.id).catch(() => ({ items: [] }))
+      const adminProfile = (profileList.items || []).find((profile) => profile.form_context === "admin_request" && profile.is_default) || (profileList.items || []).find((profile) => profile.form_context === "admin_request")
+      const formProfile = adminProfile ? await fetchEffectiveAgencyFormProfile(context.agency.id, adminProfile.id).catch(() => null) : null
+      setState({ ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], petSpecies: petSpecies.items || [], specialItemCategories: specialItemCategories.items || [], formProfile })
       setForm((current) => ({ ...current, client_id: clients.items[0]?.id || "" }))
     }
     load().catch((err) => setError(err.message))
@@ -110,6 +115,15 @@ export default function RequestCreatePage() {
   function setField(name, value) {
     setForm((current) => ({ ...current, [name]: value }))
   }
+
+  function fieldVisible(fieldKey, fallback = true) {
+    const profile = state?.formProfile
+    if (!profile || profile.fallback) return fallback
+    const field = (profile.fields || []).find((item) => item.field_key === fieldKey)
+    return field ? field.visible !== false : fallback
+  }
+
+  const customFields = (state?.formProfile?.fields || []).filter((field) => field.custom_field && field.visible)
 
   function updateArray(name, index, patch) {
     setForm((current) => ({ ...current, [name]: current[name].map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) }))
@@ -203,6 +217,7 @@ export default function RequestCreatePage() {
       priority: form.priority,
       internal_notes: form.internal_notes || undefined,
       client_visible_notes: form.client_visible_notes || undefined,
+      agency_custom_fields: form.agency_custom_fields,
     }
     try {
       const result = await apiPost(`/api/agencies/${state.agency.id}/requests/builder`, payload)
@@ -258,8 +273,8 @@ export default function RequestCreatePage() {
                     <Field label="First name" value={passenger.first_name} onChange={(value) => updateArray("passengers", index, { first_name: value })} />
                     <Field label="Display name" value={passenger.display_name} onChange={(value) => updateArray("passengers", index, { display_name: value })} />
                     <Field label="Last name" value={passenger.last_name} onChange={(value) => updateArray("passengers", index, { last_name: value })} />
-                    <Field label="Date of birth" type="date" value={passenger.date_of_birth} onChange={(value) => updateArray("passengers", index, { date_of_birth: value })} />
-                    <Select label="Passenger type" value={passenger.passenger_type} onChange={(value) => updateArray("passengers", index, { passenger_type: value })} options={["adult", "child", "infant", "senior", "unaccompanied_minor"].map((item) => [item, item.replaceAll("_", " ")])} />
+                    {fieldVisible("passengers.date_of_birth") ? <Field label="Date of birth" type="date" value={passenger.date_of_birth} onChange={(value) => updateArray("passengers", index, { date_of_birth: value })} /> : null}
+                    {fieldVisible("passengers.passenger_type") ? <Select label="Passenger type" value={passenger.passenger_type} onChange={(value) => updateArray("passengers", index, { passenger_type: value })} options={["adult", "child", "infant", "senior", "unaccompanied_minor"].map((item) => [item, item.replaceAll("_", " ")])} /> : null}
                   </div>
                   <TextArea label="Mobility / medical / passenger notes" value={passenger.notes} onChange={(value) => updateArray("passengers", index, { notes: value, mobility_notes: value })} />
                   {form.passengers.length > 1 ? <button className="mt-2 text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("passengers", index)}>Remove passenger</button> : null}
@@ -274,9 +289,9 @@ export default function RequestCreatePage() {
                 <Field label="Origin" value={form.origin} onChange={(value) => setField("origin", value)} />
                 <Field label="Destination" value={form.destination} onChange={(value) => setField("destination", value)} />
                 <Field label="Departure date" type="date" value={form.departure_date} onChange={(value) => setField("departure_date", value)} />
-                <Field label="Return date" type="date" value={form.return_date} onChange={(value) => setField("return_date", value)} />
+                {fieldVisible("itinerary_segments.arrival_date") ? <Field label="Return date" type="date" value={form.return_date} onChange={(value) => setField("return_date", value)} /> : null}
               </div>
-              <TextArea label="Route notes" value={form.route_notes} onChange={(value) => setField("route_notes", value)} />
+              {fieldVisible("itinerary_segments.notes") ? <TextArea label="Route notes" value={form.route_notes} onChange={(value) => setField("route_notes", value)} /> : null}
               {form.segments.map((segment, index) => (
                 <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
                   <Field label="Order" type="number" value={segment.sequence} onChange={(value) => updateArray("segments", index, { sequence: value })} />
@@ -284,11 +299,11 @@ export default function RequestCreatePage() {
                   <Field label="Destination" value={segment.destination_text} onChange={(value) => updateArray("segments", index, { destination_text: value })} required />
                   <Field label="Departure date" type="date" value={segment.departure_date} onChange={(value) => updateArray("segments", index, { departure_date: value })} />
                   <Field label="Departure time" value={segment.departure_time_window} onChange={(value) => updateArray("segments", index, { departure_time_window: value })} />
-                  <Field label="Arrival date" type="date" value={segment.arrival_date} onChange={(value) => updateArray("segments", index, { arrival_date: value })} />
-                  <Field label="Marketing airline" value={segment.marketing_airline} onChange={(value) => updateArray("segments", index, { marketing_airline: value })} />
+                  {fieldVisible("itinerary_segments.arrival_date") ? <Field label="Arrival date" type="date" value={segment.arrival_date} onChange={(value) => updateArray("segments", index, { arrival_date: value })} /> : null}
+                  {fieldVisible("itinerary_segments.preferred_airline") ? <Field label="Marketing airline" value={segment.marketing_airline} onChange={(value) => updateArray("segments", index, { marketing_airline: value })} /> : null}
                   <Field label="Flight number" value={segment.flight_number} onChange={(value) => updateArray("segments", index, { flight_number: value })} />
-                  <Field label="Cabin / class" value={segment.cabin_preference} onChange={(value) => updateArray("segments", index, { cabin_preference: value })} />
-                  <TextArea label="Segment notes" value={segment.notes} onChange={(value) => updateArray("segments", index, { notes: value })} />
+                  {fieldVisible("itinerary_segments.cabin_class") ? <Field label="Cabin / class" value={segment.cabin_preference} onChange={(value) => updateArray("segments", index, { cabin_preference: value })} /> : null}
+                  {fieldVisible("itinerary_segments.notes") ? <TextArea label="Segment notes" value={segment.notes} onChange={(value) => updateArray("segments", index, { notes: value })} /> : null}
                   {form.segments.length > 1 ? <button className="text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("segments", index)}>Remove segment</button> : null}
                 </div>
               ))}
@@ -327,7 +342,7 @@ export default function RequestCreatePage() {
                   <Field label="Pet kg" type="number" value={pet.pet_weight_kg} onChange={(value) => updateArray("pets", index, { pet_weight_kg: value })} />
                   <Field label="Container kg" type="number" value={pet.container_weight_kg} onChange={(value) => updateArray("pets", index, { container_weight_kg: value })} />
                   <Field label="Combined kg" type="number" value={pet.combined_weight_kg} onChange={(value) => updateArray("pets", index, { combined_weight_kg: value })} />
-                  <Field label="Documents" value={pet.documentation_status} onChange={(value) => updateArray("pets", index, { documentation_status: value })} />
+                  {fieldVisible("pets.documentation_status") ? <Field label="Documents" value={pet.documentation_status} onChange={(value) => updateArray("pets", index, { documentation_status: value })} /> : null}
                   <CheckboxGroup title="Transport segments" values={segmentKeys(form.segments)} selected={pet.segment_keys || []} onToggle={(value) => updateArray("pets", index, { segment_keys: toggleValue(pet.segment_keys || [], value) })} />
                   <TextArea label="Pet requirements" value={pet.notes} onChange={(value) => updateArray("pets", index, { notes: value })} />
                   <button className="text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("pets", index)}>Remove pet</button>
@@ -345,7 +360,7 @@ export default function RequestCreatePage() {
                   <Field label="Quantity" type="number" value={item.quantity} onChange={(value) => updateArray("special_items", index, { quantity: value })} />
                   <Field label="Weight kg" type="number" value={item.weight_kg} onChange={(value) => updateArray("special_items", index, { weight_kg: value })} />
                   <Select label="Transport location" value={item.transport_location} onChange={(value) => updateArray("special_items", index, { transport_location: value })} options={[["passenger_cabin", "Passenger cabin"], ["baggage_hold", "Baggage hold"], ["extra_seat", "Extra seat"], ["checked_baggage", "Checked baggage"], ["cargo_advisory", "Cargo advisory"]]} />
-                  <Field label="Documents" value={item.documentation_status} onChange={(value) => updateArray("special_items", index, { documentation_status: value })} />
+                  {fieldVisible("special_items.documentation_status") ? <Field label="Documents" value={item.documentation_status} onChange={(value) => updateArray("special_items", index, { documentation_status: value })} /> : null}
                   <CheckboxGroup title="Transport segments" values={segmentKeys(form.segments)} selected={item.segment_keys || []} onToggle={(value) => updateArray("special_items", index, { segment_keys: toggleValue(item.segment_keys || [], value) })} />
                   <TextArea label="Handling instructions" value={item.notes} onChange={(value) => updateArray("special_items", index, { notes: value })} />
                   <button className="text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("special_items", index)}>Remove item</button>
@@ -363,6 +378,12 @@ export default function RequestCreatePage() {
               <Field label="Operational title" value={form.title || derivedTitle} onChange={(value) => setField("title", value)} />
               <TextArea label="Internal notes" value={form.internal_notes} onChange={(value) => setField("internal_notes", value)} />
               <TextArea label="Client-visible notes" value={form.client_visible_notes} onChange={(value) => setField("client_visible_notes", value)} />
+              {customFields.length ? (
+                <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 md:col-span-2">Agency custom fields</p>
+                  {customFields.map((field) => <CustomField field={field} value={form.agency_custom_fields[field.field_key] || ""} onChange={(value) => setField("agency_custom_fields", { ...form.agency_custom_fields, [field.field_key]: value })} key={field.field_key} />)}
+                </div>
+              ) : null}
             </Section>
 
             <div className="sticky bottom-4 flex justify-end rounded-lg border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
@@ -488,6 +509,18 @@ function Section({ id, eyebrow, title, children }) {
 
 function Field({ label, value, onChange, type = "text", required = false }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<input className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" type={type} value={value} required={required} onChange={(event) => onChange(event.target.value)} /></label>
+}
+
+function CustomField({ field, value, onChange }) {
+  const label = field.effective_label || field.label || field.field_key
+  if (field.field_type === "textarea") {
+    return <TextArea label={label} value={value} onChange={onChange} />
+  }
+  if (field.field_type === "boolean") {
+    return <label className="flex items-center gap-2 rounded-md bg-slate-50 p-3 text-sm text-slate-700"><input type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} /> {label}</label>
+  }
+  const type = field.field_type === "number" ? "number" : field.field_type === "date" ? "date" : "text"
+  return <Field label={label} type={type} value={value} required={field.required} onChange={onChange} />
 }
 
 function TextArea({ label, value, onChange }) {

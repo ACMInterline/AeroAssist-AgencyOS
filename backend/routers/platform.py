@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_1_global_reference_governance_suggestions",
+        "phase": "phase_34_1_global_field_library_agency_form_profiles",
     }
 
 
@@ -86,6 +86,9 @@ async def summary(
             "pending_reference_suggestions": await db.collection("reference_data_suggestions").count({"status": "pending_review"}),
             "reference_import_batches": await db.collection("reference_import_batches").count(),
             "service_catalogue_records": await db.collection("service_catalogue").count(),
+            "global_field_definitions": await db.collection("global_field_definitions").count(),
+            "agency_form_profiles": await db.collection("agency_form_profiles").count(),
+            "agency_form_field_settings": await db.collection("agency_form_field_settings").count(),
             "request_passenger_segment_services": await db.collection("request_passenger_segment_services").count(),
             "request_pets": await db.collection("request_pets").count(),
             "request_pet_segment_transport": await db.collection("request_pet_segment_transport").count(),
@@ -141,6 +144,7 @@ async def summary(
             "Reference data core and service catalogue foundation",
             "Global reference governance, suggestion queue, and bulk import foundation",
             "Segment-scoped request services, pets, and special items foundation",
+            "Global field library and agency form profile foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

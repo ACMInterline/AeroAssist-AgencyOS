@@ -101,6 +101,7 @@ async def create_intake(
     travel: dict,
     services: dict,
     request_details: Optional[str] = None,
+    agency_custom_fields: Optional[dict[str, Any]] = None,
     agency_id: Optional[str] = None,
     workspace_id: Optional[str] = None,
     priority: str = "normal",
@@ -121,6 +122,7 @@ async def create_intake(
         "travel": travel,
         "services": services,
         "request_details": request_details,
+        "agency_custom_fields": agency_custom_fields or {},
     }
     source_metadata = source_metadata or {}
     if source_metadata:

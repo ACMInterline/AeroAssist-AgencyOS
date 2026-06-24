@@ -18,6 +18,7 @@ const secondaryNav = [
   { label: "Website / CMS", description: "Public content", href: "/agency/website", icon: Globe2 },
   { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: Files },
   { label: "Reference Data", description: "Lookups and services", href: "/agency/reference", icon: Database },
+  { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: ClipboardList },
   { label: "Offers / Pricing", description: "Coming soon", icon: Sparkles, disabled: true },
   { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: Settings },
 ]

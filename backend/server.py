@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests, websites
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, portal, refunds_exchanges, reference, request_intakes, requests, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS
 from services.secret_service import check_secret
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 33.1 global reference governance, suggestions, and bulk import readiness.",
+    description="AeroAssist AgencyOS API foundation through Phase 34.1 global field library and agency form profiles.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_1_global_reference_governance_suggestions",
+        "phase": "phase_34_1_global_field_library_agency_form_profiles",
     }
 
 
@@ -116,6 +116,9 @@ async def readiness() -> dict:
     pending_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "pending_review"})
     approved_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "approved"})
     reference_import_batch_count = await database.collection("reference_import_batches").count()
+    global_field_definition_count = await database.collection("global_field_definitions").count()
+    agency_form_profile_count = await database.collection("agency_form_profiles").count()
+    agency_form_field_setting_count = await database.collection("agency_form_field_settings").count()
     normalized_request_segment_count = await database.collection("request_segments").count()
     normalized_request_passenger_count = await database.collection("request_passengers").count()
     normalized_passenger_segment_service_count = await database.collection("request_passenger_segment_services").count()
@@ -133,7 +136,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_33_1_global_reference_governance_suggestions",
+        "phase": "phase_34_1_global_field_library_agency_form_profiles",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -214,6 +217,16 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Segment-scoped services, pets, and special items are informational and may be zero before request normalization.",
         },
+        "form_profiles": {
+            "global_field_library_enabled": True,
+            "agency_form_profiles_enabled": True,
+            "agency_field_menu_enabled": True,
+            "global_field_definition_count": global_field_definition_count,
+            "agency_form_profile_count": agency_form_profile_count,
+            "agency_form_field_setting_count": agency_form_field_setting_count,
+            "readiness_required": False,
+            "diagnostic": "Field library and agency form profiles are controlled configuration foundations and do not affect core readiness.",
+        },
         "pdf": {
             "available": pdf.get("available"),
             "engine": pdf.get("engine"),
@@ -250,3 +263,6 @@ app.include_router(websites.router)
 app.include_router(websites.public_router)
 app.include_router(portal.router)
 app.include_router(reference.router)
+app.include_router(form_profiles.router)
+app.include_router(form_profiles.agency_router)
+app.include_router(form_profiles.public_router)

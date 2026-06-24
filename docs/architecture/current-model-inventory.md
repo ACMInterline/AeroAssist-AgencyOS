@@ -30,6 +30,8 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `ReferenceDataSuggestion` | `reference_data_suggestions` | Agency-submitted reference additions/corrections awaiting platform review | Agency submission, platform review | Global reference records, agencies, reviewers | Reference governance suggestions | Canonical foundation |
 | `ReferenceImportBatch` | `reference_import_batches` | Manual CSV import validation/import audit trail | Platform | Global reference records, audit events | Reference governance import | Canonical foundation |
 | `ServiceCatalogueRecord` | `service_catalogue` | Service catalogue lookup with SSR/scoping/policy metadata | Global | Requested services, future segment applicability, airline policy checks | Service catalogue | Canonical foundation |
+| `GlobalFieldDefinition` | `global_field_definitions` | Platform-owned canonical field library | Global/platform | Form profiles, intakes, requests, future offers | Field library/schema governance | Canonical foundation |
+| `AgencyFormProfile`, `AgencyFormFieldSetting` | `agency_form_profiles`, `agency_form_field_settings` | Agency display profiles and field menu settings | Agency/workspace | Global field definitions, request/public/admin forms | Form profile/display configuration | Canonical foundation |
 | Branding/logo/media models | `agency_branding_settings`, `agency_branding_assets`, `agency_website_media_assets` | Controlled branding and public-safe assets | Agency | Website/public renderer | Branding/media | Canonical |
 | Website/CMS models | `agency_website_settings`, `agency_website_pages` | Public website settings/pages/sections | Agency | Branding/media/intakes | Public CMS | Canonical |
 | Portal models | `portal_access_mappings`, `portal_action_events`, `document_acknowledgements` | Controlled client portal visibility/actions | Agency/client | Client, documents, actions | Portal/client accounts | Transitional |
@@ -44,3 +46,4 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 - Reference Data is platform-owned global master data; agency suggestions improve it only after platform review.
 - Reference Data is intentionally separate from Airline Intelligence policy rules; it supplies lookup values and service catalogue metadata, not airline-specific acceptance decisions.
 - Future policy learning should mirror the suggestion workflow through agency-local overrides, evidence, and reviewed promotion to global policy rules.
+- Field profiles are agency-owned display configuration over platform-owned canonical fields; custom agency questions must remain in `agency_custom_fields`.
