@@ -588,21 +588,38 @@ Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, automatic email sending, public document links, customer portal account creation, external SaaS dependencies, demo auth, or seed endpoint re-enablement.
 
-### Phase 27: Operational Request Workspace Hardening
+### Phase 27: Operational Request Builder V1
+
+Implemented scope:
+
+- Structured internal request builder endpoint for client, passengers, itinerary, segments, services, and notes.
+- Inline client creation and inline passenger creation from the request builder.
+- Structured segment fields for trip type, route, dates, airline/flight placeholders, cabin/class, and notes.
+- AeroAssist service categories with conditional detail payload storage.
+- Requested service relationships to passengers and segments with all-scope defaults.
+- Intake conversion aligned to the structured request model with passenger placeholders and service detail payloads.
+- Agency request builder UI replacing the old generic ticket-style form.
+- Smoke script for builder creation and intake conversion compatibility.
+
+Avoid adding:
+
+- GDS/NDC/airline integrations, automatic pricing, booking/PNR creation, payment gateways, automatic email, public document links, or external provider calls.
+
+### Phase 28: Operational Request Workspace Hardening
 
 Recommended scope:
 
-- Passenger/profile enrichment from converted intake data.
-- Duplicate detection assistance without automatic merging.
+- Section-level editing after structured request creation.
+- Passenger/profile matching and reconciliation from converted intake data.
+- Richer per-passenger/per-segment service relation UI.
 - Better staff work queues for converted operational requests.
-- Intake-to-client matching review UI.
 - Request note/task templates for complex assistance cases.
 
 Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
 
-### Phase 28: Airline Intelligence Versioning/Import Workflow
+### Phase 29: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -617,7 +634,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 29: Agency Website/CMS Publishing Foundation
+### Phase 30: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

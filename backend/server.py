@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 26 request intake operational stabilization.",
+    description="AeroAssist AgencyOS API foundation through Phase 27 operational request builder V1.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_26_request_intake_operational_request_stabilization",
+        "phase": "phase_27_operational_request_builder_v1",
     }
 
 
@@ -106,7 +106,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_26_request_intake_operational_request_stabilization",
+        "phase": "phase_27_operational_request_builder_v1",
         "config": config,
         "database": database_status,
         "storage": storage,

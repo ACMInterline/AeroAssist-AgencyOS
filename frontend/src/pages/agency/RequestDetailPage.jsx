@@ -141,6 +141,7 @@ export default function RequestDetailPage({ requestId }) {
               ["Priority", state?.request?.priority],
               ["Source", state?.request?.source?.replaceAll("_", " ")],
               ["Route", state?.request?.route_summary || "Not set"],
+              ["Trip type", state?.request?.trip_type?.replaceAll("_", " ") || "unknown"],
               ["Services", state?.request?.service_summary || "Not set"],
               ["Source intake", state?.request?.source_intake_id ? <a className="text-blue-700 underline" href={`/agency/request-intakes/${state.request.source_intake_id}`}>Open intake</a> : "None"],
             ]} />
@@ -185,7 +186,7 @@ export default function RequestDetailPage({ requestId }) {
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Destination" value={forms.destination_text} onChange={(event) => setField("destination_text", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add segment</button>
             </form>
-            <List items={state.segments} empty="No intended segments yet" render={(item) => `${item.sequence}. ${item.origin_text} to ${item.destination_text}`} />
+            <List items={state.segments} empty="No intended segments yet" render={(item) => `${item.sequence}. ${item.origin_text} to ${item.destination_text}${item.departure_date ? ` · ${item.departure_date}` : ""}${item.preferred_flight_number ? ` · ${item.preferred_flight_number}` : ""}${item.cabin_preference ? ` · ${item.cabin_preference}` : ""}`} />
           </Panel>
           <Panel title="Requested services">
             <form className="grid gap-3 md:grid-cols-[120px_1fr_1fr_auto]" onSubmit={addService}>
@@ -194,7 +195,7 @@ export default function RequestDetailPage({ requestId }) {
               <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Category" value={forms.service_category} onChange={(event) => setField("service_category", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add service</button>
             </form>
-            <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}`} />
+            <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.detail_payload)}` : ""}`} />
           </Panel>
           <section className="grid gap-4 lg:grid-cols-2">
             <Panel title="Messages">
@@ -219,6 +220,10 @@ export default function RequestDetailPage({ requestId }) {
       </ProtectedRoute>
     </AgencyLayout>
   )
+}
+
+function detailSummary(details) {
+  return Object.entries(details).slice(0, 4).map(([key, value]) => `${key.replaceAll("_", " ")}: ${String(value)}`).join(" · ")
 }
 
 function Panel({ title, children }) {

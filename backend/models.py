@@ -247,6 +247,30 @@ class RequestIntakeStatus(str, Enum):
     ARCHIVED = "archived"
 
 
+class TripType(str, Enum):
+    ONE_WAY = "one_way"
+    ROUND_TRIP = "round_trip"
+    MULTI_CITY = "multi_city"
+    UNKNOWN = "unknown"
+
+
+class OperationalServiceCategory(str, Enum):
+    MOBILITY_ASSISTANCE = "mobility_assistance"
+    MEDICAL_TRAVEL = "medical_travel"
+    PET_TRAVEL = "pet_travel"
+    UNACCOMPANIED_MINOR = "unaccompanied_minor"
+    CHILD_TRAVEL_SUPPORT = "child_travel_support"
+    SPECIAL_BAGGAGE = "special_baggage"
+    SPORTS_EQUIPMENT = "sports_equipment"
+    DOCUMENTS_VISA = "documents_visa"
+    BOOKING_PLANNING = "booking_planning"
+    DISRUPTION_SUPPORT = "disruption_support"
+    REFUND_EXCHANGE = "refund_exchange"
+    CLAIMS_SUPPORT = "claims_support"
+    AIRPORT_ASSISTANCE = "airport_assistance"
+    OTHER = "other"
+
+
 class RequestPassengerRole(str, Enum):
     TRAVELER = "traveler"
     BENEFICIARY = "beneficiary"
@@ -789,6 +813,7 @@ class TravelRequest(BaseDocument):
     source: RequestSource = RequestSource.STAFF_CREATED
     requested_departure_date: Optional[date] = None
     requested_return_date: Optional[date] = None
+    trip_type: TripType = TripType.UNKNOWN
     route_summary: Optional[str] = None
     service_summary: Optional[str] = None
     passenger_count: int = 0
@@ -800,6 +825,7 @@ class TravelRequest(BaseDocument):
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     closed_at: Optional[datetime] = None
 
 
@@ -813,6 +839,7 @@ class TravelRequestCreate(BaseModel):
     source: RequestSource = RequestSource.STAFF_CREATED
     requested_departure_date: Optional[date] = None
     requested_return_date: Optional[date] = None
+    trip_type: TripType = TripType.UNKNOWN
     route_summary: Optional[str] = None
     service_summary: Optional[str] = None
     urgency_reason: Optional[str] = None
@@ -822,6 +849,7 @@ class TravelRequestCreate(BaseModel):
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TravelRequestUpdate(BaseModel):
@@ -833,6 +861,7 @@ class TravelRequestUpdate(BaseModel):
     source: Optional[RequestSource] = None
     requested_departure_date: Optional[date] = None
     requested_return_date: Optional[date] = None
+    trip_type: Optional[TripType] = None
     route_summary: Optional[str] = None
     service_summary: Optional[str] = None
     urgency_reason: Optional[str] = None
@@ -842,6 +871,7 @@ class TravelRequestUpdate(BaseModel):
     assigned_user_id: Optional[str] = None
     source_intake_id: Optional[str] = None
     intake_payload_snapshot: Optional[Dict[str, Any]] = None
+    builder_payload_snapshot: Optional[Dict[str, Any]] = None
 
 
 class RequestIntakeContactSnapshot(BaseModel):
@@ -1006,6 +1036,10 @@ class RequestSegment(BaseDocument):
     destination_country: Optional[str] = None
     departure_date: Optional[date] = None
     departure_time_window: Optional[str] = None
+    arrival_date: Optional[date] = None
+    arrival_time_window: Optional[str] = None
+    marketing_airline: Optional[str] = None
+    operating_airline: Optional[str] = None
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
@@ -1027,6 +1061,10 @@ class RequestSegmentCreate(BaseModel):
     destination_country: Optional[str] = None
     departure_date: Optional[date] = None
     departure_time_window: Optional[str] = None
+    arrival_date: Optional[date] = None
+    arrival_time_window: Optional[str] = None
+    marketing_airline: Optional[str] = None
+    operating_airline: Optional[str] = None
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
@@ -1047,6 +1085,10 @@ class RequestSegmentUpdate(BaseModel):
     destination_country: Optional[str] = None
     departure_date: Optional[date] = None
     departure_time_window: Optional[str] = None
+    arrival_date: Optional[date] = None
+    arrival_time_window: Optional[str] = None
+    marketing_airline: Optional[str] = None
+    operating_airline: Optional[str] = None
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
@@ -1063,6 +1105,11 @@ class RequestedService(BaseDocument):
     service_category: str
     status: RequestedServiceStatus = RequestedServiceStatus.REQUESTED
     details: Optional[str] = None
+    detail_payload: Dict[str, Any] = Field(default_factory=dict)
+    passenger_ids: List[str] = Field(default_factory=list)
+    segment_ids: List[str] = Field(default_factory=list)
+    applies_to_all_passengers: bool = True
+    applies_to_all_segments: bool = True
     client_visible_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     requires_documents: bool = False
@@ -1078,6 +1125,11 @@ class RequestedServiceCreate(BaseModel):
     service_category: str
     status: RequestedServiceStatus = RequestedServiceStatus.REQUESTED
     details: Optional[str] = None
+    detail_payload: Dict[str, Any] = Field(default_factory=dict)
+    passenger_ids: List[str] = Field(default_factory=list)
+    segment_ids: List[str] = Field(default_factory=list)
+    applies_to_all_passengers: bool = True
+    applies_to_all_segments: bool = True
     client_visible_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     requires_documents: bool = False
@@ -1093,10 +1145,90 @@ class RequestedServiceUpdate(BaseModel):
     service_category: Optional[str] = None
     status: Optional[RequestedServiceStatus] = None
     details: Optional[str] = None
+    detail_payload: Optional[Dict[str, Any]] = None
+    passenger_ids: Optional[List[str]] = None
+    segment_ids: Optional[List[str]] = None
+    applies_to_all_passengers: Optional[bool] = None
+    applies_to_all_segments: Optional[bool] = None
     client_visible_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     requires_documents: Optional[bool] = None
     requires_airline_approval: Optional[bool] = None
+
+
+class OperationalRequestBuilderClient(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: Optional[str] = None
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    organization: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderPassenger(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    passenger_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    display_name: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    passenger_type: str = "adult"
+    mobility_notes: Optional[str] = None
+    medical_notes: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderSegment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    sequence: int
+    origin_text: str
+    destination_text: str
+    departure_date: Optional[date] = None
+    departure_time_window: Optional[str] = None
+    arrival_date: Optional[date] = None
+    arrival_time_window: Optional[str] = None
+    marketing_airline: Optional[str] = None
+    operating_airline: Optional[str] = None
+    flight_number: Optional[str] = None
+    cabin_preference: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderService(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    category: OperationalServiceCategory
+    details: Dict[str, Any] = Field(default_factory=dict)
+    passenger_ids: List[str] = Field(default_factory=list)
+    segment_ids: List[str] = Field(default_factory=list)
+    applies_to_all_passengers: bool = True
+    applies_to_all_segments: bool = True
+    notes: Optional[str] = None
+
+
+class OperationalRequestBuilderCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    client: OperationalRequestBuilderClient
+    passengers: List[OperationalRequestBuilderPassenger] = Field(default_factory=list)
+    trip_type: TripType = TripType.UNKNOWN
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    route_notes: Optional[str] = None
+    segments: List[OperationalRequestBuilderSegment] = Field(default_factory=list)
+    services: List[OperationalRequestBuilderService] = Field(default_factory=list)
+    title: Optional[str] = None
+    status: RequestStatus = RequestStatus.NEW
+    priority: RequestPriority = RequestPriority.NORMAL
+    source: RequestSource = RequestSource.STAFF_CREATED
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
 
 
 class RequestMessage(BaseDocument):

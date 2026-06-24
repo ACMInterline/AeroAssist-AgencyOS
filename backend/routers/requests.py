@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -7,6 +7,10 @@ from auth import get_current_user
 from database import Database, get_database
 from models import (
     AuditEvent,
+    ClientPassengerRelationship,
+    ClientProfile,
+    OperationalRequestBuilderCreate,
+    PassengerProfile,
     RequestMessage,
     RequestMessageCreate,
     RequestPassenger,
@@ -119,6 +123,257 @@ async def update_counts(db: Database, agency_id: str, request_id: str) -> dict:
 async def next_reference(db: Database, agency_id: str) -> str:
     count = await db.collection("travel_requests").count({"agency_id": agency_id})
     return f"REQ-{count + 1:05d}"
+
+
+def compact_text(value: Any, limit: int = 1000) -> str | None:
+    if value is None:
+        return None
+    text = " ".join(str(value).split())
+    return text[:limit] if text else None
+
+
+PASSENGER_TYPE_MAP = {
+    "adult": "ADT",
+    "child": "CHD",
+    "infant": "INF",
+    "senior": "SRC",
+    "unaccompanied_minor": "UMNR",
+    "ADT": "ADT",
+    "CHD": "CHD",
+    "INF": "INF",
+    "SRC": "SRC",
+    "UMNR": "UMNR",
+}
+
+
+SERVICE_LABELS = {
+    "mobility_assistance": "Mobility assistance",
+    "medical_travel": "Medical travel",
+    "pet_travel": "Pet travel",
+    "unaccompanied_minor": "Unaccompanied minor",
+    "child_travel_support": "Child travel support",
+    "special_baggage": "Special baggage",
+    "sports_equipment": "Sports equipment",
+    "documents_visa": "Documents / visa",
+    "booking_planning": "Booking / planning",
+    "disruption_support": "Disruption support",
+    "refund_exchange": "Refund / exchange",
+    "claims_support": "Claims support",
+    "airport_assistance": "Airport assistance",
+    "other": "Other assistance",
+}
+
+
+async def create_inline_client(db: Database, agency_id: str, payload) -> dict:
+    if payload.client_id:
+        return await get_client_or_404(db, agency_id, payload.client_id)
+    name = compact_text(payload.name, 160)
+    phone = compact_text(payload.phone, 80)
+    if not name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client name is required.")
+    if not payload.email and not phone:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client email or phone is required.")
+    email = payload.email or f"client-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}@client.aeroassist.local"
+    existing = await db.collection("client_profiles").find_one({"agency_id": agency_id, "primary_email": email})
+    if existing:
+        return existing
+    client = ClientProfile(
+        agency_id=agency_id,
+        display_name=name,
+        legal_name=compact_text(payload.organization, 160),
+        primary_email=email,
+        primary_phone=phone,
+        internal_notes=compact_text(payload.notes, 2000),
+    )
+    return await db.collection("client_profiles").insert_one(client.model_dump(mode="json"))
+
+
+async def create_inline_passenger(db: Database, agency_id: str, client_id: str, payload, index: int) -> dict:
+    if payload.passenger_id:
+        passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
+    else:
+        display_name = compact_text(payload.display_name, 160)
+        first_name = compact_text(payload.first_name, 80)
+        last_name = compact_text(payload.last_name, 80)
+        if not display_name and not first_name:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passenger first name or display name is required.")
+        if not display_name:
+            display_name = " ".join([part for part in [first_name, last_name] if part])
+        passenger = PassengerProfile(
+            agency_id=agency_id,
+            first_name=first_name or display_name.split(" ", 1)[0],
+            last_name=last_name or "Unknown",
+            display_name=display_name,
+            date_of_birth=payload.date_of_birth or date(1900, 1, 1),
+            passenger_type=PASSENGER_TYPE_MAP.get(payload.passenger_type, "OTHER"),
+            known_assistance_needs=compact_text(payload.mobility_notes or payload.notes, 2000),
+            medical_notes_internal=compact_text(payload.medical_notes, 2000),
+            travel_document_notes=compact_text(payload.notes, 2000),
+        )
+        passenger = await db.collection("passenger_profiles").insert_one(passenger.model_dump(mode="json"))
+    relationship = await db.collection("client_passenger_relationships").find_one({"agency_id": agency_id, "client_id": client_id, "passenger_id": passenger["id"]})
+    if not relationship:
+        relationship = await db.collection("client_passenger_relationships").insert_one(
+            ClientPassengerRelationship(
+                agency_id=agency_id,
+                client_id=client_id,
+                passenger_id=passenger["id"],
+                relationship_type="self" if index == 0 else "other",
+                can_request_travel=True,
+                notes="Created from Operational Request Builder V1.",
+            ).model_dump(mode="json")
+        )
+    return {"passenger": passenger, "relationship": relationship}
+
+
+def route_summary_from_payload(payload: OperationalRequestBuilderCreate) -> str | None:
+    if payload.origin and payload.destination:
+        return f"{payload.origin} → {payload.destination}"
+    first_segment = payload.segments[0] if payload.segments else None
+    if first_segment:
+        return f"{first_segment.origin_text} → {first_segment.destination_text}"
+    return compact_text(payload.route_notes, 240)
+
+
+def generated_request_title(client: dict, route_summary: str | None, service_summary: str | None) -> str:
+    parts = [client.get("display_name") or "Client request"]
+    if route_summary:
+        parts.append(route_summary)
+    elif service_summary:
+        parts.append(service_summary)
+    return " · ".join(parts)[:180]
+
+
+def service_code_for(category: str) -> str:
+    return category.upper()[:32]
+
+
+@router.post("/requests/builder", status_code=status.HTTP_201_CREATED)
+async def create_request_from_builder(
+    agency_id: str,
+    payload: OperationalRequestBuilderCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    client = await create_inline_client(db, agency_id, payload.client)
+    route_summary = route_summary_from_payload(payload)
+    service_labels = [SERVICE_LABELS.get(service.category, service.category.replace("_", " ")) for service in payload.services]
+    service_summary = "; ".join(service_labels) if service_labels else None
+    request = TravelRequest(
+        agency_id=agency_id,
+        client_id=client["id"],
+        created_by_user_id=user["id"],
+        request_reference=await next_reference(db, agency_id),
+        title=compact_text(payload.title, 180) or generated_request_title(client, route_summary, service_summary),
+        status=payload.status,
+        priority=payload.priority,
+        source=payload.source,
+        trip_type=payload.trip_type,
+        requested_departure_date=payload.departure_date or (payload.segments[0].departure_date if payload.segments else None),
+        requested_return_date=payload.return_date,
+        route_summary=route_summary,
+        service_summary=service_summary,
+        urgency_reason=None,
+        client_notes=compact_text(payload.route_notes, 2000),
+        internal_notes=compact_text(payload.internal_notes, 4000),
+        client_visible_notes=compact_text(payload.client_visible_notes, 2000),
+        builder_payload_snapshot=payload.model_dump(mode="json"),
+    )
+    created_request = await db.collection("travel_requests").insert_one(request.model_dump(mode="json"))
+
+    request_passengers = []
+    passenger_id_map: dict[str, str] = {}
+    for index, passenger_payload in enumerate(payload.passengers):
+        resolved = await create_inline_passenger(db, agency_id, client["id"], passenger_payload, index)
+        passenger = resolved["passenger"]
+        relationship = resolved["relationship"]
+        passenger_id_map[passenger_payload.passenger_id or f"inline-{index}"] = passenger["id"]
+        request_passenger = RequestPassenger(
+            agency_id=agency_id,
+            request_id=created_request["id"],
+            passenger_id=passenger["id"],
+            client_passenger_relationship_id=relationship["id"],
+            role_in_request="traveler",
+            is_primary_traveler=index == 0,
+            service_needs_summary=compact_text(passenger_payload.mobility_notes or passenger_payload.medical_notes or passenger_payload.notes, 1000),
+            snapshot_display_name=passenger["display_name"],
+            snapshot_date_of_birth=passenger["date_of_birth"],
+            snapshot_passenger_type=passenger["passenger_type"],
+        )
+        request_passengers.append(await db.collection("request_passengers").insert_one(request_passenger.model_dump(mode="json")))
+
+    request_segments = []
+    segment_id_map: dict[str, str] = {}
+    segments = payload.segments or (
+        [
+            {
+                "sequence": 1,
+                "origin_text": payload.origin,
+                "destination_text": payload.destination,
+                "departure_date": payload.departure_date,
+                "notes": payload.route_notes,
+            }
+        ]
+        if payload.origin and payload.destination
+        else []
+    )
+    for index, segment_payload in enumerate(segments):
+        segment_data = segment_payload if isinstance(segment_payload, dict) else segment_payload.model_dump(mode="json")
+        segment = RequestSegment(
+            agency_id=agency_id,
+            request_id=created_request["id"],
+            sequence=segment_data.get("sequence") or index + 1,
+            origin_text=segment_data["origin_text"],
+            destination_text=segment_data["destination_text"],
+            departure_date=segment_data.get("departure_date"),
+            departure_time_window=segment_data.get("departure_time_window"),
+            arrival_date=segment_data.get("arrival_date"),
+            arrival_time_window=segment_data.get("arrival_time_window"),
+            marketing_airline=segment_data.get("marketing_airline"),
+            operating_airline=segment_data.get("operating_airline"),
+            preferred_airline_code=segment_data.get("marketing_airline"),
+            preferred_flight_number=segment_data.get("flight_number"),
+            cabin_preference=segment_data.get("cabin_preference"),
+            notes=segment_data.get("notes"),
+        )
+        created_segment = await db.collection("request_segments").insert_one(segment.model_dump(mode="json"))
+        request_segments.append(created_segment)
+        segment_id_map[str(segment_data.get("sequence") or index + 1)] = created_segment["id"]
+
+    requested_services = []
+    all_passenger_ids = [item["passenger_id"] for item in request_passengers]
+    all_segment_ids = [item["id"] for item in request_segments]
+    for service_payload in payload.services:
+        passenger_ids = service_payload.passenger_ids or (all_passenger_ids if service_payload.applies_to_all_passengers else [])
+        segment_ids = service_payload.segment_ids or (all_segment_ids if service_payload.applies_to_all_segments else [])
+        label = SERVICE_LABELS.get(service_payload.category, service_payload.category.replace("_", " "))
+        service = RequestedService(
+            agency_id=agency_id,
+            request_id=created_request["id"],
+            service_code=service_code_for(service_payload.category),
+            service_name=label,
+            service_category=service_payload.category,
+            details=compact_text(service_payload.notes, 2000),
+            detail_payload=service_payload.details,
+            passenger_ids=passenger_ids,
+            segment_ids=segment_ids,
+            applies_to_all_passengers=service_payload.applies_to_all_passengers,
+            applies_to_all_segments=service_payload.applies_to_all_segments,
+            client_visible_summary=label,
+        )
+        requested_services.append(await db.collection("requested_services").insert_one(service.model_dump(mode="json")))
+
+    updated_request = await update_counts(db, agency_id, created_request["id"])
+    await write_audit(db, agency_id, user["id"], "request.builder_created", "travel_request", created_request["id"], f"Created structured request {created_request['request_reference']}.", {"passengers": len(request_passengers), "segments": len(request_segments), "services": len(requested_services)})
+    await write_timeline(db, agency_id, created_request["id"], user["id"], "request.builder_created", "Operational request builder completed", service_summary)
+    return {
+        "request": updated_request,
+        "client": client,
+        "passengers": request_passengers,
+        "segments": request_segments,
+        "services": requested_services,
+    }
 
 
 @router.get("/requests")

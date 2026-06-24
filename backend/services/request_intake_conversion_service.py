@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Optional
 
 from fastapi import HTTPException, status
@@ -6,8 +6,11 @@ from fastapi import HTTPException, status
 from database import Database
 from models import (
     AuditEvent,
+    ClientPassengerRelationship,
     ClientProfile,
+    PassengerProfile,
     RequestIntake,
+    RequestPassenger,
     RequestSegment,
     RequestTimelineEvent,
     RequestedService,
@@ -257,6 +260,7 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         source=intake.get("source") if intake.get("source") in {"client_portal", "staff_created", "imported", "internal", "public_website"} else "website_form",
         requested_departure_date=travel.get("departure_date"),
         requested_return_date=travel.get("return_date"),
+        trip_type="round_trip" if travel.get("return_date") else "unknown",
         route_summary=travel.get("route_summary"),
         service_summary="; ".join(services) if services else normalized.get("request_details"),
         passenger_count=travel.get("passenger_count", 1),
@@ -277,6 +281,42 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
     )
     created_request = await db.collection("travel_requests").insert_one(request.model_dump(mode="json"))
 
+    request_passengers = []
+    for index in range(travel.get("passenger_count", 1)):
+        passenger = PassengerProfile(
+            agency_id=intake["agency_id"],
+            first_name=f"Passenger {index + 1}",
+            last_name="Details pending",
+            display_name=f"Passenger {index + 1} details pending",
+            date_of_birth=date(1900, 1, 1),
+            passenger_type="ADT",
+            travel_document_notes="Created as a placeholder from request intake conversion.",
+        )
+        passenger_doc = await db.collection("passenger_profiles").insert_one(passenger.model_dump(mode="json"))
+        relationship = ClientPassengerRelationship(
+            agency_id=intake["agency_id"],
+            client_id=client["id"],
+            passenger_id=passenger_doc["id"],
+            relationship_type="self" if index == 0 else "other",
+            can_request_travel=True,
+            notes=f"Placeholder created from intake {intake.get('reference_code')}.",
+        )
+        relationship_doc = await db.collection("client_passenger_relationships").insert_one(relationship.model_dump(mode="json"))
+        request_passenger = RequestPassenger(
+            agency_id=intake["agency_id"],
+            request_id=created_request["id"],
+            passenger_id=passenger_doc["id"],
+            client_passenger_relationship_id=relationship_doc["id"],
+            role_in_request="traveler",
+            is_primary_traveler=index == 0,
+            service_needs_summary=normalized.get("request_details"),
+            snapshot_display_name=passenger_doc["display_name"],
+            snapshot_date_of_birth=passenger_doc["date_of_birth"],
+            snapshot_passenger_type=passenger_doc["passenger_type"],
+        )
+        request_passengers.append(await db.collection("request_passengers").insert_one(request_passenger.model_dump(mode="json")))
+
+    request_segment_ids = []
     if travel.get("origin") and travel.get("destination"):
         segment = RequestSegment(
             agency_id=intake["agency_id"],
@@ -287,7 +327,8 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
             departure_date=travel.get("departure_date"),
             notes=travel.get("itinerary_notes"),
         )
-        await db.collection("request_segments").insert_one(segment.model_dump(mode="json"))
+        segment_doc = await db.collection("request_segments").insert_one(segment.model_dump(mode="json"))
+        request_segment_ids.append(segment_doc["id"])
 
     for service_name in services:
         service = RequestedService(
@@ -297,9 +338,23 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
             service_name=service_name,
             service_category="intake",
             details=normalized.get("request_details"),
+            detail_payload={
+                "source": "request_intake",
+                "intake_reference": intake.get("reference_code"),
+                "request_details": normalized.get("request_details"),
+            },
+            passenger_ids=[item["passenger_id"] for item in request_passengers],
+            segment_ids=request_segment_ids,
+            applies_to_all_passengers=True,
+            applies_to_all_segments=True,
             client_visible_summary=service_name,
         )
         await db.collection("requested_services").insert_one(service.model_dump(mode="json"))
+
+    created_request = await db.collection("travel_requests").update_one(
+        {"agency_id": intake["agency_id"], "id": created_request["id"]},
+        {"passenger_count": len(request_passengers), "service_count": len(services)},
+    )
 
     converted_at = datetime.now(timezone.utc)
     updated_intake = await db.collection("request_intakes").update_one(
