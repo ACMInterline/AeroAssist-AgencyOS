@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 34.2 platform reference data console and enriched countries.",
+    description="AeroAssist AgencyOS API foundation through Phase 34.3 reference enrichment import packs.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_2_platform_reference_data_console_enriched_countries",
+        "phase": "phase_34_3_reference_data_enrichment_import_packs",
     }
 
 
@@ -113,10 +113,23 @@ async def readiness() -> dict:
     reference_records = await database.collection("global_reference_records").find_many()
     active_reference_record_count = len([item for item in reference_records if item.get("is_active", True)])
     country_reference_records = [item for item in reference_records if item.get("domain") == "countries"]
+    airport_reference_records = [item for item in reference_records if item.get("domain") == "airports"]
+    airline_reference_records = [item for item in reference_records if item.get("domain") == "airlines"]
+    currency_reference_records = [item for item in reference_records if item.get("domain") == "currencies"]
+    language_reference_records = [item for item in reference_records if item.get("domain") == "languages"]
+    country_codes = {item.get("code") or item.get("key") for item in country_reference_records}
     country_record_count = len(country_reference_records)
     enriched_country_record_count = len([item for item in country_reference_records if country_enrichment_complete(item.get("metadata_json") or item.get("metadata") or {})])
     countries_missing_iso3_count = len([item for item in country_reference_records if not (item.get("metadata_json") or item.get("metadata") or {}).get("iso3_code")])
     countries_missing_capital_iata_count = len([item for item in country_reference_records if not (item.get("metadata_json") or item.get("metadata") or {}).get("capital_iata_code")])
+    enriched_airport_record_count = len([item for item in airport_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("iata_code")])
+    enriched_airline_record_count = len([item for item in airline_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("iata_code") or (item.get("metadata_json") or item.get("metadata") or {}).get("icao_code")])
+    enriched_currency_record_count = len([item for item in currency_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("currency_iso_code")])
+    enriched_language_record_count = len([item for item in language_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("iso639_1") or (item.get("metadata_json") or item.get("metadata") or {}).get("iso639_2")])
+    countries_with_major_airports_count = len([item for item in country_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("major_airports")])
+    countries_with_national_carrier_count = len([item for item in country_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("national_carrier")])
+    airports_missing_country_link_count = len([item for item in airport_reference_records if ((item.get("metadata_json") or item.get("metadata") or {}).get("country_code") or (item.get("metadata_json") or item.get("metadata") or {}).get("country_iso2")) not in country_codes])
+    airlines_missing_country_link_count = len([item for item in airline_reference_records if ((item.get("metadata_json") or item.get("metadata") or {}).get("country_code") or (item.get("metadata_json") or item.get("metadata") or {}).get("country_iso2")) not in country_codes])
     service_catalogue_record_count = await database.collection("service_catalogue").count()
     pending_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "pending_review"})
     approved_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "approved"})
@@ -141,7 +154,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_2_platform_reference_data_console_enriched_countries",
+        "phase": "phase_34_3_reference_data_enrichment_import_packs",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -222,8 +235,18 @@ async def readiness() -> dict:
             "countries_missing_iso3_count": countries_missing_iso3_count,
             "countries_missing_capital_iata_count": countries_missing_capital_iata_count,
             "reference_record_card_enabled": True,
+            "reference_enrichment_import_enabled": True,
+            "reference_enrichment_templates_enabled": True,
+            "enriched_airport_record_count": enriched_airport_record_count,
+            "enriched_airline_record_count": enriched_airline_record_count,
+            "enriched_currency_record_count": enriched_currency_record_count,
+            "enriched_language_record_count": enriched_language_record_count,
+            "countries_with_major_airports_count": countries_with_major_airports_count,
+            "countries_with_national_carrier_count": countries_with_national_carrier_count,
+            "airports_missing_country_link_count": airports_missing_country_link_count,
+            "airlines_missing_country_link_count": airlines_missing_country_link_count,
             "readiness_required": False,
-            "diagnostic": "Platform reference management is owner-controlled; enriched country quality gaps are informational.",
+            "diagnostic": "Platform reference management and enrichment imports are owner-controlled; quality and link gaps are informational.",
         },
         "segment_scoped_requests": {
             "segment_scoped_services_enabled": True,

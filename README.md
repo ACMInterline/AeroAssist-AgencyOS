@@ -425,6 +425,15 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - Agency reference data page remains consume-and-suggest only.
 - Phase 34.2 implementation note in `PHASE_34_2_PLATFORM_REFERENCE_DATA_CONSOLE_ENRICHED_COUNTRIES.md`.
 
+## Phase 34.3 Includes
+
+- Reference enrichment import pack templates in `data/reference_packs/`.
+- Platform-only enrichment APIs and `/platform/reference` import pack UI.
+- Non-destructive dry-run and commit workflows with update modes and row-level reports.
+- Country, airport, airline, currency, language, and region normalization.
+- Cross-link warnings for missing country/airport/airline/currency/language references.
+- Phase 34.3 implementation note in `PHASE_34_3_REFERENCE_DATA_ENRICHMENT_IMPORT_PACKS.md`.
+
 ## Intentionally Not Included Yet
 
 - Public share links.

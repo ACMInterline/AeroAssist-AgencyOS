@@ -98,6 +98,8 @@ Reference Data is global, platform-owned master data:
 - Agency-local overrides, when introduced, must be clearly local and must not be confused with global master records.
 - Phase 34.2 adds the platform-only `/platform/reference` management console and keeps agency reference pages consume-and-suggest only.
 - Enriched country metadata remains on `global_reference_records.metadata_json` for legacy compatibility while exposing structured platform editor fields.
+- Phase 34.3 adds platform-owned import packs and normalization services for countries, airports, airlines, currencies, languages, and regions.
+- Enrichment imports are dry-run first, non-destructive by default, and report missing cross-links without activating unreviewed external data.
 
 The same governance shape is reserved for future airline policy learning:
 

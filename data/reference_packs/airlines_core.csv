@@ -1,0 +1,2 @@
+code,label,iata_code,icao_code,country_iso2,country_iso3,country_code,airline_type,is_national_carrier,active,aliases,data_quality_status,source_notes
+FB,Bulgaria Air,FB,LZB,BG,BGR,BG,scheduled,true,true,Bulgaria Air AD,draft,Starter sample for platform review

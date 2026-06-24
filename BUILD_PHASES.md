@@ -51,6 +51,7 @@ The repository currently contains:
 - Phase 34: Segment-scoped request services, pets, and special items.
 - Phase 34.1: Global field library and agency form profiles.
 - Phase 34.2: Platform reference data console and enriched countries.
+- Phase 34.3: Reference data enrichment import packs and aviation normalization.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -831,6 +832,20 @@ Implemented scope:
 Avoid adding:
 
 - External reference data providers, scraping, automated enrichment, airline execution, pricing, payment gateways, destructive import/reset workflows, or agency edits to global master records.
+
+### Phase 34.3: Reference Data Enrichment Import Packs And Aviation Normalization
+
+Implemented scope:
+
+- Starter CSV templates under `data/reference_packs/` for enriched countries, airports, airlines, currencies, languages, and continents/regions.
+- `reference_enrichment_service` for dry-run validation, commit imports, update modes, row-level reports, and missing cross-link warnings.
+- Platform-only enrichment APIs and `/platform/reference` Enrichment Packs tab.
+- Normalization for ISO country codes, airport IATA/ICAO, airline IATA/ICAO, currency ISO, language ISO, lat/lng, booleans, and max-3 arrays.
+- Readiness quality counts for enriched airports, airlines, currencies, languages, country airport/carrier coverage, and missing country links.
+
+Avoid adding:
+
+- External scraping/API enrichment, full global datasets, airline policy engines, pricing engines, offer builders, GDS/NDC imports, invoices, payments, portal expansion, or destructive seed/reset behavior.
 
 ### Phase 35: Trip Dossier Foundation
 

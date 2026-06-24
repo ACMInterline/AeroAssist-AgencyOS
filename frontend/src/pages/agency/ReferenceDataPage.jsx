@@ -219,7 +219,7 @@ export default function ReferenceDataPage() {
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Governed lookup foundation</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Reference data governance</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Global reference data is platform-owned. Agencies consume approved records and submit suggestions into a review queue instead of creating master data directly.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Global Reference Data is managed by AeroAssist. Agencies consume approved records and submit suggestions for corrections or additions instead of creating master data directly.</p>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
             {error ? <p className="mt-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
           </section>

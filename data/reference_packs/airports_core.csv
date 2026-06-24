@@ -1,0 +1,2 @@
+code,label,iata_code,icao_code,city,country_iso2,country_iso3,country_code,timezone,latitude,longitude,airport_type,is_major_airport,aliases,data_quality_status,source_notes
+SOF,Sofia Airport,SOF,LBSF,Sofia,BG,BGR,BG,Europe/Sofia,42.6967,23.4114,international,true,Sofia International Airport,draft,Starter sample for platform review

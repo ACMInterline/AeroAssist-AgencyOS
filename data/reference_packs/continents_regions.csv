@@ -1,0 +1,3 @@
+code,label,parent_region_code,region_type,aliases,data_quality_status,source_notes
+EUROPE,Europe,,continent,European region,draft,Starter sample for platform review
+EASTERN_EUROPE,Eastern Europe,EUROPE,region,East Europe,draft,Starter sample for platform review

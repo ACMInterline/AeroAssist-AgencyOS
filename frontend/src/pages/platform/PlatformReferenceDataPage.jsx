@@ -6,8 +6,13 @@ import PlatformLayout from "../../layouts/PlatformLayout"
 import { apiGet } from "../../lib/api"
 import {
   archivePlatformReferenceRecord,
+  commitReferenceEnrichmentImport,
   createPlatformReferenceRecord,
+  dryRunReferenceEnrichmentImport,
   exportPlatformReferenceData,
+  fetchReferenceEnrichmentBatches,
+  fetchReferenceEnrichmentTemplate,
+  fetchReferenceEnrichmentTemplates,
   fetchPlatformReferenceDomains,
   fetchPlatformReferenceImportBatches,
   fetchPlatformReferenceRecord,
@@ -25,6 +30,7 @@ const tabs = [
   ["service", "Service Catalogue"],
   ["suggestions", "Agency Suggestions"],
   ["import", "Bulk Import"],
+  ["enrichment", "Enrichment Packs"],
   ["export", "Bulk Export"],
   ["cards", "Important Record Cards"],
   ["audit", "Audit / Update History"],
@@ -184,10 +190,13 @@ function TextInput(props) {
 export default function PlatformReferenceDataPage({ recordId }) {
   const [activeTab, setActiveTab] = useState(recordId ? "cards" : "domains")
   const [summary, setSummary] = useState(null)
+  const [referenceReadiness, setReferenceReadiness] = useState(null)
   const [domains, setDomains] = useState([])
   const [records, setRecords] = useState([])
   const [suggestions, setSuggestions] = useState([])
   const [imports, setImports] = useState([])
+  const [enrichmentTemplates, setEnrichmentTemplates] = useState([])
+  const [enrichmentBatches, setEnrichmentBatches] = useState([])
   const [serviceCatalogue, setServiceCatalogue] = useState([])
   const [auditEvents, setAuditEvents] = useState([])
   const [selectedDomain, setSelectedDomain] = useState("countries")
@@ -197,6 +206,9 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const [filters, setFilters] = useState({ data_quality_status: "", continent: "", missing_iso3: false, missing_capital_iata: false, missing_currency: false, missing_major_airports: false, missing_national_carrier: false })
   const [importCsv, setImportCsv] = useState("domain,code,label,iso2_code,iso3_code,continent,capital_city,capital_iata_code,major_airports,official_languages,currency_name,currency_iso_code,national_carrier_name,national_carrier_iata_code,data_quality_status\ncountries,CA,Canada,CA,CAN,North America,Ottawa,YOW,\"YYZ,YVR,YUL\",English|French,Canadian dollar,CAD,Air Canada,AC,draft")
   const [dryRun, setDryRun] = useState(true)
+  const [enrichmentForm, setEnrichmentForm] = useState({ template_name: "countries_enriched", domain: "countries", update_mode: "update_missing_only", csv_text: "", source_label: "Manual platform import pack", notes: "" })
+  const [enrichmentReport, setEnrichmentReport] = useState(null)
+  const [enrichmentDryRunOk, setEnrichmentDryRunOk] = useState(false)
   const [exportOptions, setExportOptions] = useState({ export_type: "domain", domain: "countries", format: "csv" })
   const [exportResult, setExportResult] = useState(null)
   const [notice, setNotice] = useState("")
@@ -216,18 +228,24 @@ export default function PlatformReferenceDataPage({ recordId }) {
 
   async function loadAll() {
     setLoading(true)
-    const [summaryResult, domainsResult, suggestionsResult, importsResult, serviceResult, auditResult] = await Promise.all([
+    const [summaryResult, readinessResult, domainsResult, suggestionsResult, importsResult, enrichmentTemplatesResult, enrichmentBatchesResult, serviceResult, auditResult] = await Promise.all([
       apiGet("/api/platform/summary"),
+      apiGet("/api/readiness"),
       fetchPlatformReferenceDomains(),
       fetchPlatformReferenceSuggestions(),
       fetchPlatformReferenceImportBatches(),
+      fetchReferenceEnrichmentTemplates(),
+      fetchReferenceEnrichmentBatches(),
       apiGet("/api/reference/service-catalogue?include_inactive=true"),
       apiGet("/api/platform/audit-events"),
     ])
     setSummary(summaryResult)
+    setReferenceReadiness(readinessResult.platform_reference_console || {})
     setDomains(domainsResult.items || [])
     setSuggestions(suggestionsResult.items || [])
     setImports(importsResult.items || [])
+    setEnrichmentTemplates(enrichmentTemplatesResult.items || [])
+    setEnrichmentBatches(enrichmentBatchesResult.items || [])
     setServiceCatalogue(serviceResult.items || [])
     setAuditEvents(auditResult.items || [])
     await loadRecords(selectedDomain)
@@ -319,6 +337,57 @@ export default function PlatformReferenceDataPage({ recordId }) {
     await loadRecords(selectedDomain)
   }
 
+  async function loadEnrichmentTemplate(templateName) {
+    const result = await fetchReferenceEnrichmentTemplate(templateName)
+    setEnrichmentForm((current) => ({
+      ...current,
+      template_name: templateName,
+      domain: result.template.domain,
+      csv_text: result.csv_text,
+    }))
+    setEnrichmentReport(null)
+    setEnrichmentDryRunOk(false)
+  }
+
+  async function runEnrichmentDryRun(event) {
+    event.preventDefault()
+    const result = await dryRunReferenceEnrichmentImport({
+      domain: enrichmentForm.domain,
+      csv_text: enrichmentForm.csv_text,
+      update_mode: enrichmentForm.update_mode,
+      dry_run: true,
+      source_label: enrichmentForm.source_label,
+      notes: enrichmentForm.notes,
+    })
+    setEnrichmentReport(result.report)
+    setEnrichmentDryRunOk((result.report?.failed || 0) === 0)
+    const batches = await fetchReferenceEnrichmentBatches()
+    setEnrichmentBatches(batches.items || [])
+    setNotice("Enrichment dry run completed.")
+  }
+
+  async function commitEnrichmentImport() {
+    const result = await commitReferenceEnrichmentImport({
+      domain: enrichmentForm.domain,
+      csv_text: enrichmentForm.csv_text,
+      update_mode: enrichmentForm.update_mode,
+      dry_run: false,
+      source_label: enrichmentForm.source_label,
+      notes: enrichmentForm.notes,
+    })
+    setEnrichmentReport(result.report)
+    setEnrichmentDryRunOk(false)
+    const [batches, recordsResult, readinessResult] = await Promise.all([
+      fetchReferenceEnrichmentBatches(),
+      fetchPlatformReferenceRecords({ domain: enrichmentForm.domain, include_inactive: true }),
+      apiGet("/api/readiness"),
+    ])
+    setEnrichmentBatches(batches.items || [])
+    setRecords(recordsResult.items || [])
+    setReferenceReadiness(readinessResult.platform_reference_console || {})
+    setNotice("Enrichment import committed.")
+  }
+
   async function runExport(event) {
     event.preventDefault()
     const result = await exportPlatformReferenceData(exportOptions)
@@ -345,6 +414,27 @@ export default function PlatformReferenceDataPage({ recordId }) {
             <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-white" href="/agency/reference">Agency reference view</a>
           </div>
           {notice ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div> : null}
+
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
+            <h3 className="font-semibold text-slate-950">Reference Enrichment Quality</h3>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                ["Countries", referenceReadiness?.enriched_country_record_count, referenceReadiness?.country_record_count],
+                ["Airports enriched", referenceReadiness?.enriched_airport_record_count],
+                ["Airlines enriched", referenceReadiness?.enriched_airline_record_count],
+                ["Currencies enriched", referenceReadiness?.enriched_currency_record_count],
+                ["Languages enriched", referenceReadiness?.enriched_language_record_count],
+                ["Countries with airports", referenceReadiness?.countries_with_major_airports_count],
+                ["Countries with carrier", referenceReadiness?.countries_with_national_carrier_count],
+                ["Missing country links", (referenceReadiness?.airports_missing_country_link_count || 0) + (referenceReadiness?.airlines_missing_country_link_count || 0)],
+              ].map(([label, value, total]) => (
+                <div className="rounded-md bg-slate-50 p-3" key={label}>
+                  <dt className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-slate-950">{value || 0}{total !== undefined ? <span className="text-sm font-normal text-slate-500"> / {total || 0}</span> : null}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
           <div className="flex flex-wrap gap-2">
             {tabs.map(([key, label]) => (
@@ -539,6 +629,79 @@ export default function PlatformReferenceDataPage({ recordId }) {
               </form>
               <div className="mt-5 grid gap-2 text-sm">
                 {imports.slice(0, 8).map((batch) => <div className="rounded-md bg-slate-50 p-3" key={batch.id}>{batch.domain} · {batch.status} · valid {batch.valid_rows} · invalid {batch.invalid_rows} · inserted {batch.inserted_count} · updated {batch.updated_count}</div>)}
+              </div>
+            </section>
+          ) : null}
+
+          {activeTab === "enrichment" ? (
+            <section className="rounded-lg border border-slate-200 bg-white p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold text-slate-950">Enrichment Packs</h3>
+                  <p className="mt-1 text-sm text-slate-600">Use starter CSV templates to enrich countries, airports, airlines, currencies, languages, and regions. Defaults are dry-run and non-destructive.</p>
+                </div>
+                <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" href="/agency/reference">Agency view stays read/suggest</a>
+              </div>
+              <form className="mt-4 grid gap-4" onSubmit={runEnrichmentDryRun}>
+                <div className="grid gap-3 lg:grid-cols-[220px_220px_1fr_auto]">
+                  <Field label="Pack type">
+                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={enrichmentForm.template_name} onChange={(event) => {
+                      const selected = enrichmentTemplates.find((item) => item.template_name === event.target.value)
+                      setEnrichmentForm((current) => ({ ...current, template_name: event.target.value, domain: selected?.domain || current.domain }))
+                      setEnrichmentDryRunOk(false)
+                    }}>
+                      {enrichmentTemplates.map((template) => <option key={template.template_name} value={template.template_name}>{template.label}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Update mode">
+                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={enrichmentForm.update_mode} onChange={(event) => { setEnrichmentForm((current) => ({ ...current, update_mode: event.target.value })); setEnrichmentDryRunOk(false) }}>
+                      <option value="insert_only">Insert only</option>
+                      <option value="update_missing_only">Update missing only</option>
+                      <option value="update_all_non_verified">Update all non-verified</option>
+                      <option value="force_update">Force update</option>
+                    </select>
+                  </Field>
+                  <Field label="Source label"><TextInput value={enrichmentForm.source_label} onChange={(event) => setEnrichmentForm((current) => ({ ...current, source_label: event.target.value }))} /></Field>
+                  <button className="mt-6 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => loadEnrichmentTemplate(enrichmentForm.template_name)}>Load template</button>
+                </div>
+                <Field label="Notes"><TextInput value={enrichmentForm.notes} onChange={(event) => setEnrichmentForm((current) => ({ ...current, notes: event.target.value }))} /></Field>
+                <textarea className="min-h-72 rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" placeholder="Load a template or paste enrichment CSV text here." value={enrichmentForm.csv_text} onChange={(event) => { setEnrichmentForm((current) => ({ ...current, csv_text: event.target.value })); setEnrichmentDryRunOk(false) }} />
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Dry run</button>
+                  <button className={`rounded-md px-4 py-2 text-sm font-semibold ${enrichmentDryRunOk ? "bg-emerald-600 text-white" : "cursor-not-allowed bg-slate-200 text-slate-500"}`} disabled={!enrichmentDryRunOk} type="button" onClick={commitEnrichmentImport}>Commit import</button>
+                </div>
+              </form>
+              {enrichmentReport ? (
+                <div className="mt-5 grid gap-4 lg:grid-cols-[280px_1fr]">
+                  <div className="rounded-lg bg-slate-50 p-4">
+                    <h4 className="font-semibold text-slate-950">Report</h4>
+                    <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                      {["inserted", "updated", "skipped", "failed"].map((key) => <div key={key}><dt className="text-xs uppercase tracking-wide text-slate-500">{key}</dt><dd className="text-2xl font-semibold text-slate-950">{enrichmentReport[key] || 0}</dd></div>)}
+                    </dl>
+                    <p className="mt-3 text-xs text-slate-500">Mode: {enrichmentReport.update_mode} · {enrichmentReport.dry_run ? "dry run" : "committed"}</p>
+                  </div>
+                  <div className="space-y-3">
+                    {enrichmentReport.warnings?.length ? <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"><strong>Warnings:</strong> {enrichmentReport.warnings.join(" · ")}</div> : null}
+                    {enrichmentReport.missing_links?.length ? <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800"><strong>Missing links:</strong> {enrichmentReport.missing_links.join(", ")}</div> : null}
+                    <div className="max-h-80 overflow-auto rounded-md border border-slate-200">
+                      <table className="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Row</th><th className="px-3 py-2">Code</th><th className="px-3 py-2">Action</th><th className="px-3 py-2">Issues</th></tr></thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {(enrichmentReport.rows || []).map((row) => <tr key={`${row.row_number}-${row.code}`}><td className="px-3 py-2">{row.row_number}</td><td className="px-3 py-2 font-semibold">{row.code}</td><td className="px-3 py-2">{row.action}</td><td className="px-3 py-2 text-slate-600">{[...(row.errors || []), ...(row.warnings || [])].join(" · ") || "—"}</td></tr>)}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <div className="mt-5">
+                <h4 className="font-semibold text-slate-950">Enrichment Batch History</h4>
+                <div className="mt-3 grid gap-2 text-sm">
+                  {enrichmentBatches.slice(0, 8).map((batch) => {
+                    const report = batch.error_report_json?.enrichment || {}
+                    return <div className="rounded-md bg-slate-50 p-3" key={batch.id}>{batch.domain} · {batch.status} · {report.update_mode || "n/a"} · inserted {report.inserted || 0} · updated {report.updated || 0} · failed {report.failed || 0}</div>
+                  })}
+                </div>
               </div>
             </section>
           ) : null}

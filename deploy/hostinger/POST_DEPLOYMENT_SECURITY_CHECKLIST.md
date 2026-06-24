@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_34_2_platform_reference_data_console_enriched_countries`
+- API phase reports `phase_34_3_reference_data_enrichment_import_packs`
 - platform login verified
 - agency login verified
 - portal login verified
@@ -39,6 +39,8 @@ Run this after the first deployment and after major operational changes.
 - agency users cannot create global reference records; reference suggestions require platform review
 - agency users cannot access `/api/platform/reference/*` management/import/export/review endpoints
 - platform reference country validation rejects invalid ISO/IATA and over-limit airport/airline arrays
+- agency users cannot access platform reference enrichment templates or import endpoints
+- reference enrichment dry-run and commit reports are non-destructive unless platform owner selects commit/update mode
 - agency form profiles cannot hide system-required fields or expose internal-only fields publicly
 - SMTP secret references are masked and never display raw secret values
 

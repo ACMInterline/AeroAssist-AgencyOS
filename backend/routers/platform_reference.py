@@ -16,10 +16,17 @@ from models import (
     ReferenceDomainMetadata,
     ReferenceDomainMetadataCreate,
     ReferenceDomainMetadataUpdate,
+    ReferenceEnrichmentImportRequest,
     ReferenceSuggestionReview,
     now_utc,
 )
 from routers.reference import apply_suggestion_approval
+from services.reference_enrichment_service import (
+    ENRICHMENT_TEMPLATES,
+    list_templates,
+    read_template,
+    run_reference_enrichment_import,
+)
 from services.reference_data_service import (
     COUNTRY_METADATA_FIELDS,
     REFERENCE_DOMAINS,
@@ -509,6 +516,84 @@ async def list_platform_reference_import_batches(
     db: Database = Depends(get_database),
 ) -> dict:
     items = [safe_reference_import_batch(item) for item in await db.collection("reference_import_batches").find_many()]
+    return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
+
+
+@router.get("/enrichment/templates")
+async def list_reference_enrichment_templates(
+    user: dict = PlatformReferenceOwner,
+) -> dict:
+    return {"items": list_templates(), "actor_user_id": user["id"]}
+
+
+@router.get("/enrichment/template/{template_name}")
+async def get_reference_enrichment_template(
+    template_name: str,
+    user: dict = PlatformReferenceOwner,
+) -> dict:
+    if template_name not in ENRICHMENT_TEMPLATES:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference enrichment template not found.")
+    return {
+        "template": {**ENRICHMENT_TEMPLATES[template_name], "template_name": template_name},
+        "csv_text": read_template(template_name),
+        "actor_user_id": user["id"],
+    }
+
+
+@router.post("/enrichment/dry-run")
+async def dry_run_reference_enrichment_import(
+    payload: ReferenceEnrichmentImportRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    try:
+        result = await run_reference_enrichment_import(
+            db,
+            payload.domain,
+            payload.csv_text,
+            user["id"],
+            payload.update_mode,
+            True,
+            payload.source_label,
+            payload.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {**result, "actor_user_id": user["id"]}
+
+
+@router.post("/enrichment/import")
+async def commit_reference_enrichment_import(
+    payload: ReferenceEnrichmentImportRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    try:
+        result = await run_reference_enrichment_import(
+            db,
+            payload.domain,
+            payload.csv_text,
+            user["id"],
+            payload.update_mode,
+            False,
+            payload.source_label,
+            payload.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {**result, "actor_user_id": user["id"]}
+
+
+@router.get("/enrichment/batches")
+async def list_reference_enrichment_batches(
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    items = [
+        safe_reference_import_batch(item)
+        for item in await db.collection("reference_import_batches").find_many()
+        if (item.get("error_report_json") or {}).get("enrichment")
+    ]
     return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
 
 
