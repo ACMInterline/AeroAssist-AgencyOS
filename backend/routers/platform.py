@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_28_agency_branding_theme_personalization",
+        "phase": "phase_28_1_app_shell_sidebar_visual_polish",
     }
 
 
@@ -113,6 +113,7 @@ async def summary(
             "Mobility assistance logic and request builder UX correction",
             "Assistance assessment driven SSR recommendation",
             "Agency branding, theme, and UI personalization foundation",
+            "AgencyOS app shell, sidebar navigation, and visual polish stabilization",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

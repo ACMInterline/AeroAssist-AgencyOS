@@ -118,11 +118,12 @@ export default function RequestDetailPage({ requestId }) {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <a className="text-sm font-medium text-blue-700" href="/agency/requests">Back to requests</a>
               <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.request?.request_reference}</p>
-              <h2 className="text-2xl font-semibold text-slate-950">{state?.request?.title}</h2>
+              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{state?.request?.title}</h2>
               <p className="mt-1 text-sm text-slate-600">Request is an inquiry/case. Intended segments are not booked services.</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -133,6 +134,7 @@ export default function RequestDetailPage({ requestId }) {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.request?.status === "archived" ? "Restore" : "Archive"}
               </button>
+            </div>
             </div>
           </div>
           <section className="grid gap-4 lg:grid-cols-3">
@@ -276,7 +278,9 @@ function detailSummary(category, details) {
 function Panel({ title, children }) {
   return (
     <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="font-semibold text-slate-950">{title}</h3>
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <h3 className="font-semibold text-slate-950">{title}</h3>
+      </div>
       {children}
     </section>
   )
@@ -285,8 +289,8 @@ function Panel({ title, children }) {
 function List({ items, empty, render }) {
   if (!items?.length) return <EmptyState title={empty} body="Add records when the agency has the information." />
   return (
-    <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
-      {items.map((item) => <div className="p-3 text-sm text-slate-700" key={item.id}>{render(item)}</div>)}
+    <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200 bg-white">
+      {items.map((item) => <div className="p-3 text-sm leading-6 text-slate-700" key={item.id}>{render(item)}</div>)}
     </div>
   )
 }

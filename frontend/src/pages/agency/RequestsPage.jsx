@@ -35,13 +35,18 @@ export default function RequestsPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Request Intake</p>
-              <h2 className="text-2xl font-semibold text-slate-950">Requests</h2>
+              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">Requests</h2>
               <p className="mt-1 text-sm text-slate-600">Inquiry/case records before offers or bookings exist.</p>
             </div>
-            <a className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/agency/requests/new">Create request</a>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{filtered.length} shown</span>
+                <a className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold" href="/agency/requests/new">Create request</a>
+              </div>
+            </div>
           </div>
           <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search requests" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
@@ -61,11 +66,11 @@ export default function RequestsPage() {
           {filtered.length ? (
             <div className="grid gap-4">
               {filtered.map((request) => (
-                <a className="rounded-lg border border-slate-200 bg-white p-5 hover:border-blue-300" href={`/agency/requests/${request.id}`} key={request.id}>
+                <a className="group rounded-lg border border-slate-200 bg-white p-5 hover:-translate-y-0.5 hover:border-blue-300" href={`/agency/requests/${request.id}`} key={request.id}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{request.request_reference}</p>
-                      <h3 className="mt-1 font-semibold text-slate-950">{request.title}</h3>
+                      <h3 className="mt-1 font-semibold text-slate-950 group-hover:text-blue-700">{request.title}</h3>
                       <p className="mt-1 text-sm text-slate-600">{request.client?.display_name || "Client"} · {request.route_summary || "Route not set"}</p>
                     </div>
                     <RequestStatusBadge status={request.status} />
@@ -81,7 +86,12 @@ export default function RequestsPage() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No requests found" body="Create a request from a client and link passengers, intended segments, services, messages, and tasks." />
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8">
+              <EmptyState title="No requests found" body="Create a request from a client and link passengers, intended segments, services, messages, and tasks." />
+              <div className="mt-4 text-center">
+                <a className="aa-primary-action inline-flex rounded-md px-4 py-2 text-sm font-semibold" href="/agency/requests/new">Create request</a>
+              </div>
+            </div>
           )}
         </div>
       </ProtectedRoute>

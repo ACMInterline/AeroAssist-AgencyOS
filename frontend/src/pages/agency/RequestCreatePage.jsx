@@ -180,14 +180,22 @@ export default function RequestCreatePage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={!state ? error : ""}>
         <div className="space-y-6">
-          <div>
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
             <a className="text-sm font-medium text-blue-700" href="/agency/requests">Back to requests</a>
-            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Operational Request Builder V1</h2>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Operational Request Builder V1</h2>
             <p className="mt-1 text-sm text-slate-600">Build a structured assistance case with client, passengers, itinerary, services, and notes before offers or bookings exist.</p>
           </div>
           {error ? <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+          <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
+            <aside className="hidden xl:block">
+              <div className="sticky top-24 rounded-lg border border-slate-200 bg-white p-3">
+                {["Client", "Passengers", "Itinerary", "Services", "Summary"].map((item, index) => (
+                  <a className="block rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100" href={`#builder-${index + 1}`} key={item}>{index + 1}. {item}</a>
+                ))}
+              </div>
+            </aside>
           <form className="space-y-5" onSubmit={submit}>
-            <Section title="1. Client">
+            <Section id="builder-1" eyebrow="Client context" title="1. Client">
               <div className="flex gap-3 text-sm">
                 <label><input type="radio" checked={form.client_mode === "existing"} onChange={() => setField("client_mode", "existing")} /> Existing client</label>
                 <label><input type="radio" checked={form.client_mode === "inline"} onChange={() => setField("client_mode", "inline")} /> Create inline</label>
@@ -205,7 +213,7 @@ export default function RequestCreatePage() {
               )}
             </Section>
 
-            <Section title="2. Passengers">
+            <Section id="builder-2" eyebrow="Travelers" title="2. Passengers">
               {!form.passengers.some((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name) ? <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">No passengers yet. You can save with client-only context, but add at least one passenger when possible.</p> : null}
               {form.passengers.map((passenger, index) => (
                 <div className="rounded-md border border-slate-100 p-3" key={index}>
@@ -224,7 +232,7 @@ export default function RequestCreatePage() {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("passengers", blankPassenger)}>Add passenger</button>
             </Section>
 
-            <Section title="3. Itinerary / route">
+            <Section id="builder-3" eyebrow="Trip shape" title="3. Itinerary / route">
               <div className="grid gap-3 md:grid-cols-4">
                 <Select label="Trip type" value={form.trip_type} onChange={(value) => setField("trip_type", value)} options={["one_way", "round_trip", "multi_city", "unknown"].map((item) => [item, item.replaceAll("_", " ")])} />
                 <Field label="Origin" value={form.origin} onChange={(value) => setField("origin", value)} />
@@ -251,7 +259,7 @@ export default function RequestCreatePage() {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("segments", () => ({ ...blankSegment(), sequence: form.segments.length + 1 }))}>Add segment</button>
             </Section>
 
-            <Section title="4. Services">
+            <Section id="builder-4" eyebrow="Assistance needs" title="4. Services">
               {form.services.map((service, index) => (
                 <div className="rounded-md border border-slate-100 p-3" key={index}>
                   <div className="grid gap-3 md:grid-cols-3">
@@ -267,7 +275,7 @@ export default function RequestCreatePage() {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => addArrayItem("services", blankService)}>Add service</button>
             </Section>
 
-            <Section title="5. Notes and summary">
+            <Section id="builder-5" eyebrow="Review" title="5. Notes and summary">
               <div className="grid gap-3 md:grid-cols-3">
                 <Select label="Status" value={form.status} onChange={(value) => setField("status", value)} options={["draft", "new", "triage"].map((item) => [item, item])} />
                 <Select label="Priority" value={form.priority} onChange={(value) => setField("priority", value)} options={["low", "normal", "high", "urgent"].map((item) => [item, item])} />
@@ -278,8 +286,11 @@ export default function RequestCreatePage() {
               <TextArea label="Client-visible notes" value={form.client_visible_notes} onChange={(value) => setField("client_visible_notes", value)} />
             </Section>
 
-            <button className="rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white" type="submit">Create operational request</button>
+            <div className="sticky bottom-4 flex justify-end rounded-lg border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+              <button className="rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white" type="submit">Create operational request</button>
+            </div>
           </form>
+          </div>
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -345,8 +356,16 @@ function recommendMobilitySsr(details = {}) {
   return { code: "manual_review", confidence: "manual_review", reason: "Information is insufficient or conflicting; staff should assess manually." }
 }
 
-function Section({ title, children }) {
-  return <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-950">{title}</h3>{children}</section>
+function Section({ id, eyebrow, title, children }) {
+  return (
+    <section id={id} className="scroll-mt-24 space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+      <div className="border-b border-slate-100 pb-3">
+        {eyebrow ? <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">{eyebrow}</p> : null}
+        <h3 className="mt-1 font-semibold text-slate-950">{title}</h3>
+      </div>
+      {children}
+    </section>
+  )
 }
 
 function Field({ label, value, onChange, type = "text", required = false }) {

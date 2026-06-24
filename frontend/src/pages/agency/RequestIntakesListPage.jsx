@@ -35,13 +35,18 @@ export default function RequestIntakesListPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Request Intake</p>
-              <h2 className="text-2xl font-semibold text-slate-950">Intake queue</h2>
+              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">Intake queue</h2>
               <p className="mt-1 text-sm text-slate-600">Public and portal submissions wait here until staff explicitly convert them.</p>
             </div>
-            <a className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" href="/agency/requests">Operational requests</a>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{filtered.length} shown</span>
+                <a className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold" href="/agency/requests">Operational requests</a>
+              </div>
+            </div>
           </div>
           <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-2">
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search intakes" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
@@ -55,7 +60,9 @@ export default function RequestIntakesListPage() {
               {filtered.map((intake) => <IntakeCard intake={intake} key={intake.id} />)}
             </div>
           ) : (
-            <EmptyState title="No intakes found" body="Public and portal submissions will appear here before operational conversion." />
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8">
+              <EmptyState title="No intakes found" body="Public and portal submissions will appear here before operational conversion." />
+            </div>
           )}
         </div>
       </ProtectedRoute>
@@ -69,11 +76,11 @@ function IntakeCard({ intake }) {
   const services = intake.service_summary || {}
   const route = travel.origin && travel.destination ? `${travel.origin} → ${travel.destination}` : travel.itinerary_notes || "Route not set"
   return (
-    <a className="rounded-lg border border-slate-200 bg-white p-5 hover:border-blue-300" href={`/agency/request-intakes/${intake.id}`}>
+    <a className="group rounded-lg border border-slate-200 bg-white p-5 hover:-translate-y-0.5 hover:border-blue-300" href={`/agency/request-intakes/${intake.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{intake.reference_code}</p>
-          <h3 className="mt-1 font-semibold text-slate-950">{contact.name || "Unnamed contact"}</h3>
+          <h3 className="mt-1 font-semibold text-slate-950 group-hover:text-blue-700">{contact.name || "Unnamed contact"}</h3>
           <p className="mt-1 text-sm text-slate-600">{route}</p>
         </div>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{intake.status}</span>

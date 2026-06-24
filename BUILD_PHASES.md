@@ -40,6 +40,7 @@ The repository currently contains:
 - Phase 27.1: Mobility assistance logic and request builder UX correction.
 - Phase 27.2: Assistance assessment driven SSR recommendation.
 - Phase 28: Agency branding, theme, and UI personalization settings.
+- Phase 28.1: AgencyOS app shell, sidebar navigation, and visual polish stabilization.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -656,6 +657,21 @@ Implemented scope:
 Avoid adding:
 
 - Arbitrary CSS/HTML injection, remote font loading, public logo filesystem paths, SVG logo execution, public document links, or marketing CMS publishing.
+
+### Phase 28.1: AgencyOS App Shell, Sidebar Navigation, And Visual Polish Stabilization
+
+Implemented scope:
+
+- Persistent desktop sidebar for agency admins and agents.
+- Responsive mobile drawer navigation and desktop sidebar collapse.
+- Active-route highlighting and disabled coming-soon items for Website/CMS and Offers/Pricing.
+- Top bar with workspace context, primary create-request action, manual operations badge, and account/logout area.
+- Theme-aware app background, cards, buttons, fields, status surfaces, focus states, and responsive table overflow.
+- Dashboard, request list, request detail, intake queue, and request builder layout polish.
+
+Avoid adding:
+
+- CMS publishing, pricing automation, airline integrations, external UI libraries, arbitrary CSS injection, or automated delivery.
 
 ### Phase 29: Operational Request Workspace Hardening
 
