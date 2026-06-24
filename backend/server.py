@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 24 staff invitation acceptance and team access hardening.",
+    description="AeroAssist AgencyOS API foundation through Phase 25 document storage lifecycle and delivery provider readiness.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_24_staff_invitation_acceptance_team_access_hardening",
+        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
     }
 
 
@@ -96,10 +96,17 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_24_staff_invitation_acceptance_team_access_hardening",
+        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
         "config": config,
         "database": database_status,
         "storage": storage,
+        "document_delivery_providers": {
+            "automatic_delivery_enabled": False,
+            "manual_provider_enabled": True,
+            "public_links_enabled": False,
+            "object_storage_enabled": False,
+            "diagnostic": "Automatic delivery providers are disabled or not configured in Phase 25.",
+        },
         "pdf": {
             "available": pdf.get("available"),
             "engine": pdf.get("engine"),
@@ -126,6 +133,7 @@ app.include_router(bookings.router)
 app.include_router(finance.router)
 app.include_router(airline_intelligence.router)
 app.include_router(documents.router)
+app.include_router(documents.storage_router)
 app.include_router(documents.portal_router)
 app.include_router(refunds_exchanges.router)
 app.include_router(refunds_exchanges.portal_router)

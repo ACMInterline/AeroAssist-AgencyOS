@@ -8,6 +8,7 @@ import BookingsPage from "./pages/agency/BookingsPage"
 import ClientDetailPage from "./pages/agency/ClientDetailPage"
 import ClientsPage from "./pages/agency/ClientsPage"
 import DocumentDetailPage from "./pages/agency/DocumentDetailPage"
+import DocumentStoragePage from "./pages/agency/DocumentStoragePage"
 import DocumentTemplatesPage from "./pages/agency/DocumentTemplatesPage"
 import DocumentsPage from "./pages/agency/DocumentsPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
@@ -64,6 +65,7 @@ const routes = {
   "/agency": AgencyDashboardPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
+  "/agency/document-storage": DocumentStoragePage,
   "/agency/document-templates": DocumentTemplatesPage,
   "/agency/portal-actions": AgencyPortalActionsPage,
   "/agency/refunds-exchanges": RefundExchangeCasesPage,

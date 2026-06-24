@@ -304,3 +304,37 @@ Likely fix:
 - Confirm `FRONTEND_HTTP_PORT=127.0.0.1:8080`.
 - Restart Docker Compose services if any are unhealthy.
 - Restart nginx only after `sudo nginx -t` passes.
+
+## Document Storage Check Fails
+
+Symptoms:
+
+- `deploy/hostinger/scripts/check_storage.sh` exits nonzero
+- `/api/documents/storage/health` reports storage not writable
+- document export generation fails
+
+Inspect:
+
+```bash
+deploy/hostinger/scripts/check_storage.sh
+docker compose --env-file .env.production -f docker-compose.production.yml ps backend
+docker compose --env-file .env.production -f docker-compose.production.yml logs backend
+```
+
+Likely fix:
+
+- Confirm the backend container is running.
+- Confirm the `document_exports` Docker volume is mounted.
+- Confirm the backend user can write to `/var/lib/aeroassist/document_exports`.
+- Do not manually delete export files unless a backup and restore plan exists.
+
+## Delivery Provider Readiness Looks Disabled
+
+Symptoms:
+
+- provider readiness shows `email_smtp`, `email_api`, `object_storage`, `portal`, or `webhook` disabled
+
+Likely fix:
+
+- No fix is required in Phase 25. Manual delivery is intentionally the only active provider.
+- Keep automatic email sending, public links, and object storage disabled until a later provider operations phase.

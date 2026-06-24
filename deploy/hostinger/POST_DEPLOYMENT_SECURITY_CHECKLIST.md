@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_24_staff_invitation_acceptance_team_access_hardening`
+- API phase reports `phase_25_document_storage_lifecycle_delivery_provider_readiness`
 - platform login verified
 - agency login verified
 - portal login verified
@@ -47,6 +47,16 @@ Run this after the first deployment and after major operational changes.
 - revoked invitation cannot be accepted
 - accepted invitation creates exactly one active staff membership
 - audit events do not include raw invitation token or `token_hash`
+
+## Document Storage And Delivery Readiness
+
+- `/api/documents/storage/health` requires auth and returns no absolute local paths
+- `/api/documents/storage` returns safe metadata only
+- storage archive and mark-missing actions are role-gated
+- manual delivery provider is enabled
+- automatic email/API/object-storage/webhook providers are disabled or not configured
+- no public document links are enabled
+- `deploy/hostinger/scripts/check_storage.sh` passes on the VPS
 
 ## Data And Storage
 
@@ -97,4 +107,5 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 APP_BASE_URL=https://avio.my deploy/hostinger/scripts/smoke_production.sh
 deploy/hostinger/scripts/healthcheck.sh
 deploy/hostinger/scripts/verify_backups.sh
+deploy/hostinger/scripts/check_storage.sh
 ```

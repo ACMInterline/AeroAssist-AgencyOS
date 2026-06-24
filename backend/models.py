@@ -2953,6 +2953,18 @@ class DocumentExportRetentionPolicy(str, Enum):
     KEEP_UNTIL_ARCHIVED = "keep_until_archived"
 
 
+class DocumentStorageBackend(str, Enum):
+    LOCAL_FILESYSTEM = "local_filesystem"
+
+
+class DocumentStorageStatus(str, Enum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+    DELETED = "deleted"
+    MISSING = "missing"
+    FAILED = "failed"
+
+
 class DocumentDeliveryType(str, Enum):
     EMAIL = "email"
     MANUAL_DOWNLOAD = "manual_download"
@@ -3035,6 +3047,31 @@ class DocumentExport(BaseDocument):
     archived_by_user_id: Optional[str] = None
     error_message: Optional[str] = None
     client_visible: bool = False
+
+
+class DocumentStorageRecord(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    related_entity_type: str
+    related_entity_id: str
+    document_type: str
+    filename_original: Optional[str] = None
+    filename_stored: Optional[str] = None
+    storage_key: Optional[str] = None
+    storage_backend: DocumentStorageBackend = DocumentStorageBackend.LOCAL_FILESYSTEM
+    storage_status: DocumentStorageStatus = DocumentStorageStatus.ACTIVE
+    content_type: Optional[str] = None
+    size_bytes: Optional[int] = None
+    checksum_sha256: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    created_by_email: Optional[EmailStr] = None
+    archived_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    retention_until: Optional[datetime] = None
+    delivery_allowed: bool = False
+    public_access_allowed: bool = False
+    internal_notes: Optional[str] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class DocumentExportCreate(BaseModel):

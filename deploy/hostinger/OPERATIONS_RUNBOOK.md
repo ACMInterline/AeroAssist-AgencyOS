@@ -273,11 +273,30 @@ curl https://avio.my/api/readiness
 docker compose --env-file .env.production -f docker-compose.production.yml exec -T backend python scripts/check_production_readiness.py
 deploy/hostinger/scripts/healthcheck.sh
 deploy/hostinger/scripts/status_full.sh
+deploy/hostinger/scripts/check_storage.sh
 ```
 
 Readiness must not expose secret values.
 
 The Phase 23 healthcheck validates Docker, nginx, `certbot.timer`, Compose service health, canonical `https://avio.my` routing, API health/readiness, local-only frontend binding on `127.0.0.1:8080`, nginx ownership of public ports `80/443`, and the stopped/preserved old app state.
+
+## Document Storage Lifecycle
+
+Phase 25 keeps the local filesystem document export volume as the active storage backend. It adds lifecycle metadata, provider readiness summaries, and a storage check script, but it does not add automatic email sending, public links, object storage uploads, or hard deletion.
+
+Check backend export storage from the host:
+
+```bash
+deploy/hostinger/scripts/check_storage.sh
+```
+
+In the app, use the agency workspace page:
+
+```text
+/agency/document-storage
+```
+
+The page and APIs must not expose absolute local filesystem paths or secrets.
 
 ## First Platform Owner Bootstrap
 

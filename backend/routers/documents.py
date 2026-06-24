@@ -30,12 +30,23 @@ from models import (
 )
 from routers.portal import portal_context
 from services.document_rendering_service import render_document_payload
+from services.document_storage_lifecycle_service import (
+    archive_storage_record,
+    ensure_storage_records_for_exports,
+    list_storage_records,
+    mark_storage_record_missing,
+    register_export_storage_record,
+    storage_health,
+    storage_summary,
+)
+from services.delivery_provider_service import delivery_provider_readiness, delivery_provider_statuses
 from services.file_storage_service import get_export_bytes, save_export_bytes
 from services.pdf_rendering_service import pdf_capabilities, render_pdf_from_html
 from services.secret_service import check_secret, mask_secret_ref, resolve_secret
 from services.tenant_service import assert_agency_access, assert_portal_projection_safe, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["documents"])
+storage_router = APIRouter(prefix="/api/documents", tags=["document_storage_lifecycle"])
 portal_router = APIRouter(prefix="/api/portal", tags=["portal_document_exports"])
 
 READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
@@ -63,6 +74,30 @@ async def require_template_write(db: Database, agency_id: str, user: dict) -> No
     await assert_agency_access(db, agency_id, user)
     if user.get("global_role") not in {"platform_owner", "platform_admin"}:
         await require_any_agency_role(db, agency_id, user, TEMPLATE_WRITE_ROLES)
+
+
+async def scoped_storage_filters(db: Database, user: dict, agency_id: str | None = None) -> dict:
+    if user.get("global_role") in {"platform_owner", "platform_admin", "platform_support"}:
+        return {"agency_id": agency_id} if agency_id else {}
+    if not agency_id:
+        memberships = await db.collection("agency_staff_memberships").find_many({"user_id": user["id"], "status": "active"})
+        agency_ids = [membership["agency_id"] for membership in memberships]
+        if len(agency_ids) != 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="agency_id is required for this account.")
+        agency_id = agency_ids[0]
+    await require_read(db, agency_id, user)
+    return {"agency_id": agency_id}
+
+
+async def require_storage_record_write(db: Database, record_id: str, user: dict) -> dict:
+    record = await db.collection("document_storage_records").find_one({"id": record_id})
+    if not record:
+        await ensure_storage_records_for_exports(db)
+        record = await db.collection("document_storage_records").find_one({"id": record_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Storage record not found.")
+    await require_write(db, record["agency_id"], user)
+    return record
 
 
 async def write_audit(db: Database, agency_id: str, actor_user_id: str, event_type: str, entity_type: str, entity_id: str, summary: str, metadata: dict | None = None) -> None:
@@ -650,8 +685,10 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
             export_data = export.model_dump(mode="json")
             export_data.update(save_export_bytes(agency_id, export.id, export.filename, export.content_type, pdf_result.data))
             created = await db.collection("document_exports").insert_one(export_data)
+            storage_record = await register_export_storage_record(db, created, document, user)
             await write_document_timeline(db, agency_id, document_id, user["id"], "document_export.generated", "PDF export generated", created["filename"], {"export_id": created["id"], "export_type": created["export_type"], "renderer": pdf_result.engine_name})
             await write_audit(db, agency_id, user["id"], "document_export.generated", "document_export", created["id"], "Generated PDF document export.", {"rendered_document_id": document_id, "export_type": created["export_type"], "renderer": pdf_result.engine_name})
+            await write_audit(db, agency_id, user["id"], "storage_record_registered", "document_storage_record", storage_record["id"], "Registered document export storage metadata.", {"document_export_id": created["id"]})
             return {"export": public_export(created)}
 
         export = DocumentExport(
@@ -694,8 +731,10 @@ async def create_document_export(agency_id: str, document_id: str, payload: Docu
     export_data = export.model_dump(mode="json")
     export_data.update(save_export_bytes(agency_id, export.id, export.filename, export.content_type, data))
     created = await db.collection("document_exports").insert_one(export_data)
+    storage_record = await register_export_storage_record(db, created, document, user)
     await write_document_timeline(db, agency_id, document_id, user["id"], "document_export.generated", "Printable export generated", created["filename"], {"export_id": created["id"], "export_type": created["export_type"]})
     await write_audit(db, agency_id, user["id"], "document_export.generated", "document_export", created["id"], "Generated printable document export.", {"rendered_document_id": document_id, "export_type": created["export_type"]})
+    await write_audit(db, agency_id, user["id"], "storage_record_registered", "document_storage_record", storage_record["id"], "Registered document export storage metadata.", {"document_export_id": created["id"]})
     return {"export": public_export(created)}
 
 
@@ -729,8 +768,13 @@ async def archive_document_export(agency_id: str, export_id: str, user: dict = D
     await require_write(db, agency_id, user)
     export = await get_export_or_404(db, agency_id, export_id)
     updated = await db.collection("document_exports").update_one({"agency_id": agency_id, "id": export_id}, {"status": "archived", "archived_at": datetime.now(timezone.utc), "archived_by_user_id": user["id"], "client_visible": False})
+    storage_records = await list_storage_records(db, {"agency_id": agency_id, "related_entity_type": "document_export", "related_entity_id": export_id})
+    for record in storage_records:
+        await archive_storage_record(db, record["id"], user["id"])
     await write_document_timeline(db, agency_id, export["rendered_document_id"], user["id"], "document_export.archived", "Document export archived", updated.get("filename"), {"export_id": export_id})
     await write_audit(db, agency_id, user["id"], "document_export.archived", "document_export", export_id, "Archived document export.", {"rendered_document_id": export["rendered_document_id"]})
+    for record in storage_records:
+        await write_audit(db, agency_id, user["id"], "storage_record_archived", "document_storage_record", record["id"], "Archived document storage record.", {"document_export_id": export_id})
     return {"export": public_export(updated)}
 
 
@@ -888,6 +932,84 @@ async def validate_agency_email_settings(agency_id: str, user: dict = Depends(ge
         {"last_validation_error": validation_error, "verified_at": datetime.now(timezone.utc) if ok and settings.get("mode") != "disabled" else None},
     ) if settings.get("id") else settings
     return {"settings": public_email_settings(updated), "validation": {"ok": ok, "error": validation_error}}
+
+
+@storage_router.get("/storage/summary")
+async def document_storage_summary(
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters = await scoped_storage_filters(db, user, agency_id)
+    return {"summary": await storage_summary(db, filters.get("agency_id"))}
+
+
+@storage_router.get("/storage")
+async def document_storage_records(
+    agency_id: str | None = Query(default=None),
+    workspace_id: str | None = Query(default=None),
+    status_filter: str | None = Query(default=None, alias="status"),
+    document_type: str | None = Query(default=None),
+    related_entity_type: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters = await scoped_storage_filters(db, user, agency_id)
+    if workspace_id:
+        filters["workspace_id"] = workspace_id
+    if status_filter:
+        filters["storage_status"] = status_filter
+    if document_type:
+        filters["document_type"] = document_type
+    if related_entity_type:
+        filters["related_entity_type"] = related_entity_type
+    return {"items": await list_storage_records(db, filters)}
+
+
+@storage_router.post("/storage/{record_id}/archive")
+async def archive_document_storage_record(record_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    record = await require_storage_record_write(db, record_id, user)
+    updated = await archive_storage_record(db, record_id, user["id"])
+    await write_audit(db, record["agency_id"], user["id"], "storage_record_archived", "document_storage_record", record_id, "Archived document storage record.", {"related_entity_type": record.get("related_entity_type"), "related_entity_id": record.get("related_entity_id")})
+    return {"record": updated}
+
+
+@storage_router.post("/storage/{record_id}/mark-missing")
+async def mark_document_storage_record_missing(record_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    record = await require_storage_record_write(db, record_id, user)
+    updated = await mark_storage_record_missing(db, record_id)
+    await write_audit(db, record["agency_id"], user["id"], "storage_record_marked_missing", "document_storage_record", record_id, "Marked document storage record missing.", {"related_entity_type": record.get("related_entity_type"), "related_entity_id": record.get("related_entity_id")})
+    return {"record": updated}
+
+
+@storage_router.get("/storage/health")
+async def document_storage_health(
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters = await scoped_storage_filters(db, user, agency_id)
+    return {"health": await storage_health(db, filters.get("agency_id"))}
+
+
+@storage_router.get("/delivery-providers")
+async def document_delivery_providers(
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters = await scoped_storage_filters(db, user, agency_id)
+    return {"items": await delivery_provider_statuses(db, filters.get("agency_id"))}
+
+
+@storage_router.get("/delivery-providers/readiness")
+async def document_delivery_provider_readiness(
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    filters = await scoped_storage_filters(db, user, agency_id)
+    return {"readiness": await delivery_provider_readiness(db, filters.get("agency_id"))}
 
 
 @router.post("/offers/{offer_id}/render-document", status_code=status.HTTP_201_CREATED)

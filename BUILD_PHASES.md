@@ -34,6 +34,7 @@ The repository currently contains:
 - Phase 22: Production onboarding and agency setup.
 - Phase 23: Backup automation and lightweight monitoring readiness.
 - Phase 24: Staff invitation acceptance and team access hardening.
+- Phase 25: Document storage lifecycle and delivery provider readiness.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -555,7 +556,23 @@ Avoid adding:
 
 - Public registration, automatic email sending, external email/SaaS dependencies, mass team management, membership removal, or platform owner invitation flow.
 
-### Phase 25: Delivery Provider Operations And Object Storage Lifecycle
+### Phase 25: Document Storage Lifecycle And Delivery Provider Readiness
+
+Implemented scope:
+
+- Storage lifecycle metadata records for generated document exports.
+- Local filesystem storage backend health, summaries, and path-safe metadata listing.
+- Storage archive and mark-missing actions without file deletion.
+- Delivery provider readiness contract with manual provider enabled and all automatic/external providers disabled by default.
+- Agency UI for storage health, lifecycle counts, provider readiness, and storage record actions.
+- Hostinger storage check script for the backend document export volume.
+- Smoke script for storage/provider readiness safety checks.
+
+Avoid adding:
+
+- Automatic email sending, external object storage, public document links, external SaaS dependencies, provider webhooks, hard-delete API, or background workers.
+
+### Phase 26: Delivery Provider Operations And Object Storage Lifecycle
 
 Recommended scope:
 
@@ -571,7 +588,7 @@ Avoid adding:
 
 - Payment gateway links unless explicitly included in a later payment phase.
 
-### Phase 26: Airline Intelligence Versioning/Import Workflow
+### Phase 27: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -586,7 +603,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 27: Agency Website/CMS Publishing Foundation
+### Phase 28: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

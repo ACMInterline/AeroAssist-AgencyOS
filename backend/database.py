@@ -190,6 +190,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "document_exports",
     "document_deliveries",
     "document_delivery_attempts",
+    "document_storage_records",
     "agency_email_settings",
     "document_timeline_events",
     "portal_action_events",
@@ -265,6 +266,12 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "document_delivery_attempts": [
             [("agency_id", ASCENDING), ("delivery_id", ASCENDING)],
             [("agency_id", ASCENDING), ("rendered_document_id", ASCENDING)],
+        ],
+        "document_storage_records": [
+            [("agency_id", ASCENDING), ("related_entity_type", ASCENDING), ("related_entity_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("storage_status", ASCENDING)],
+            [("agency_id", ASCENDING), ("document_type", ASCENDING)],
+            [("agency_id", ASCENDING), ("storage_backend", ASCENDING)],
         ],
         "agency_email_settings": [[("agency_id", ASCENDING), ("status", ASCENDING)]],
         "portal_action_events": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("status", ASCENDING)]],

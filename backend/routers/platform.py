@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_24_staff_invitation_acceptance_team_access_hardening",
+        "phase": "phase_25_document_storage_lifecycle_delivery_provider_readiness",
     }
 
 
@@ -94,6 +94,7 @@ async def summary(
             "Production onboarding and agency setup foundation",
             "Backup automation and lightweight monitoring readiness foundation",
             "Staff invitation acceptance and team access hardening foundation",
+            "Document storage lifecycle and delivery provider readiness foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
