@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_2_assistance_assessment_ssr_recommendation",
+        "phase": "phase_28_agency_branding_theme_personalization",
     }
 
 
@@ -28,6 +28,7 @@ async def summary(
     workspace_count = await db.collection("agency_workspaces").count()
     staff_membership_count = await db.collection("agency_staff_memberships").count()
     staff_invitation_count = await db.collection("invitations").count({"invitation_type": "agency_staff"})
+    branding_settings = await db.collection("agency_branding_settings").find_many()
     request_intakes = await db.collection("request_intakes").find_many()
     open_operational_requests = [
         item
@@ -40,6 +41,8 @@ async def summary(
             "agencies": agency_count,
             "workspaces": workspace_count,
             "staff_memberships": staff_membership_count,
+            "agency_branding_settings": len(branding_settings),
+            "agency_branding_logos": len([item for item in branding_settings if item.get("logo_storage_record_id")]),
             "clients": await db.collection("client_profiles").count(),
             "passengers": await db.collection("passenger_profiles").count(),
             "relationships": await db.collection("client_passenger_relationships").count(),
@@ -109,6 +112,7 @@ async def summary(
             "Operational request builder V1 foundation",
             "Mobility assistance logic and request builder UX correction",
             "Assistance assessment driven SSR recommendation",
+            "Agency branding, theme, and UI personalization foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

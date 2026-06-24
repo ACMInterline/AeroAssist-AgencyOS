@@ -17,7 +17,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 27 operational request builder V1.",
+    description="AeroAssist AgencyOS API foundation through Phase 28 agency branding and UI personalization.",
 )
 
 app.add_middleware(
@@ -44,7 +44,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_2_assistance_assessment_ssr_recommendation",
+        "phase": "phase_28_agency_branding_theme_personalization",
     }
 
 
@@ -101,12 +101,20 @@ async def readiness() -> dict:
             if item.get("status") not in {"closed", "cancelled", "archived"}
         ]
     )
+    branding_settings_count = await database.collection("agency_branding_settings").count()
+    branded_logo_count = len(
+        [
+            item
+            for item in await database.collection("agency_branding_settings").find_many()
+            if item.get("logo_storage_record_id")
+        ]
+    )
     ok = config["ok"] and storage["ok"] and database_status["ok"]
     return {
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_27_2_assistance_assessment_ssr_recommendation",
+        "phase": "phase_28_agency_branding_theme_personalization",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -123,6 +131,12 @@ async def readiness() -> dict:
             "converted_intakes": converted_intake_count,
             "open_operational_requests": open_request_count,
             "diagnostic": "Request intake counts are informational and do not affect readiness.",
+        },
+        "agency_branding": {
+            "configured_agencies": branding_settings_count,
+            "logo_configured_agencies": branded_logo_count,
+            "readiness_required": False,
+            "diagnostic": "Agency branding settings are optional and do not affect service readiness.",
         },
         "pdf": {
             "available": pdf.get("available"),

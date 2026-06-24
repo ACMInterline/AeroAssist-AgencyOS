@@ -131,6 +131,76 @@ class PortalStatus(str, Enum):
     SUSPENDED = "suspended"
 
 
+class BrandingThemeMode(str, Enum):
+    LIGHT = "light"
+    DARK = "dark"
+    SYSTEM = "system"
+
+
+class BrandingFontKey(str, Enum):
+    INTER = "inter"
+    QUICKSAND = "quicksand"
+    MANROPE = "manrope"
+    NUNITO_SANS = "nunito_sans"
+    LATO = "lato"
+    SOURCE_SANS_3 = "source_sans_3"
+    IBM_PLEX_SANS = "ibm_plex_sans"
+    PLUS_JAKARTA_SANS = "plus_jakarta_sans"
+    ROBOTO = "roboto"
+    SYSTEM_UI = "system_ui"
+
+
+class BrandingRadiusKey(str, Enum):
+    SQUARE = "square"
+    SUBTLE = "subtle"
+    ROUNDED = "rounded"
+    SOFT = "soft"
+    PILL = "pill"
+
+
+class BrandingDensityKey(str, Enum):
+    COMPACT = "compact"
+    COMFORTABLE = "comfortable"
+    SPACIOUS = "spacious"
+
+
+class BrandingPaletteKey(str, Enum):
+    AERO_BLUE = "aero_blue"
+    MIDNIGHT_NAVY = "midnight_navy"
+    GRAPHITE = "graphite"
+    EMERALD_AVIATION = "emerald_aviation"
+    SKY_CYAN = "sky_cyan"
+    VIOLET_PREMIUM = "violet_premium"
+    BURGUNDY_EXECUTIVE = "burgundy_executive"
+    SANDSTONE = "sandstone"
+    SLATE_MINIMAL = "slate_minimal"
+    BLACK_GLASS = "black_glass"
+
+
+class BrandingFieldStyleKey(str, Enum):
+    OUTLINE = "outline"
+    FILLED = "filled"
+    SOFT_GLASS = "soft_glass"
+
+
+class BrandingButtonStyleKey(str, Enum):
+    SOLID = "solid"
+    SOFT = "soft"
+    OUTLINE = "outline"
+
+
+class BrandingCalendarStyleKey(str, Enum):
+    NATIVE_POLISHED = "native_polished"
+    COMPACT = "compact"
+    CARD = "card"
+
+
+class BrandingCardStyleKey(str, Enum):
+    FLAT = "flat"
+    RAISED = "raised"
+    OUTLINE = "outline"
+
+
 class ClientType(str, Enum):
     INDIVIDUAL = "individual"
     FAMILY_HOUSEHOLD = "family_household"
@@ -549,6 +619,50 @@ class AgencyWorkspaceUpdate(BaseModel):
     font_family: Optional[str] = None
     website_status: Optional[WebsiteStatus] = None
     portal_status: Optional[PortalStatus] = None
+
+
+class AgencyBrandingSettings(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    logo_storage_record_id: Optional[str] = None
+    logo_url: Optional[str] = None
+    brand_name: Optional[str] = None
+    font_family_key: BrandingFontKey = BrandingFontKey.INTER
+    corner_radius_key: BrandingRadiusKey = BrandingRadiusKey.ROUNDED
+    density_key: BrandingDensityKey = BrandingDensityKey.COMFORTABLE
+    theme_mode: BrandingThemeMode = BrandingThemeMode.LIGHT
+    color_palette_key: BrandingPaletteKey = BrandingPaletteKey.AERO_BLUE
+    field_style_key: BrandingFieldStyleKey = BrandingFieldStyleKey.OUTLINE
+    button_style_key: BrandingButtonStyleKey = BrandingButtonStyleKey.SOLID
+    calendar_style_key: BrandingCalendarStyleKey = BrandingCalendarStyleKey.NATIVE_POLISHED
+    card_style_key: BrandingCardStyleKey = BrandingCardStyleKey.OUTLINE
+    updated_by_user_id: Optional[str] = None
+    updated_by_email: Optional[EmailStr] = None
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AgencyBrandingSettingsUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workspace_id: Optional[str] = None
+    brand_name: Optional[str] = None
+    font_family_key: Optional[BrandingFontKey] = None
+    corner_radius_key: Optional[BrandingRadiusKey] = None
+    density_key: Optional[BrandingDensityKey] = None
+    theme_mode: Optional[BrandingThemeMode] = None
+    color_palette_key: Optional[BrandingPaletteKey] = None
+    field_style_key: Optional[BrandingFieldStyleKey] = None
+    button_style_key: Optional[BrandingButtonStyleKey] = None
+    calendar_style_key: Optional[BrandingCalendarStyleKey] = None
+    card_style_key: Optional[BrandingCardStyleKey] = None
+
+
+class AgencyLogoUpload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    filename: str
+    content_type: str
+    data_base64: str
 
 
 class AgencyStaffMembership(BaseDocument):

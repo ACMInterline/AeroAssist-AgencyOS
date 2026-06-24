@@ -35,6 +35,11 @@ The repository currently contains:
 - Phase 23: Backup automation and lightweight monitoring readiness.
 - Phase 24: Staff invitation acceptance and team access hardening.
 - Phase 25: Document storage lifecycle and delivery provider readiness.
+- Phase 26: Request intake to operational request stabilization.
+- Phase 27: Operational request builder V1.
+- Phase 27.1: Mobility assistance logic and request builder UX correction.
+- Phase 27.2: Assistance assessment driven SSR recommendation.
+- Phase 28: Agency branding, theme, and UI personalization settings.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -635,7 +640,24 @@ Avoid adding:
 
 - Airline-specific validation, reference-data taxonomy, automated SSR transmission, pricing, airline integration, public links, or automated delivery.
 
-### Phase 28: Operational Request Workspace Hardening
+### Phase 28: Agency Branding, Theme, And UI Personalization Settings
+
+Implemented scope:
+
+- Agency-scoped `agency_branding_settings` with optional workspace override, controlled design preset keys, audit metadata, and update actor metadata.
+- Read/write branding APIs plus safe PNG/JPEG/WEBP logo upload and removal endpoints.
+- Controlled typography choices, including Quicksand, without remote font loading.
+- Ten controlled color palettes with light/dark values plus light/dark/system theme modes.
+- Radius, density, field, button, date input, and card style presets without arbitrary CSS input.
+- Agency settings UI at `/agency/settings` with brand identity, typography, theme, controls, logo, reset, and live preview.
+- Shared agency theme layer that applies CSS variables to header, navigation, inputs, buttons, cards, badges, and native date inputs.
+- Optional readiness/platform summaries and a branding smoke script.
+
+Avoid adding:
+
+- Arbitrary CSS/HTML injection, remote font loading, public logo filesystem paths, SVG logo execution, public document links, or marketing CMS publishing.
+
+### Phase 29: Operational Request Workspace Hardening
 
 Recommended scope:
 
@@ -649,7 +671,7 @@ Avoid adding:
 
 - Airline integrations, pricing automation, payment gateways, or automatic supplier execution.
 
-### Phase 29: Airline Intelligence Versioning/Import Workflow
+### Phase 30: Airline Intelligence Versioning/Import Workflow
 
 Recommended scope:
 
@@ -664,7 +686,7 @@ Avoid adding:
 - Automatic scraping without human review.
 - Automated policy scoring or pricing decisions.
 
-### Phase 30: Agency Website/CMS Publishing Foundation
+### Phase 31: Agency Website/CMS Publishing Foundation
 
 Recommended scope:
 

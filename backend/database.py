@@ -155,6 +155,8 @@ async def get_database() -> Database:
 AGENCY_OWNED_COLLECTIONS = [
     "agency_staff_memberships",
     "agency_workspaces",
+    "agency_branding_settings",
+    "agency_branding_assets",
     "client_profiles",
     "request_intakes",
     "portal_access_mappings",

@@ -1,4 +1,5 @@
 import AgencyDashboardPage from "./pages/agency/AgencyDashboardPage"
+import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
@@ -65,6 +66,7 @@ const routes = {
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/airlines": AirlinesPage,
   "/agency": AgencyDashboardPage,
+  "/agency/settings": AgencySettingsPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
   "/agency/document-storage": DocumentStoragePage,

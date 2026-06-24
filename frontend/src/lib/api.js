@@ -29,6 +29,14 @@ export async function apiDeleteSession() {
   return readResponse(response)
 }
 
+export async function apiDelete(path) {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  return readResponse(response)
+}
+
 export async function apiPut(path, body = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     method: "PUT",
