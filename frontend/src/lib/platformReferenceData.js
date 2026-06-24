@@ -58,3 +58,23 @@ export function fetchPlatformReferenceImportBatches() {
 export function exportPlatformReferenceData(params = {}) {
   return apiGet(withQuery("/api/platform/reference/export", params))
 }
+
+export function fetchReferenceEnrichmentTemplates() {
+  return apiGet("/api/platform/reference/enrichment/templates")
+}
+
+export function fetchReferenceEnrichmentTemplate(templateName) {
+  return apiGet(`/api/platform/reference/enrichment/template/${encodeURIComponent(templateName)}`)
+}
+
+export function dryRunReferenceEnrichmentImport(payload) {
+  return apiPost("/api/platform/reference/enrichment/dry-run", payload)
+}
+
+export function commitReferenceEnrichmentImport(payload) {
+  return apiPost("/api/platform/reference/enrichment/import", payload)
+}
+
+export function fetchReferenceEnrichmentBatches() {
+  return apiGet("/api/platform/reference/enrichment/batches")
+}

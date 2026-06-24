@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_2_platform_reference_data_console_enriched_countries",
+        "phase": "phase_34_3_reference_data_enrichment_import_packs",
     }
 
 
@@ -83,6 +83,10 @@ async def summary(
             "document_delivery_attempts": await db.collection("document_delivery_attempts").count(),
             "reference_records": await db.collection("global_reference_records").count(),
             "country_reference_records": await db.collection("global_reference_records").count({"domain": "countries"}),
+            "airport_reference_records": await db.collection("global_reference_records").count({"domain": "airports"}),
+            "airline_reference_records": await db.collection("global_reference_records").count({"domain": "airlines"}),
+            "currency_reference_records": await db.collection("global_reference_records").count({"domain": "currencies"}),
+            "language_reference_records": await db.collection("global_reference_records").count({"domain": "languages"}),
             "reference_domain_metadata": await db.collection("reference_domain_metadata").count(),
             "reference_suggestions": await db.collection("reference_data_suggestions").count(),
             "pending_reference_suggestions": await db.collection("reference_data_suggestions").count({"status": "pending_review"}),
@@ -148,6 +152,7 @@ async def summary(
             "Segment-scoped request services, pets, and special items foundation",
             "Global field library and agency form profile foundation",
             "Platform reference data console and enriched country metadata foundation",
+            "Reference enrichment import packs and aviation normalization foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

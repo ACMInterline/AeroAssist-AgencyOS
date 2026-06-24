@@ -55,3 +55,7 @@ Validation enforces uppercase ISO2/ISO3, airport IATA codes, two-character airli
 - No external country data provider is integrated.
 - No automatic enrichment, scraping, airline execution, GDS/NDC integration, pricing, or payment behavior is introduced.
 - Agency-local reference overrides remain future work.
+
+## Phase 34.3 Follow-On
+
+Phase 34.3 adds starter reference enrichment import packs, normalization services, platform-only enrichment APIs, and an Enrichment Packs tab so platform owners can safely populate enriched countries plus airport, airline, currency, language, and region records without manual one-by-one editing.

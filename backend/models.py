@@ -4496,6 +4496,17 @@ class PlatformReferenceImportRequest(BaseModel):
     dry_run: bool = True
 
 
+class ReferenceEnrichmentImportRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    domain: str
+    csv_text: str
+    update_mode: str = "update_missing_only"
+    dry_run: bool = True
+    source_label: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class GlobalFieldDefinition(BaseDocument):
     field_key: str
     canonical_path: str

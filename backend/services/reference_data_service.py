@@ -17,6 +17,7 @@ REFERENCE_DOMAINS = {
     "currencies": "Currencies",
     "timezones": "Time zones",
     "languages": "Languages",
+    "continents_regions": "Continents / regions",
     "payment_methods": "Payment methods",
     "client_types": "Client types",
     "contact_channels": "Contact channels",
@@ -275,6 +276,7 @@ COUNTRY_METADATA_FIELDS = [
     "iso2_code",
     "iso3_code",
     "continent",
+    "region",
     "capital_city",
     "capital_iata_code",
     "major_airports",
@@ -447,6 +449,7 @@ def normalize_country_metadata(raw: dict[str, Any] | None, errors: list[str] | N
 
     simple_fields = [
         "continent",
+        "region",
         "capital_city",
         "currency_name",
         "travel_notes",
