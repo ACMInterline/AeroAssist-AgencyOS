@@ -61,6 +61,10 @@ const countryDefaults = {
   source_notes: "",
 }
 
+const cityDefaults = {
+  country_code: "",
+}
+
 const defaultRecordFilters = {
   data_quality_status: "",
   continent: "",
@@ -71,8 +75,15 @@ const defaultRecordFilters = {
   missing_national_carrier: false,
 }
 
+function metadataDefaultsForDomain(domain) {
+  if (domain === "countries") return { ...countryDefaults }
+  if (domain === "cities") return { ...cityDefaults }
+  return {}
+}
+
 function emptyRecord(domain = "countries") {
-  return {
+  const metadata = metadataDefaultsForDomain(domain)
+  const form = {
     domain,
     code: "",
     label: "",
@@ -80,60 +91,77 @@ function emptyRecord(domain = "countries") {
     aliases: "",
     sort_order: 100,
     is_active: true,
-    metadata: { ...countryDefaults },
+    metadata,
     metadata_json: "{}",
   }
+  return { ...form, metadata_json: JSON.stringify(buildMetadataFromRecordForm(domain, form), null, 2) }
 }
 
-function splitValues(value) {
+function normalizeAliases(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || "").trim()).filter(Boolean)
+  }
   return String(value || "")
     .split(/[|,;]/)
     .map((item) => item.trim())
     .filter(Boolean)
-    .slice(0, 3)
 }
 
-function compactObject(value) {
-  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== null && item !== ""))
+function domainSpecificMetadataKeys(domain) {
+  if (domain === "cities") return ["record_type", "iata_city_code", "city_name", "legacy_codes", "country_code"]
+  return []
 }
 
-function recordToForm(record) {
-  const metadata = record?.metadata_json || {}
-  const nationalCarrier = metadata.national_carrier || {}
-  const majorAirlines = metadata.major_airlines || []
-  return {
-    domain: record?.domain || "countries",
-    code: record?.code || record?.key || "",
-    label: record?.label || "",
-    description: record?.description || "",
-    aliases: (record?.aliases || []).join(", "),
-    sort_order: record?.sort_order || 100,
-    is_active: record?.is_active !== false,
-    metadata: {
-      ...countryDefaults,
-      ...metadata,
-      major_airports: (metadata.major_airports || []).join(", "),
-      official_languages: (metadata.official_languages || []).join(", "),
-      national_carrier_name: nationalCarrier.name || "",
-      national_carrier_iata_code: nationalCarrier.iata_code || "",
-      major_airline_1_name: majorAirlines[0]?.name || "",
-      major_airline_1_iata_code: majorAirlines[0]?.iata_code || "",
-      major_airline_2_name: majorAirlines[1]?.name || "",
-      major_airline_2_iata_code: majorAirlines[1]?.iata_code || "",
-      major_airline_3_name: majorAirlines[2]?.name || "",
-      major_airline_3_iata_code: majorAirlines[2]?.iata_code || "",
-    },
-    metadata_json: JSON.stringify(metadata, null, 2),
+function parseAdvancedMetadata(value) {
+  try {
+    const parsed = JSON.parse(value || "{}")
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") {
+      throw new Error("Advanced metadata must be a JSON object.")
+    }
+    return parsed
+  } catch (err) {
+    throw new Error(err.message === "Advanced metadata must be a JSON object." ? err.message : "Advanced metadata must be valid JSON.")
   }
 }
 
-function metadataFromForm(form) {
-  if (form.domain !== "countries") {
-    try {
-      return JSON.parse(form.metadata_json || "{}")
-    } catch {
-      throw new Error("Advanced metadata must be valid JSON.")
+function extraMetadataFromJson(form) {
+  const metadata = parseAdvancedMetadata(form.metadata_json || "{}")
+  const canonicalKeys = new Set(domainSpecificMetadataKeys(form.domain))
+  return Object.fromEntries(Object.entries(metadata).filter(([key]) => !canonicalKeys.has(key)))
+}
+
+function assertCityMetadataDoesNotContradictForm(form, parsedMetadata) {
+  const code = String(form.code || "").trim().toUpperCase()
+  const label = String(form.label || "").trim()
+  const countryCode = String(form.metadata?.country_code || "").trim().toUpperCase()
+  const checks = [
+    ["iata_city_code", code],
+    ["city_name", label],
+    ["country_code", countryCode],
+  ]
+  if (parsedMetadata.record_type && parsedMetadata.record_type !== "city") {
+    throw new Error("Advanced metadata record_type must be city for city records.")
+  }
+  checks.forEach(([key, expected]) => {
+    if (parsedMetadata[key] && expected && String(parsedMetadata[key]).trim().toUpperCase() !== expected.toUpperCase()) {
+      throw new Error(`Advanced metadata ${key} contradicts the canonical form field.`)
     }
+  })
+}
+
+function buildMetadataFromRecordForm(domain, form) {
+  if (domain === "cities") {
+    return compactObject({
+      ...extraMetadataFromJson({ ...form, domain }),
+      record_type: "city",
+      iata_city_code: String(form.code || "").trim().toUpperCase(),
+      city_name: String(form.label || "").trim(),
+      legacy_codes: normalizeAliases(form.aliases).map((item) => item.toUpperCase()),
+      country_code: String(form.metadata?.country_code || "").trim().toUpperCase(),
+    })
+  }
+  if (domain !== "countries") {
+    return parseAdvancedMetadata(form.metadata_json || "{}")
   }
   const metadata = compactObject({
     iso2_code: form.metadata.iso2_code.toUpperCase(),
@@ -171,13 +199,72 @@ function metadataFromForm(form) {
   return metadata
 }
 
+function mergeMetadataIntoRecordForm(domain, record) {
+  const metadata = record?.metadata_json || {}
+  if (domain === "cities") {
+    return {
+      ...metadataDefaultsForDomain(domain),
+      country_code: metadata.country_code || "",
+    }
+  }
+  if (domain !== "countries") return metadata
+  const nationalCarrier = metadata.national_carrier || {}
+  const majorAirlines = metadata.major_airlines || []
+  return {
+    ...countryDefaults,
+    ...metadata,
+    major_airports: (metadata.major_airports || []).join(", "),
+    official_languages: (metadata.official_languages || []).join(", "),
+    national_carrier_name: nationalCarrier.name || "",
+    national_carrier_iata_code: nationalCarrier.iata_code || "",
+    major_airline_1_name: majorAirlines[0]?.name || "",
+    major_airline_1_iata_code: majorAirlines[0]?.iata_code || "",
+    major_airline_2_name: majorAirlines[1]?.name || "",
+    major_airline_2_iata_code: majorAirlines[1]?.iata_code || "",
+    major_airline_3_name: majorAirlines[2]?.name || "",
+    major_airline_3_iata_code: majorAirlines[2]?.iata_code || "",
+  }
+}
+
+function splitValues(value) {
+  return String(value || "")
+    .split(/[|,;]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+}
+
+function compactObject(value) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined && item !== null && item !== ""))
+}
+
+function recordToForm(record) {
+  const domain = record?.domain || "countries"
+  const form = {
+    domain: record?.domain || "countries",
+    code: record?.code || record?.key || "",
+    label: record?.label || "",
+    description: record?.description || "",
+    aliases: (record?.aliases || []).join(", "),
+    sort_order: record?.sort_order || 100,
+    is_active: record?.is_active !== false,
+    metadata: mergeMetadataIntoRecordForm(domain, record),
+    metadata_json: JSON.stringify(record?.metadata_json || {}, null, 2),
+  }
+  return { ...form, metadata_json: JSON.stringify(buildMetadataFromRecordForm(domain, form), null, 2) }
+}
+
+function metadataFromForm(form) {
+  return buildMetadataFromRecordForm(form.domain, form)
+}
+
 function recordPayload(form) {
   return {
     domain: form.domain,
-    code: form.code,
+    code: form.domain === "cities" ? form.code.toUpperCase().trim() : form.code,
     label: form.label,
     description: form.description || null,
-    aliases: splitValues(form.aliases),
+    aliases: normalizeAliases(form.aliases),
     sort_order: Number(form.sort_order || 100),
     is_active: form.is_active,
     metadata_json: metadataFromForm(form),
@@ -240,6 +327,13 @@ export default function PlatformReferenceDataPage({ recordId }) {
     airports: "IATA Airport Code",
     airlines: "Airline Code",
   }[selectedDomain] || "Code"
+  const synchronizedMetadataJson = useMemo(() => {
+    try {
+      return JSON.stringify(buildMetadataFromRecordForm(recordForm.domain, recordForm), null, 2)
+    } catch {
+      return recordForm.metadata_json
+    }
+  }, [recordForm])
   const visibleAuditEvents = useMemo(
     () => auditEvents.filter((event) => String(event.event_type || "").includes("reference")).slice(-40).reverse(),
     [auditEvents]
@@ -392,7 +486,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
       if (selectedRecord && selectedRecord.domain !== selectedDomain) {
         throw new Error("Selected record no longer belongs to the active domain. Reload the domain and try again.")
       }
-      const payload = { ...recordPayload({ ...recordForm, domain: selectedDomain }), domain: selectedDomain }
+      const payload = { ...recordPayload({ ...recordForm, domain: selectedDomain, metadata_json: synchronizedMetadataJson }), domain: selectedDomain }
       const updatePayload = payload
       const result = selectedRecord
         ? await updatePlatformReferenceRecord(selectedRecord.id, updatePayload)
@@ -666,15 +760,26 @@ export default function PlatformReferenceDataPage({ recordId }) {
                   <h3 className="font-semibold text-slate-950">{selectedRecord ? "Edit Record" : "Create Record"}</h3>
                   <form className="mt-4 grid gap-3" onSubmit={saveRecord}>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <Field label="Code"><TextInput required value={recordForm.code} onChange={(event) => setRecordField("code", event.target.value)} /></Field>
-                      <Field label="Label"><TextInput required value={recordForm.label} onChange={(event) => setRecordField("label", event.target.value)} /></Field>
-                      <Field label="Aliases"><TextInput value={recordForm.aliases} onChange={(event) => setRecordField("aliases", event.target.value)} /></Field>
+                      <Field label={recordCodeColumnLabel}>
+                        <TextInput
+                          required
+                          maxLength={recordForm.domain === "cities" ? 3 : undefined}
+                          value={recordForm.code}
+                          onChange={(event) => setRecordField("code", recordForm.domain === "cities" ? event.target.value.toUpperCase() : event.target.value)}
+                        />
+                      </Field>
+                      <Field label={recordForm.domain === "cities" ? "City name" : "Label"}><TextInput required value={recordForm.label} onChange={(event) => setRecordField("label", event.target.value)} /></Field>
+                      <Field label={recordForm.domain === "cities" ? "Legacy aliases" : "Aliases"}><TextInput value={recordForm.aliases} onChange={(event) => setRecordField("aliases", event.target.value)} /></Field>
                       <Field label="Sort order"><TextInput type="number" value={recordForm.sort_order} onChange={(event) => setRecordField("sort_order", event.target.value)} /></Field>
                     </div>
                     <Field label="Description"><textarea className="rounded-md border border-slate-300 px-3 py-2 text-sm" rows={2} value={recordForm.description} onChange={(event) => setRecordField("description", event.target.value)} /></Field>
                     <label className="flex items-center gap-2 text-sm text-slate-700"><input checked={recordForm.is_active} type="checkbox" onChange={(event) => setRecordField("is_active", event.target.checked)} /> Active</label>
 
-                    {recordForm.domain === "countries" ? (
+                    {recordForm.domain === "cities" ? (
+                      <div className="grid gap-3 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
+                        <Field label="Country code"><TextInput maxLength={2} value={recordForm.metadata.country_code || ""} onChange={(event) => setMetadataField("country_code", event.target.value.toUpperCase())} /></Field>
+                      </div>
+                    ) : recordForm.domain === "countries" ? (
                       <div className="grid gap-3 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
                         <Field label="ISO2"><TextInput maxLength={2} value={recordForm.metadata.iso2_code} onChange={(event) => setMetadataField("iso2_code", event.target.value.toUpperCase())} /></Field>
                         <Field label="ISO3"><TextInput maxLength={3} value={recordForm.metadata.iso3_code} onChange={(event) => setMetadataField("iso3_code", event.target.value.toUpperCase())} /></Field>
@@ -699,8 +804,19 @@ export default function PlatformReferenceDataPage({ recordId }) {
                         <Field label="Source notes"><TextInput value={recordForm.metadata.source_notes} onChange={(event) => setMetadataField("source_notes", event.target.value)} /></Field>
                         <Field label="Travel notes"><textarea className="rounded-md border border-slate-300 px-3 py-2 text-sm" rows={2} value={recordForm.metadata.travel_notes} onChange={(event) => setMetadataField("travel_notes", event.target.value)} /></Field>
                       </div>
+                    ) : null}
+                    {recordForm.domain === "cities" ? (
+                      <Field label="Synchronized advanced metadata JSON">
+                        <textarea readOnly className="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" rows={8} value={synchronizedMetadataJson} />
+                      </Field>
+                    ) : recordForm.domain !== "countries" ? (
+                      <Field label="Synchronized advanced metadata JSON">
+                        <textarea className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" rows={8} value={recordForm.metadata_json} onChange={(event) => setRecordField("metadata_json", event.target.value)} />
+                      </Field>
                     ) : (
-                      <Field label="Advanced metadata JSON"><textarea className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" rows={8} value={recordForm.metadata_json} onChange={(event) => setRecordField("metadata_json", event.target.value)} /></Field>
+                      <Field label="Synchronized advanced metadata JSON">
+                        <textarea readOnly className="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" rows={8} value={synchronizedMetadataJson} />
+                      </Field>
                     )}
                     <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={savingRecord}>{savingRecord ? "Saving..." : "Save global record"}</button>
                   </form>

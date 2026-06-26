@@ -67,6 +67,17 @@ def main() -> int:
         aliases = set(active_cities[code].get("aliases") or [])
         if legacy_alias not in aliases:
             raise AssertionError(f"{code} did not preserve legacy alias {legacy_alias}.")
+        metadata = active_cities[code].get("metadata_json") or {}
+        if metadata.get("record_type") != "city":
+            raise AssertionError(f"{code} metadata did not identify the record as a city.")
+        if metadata.get("iata_city_code") != code:
+            raise AssertionError(f"{code} metadata did not mirror the canonical city code.")
+        if metadata.get("city_name") != active_cities[code].get("label"):
+            raise AssertionError(f"{code} metadata did not mirror the city label.")
+        if legacy_alias not in set(metadata.get("legacy_codes") or []):
+            raise AssertionError(f"{code} metadata did not preserve legacy code {legacy_alias}.")
+        if not metadata.get("country_code"):
+            raise AssertionError(f"{code} metadata did not preserve country_code.")
 
     airports = get("/api/platform/reference/records?domain=airports&include_inactive=true", OWNER_HEADERS)["items"]
     airport_city_codes = {item.get("metadata_json", {}).get("city_code") for item in airports}
@@ -74,13 +85,25 @@ def main() -> int:
         raise AssertionError("Airport records still point to legacy city slug codes.")
 
     post("/api/platform/reference/records", {"domain": "cities", "code": "BAD", "label": "Agency Blocked"}, AGENCY_HEADERS, 403)
+    post(
+        "/api/platform/reference/records",
+        {"domain": "cities", "code": "LON", "label": "Contradictory City", "metadata_json": {"iata_city_code": "SOF"}},
+        OWNER_HEADERS,
+        409,
+    )
+    post(
+        "/api/platform/reference/records",
+        {"domain": "cities", "code": "ZZZ", "label": "Contradictory City", "metadata_json": {"iata_city_code": "SOF"}},
+        OWNER_HEADERS,
+        400,
+    )
 
     reference_service = (ROOT / "backend/services/reference_data_service.py").read_text(encoding="utf-8")
     platform_page = (ROOT / "frontend/src/pages/platform/PlatformReferenceDataPage.jsx").read_text(encoding="utf-8")
     for needle in ['"code": "SOF"', '"code": "NYC"', '"code": "LON"', '"SOFIA"', '"NEW_YORK"', '"LONDON"', "normalize_city_reference_codes"]:
         if needle not in reference_service:
             raise AssertionError(f"Reference seed/migration missing marker: {needle}")
-    for needle in ["IATA City Code", "IATA Airport Code", "Airline Code"]:
+    for needle in ["IATA City Code", "IATA Airport Code", "Airline Code", "buildMetadataFromRecordForm", "mergeMetadataIntoRecordForm", "domainSpecificMetadataKeys"]:
         if needle not in platform_page:
             raise AssertionError(f"Platform console missing domain-specific code label: {needle}")
 

@@ -226,6 +226,8 @@ CITY_CODE_MIGRATIONS = {
     "LONDON": "LON",
 }
 
+CITY_CANONICAL_METADATA_KEYS = {"record_type", "iata_city_code", "city_name", "legacy_codes", "country_code"}
+
 SERVICE_CATALOGUE_BOOTSTRAP_RECORDS = [
     {"service_code": "WCHR", "service_label": "Wheelchair assistance to/from gate", "service_family_code": "wheelchair_mobility", "default_ssr_code": "WCHR", "sort_order": 10, "input_schema_json": {"mobility_level": "wchr"}},
     {"service_code": "WCHS", "service_label": "Wheelchair assistance including stairs", "service_family_code": "wheelchair_mobility", "default_ssr_code": "WCHS", "sort_order": 20, "input_schema_json": {"mobility_level": "wchs"}},
@@ -251,6 +253,40 @@ SERVICE_CATALOGUE_BOOTSTRAP_RECORDS = [
 
 def normalize_reference_code(value: str) -> str:
     return value.strip()
+
+
+def normalize_city_reference_code(value: str) -> str:
+    return normalize_reference_code(value).upper()
+
+
+def normalize_city_reference_metadata(
+    code: str,
+    label: str,
+    aliases: list[str] | None,
+    metadata: dict[str, Any] | None,
+) -> tuple[dict[str, Any], list[str]]:
+    errors: list[str] = []
+    normalized_code = normalize_city_reference_code(code)
+    source = dict(metadata or {})
+    record_type = source.get("record_type") or "city"
+    if record_type == "city" and not re.fullmatch(r"[A-Z]{3}", normalized_code):
+        errors.append("City reference code must be the canonical 3-letter IATA city code.")
+    if source.get("iata_city_code") and normalize_city_reference_code(str(source["iata_city_code"])) != normalized_code:
+        errors.append("City metadata iata_city_code must match the canonical city code.")
+    if source.get("city_name") and str(source["city_name"]).strip() != str(label or "").strip():
+        errors.append("City metadata city_name must match the city label.")
+    extra = {key: value for key, value in source.items() if key not in CITY_CANONICAL_METADATA_KEYS}
+    country_code = source.get("country_code")
+    metadata_json = {
+        **extra,
+        "record_type": record_type,
+        "iata_city_code": normalized_code,
+        "city_name": str(label or "").strip(),
+        "legacy_codes": [str(alias).strip().upper() for alias in (aliases or []) if str(alias).strip()],
+    }
+    if country_code:
+        metadata_json["country_code"] = str(country_code).strip().upper()
+    return metadata_json, errors
 
 
 def sort_records(records: list[dict[str, Any]], code_field: str = "code", label_field: str = "label") -> list[dict[str, Any]]:
@@ -634,6 +670,10 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
         if domain == "countries":
             metadata_json, metadata_errors = normalize_reference_metadata_for_domain(domain, extract_country_metadata_from_row(row, metadata_json), row_number)
             row_errors.extend(metadata_errors)
+        elif domain == "cities":
+            code = normalize_city_reference_code(code)
+            metadata_json, metadata_errors = normalize_city_reference_metadata(code, label, parse_aliases(row.get("aliases")), metadata_json)
+            row_errors.extend([f"Row {row_number}: {error}" for error in metadata_errors])
         try:
             sort_order = int(row.get("sort_order") or 100)
         except ValueError:
@@ -733,7 +773,12 @@ async def create_reference_import_batch(
 
 
 async def upsert_reference_record(db: Database, domain: str, payload: dict[str, Any], actor_user_id: str | None = None) -> str:
-    code = normalize_reference_code(payload["code"])
+    code = normalize_city_reference_code(payload["code"]) if domain == "cities" else normalize_reference_code(payload["code"])
+    metadata_json = payload.get("metadata_json", {})
+    if domain == "cities":
+        metadata_json, metadata_errors = normalize_city_reference_metadata(code, payload["label"], payload.get("aliases", []), metadata_json)
+        if metadata_errors:
+            raise ValueError("; ".join(metadata_errors))
     existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
     record_payload = {
         "domain": domain,
@@ -743,8 +788,8 @@ async def upsert_reference_record(db: Database, domain: str, payload: dict[str, 
         "description": payload.get("description"),
         "aliases": payload.get("aliases", []),
         "sort_order": payload.get("sort_order", 100),
-        "metadata_json": payload.get("metadata_json", {}),
-        "metadata": payload.get("metadata_json", {}),
+        "metadata_json": metadata_json,
+        "metadata": metadata_json,
         "source_type": payload.get("source_type", "system"),
         "is_active": payload.get("is_active", True),
         "updated_by_user_id": actor_user_id,
@@ -813,12 +858,25 @@ async def normalize_city_reference_codes(db: Database, actor_user_id: str | None
         if not source:
             if target:
                 aliases = unique_values(target.get("aliases", []), legacy_code)
+                metadata_json, metadata_errors = normalize_city_reference_metadata(target_code, target.get("label") or "", aliases, target.get("metadata_json") or {})
+                if metadata_errors:
+                    report["unchanged"].append({"code": target_code, "errors": metadata_errors})
+                    continue
                 if aliases != (target.get("aliases") or []):
-                    report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_added"})
+                    report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_or_metadata_synchronized"})
                     if not dry_run:
                         updated = await db.collection("global_reference_records").update_one(
                             {"id": target["id"]},
-                            {"aliases": aliases, "updated_by_user_id": actor_user_id},
+                            {"aliases": aliases, "metadata_json": metadata_json, "metadata": metadata_json, "updated_by_user_id": actor_user_id},
+                        )
+                        if updated:
+                            by_key[target_code] = updated
+                elif metadata_json != (target.get("metadata_json") or {}):
+                    report["merged"].append({"from": legacy_code, "to": target_code, "action": "metadata_synchronized"})
+                    if not dry_run:
+                        updated = await db.collection("global_reference_records").update_one(
+                            {"id": target["id"]},
+                            {"metadata_json": metadata_json, "metadata": metadata_json, "updated_by_user_id": actor_user_id},
                         )
                         if updated:
                             by_key[target_code] = updated
@@ -829,12 +887,25 @@ async def normalize_city_reference_codes(db: Database, actor_user_id: str | None
         source_aliases = unique_values(source.get("aliases", []), legacy_code)
         if target and target["id"] != source["id"] and source.get("is_active") is False:
             aliases = unique_values(target.get("aliases", []), source_aliases)
+            metadata_json, metadata_errors = normalize_city_reference_metadata(target_code, target.get("label") or source.get("label") or "", aliases, merge_metadata(target.get("metadata_json"), source.get("metadata_json")))
+            if metadata_errors:
+                report["unchanged"].append({"code": target_code, "legacy_code": legacy_code, "errors": metadata_errors})
+                continue
             if aliases != (target.get("aliases") or []):
-                report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_added_from_archived_source"})
+                report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_or_metadata_synchronized_from_archived_source"})
                 if not dry_run:
                     updated = await db.collection("global_reference_records").update_one(
                         {"id": target["id"]},
-                        {"aliases": aliases, "updated_by_user_id": actor_user_id},
+                        {"aliases": aliases, "metadata_json": metadata_json, "metadata": metadata_json, "updated_by_user_id": actor_user_id},
+                    )
+                    if updated:
+                        by_key[target_code] = updated
+            elif metadata_json != (target.get("metadata_json") or {}):
+                report["merged"].append({"from": legacy_code, "to": target_code, "action": "metadata_synchronized_from_archived_source"})
+                if not dry_run:
+                    updated = await db.collection("global_reference_records").update_one(
+                        {"id": target["id"]},
+                        {"metadata_json": metadata_json, "metadata": metadata_json, "updated_by_user_id": actor_user_id},
                     )
                     if updated:
                         by_key[target_code] = updated
@@ -844,10 +915,15 @@ async def normalize_city_reference_codes(db: Database, actor_user_id: str | None
 
         if target and target["id"] != source["id"]:
             target_metadata = merge_metadata(target.get("metadata_json"), source.get("metadata_json"))
+            aliases = unique_values(target.get("aliases", []), source_aliases)
+            target_metadata, metadata_errors = normalize_city_reference_metadata(target_code, target.get("label") or source.get("label") or "", aliases, target_metadata)
+            if metadata_errors:
+                report["unchanged"].append({"code": target_code, "legacy_code": legacy_code, "errors": metadata_errors})
+                continue
             target_updates = {
                 "label": target.get("label") or source.get("label"),
                 "description": target.get("description") or source.get("description"),
-                "aliases": unique_values(target.get("aliases", []), source_aliases),
+                "aliases": aliases,
                 "sort_order": target.get("sort_order") or source.get("sort_order", 100),
                 "metadata_json": target_metadata,
                 "metadata": target_metadata,
@@ -878,6 +954,12 @@ async def normalize_city_reference_codes(db: Database, actor_user_id: str | None
             "aliases": source_aliases,
             "updated_by_user_id": actor_user_id,
         }
+        metadata_json, metadata_errors = normalize_city_reference_metadata(target_code, source.get("label") or "", source_aliases, source.get("metadata_json") or {})
+        if metadata_errors:
+            report["unchanged"].append({"code": legacy_code, "errors": metadata_errors})
+            continue
+        updates["metadata_json"] = metadata_json
+        updates["metadata"] = metadata_json
         report["renamed"].append({"from": legacy_code, "to": target_code})
         if not dry_run:
             updated = await db.collection("global_reference_records").update_one({"id": source["id"]}, updates)

@@ -35,6 +35,8 @@ from services.reference_data_service import (
     country_enrichment_complete,
     create_reference_import_batch,
     normalize_reference_code,
+    normalize_city_reference_code,
+    normalize_city_reference_metadata,
     normalize_reference_metadata_for_domain,
     safe_reference_import_batch,
     safe_reference_record,
@@ -76,6 +78,15 @@ def enriched_metadata(domain: str, metadata: dict[str, Any] | None, actor_user_i
             normalized["reviewed_by_user_id"] = actor_user_id
             normalized["reviewed_at"] = now_utc().isoformat()
     return normalized
+
+
+def enriched_record_metadata(domain: str, code: str, label: str, aliases: list[str] | None, metadata: dict[str, Any] | None, actor_user_id: str | None = None) -> dict[str, Any]:
+    if domain == "cities":
+        normalized, errors = normalize_city_reference_metadata(code, label, aliases or [], metadata or {})
+        if errors:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+        return normalized
+    return enriched_metadata(domain, metadata, actor_user_id)
 
 
 async def platform_domains(db: Database) -> list[dict[str, Any]]:
@@ -309,12 +320,12 @@ async def create_platform_reference_record(
 ) -> dict:
     domain = normalize_domain_code(payload.domain)
     await ensure_supported_domain(db, domain)
-    code = normalize_reference_code(payload.code)
+    code = normalize_city_reference_code(payload.code) if domain == "cities" else normalize_reference_code(payload.code)
     if not code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code is required.")
     if await db.collection("global_reference_records").find_one({"domain": domain, "key": code}):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference record already exists.")
-    metadata_json = enriched_metadata(domain, payload.metadata_json, user["id"])
+    metadata_json = enriched_record_metadata(domain, code, payload.label, payload.aliases, payload.metadata_json, user["id"])
     record = GlobalReferenceRecord(
         domain=domain,
         code=code,
@@ -367,7 +378,7 @@ async def update_platform_reference_record(
         if payload_domain != domain:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Reference record belongs to {domain}, not {payload_domain}.")
     if "code" in updates:
-        code = normalize_reference_code(updates["code"])
+        code = normalize_city_reference_code(updates["code"]) if domain == "cities" else normalize_reference_code(updates["code"])
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code cannot be blank.")
         conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
@@ -376,7 +387,25 @@ async def update_platform_reference_record(
         updates["code"] = code
         updates["key"] = code
     if "metadata_json" in updates:
-        metadata_json = enriched_metadata(domain, updates["metadata_json"], user["id"])
+        metadata_json = enriched_record_metadata(
+            domain,
+            updates.get("code") or existing.get("code") or existing.get("key"),
+            updates.get("label") or existing.get("label"),
+            updates.get("aliases") if "aliases" in updates else existing.get("aliases") or [],
+            updates["metadata_json"],
+            user["id"],
+        )
+        updates["metadata_json"] = metadata_json
+        updates["metadata"] = metadata_json
+    elif domain == "cities" and any(key in updates for key in {"code", "label", "aliases"}):
+        metadata_json = enriched_record_metadata(
+            domain,
+            updates.get("code") or existing.get("code") or existing.get("key"),
+            updates.get("label") or existing.get("label"),
+            updates.get("aliases") if "aliases" in updates else existing.get("aliases") or [],
+            existing.get("metadata_json") or {},
+            user["id"],
+        )
         updates["metadata_json"] = metadata_json
         updates["metadata"] = metadata_json
     updates["updated_by_user_id"] = user["id"]

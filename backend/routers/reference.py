@@ -21,6 +21,8 @@ from services.reference_data_service import (
     audit_reference_event,
     bootstrap_reference_data,
     create_reference_import_batch,
+    normalize_city_reference_code,
+    normalize_city_reference_metadata,
     normalize_reference_code,
     normalize_reference_metadata_for_domain,
     safe_reference_import_batch,
@@ -75,6 +77,15 @@ def normalize_metadata_or_raise(domain: str, metadata: dict[str, Any] | None) ->
     if errors:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
     return normalized
+
+
+def normalize_record_metadata_or_raise(domain: str, code: str, label: str, aliases: list[str] | None, metadata: dict[str, Any] | None) -> dict[str, Any]:
+    if domain == "cities":
+        normalized, errors = normalize_city_reference_metadata(code, label, aliases or [], metadata or {})
+        if errors:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=errors)
+        return normalized
+    return normalize_metadata_or_raise(domain, metadata)
 
 
 async def require_reference_manager(user: dict, payload_scope: str | None = None) -> None:
@@ -496,14 +507,14 @@ async def create_reference_record_for_domain(
 ) -> dict:
     ensure_domain(domain)
     await require_reference_manager(user, payload.scope.value if hasattr(payload.scope, "value") else payload.scope)
-    code = normalize_reference_code(payload.code or payload.key or "")
+    code = normalize_city_reference_code(payload.code or payload.key or "") if domain == "cities" else normalize_reference_code(payload.code or payload.key or "")
     if not code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code is required.")
     existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
     if existing:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference record already exists.")
     payload_dict = payload.model_dump(mode="json")
-    metadata_json = normalize_metadata_or_raise(domain, payload_dict.get("metadata_json") or payload_dict.get("metadata") or {})
+    metadata_json = normalize_record_metadata_or_raise(domain, code, payload.label, payload.aliases, payload_dict.get("metadata_json") or payload_dict.get("metadata") or {})
     record = GlobalReferenceRecord(
         **{
             **payload_dict,
@@ -547,7 +558,7 @@ async def update_reference_record(
     await require_reference_manager(user, payload.scope.value if payload.scope and hasattr(payload.scope, "value") else payload.scope)
     updates = {key: value for key, value in payload.model_dump(mode="json", exclude_unset=True).items() if value is not None}
     if "code" in updates or "key" in updates:
-        code = normalize_reference_code(updates.get("code") or updates.get("key") or "")
+        code = normalize_city_reference_code(updates.get("code") or updates.get("key") or "") if domain == "cities" else normalize_reference_code(updates.get("code") or updates.get("key") or "")
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code cannot be blank.")
         conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
@@ -556,7 +567,23 @@ async def update_reference_record(
         updates["code"] = code
         updates["key"] = code
     if "metadata_json" in updates or "metadata" in updates:
-        metadata_json = normalize_metadata_or_raise(domain, updates.get("metadata_json") or updates.get("metadata") or {})
+        metadata_json = normalize_record_metadata_or_raise(
+            domain,
+            updates.get("code") or existing.get("code") or existing.get("key"),
+            updates.get("label") or existing.get("label"),
+            updates.get("aliases") if "aliases" in updates else existing.get("aliases") or [],
+            updates.get("metadata_json") or updates.get("metadata") or {},
+        )
+        updates["metadata_json"] = metadata_json
+        updates["metadata"] = metadata_json
+    elif domain == "cities" and any(key in updates for key in {"code", "key", "label", "aliases"}):
+        metadata_json = normalize_record_metadata_or_raise(
+            domain,
+            updates.get("code") or existing.get("code") or existing.get("key"),
+            updates.get("label") or existing.get("label"),
+            updates.get("aliases") if "aliases" in updates else existing.get("aliases") or [],
+            existing.get("metadata_json") or {},
+        )
         updates["metadata_json"] = metadata_json
         updates["metadata"] = metadata_json
     updates["updated_by_user_id"] = user["id"]

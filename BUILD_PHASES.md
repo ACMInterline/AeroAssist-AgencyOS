@@ -837,6 +837,7 @@ Implemented scope:
 - Readiness counters for country record quality gaps and console/import/export/review flags.
 - Platform reference global record save/update now shows visible saving/success/error status, reloads the selected domain after save, and prevents stale cross-domain rows from being edited or displayed.
 - Seeded city reference records now use canonical IATA city codes (`SOF`, `NYC`, `LON`) with legacy slugs preserved as aliases and an idempotent migration/backfill for existing data.
+- City advanced metadata now mirrors canonical fields (`record_type`, `iata_city_code`, `city_name`, `legacy_codes`, `country_code`) and backend validation rejects contradictory city metadata.
 
 Avoid adding:
 
