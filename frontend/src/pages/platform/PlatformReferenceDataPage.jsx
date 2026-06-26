@@ -235,6 +235,11 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const selectedDomainMeta = useMemo(() => domains.find((domain) => domain.domain === selectedDomain), [domains, selectedDomain])
   const selectedDomainLabel = selectedDomainMeta?.label || selectedDomain.replaceAll("_", " ")
   const selectedDomainHasCountrySchema = selectedDomain === "countries"
+  const recordCodeColumnLabel = {
+    cities: "IATA City Code",
+    airports: "IATA Airport Code",
+    airlines: "Airline Code",
+  }[selectedDomain] || "Code"
   const visibleAuditEvents = useMemo(
     () => auditEvents.filter((event) => String(event.event_type || "").includes("reference")).slice(-40).reverse(),
     [auditEvents]
@@ -620,9 +625,9 @@ export default function PlatformReferenceDataPage({ recordId }) {
                     <div className="mt-4 overflow-x-auto rounded-md border border-slate-200">
                       <table className="min-w-full divide-y divide-slate-200 text-sm">
                         {selectedDomainHasCountrySchema ? (
-                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Code</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">ISO3</th><th className="px-3 py-2">Capital IATA</th><th className="px-3 py-2">Currency</th><th className="px-3 py-2">Quality</th><th className="px-3 py-2">Actions</th></tr></thead>
+                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">{recordCodeColumnLabel}</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">ISO3</th><th className="px-3 py-2">Capital IATA</th><th className="px-3 py-2">Currency</th><th className="px-3 py-2">Quality</th><th className="px-3 py-2">Actions</th></tr></thead>
                         ) : (
-                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Code</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">Aliases</th><th className="px-3 py-2">Description</th><th className="px-3 py-2">Status / Governance</th><th className="px-3 py-2">Actions</th></tr></thead>
+                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">{recordCodeColumnLabel}</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">Aliases</th><th className="px-3 py-2">Description</th><th className="px-3 py-2">Status / Governance</th><th className="px-3 py-2">Actions</th></tr></thead>
                         )}
                         <tbody className="divide-y divide-slate-100">
                           {records.map((record) => (

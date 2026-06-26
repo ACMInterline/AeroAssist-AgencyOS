@@ -119,14 +119,14 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         },
     ],
     "cities": [
-        {"code": "SOFIA", "label": "Sofia", "metadata_json": {"country_code": "BG"}, "sort_order": 10},
-        {"code": "NEW_YORK", "label": "New York", "aliases": ["NYC"], "metadata_json": {"country_code": "US"}, "sort_order": 20},
-        {"code": "LONDON", "label": "London", "metadata_json": {"country_code": "GB"}, "sort_order": 30},
+        {"code": "SOF", "label": "Sofia", "aliases": ["SOFIA"], "metadata_json": {"country_code": "BG"}, "sort_order": 10},
+        {"code": "NYC", "label": "New York", "aliases": ["NEW_YORK"], "metadata_json": {"country_code": "US"}, "sort_order": 20},
+        {"code": "LON", "label": "London", "aliases": ["LONDON"], "metadata_json": {"country_code": "GB"}, "sort_order": 30},
     ],
     "airports": [
-        {"code": "SOF", "label": "Sofia Airport", "metadata_json": {"city_code": "SOFIA", "country_code": "BG"}, "sort_order": 10},
-        {"code": "JFK", "label": "John F. Kennedy International Airport", "metadata_json": {"city_code": "NEW_YORK", "country_code": "US"}, "sort_order": 20},
-        {"code": "LHR", "label": "London Heathrow Airport", "metadata_json": {"city_code": "LONDON", "country_code": "GB"}, "sort_order": 30},
+        {"code": "SOF", "label": "Sofia Airport", "metadata_json": {"city_code": "SOF", "country_code": "BG"}, "sort_order": 10},
+        {"code": "JFK", "label": "John F. Kennedy International Airport", "metadata_json": {"city_code": "NYC", "country_code": "US"}, "sort_order": 20},
+        {"code": "LHR", "label": "London Heathrow Airport", "metadata_json": {"city_code": "LON", "country_code": "GB"}, "sort_order": 30},
     ],
     "airlines": [
         {"code": "LH", "label": "Lufthansa", "aliases": ["Lufthansa German Airlines"], "sort_order": 10},
@@ -218,6 +218,12 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         {"code": "musical_instrument", "label": "Musical instrument", "sort_order": 20},
         {"code": "fragile_valuable", "label": "Fragile or valuable item", "sort_order": 30},
     ],
+}
+
+CITY_CODE_MIGRATIONS = {
+    "SOFIA": "SOF",
+    "NEW_YORK": "NYC",
+    "LONDON": "LON",
 }
 
 SERVICE_CATALOGUE_BOOTSTRAP_RECORDS = [
@@ -767,6 +773,136 @@ async def upsert_service_catalogue_record(db: Database, payload: dict[str, Any],
     return "inserted"
 
 
+def unique_values(*values: Any) -> list[str]:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        items = value if isinstance(value, list) else [value]
+        for item in items:
+            if item is None or item == "":
+                continue
+            text = str(item)
+            marker = text.upper()
+            if marker not in seen:
+                result.append(text)
+                seen.add(marker)
+    return result
+
+
+def merge_metadata(primary: dict[str, Any] | None, fallback: dict[str, Any] | None) -> dict[str, Any]:
+    merged = dict(fallback or {})
+    merged.update(primary or {})
+    return merged
+
+
+async def normalize_city_reference_codes(db: Database, actor_user_id: str | None = None, dry_run: bool = False) -> dict[str, Any]:
+    report: dict[str, Any] = {
+        "dry_run": dry_run,
+        "renamed": [],
+        "merged": [],
+        "archived": [],
+        "airport_city_codes_updated": [],
+        "unchanged": [],
+    }
+    records = await db.collection("global_reference_records").find_many({"domain": "cities"})
+    by_key = {normalize_reference_code(record.get("key") or record.get("code")): record for record in records}
+
+    for legacy_code, target_code in CITY_CODE_MIGRATIONS.items():
+        source = by_key.get(legacy_code)
+        target = by_key.get(target_code)
+        if not source:
+            if target:
+                aliases = unique_values(target.get("aliases", []), legacy_code)
+                if aliases != (target.get("aliases") or []):
+                    report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_added"})
+                    if not dry_run:
+                        updated = await db.collection("global_reference_records").update_one(
+                            {"id": target["id"]},
+                            {"aliases": aliases, "updated_by_user_id": actor_user_id},
+                        )
+                        if updated:
+                            by_key[target_code] = updated
+                else:
+                    report["unchanged"].append({"code": target_code})
+            continue
+
+        source_aliases = unique_values(source.get("aliases", []), legacy_code)
+        if target and target["id"] != source["id"] and source.get("is_active") is False:
+            aliases = unique_values(target.get("aliases", []), source_aliases)
+            if aliases != (target.get("aliases") or []):
+                report["merged"].append({"from": legacy_code, "to": target_code, "action": "alias_added_from_archived_source"})
+                if not dry_run:
+                    updated = await db.collection("global_reference_records").update_one(
+                        {"id": target["id"]},
+                        {"aliases": aliases, "updated_by_user_id": actor_user_id},
+                    )
+                    if updated:
+                        by_key[target_code] = updated
+            else:
+                report["unchanged"].append({"code": target_code, "legacy_code": legacy_code})
+            continue
+
+        if target and target["id"] != source["id"]:
+            target_metadata = merge_metadata(target.get("metadata_json"), source.get("metadata_json"))
+            target_updates = {
+                "label": target.get("label") or source.get("label"),
+                "description": target.get("description") or source.get("description"),
+                "aliases": unique_values(target.get("aliases", []), source_aliases),
+                "sort_order": target.get("sort_order") or source.get("sort_order", 100),
+                "metadata_json": target_metadata,
+                "metadata": target_metadata,
+                "is_active": target.get("is_active", True) or source.get("is_active", True),
+                "updated_by_user_id": actor_user_id,
+            }
+            report["merged"].append({"from": legacy_code, "to": target_code, "archived_source": True})
+            if not dry_run:
+                updated = await db.collection("global_reference_records").update_one({"id": target["id"]}, target_updates)
+                archived = await db.collection("global_reference_records").update_one(
+                    {"id": source["id"]},
+                    {
+                        "aliases": source_aliases,
+                        "is_active": False,
+                        "updated_by_user_id": actor_user_id,
+                    },
+                )
+                if updated:
+                    by_key[target_code] = updated
+                if archived:
+                    by_key[legacy_code] = archived
+                    report["archived"].append(legacy_code)
+            continue
+
+        updates = {
+            "code": target_code,
+            "key": target_code,
+            "aliases": source_aliases,
+            "updated_by_user_id": actor_user_id,
+        }
+        report["renamed"].append({"from": legacy_code, "to": target_code})
+        if not dry_run:
+            updated = await db.collection("global_reference_records").update_one({"id": source["id"]}, updates)
+            if updated:
+                by_key[target_code] = updated
+                by_key.pop(legacy_code, None)
+
+    airport_records = await db.collection("global_reference_records").find_many({"domain": "airports"})
+    for airport in airport_records:
+        metadata = dict(airport.get("metadata_json") or {})
+        legacy_city_code = metadata.get("city_code")
+        target_city_code = CITY_CODE_MIGRATIONS.get(normalize_reference_code(legacy_city_code)) if legacy_city_code else None
+        if not target_city_code:
+            continue
+        metadata["city_code"] = target_city_code
+        report["airport_city_codes_updated"].append({"airport": airport.get("code") or airport.get("key"), "from": legacy_city_code, "to": target_city_code})
+        if not dry_run:
+            await db.collection("global_reference_records").update_one(
+                {"id": airport["id"]},
+                {"metadata_json": metadata, "metadata": metadata, "updated_by_user_id": actor_user_id},
+            )
+
+    return report
+
+
 async def bootstrap_reference_data(db: Database, actor_user_id: str | None = None) -> dict[str, Any]:
     reference_counts = {"inserted": 0, "updated": 0}
     service_counts = {"inserted": 0, "updated": 0}
@@ -777,9 +913,11 @@ async def bootstrap_reference_data(db: Database, actor_user_id: str | None = Non
     for record in SERVICE_CATALOGUE_BOOTSTRAP_RECORDS:
         result = await upsert_service_catalogue_record(db, record, actor_user_id)
         service_counts[result] += 1
+    city_migration = await normalize_city_reference_codes(db, actor_user_id)
     return {
         "reference_records": reference_counts,
         "service_catalogue_records": service_counts,
         "domains": len(REFERENCE_DOMAINS),
         "service_families": len(SERVICE_FAMILIES),
+        "city_code_migration": city_migration,
     }

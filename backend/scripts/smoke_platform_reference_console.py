@@ -86,11 +86,14 @@ def main() -> int:
         if not records:
             raise AssertionError(f"Platform records endpoint returned no records for {domain}.")
     cities = get("/api/platform/reference/records?domain=cities&include_inactive=true", OWNER_HEADERS)["items"]
-    if not {"SOFIA", "NEW_YORK", "LONDON"}.intersection({item.get("code") for item in cities}):
-        raise AssertionError("Cities records endpoint did not return expected seeded city records.")
+    city_codes = {item.get("code") for item in cities if item.get("is_active", True)}
+    if not {"SOF", "NYC", "LON"}.issubset(city_codes):
+        raise AssertionError("Cities records endpoint did not return canonical IATA city codes.")
+    if {"SOFIA", "NEW_YORK", "LONDON"}.intersection(city_codes):
+        raise AssertionError("Cities records endpoint returned legacy slug city codes as active records.")
 
     platform_page = (ROOT / "frontend/src/pages/platform/PlatformReferenceDataPage.jsx").read_text(encoding="utf-8")
-    for needle in ["Open records", "Edit metadata", "selectedDomainHasCountrySchema", "Global Records:", "Status / Governance"]:
+    for needle in ["Open records", "Edit metadata", "selectedDomainHasCountrySchema", "Global Records:", "Status / Governance", "IATA City Code"]:
         if needle not in platform_page:
             raise AssertionError(f"PlatformReferenceDataPage missing domain navigation/table behavior marker: {needle}")
     agency_page = (ROOT / "frontend/src/pages/agency/ReferenceDataPage.jsx").read_text(encoding="utf-8")

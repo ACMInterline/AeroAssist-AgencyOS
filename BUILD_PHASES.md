@@ -836,6 +836,7 @@ Implemented scope:
 - Agency reference UI remains consume-and-suggest only.
 - Readiness counters for country record quality gaps and console/import/export/review flags.
 - Platform reference global record save/update now shows visible saving/success/error status, reloads the selected domain after save, and prevents stale cross-domain rows from being edited or displayed.
+- Seeded city reference records now use canonical IATA city codes (`SOF`, `NYC`, `LON`) with legacy slugs preserved as aliases and an idempotent migration/backfill for existing data.
 
 Avoid adding:
 
