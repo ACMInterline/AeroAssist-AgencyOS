@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
@@ -224,6 +224,12 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const [notice, setNotice] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
+  const [recordNotice, setRecordNotice] = useState("")
+  const [recordError, setRecordError] = useState("")
+  const [recordsLoading, setRecordsLoading] = useState(false)
+  const [savingRecord, setSavingRecord] = useState(false)
+  const recordLoadRequestRef = useRef(0)
+  const selectedDomainRef = useRef(selectedDomain)
 
   const domainOptions = useMemo(() => domains.map((domain) => domain.domain), [domains])
   const selectedDomainMeta = useMemo(() => domains.find((domain) => domain.domain === selectedDomain), [domains, selectedDomain])
@@ -234,9 +240,29 @@ export default function PlatformReferenceDataPage({ recordId }) {
     [auditEvents]
   )
 
+  useEffect(() => {
+    selectedDomainRef.current = selectedDomain
+  }, [selectedDomain])
+
   async function loadRecords(domain = selectedDomain, nextFilters = filters) {
-    const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...nextFilters })
-    setRecords(result.items || [])
+    const requestId = recordLoadRequestRef.current + 1
+    recordLoadRequestRef.current = requestId
+    setRecordsLoading(true)
+    setRecords([])
+    setRecordError("")
+    try {
+      const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...nextFilters })
+      if (recordLoadRequestRef.current !== requestId || selectedDomainRef.current !== domain) return
+      setRecords((result.items || []).filter((record) => record.domain === domain))
+    } catch (err) {
+      if (recordLoadRequestRef.current !== requestId || selectedDomainRef.current !== domain) return
+      setRecords([])
+      setRecordError(err.message)
+    } finally {
+      if (recordLoadRequestRef.current === requestId && selectedDomainRef.current === domain) {
+        setRecordsLoading(false)
+      }
+    }
   }
 
   async function loadAll() {
@@ -264,8 +290,12 @@ export default function PlatformReferenceDataPage({ recordId }) {
     await loadRecords(selectedDomain)
     if (recordId) {
       const card = await fetchPlatformReferenceRecord(recordId)
+      selectedDomainRef.current = card.record.domain
+      setSelectedDomain(card.record.domain)
+      populateDomainMetadataForm(card.record.domain)
       setSelectedRecord(card.record)
       setRecordForm(recordToForm(card.record))
+      await loadRecords(card.record.domain)
     }
     setLoading(false)
   }
@@ -291,9 +321,14 @@ export default function PlatformReferenceDataPage({ recordId }) {
 
   async function changeDomain(domain, options = {}) {
     const nextFilters = domain === "countries" ? filters : defaultRecordFilters
+    selectedDomainRef.current = domain
     setSelectedDomain(domain)
+    setRecords([])
     setRecordForm(emptyRecord(domain))
     setSelectedRecord(null)
+    setRecordNotice("")
+    setRecordError("")
+    setNotice("")
     populateDomainMetadataForm(domain)
     if (domain !== "countries") setFilters(defaultRecordFilters)
     await loadRecords(domain, nextFilters)
@@ -304,14 +339,19 @@ export default function PlatformReferenceDataPage({ recordId }) {
   }
 
   function editDomainMetadata(domain) {
+    selectedDomainRef.current = domain
     setSelectedDomain(domain)
     populateDomainMetadataForm(domain)
     setNotice("")
+    setRecordNotice("")
+    setRecordError("")
   }
 
   async function selectTab(tab) {
     setActiveTab(tab)
     if (tab === "records") {
+      setRecordNotice("")
+      setRecordError("")
       await loadRecords(selectedDomain)
     }
   }
@@ -340,15 +380,27 @@ export default function PlatformReferenceDataPage({ recordId }) {
 
   async function saveRecord(event) {
     event.preventDefault()
-    const payload = recordPayload(recordForm)
-    const result = selectedRecord
-      ? await updatePlatformReferenceRecord(selectedRecord.id, payload)
-      : await createPlatformReferenceRecord(payload)
-    setSelectedRecord(result.record)
-    setRecordForm(recordToForm(result.record))
-    setSelectedDomain(payload.domain)
-    setNotice("Reference record saved.")
-    await loadRecords(payload.domain)
+    setSavingRecord(true)
+    setRecordNotice("")
+    setRecordError("")
+    try {
+      if (selectedRecord && selectedRecord.domain !== selectedDomain) {
+        throw new Error("Selected record no longer belongs to the active domain. Reload the domain and try again.")
+      }
+      const payload = { ...recordPayload({ ...recordForm, domain: selectedDomain }), domain: selectedDomain }
+      const updatePayload = payload
+      const result = selectedRecord
+        ? await updatePlatformReferenceRecord(selectedRecord.id, updatePayload)
+        : await createPlatformReferenceRecord(payload)
+      setSelectedRecord(result.record)
+      setRecordForm(recordToForm(result.record))
+      setRecordNotice("Global reference record saved.")
+      await loadRecords(selectedDomain, selectedDomain === "countries" ? filters : defaultRecordFilters)
+    } catch (err) {
+      setRecordError(err.message)
+    } finally {
+      setSavingRecord(false)
+    }
   }
 
   async function archiveRecord(record) {
@@ -419,7 +471,9 @@ export default function PlatformReferenceDataPage({ recordId }) {
       apiGet("/api/readiness"),
     ])
     setEnrichmentBatches(batches.items || [])
-    setRecords(recordsResult.items || [])
+    if (enrichmentForm.domain === selectedDomain) {
+      setRecords((recordsResult.items || []).filter((record) => record.domain === selectedDomain))
+    }
     setReferenceReadiness(readinessResult.platform_reference_console || {})
     setNotice("Enrichment import committed.")
   }
@@ -432,7 +486,12 @@ export default function PlatformReferenceDataPage({ recordId }) {
   }
 
   function editRecord(record) {
-    setSelectedDomain(record.domain)
+    if (record.domain !== selectedDomain) {
+      setRecordError("This record belongs to a different domain. Reload the selected domain before editing.")
+      return
+    }
+    setRecordNotice("")
+    setRecordError("")
     setSelectedRecord(record)
     setRecordForm(recordToForm(record))
     setActiveTab("records")
@@ -544,15 +603,20 @@ export default function PlatformReferenceDataPage({ recordId }) {
                       ))}
                     </>
                   ) : null}
-                  <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => loadRecords(selectedDomain)}>Apply filters</button>
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => { setSelectedRecord(null); setRecordForm(emptyRecord(selectedDomain)) }}>New record</button>
+                  <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={recordsLoading} onClick={() => loadRecords(selectedDomain)}>Apply filters</button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => { setSelectedRecord(null); setRecordForm(emptyRecord(selectedDomain)); setRecordNotice(""); setRecordError("") }}>New record</button>
                 </div>
               </section>
 
+              {recordNotice ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{recordNotice}</div> : null}
+              {recordError ? <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{recordError}</div> : null}
+
               <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-                <section className="rounded-lg border border-slate-200 bg-white p-5">
+                <section className="rounded-lg border border-slate-200 bg-white p-5" aria-busy={recordsLoading}>
                   <h3 className="font-semibold text-slate-950">Global Records: {selectedDomainLabel}</h3>
-                  {!records.length ? <EmptyState title="No records found" body="Create or import global records for this platform-owned domain." /> : (
+                  {recordsLoading ? (
+                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">Loading {selectedDomainLabel} records...</div>
+                  ) : !records.length ? <EmptyState title="No records found" body="Create or import global records for this platform-owned domain." /> : (
                     <div className="mt-4 overflow-x-auto rounded-md border border-slate-200">
                       <table className="min-w-full divide-y divide-slate-200 text-sm">
                         {selectedDomainHasCountrySchema ? (
@@ -633,7 +697,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
                     ) : (
                       <Field label="Advanced metadata JSON"><textarea className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" rows={8} value={recordForm.metadata_json} onChange={(event) => setRecordField("metadata_json", event.target.value)} /></Field>
                     )}
-                    <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white">Save global record</button>
+                    <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={savingRecord}>{savingRecord ? "Saving..." : "Save global record"}</button>
                   </form>
                 </section>
               </div>

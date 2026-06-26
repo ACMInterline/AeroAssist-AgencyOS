@@ -4497,6 +4497,7 @@ class PlatformReferenceRecordCreate(BaseModel):
 class PlatformReferenceRecordUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    domain: Optional[str] = None
     code: Optional[str] = None
     label: Optional[str] = None
     description: Optional[str] = None

@@ -835,6 +835,7 @@ Implemented scope:
 - Owner-only platform APIs under `/api/platform/reference/*` for domains, records, suggestion review, dry-run/committed import, CSV/JSON export, and important record cards.
 - Agency reference UI remains consume-and-suggest only.
 - Readiness counters for country record quality gaps and console/import/export/review flags.
+- Platform reference global record save/update now shows visible saving/success/error status, reloads the selected domain after save, and prevents stale cross-domain rows from being edited or displayed.
 
 Avoid adding:
 

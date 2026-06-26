@@ -362,6 +362,10 @@ async def update_platform_reference_record(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
     domain = existing["domain"]
     updates = {key: value for key, value in payload.model_dump(mode="json", exclude_unset=True).items() if value is not None}
+    if "domain" in updates:
+        payload_domain = normalize_domain_code(updates.pop("domain"))
+        if payload_domain != domain:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Reference record belongs to {domain}, not {payload_domain}.")
     if "code" in updates:
         code = normalize_reference_code(updates["code"])
         if not code:
