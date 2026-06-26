@@ -61,6 +61,16 @@ const countryDefaults = {
   source_notes: "",
 }
 
+const defaultRecordFilters = {
+  data_quality_status: "",
+  continent: "",
+  missing_iso3: false,
+  missing_capital_iata: false,
+  missing_currency: false,
+  missing_major_airports: false,
+  missing_national_carrier: false,
+}
+
 function emptyRecord(domain = "countries") {
   return {
     domain,
@@ -203,7 +213,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const [selectedRecord, setSelectedRecord] = useState(null)
   const [recordForm, setRecordForm] = useState(emptyRecord("countries"))
   const [domainForm, setDomainForm] = useState({ domain: "countries", label: "Countries", description: "", category: "geography", is_active: true, sort_order: 10 })
-  const [filters, setFilters] = useState({ data_quality_status: "", continent: "", missing_iso3: false, missing_capital_iata: false, missing_currency: false, missing_major_airports: false, missing_national_carrier: false })
+  const [filters, setFilters] = useState(defaultRecordFilters)
   const [importCsv, setImportCsv] = useState("domain,code,label,iso2_code,iso3_code,continent,capital_city,capital_iata_code,major_airports,official_languages,currency_name,currency_iso_code,national_carrier_name,national_carrier_iata_code,data_quality_status\ncountries,CA,Canada,CA,CAN,North America,Ottawa,YOW,\"YYZ,YVR,YUL\",English|French,Canadian dollar,CAD,Air Canada,AC,draft")
   const [dryRun, setDryRun] = useState(true)
   const [enrichmentForm, setEnrichmentForm] = useState({ template_name: "countries_enriched", domain: "countries", update_mode: "update_missing_only", csv_text: "", source_label: "Manual platform import pack", notes: "" })
@@ -216,13 +226,16 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const [loading, setLoading] = useState(true)
 
   const domainOptions = useMemo(() => domains.map((domain) => domain.domain), [domains])
+  const selectedDomainMeta = useMemo(() => domains.find((domain) => domain.domain === selectedDomain), [domains, selectedDomain])
+  const selectedDomainLabel = selectedDomainMeta?.label || selectedDomain.replaceAll("_", " ")
+  const selectedDomainHasCountrySchema = selectedDomain === "countries"
   const visibleAuditEvents = useMemo(
     () => auditEvents.filter((event) => String(event.event_type || "").includes("reference")).slice(-40).reverse(),
     [auditEvents]
   )
 
-  async function loadRecords(domain = selectedDomain) {
-    const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...filters })
+  async function loadRecords(domain = selectedDomain, nextFilters = filters) {
+    const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...nextFilters })
     setRecords(result.items || [])
   }
 
@@ -264,10 +277,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
     })
   }, [recordId])
 
-  async function changeDomain(domain) {
-    setSelectedDomain(domain)
-    setRecordForm(emptyRecord(domain))
-    setSelectedRecord(null)
+  function populateDomainMetadataForm(domain) {
     const selected = domains.find((item) => item.domain === domain)
     setDomainForm({
       domain,
@@ -277,8 +287,33 @@ export default function PlatformReferenceDataPage({ recordId }) {
       is_active: selected?.is_active !== false,
       sort_order: selected?.sort_order || 100,
     })
-    const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...filters })
-    setRecords(result.items || [])
+  }
+
+  async function changeDomain(domain, options = {}) {
+    const nextFilters = domain === "countries" ? filters : defaultRecordFilters
+    setSelectedDomain(domain)
+    setRecordForm(emptyRecord(domain))
+    setSelectedRecord(null)
+    populateDomainMetadataForm(domain)
+    if (domain !== "countries") setFilters(defaultRecordFilters)
+    await loadRecords(domain, nextFilters)
+    if (options.openRecords) {
+      setActiveTab("records")
+      setNotice(`Showing ${domains.find((item) => item.domain === domain)?.label || domain.replaceAll("_", " ")} records.`)
+    }
+  }
+
+  function editDomainMetadata(domain) {
+    setSelectedDomain(domain)
+    populateDomainMetadataForm(domain)
+    setNotice("")
+  }
+
+  async function selectTab(tab) {
+    setActiveTab(tab)
+    if (tab === "records") {
+      await loadRecords(selectedDomain)
+    }
   }
 
   function setRecordField(name, value) {
@@ -311,6 +346,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
       : await createPlatformReferenceRecord(payload)
     setSelectedRecord(result.record)
     setRecordForm(recordToForm(result.record))
+    setSelectedDomain(payload.domain)
     setNotice("Reference record saved.")
     await loadRecords(payload.domain)
   }
@@ -396,6 +432,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
   }
 
   function editRecord(record) {
+    setSelectedDomain(record.domain)
     setSelectedRecord(record)
     setRecordForm(recordToForm(record))
     setActiveTab("records")
@@ -438,7 +475,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
 
           <div className="flex flex-wrap gap-2">
             {tabs.map(([key, label]) => (
-              <button className={`rounded-full px-3 py-2 text-sm font-semibold ${activeTab === key ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`} key={key} type="button" onClick={() => setActiveTab(key)}>
+              <button className={`rounded-full px-3 py-2 text-sm font-semibold ${activeTab === key ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`} key={key} type="button" onClick={() => selectTab(key)}>
                 {label}
               </button>
             ))}
@@ -450,7 +487,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
                 <h3 className="font-semibold text-slate-950">Domains</h3>
                 <div className="mt-4 grid gap-3">
                   {domains.map((domain) => (
-                    <button className="rounded-lg border border-slate-200 p-4 text-left hover:border-blue-300 hover:bg-blue-50/40" key={domain.domain} type="button" onClick={() => changeDomain(domain.domain)}>
+                    <article className={`rounded-lg border p-4 ${selectedDomain === domain.domain ? "border-blue-300 bg-blue-50/40" : "border-slate-200 bg-white"}`} key={domain.domain}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="font-semibold text-slate-950">{domain.label}</p>
@@ -464,7 +501,11 @@ export default function PlatformReferenceDataPage({ recordId }) {
                         <div><dt>Suggestions</dt><dd className="font-semibold text-slate-950">{domain.pending_suggestion_count}</dd></div>
                         <div><dt>Imports</dt><dd className="font-semibold text-slate-950">{domain.import_batch_count}</dd></div>
                       </dl>
-                    </button>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button className="rounded-md bg-blue-600 px-3 py-2 text-xs font-semibold text-white" type="button" onClick={() => changeDomain(domain.domain, { openRecords: true })}>Open records</button>
+                        <button className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700" type="button" onClick={() => editDomainMetadata(domain.domain)}>Edit metadata</button>
+                      </div>
+                    </article>
                   ))}
                 </div>
               </section>
@@ -490,15 +531,19 @@ export default function PlatformReferenceDataPage({ recordId }) {
               <section className="rounded-lg border border-slate-200 bg-white p-5">
                 <div className="flex flex-wrap items-end gap-3">
                   <Field label="Domain">
-                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={selectedDomain} onChange={(event) => changeDomain(event.target.value)}>
+                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={selectedDomain} onChange={(event) => changeDomain(event.target.value, { openRecords: true })}>
                       {domainOptions.map((domain) => <option key={domain} value={domain}>{domain}</option>)}
                     </select>
                   </Field>
-                  <Field label="Quality"><select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.data_quality_status} onChange={(event) => setFilters((current) => ({ ...current, data_quality_status: event.target.value }))}><option value="">Any</option><option value="draft">Draft</option><option value="verified">Verified</option><option value="needs_review">Needs review</option><option value="deprecated">Deprecated</option></select></Field>
-                  <Field label="Continent"><TextInput value={filters.continent} onChange={(event) => setFilters((current) => ({ ...current, continent: event.target.value }))} /></Field>
-                  {["missing_iso3", "missing_capital_iata", "missing_currency", "missing_major_airports", "missing_national_carrier"].map((key) => (
-                    <label className="mb-2 flex items-center gap-2 text-sm text-slate-700" key={key}><input checked={filters[key]} type="checkbox" onChange={(event) => setFilters((current) => ({ ...current, [key]: event.target.checked }))} /> {key.replaceAll("_", " ")}</label>
-                  ))}
+                  {selectedDomainHasCountrySchema ? (
+                    <>
+                      <Field label="Quality"><select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.data_quality_status} onChange={(event) => setFilters((current) => ({ ...current, data_quality_status: event.target.value }))}><option value="">Any</option><option value="draft">Draft</option><option value="verified">Verified</option><option value="needs_review">Needs review</option><option value="deprecated">Deprecated</option></select></Field>
+                      <Field label="Continent"><TextInput value={filters.continent} onChange={(event) => setFilters((current) => ({ ...current, continent: event.target.value }))} /></Field>
+                      {["missing_iso3", "missing_capital_iata", "missing_currency", "missing_major_airports", "missing_national_carrier"].map((key) => (
+                        <label className="mb-2 flex items-center gap-2 text-sm text-slate-700" key={key}><input checked={filters[key]} type="checkbox" onChange={(event) => setFilters((current) => ({ ...current, [key]: event.target.checked }))} /> {key.replaceAll("_", " ")}</label>
+                      ))}
+                    </>
+                  ) : null}
                   <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white" type="button" onClick={() => loadRecords(selectedDomain)}>Apply filters</button>
                   <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => { setSelectedRecord(null); setRecordForm(emptyRecord(selectedDomain)) }}>New record</button>
                 </div>
@@ -506,19 +551,32 @@ export default function PlatformReferenceDataPage({ recordId }) {
 
               <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
                 <section className="rounded-lg border border-slate-200 bg-white p-5">
-                  <h3 className="font-semibold text-slate-950">Global Records</h3>
+                  <h3 className="font-semibold text-slate-950">Global Records: {selectedDomainLabel}</h3>
                   {!records.length ? <EmptyState title="No records found" body="Create or import global records for this platform-owned domain." /> : (
                     <div className="mt-4 overflow-x-auto rounded-md border border-slate-200">
                       <table className="min-w-full divide-y divide-slate-200 text-sm">
-                        <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Code</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">ISO3</th><th className="px-3 py-2">Capital IATA</th><th className="px-3 py-2">Currency</th><th className="px-3 py-2">Quality</th><th className="px-3 py-2">Actions</th></tr></thead>
+                        {selectedDomainHasCountrySchema ? (
+                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Code</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">ISO3</th><th className="px-3 py-2">Capital IATA</th><th className="px-3 py-2">Currency</th><th className="px-3 py-2">Quality</th><th className="px-3 py-2">Actions</th></tr></thead>
+                        ) : (
+                          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-2">Code</th><th className="px-3 py-2">Label</th><th className="px-3 py-2">Aliases</th><th className="px-3 py-2">Description</th><th className="px-3 py-2">Status / Governance</th><th className="px-3 py-2">Actions</th></tr></thead>
+                        )}
                         <tbody className="divide-y divide-slate-100">
                           {records.map((record) => (
                             <tr key={record.id}>
                               <td className="px-3 py-2 font-semibold text-slate-950">{record.code}</td>
                               <td className="px-3 py-2 text-slate-700">{record.label}</td>
-                              <td className="px-3 py-2 text-slate-600">{record.metadata_json?.iso3_code || "—"}</td>
-                              <td className="px-3 py-2 text-slate-600">{record.metadata_json?.capital_iata_code || "—"}</td>
-                              <td className="px-3 py-2 text-slate-600">{record.metadata_json?.currency_iso_code || "—"}</td>
+                              {selectedDomainHasCountrySchema ? (
+                                <>
+                                  <td className="px-3 py-2 text-slate-600">{record.metadata_json?.iso3_code || "-"}</td>
+                                  <td className="px-3 py-2 text-slate-600">{record.metadata_json?.capital_iata_code || "-"}</td>
+                                  <td className="px-3 py-2 text-slate-600">{record.metadata_json?.currency_iso_code || "-"}</td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="px-3 py-2 text-slate-600">{(record.aliases || []).join(", ") || "-"}</td>
+                                  <td className="px-3 py-2 text-slate-600">{record.description || "-"}</td>
+                                </>
+                              )}
                               <td className="px-3 py-2"><StatusBadge status={record.metadata_json?.data_quality_status || (record.is_active ? "active" : "inactive")} /></td>
                               <td className="px-3 py-2">
                                 <div className="flex gap-2">

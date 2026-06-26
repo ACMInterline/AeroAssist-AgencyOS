@@ -5,6 +5,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from pathlib import Path
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
@@ -12,6 +13,7 @@ OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 AGENCY_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 EXPECTED_PHASE = "phase_35_trip_dossier_foundation"
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def request(method: str, path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> tuple[int, dict]:
@@ -78,6 +80,23 @@ def main() -> int:
     domains = get("/api/platform/reference/domains", OWNER_HEADERS)["items"]
     if "countries" not in {item["domain"] for item in domains}:
         raise AssertionError("Platform reference domains did not include countries.")
+    expected_domains = ["countries", "cities", "airports", "airlines", "currencies", "languages"]
+    for domain in expected_domains:
+        records = get(f"/api/platform/reference/records?domain={domain}&include_inactive=true", OWNER_HEADERS)["items"]
+        if not records:
+            raise AssertionError(f"Platform records endpoint returned no records for {domain}.")
+    cities = get("/api/platform/reference/records?domain=cities&include_inactive=true", OWNER_HEADERS)["items"]
+    if not {"SOFIA", "NEW_YORK", "LONDON"}.intersection({item.get("code") for item in cities}):
+        raise AssertionError("Cities records endpoint did not return expected seeded city records.")
+
+    platform_page = (ROOT / "frontend/src/pages/platform/PlatformReferenceDataPage.jsx").read_text(encoding="utf-8")
+    for needle in ["Open records", "Edit metadata", "selectedDomainHasCountrySchema", "Global Records:", "Status / Governance"]:
+        if needle not in platform_page:
+            raise AssertionError(f"PlatformReferenceDataPage missing domain navigation/table behavior marker: {needle}")
+    agency_page = (ROOT / "frontend/src/pages/agency/ReferenceDataPage.jsx").read_text(encoding="utf-8")
+    for forbidden in ["Create global record", "Edit", "Deactivate", "Upload import batch", "Import / Bulk Upload"]:
+        if forbidden in agency_page:
+            raise AssertionError(f"Agency reference page regressed into management UI: {forbidden}")
 
     now = int(time.time())
     code = f"smoke_country_{now}"
