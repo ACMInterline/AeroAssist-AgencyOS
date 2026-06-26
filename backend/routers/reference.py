@@ -95,6 +95,11 @@ async def require_platform_reference_owner(user: dict) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Platform owner or admin role is required.")
 
 
+async def enforce_approved_reference_read(user: dict, include_inactive: bool) -> None:
+    if include_inactive and not is_platform_owner(user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive reference records are restricted to platform owners.")
+
+
 async def get_suggestion_for_actor(db: Database, suggestion_id: str, user: dict) -> dict:
     suggestion = await db.collection("reference_data_suggestions").find_one({"id": suggestion_id})
     if not suggestion:
@@ -222,6 +227,7 @@ async def search_service_catalogue(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
+    await enforce_approved_reference_read(user, include_inactive)
     records = filter_active(await db.collection("service_catalogue").find_many(), include_inactive)
     items = [record for record in records if matches_service_query(record, q)]
     return {"items": sort_records(items, "service_code", "service_label"), "query": q, "actor_user_id": user["id"]}
@@ -233,6 +239,7 @@ async def list_service_catalogue(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
+    await enforce_approved_reference_read(user, include_inactive)
     records = filter_active(await db.collection("service_catalogue").find_many(), include_inactive)
     grouped = []
     for family in SERVICE_FAMILIES:
@@ -445,6 +452,7 @@ async def search_reference_domain(
     db: Database = Depends(get_database),
 ) -> dict:
     ensure_domain(domain)
+    await enforce_approved_reference_read(user, include_inactive)
     records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many({"domain": domain})]
     items = [record for record in filter_active(records, include_inactive) if matches_query(record, q)]
     return {"domain": domain, "items": sort_records(items), "query": q, "actor_user_id": user["id"]}
@@ -458,6 +466,7 @@ async def list_reference_domain(
     db: Database = Depends(get_database),
 ) -> dict:
     ensure_domain(domain)
+    await enforce_approved_reference_read(user, include_inactive)
     records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many({"domain": domain})]
     return {
         "domain": domain,
@@ -473,6 +482,7 @@ async def list_reference(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
+    await enforce_approved_reference_read(user, include_inactive)
     records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many()]
     return {"items": sort_records(filter_active(records, include_inactive)), "actor_user_id": user["id"]}
 

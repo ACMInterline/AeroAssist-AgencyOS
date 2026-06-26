@@ -217,6 +217,9 @@ async def readiness() -> dict:
             "reference_data_enabled": True,
             "service_catalogue_enabled": True,
             "global_reference_governance_enabled": True,
+            "reference_governance_permissions_enforced": True,
+            "agency_reference_mutation_blocked": True,
+            "agency_reference_consume_suggest_only": True,
             "reference_suggestion_queue_enabled": True,
             "reference_bulk_import_enabled": True,
             "reference_domain_count": len(REFERENCE_DOMAINS),
@@ -231,6 +234,7 @@ async def readiness() -> dict:
         },
         "platform_reference_console": {
             "platform_reference_console_enabled": True,
+            "platform_reference_management_enabled": True,
             "enriched_country_schema_enabled": True,
             "platform_reference_import_enabled": True,
             "platform_reference_export_enabled": True,
