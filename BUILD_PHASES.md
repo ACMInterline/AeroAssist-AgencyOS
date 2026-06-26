@@ -54,6 +54,12 @@ The repository currently contains:
 - Phase 34.3: Reference data enrichment import packs and aviation normalization.
 - Phase 35: Trip dossier foundation and request-to-trip operational shell.
 
+Phase 35 navigation hotfix:
+
+- Platform Owner navigation no longer includes a global Agency Workspace shortcut; agency workspace entry is contextual from platform agency management/detail pages.
+- `/platform/agencies` and `/platform/airlines` render defensive management/foundation pages instead of blank routes.
+- Agency reference data governance remains consume-and-suggest only.
+
 ## Phase 0: Architecture Contract And Foundations
 
 Goal: Establish canonical specifications before code.

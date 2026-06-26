@@ -27,11 +27,21 @@ export default function PlatformAgenciesPage() {
   const [form, setForm] = useState(initialForm)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const agencies = state?.agencies || []
 
   async function load() {
-    const summary = await apiGet("/api/platform/summary")
-    const agencies = await apiGet("/api/agencies")
-    setState({ summary, agencies: agencies.items })
+    setError("")
+    const [summaryResult, agenciesResult] = await Promise.allSettled([
+      apiGet("/api/platform/summary"),
+      apiGet("/api/agencies"),
+    ])
+    const summary = summaryResult.status === "fulfilled" ? summaryResult.value : {}
+    const agenciesPayload = agenciesResult.status === "fulfilled" ? agenciesResult.value : { items: [] }
+    const loadErrors = [summaryResult, agenciesResult]
+      .filter((result) => result.status === "rejected")
+      .map((result) => result.reason?.message || "Unable to load platform agencies data.")
+    setState({ summary, agencies: agenciesPayload.items || [] })
+    if (loadErrors.length) setError(loadErrors.join(" "))
   }
 
   useEffect(() => {
@@ -64,7 +74,7 @@ export default function PlatformAgenciesPage() {
 
   return (
     <PlatformLayout user={state?.summary?.current_user}>
-      <ProtectedRoute loading={!state && !error} error={error}>
+      <ProtectedRoute loading={!state && !error}>
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -73,12 +83,13 @@ export default function PlatformAgenciesPage() {
                 <h2 className="mt-2 text-2xl font-semibold text-slate-950">Agencies</h2>
                 <p className="mt-2 text-sm text-slate-600">Create your first agency workspace to begin operating AeroAssist.</p>
               </div>
-              <StatusBadge status={`${state?.agencies?.length || 0} agencies`} />
+              <StatusBadge status={`${agencies.length} agencies`} />
             </div>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
-            {state?.agencies?.length ? (
+            {error ? <p className="mt-4 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+            {agencies.length ? (
               <div className="mt-6 divide-y divide-slate-100 rounded-md border border-slate-200">
-                {state.agencies.map((agency) => (
+                {agencies.map((agency) => (
                   <a className="grid gap-3 p-4 hover:bg-slate-50 md:grid-cols-[1fr_auto]" href={`/platform/agencies/${agency.id}`} key={agency.id}>
                     <div>
                       <p className="font-semibold text-slate-950">{agency.name}</p>

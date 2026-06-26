@@ -26,10 +26,6 @@ export default function PlatformLayout({ children, user }) {
               <Building2 className="h-4 w-4" />
               Agencies
             </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/agency">
-              <Building2 className="h-4 w-4" />
-              Agency Workspace
-            </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airlines">
               <Plane className="h-4 w-4" />
               Airlines / Knowledge
