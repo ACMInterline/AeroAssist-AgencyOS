@@ -256,7 +256,8 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
 
     agency_owner_user = await ensure_platform_user("agency.owner@aeroassist.dev", "Demo Agency Owner")
     agency_agent_user = await ensure_platform_user("agency.agent@aeroassist.dev", "Demo Agency Agent")
-    for staff_user, role in [(agency_owner_user, "agency_owner"), (agency_agent_user, "agency_agent")]:
+    agency_readonly_user = await ensure_platform_user("agency.readonly@aeroassist.dev", "Demo Agency Readonly")
+    for staff_user, role in [(agency_owner_user, "agency_owner"), (agency_agent_user, "agency_agent"), (agency_readonly_user, "agency_readonly")]:
         existing_staff = await memberships.find_one({"agency_id": agency["id"], "user_id": staff_user["id"]})
         if existing_staff is None:
             await memberships.insert_one(
@@ -273,6 +274,7 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
     await ensure_identity(DEMO_OWNER_EMAIL, "platform_user")
     await ensure_identity("agency.owner@aeroassist.dev", "agency_staff")
     await ensure_identity("agency.agent@aeroassist.dev", "agency_staff")
+    await ensure_identity("agency.readonly@aeroassist.dev", "agency_staff")
 
     for record in core_reference_records():
         existing = await references.find_one({"domain": record.domain, "key": record.key})

@@ -18,7 +18,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `RequestCaseFlag` | `request_case_flags` | Derived and manual operational flags/risk/attention markers | Agency/workspace | Request, normalized children | Case flags | Canonical foundation |
 | `RequestPet`, `RequestPetSegmentTransport` | `request_pets`, `request_pet_segment_transport` | Pet/service animal request and segment transport applicability | Agency/workspace | Request, passenger, segment | Pet transport | Canonical foundation |
 | `RequestSpecialItem`, `RequestSpecialItemSegment` | `request_special_items`, `request_special_item_segments` | Special item and segment transport applicability | Agency/workspace | Request, passenger, segment | Special baggage/items | Canonical foundation |
-| `TripDossier`, `TripPassenger`, `TripSegment` | `trip_dossiers`, `trip_passengers`, `trip_segments` | Canonical trip dossier placeholders | Agency | Requests, passengers, segments, future bookings/offers | Trip/dossier | Foundation |
+| `TripDossier`, `TripPassenger`, `TripSegment`, `TripServiceItem`, `TripTimelineEvent` | `trip_dossiers`, `trip_passengers`, `trip_segments`, `trip_service_items`, `trip_timeline_events` | Operational trip dossier shell and copied request context | Agency/workspace | Linked requests, copied passengers, copied segments, copied service scopes, future bookings/offers | Trip/dossier | Canonical foundation |
 | Offer models | `offers`, `offer_*` collections | Manual offer foundation | Agency | Request, passengers, routes, fares, services | Offer/comparison | Legacy-compatible foundation |
 | Booking/ticket/EMD models | `bookings`, `booking_passengers`, `booking_segments`, `ticket_records`, `emd_records` | Booking and document mirror/tracking | Agency | Requests/bookings/passengers/segments | Booking/GDS mirror | Transitional |
 | Invoice/payment models | `invoices`, `invoice_line_items`, `payment_records` | Finance tracking | Agency | Booking/client | Invoice/payment | Transitional |
@@ -44,7 +44,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 - Current stack remains FastAPI/Pydantic, repository-backed Mongo/in-memory database, React frontend, and Docker deployment.
 - Collection names are not destructively renamed for blueprint alignment.
 - Segment-scoped request service, pet, and special item classes are now populated by Phase 34 normalization.
-- Trip dossier classes remain additive placeholders for future UI/API phases.
+- Trip dossier classes now support manual trip creation, request-to-trip conversion, request linking, copied request child records, and trip timelines while preserving request independence.
 - Reference Data is platform-owned global master data; agency suggestions improve it only after platform review.
 - Reference Data is intentionally separate from Airline Intelligence policy rules; it supplies lookup values and service catalogue metadata, not airline-specific acceptance decisions.
 - Future policy learning should mirror the suggestion workflow through agency-local overrides, evidence, and reviewed promotion to global policy rules.

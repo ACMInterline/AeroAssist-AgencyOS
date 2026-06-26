@@ -424,8 +424,9 @@ async def list_requests(
         filters["source"] = source
     items = [item for item in await db.collection("travel_requests").find_many(filters) if matches_search(item, search)]
     clients = {client["id"]: client for client in await db.collection("client_profiles").find_many({"agency_id": agency_id})}
+    trips = {trip["id"]: trip for trip in await db.collection("trip_dossiers").find_many({"agency_id": agency_id})}
     items.sort(key=lambda item: str(item.get("updated_at") or ""), reverse=True)
-    return {"items": [{**item, "client": clients.get(item["client_id"])} for item in items]}
+    return {"items": [{**item, "client": clients.get(item["client_id"]), "linked_trip": trips.get(item.get("trip_id"))} for item in items]}
 
 
 @router.post("/requests", status_code=status.HTTP_201_CREATED)
@@ -454,9 +455,11 @@ async def get_request(agency_id: str, request_id: str, user: dict = Depends(get_
     await require_read(db, agency_id, user)
     request = await get_request_or_404(db, agency_id, request_id)
     client = await get_client_or_404(db, agency_id, request["client_id"])
+    linked_trip = await db.collection("trip_dossiers").find_one({"agency_id": agency_id, "id": request["trip_id"]}) if request.get("trip_id") else None
     return {
         "request": request,
         "client": client,
+        "linked_trip": linked_trip,
         "passengers": await db.collection("request_passengers").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
         "segments": await db.collection("request_segments").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
         "services": await db.collection("requested_services").find_many({"agency_id": agency_id, "request_id": request_id}),

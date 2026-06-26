@@ -31,6 +31,9 @@ import RequestDetailPage from "./pages/agency/RequestDetailPage"
 import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
 import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
 import RequestsPage from "./pages/agency/RequestsPage"
+import TripCreatePage from "./pages/agency/TripCreatePage"
+import TripDetailPage from "./pages/agency/TripDetailPage"
+import TripsPage from "./pages/agency/TripsPage"
 import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
 import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
 import LoginPage from "./pages/auth/LoginPage"
@@ -84,6 +87,8 @@ const routes = {
   "/agency/document-templates": DocumentTemplatesPage,
   "/agency/portal-actions": AgencyPortalActionsPage,
   "/agency/request-intakes": RequestIntakesListPage,
+  "/agency/trips": TripsPage,
+  "/agency/trips/new": TripCreatePage,
   "/agency/refunds-exchanges": RefundExchangeCasesPage,
   "/agency/refunds-exchanges/new": RefundExchangeCaseCreatePage,
   "/portal": PortalDashboardPage,
@@ -149,6 +154,11 @@ export default function App() {
   const requestMatch = window.location.pathname.match(/^\/agency\/requests\/([^/]+)$/)
   if (requestMatch) {
     return <RequestDetailPage requestId={requestMatch[1]} />
+  }
+
+  const tripMatch = window.location.pathname.match(/^\/agency\/trips\/([^/]+)$/)
+  if (tripMatch && tripMatch[1] !== "new") {
+    return <TripDetailPage tripId={tripMatch[1]} />
   }
 
   const requestIntakeMatch = window.location.pathname.match(/^\/agency\/request-intakes\/([^/]+)$/)
@@ -264,6 +274,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/requests") {
     return <RequestsPage />
+  }
+
+  if (window.location.pathname === "/agency/trips") {
+    return <TripsPage />
   }
 
   if (window.location.pathname === "/agency/offers") {

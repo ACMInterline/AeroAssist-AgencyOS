@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_reference, portal, refunds_exchanges, reference, request_intakes, requests, websites
+from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_reference, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.secret_service import check_secret
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 34.3 reference enrichment import packs.",
+    description="AeroAssist AgencyOS API foundation through Phase 35 trip dossier foundation.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_3_reference_data_enrichment_import_packs",
+        "phase": "phase_35_trip_dossier_foundation",
     }
 
 
@@ -142,6 +142,11 @@ async def readiness() -> dict:
     normalized_passenger_segment_service_count = await database.collection("request_passenger_segment_services").count()
     normalized_request_pet_count = await database.collection("request_pets").count()
     normalized_request_special_item_count = await database.collection("request_special_items").count()
+    trip_dossier_count = await database.collection("trip_dossiers").count()
+    linked_trip_request_count = len([item for item in await database.collection("travel_requests").find_many() if item.get("trip_id")])
+    trip_passenger_count = await database.collection("trip_passengers").count()
+    trip_segment_count = await database.collection("trip_segments").count()
+    trip_service_item_count = await database.collection("trip_service_items").count()
     branded_logo_count = len(
         [
             item
@@ -154,7 +159,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_34_3_reference_data_enrichment_import_packs",
+        "phase": "phase_35_trip_dossier_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -259,6 +264,21 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Segment-scoped services, pets, and special items are informational and may be zero before request normalization.",
         },
+        "trip_dossiers": {
+            "trip_dossier_foundation_enabled": True,
+            "request_to_trip_conversion_enabled": True,
+            "trip_linking_enabled": True,
+            "trip_passenger_copy_enabled": True,
+            "trip_segment_copy_enabled": True,
+            "trip_service_scope_copy_enabled": True,
+            "trip_dossier_count": trip_dossier_count,
+            "linked_trip_request_count": linked_trip_request_count,
+            "trip_passenger_count": trip_passenger_count,
+            "trip_segment_count": trip_segment_count,
+            "trip_service_item_count": trip_service_item_count,
+            "readiness_required": False,
+            "diagnostic": "Trip dossiers are operational shells created manually or from requests; counts are informational.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -292,6 +312,7 @@ app.include_router(passengers.router)
 app.include_router(request_intakes.public_router)
 app.include_router(request_intakes.staff_router)
 app.include_router(requests.router)
+app.include_router(trips.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Building2, ClipboardList, Database, Files, Globe2, Inbox, Menu, Palette, Plus, Settings, Sparkles, UserRound, Users } from "lucide-react"
+import { Building2, ClipboardList, Database, Files, Globe2, Inbox, Menu, Palette, Plane, Plus, Settings, Sparkles, UserRound, Users } from "lucide-react"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 import { agencyThemeStyle } from "../lib/theme"
@@ -7,6 +7,7 @@ import { agencyThemeStyle } from "../lib/theme"
 const primaryNav = [
   { label: "Dashboard", description: "Workspace home", href: "/agency", icon: Building2 },
   { label: "Requests", description: "Operational work", href: "/agency/requests", icon: ClipboardList },
+  { label: "Trips", description: "Dossiers", href: "/agency/trips", icon: Plane },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },
   { label: "Passengers", description: "Travelers", href: "/agency/passengers", icon: UserRound },

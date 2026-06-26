@@ -72,6 +72,7 @@ export default function RequestsPage() {
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{request.request_reference}</p>
                       <h3 className="mt-1 font-semibold text-slate-950 group-hover:text-blue-700">{request.title}</h3>
                       <p className="mt-1 text-sm text-slate-600">{request.client?.display_name || "Client"} · {request.route_summary || "Route not set"}</p>
+                      {request.linked_trip ? <span className="mt-2 inline-flex rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">{request.linked_trip.trip_reference}</span> : null}
                     </div>
                     <RequestStatusBadge status={request.status} />
                   </div>

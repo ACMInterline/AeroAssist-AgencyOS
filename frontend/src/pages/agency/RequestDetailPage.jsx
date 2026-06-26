@@ -112,6 +112,17 @@ export default function RequestDetailPage({ requestId }) {
     await load()
   }
 
+  async function createTripDossier() {
+    const result = await apiPost(`/api/agencies/${state.agency.id}/trips/from-request/${requestId}`)
+    window.location.href = `/agency/trips/${result.trip.id}`
+  }
+
+  async function unlinkTripDossier() {
+    if (!state.linked_trip) return
+    await apiPost(`/api/agencies/${state.agency.id}/trips/${state.linked_trip.id}/unlink-request/${requestId}`)
+    await load()
+  }
+
   const allowedRelationships = (state?.agencyRelationships || []).filter((relationship) => relationship.client_id === state?.request?.client_id && relationship.passenger_id === forms.passenger_id && relationship.status === "active")
 
   return (
@@ -172,6 +183,29 @@ export default function RequestDetailPage({ requestId }) {
               ["Client-visible", state?.request?.client_visible_notes || "None"],
             ]} />
           </section>
+          <Panel title="Trip Dossier">
+            {state?.linked_trip ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">{state.linked_trip.trip_reference} · {state.linked_trip.trip_title}</p>
+                  <p className="mt-1 text-sm text-slate-600">{state.linked_trip.trip_status.replaceAll("_", " ")} · {state.linked_trip.route_summary || "Route pending"}</p>
+                  <p className="mt-1 text-xs text-slate-500">This request is linked to a trip dossier. The request remains an independent intake/case record.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/trips/${state.linked_trip.id}`}>Open trip</a>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={unlinkTripDossier}>Unlink</button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-950">No trip dossier linked</p>
+                  <p className="mt-1 text-sm text-slate-600">Create an operational shell when this request becomes active trip work. The original request will not be replaced.</p>
+                </div>
+                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createTripDossier}>Create Trip Dossier</button>
+              </div>
+            )}
+          </Panel>
           <AirlineIntelLinkPanel
             title="Search Airline Intelligence"
             airlineCode={state.segments.find((segment) => segment.preferred_airline_code)?.preferred_airline_code}

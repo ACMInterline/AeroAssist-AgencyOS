@@ -58,6 +58,20 @@ Phase 34 implements the canonical request child model:
 - `request_special_items` stores request/passenger-linked item details, while `request_special_item_segments` stores exact segment transport applicability.
 - `request_case_flags` summarize medical, document, pet, special-item, and scoped-service conditions but do not replace exact child records.
 
+## Phase 35 Trip Dossier Foundation
+
+Phase 35 implements the Trip Dossier as the agency operational shell:
+
+- `trip_dossiers` have independent generated IDs and `TRP-YYYYMMDD-XXXX` references.
+- `TravelRequest.trip_id` is an additive primary trip back-reference only; it is not the trip identity.
+- `TripDossier.linked_request_ids` records the request scope for the operational shell.
+- `trip_passengers`, `trip_segments`, and `trip_service_items` copy normalized request child records for operational use while preserving source request child IDs.
+- Request-to-trip conversion does not delete, replace, or destructively mutate request records.
+- `trip_timeline_events` and `audit_events` record trip creation, conversion, linking, unlinking, child copying, summary rebuilding, updating, and archiving.
+- Pets and special items remain request-level child records in this phase and are summarized on the trip only.
+
+Offer, booking, ticket, EMD, document, invoice, payment, claim, and communication workflows should attach through the trip dossier where relevant in future phases, but Phase 35 does not implement those expansions.
+
 ## Service Catalogue
 
 Phase 33 implements `service_catalogue` as controlled master lookup data. It includes:

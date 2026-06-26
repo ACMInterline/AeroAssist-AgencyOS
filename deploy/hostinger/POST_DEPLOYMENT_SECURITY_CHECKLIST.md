@@ -29,7 +29,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_34_3_reference_data_enrichment_import_packs`
+- API phase reports `phase_35_trip_dossier_foundation`
 - platform login verified
 - agency login verified
 - portal login verified
@@ -42,6 +42,7 @@ Run this after the first deployment and after major operational changes.
 - agency users cannot access platform reference enrichment templates or import endpoints
 - reference enrichment dry-run and commit reports are non-destructive unless platform owner selects commit/update mode
 - agency form profiles cannot hide system-required fields or expose internal-only fields publicly
+- trip dossier management is staff-only; agency readonly users can view, agency agents/admins/owners can manage, and client portal users cannot access `/api/agencies/*/trips`
 - SMTP secret references are masked and never display raw secret values
 
 ## Staff Invitations

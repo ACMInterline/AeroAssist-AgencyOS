@@ -11,7 +11,7 @@ AgencyOS already surpasses the blueprint in production deployment readiness, bac
 | CRM clients | Implemented foundation | `ClientProfile`, `ClientPassengerRelationship`, `backend/routers/clients.py` | Needs richer account roles and segmentation later | Phase 34+ | Low | Payer/requester must remain separate from beneficiaries. |
 | Passenger registry | Implemented foundation | `PassengerProfile`, passenger routes | Needs deeper identity reconciliation and document readiness | Phase 34+ | Medium | Passenger is canonical person/traveler registry, not always the payer. |
 | Requests/intake | Implemented and ahead | `RequestIntake`, `TravelRequest`, request/intake routers | Needs full segment-scoped service model UI | Phase 34 | Medium | Public, portal, and staff UX should share canonical intake semantics. |
-| Trips/dossiers | Foundation placeholders added | `TripDossier`, `TripPassenger`, `TripSegment` | No trip UI/workflow yet | Phase 35 | Medium | Trip is dossier shell; request id must not be used as trip id. |
+| Trips/dossiers | Implemented foundation | `TripDossier`, `TripPassenger`, `TripSegment`, `TripServiceItem`, `TripTimelineEvent`, `backend/routers/trips.py`, `/agency/trips` | Future offer/booking/ticket/document/invoice attachment remains | Phase 36+ | Medium | Trip is dossier shell; request id is never used as trip id. Requests remain independent. |
 | Offers/comparison | Partial legacy/foundation | offer models/routes | Needs modern comparison matrix and trip attachment rules | Phase 36 | High | Offers may exist before trip but accepted offers should attach early. |
 | Bookings/GDS mirror | Tracking foundation exists | `Booking`, `BookingSegment`, booking routes | No GDS import/mirror workflow | Phase 37 | High | Imported records must preserve raw source payloads. |
 | Tickets mirror | Tracking foundation exists | `TicketRecord` | Needs GDS/ticket mirror provenance | Phase 37 | High | Mirror records should not imply ticketing integration. |
@@ -38,5 +38,5 @@ AgencyOS already surpasses the blueprint in production deployment readiness, bac
 
 - Keep existing collection names and add fields/models only where safe.
 - Treat current request/booking/invoice modules as existing foundations, not as data to be migrated or renamed.
-- Add trip dossier and segment-scoped applicability foundations before adding UI workflows.
+- Keep trip dossier and segment-scoped applicability foundations additive before attaching offer, booking, ticket, document, invoice, and portal workflows.
 - Do not import GDS records or execute external integrations until mirror provenance and raw-payload retention rules are implemented.

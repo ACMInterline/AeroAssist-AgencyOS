@@ -52,6 +52,7 @@ The repository currently contains:
 - Phase 34.1: Global field library and agency form profiles.
 - Phase 34.2: Platform reference data console and enriched countries.
 - Phase 34.3: Reference data enrichment import packs and aviation normalization.
+- Phase 35: Trip dossier foundation and request-to-trip operational shell.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -849,15 +850,19 @@ Avoid adding:
 
 ### Phase 35: Trip Dossier Foundation
 
-Recommended scope:
+Implemented scope:
 
-- Trip dossier creation/attachment from accepted/commercialized work.
-- Trip passenger/segment views and request-to-trip linkage.
-- Dossier activity timeline and document/task attachment points.
+- Additive `trip_dossiers`, `trip_passengers`, `trip_segments`, `trip_service_items`, and `trip_timeline_events` foundations.
+- Manual trip dossier creation and request-to-trip conversion that never reuses `request_id` as `trip_id`.
+- Request linking/unlinking with `TravelRequest.trip_id` as an additive primary back-reference and `TripDossier.linked_request_ids` for dossier scope.
+- Idempotent copying of normalized request passengers, segments, and service scopes into trip-level child records with source IDs preserved.
+- Trip summary rebuild, archive, audit/timeline events, and readiness counters.
+- Agency trip APIs under `/api/agencies/{agency_id}/trips`.
+- Agency UI routes `/agency/trips`, `/agency/trips/new`, and `/agency/trips/{trip_id}` plus request detail/list linked-trip integration.
 
 Avoid adding:
 
-- GDS import, ticketing execution, or automatic fulfillment.
+- Offer builder expansion, GDS/NDC import, booking/ticket/EMD import, pricing, airline policy automation, invoices/payments, portal trip views, or automatic fulfillment.
 
 ### Phase 36: Offer Builder And Comparison Matrix
 

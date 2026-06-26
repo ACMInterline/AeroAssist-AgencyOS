@@ -401,6 +401,8 @@ class TripType(str, Enum):
     ONE_WAY = "one_way"
     ROUND_TRIP = "round_trip"
     MULTI_CITY = "multi_city"
+    OPEN_JAW = "open_jaw"
+    COMPLEX = "complex"
     UNKNOWN = "unknown"
 
 
@@ -431,10 +433,50 @@ class PassengerLinkMode(str, Enum):
 
 class TripStatus(str, Enum):
     DRAFT = "draft"
-    ACTIVE = "active"
+    PLANNING = "planning"
+    QUOTED = "quoted"
+    BOOKED = "booked"
+    TICKETED = "ticketed"
+    IN_TRAVEL = "in_travel"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
     ARCHIVED = "archived"
+
+
+class TripDossierSource(str, Enum):
+    MANUAL = "manual"
+    REQUEST_CONVERSION = "request_conversion"
+    INTAKE_CONVERSION = "intake_conversion"
+    IMPORTED = "imported"
+
+
+class TripPassengerType(str, Enum):
+    ADULT = "adult"
+    CHILD = "child"
+    INFANT = "infant"
+    YOUTH = "youth"
+    SENIOR = "senior"
+    UNKNOWN = "unknown"
+
+
+class TripSegmentStatus(str, Enum):
+    PLANNED = "planned"
+    QUOTED = "quoted"
+    BOOKED = "booked"
+    TICKETED = "ticketed"
+    FLOWN = "flown"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+
+
+class TripServiceStatus(str, Enum):
+    REQUESTED = "requested"
+    CHECKING = "checking"
+    QUOTED = "quoted"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    FULFILLED = "fulfilled"
 
 
 class OperationalServiceCategory(str, Enum):
@@ -1448,42 +1490,132 @@ class RequestStatusUpdate(BaseModel):
 
 class TripDossier(BaseDocument):
     agency_id: str
-    client_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    primary_client_id: Optional[str] = None
     primary_request_id: Optional[str] = None
+    linked_request_ids: List[str] = Field(default_factory=list)
     trip_reference: str
-    title: str
-    status: TripStatus = TripStatus.DRAFT
-    dossier_summary: Optional[str] = None
+    trip_title: str
+    trip_status: TripStatus = TripStatus.DRAFT
+    trip_type: TripType = TripType.UNKNOWN
+    passenger_count: int = 0
+    segment_count: int = 0
+    service_count: int = 0
+    route_summary: Optional[str] = None
+    date_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+    source: TripDossierSource = TripDossierSource.MANUAL
     raw_source_payloads: List[Dict[str, Any]] = Field(default_factory=list)
     created_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
+    archived_at: Optional[datetime] = None
     audit_metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TripPassenger(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     trip_id: str
-    passenger_id: str
-    request_passenger_id: Optional[str] = None
-    role_in_trip: RequestPassengerRole = RequestPassengerRole.TRAVELER
-    snapshot_display_name: str
-    status: str = "active"
+    source_request_passenger_id: Optional[str] = None
+    passenger_profile_id: Optional[str] = None
+    display_name: str
+    passenger_type: TripPassengerType = TripPassengerType.UNKNOWN
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    document_summary: Optional[str] = None
+    assistance_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    sort_order: int = 0
 
 
 class TripSegment(BaseDocument):
     agency_id: str
+    workspace_id: Optional[str] = None
     trip_id: str
-    request_segment_id: Optional[str] = None
-    sequence: int
-    origin_text: str
-    destination_text: str
+    source_request_segment_id: Optional[str] = None
+    segment_order: int
+    origin_airport_code: str
+    destination_airport_code: str
     departure_date: Optional[date] = None
+    departure_time: Optional[str] = None
     arrival_date: Optional[date] = None
-    marketing_airline: Optional[str] = None
-    operating_airline: Optional[str] = None
+    arrival_time: Optional[str] = None
+    marketing_airline_code: Optional[str] = None
+    operating_airline_code: Optional[str] = None
     flight_number: Optional[str] = None
-    raw_source_payload: Dict[str, Any] = Field(default_factory=dict)
-    status: str = "active"
+    cabin: Optional[str] = None
+    booking_class: Optional[str] = None
+    segment_status: TripSegmentStatus = TripSegmentStatus.PLANNED
+
+
+class TripServiceItem(BaseDocument):
+    agency_id: str
+    workspace_id: Optional[str] = None
+    trip_id: str
+    source_request_service_id: Optional[str] = None
+    source_passenger_segment_service_id: Optional[str] = None
+    service_code: str
+    service_label: str
+    service_family_code: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    segment_ids: List[str] = Field(default_factory=list)
+    status: TripServiceStatus = TripServiceStatus.REQUESTED
+    notes: Optional[str] = None
+
+
+class TripTimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    workspace_id: Optional[str] = None
+    trip_id: str
+    actor_user_id: Optional[str] = None
+    event_type: str
+    title: str
+    summary: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=now_utc)
+
+
+class TripDossierCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workspace_id: Optional[str] = None
+    primary_client_id: Optional[str] = None
+    trip_title: str
+    trip_status: TripStatus = TripStatus.DRAFT
+    trip_type: TripType = TripType.UNKNOWN
+    route_summary: Optional[str] = None
+    date_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class TripDossierUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    trip_title: Optional[str] = None
+    trip_status: Optional[TripStatus] = None
+    trip_type: Optional[TripType] = None
+    primary_client_id: Optional[str] = None
+    route_summary: Optional[str] = None
+    date_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+
+
+class TripLinkRequestPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: str
 
 
 class RequestCaseFlag(BaseDocument):
