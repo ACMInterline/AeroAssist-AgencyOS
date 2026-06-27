@@ -130,6 +130,15 @@ export default function TripDetailPage({ tripId }) {
             <Panel title="Segments"><List items={state?.segments} empty="No trip segments copied yet" render={(item) => `${item.segment_order}. ${item.origin_airport_code} to ${item.destination_airport_code}${item.departure_date ? ` · ${item.departure_date}` : ""}${item.flight_number ? ` · ${item.flight_number}` : ""}`} /></Panel>
           </section>
           <Panel title="Services"><List items={state?.services} empty="No trip services copied yet" render={(item) => `${item.service_code} · ${item.service_label} · ${item.status.replaceAll("_", " ")} · ${item.passenger_ids.length} pax / ${item.segment_ids.length} seg`} /></Panel>
+          <Panel title="Special Services">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Passenger service checks</p>
+                <p className="mt-1 text-sm text-slate-600">Rules evaluation and SSR/OSI previews for this trip.</p>
+              </div>
+              <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/trips/${tripId}/special-services`}>Open Special Services</a>
+            </div>
+          </Panel>
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {["Offers", "Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}

@@ -53,12 +53,20 @@ The repository currently contains:
 - Phase 34.2: Platform reference data console and enriched countries.
 - Phase 34.3: Reference data enrichment import packs and aviation normalization.
 - Phase 35: Trip dossier foundation and request-to-trip operational shell.
+- Phase 36.0: Unified Airline Intelligence, Rules & Services foundation.
 
 Phase 35 navigation hotfix:
 
 - Platform Owner navigation no longer includes a global Agency Workspace shortcut; agency workspace entry is contextual from platform agency management/detail pages.
 - `/platform/agencies` and `/platform/airlines` render defensive management/foundation pages instead of blank routes.
 - Agency reference data governance remains consume-and-suggest only.
+
+Phase 36.0 foundation note:
+
+- Platform owns global airline intelligence, airline rules core records, and unified exception rules.
+- Agencies consume and evaluate rules through request/trip special-services workspaces; they do not edit platform global rules.
+- SSR/OSI generation is deterministic preview text for supported service codes and remains staff-reviewed.
+- Full visual airline dashboards, AI reasoning engines, offer builder expansion, ticketing, document designer, and 100-airline datasets remain future phases.
 
 ## Phase 0: Architecture Contract And Foundations
 
@@ -873,7 +881,25 @@ Avoid adding:
 
 - Offer builder expansion, GDS/NDC import, booking/ticket/EMD import, pricing, airline policy automation, invoices/payments, portal trip views, or automatic fulfillment.
 
-### Phase 36: Offer Builder And Comparison Matrix
+### Phase 36.0: Unified Airline Intelligence, Rules & Services Foundation
+
+Implemented scope:
+
+- Additive platform-owned airline intelligence foundation records beyond the earlier airline knowledge shell.
+- `AirlineRulesCore` as the shared future source of truth for UMNR, PRM, medical, pets/service animals, baggage, seating, meals, cargo, VIP, POS, and general airline rules.
+- `UnifiedExceptionRule` and a safe exception engine with exact matching and JSON/path comparisons only; no unsafe expression evaluation.
+- `PassengerServiceRequest` as the agency-owned bridge for request, trip, booking, passenger, and segment special-service checks.
+- Deterministic SSR/OSI preview generation for core UMNR, PRM, medical, pets, service animal, seating, meal, cargo, regulated item, VIP, and diplomatic service types.
+- Platform APIs and `/platform/rules-services` console for airline rules, exception rules, and simulation.
+- Agency APIs and request/trip special-services workspace routes for service creation, evaluation, and SSR/OSI preview.
+- Idempotent seed script for LH, TK, and AF sample rules/services foundation data and a Phase 36 smoke script.
+- Readiness flags and non-blocking counts under `rules_and_services`.
+
+Avoid adding:
+
+- Full offer builder bundles, visual maps, airline dashboards, AI reasoning/calls, ticketing, document designer, automatic booking, scraping, or large fake airline datasets.
+
+### Future Phase: Offer Builder And Comparison Matrix
 
 Recommended scope:
 

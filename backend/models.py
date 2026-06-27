@@ -3912,6 +3912,471 @@ class AirlineKnowledgeUsageEventCreate(BaseModel):
     note: Optional[str] = None
 
 
+class RulesGovernanceStatus(str, Enum):
+    DRAFT = "draft"
+    NEEDS_REVIEW = "needs_review"
+    APPROVED = "approved"
+    PUBLISHED = "published"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class UnifiedExceptionCategory(str, Enum):
+    PETS = "PETS"
+    SERVICE_ANIMAL = "SERVICE_ANIMAL"
+    UMNR = "UMNR"
+    PRM = "PRM"
+    MEDICAL = "MEDICAL"
+    CARGO = "CARGO"
+    VIP = "VIP"
+    SEATING = "SEATING"
+    MEAL = "MEAL"
+    REFUND = "REFUND"
+    REBOOK = "REBOOK"
+    GENERAL = "GENERAL"
+
+
+class UnifiedExceptionAction(str, Enum):
+    ALLOW = "ALLOW"
+    BLOCK = "BLOCK"
+    WARN = "WARN"
+    REQUIRE_DOC = "REQUIRE_DOC"
+    OVERRIDE = "OVERRIDE"
+
+
+class PassengerServiceCategory(str, Enum):
+    UMNR = "UMNR"
+    PRM = "PRM"
+    MEDICAL = "MEDICAL"
+    PETS = "PETS"
+    SERVICE_ANIMAL = "SERVICE_ANIMAL"
+    CARGO = "CARGO"
+    VIP = "VIP"
+    SEATING = "SEATING"
+    MEAL = "MEAL"
+    OTHER = "OTHER"
+
+
+class PassengerServiceRequestStatus(str, Enum):
+    REQUESTED = "requested"
+    VALIDATED = "validated"
+    BLOCKED = "blocked"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+
+
+class AirlineIntelligenceProfile(BaseDocument):
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    icao_code: Optional[str] = None
+    numeric_code: Optional[str] = None
+    legal_name: Optional[str] = None
+    alliance: Optional[str] = None
+    headquarters: Optional[str] = None
+    base_country: Optional[str] = None
+    hubs_json: List[Dict[str, Any]] = Field(default_factory=list)
+    subsidiaries_json: List[Dict[str, Any]] = Field(default_factory=list)
+    group_membership: Optional[str] = None
+    operational_notes: Optional[str] = None
+    brand_assets_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineIntelligenceProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    icao_code: Optional[str] = None
+    numeric_code: Optional[str] = None
+    legal_name: Optional[str] = None
+    alliance: Optional[str] = None
+    headquarters: Optional[str] = None
+    base_country: Optional[str] = None
+    hubs_json: List[Dict[str, Any]] = Field(default_factory=list)
+    subsidiaries_json: List[Dict[str, Any]] = Field(default_factory=list)
+    group_membership: Optional[str] = None
+    operational_notes: Optional[str] = None
+    brand_assets_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineIntelligenceProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    icao_code: Optional[str] = None
+    numeric_code: Optional[str] = None
+    legal_name: Optional[str] = None
+    alliance: Optional[str] = None
+    headquarters: Optional[str] = None
+    base_country: Optional[str] = None
+    hubs_json: Optional[List[Dict[str, Any]]] = None
+    subsidiaries_json: Optional[List[Dict[str, Any]]] = None
+    group_membership: Optional[str] = None
+    operational_notes: Optional[str] = None
+    brand_assets_json: Optional[Dict[str, Any]] = None
+    source_metadata_json: Optional[Dict[str, Any]] = None
+    governance_status: Optional[RulesGovernanceStatus] = None
+
+
+class AirlineContact(BaseDocument):
+    airline_id: str
+    contact_type: str
+    label: str
+    value: Optional[str] = None
+    region_scope: Optional[str] = None
+    service_scope: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineFleetType(BaseDocument):
+    airline_id: str
+    aircraft_type: str
+    manufacturer: Optional[str] = None
+    model_name: Optional[str] = None
+    fleet_notes: Optional[str] = None
+    capabilities_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AircraftTailNumber(BaseDocument):
+    airline_id: str
+    fleet_type_id: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    tail_number: str
+    registration_country: Optional[str] = None
+    status: str = "active"
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AircraftConfiguration(BaseDocument):
+    airline_id: str
+    fleet_type_id: Optional[str] = None
+    aircraft_type: str
+    configuration_name: str
+    cabin_layout_json: Dict[str, Any] = Field(default_factory=dict)
+    service_capabilities_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AircraftSeatmap(BaseDocument):
+    airline_id: str
+    aircraft_configuration_id: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    seatmap_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineRoute(BaseDocument):
+    airline_id: str
+    origin_airport_code: str
+    destination_airport_code: str
+    operating_airline_id: Optional[str] = None
+    aircraft_types_json: List[Dict[str, Any]] = Field(default_factory=list)
+    schedule_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineFareFamily(BaseDocument):
+    airline_id: str
+    family_code: str
+    family_name: str
+    cabin: Optional[str] = None
+    benefits_json: Dict[str, Any] = Field(default_factory=dict)
+    restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineRbdMatrixRow(BaseDocument):
+    airline_id: str
+    rbd_code: str
+    cabin: Optional[str] = None
+    fare_family_code: Optional[str] = None
+    rules_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineFareRule(BaseDocument):
+    airline_id: str
+    rule_code: Optional[str] = None
+    fare_family_code: Optional[str] = None
+    rbd_code: Optional[str] = None
+    rule_category: str = "general"
+    rules_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineAncillary(BaseDocument):
+    airline_id: str
+    service_code: str
+    service_name: str
+    category: Optional[str] = None
+    pricing_json: Dict[str, Any] = Field(default_factory=dict)
+    fulfillment_json: Dict[str, Any] = Field(default_factory=dict)
+    restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineInterlineAgreement(BaseDocument):
+    airline_id: str
+    partner_airline_id: Optional[str] = None
+    partner_iata_code: Optional[str] = None
+    agreement_type: str = "interline"
+    scope_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineDistributionProfile(BaseDocument):
+    airline_id: str
+    channels_json: Dict[str, Any] = Field(default_factory=dict)
+    ndc_json: Dict[str, Any] = Field(default_factory=dict)
+    gds_json: Dict[str, Any] = Field(default_factory=dict)
+    servicing_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlinePssParameters(BaseDocument):
+    airline_id: str
+    pss_name: Optional[str] = None
+    parameters_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineGdsParameters(BaseDocument):
+    airline_id: str
+    gds_code: str
+    parameters_json: Dict[str, Any] = Field(default_factory=dict)
+    ticketing_json: Dict[str, Any] = Field(default_factory=dict)
+    servicing_json: Dict[str, Any] = Field(default_factory=dict)
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineExceptionRule(BaseDocument):
+    airline_id: str
+    category: str
+    rule_name: str
+    condition_json: Dict[str, Any] = Field(default_factory=dict)
+    action_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    active: bool = True
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class AirlineRulesCore(BaseDocument):
+    airline_id: str
+    iata_code: Optional[str] = None
+    umnr_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    prm_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    medical_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_service_animals_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    pos_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    musical_instruments_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    weapons_regulated_items_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    cargo_oversized_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    vip_protocol_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    baggage_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    seating_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    meal_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    general_notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+
+
+class AirlineRulesCorePayload(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    umnr_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    prm_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    medical_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_service_animals_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    pos_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    musical_instruments_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    weapons_regulated_items_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    cargo_oversized_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    vip_protocol_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    baggage_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    seating_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    meal_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    general_notes: Optional[str] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+
+
+class UnifiedExceptionRule(BaseDocument):
+    category: UnifiedExceptionCategory
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    airport_code: Optional[str] = None
+    route_origin: Optional[str] = None
+    route_destination: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    condition_expression: Optional[Any] = None
+    action: UnifiedExceptionAction
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    priority: int = 100
+    active: bool = True
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class UnifiedExceptionRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    category: UnifiedExceptionCategory
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    airport_code: Optional[str] = None
+    route_origin: Optional[str] = None
+    route_destination: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    condition_expression: Optional[Any] = None
+    action: UnifiedExceptionAction
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    priority: int = 100
+    active: bool = True
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class UnifiedExceptionRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    category: Optional[UnifiedExceptionCategory] = None
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    airport_code: Optional[str] = None
+    route_origin: Optional[str] = None
+    route_destination: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    condition_expression: Optional[Any] = None
+    action: Optional[UnifiedExceptionAction] = None
+    required_documents_json: Optional[List[Dict[str, Any]]] = None
+    notes: Optional[str] = None
+    priority: Optional[int] = None
+    active: Optional[bool] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    source_metadata_json: Optional[Dict[str, Any]] = None
+
+
+class PassengerServiceRequest(BaseDocument):
+    agency_id: str
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    category: PassengerServiceCategory
+    service_type: str
+    ssr_code: Optional[str] = None
+    osi_code: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    gds_text: Optional[str] = None
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_violations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluation_result_json: Dict[str, Any] = Field(default_factory=dict)
+    status: PassengerServiceRequestStatus = PassengerServiceRequestStatus.REQUESTED
+
+
+class PassengerServiceRequestCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    category: PassengerServiceCategory
+    service_type: str
+    ssr_code: Optional[str] = None
+    osi_code: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    gds_text: Optional[str] = None
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_violations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluation_result_json: Dict[str, Any] = Field(default_factory=dict)
+    status: PassengerServiceRequestStatus = PassengerServiceRequestStatus.REQUESTED
+
+
+class PassengerServiceRequestUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    category: Optional[PassengerServiceCategory] = None
+    service_type: Optional[str] = None
+    ssr_code: Optional[str] = None
+    osi_code: Optional[str] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+    gds_text: Optional[str] = None
+    required_documents_json: Optional[List[Dict[str, Any]]] = None
+    warnings_json: Optional[List[Dict[str, Any]]] = None
+    policy_violations_json: Optional[List[Dict[str, Any]]] = None
+    generated_ssr_json: Optional[List[Dict[str, Any]]] = None
+    generated_osi_json: Optional[List[Dict[str, Any]]] = None
+    evaluation_result_json: Optional[Dict[str, Any]] = None
+    status: Optional[PassengerServiceRequestStatus] = None
+
+
+class RulesServicesSimulationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    airline_id: Optional[str] = None
+    iata_code: Optional[str] = None
+    route_origin: Optional[str] = None
+    route_destination: Optional[str] = None
+    aircraft_type: Optional[str] = None
+    passenger_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    service_category: UnifiedExceptionCategory = UnifiedExceptionCategory.GENERAL
+    service_type: str
+    service_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    segment_refs_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
 class DocumentTemplateScope(str, Enum):
     PLATFORM_DEFAULT = "platform_default"
     AGENCY_CUSTOM = "agency_custom"

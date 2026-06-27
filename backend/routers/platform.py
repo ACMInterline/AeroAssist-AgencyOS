@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_35_trip_dossier_foundation",
+        "phase": "phase_36_rules_services_foundation",
     }
 
 
@@ -76,6 +76,9 @@ async def summary(
             "airline_procedures": await db.collection("airline_procedures").count(),
             "airline_emd_notes": await db.collection("airline_emd_rule_notes").count(),
             "airline_overrides": await db.collection("agency_airline_overrides").count(),
+            "airline_rules_core": await db.collection("airline_rules_core").count(),
+            "unified_exception_rules": await db.collection("unified_exception_rules").count(),
+            "passenger_service_requests": await db.collection("passenger_service_requests").count(),
             "document_templates": await db.collection("document_templates").count(),
             "rendered_documents": await db.collection("rendered_documents").count(),
             "document_exports": await db.collection("document_exports").count(),

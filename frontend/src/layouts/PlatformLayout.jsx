@@ -1,4 +1,8 @@
-import { Building2, Database, Plane, ShieldCheck } from "lucide-react"
+import Building2 from "lucide-react/dist/esm/icons/building-2.js"
+import ClipboardCheck from "lucide-react/dist/esm/icons/clipboard-check.js"
+import Database from "lucide-react/dist/esm/icons/database.js"
+import Plane from "lucide-react/dist/esm/icons/plane.js"
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -33,6 +37,10 @@ export default function PlatformLayout({ children, user }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/reference">
               <Database className="h-4 w-4" />
               Reference Data
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/rules-services">
+              <ClipboardCheck className="h-4 w-4" />
+              Rules & Services
             </a>
           </nav>
           <div className="flex items-center gap-3">

@@ -22,6 +22,7 @@ import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetai
 import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
 import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
+import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
 import PassengersPage from "./pages/agency/PassengersPage"
 import PaymentsPage from "./pages/agency/PaymentsPage"
@@ -45,6 +46,7 @@ import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
+import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
 import PortalActionsPage from "./pages/portal/PortalActionsPage"
 import PortalBookingsPage from "./pages/portal/PortalBookingsPage"
@@ -75,6 +77,7 @@ const routes = {
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/airlines": AirlinesPage,
   "/platform/reference": PlatformReferenceDataPage,
+  "/platform/rules-services": PlatformRulesServicesPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -156,9 +159,19 @@ export default function App() {
     return <RequestDetailPage requestId={requestMatch[1]} />
   }
 
+  const requestSpecialServicesMatch = window.location.pathname.match(/^\/agency\/requests\/([^/]+)\/special-services$/)
+  if (requestSpecialServicesMatch) {
+    return <SpecialServicesPage requestId={requestSpecialServicesMatch[1]} />
+  }
+
   const tripMatch = window.location.pathname.match(/^\/agency\/trips\/([^/]+)$/)
   if (tripMatch && tripMatch[1] !== "new") {
     return <TripDetailPage tripId={tripMatch[1]} />
+  }
+
+  const tripSpecialServicesMatch = window.location.pathname.match(/^\/agency\/trips\/([^/]+)\/special-services$/)
+  if (tripSpecialServicesMatch) {
+    return <SpecialServicesPage tripId={tripSpecialServicesMatch[1]} />
   }
 
   const requestIntakeMatch = window.location.pathname.match(/^\/agency\/request-intakes\/([^/]+)$/)

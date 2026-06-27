@@ -1,4 +1,4 @@
-import { Plane } from "lucide-react"
+import Plane from "lucide-react/dist/esm/icons/plane.js"
 
 const isProduction = import.meta.env.PROD || import.meta.env.VITE_APP_ENV === "production"
 

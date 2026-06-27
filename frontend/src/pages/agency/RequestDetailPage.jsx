@@ -211,6 +211,15 @@ export default function RequestDetailPage({ requestId }) {
             airlineCode={state.segments.find((segment) => segment.preferred_airline_code)?.preferred_airline_code}
             serviceCodes={state.services.map((service) => service.service_code)}
           />
+          <Panel title="Special Services">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-950">Passenger service checks</p>
+                <p className="mt-1 text-sm text-slate-600">Rules evaluation and SSR/OSI previews for this request.</p>
+              </div>
+              <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/requests/${requestId}/special-services`}>Open Special Services</a>
+            </div>
+          </Panel>
           <Panel title="Case flags">
             <List items={state.case_flags} empty="No derived case flags yet" render={(item) => `${item.flag_label} · ${item.severity} · ${item.source}`} />
           </Panel>

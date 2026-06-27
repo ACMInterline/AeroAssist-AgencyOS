@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_reference, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.secret_service import check_secret
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 35 trip dossier foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36 unified rules and services foundation.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_35_trip_dossier_foundation",
+        "phase": "phase_36_rules_services_foundation",
     }
 
 
@@ -147,6 +147,9 @@ async def readiness() -> dict:
     trip_passenger_count = await database.collection("trip_passengers").count()
     trip_segment_count = await database.collection("trip_segments").count()
     trip_service_item_count = await database.collection("trip_service_items").count()
+    airline_rules_core_count = await database.collection("airline_rules_core").count()
+    exception_rule_count = await database.collection("unified_exception_rules").count()
+    passenger_service_request_count = await database.collection("passenger_service_requests").count()
     branded_logo_count = len(
         [
             item
@@ -159,7 +162,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_35_trip_dossier_foundation",
+        "phase": "phase_36_rules_services_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -283,6 +286,20 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Trip dossiers are operational shells created manually or from requests; counts are informational.",
         },
+        "rules_and_services": {
+            "rules_services_registry_enabled": True,
+            "airline_rules_core_enabled": True,
+            "exception_engine_enabled": True,
+            "ssr_osi_generator_enabled": True,
+            "passenger_service_requests_enabled": True,
+            "platform_rules_services_console_enabled": True,
+            "agency_special_services_workspace_enabled": True,
+            "airline_rules_core_count": airline_rules_core_count,
+            "exception_rule_count": exception_rule_count,
+            "passenger_service_request_count": passenger_service_request_count,
+            "readiness_required": False,
+            "diagnostic": "Rules and Services foundation is additive; empty rules and exception collections require manual verification but do not affect deployment readiness.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -310,6 +327,8 @@ async def audit_events() -> dict:
 
 app.include_router(auth.router)
 app.include_router(platform.router)
+app.include_router(platform_airline_intelligence.router)
+app.include_router(platform_rules_services.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
@@ -317,6 +336,7 @@ app.include_router(request_intakes.public_router)
 app.include_router(request_intakes.staff_router)
 app.include_router(requests.router)
 app.include_router(trips.router)
+app.include_router(agency_special_services.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)
