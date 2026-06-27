@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_rules_services_foundation",
+        "phase": "phase_36_1_rule_aware_offer_builder",
     }
 
 
@@ -65,6 +65,12 @@ async def summary(
             "offers": await db.collection("offers").count(),
             "offer_routes": await db.collection("offer_route_alternatives").count(),
             "offer_fare_options": await db.collection("offer_fare_options").count(),
+            "offer_workspaces": await db.collection("offer_workspaces").count(),
+            "offer_options": await db.collection("offer_options").count(),
+            "offer_builder_segments": await db.collection("offer_builder_segments").count(),
+            "offer_fare_bundles": await db.collection("offer_fare_bundles").count(),
+            "offer_pricing_lines": await db.collection("offer_pricing_lines").count(),
+            "offer_comparison_snapshots": await db.collection("offer_comparison_snapshots").count(),
             "bookings": await db.collection("bookings").count(),
             "tickets": await db.collection("ticket_records").count(),
             "emds": await db.collection("emd_records").count(),

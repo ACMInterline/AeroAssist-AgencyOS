@@ -2592,6 +2592,293 @@ class OfferTimelineEvent(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class OfferWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    IN_REVIEW = "in_review"
+    SHARED = "shared"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+    ARCHIVED = "archived"
+
+
+class OfferOptionType(str, Enum):
+    FLIGHT = "flight"
+    PACKAGE = "package"
+    SERVICE_ONLY = "service_only"
+    MANUAL = "manual"
+
+
+class OfferOptionStatus(str, Enum):
+    DRAFT = "draft"
+    RECOMMENDED = "recommended"
+    ALTERNATE = "alternate"
+    REJECTED = "rejected"
+    ARCHIVED = "archived"
+
+
+class OfferProviderName(str, Enum):
+    MANUAL = "manual"
+    TRAVELPORT = "travelport"
+    AMADEUS = "amadeus"
+    NDC = "ndc"
+    SUPPLIER = "supplier"
+    OTHER = "other"
+
+
+class OfferBuilderPricingLineType(str, Enum):
+    BASE_FARE = "base_fare"
+    TAX = "tax"
+    SURCHARGE = "surcharge"
+    SERVICE_FEE = "service_fee"
+    COMMISSION = "commission"
+    DISCOUNT = "discount"
+    ANCILLARY = "ancillary"
+    OTHER = "other"
+
+
+class OfferWorkspace(BaseDocument):
+    agency_id: str
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    title: str
+    status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
+    currency: str = "EUR"
+    client_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+
+
+class OfferWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    title: str
+    status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
+    currency: str = "EUR"
+    client_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+
+
+class OfferWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    title: Optional[str] = None
+    status: Optional[OfferWorkspaceStatus] = None
+    currency: Optional[str] = None
+    client_summary_json: Optional[Dict[str, Any]] = None
+    internal_notes: Optional[str] = None
+
+
+class OfferOption(BaseDocument):
+    agency_id: str
+    workspace_id: str
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    label: str
+    option_type: OfferOptionType = OfferOptionType.FLIGHT
+    status: OfferOptionStatus = OfferOptionStatus.DRAFT
+    recommendation_rank: Optional[int] = None
+    recommendation_tag: Optional[str] = None
+    main_airline_id: Optional[str] = None
+    main_airline_code: Optional[str] = None
+    provider_name: OfferProviderName = OfferProviderName.MANUAL
+    source_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    rules_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    service_feasibility_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+
+
+class OfferOptionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    label: str
+    option_type: OfferOptionType = OfferOptionType.FLIGHT
+    status: OfferOptionStatus = OfferOptionStatus.DRAFT
+    recommendation_rank: Optional[int] = None
+    recommendation_tag: Optional[str] = None
+    main_airline_id: Optional[str] = None
+    main_airline_code: Optional[str] = None
+    provider_name: OfferProviderName = OfferProviderName.MANUAL
+    source_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    rules_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    service_feasibility_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+
+
+class OfferOptionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    label: Optional[str] = None
+    option_type: Optional[OfferOptionType] = None
+    status: Optional[OfferOptionStatus] = None
+    recommendation_rank: Optional[int] = None
+    recommendation_tag: Optional[str] = None
+    main_airline_id: Optional[str] = None
+    main_airline_code: Optional[str] = None
+    provider_name: Optional[OfferProviderName] = None
+    source_payload_json: Optional[Dict[str, Any]] = None
+    rules_summary_json: Optional[Dict[str, Any]] = None
+    service_feasibility_json: Optional[Dict[str, Any]] = None
+    pricing_summary_json: Optional[Dict[str, Any]] = None
+    warnings_json: Optional[List[Dict[str, Any]]] = None
+    internal_notes: Optional[str] = None
+
+
+class OfferRoutingOption(BaseDocument):
+    agency_id: str
+    option_id: str
+    origin_airport: str
+    destination_airport: str
+    route_path_json: List[Dict[str, Any]] = Field(default_factory=list)
+    total_duration_minutes: Optional[int] = None
+    stops_count: int = 0
+    validating_carrier_code: Optional[str] = None
+    marketing_carriers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    operating_carriers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    mileage_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class OfferRoutingOptionCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin_airport: str
+    destination_airport: str
+    route_path_json: List[Dict[str, Any]] = Field(default_factory=list)
+    total_duration_minutes: Optional[int] = None
+    stops_count: int = 0
+    validating_carrier_code: Optional[str] = None
+    marketing_carriers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    operating_carriers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    mileage_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class OfferBuilderSegment(BaseDocument):
+    agency_id: str
+    option_id: str
+    routing_id: Optional[str] = None
+    sequence: int
+    marketing_airline_code: str
+    operating_airline_code: Optional[str] = None
+    flight_number: Optional[str] = None
+    origin_airport: str
+    destination_airport: str
+    departure_at: Optional[datetime] = None
+    arrival_at: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_basis: Optional[str] = None
+    segment_status: str = "proposed"
+    source_payload_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferBuilderSegmentCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    routing_id: Optional[str] = None
+    sequence: int
+    marketing_airline_code: str
+    operating_airline_code: Optional[str] = None
+    flight_number: Optional[str] = None
+    origin_airport: str
+    destination_airport: str
+    departure_at: Optional[datetime] = None
+    arrival_at: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_basis: Optional[str] = None
+    segment_status: str = "proposed"
+    source_payload_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferFareBundle(BaseDocument):
+    agency_id: str
+    option_id: str
+    fare_family_name: str
+    cabin_class: str
+    booking_class: Optional[str] = None
+    included_baggage_json: Dict[str, Any] = Field(default_factory=dict)
+    seat_selection_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    change_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    refund_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    meal_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    lounge_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    priority_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    upgrade_eligibility_json: Dict[str, Any] = Field(default_factory=dict)
+    restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferFareBundleCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fare_family_name: str
+    cabin_class: str
+    booking_class: Optional[str] = None
+    included_baggage_json: Dict[str, Any] = Field(default_factory=dict)
+    seat_selection_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    change_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    refund_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    meal_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    lounge_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    priority_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    upgrade_eligibility_json: Dict[str, Any] = Field(default_factory=dict)
+    restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferPricingLine(BaseDocument):
+    agency_id: str
+    option_id: str
+    line_type: OfferBuilderPricingLineType
+    label: str
+    amount: float = 0
+    currency: str = "EUR"
+    passenger_scope: Optional[str] = None
+    segment_scope: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferPricingLineCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    line_type: OfferBuilderPricingLineType
+    label: str
+    amount: float = 0
+    currency: str = "EUR"
+    passenger_scope: Optional[str] = None
+    segment_scope: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferComparisonSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    workspace_id: str
+    matrix_json: Dict[str, Any] = Field(default_factory=dict)
+    generated_at: datetime = Field(default_factory=now_utc)
+    generated_by_user_id: Optional[str] = None
+
+
+class OfferRecommendationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    option_id: str
+    tag: Optional[str] = None
+    rank: Optional[int] = None
+
 
 class RefundExchangeCaseType(str, Enum):
     REFUND = "refund"

@@ -69,6 +69,16 @@ export default function TripDetailPage({ tripId }) {
     await load()
   }
 
+  async function createOrOpenOfferWorkspace() {
+    try {
+      const existing = await apiGet(`/api/agencies/${state.agency.id}/offer-workspaces?trip_id=${encodeURIComponent(tripId)}`)
+      const workspace = existing.items?.[0] || (await apiPost(`/api/agencies/${state.agency.id}/trips/${tripId}/offer-workspace`)).workspace
+      window.location.href = `/agency/offers/${workspace.id}/builder`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const unlinkedRequests = (state?.requests || []).filter((request) => !request.trip_id || request.trip_id === tripId)
 
   return (
@@ -84,6 +94,7 @@ export default function TripDetailPage({ tripId }) {
                 <p className="mt-1 text-sm text-slate-600">{state?.trip?.route_summary || "Route pending"} · {state?.trip?.date_summary || "Dates pending"}</p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenOfferWorkspace}>Create / open offer workspace</button>
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={rebuild}>Rebuild summary</button>
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={archive}>Archive</button>
               </div>
@@ -140,8 +151,8 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {["Offers", "Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
           </section>
 
           <Panel title="Timeline"><List items={state?.timeline} empty="No trip timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>

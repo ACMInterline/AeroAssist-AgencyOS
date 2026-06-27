@@ -117,6 +117,16 @@ export default function RequestDetailPage({ requestId }) {
     window.location.href = `/agency/trips/${result.trip.id}`
   }
 
+  async function createOrOpenOfferWorkspace() {
+    try {
+      const existing = await apiGet(`/api/agencies/${state.agency.id}/offer-workspaces?request_id=${encodeURIComponent(requestId)}`)
+      const workspace = existing.items?.[0] || (await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/offer-workspace`)).workspace
+      window.location.href = `/agency/offers/${workspace.id}/builder`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   async function unlinkTripDossier() {
     if (!state.linked_trip) return
     await apiPost(`/api/agencies/${state.agency.id}/trips/${state.linked_trip.id}/unlink-request/${requestId}`)
@@ -139,9 +149,9 @@ export default function RequestDetailPage({ requestId }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <RequestStatusBadge status={state?.request?.status} />
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/offers/new?requestId=${requestId}`}>
-                Create offer
-              </a>
+              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenOfferWorkspace}>
+                Create / open offer workspace
+              </button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.request?.status === "archived" ? "Restore" : "Archive"}
               </button>
@@ -175,7 +185,7 @@ export default function RequestDetailPage({ requestId }) {
                 </select>
                 <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Update</button>
               </form>
-              <p className="mt-3 text-sm text-slate-600">Offer creation comes next and is intentionally not active here.</p>
+              <p className="mt-3 text-sm text-slate-600">Offer workspace status is managed in the offer builder.</p>
             </div>
             <InfoCard title="Notes" rows={[
               ["Client notes", state?.request?.client_notes || "None"],

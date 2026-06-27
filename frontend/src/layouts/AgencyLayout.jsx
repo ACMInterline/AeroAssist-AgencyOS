@@ -21,6 +21,7 @@ const primaryNav = [
   { label: "Dashboard", description: "Workspace home", href: "/agency", icon: Building2 },
   { label: "Requests", description: "Operational work", href: "/agency/requests", icon: ClipboardList },
   { label: "Trips", description: "Dossiers", href: "/agency/trips", icon: Plane },
+  { label: "Offers", description: "Compare options", href: "/agency/offers", icon: Sparkles },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },
   { label: "Passengers", description: "Travelers", href: "/agency/passengers", icon: UserRound },
@@ -33,7 +34,6 @@ const secondaryNav = [
   { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: Files },
   { label: "Reference Data", description: "Lookups and services", href: "/agency/reference", icon: Database },
   { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: ClipboardList },
-  { label: "Offers / Pricing", description: "Coming soon", icon: Sparkles, disabled: true },
   { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: Settings },
 ]
 

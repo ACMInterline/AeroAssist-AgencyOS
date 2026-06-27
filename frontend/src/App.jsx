@@ -15,8 +15,9 @@ import DocumentsPage from "./pages/agency/DocumentsPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
-import OfferDetailPage from "./pages/agency/OfferDetailPage"
-import OffersPage from "./pages/agency/OffersPage"
+import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
+import OfferWorkspaceDetailPage from "./pages/agency/OfferWorkspaceDetailPage"
+import OfferWorkspacesPage from "./pages/agency/OfferWorkspacesPage"
 import RefundExchangeCaseCreatePage from "./pages/agency/RefundExchangeCaseCreatePage"
 import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetailPage"
 import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
@@ -179,9 +180,14 @@ export default function App() {
     return <RequestIntakeDetailPage intakeId={requestIntakeMatch[1]} />
   }
 
+  const offerBuilderMatch = window.location.pathname.match(/^\/agency\/offers\/([^/]+)\/builder$/)
+  if (offerBuilderMatch) {
+    return <OfferBuilderPage workspaceId={offerBuilderMatch[1]} />
+  }
+
   const offerMatch = window.location.pathname.match(/^\/agency\/offers\/([^/]+)$/)
   if (offerMatch) {
-    return <OfferDetailPage offerId={offerMatch[1]} />
+    return <OfferWorkspaceDetailPage workspaceId={offerMatch[1]} />
   }
 
   const bookingMatch = window.location.pathname.match(/^\/agency\/bookings\/([^/]+)$/)
@@ -294,7 +300,7 @@ export default function App() {
   }
 
   if (window.location.pathname === "/agency/offers") {
-    return <OffersPage />
+    return <OfferWorkspacesPage />
   }
 
   if (window.location.pathname === "/agency/bookings") {

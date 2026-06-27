@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.secret_service import check_secret
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36 unified rules and services foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.1 rule-aware offer builder.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_rules_services_foundation",
+        "phase": "phase_36_1_rule_aware_offer_builder",
     }
 
 
@@ -150,6 +150,12 @@ async def readiness() -> dict:
     airline_rules_core_count = await database.collection("airline_rules_core").count()
     exception_rule_count = await database.collection("unified_exception_rules").count()
     passenger_service_request_count = await database.collection("passenger_service_requests").count()
+    offer_workspace_count = await database.collection("offer_workspaces").count()
+    offer_option_count = await database.collection("offer_options").count()
+    offer_builder_segment_count = await database.collection("offer_builder_segments").count()
+    offer_fare_bundle_count = await database.collection("offer_fare_bundles").count()
+    offer_pricing_line_count = await database.collection("offer_pricing_lines").count()
+    offer_comparison_snapshot_count = await database.collection("offer_comparison_snapshots").count()
     branded_logo_count = len(
         [
             item
@@ -162,7 +168,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_rules_services_foundation",
+        "phase": "phase_36_1_rule_aware_offer_builder",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -300,6 +306,24 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Rules and Services foundation is additive; empty rules and exception collections require manual verification but do not affect deployment readiness.",
         },
+        "offer_builder": {
+            "offer_workspace_foundation_enabled": True,
+            "rule_aware_offer_options_enabled": True,
+            "internal_comparison_matrix_enabled": True,
+            "workspace_request_entrypoint_enabled": True,
+            "workspace_trip_entrypoint_enabled": True,
+            "rule_evaluation_in_offer_builder_enabled": True,
+            "pricing_recalculation_enabled": True,
+            "recommendation_flagging_enabled": True,
+            "offer_workspace_count": offer_workspace_count,
+            "offer_option_count": offer_option_count,
+            "offer_segment_count": offer_builder_segment_count,
+            "offer_fare_bundle_count": offer_fare_bundle_count,
+            "offer_pricing_line_count": offer_pricing_line_count,
+            "offer_comparison_snapshot_count": offer_comparison_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Offer builder workspaces and internal comparison matrices are additive; missing option data requires manual completion but does not affect deployment readiness.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -337,6 +361,7 @@ app.include_router(request_intakes.staff_router)
 app.include_router(requests.router)
 app.include_router(trips.router)
 app.include_router(agency_special_services.router)
+app.include_router(agency_offer_builder.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)
