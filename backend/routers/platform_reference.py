@@ -12,7 +12,12 @@ from models import (
     GlobalReferenceRecord,
     PlatformReferenceRecordCreate,
     PlatformReferenceRecordUpdate,
+    ReferenceEnrichmentPack,
+    ReferenceEnrichmentPackCreate,
+    ReferenceEnrichmentPackPreviewRequest,
     PlatformReferenceImportRequest,
+    ReferenceImportApplyRequest,
+    ReferenceImportPreviewRequest,
     ReferenceDomainMetadata,
     ReferenceDomainMetadataCreate,
     ReferenceDomainMetadataUpdate,
@@ -26,6 +31,18 @@ from services.reference_enrichment_service import (
     list_templates,
     read_template,
     run_reference_enrichment_import,
+)
+from services.reference_domain_usage_service import (
+    get_domain_usage,
+    list_domain_usage,
+    reference_action_required,
+    reference_health,
+)
+from services.reference_import_template_service import (
+    apply_reference_import,
+    get_import_template,
+    list_import_templates,
+    preview_reference_import,
 )
 from services.reference_data_service import (
     COUNTRY_METADATA_FIELDS,
@@ -210,6 +227,75 @@ async def list_platform_reference_domains(
     db: Database = Depends(get_database),
 ) -> dict:
     return {"items": await platform_domains(db), "actor_user_id": user["id"]}
+
+
+@router.get("/domain-usage")
+async def list_reference_domain_usage(user: dict = PlatformReferenceOwner) -> dict:
+    return {"items": list_domain_usage(), "actor_user_id": user["id"]}
+
+
+@router.get("/domain-usage/{domain_key}")
+async def get_reference_domain_usage(domain_key: str, user: dict = PlatformReferenceOwner) -> dict:
+    usage = get_domain_usage(domain_key)
+    if not usage:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference domain usage definition not found.")
+    return {"domain": usage, "actor_user_id": user["id"]}
+
+
+@router.get("/health")
+async def get_reference_health(
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    return {**await reference_health(db), "actor_user_id": user["id"]}
+
+
+@router.get("/records/action-required")
+async def list_reference_action_required(
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    return {"items": await reference_action_required(db), "actor_user_id": user["id"]}
+
+
+@router.get("/import/templates")
+async def list_reference_import_templates(user: dict = PlatformReferenceOwner) -> dict:
+    return {"items": list_import_templates(), "actor_user_id": user["id"]}
+
+
+@router.get("/import/templates/{domain_key}")
+async def get_reference_import_template(domain_key: str, user: dict = PlatformReferenceOwner) -> dict:
+    template = get_import_template(domain_key)
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference import template not found.")
+    return {"template": template, "actor_user_id": user["id"]}
+
+
+@router.post("/import/preview")
+async def preview_platform_reference_import(
+    payload: ReferenceImportPreviewRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    result = await preview_reference_import(db, payload.domain, payload.csv_text, payload.mode)
+    return {**result, "actor_user_id": user["id"]}
+
+
+@router.post("/import/apply")
+async def apply_platform_reference_import(
+    payload: ReferenceImportApplyRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    result = await apply_reference_import(
+        db,
+        payload.domain,
+        payload.filename or f"{payload.domain}.csv",
+        payload.csv_text,
+        payload.mode,
+        user["id"],
+    )
+    return {**result, "actor_user_id": user["id"]}
 
 
 @router.post("/domains", status_code=status.HTTP_201_CREATED)
@@ -628,6 +714,255 @@ async def list_reference_enrichment_batches(
         if (item.get("error_report_json") or {}).get("enrichment")
     ]
     return {"items": sorted(items, key=lambda item: str(item.get("created_at")), reverse=True), "actor_user_id": user["id"]}
+
+
+def default_enrichment_packs() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": "airport_timezone_city_country_pack",
+            "pack_key": "airport_timezone_city_country_pack",
+            "label": "Airport timezone, city, and country pack",
+            "description": "Enriches airport records with city, country, timezone, and geospatial metadata used by route, offer, and readiness workflows.",
+            "target_domain": "airports",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["city_code", "country_code", "timezone", "latitude", "longitude"],
+            "validation_rules_json": get_import_template("airports") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["request_segments", "trip_segments", "offer_routes", "booking_readiness"],
+        },
+        {
+            "id": "airline_distribution_profile_pack",
+            "pack_key": "airline_distribution_profile_pack",
+            "label": "Airline distribution profile pack",
+            "description": "Enriches airline records with identifiers and distribution metadata for airline intelligence, rules, and offers.",
+            "target_domain": "airlines",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["iata_code", "icao_code", "country_code", "distribution_profile"],
+            "validation_rules_json": get_import_template("airlines") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["airline_intelligence", "rules_services", "offer_builder", "booking_readiness"],
+        },
+        {
+            "id": "service_catalogue_ssr_emd_mapping_pack",
+            "pack_key": "service_catalogue_ssr_emd_mapping_pack",
+            "label": "Service catalogue SSR and EMD mapping pack",
+            "description": "Adds service operational mapping for SSR/OSI previews, offer feasibility, booking readiness, EMD readiness, and documents.",
+            "target_domain": "service_catalogue",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["ssr_code", "rules_category", "emd_applicability", "required_documents_json"],
+            "validation_rules_json": get_import_template("service_catalogue") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["request_builder", "rules_services", "offer_acceptance", "booking_readiness", "documents"],
+        },
+        {
+            "id": "document_type_compliance_pack",
+            "pack_key": "document_type_compliance_pack",
+            "label": "Document type compliance pack",
+            "description": "Enriches document type records with compliance and validity metadata.",
+            "target_domain": "document_types",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["validity_rules", "service_keys", "country_scope"],
+            "validation_rules_json": get_import_template("document_types") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["request_compliance", "booking_readiness", "documents"],
+        },
+        {
+            "id": "pet_species_breed_pack",
+            "pack_key": "pet_species_breed_pack",
+            "label": "Pet species and breed pack",
+            "description": "Enriches pet species and breed records used by pet/service animal workflows.",
+            "target_domain": "pet_species",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["iata_live_animal_category", "default_documents"],
+            "validation_rules_json": get_import_template("pet_species") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["request_pets", "offer_feasibility", "booking_readiness"],
+        },
+        {
+            "id": "special_item_handling_pack",
+            "pack_key": "special_item_handling_pack",
+            "label": "Special item handling pack",
+            "description": "Enriches special item categories with handling, fee, and readiness metadata.",
+            "target_domain": "special_item_categories",
+            "source_type": "csv_import",
+            "status": "ready",
+            "fields_added_or_updated": ["handling_notes", "fee_expected", "ssr_code"],
+            "validation_rules_json": get_import_template("special_item_categories") or {},
+            "preview_count": 0,
+            "applied_count": 0,
+            "warnings_json": [],
+            "workflow_impact": ["request_special_items", "offer_fees", "booking_readiness", "future_emd_readiness"],
+        },
+    ]
+
+
+async def enrichment_pack_or_default(db: Database, pack_id: str) -> dict[str, Any] | None:
+    pack = await db.collection("reference_enrichment_packs").find_one({"id": pack_id})
+    if pack:
+        return pack
+    pack = await db.collection("reference_enrichment_packs").find_one({"pack_key": pack_id})
+    if pack:
+        return pack
+    return next((item for item in default_enrichment_packs() if item["id"] == pack_id or item["pack_key"] == pack_id), None)
+
+
+@router.get("/enrichment-packs")
+async def list_reference_enrichment_packs(
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    custom = await db.collection("reference_enrichment_packs").find_many()
+    custom_keys = {item.get("pack_key") for item in custom}
+    defaults = [item for item in default_enrichment_packs() if item["pack_key"] not in custom_keys]
+    return {
+        "items": sorted([*defaults, *custom], key=lambda item: item.get("label") or item.get("pack_key")),
+        "description": "Enrichment Packs update selected reference domains with operational metadata used by requests, offers, rules, offer acceptance, booking readiness, and documents.",
+        "actor_user_id": user["id"],
+    }
+
+
+@router.post("/enrichment-packs", status_code=status.HTTP_201_CREATED)
+async def create_reference_enrichment_pack(
+    payload: ReferenceEnrichmentPackCreate,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    if await db.collection("reference_enrichment_packs").find_one({"pack_key": payload.pack_key}):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference enrichment pack already exists.")
+    pack = ReferenceEnrichmentPack(
+        **payload.model_dump(mode="json"),
+        created_by_user_id=user["id"],
+    )
+    created = await db.collection("reference_enrichment_packs").insert_one(pack.model_dump(mode="json"))
+    await audit_reference_event(
+        db,
+        "reference_enrichment_pack_created",
+        "reference_enrichment_pack",
+        created["id"],
+        f"Reference enrichment pack {created['pack_key']} created.",
+        user["id"],
+        {"target_domain": created.get("target_domain")},
+    )
+    return {"pack": created, "actor_user_id": user["id"]}
+
+
+@router.get("/enrichment-packs/{pack_id}")
+async def get_reference_enrichment_pack(
+    pack_id: str,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    pack = await enrichment_pack_or_default(db, pack_id)
+    if not pack:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference enrichment pack not found.")
+    return {"pack": pack, "actor_user_id": user["id"]}
+
+
+@router.post("/enrichment-packs/{pack_id}/preview")
+async def preview_reference_enrichment_pack(
+    pack_id: str,
+    payload: ReferenceEnrichmentPackPreviewRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    pack = await enrichment_pack_or_default(db, pack_id)
+    if not pack:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference enrichment pack not found.")
+    csv_text = payload.csv_text or ""
+    target_domain = pack["target_domain"]
+    if target_domain == "service_catalogue" or get_import_template(target_domain):
+        preview = await preview_reference_import(db, target_domain, csv_text, "upsert")
+        return {"pack": pack, "preview": preview, "actor_user_id": user["id"]}
+    try:
+        result = await run_reference_enrichment_import(
+            db,
+            target_domain,
+            csv_text,
+            user["id"],
+            payload.update_mode,
+            True,
+            payload.source_label or pack.get("label"),
+            payload.notes,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    return {"pack": pack, "preview": result, "actor_user_id": user["id"]}
+
+
+@router.post("/enrichment-packs/{pack_id}/apply")
+async def apply_reference_enrichment_pack(
+    pack_id: str,
+    payload: ReferenceEnrichmentPackPreviewRequest,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    pack = await enrichment_pack_or_default(db, pack_id)
+    if not pack:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference enrichment pack not found.")
+    csv_text = payload.csv_text or ""
+    target_domain = pack["target_domain"]
+    if target_domain == "service_catalogue" or get_import_template(target_domain):
+        result = await apply_reference_import(db, target_domain, f"{pack['pack_key']}.csv", csv_text, "upsert", user["id"])
+        applied_count = result["summary"]["created"] + result["summary"]["updated"]
+    else:
+        try:
+            result = await run_reference_enrichment_import(
+                db,
+                target_domain,
+                csv_text,
+                user["id"],
+                payload.update_mode,
+                False,
+                payload.source_label or pack.get("label"),
+                payload.notes,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        applied_count = (result.get("report") or {}).get("inserted", 0) + (result.get("report") or {}).get("updated", 0)
+    existing = await db.collection("reference_enrichment_packs").find_one({"pack_key": pack["pack_key"]})
+    updates = {
+        "status": "applied",
+        "preview_count": len((result.get("preview") or result.get("report") or {}).get("rows") or []),
+        "applied_count": applied_count,
+        "applied_by_user_id": user["id"],
+        "applied_at": now_utc(),
+    }
+    if existing:
+        pack = await db.collection("reference_enrichment_packs").update_one({"id": existing["id"]}, updates)
+    else:
+        created_pack = ReferenceEnrichmentPack(
+            pack_key=pack["pack_key"],
+            label=pack["label"],
+            description=pack.get("description"),
+            target_domain=target_domain,
+            source_type=pack.get("source_type", "csv_import"),
+            status="applied",
+            fields_added_or_updated=pack.get("fields_added_or_updated") or [],
+            validation_rules_json=pack.get("validation_rules_json") or {},
+            preview_count=updates["preview_count"],
+            applied_count=updates["applied_count"],
+            warnings_json=pack.get("warnings_json") or [],
+            created_by_user_id=user["id"],
+            applied_by_user_id=user["id"],
+            applied_at=updates["applied_at"],
+        )
+        pack = await db.collection("reference_enrichment_packs").insert_one(created_pack.model_dump(mode="json"))
+    return {"pack": pack, "result": result, "actor_user_id": user["id"]}
 
 
 @router.get("/export")

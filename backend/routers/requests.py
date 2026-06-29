@@ -32,6 +32,7 @@ from models import (
     TravelRequestUpdate,
 )
 from services.request_normalization_service import normalize_request_children
+from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["requests"])
@@ -373,12 +374,18 @@ async def create_request_from_builder(
         passenger_ids = service_payload.passenger_ids or (all_passenger_ids if service_payload.applies_to_all_passengers else [])
         segment_ids = service_payload.segment_ids or (all_segment_ids if service_payload.applies_to_all_segments else [])
         label = SERVICE_LABELS.get(service_payload.category, service_payload.category.replace("_", " "))
+        service_code = service_code_for(service_payload.category)
+        service_record = await find_service_catalogue_record(db, service_code)
+        service_snapshot = service_catalogue_snapshot(service_record)
         service = RequestedService(
             agency_id=agency_id,
             request_id=created_request["id"],
-            service_code=service_code_for(service_payload.category),
-            service_name=label,
-            service_category=service_payload.category,
+            service_catalogue_id=service_snapshot.get("service_catalogue_id"),
+            service_key=service_snapshot.get("service_key"),
+            service_catalogue_snapshot_json=service_snapshot,
+            service_code=service_snapshot.get("service_key") or service_code,
+            service_name=service_snapshot.get("label") or label,
+            service_category=service_snapshot.get("category") or service_payload.category,
             details=compact_text(service_payload.notes, 2000),
             detail_payload=service_payload.details,
             passenger_ids=passenger_ids,
@@ -598,7 +605,17 @@ async def archive_request_passenger(agency_id: str, request_id: str, request_pas
 async def create_child(db: Database, agency_id: str, request_id: str, user: dict, model, collection_name: str, payload, event_type: str, title: str) -> dict:
     await require_write(db, agency_id, user)
     await get_request_or_404(db, agency_id, request_id)
-    item = model(agency_id=agency_id, request_id=request_id, **payload.model_dump(mode="json"))
+    data = payload.model_dump(mode="json")
+    if collection_name == "requested_services":
+        record = await find_service_catalogue_record(db, data.get("service_key") or data.get("service_code"))
+        snapshot = service_catalogue_snapshot(record)
+        if snapshot:
+            data["service_catalogue_id"] = data.get("service_catalogue_id") or snapshot.get("service_catalogue_id")
+            data["service_key"] = data.get("service_key") or snapshot.get("service_key")
+            data["service_catalogue_snapshot_json"] = data.get("service_catalogue_snapshot_json") or snapshot
+            data["service_name"] = data.get("service_name") or snapshot.get("label")
+            data["service_category"] = data.get("service_category") or snapshot.get("category")
+    item = model(agency_id=agency_id, request_id=request_id, **data)
     created = await db.collection(collection_name).insert_one(item.model_dump(mode="json"))
     request = await update_counts(db, agency_id, request_id) if collection_name == "requested_services" else None
     await write_timeline(db, agency_id, request_id, user["id"], event_type, title)

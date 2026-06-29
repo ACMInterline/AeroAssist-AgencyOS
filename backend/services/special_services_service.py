@@ -6,7 +6,11 @@ from database import Database
 from models import AuditEvent, PassengerServiceRequest, PassengerServiceRequestCreate
 from services.exception_engine_service import ExceptionEngineService
 from services.rules_and_services_registry import normalize_code
+from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.ssr_osi_generator_service import SsrOsiGeneratorService
+
+
+PASSENGER_SERVICE_CATEGORIES = {"UMNR", "PRM", "MEDICAL", "PETS", "SERVICE_ANIMAL", "CARGO", "VIP", "SEATING", "MEAL", "OTHER"}
 
 
 def category_for_service_type(service_type: str | None, fallback: str = "OTHER") -> str:
@@ -29,11 +33,23 @@ def category_for_service_type(service_type: str | None, fallback: str = "OTHER")
         return "SEATING"
     if code == "SPML":
         return "MEAL"
-    return fallback
+    return fallback if normalize_code(fallback) in PASSENGER_SERVICE_CATEGORIES else "OTHER"
 
 
 def json_warnings(warnings: list[str]) -> list[dict[str, Any]]:
     return [{"message": warning} for warning in warnings if warning]
+
+
+def merge_documents(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for group in groups:
+        for document in group or []:
+            key = (str(document.get("code") or ""), str(document.get("label") or document))
+            if key not in seen:
+                seen.add(key)
+                merged.append(document)
+    return merged
 
 
 async def write_service_audit(
@@ -74,7 +90,32 @@ class SpecialServicesService:
     ) -> dict[str, Any]:
         data = payload.model_dump(mode="json")
         data["service_type"] = normalize_code(data.get("service_type")) or data.get("service_type")
-        data["category"] = category_for_service_type(data.get("service_type"), data.get("category") or "OTHER")
+        catalogue_record = await find_service_catalogue_record(
+            self.db,
+            data.get("service_key") or data.get("service_type") or data.get("ssr_code"),
+        )
+        if not catalogue_record and data.get("service_catalogue_id"):
+            catalogue_record = await self.db.collection("service_catalogue").find_one({"id": data["service_catalogue_id"]})
+        catalogue_snapshot = service_catalogue_snapshot(catalogue_record)
+        if catalogue_snapshot:
+            data["service_catalogue_id"] = data.get("service_catalogue_id") or catalogue_snapshot.get("service_catalogue_id")
+            data["service_key"] = data.get("service_key") or catalogue_snapshot.get("service_key")
+            data["service_label"] = data.get("service_label") or catalogue_snapshot.get("label")
+            data["service_catalogue_category"] = data.get("service_catalogue_category") or catalogue_snapshot.get("category") or catalogue_snapshot.get("rules_category")
+            data["service_catalogue_snapshot_json"] = catalogue_snapshot
+            data["service_type"] = normalize_code(catalogue_snapshot.get("service_key") or data.get("service_type")) or data.get("service_type")
+            data["ssr_code"] = data.get("ssr_code") or catalogue_snapshot.get("ssr_code")
+            data["required_documents_json"] = merge_documents(
+                data.get("required_documents_json") or [],
+                catalogue_snapshot.get("required_documents_json") or [],
+            )
+            metadata = data.get("metadata_json") or {}
+            metadata["service_catalogue_snapshot_json"] = catalogue_snapshot
+            data["metadata_json"] = metadata
+        data["category"] = category_for_service_type(
+            data.get("service_type"),
+            data.get("service_catalogue_category") or data.get("category") or "OTHER",
+        )
         if request_id:
             data["request_id"] = request_id
         if trip_id:
@@ -164,9 +205,13 @@ class SpecialServicesService:
             "route_destination": normalize_code(segment.get("route_destination")),
             "aircraft_type": normalize_code(segment.get("aircraft_type")),
             "passenger_summary_json": metadata.get("passenger_summary_json") or {},
-            "service_category": service_request.get("category") or category_for_service_type(service_request.get("service_type")),
+            "service_category": service_request.get("service_catalogue_category") or service_request.get("category") or category_for_service_type(service_request.get("service_type")),
+            "service_key": service_request.get("service_key"),
+            "service_label": service_request.get("service_label"),
+            "service_catalogue_category": service_request.get("service_catalogue_category"),
             "service_type": service_request.get("service_type"),
             "service_payload_json": metadata,
+            "service_catalogue_snapshot_json": service_request.get("service_catalogue_snapshot_json") or metadata.get("service_catalogue_snapshot_json") or {},
             "segment_refs_json": segment.get("segment_refs_json") or [],
         }
 

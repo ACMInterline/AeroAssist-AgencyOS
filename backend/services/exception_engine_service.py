@@ -71,7 +71,12 @@ class ExceptionEngineService:
         self.registry = RulesAndServicesRegistry(db)
 
     async def evaluate(self, context: dict[str, Any]) -> ExceptionResult:
-        category = normalize_code(context.get("service_category")) or "GENERAL"
+        catalogue = context.get("service_catalogue_snapshot_json") or {}
+        service_key = normalize_code(context.get("service_key") or catalogue.get("service_key"))
+        service_catalogue_category = normalize_code(
+            context.get("service_catalogue_category") or catalogue.get("category") or catalogue.get("rules_category")
+        )
+        category = service_catalogue_category or normalize_code(context.get("service_category")) or "GENERAL"
         route = {
             "origin": context.get("route_origin"),
             "destination": context.get("route_destination"),
@@ -82,6 +87,8 @@ class ExceptionEngineService:
             route=route,
             aircraft_type=context.get("aircraft_type"),
             category=category,
+            service_key=service_key,
+            service_catalogue_category=service_catalogue_category,
         )
         warnings = list(rules_context.get("warnings") or [])
         actions: list[dict[str, Any]] = []
@@ -113,6 +120,8 @@ class ExceptionEngineService:
             fired = {
                 "id": rule.get("id"),
                 "category": rule.get("category"),
+                "service_key": rule.get("service_key"),
+                "service_catalogue_category": rule.get("service_catalogue_category"),
                 "action": action,
                 "priority": rule.get("priority", 100),
                 "notes": rule.get("notes"),

@@ -1557,8 +1557,12 @@ class TripServiceItem(BaseDocument):
     trip_id: str
     source_request_service_id: Optional[str] = None
     source_passenger_segment_service_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     service_code: str
     service_label: str
+    service_catalogue_category: Optional[str] = None
     service_family_code: Optional[str] = None
     passenger_ids: List[str] = Field(default_factory=list)
     segment_ids: List[str] = Field(default_factory=list)
@@ -1643,6 +1647,8 @@ class RequestPassengerSegmentService(BaseDocument):
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     service_family_code: Optional[str] = None
     service_code: str
     service_label: Optional[str] = None
@@ -1862,6 +1868,8 @@ class RequestedService(BaseDocument):
     request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     service_family_code: Optional[str] = None
     service_code: str
     service_name: str
@@ -1885,6 +1893,9 @@ class RequestedServiceCreate(BaseModel):
 
     passenger_id: Optional[str] = None
     request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     service_code: str
     service_name: str
     service_category: str
@@ -1906,6 +1917,9 @@ class RequestedServiceUpdate(BaseModel):
 
     passenger_id: Optional[str] = None
     request_passenger_segment_service_ids: Optional[List[str]] = None
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_snapshot_json: Optional[Dict[str, Any]] = None
     service_code: Optional[str] = None
     service_name: Optional[str] = None
     service_category: Optional[str] = None
@@ -4624,6 +4638,8 @@ class AirlineRulesCorePayload(BaseModel):
 
 class UnifiedExceptionRule(BaseDocument):
     category: UnifiedExceptionCategory
+    service_key: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
     airline_id: Optional[str] = None
     iata_code: Optional[str] = None
     airport_code: Optional[str] = None
@@ -4645,6 +4661,8 @@ class UnifiedExceptionRuleCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     category: UnifiedExceptionCategory
+    service_key: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
     airline_id: Optional[str] = None
     iata_code: Optional[str] = None
     airport_code: Optional[str] = None
@@ -4666,6 +4684,8 @@ class UnifiedExceptionRuleUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     category: Optional[UnifiedExceptionCategory] = None
+    service_key: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
     airline_id: Optional[str] = None
     iata_code: Optional[str] = None
     airport_code: Optional[str] = None
@@ -4690,6 +4710,11 @@ class PassengerServiceRequest(BaseDocument):
     booking_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_label: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     category: PassengerServiceCategory
     service_type: str
     ssr_code: Optional[str] = None
@@ -4713,6 +4738,11 @@ class PassengerServiceRequestCreate(BaseModel):
     booking_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_label: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
+    service_catalogue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     category: PassengerServiceCategory
     service_type: str
     ssr_code: Optional[str] = None
@@ -4736,6 +4766,11 @@ class PassengerServiceRequestUpdate(BaseModel):
     booking_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_label: Optional[str] = None
+    service_catalogue_category: Optional[str] = None
+    service_catalogue_snapshot_json: Optional[Dict[str, Any]] = None
     category: Optional[PassengerServiceCategory] = None
     service_type: Optional[str] = None
     ssr_code: Optional[str] = None
@@ -5236,6 +5271,40 @@ class ServiceCatalogueBeneficiaryType(str, Enum):
     SPECIAL_ITEM = "special_item"
 
 
+class ServiceCatalogueStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class ServiceSegmentScopeDefault(str, Enum):
+    ALL_SEGMENTS = "all_segments"
+    SELECTED_SEGMENTS = "selected_segments"
+
+
+class ServiceEmdApplicability(str, Enum):
+    NONE = "none"
+    OPTIONAL = "optional"
+    REQUIRED = "required"
+    CONDITIONAL = "conditional"
+
+
+class ReferenceEnrichmentPackSourceType(str, Enum):
+    MANUAL = "manual"
+    CSV_IMPORT = "csv_import"
+    SEED = "seed"
+    EXTERNAL_REFERENCE = "external_reference"
+    SYSTEM_GENERATED = "system_generated"
+
+
+class ReferenceEnrichmentPackStatus(str, Enum):
+    DRAFT = "draft"
+    READY = "ready"
+    APPLIED = "applied"
+    ARCHIVED = "archived"
+
+
 class GlobalReferenceRecord(BaseDocument):
     domain: str
     code: Optional[str] = None
@@ -5362,15 +5431,64 @@ class PlatformReferenceRecordUpdate(BaseModel):
 
 
 class ServiceCatalogueRecord(BaseDocument):
-    service_code: str
-    service_label: str
-    service_family_code: str
+    service_code: Optional[str] = None
+    service_label: Optional[str] = None
+    service_family_code: Optional[str] = None
+    service_key: Optional[str] = None
+    label: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    active: bool = True
+    status: ServiceCatalogueStatus = ServiceCatalogueStatus.ACTIVE
     default_ssr_code: Optional[str] = None
     beneficiary_type: ServiceCatalogueBeneficiaryType = ServiceCatalogueBeneficiaryType.PASSENGER
     requires_segment_scoping: bool = True
     requires_policy_check: bool = True
     requires_document_check: bool = False
     requires_manual_pricing: bool = False
+    client_visible: bool = True
+    agency_visible: bool = True
+    platform_managed: bool = True
+    applies_to_passenger_types: List[str] = Field(default_factory=list)
+    applies_to_trip_types: List[str] = Field(default_factory=list)
+    applies_to_segment_types: List[str] = Field(default_factory=list)
+    requires_passenger_scope: bool = False
+    requires_segment_scope: bool = True
+    segment_scope_default: ServiceSegmentScopeDefault = ServiceSegmentScopeDefault.ALL_SEGMENTS
+    segment_scope_allowed: bool = True
+    request_form_enabled: bool = True
+    default_selected: bool = False
+    conditional_fields_json: Dict[str, Any] = Field(default_factory=dict)
+    required_fields_json: Dict[str, Any] = Field(default_factory=dict)
+    validation_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    helper_text: Optional[str] = None
+    warning_text: Optional[str] = None
+    rules_category: Optional[str] = None
+    default_service_type: Optional[str] = None
+    maps_to_passenger_service_request: bool = True
+    exception_engine_enabled: bool = True
+    policy_check_required: bool = True
+    ssr_code: Optional[str] = None
+    osi_template: Optional[str] = None
+    ssr_template: Optional[str] = None
+    requires_staff_review: bool = False
+    booking_preview_enabled: bool = True
+    offer_feasibility_enabled: bool = True
+    offer_pricing_enabled: bool = False
+    acceptance_snapshot_enabled: bool = True
+    booking_readiness_enabled: bool = True
+    default_pricing_category: Optional[str] = None
+    emd_applicability: ServiceEmdApplicability = ServiceEmdApplicability.NONE
+    fee_expected: bool = False
+    included_in_fare_possible: bool = False
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    client_document_summary_enabled: bool = True
+    internal_handling_notes: Optional[str] = None
+    links_to_pet_taxonomy: bool = False
+    links_to_special_item_taxonomy: bool = False
+    linked_special_item_categories: List[str] = Field(default_factory=list)
+    linked_pet_categories: List[str] = Field(default_factory=list)
     input_schema_json: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
     sort_order: int = 100
@@ -5379,24 +5497,255 @@ class ServiceCatalogueRecord(BaseDocument):
     updated_by_user_id: Optional[str] = None
     created_by_user_id: Optional[str] = None
 
+    @model_validator(mode="after")
+    def align_operational_fields(self) -> "ServiceCatalogueRecord":
+        if self.service_key is None and self.service_code:
+            self.service_key = self.service_code
+        if self.service_code is None and self.service_key:
+            self.service_code = self.service_key
+        if self.label is None and self.service_label:
+            self.label = self.service_label
+        if self.service_label is None and self.label:
+            self.service_label = self.label
+        if self.category is None and self.service_family_code:
+            self.category = self.service_family_code
+        if self.service_family_code is None and self.category:
+            self.service_family_code = self.category
+        if self.ssr_code is None and self.default_ssr_code:
+            self.ssr_code = self.default_ssr_code
+        if self.default_ssr_code is None and self.ssr_code:
+            self.default_ssr_code = self.ssr_code
+        if self.default_service_type is None and self.service_code:
+            self.default_service_type = self.service_code
+        status_value = self.status.value if hasattr(self.status, "value") else self.status
+        self.active = self.is_active and status_value != ServiceCatalogueStatus.ARCHIVED.value
+        return self
+
 
 class ServiceCatalogueCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    service_code: str
-    service_label: str
-    service_family_code: str
+    service_code: Optional[str] = None
+    service_label: Optional[str] = None
+    service_family_code: Optional[str] = None
+    service_key: Optional[str] = None
+    label: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    active: bool = True
+    status: ServiceCatalogueStatus = ServiceCatalogueStatus.ACTIVE
     default_ssr_code: Optional[str] = None
     beneficiary_type: ServiceCatalogueBeneficiaryType = ServiceCatalogueBeneficiaryType.PASSENGER
     requires_segment_scoping: bool = True
     requires_policy_check: bool = True
     requires_document_check: bool = False
     requires_manual_pricing: bool = False
+    client_visible: bool = True
+    agency_visible: bool = True
+    platform_managed: bool = True
+    applies_to_passenger_types: List[str] = Field(default_factory=list)
+    applies_to_trip_types: List[str] = Field(default_factory=list)
+    applies_to_segment_types: List[str] = Field(default_factory=list)
+    requires_passenger_scope: bool = False
+    requires_segment_scope: bool = True
+    segment_scope_default: ServiceSegmentScopeDefault = ServiceSegmentScopeDefault.ALL_SEGMENTS
+    segment_scope_allowed: bool = True
+    request_form_enabled: bool = True
+    default_selected: bool = False
+    conditional_fields_json: Dict[str, Any] = Field(default_factory=dict)
+    required_fields_json: Dict[str, Any] = Field(default_factory=dict)
+    validation_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    helper_text: Optional[str] = None
+    warning_text: Optional[str] = None
+    rules_category: Optional[str] = None
+    default_service_type: Optional[str] = None
+    maps_to_passenger_service_request: bool = True
+    exception_engine_enabled: bool = True
+    policy_check_required: bool = True
+    ssr_code: Optional[str] = None
+    osi_template: Optional[str] = None
+    ssr_template: Optional[str] = None
+    requires_staff_review: bool = False
+    booking_preview_enabled: bool = True
+    offer_feasibility_enabled: bool = True
+    offer_pricing_enabled: bool = False
+    acceptance_snapshot_enabled: bool = True
+    booking_readiness_enabled: bool = True
+    default_pricing_category: Optional[str] = None
+    emd_applicability: ServiceEmdApplicability = ServiceEmdApplicability.NONE
+    fee_expected: bool = False
+    included_in_fare_possible: bool = False
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    client_document_summary_enabled: bool = True
+    internal_handling_notes: Optional[str] = None
+    links_to_pet_taxonomy: bool = False
+    links_to_special_item_taxonomy: bool = False
+    linked_special_item_categories: List[str] = Field(default_factory=list)
+    linked_pet_categories: List[str] = Field(default_factory=list)
     input_schema_json: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
     sort_order: int = 100
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
     source_type: ReferenceRecordSourceType = ReferenceRecordSourceType.PLATFORM
+
+    @model_validator(mode="after")
+    def align_operational_fields(self) -> "ServiceCatalogueCreate":
+        if self.service_key is None and self.service_code:
+            self.service_key = self.service_code
+        if self.service_code is None and self.service_key:
+            self.service_code = self.service_key
+        if self.label is None and self.service_label:
+            self.label = self.service_label
+        if self.service_label is None and self.label:
+            self.service_label = self.label
+        if self.category is None and self.service_family_code:
+            self.category = self.service_family_code
+        if self.service_family_code is None and self.category:
+            self.service_family_code = self.category
+        if not self.service_code or not self.service_label or not self.service_family_code:
+            raise ValueError("service_key/label/category are required.")
+        if self.ssr_code is None and self.default_ssr_code:
+            self.ssr_code = self.default_ssr_code
+        if self.default_ssr_code is None and self.ssr_code:
+            self.default_ssr_code = self.ssr_code
+        if self.default_service_type is None and self.service_code:
+            self.default_service_type = self.service_code
+        status_value = self.status.value if hasattr(self.status, "value") else self.status
+        self.is_active = self.active and status_value != ServiceCatalogueStatus.ARCHIVED.value
+        return self
+
+
+class ServiceCatalogueUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    service_code: Optional[str] = None
+    service_label: Optional[str] = None
+    service_family_code: Optional[str] = None
+    service_key: Optional[str] = None
+    label: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    active: Optional[bool] = None
+    status: Optional[ServiceCatalogueStatus] = None
+    default_ssr_code: Optional[str] = None
+    beneficiary_type: Optional[ServiceCatalogueBeneficiaryType] = None
+    requires_segment_scoping: Optional[bool] = None
+    requires_policy_check: Optional[bool] = None
+    requires_document_check: Optional[bool] = None
+    requires_manual_pricing: Optional[bool] = None
+    client_visible: Optional[bool] = None
+    agency_visible: Optional[bool] = None
+    platform_managed: Optional[bool] = None
+    applies_to_passenger_types: Optional[List[str]] = None
+    applies_to_trip_types: Optional[List[str]] = None
+    applies_to_segment_types: Optional[List[str]] = None
+    requires_passenger_scope: Optional[bool] = None
+    requires_segment_scope: Optional[bool] = None
+    segment_scope_default: Optional[ServiceSegmentScopeDefault] = None
+    segment_scope_allowed: Optional[bool] = None
+    request_form_enabled: Optional[bool] = None
+    default_selected: Optional[bool] = None
+    conditional_fields_json: Optional[Dict[str, Any]] = None
+    required_fields_json: Optional[Dict[str, Any]] = None
+    validation_rules_json: Optional[Dict[str, Any]] = None
+    helper_text: Optional[str] = None
+    warning_text: Optional[str] = None
+    rules_category: Optional[str] = None
+    default_service_type: Optional[str] = None
+    maps_to_passenger_service_request: Optional[bool] = None
+    exception_engine_enabled: Optional[bool] = None
+    policy_check_required: Optional[bool] = None
+    ssr_code: Optional[str] = None
+    osi_template: Optional[str] = None
+    ssr_template: Optional[str] = None
+    requires_staff_review: Optional[bool] = None
+    booking_preview_enabled: Optional[bool] = None
+    offer_feasibility_enabled: Optional[bool] = None
+    offer_pricing_enabled: Optional[bool] = None
+    acceptance_snapshot_enabled: Optional[bool] = None
+    booking_readiness_enabled: Optional[bool] = None
+    default_pricing_category: Optional[str] = None
+    emd_applicability: Optional[ServiceEmdApplicability] = None
+    fee_expected: Optional[bool] = None
+    included_in_fare_possible: Optional[bool] = None
+    required_documents_json: Optional[List[Dict[str, Any]]] = None
+    client_document_summary_enabled: Optional[bool] = None
+    internal_handling_notes: Optional[str] = None
+    links_to_pet_taxonomy: Optional[bool] = None
+    links_to_special_item_taxonomy: Optional[bool] = None
+    linked_special_item_categories: Optional[List[str]] = None
+    linked_pet_categories: Optional[List[str]] = None
+    input_schema_json: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+    source_type: Optional[ReferenceRecordSourceType] = None
+
+
+class ServiceCatalogueReorderRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    ordered_ids: List[str] = Field(default_factory=list)
+
+
+class ReferenceEnrichmentPack(BaseDocument):
+    pack_key: str
+    label: str
+    description: Optional[str] = None
+    target_domain: str
+    source_type: ReferenceEnrichmentPackSourceType = ReferenceEnrichmentPackSourceType.MANUAL
+    status: ReferenceEnrichmentPackStatus = ReferenceEnrichmentPackStatus.DRAFT
+    fields_added_or_updated: List[str] = Field(default_factory=list)
+    validation_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    preview_count: int = 0
+    applied_count: int = 0
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+    applied_by_user_id: Optional[str] = None
+    applied_at: Optional[datetime] = None
+
+
+class ReferenceEnrichmentPackCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pack_key: str
+    label: str
+    description: Optional[str] = None
+    target_domain: str
+    source_type: ReferenceEnrichmentPackSourceType = ReferenceEnrichmentPackSourceType.MANUAL
+    status: ReferenceEnrichmentPackStatus = ReferenceEnrichmentPackStatus.DRAFT
+    fields_added_or_updated: List[str] = Field(default_factory=list)
+    validation_rules_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class ReferenceEnrichmentPackPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    csv_text: Optional[str] = None
+    update_mode: str = "update_missing_only"
+    source_label: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ReferenceImportPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    domain: str
+    filename: Optional[str] = None
+    csv_text: str
+    mode: str = "upsert"
+
+
+class ReferenceImportApplyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    domain: str
+    filename: Optional[str] = None
+    csv_text: str
+    mode: str = "upsert"
 
 
 class ReferenceDataSuggestion(BaseDocument):

@@ -14,6 +14,8 @@ from models import (
     RequestSpecialItemSegment,
 )
 from services.reference_data_service import SERVICE_FAMILIES
+from services.rules_and_services_registry import normalize_code
+from services.service_catalogue_service import safe_service_catalogue_record, service_catalogue_snapshot
 
 
 SERVICE_FAMILY_CODES = {family["code"] for family in SERVICE_FAMILIES}
@@ -95,11 +97,22 @@ def segment_date(value: Any) -> date | None:
 
 
 async def service_catalogue_by_code(db: Database) -> dict[str, dict]:
-    return {
-        item["service_code"]: item
-        for item in await db.collection("service_catalogue").find_many()
-        if item.get("is_active", True)
-    }
+    catalogue: dict[str, dict] = {}
+    for item in await db.collection("service_catalogue").find_many():
+        safe = safe_service_catalogue_record(item)
+        if not safe.get("is_active", safe.get("active", True)) or safe.get("status") == "archived":
+            continue
+        for key in [
+            safe.get("service_key"),
+            safe.get("service_code"),
+            safe.get("default_ssr_code"),
+            safe.get("ssr_code"),
+            safe.get("default_service_type"),
+        ]:
+            normalized = normalize_code(key)
+            if normalized:
+                catalogue[normalized] = safe
+    return catalogue
 
 
 async def normalize_request_children(
@@ -152,8 +165,10 @@ async def normalize_request_children(
     for index, service_payload in enumerate(payload_data.get("services") or []):
         category = service_payload.get("category") or "other"
         service_code = service_payload.get("service_code") or service_payload.get("details", {}).get("confirmed_ssr_code") or service_payload.get("details", {}).get("suggested_ssr_code") or category.upper()[:32]
-        service_record = catalogue.get(service_code)
-        family = service_payload.get("service_family_code") or (service_record.get("service_family_code") if service_record else None) or SERVICE_CATEGORY_TO_FAMILY.get(category)
+        service_code = normalize_code(service_code) or service_code
+        service_record = catalogue.get(normalize_code(service_payload.get("service_key")) or "") or catalogue.get(normalize_code(service_code) or "")
+        service_snapshot = service_catalogue_snapshot(service_record)
+        family = service_payload.get("service_family_code") or (service_record.get("category") if service_record else None) or (service_record.get("service_family_code") if service_record else None) or SERVICE_CATEGORY_TO_FAMILY.get(category)
         if family and family not in SERVICE_FAMILY_CODES:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid service family: {family}")
         selected_passengers = all_passengers if service_payload.get("applies_to_all_passengers", True) else [passenger_key_map[key] for key in service_payload.get("passenger_ids", []) if key in passenger_key_map]
@@ -179,9 +194,11 @@ async def normalize_request_children(
                         "passenger_id": passenger.get("passenger_id"),
                         "segment_id": segment["id"],
                         "service_catalogue_id": service_payload.get("service_catalogue_id") or (service_record.get("id") if service_record else None),
+                        "service_key": service_payload.get("service_key") or service_snapshot.get("service_key"),
+                        "service_catalogue_snapshot_json": service_snapshot,
                         "service_family_code": family,
-                        "service_code": service_code,
-                        "service_label": service_record.get("service_label") if service_record else category.replace("_", " "),
+                        "service_code": service_snapshot.get("service_key") or service_code,
+                        "service_label": service_snapshot.get("label") or (service_record.get("service_label") if service_record else category.replace("_", " ")),
                         "service_details_json": service_payload.get("details") or {},
                         "applicability_status": "requested" if service_record else "pending_information",
                         "generated_key": generated_key,

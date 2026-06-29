@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
+from services.reference_domain_usage_service import list_domain_usage, reference_action_required
+from services.reference_import_template_service import list_import_templates
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
 
@@ -18,7 +20,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.2 offer acceptance and booking readiness.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.2.5 reference and service catalogue governance.",
 )
 
 app.add_middleware(
@@ -45,7 +47,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_2_offer_acceptance_booking_readiness",
+        "phase": "phase_36_2_5_reference_service_catalogue_governance",
     }
 
 
@@ -130,7 +132,19 @@ async def readiness() -> dict:
     countries_with_national_carrier_count = len([item for item in country_reference_records if (item.get("metadata_json") or item.get("metadata") or {}).get("national_carrier")])
     airports_missing_country_link_count = len([item for item in airport_reference_records if ((item.get("metadata_json") or item.get("metadata") or {}).get("country_code") or (item.get("metadata_json") or item.get("metadata") or {}).get("country_iso2")) not in country_codes])
     airlines_missing_country_link_count = len([item for item in airline_reference_records if ((item.get("metadata_json") or item.get("metadata") or {}).get("country_code") or (item.get("metadata_json") or item.get("metadata") or {}).get("country_iso2")) not in country_codes])
-    service_catalogue_record_count = await database.collection("service_catalogue").count()
+    service_catalogue_records = await database.collection("service_catalogue").find_many()
+    service_catalogue_record_count = len(service_catalogue_records)
+    service_catalogue_active_count = len(
+        [
+            item
+            for item in service_catalogue_records
+            if item.get("is_active", item.get("active", True)) and item.get("status") != "archived"
+        ]
+    )
+    reference_domain_usage_count = len(list_domain_usage())
+    import_template_count = len(list_import_templates())
+    enrichment_pack_count = 6 + await database.collection("reference_enrichment_packs").count()
+    reference_action_required_count = len(await reference_action_required(database))
     pending_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "pending_review"})
     approved_reference_suggestion_count = await database.collection("reference_data_suggestions").count({"status": "approved"})
     reference_import_batch_count = await database.collection("reference_import_batches").count()
@@ -171,7 +185,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_2_offer_acceptance_booking_readiness",
+        "phase": "phase_36_2_5_reference_service_catalogue_governance",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -234,9 +248,25 @@ async def readiness() -> dict:
             "agency_reference_consume_suggest_only": True,
             "reference_suggestion_queue_enabled": True,
             "reference_bulk_import_enabled": True,
+            "reference_domain_usage_map_enabled": True,
+            "reference_health_action_required_enabled": True,
+            "domain_aware_import_templates_enabled": True,
+            "enrichment_packs_defined_enabled": True,
+            "service_catalogue_editable_enabled": True,
+            "service_catalogue_operational_mapping_enabled": True,
+            "service_catalogue_request_integration_enabled": True,
+            "service_catalogue_rules_services_integration_enabled": True,
+            "service_catalogue_offer_builder_integration_enabled": True,
+            "service_catalogue_acceptance_booking_readiness_integration_enabled": True,
+            "agency_service_catalogue_consume_enabled": True,
             "reference_domain_count": len(REFERENCE_DOMAINS),
+            "reference_domain_usage_count": reference_domain_usage_count,
+            "import_template_count": import_template_count,
+            "enrichment_pack_count": enrichment_pack_count,
             "active_reference_record_count": active_reference_record_count,
             "service_catalogue_record_count": service_catalogue_record_count,
+            "service_catalogue_active_count": service_catalogue_active_count,
+            "reference_action_required_count": reference_action_required_count,
             "pending_reference_suggestion_count": pending_reference_suggestion_count,
             "approved_reference_suggestion_count": approved_reference_suggestion_count,
             "reference_import_batch_count": reference_import_batch_count,
@@ -366,6 +396,7 @@ app.include_router(auth.router)
 app.include_router(platform.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
+app.include_router(platform_service_catalogue.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)

@@ -25,6 +25,7 @@ from models import (
 )
 from services.exception_engine_service import ExceptionEngineService
 from services.rules_and_services_registry import normalize_code
+from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.special_services_service import category_for_service_type
 from services.ssr_osi_generator_service import SsrOsiGeneratorService
 
@@ -52,7 +53,7 @@ def _sort_segments(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _service_type(service: dict[str, Any]) -> str:
-    return normalize_code(service.get("service_type") or service.get("service_code") or service.get("ssr_code")) or "OTHS"
+    return normalize_code(service.get("service_key") or service.get("service_type") or service.get("service_code") or service.get("ssr_code")) or "OTHS"
 
 
 async def write_offer_builder_audit(
@@ -524,42 +525,63 @@ class OfferBuilderService:
             if services:
                 return services
             trip_items = await self.db.collection("trip_service_items").find_many({"agency_id": agency_id, "trip_id": workspace["trip_id"]})
-            return [
-                {
-                    "id": item.get("id"),
-                    "service_type": item.get("service_code"),
-                    "category": category_for_service_type(item.get("service_code"), item.get("service_family_code") or "OTHER"),
-                    "metadata_json": {
-                        "notes": item.get("notes"),
-                        "passenger_ids": item.get("passenger_ids") or [],
-                        "segment_ids": item.get("segment_ids") or [],
-                        "source": "trip_service_item",
-                    },
-                }
-                for item in trip_items
-            ]
+            mapped = []
+            for item in trip_items:
+                snapshot = item.get("service_catalogue_snapshot_json") or service_catalogue_snapshot(
+                    await find_service_catalogue_record(self.db, item.get("service_key") or item.get("service_code"))
+                )
+                mapped.append(
+                    {
+                        "id": item.get("id"),
+                        "service_key": item.get("service_key") or snapshot.get("service_key"),
+                        "service_label": item.get("service_label") or snapshot.get("label"),
+                        "service_catalogue_category": item.get("service_catalogue_category") or snapshot.get("category"),
+                        "service_catalogue_snapshot_json": snapshot,
+                        "service_type": snapshot.get("service_key") or item.get("service_code"),
+                        "category": category_for_service_type(snapshot.get("service_key") or item.get("service_code"), snapshot.get("rules_category") or item.get("service_family_code") or "OTHER"),
+                        "metadata_json": {
+                            "notes": item.get("notes"),
+                            "passenger_ids": item.get("passenger_ids") or [],
+                            "segment_ids": item.get("segment_ids") or [],
+                            "service_catalogue_snapshot_json": snapshot,
+                            "source": "trip_service_item",
+                        },
+                    }
+                )
+            return mapped
         if workspace.get("request_id"):
             services = await self.db.collection("passenger_service_requests").find_many({"agency_id": agency_id, "request_id": workspace["request_id"]})
             if services:
                 return services
             requested = await self.db.collection("requested_services").find_many({"agency_id": agency_id, "request_id": workspace["request_id"], "status": "active"})
-            return [
-                {
-                    "id": item.get("id"),
-                    "service_type": item.get("service_code") or item.get("service_family_code"),
-                    "category": category_for_service_type(item.get("service_code"), item.get("service_family_code") or "OTHER"),
-                    "metadata_json": {
-                        "service_label": item.get("service_label"),
-                        "notes": item.get("notes"),
-                        "source": "requested_service",
-                    },
-                }
-                for item in requested
-            ]
+            mapped = []
+            for item in requested:
+                snapshot = item.get("service_catalogue_snapshot_json") or service_catalogue_snapshot(
+                    await find_service_catalogue_record(self.db, item.get("service_key") or item.get("service_code"))
+                )
+                mapped.append(
+                    {
+                        "id": item.get("id"),
+                        "service_key": item.get("service_key") or snapshot.get("service_key"),
+                        "service_label": item.get("service_name") or snapshot.get("label"),
+                        "service_catalogue_category": item.get("service_catalogue_category") or snapshot.get("category"),
+                        "service_catalogue_snapshot_json": snapshot,
+                        "service_type": snapshot.get("service_key") or item.get("service_code") or item.get("service_family_code"),
+                        "category": category_for_service_type(snapshot.get("service_key") or item.get("service_code"), snapshot.get("rules_category") or item.get("service_family_code") or "OTHER"),
+                        "metadata_json": {
+                            "service_label": item.get("service_name") or snapshot.get("label"),
+                            "notes": item.get("notes"),
+                            "service_catalogue_snapshot_json": snapshot,
+                            "source": "requested_service",
+                        },
+                    }
+                )
+            return mapped
         return []
 
     def _segment_rule_context(self, option: dict[str, Any], segment: dict[str, Any], service: dict[str, Any]) -> dict[str, Any]:
         metadata = service.get("metadata_json") or {}
+        catalogue_snapshot = service.get("service_catalogue_snapshot_json") or metadata.get("service_catalogue_snapshot_json") or {}
         service_type = _service_type(service)
         return {
             "airline_id": option.get("main_airline_id"),
@@ -568,9 +590,13 @@ class OfferBuilderService:
             "route_destination": normalize_code(segment.get("destination_airport")),
             "aircraft_type": normalize_code(segment.get("aircraft_type")),
             "passenger_summary_json": metadata.get("passenger_summary_json") or {},
-            "service_category": service.get("category") or category_for_service_type(service_type),
+            "service_category": service.get("service_catalogue_category") or service.get("category") or category_for_service_type(service_type),
+            "service_key": service.get("service_key") or catalogue_snapshot.get("service_key"),
+            "service_label": service.get("service_label") or catalogue_snapshot.get("label"),
+            "service_catalogue_category": service.get("service_catalogue_category") or catalogue_snapshot.get("category"),
             "service_type": service_type,
             "service_payload_json": metadata,
+            "service_catalogue_snapshot_json": catalogue_snapshot,
             "segment_refs_json": [{"offer_segment_id": segment.get("id"), "sequence": segment.get("sequence")}],
         }
 
@@ -608,6 +634,9 @@ class OfferBuilderService:
                     "segment_id": segment.get("id"),
                     "segment_sequence": segment.get("sequence"),
                     "service_id": service.get("id"),
+                    "service_key": service.get("service_key"),
+                    "service_label": service.get("service_label"),
+                    "service_catalogue_category": service.get("service_catalogue_category"),
                     "service_type": _service_type(service),
                     "allowed": result.get("allowed", True),
                     "confidence": result.get("confidence"),
@@ -648,6 +677,8 @@ class OfferBuilderService:
             "services": [
                 {
                     "service_id": service.get("id"),
+                    "service_key": service.get("service_key"),
+                    "service_label": service.get("service_label"),
                     "service_type": _service_type(service),
                     "category": service.get("category"),
                     "evaluation_count": len([item for item in evaluations if item.get("service_id") == service.get("id")]),

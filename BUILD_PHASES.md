@@ -931,6 +931,23 @@ Avoid adding:
 
 - Live GDS/NDC/supplier calls, PNR creation, ticketing, EMD issuance, invoices, payments, or document designer actions.
 
+### Phase 36.2.5: Reference Data Consumer Map And Service Catalogue Governance
+
+Implemented scope:
+
+- Reference domain usage map covering ownership, agency behavior, consumers, routes, models, workflows, import support, enrichment support, health checks, operational impact, and missing-data risk.
+- Reference Health & Action Required endpoints replacing unexplained Important Records with explicit missing metadata, active workflow usage, recent changes, review, pinned, and high-risk domain logic.
+- Domain-aware import templates plus preview/apply import APIs for governed reference domains and service catalogue records.
+- Reference Enrichment Pack model/API facade with default operational metadata packs for airports, airlines, service catalogue, documents, pets, and special items.
+- Editable platform Service Catalogue APIs and UI with operational mappings for request UI, rules/services, SSR/OSI, offers, acceptance, booking readiness, documents, and future EMD readiness.
+- Agency consume-only service catalogue view with correction suggestions remaining in the reference suggestion workflow.
+- Compatibility-layer links from service catalogue records into requested services, passenger service requests, rules/services evaluation, offer builder snapshots, accepted offer snapshots, trip service items, and booking readiness packages.
+- Readiness flags and non-blocking counts under `reference_data`.
+
+Avoid adding:
+
+- Live booking/PNR creation, ticketing, EMD issuance, supplier execution, invoices/accounting, payment processing, document designer actions, or agency mutation of platform-owned reference/service catalogue records.
+
 ### Phase 37: Booking/Ticket/EMD Mirror Records
 
 Recommended scope:

@@ -7,6 +7,7 @@ from typing import Any
 
 from database import Database
 from models import AuditEvent, GlobalReferenceRecord, ReferenceImportBatch, ServiceCatalogueRecord, now_utc
+from services.service_catalogue_service import normalize_service_catalogue_payload
 
 
 REFERENCE_DOMAINS = {
@@ -22,7 +23,11 @@ REFERENCE_DOMAINS = {
     "client_types": "Client types",
     "contact_channels": "Contact channels",
     "document_types": "Document types",
+    "service_categories": "Service categories",
+    "ssr_osi_codes": "SSR / OSI codes",
     "cabin_classes": "Cabin classes",
+    "aircraft_types": "Aircraft types",
+    "airline_alliances": "Airline alliances",
     "passenger_types": "Passenger types",
     "guardian_relationships": "Guardian relationships",
     "mobility_levels": "Mobility levels",
@@ -32,6 +37,7 @@ REFERENCE_DOMAINS = {
     "pet_species": "Pet species",
     "pet_breeds": "Pet breeds",
     "special_item_categories": "Special item categories",
+    "tax_types": "Tax types",
 }
 
 SERVICE_FAMILIES = [
@@ -169,11 +175,33 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         {"code": "visa", "label": "Visa", "sort_order": 30},
         {"code": "medical_certificate", "label": "Medical certificate", "sort_order": 40},
     ],
+    "service_categories": [
+        {"code": "wheelchair_mobility", "label": "Wheelchair and mobility assistance", "sort_order": 10},
+        {"code": "medical_assistance", "label": "Medical assistance", "sort_order": 20},
+        {"code": "pets_animals", "label": "Pets and service animals", "sort_order": 30},
+        {"code": "special_items", "label": "Special items and equipment", "sort_order": 40},
+    ],
+    "ssr_osi_codes": [
+        {"code": "WCHR", "label": "Wheelchair assistance to/from gate", "metadata_json": {"message_type": "ssr"}, "sort_order": 10},
+        {"code": "WCHS", "label": "Wheelchair assistance including stairs", "metadata_json": {"message_type": "ssr"}, "sort_order": 20},
+        {"code": "WCHC", "label": "Full wheelchair assistance to cabin seat", "metadata_json": {"message_type": "ssr"}, "sort_order": 30},
+        {"code": "MEDA", "label": "Medical case requiring airline review", "metadata_json": {"message_type": "ssr"}, "sort_order": 40},
+        {"code": "PETC", "label": "Pet in cabin", "metadata_json": {"message_type": "ssr"}, "sort_order": 50},
+    ],
     "cabin_classes": [
         {"code": "economy", "label": "Economy", "sort_order": 10},
         {"code": "premium_economy", "label": "Premium economy", "sort_order": 20},
         {"code": "business", "label": "Business", "sort_order": 30},
         {"code": "first", "label": "First", "sort_order": 40},
+    ],
+    "aircraft_types": [
+        {"code": "320", "label": "Airbus A320", "metadata_json": {"iata_aircraft_code": "320", "icao_aircraft_code": "A320"}, "sort_order": 10},
+        {"code": "738", "label": "Boeing 737-800", "metadata_json": {"iata_aircraft_code": "738", "icao_aircraft_code": "B738"}, "sort_order": 20},
+    ],
+    "airline_alliances": [
+        {"code": "STAR", "label": "Star Alliance", "metadata_json": {"alliance_key": "STAR"}, "sort_order": 10},
+        {"code": "ONEWORLD", "label": "oneworld", "metadata_json": {"alliance_key": "ONEWORLD"}, "sort_order": 20},
+        {"code": "SKYTEAM", "label": "SkyTeam", "metadata_json": {"alliance_key": "SKYTEAM"}, "sort_order": 30},
     ],
     "passenger_types": [
         {"code": "adult", "label": "Adult", "aliases": ["ADT"], "sort_order": 10},
@@ -217,6 +245,11 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         {"code": "sports_equipment", "label": "Sports equipment", "sort_order": 10},
         {"code": "musical_instrument", "label": "Musical instrument", "sort_order": 20},
         {"code": "fragile_valuable", "label": "Fragile or valuable item", "sort_order": 30},
+    ],
+    "tax_types": [
+        {"code": "airport_tax", "label": "Airport tax", "metadata_json": {"tax_type_key": "airport_tax"}, "sort_order": 10},
+        {"code": "government_tax", "label": "Government tax", "metadata_json": {"tax_type_key": "government_tax"}, "sort_order": 20},
+        {"code": "service_tax", "label": "Service tax", "metadata_json": {"tax_type_key": "service_tax"}, "sort_order": 30},
     ],
 }
 
@@ -803,10 +836,11 @@ async def upsert_reference_record(db: Database, domain: str, payload: dict[str, 
 
 
 async def upsert_service_catalogue_record(db: Database, payload: dict[str, Any], actor_user_id: str | None = None) -> str:
-    service_code = normalize_reference_code(payload["service_code"])
+    normalized_payload = normalize_service_catalogue_payload(payload, actor_user_id)
+    service_code = normalize_reference_code(normalized_payload["service_code"])
     existing = await db.collection("service_catalogue").find_one({"service_code": service_code})
     record_payload = {
-        **payload,
+        **normalized_payload,
         "service_code": service_code,
         "updated_by_user_id": actor_user_id,
     }

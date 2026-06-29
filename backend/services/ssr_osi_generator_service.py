@@ -98,6 +98,27 @@ def build_ssr_text(service_type: str, payload: dict[str, Any]) -> str:
     return compact_text(payload_value(payload, "notes") or service)
 
 
+def merge_documents(*groups: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for group in groups:
+        for document in group or []:
+            key = (str(document.get("code") or ""), str(document.get("label") or document))
+            if key not in seen:
+                seen.add(key)
+                merged.append(document)
+    return merged
+
+
+def render_catalogue_template(template: str | None, values: dict[str, Any]) -> str | None:
+    if not template:
+        return None
+    try:
+        return compact_text(template.format(**values))
+    except (KeyError, ValueError):
+        return compact_text(template)
+
+
 class SsrOsiGeneratorService:
     def __init__(self, db: Database) -> None:
         self.db = db
@@ -106,17 +127,20 @@ class SsrOsiGeneratorService:
     async def generate(self, context: dict[str, Any], exception_result: dict[str, Any] | None = None) -> dict[str, Any]:
         result = exception_result or await self.exception_engine.evaluate(context)
         warnings = list(result.get("warnings") or [])
-        required_documents = [
-            *SSR_REQUIRED_DOCUMENTS.get(normalize_code(context.get("service_type")) or "", []),
-            *(result.get("required_documents") or []),
-        ]
-        service_type = normalize_code(context.get("service_type")) or "OTHS"
-        ssr_code = SSR_CODE_MAP.get(service_type)
-        iata_code = normalize_code(context.get("iata_code")) or normalize_code((result.get("rules_context") or {}).get("airline", {}).get("iata_code"))
         payload = context.get("service_payload_json") or {}
+        catalogue = context.get("service_catalogue_snapshot_json") or payload.get("service_catalogue_snapshot_json") or {}
+        service_type = normalize_code(catalogue.get("service_key") or catalogue.get("default_service_type") or context.get("service_type")) or "OTHS"
+        required_documents = merge_documents(
+            SSR_REQUIRED_DOCUMENTS.get(service_type, []),
+            catalogue.get("required_documents_json") or [],
+            result.get("required_documents") or [],
+        )
+        ssr_code = normalize_code(catalogue.get("ssr_code")) or SSR_CODE_MAP.get(service_type)
+        iata_code = normalize_code(context.get("iata_code")) or normalize_code((result.get("rules_context") or {}).get("airline", {}).get("iata_code"))
+        template_values = {**payload, **context, "service_type": service_type, "service_key": catalogue.get("service_key") or service_type}
 
         if not result.get("allowed", True):
-            draft_text = build_ssr_text(service_type, payload)
+            draft_text = render_catalogue_template(catalogue.get("ssr_template"), template_values) or build_ssr_text(service_type, payload)
             return {
                 "ssr": [],
                 "osi": [{"airline_code": iata_code, "text": f"MANUAL REVIEW ONLY - {draft_text}", "status": "draft"}],
@@ -128,13 +152,14 @@ class SsrOsiGeneratorService:
 
         ssr: list[dict[str, Any]] = []
         osi: list[dict[str, Any]] = []
-        text = build_ssr_text(service_type, payload)
+        text = render_catalogue_template(catalogue.get("ssr_template"), template_values) or build_ssr_text(service_type, payload)
+        osi_text = render_catalogue_template(catalogue.get("osi_template"), template_values)
         if ssr_code:
             ssr.append({"airline_code": iata_code, "code": ssr_code, "text": text, "status": "preview"})
         else:
             warnings.append(f"No deterministic SSR code configured for service type {service_type}.")
-        if service_type in {"VIP", "VVIP", "DIPLOMAT", "DIPB", "WEAP"}:
-            osi.append({"airline_code": iata_code, "text": text, "status": "preview"})
+        if osi_text or service_type in {"VIP", "VVIP", "DIPLOMAT", "DIPB", "WEAP"}:
+            osi.append({"airline_code": iata_code, "text": osi_text or text, "status": "preview"})
         if service_type == "MEDIF":
             osi.append({"airline_code": iata_code, "text": "MEDIF FORM REQUIRED BEFORE AIRLINE CONFIRMATION", "status": "preview"})
         return {

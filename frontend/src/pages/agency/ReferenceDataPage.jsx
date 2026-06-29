@@ -140,7 +140,7 @@ export default function ReferenceDataPage() {
           <section className="rounded-lg border border-slate-200 bg-white p-6">
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Governed lookup foundation</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Reference Data</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Global reference data is managed by AeroAssist. Your agency can use approved records and submit suggestions for corrections or additions.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Global reference data is managed by AeroAssist. Your agency can consume approved records and submit suggestions for corrections or additions; foundation records and service catalogue entries cannot be edited from agency workspaces.</p>
             {message ? <p className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{message}</p> : null}
             {error ? <p className="mt-4 rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
           </section>
@@ -205,7 +205,7 @@ function ServiceCataloguePanel({ query, setQuery, runSearch, families, records }
     <>
       <section className="rounded-lg border border-slate-200 bg-white p-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div><h3 className="text-xl font-semibold text-slate-950">Service Catalogue</h3><p className="text-sm text-slate-600">Approved global service entries available for agency workflows.</p></div>
+          <div><h3 className="text-xl font-semibold text-slate-950">Service Catalogue</h3><p className="text-sm text-slate-600">Active platform-managed services available to request, rules, offer, acceptance, booking readiness, and document workflows.</p></div>
           <form className="flex flex-wrap items-center gap-2" onSubmit={runSearch}>
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search service or SSR" value={query} onChange={(event) => setQuery(event.target.value)} />
             <button className="rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white" type="submit">Search</button>
@@ -306,7 +306,25 @@ function SuggestionList({ title, suggestions }) {
 }
 
 function ServiceRow({ record }) {
-  return <div className="py-3"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-950">{record.service_label}</p><p className="text-xs text-slate-500">{record.service_code} · SSR {record.default_ssr_code || "manual"} · {record.beneficiary_type}</p></div><span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{record.requires_policy_check ? "Policy check" : "Lookup"}</span></div><p className="mt-2 text-xs text-slate-500">{record.requires_document_check ? "Document check required. " : ""}{record.requires_manual_pricing ? "Manual pricing required. " : ""}{record.requires_segment_scoping ? "Segment scoped." : "Trip scoped."}</p></div>
+  const mappings = record.operational_mappings || {}
+  const documents = mappings.documents?.required_documents_json || record.required_documents_json || []
+  return (
+    <div className="py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold text-slate-950">{record.label || record.service_label}</p>
+          <p className="text-xs text-slate-500">{record.service_key || record.service_code} · SSR {record.ssr_code || record.default_ssr_code || "manual"} · {record.category || record.service_family_code}</p>
+        </div>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{record.requires_policy_check ? "Policy check" : "Lookup"}</span>
+      </div>
+      <p className="mt-2 text-xs text-slate-500">
+        {(documents || []).length ? `Documents: ${documents.map((item) => item.label || item.code).join(", ")}. ` : ""}
+        {record.requires_manual_pricing || mappings.acceptance_booking_readiness?.fee_expected ? "Pricing or EMD review may apply. " : ""}
+        {record.requires_segment_scope || record.requires_segment_scoping ? "Segment scoped. " : "Trip scoped. "}
+        {mappings.acceptance_booking_readiness?.booking_readiness_enabled === false ? "Excluded from booking readiness." : "Included in booking readiness checks."}
+      </p>
+    </div>
+  )
 }
 
 function Status({ value, tone = "slate" }) {

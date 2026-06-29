@@ -12,7 +12,7 @@ BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 AGENCY_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
-EXPECTED_PHASE = "phase_36_2_offer_acceptance_booking_readiness"
+EXPECTED_PHASE = "phase_36_2_5_reference_service_catalogue_governance"
 ROOT = Path(__file__).resolve().parents[2]
 
 

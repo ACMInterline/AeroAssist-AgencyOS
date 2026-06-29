@@ -30,6 +30,7 @@ from services.reference_data_service import (
     safe_reference_suggestion,
     sort_records,
 )
+from services.service_catalogue_service import safe_service_catalogue_record
 from services.seed_service import seed_core_data
 from services.tenant_service import assert_agency_access
 
@@ -208,6 +209,7 @@ async def list_reference_domains(
         domain: len([record for record in active_records if record.get("domain") == domain])
         for domain in REFERENCE_DOMAINS
     }
+    service_records = [safe_service_catalogue_record(record) for record in await db.collection("service_catalogue").find_many()]
     return {
         "domains": [
             {
@@ -220,7 +222,8 @@ async def list_reference_domains(
         "service_catalogue": {
             "domain": "service_catalogue",
             "label": "Service catalogue",
-            "active_record_count": await db.collection("service_catalogue").count({"is_active": True}),
+            "active_record_count": len([record for record in service_records if record.get("is_active", True) and record.get("status") != "archived"]),
+            "agency_behavior": "consume_only_suggest_changes",
         },
         "actor_user_id": user["id"],
     }
@@ -240,7 +243,7 @@ async def search_service_catalogue(
 ) -> dict:
     await enforce_approved_reference_read(user, include_inactive)
     records = filter_active(await db.collection("service_catalogue").find_many(), include_inactive)
-    items = [record for record in records if matches_service_query(record, q)]
+    items = [safe_service_catalogue_record(record) for record in records if matches_service_query(safe_service_catalogue_record(record), q)]
     return {"items": sort_records(items, "service_code", "service_label"), "query": q, "actor_user_id": user["id"]}
 
 
@@ -251,7 +254,8 @@ async def list_service_catalogue(
     db: Database = Depends(get_database),
 ) -> dict:
     await enforce_approved_reference_read(user, include_inactive)
-    records = filter_active(await db.collection("service_catalogue").find_many(), include_inactive)
+    records = [safe_service_catalogue_record(record) for record in filter_active(await db.collection("service_catalogue").find_many(), include_inactive)]
+    records = [record for record in records if include_inactive or record.get("status") != "archived"]
     grouped = []
     for family in SERVICE_FAMILIES:
         family_records = [record for record in records if record.get("service_family_code") == family["code"]]

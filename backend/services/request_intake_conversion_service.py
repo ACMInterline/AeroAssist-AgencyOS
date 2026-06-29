@@ -17,6 +17,7 @@ from models import (
     TravelRequest,
 )
 from services.request_normalization_service import normalize_request_children
+from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 
 
 SERVICE_LABELS = {
@@ -342,11 +343,16 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         request_segment_ids.append(segment_doc["id"])
 
     for service_name in services:
+        service_code = service_name.upper().replace(" ", "_").replace("/", "_")[:32]
+        service_record = await find_service_catalogue_record(db, service_code)
+        service_snapshot = service_catalogue_snapshot(service_record)
         service_detail_payload = {
             "source": "request_intake",
             "intake_reference": intake.get("reference_code"),
             "request_details": normalized.get("request_details"),
         }
+        if service_snapshot:
+            service_detail_payload["service_catalogue_snapshot_json"] = service_snapshot
         if "mobility" in service_name.lower():
             service_detail_payload.update(
                 {
@@ -365,9 +371,12 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         service = RequestedService(
             agency_id=intake["agency_id"],
             request_id=created_request["id"],
-            service_code=service_name.upper().replace(" ", "_").replace("/", "_")[:32],
-            service_name=service_name,
-            service_category="intake",
+            service_catalogue_id=service_snapshot.get("service_catalogue_id"),
+            service_key=service_snapshot.get("service_key"),
+            service_catalogue_snapshot_json=service_snapshot,
+            service_code=service_snapshot.get("service_key") or service_code,
+            service_name=service_snapshot.get("label") or service_name,
+            service_category=service_snapshot.get("category") or "intake",
             details=normalized.get("request_details"),
             detail_payload=service_detail_payload,
             passenger_ids=[item["passenger_id"] for item in request_passengers],

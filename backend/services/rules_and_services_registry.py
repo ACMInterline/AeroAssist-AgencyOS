@@ -114,12 +114,16 @@ class RulesAndServicesRegistry:
         airline_id: str | None = None,
         route: dict[str, Any] | None = None,
         aircraft_type: str | None = None,
+        service_key: str | None = None,
+        service_catalogue_category: str | None = None,
     ) -> list[dict[str, Any]]:
         resolved = await self.resolve_airline(airline_id)
         airline_ids = {value for value in [airline_id, resolved.get("airline_id")] if value}
         iata_codes = {value for value in [normalize_code(airline_id), resolved.get("iata_code")] if value}
         origin, destination = route_parts(route)
         aircraft = normalize_code(aircraft_type)
+        service = normalize_code(service_key)
+        service_category = normalize_code(service_catalogue_category) or normalize_code(category)
         today = date.today()
         filters = {"active": True}
         if category:
@@ -143,6 +147,10 @@ class RulesAndServicesRegistry:
                     return False
             if rule.get("aircraft_type") and normalize_code(rule.get("aircraft_type")) != aircraft:
                 return False
+            if rule.get("service_key") and normalize_code(rule.get("service_key")) != service:
+                return False
+            if rule.get("service_catalogue_category") and normalize_code(rule.get("service_catalogue_category")) != service_category:
+                return False
             effective_from = date_from_value(rule.get("effective_from"))
             effective_to = date_from_value(rule.get("effective_to"))
             if effective_from and effective_from > today:
@@ -159,11 +167,20 @@ class RulesAndServicesRegistry:
         route: dict[str, Any] | None = None,
         aircraft_type: str | None = None,
         category: str | None = None,
+        service_key: str | None = None,
+        service_catalogue_category: str | None = None,
     ) -> dict[str, Any]:
         resolved = await self.resolve_airline(airline_id_or_iata)
         airline_id = resolved.get("airline_id")
         rules_payload = await self.get_airline_rules(airline_id or airline_id_or_iata)
-        exception_rules = await self.get_exception_rules(category, airline_id or airline_id_or_iata, route, aircraft_type)
+        exception_rules = await self.get_exception_rules(
+            category,
+            airline_id or airline_id_or_iata,
+            route,
+            aircraft_type,
+            service_key=service_key,
+            service_catalogue_category=service_catalogue_category,
+        )
         ancillaries = await self.db.collection("airline_ancillaries").find_many({"airline_id": airline_id}) if airline_id else []
         distribution_profile = await self.db.collection("airline_distribution_profiles").find_one({"airline_id": airline_id}) if airline_id else None
         pss_parameters = await self.db.collection("airline_pss_parameters").find_one({"airline_id": airline_id}) if airline_id else None

@@ -15,6 +15,18 @@ export function fetchPlatformReferenceDomains() {
   return apiGet("/api/platform/reference/domains")
 }
 
+export function fetchReferenceDomainUsage() {
+  return apiGet("/api/platform/reference/domain-usage")
+}
+
+export function fetchReferenceHealth() {
+  return apiGet("/api/platform/reference/health")
+}
+
+export function fetchReferenceActionRequired() {
+  return apiGet("/api/platform/reference/records/action-required")
+}
+
 export function savePlatformReferenceDomain(domain, payload) {
   return apiPut(`/api/platform/reference/domains/${encodeURIComponent(domain)}`, payload)
 }
@@ -51,6 +63,18 @@ export function importPlatformReferenceCsv(payload) {
   return apiPost("/api/platform/reference/import", payload)
 }
 
+export function fetchReferenceImportTemplates() {
+  return apiGet("/api/platform/reference/import/templates")
+}
+
+export function previewPlatformReferenceImport(payload) {
+  return apiPost("/api/platform/reference/import/preview", payload)
+}
+
+export function applyPlatformReferenceImport(payload) {
+  return apiPost("/api/platform/reference/import/apply", payload)
+}
+
 export function fetchPlatformReferenceImportBatches() {
   return apiGet("/api/platform/reference/import-batches")
 }
@@ -77,4 +101,32 @@ export function commitReferenceEnrichmentImport(payload) {
 
 export function fetchReferenceEnrichmentBatches() {
   return apiGet("/api/platform/reference/enrichment/batches")
+}
+
+export function fetchReferenceEnrichmentPacks() {
+  return apiGet("/api/platform/reference/enrichment-packs")
+}
+
+export function previewReferenceEnrichmentPack(packId, payload) {
+  return apiPost(`/api/platform/reference/enrichment-packs/${encodeURIComponent(packId)}/preview`, payload)
+}
+
+export function applyReferenceEnrichmentPack(packId, payload) {
+  return apiPost(`/api/platform/reference/enrichment-packs/${encodeURIComponent(packId)}/apply`, payload)
+}
+
+export function fetchPlatformServiceCatalogue(params = {}) {
+  return apiGet(withQuery("/api/platform/service-catalogue", params))
+}
+
+export function createPlatformServiceCatalogue(payload) {
+  return apiPost("/api/platform/service-catalogue", payload)
+}
+
+export function updatePlatformServiceCatalogue(serviceId, payload) {
+  return apiPut(`/api/platform/service-catalogue/${encodeURIComponent(serviceId)}`, payload)
+}
+
+export function archivePlatformServiceCatalogue(serviceId) {
+  return apiPost(`/api/platform/service-catalogue/${encodeURIComponent(serviceId)}/archive`, {})
 }

@@ -15,6 +15,7 @@ from models import (
     TripAcceptedOfferSnapshot,
 )
 from services.offer_builder_service import OfferBuilderService, write_offer_builder_audit
+from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.trip_dossier_service import create_trip_from_request
 
 
@@ -551,11 +552,31 @@ class OfferAcceptanceService:
             scoped = []
             requested = []
         return {
-            "trip_service_items": trip_services,
-            "passenger_service_requests": passenger_services,
-            "request_passenger_segment_services": scoped,
-            "requested_services": requested,
+            "trip_service_items": await self._with_catalogue_snapshots(trip_services),
+            "passenger_service_requests": await self._with_catalogue_snapshots(passenger_services),
+            "request_passenger_segment_services": await self._with_catalogue_snapshots(scoped),
+            "requested_services": await self._with_catalogue_snapshots(requested),
         }
+
+    async def _with_catalogue_snapshots(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        enriched: list[dict[str, Any]] = []
+        for item in items:
+            row = dict(item)
+            snapshot = row.get("service_catalogue_snapshot_json") or {}
+            if not snapshot:
+                record = await find_service_catalogue_record(
+                    self.db,
+                    row.get("service_key") or row.get("service_code") or row.get("service_type") or row.get("ssr_code"),
+                )
+                snapshot = service_catalogue_snapshot(record)
+            if snapshot:
+                row["service_catalogue_snapshot_json"] = snapshot
+                row["service_catalogue_id"] = row.get("service_catalogue_id") or snapshot.get("service_catalogue_id")
+                row["service_key"] = row.get("service_key") or snapshot.get("service_key")
+                row["service_label"] = row.get("service_label") or row.get("service_name") or snapshot.get("label")
+                row["service_catalogue_category"] = row.get("service_catalogue_category") or snapshot.get("category") or snapshot.get("rules_category")
+            enriched.append(row)
+        return enriched
 
     async def _collect_request_records(
         self,
