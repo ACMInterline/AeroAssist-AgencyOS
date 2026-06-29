@@ -2924,6 +2924,33 @@ class BookingProviderTarget(str, Enum):
     OTHER = "other"
 
 
+class BookingWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    READY_TO_BOOK = "ready_to_book"
+    BOOKING_IN_PROGRESS = "booking_in_progress"
+    BOOKED = "booked"
+    BLOCKED = "blocked"
+    CANCELLED = "cancelled"
+
+
+class BookingRecordProviderStatus(str, Enum):
+    DRAFT = "draft"
+    QUEUED = "queued"
+    HELD = "held"
+    CONFIRMED = "confirmed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class BookingRecordStatus(str, Enum):
+    DRAFT = "draft"
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    PARTIALLY_CONFIRMED = "partially_confirmed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
 class OfferAcceptance(BaseDocument):
     agency_id: str
     workspace_id: str
@@ -2994,6 +3021,97 @@ class BookingReadinessPackage(BaseDocument):
     policy_violations_json: List[Dict[str, Any]] = Field(default_factory=list)
     readiness_checks_json: Dict[str, Any] = Field(default_factory=dict)
     created_by_user_id: Optional[str] = None
+
+
+class BookingWorkspace(BaseDocument):
+    agency_id: str
+    trip_id: str
+    request_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_option_id: Optional[str] = None
+    offer_acceptance_id: Optional[str] = None
+    booking_readiness_package_id: str
+    booking_record_id: Optional[str] = None
+    workspace_number: str
+    title: str
+    status: BookingWorkspaceStatus = BookingWorkspaceStatus.DRAFT
+    provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    passengers_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    segments_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    services_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    special_items_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_violations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class BookingRecord(BaseDocument):
+    agency_id: str
+    booking_workspace_id: str
+    trip_id: str
+    request_id: Optional[str] = None
+    booking_readiness_package_id: str
+    offer_acceptance_id: Optional[str] = None
+    pnr_locator: Optional[str] = None
+    provider: BookingProviderTarget = BookingProviderTarget.MANUAL
+    provider_status: BookingRecordProviderStatus = BookingRecordProviderStatus.DRAFT
+    booking_status: BookingRecordStatus = BookingRecordStatus.DRAFT
+    passengers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    segments_json: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_json: Dict[str, Any] = Field(default_factory=dict)
+    services_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_json: Dict[str, Any] = Field(default_factory=dict)
+    special_items_json: Dict[str, Any] = Field(default_factory=dict)
+    ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    provider_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    provider_response_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_pnr_mirror_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class BookingCreateFromReadinessRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    booking_readiness_package_id: str
+    provider_target: Optional[BookingProviderTarget] = None
+    internal_notes: Optional[str] = None
+    create_draft_record: bool = True
+
+
+class BookingWorkspaceStatusUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: BookingWorkspaceStatus
+    internal_notes: Optional[str] = None
+
+
+class BookingRecordUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pnr_locator: Optional[str] = None
+    provider_status: Optional[BookingRecordProviderStatus] = None
+    booking_status: Optional[BookingRecordStatus] = None
+    passengers_json: Optional[List[Dict[str, Any]]] = None
+    segments_json: Optional[List[Dict[str, Any]]] = None
+    pricing_json: Optional[Dict[str, Any]] = None
+    services_json: Optional[Dict[str, Any]] = None
+    pets_json: Optional[Dict[str, Any]] = None
+    special_items_json: Optional[Dict[str, Any]] = None
+    ssr_json: Optional[List[Dict[str, Any]]] = None
+    osi_json: Optional[List[Dict[str, Any]]] = None
+    provider_payload_json: Optional[Dict[str, Any]] = None
+    provider_response_json: Optional[Dict[str, Any]] = None
+    internal_notes: Optional[str] = None
 
 
 class RefundExchangeCaseType(str, Enum):
@@ -3879,12 +3997,17 @@ class BookingTimelineEvent(BaseModel):
 
     id: str = Field(default_factory=new_id)
     agency_id: str
-    booking_id: str
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    trip_id: Optional[str] = None
     event_type: str
     actor_user_id: Optional[str] = None
     title: str
+    description: Optional[str] = None
     summary: Optional[str] = None
     visibility: Visibility = Visibility.INTERNAL
+    payload_json: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=now_utc)
 

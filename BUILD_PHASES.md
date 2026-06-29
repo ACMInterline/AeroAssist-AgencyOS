@@ -56,6 +56,8 @@ The repository currently contains:
 - Phase 36.0: Unified Airline Intelligence, Rules & Services foundation.
 - Phase 36.1: Rule-aware offer builder and internal comparison matrix.
 - Phase 36.2: Offer acceptance, trip accepted-offer snapshot, and booking readiness.
+- Phase 36.2.5: Reference data consumer map and service catalogue governance.
+- Phase 36.3: Booking workspace and manual PNR mirror foundation.
 
 Phase 35 navigation hotfix:
 
@@ -948,11 +950,26 @@ Avoid adding:
 
 - Live booking/PNR creation, ticketing, EMD issuance, supplier execution, invoices/accounting, payment processing, document designer actions, or agency mutation of platform-owned reference/service catalogue records.
 
-### Phase 37: Booking/Ticket/EMD Mirror Records
+### Phase 36.3: Booking / PNR Foundation From Booking Readiness
+
+Implemented scope:
+
+- `BookingWorkspace` records created from booking readiness packages with immutable copied passenger, segment, pricing, service catalogue, pet, special-item, SSR/OSI, warning, document, and policy snapshots.
+- `BookingRecord` draft/manual PNR mirror records linked to booking workspaces, preserving provider target, manual locator/status fields, raw provider payload placeholders, and internal mirror JSON.
+- Extended booking timeline events for booking workspace, booking record, trip, description, and payload data while preserving legacy booking timeline compatibility.
+- Agency APIs for list, create-from-readiness, detail, status update, draft mirror rebuild, cancel, and manual booking record update.
+- Agency UI routes `/agency/booking-workspaces` and `/agency/booking-workspaces/{booking_workspace_id}` plus trip/offer readiness entry points.
+- Readiness flags and non-blocking counts under `booking_foundation`.
+
+Avoid adding:
+
+- Live GDS/NDC/supplier calls, provider booking execution, ticketing, EMD issuance, invoices, payments, document designer actions, or backward mutation of accepted offer/request snapshots.
+
+### Phase 37: Provider Import, Ticket, And EMD Mirror Records
 
 Recommended scope:
 
-- Mirror records for booking, ticket, and EMD state with raw source payload preservation.
+- Provider import provenance and deeper ticket/EMD mirror state with raw source payload preservation.
 - Manual import/reconciliation workflow and provenance metadata.
 
 Avoid adding:

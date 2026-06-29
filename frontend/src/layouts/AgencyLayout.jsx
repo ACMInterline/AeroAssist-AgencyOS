@@ -22,6 +22,7 @@ const primaryNav = [
   { label: "Requests", description: "Operational work", href: "/agency/requests", icon: ClipboardList },
   { label: "Trips", description: "Dossiers", href: "/agency/trips", icon: Plane },
   { label: "Offers", description: "Compare options", href: "/agency/offers", icon: Sparkles },
+  { label: "Booking Workspaces", description: "PNR mirrors", href: "/agency/booking-workspaces", icon: ClipboardList },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },
   { label: "Passengers", description: "Travelers", href: "/agency/passengers", icon: UserRound },

@@ -12,13 +12,14 @@ export default function TripDetailPage({ tripId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, requests, acceptedOffer, bookingReadiness] = await Promise.all([
+    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/booking-readiness`),
+      apiGet(`/api/agencies/${context.agency.id}/booking-workspaces?trip_id=${encodeURIComponent(tripId)}`),
     ])
-    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness })
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [] })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -78,6 +79,28 @@ export default function TripDetailPage({ tripId }) {
       const existing = await apiGet(`/api/agencies/${state.agency.id}/offer-workspaces?trip_id=${encodeURIComponent(tripId)}`)
       const workspace = existing.items?.[0] || (await apiPost(`/api/agencies/${state.agency.id}/trips/${tripId}/offer-workspace`)).workspace
       window.location.href = `/agency/offers/${workspace.id}/builder`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function createOrOpenBookingWorkspace() {
+    try {
+      const existing = state?.bookingWorkspaces?.[0]
+      if (existing) {
+        window.location.href = `/agency/booking-workspaces/${existing.id}`
+        return
+      }
+      const readinessId = state?.bookingReadiness?.booking_readiness?.id
+      if (!readinessId) {
+        setError("Booking readiness package is required before creating a booking workspace.")
+        return
+      }
+      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
+        booking_readiness_package_id: readinessId,
+        create_draft_record: true,
+      })
+      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
     } catch (err) {
       setError(err.message)
     }
@@ -155,7 +178,7 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
-          <AcceptedOfferPanel state={state} />
+          <AcceptedOfferPanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
@@ -180,10 +203,11 @@ function FuturePanel({ title }) {
   return <section className="rounded-lg border border-dashed border-slate-300 bg-white p-4"><h3 className="text-sm font-semibold text-slate-950">{title}</h3><p className="mt-2 text-xs text-slate-500">Future phase. This dossier can anchor the workflow later, but no functionality is active here yet.</p></section>
 }
 
-function AcceptedOfferPanel({ state }) {
+function AcceptedOfferPanel({ state, onCreateOrOpenBookingWorkspace }) {
   const snapshot = state?.acceptedOffer?.accepted_offer
   const acceptance = state?.acceptedOffer?.acceptance
   const readiness = state?.bookingReadiness?.booking_readiness
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
   if (!snapshot && !readiness) {
     return (
       <Panel title="Accepted Offer + Booking Readiness">
@@ -199,11 +223,12 @@ function AcceptedOfferPanel({ state }) {
   const osi = readiness?.osi_json || snapshot?.ssr_osi_preview_json?.osi || []
   return (
     <Panel title="Accepted Offer + Booking Readiness">
-      <div className="grid gap-4 lg:grid-cols-4">
+      <div className="grid gap-4 lg:grid-cols-5">
         <Metric label="Acceptance" value={acceptance?.status || "snapshot"} />
         <Metric label="Readiness" value={readiness?.status || "pending"} />
         <Metric label="Pricing" value={money(pricing.total_amount, pricing.currency)} />
         <Metric label="Provider" value={readiness?.provider_target || "manual"} />
+        <Metric label="Booking Workspace" value={bookingWorkspace?.workspace_number || "not created"} />
       </div>
       <section className="grid gap-4 lg:grid-cols-2">
         <SnapshotList
@@ -258,10 +283,21 @@ function AcceptedOfferPanel({ state }) {
         />
       </section>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
-        <p className="text-sm text-slate-600">Booking creation is not active in this phase.</p>
-        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>
-          Create Booking
-        </button>
+        <p className="text-sm text-slate-600">Create or open the manual booking workspace and PNR mirror. Live provider booking remains disabled.</p>
+        <div className="flex flex-wrap gap-2">
+          {bookingWorkspace ? (
+            <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>
+              Open Booking Workspace
+            </a>
+          ) : (
+            <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateOrOpenBookingWorkspace} disabled={!readiness}>
+              Create Booking Workspace
+            </button>
+          )}
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>
+            Create Live Booking
+          </button>
+        </div>
       </div>
     </Panel>
   )

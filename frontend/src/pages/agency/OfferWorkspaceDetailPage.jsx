@@ -23,7 +23,11 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/comparison`),
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/acceptance`),
     ])
-    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance })
+    const readiness = acceptance.booking_readiness
+    const bookingWorkspaces = readiness?.trip_id
+      ? await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces?trip_id=${encodeURIComponent(readiness.trip_id)}`)
+      : { items: [] }
+    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance, bookingWorkspaces: bookingWorkspaces.items || [] })
   }
 
   useEffect(() => {
@@ -98,6 +102,28 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
     await load()
   }
 
+  async function createOrOpenBookingWorkspace() {
+    try {
+      const existing = state?.bookingWorkspaces?.[0]
+      if (existing) {
+        window.location.href = `/agency/booking-workspaces/${existing.id}`
+        return
+      }
+      const readinessId = state?.acceptance?.booking_readiness?.id
+      if (!readinessId) {
+        setError("Booking readiness package is required before creating a booking workspace.")
+        return
+      }
+      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
+        booking_readiness_package_id: readinessId,
+        create_draft_record: true,
+      })
+      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -125,7 +151,7 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
 
-          <AcceptancePanel state={state} />
+          <AcceptancePanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
 
           <section className="grid gap-4 md:grid-cols-5">
             <Metric label="Options" value={childCounts.options} />
@@ -196,10 +222,11 @@ function contextLabel(state) {
   return parts.length ? parts.join(" | ") : "Manual workspace"
 }
 
-function AcceptancePanel({ state }) {
+function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
   const acceptance = state?.acceptance?.acceptance
   const readiness = state?.acceptance?.booking_readiness
   const history = state?.acceptance?.history || []
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
   const superseded = history.filter((item) => item.status === "superseded").length
   if (!acceptance) {
     return (
@@ -233,6 +260,15 @@ function AcceptancePanel({ state }) {
               Readiness: {readiness.status}
             </span>
           ) : null}
+          {bookingWorkspace ? (
+            <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>
+              Open booking workspace
+            </a>
+          ) : (
+            <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateOrOpenBookingWorkspace} disabled={!readiness}>
+              Create booking workspace
+            </button>
+          )}
         </div>
       </div>
     </section>

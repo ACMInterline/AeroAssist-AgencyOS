@@ -5,6 +5,8 @@ import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
+import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPage"
+import BookingWorkspacesPage from "./pages/agency/BookingWorkspacesPage"
 import BookingsPage from "./pages/agency/BookingsPage"
 import ClientDetailPage from "./pages/agency/ClientDetailPage"
 import ClientsPage from "./pages/agency/ClientsPage"
@@ -190,6 +192,11 @@ export default function App() {
     return <OfferWorkspaceDetailPage workspaceId={offerMatch[1]} />
   }
 
+  const bookingWorkspaceMatch = window.location.pathname.match(/^\/agency\/booking-workspaces\/([^/]+)$/)
+  if (bookingWorkspaceMatch) {
+    return <BookingWorkspaceDetailPage bookingWorkspaceId={bookingWorkspaceMatch[1]} />
+  }
+
   const bookingMatch = window.location.pathname.match(/^\/agency\/bookings\/([^/]+)$/)
   if (bookingMatch) {
     return <BookingDetailPage bookingId={bookingMatch[1]} />
@@ -305,6 +312,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/bookings") {
     return <BookingsPage />
+  }
+
+  if (window.location.pathname === "/agency/booking-workspaces") {
+    return <BookingWorkspacesPage />
   }
 
   if (window.location.pathname === "/agency/invoices") {

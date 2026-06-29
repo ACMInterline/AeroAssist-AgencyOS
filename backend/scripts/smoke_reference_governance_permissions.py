@@ -14,7 +14,7 @@ OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {
 AGENCY_ADMIN_HEADERS = {"X-Demo-User-Email": "agency.owner@aeroassist.dev"}
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 PORTAL_HEADERS = {"X-Demo-User-Email": "anna.client@example.com"}
-EXPECTED_PHASE = "phase_36_2_5_reference_service_catalogue_governance"
+EXPECTED_PHASE = "phase_36_3_booking_pnr_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

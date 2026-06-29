@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.reference_domain_usage_service import list_domain_usage, reference_action_required
@@ -20,7 +20,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.2.5 reference and service catalogue governance.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.3 booking and PNR foundation.",
 )
 
 app.add_middleware(
@@ -47,7 +47,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_2_5_reference_service_catalogue_governance",
+        "phase": "phase_36_3_booking_pnr_foundation",
     }
 
 
@@ -173,6 +173,15 @@ async def readiness() -> dict:
     offer_acceptance_count = await database.collection("offer_acceptances").count()
     trip_accepted_offer_snapshot_count = await database.collection("trip_accepted_offer_snapshots").count()
     booking_readiness_package_count = await database.collection("booking_readiness_packages").count()
+    booking_workspace_count = await database.collection("booking_workspaces").count()
+    booking_record_count = await database.collection("booking_records").count()
+    booking_timeline_events = await database.collection("booking_timeline_events").find_many()
+    booking_timeline_event_count = len(
+        [item for item in booking_timeline_events if item.get("booking_workspace_id")]
+    )
+    booking_workspace_ready_count = await database.collection("booking_workspaces").count({"status": "ready_to_book"})
+    booking_workspace_blocked_count = await database.collection("booking_workspaces").count({"status": "blocked"})
+    booking_workspace_cancelled_count = await database.collection("booking_workspaces").count({"status": "cancelled"})
     branded_logo_count = len(
         [
             item
@@ -185,7 +194,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_2_5_reference_service_catalogue_governance",
+        "phase": "phase_36_3_booking_pnr_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -367,6 +376,25 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Offer builder acceptance snapshots and booking readiness packages are additive; no real booking, ticketing, or supplier execution is performed.",
         },
+        "booking_foundation": {
+            "booking_workspace_foundation_enabled": True,
+            "booking_from_readiness_enabled": True,
+            "booking_record_mirror_enabled": True,
+            "booking_timeline_enabled": True,
+            "manual_pnr_mirror_enabled": True,
+            "provider_execution_disabled": True,
+            "service_catalogue_booking_snapshot_enabled": True,
+            "trip_booking_workspace_link_enabled": True,
+            "agency_booking_workspace_ui_enabled": True,
+            "booking_workspace_count": booking_workspace_count,
+            "booking_record_count": booking_record_count,
+            "booking_timeline_event_count": booking_timeline_event_count,
+            "booking_workspace_ready_count": booking_workspace_ready_count,
+            "booking_workspace_blocked_count": booking_workspace_blocked_count,
+            "booking_workspace_cancelled_count": booking_workspace_cancelled_count,
+            "readiness_required": False,
+            "diagnostic": "Booking workspaces and PNR mirrors are manual foundations created from readiness packages; provider execution remains disabled.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -407,6 +435,7 @@ app.include_router(trips.router)
 app.include_router(agency_special_services.router)
 app.include_router(agency_offer_builder.router)
 app.include_router(agency_offer_acceptance.router)
+app.include_router(agency_booking_workspaces.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)

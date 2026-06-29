@@ -36,9 +36,13 @@ export default function OfferBuilderPage({ workspaceId }) {
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/comparison`),
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/acceptance`),
     ])
+    const readiness = acceptance.booking_readiness
+    const bookingWorkspaces = readiness?.trip_id
+      ? await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces?trip_id=${encodeURIComponent(readiness.trip_id)}`)
+      : { items: [] }
     const urlOption = new URLSearchParams(window.location.search).get("option")
     const nextSelected = preferredOptionId || urlOption || detail.options?.[0]?.id || ""
-    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance })
+    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance, bookingWorkspaces: bookingWorkspaces.items || [] })
     setSelectedOptionId(nextSelected)
     const selected = detail.options?.find((option) => option.id === nextSelected) || detail.options?.[0]
     if (selected) {
@@ -191,6 +195,28 @@ export default function OfferBuilderPage({ workspaceId }) {
     }
   }
 
+  async function createOrOpenBookingWorkspace() {
+    try {
+      const existing = state?.bookingWorkspaces?.[0]
+      if (existing) {
+        window.location.href = `/agency/booking-workspaces/${existing.id}`
+        return
+      }
+      const readinessId = state?.acceptance?.booking_readiness?.id
+      if (!readinessId) {
+        setError("Booking readiness package is required before creating a booking workspace.")
+        return
+      }
+      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
+        booking_readiness_package_id: readinessId,
+        create_draft_record: true,
+      })
+      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const pricing = selectedOption?.pricing_summary_json || {}
   const acceptedOptionId = state?.acceptance?.acceptance?.option_id
 
@@ -231,6 +257,11 @@ export default function OfferBuilderPage({ workspaceId }) {
                   <CheckCircle2 className="h-4 w-4" />
                   {selectedOption?.id === acceptedOptionId ? "Accepted" : "Accept"}
                 </button>
+                {state?.acceptance?.booking_readiness ? (
+                  <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenBookingWorkspace}>
+                    Booking Workspace
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
