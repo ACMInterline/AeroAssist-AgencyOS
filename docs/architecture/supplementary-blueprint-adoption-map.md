@@ -1,6 +1,6 @@
 # Supplementary Blueprint Adoption Map
 
-Phase 36.4.5 adopts useful structures from the supplementary blueprint without replacing AgencyOS architecture. `/platform/*` and `/agency/*` remain canonical, provider execution stays disabled, and existing request/trip/offer/booking/ticket/EMD models remain the source of truth.
+Phase 36.4.5 adopts useful structures from the supplementary blueprint without replacing AgencyOS architecture. Phase 36.4.6 extends that alignment to standalone manual, imported confirmation/GDS, and existing-trip change/exchange workflows. `/platform/*` and `/agency/*` remain canonical, provider execution stays disabled, and existing request/trip/offer/booking/ticket/EMD models remain the source of truth.
 
 | Supplementary concept | Current AgencyOS equivalent | Status | Action |
 |---|---|---|---|
@@ -10,8 +10,8 @@ Phase 36.4.5 adopts useful structures from the supplementary blueprint without r
 | GDS parser samples and normalizer traces | `GdsParseSample` and `AiTraceEvent` | add foundation now | Preserve samples and traces without provider calls or parser automation. |
 | Trip requests and trip segments | `request_intakes`, `travel_requests`, `request_segments`, `trip_dossiers`, `trip_segments` | built | Map to existing request-to-trip lifecycle. |
 | Offers and offer items | `offer_workspaces`, `offer_options`, `offer_builder_segments`, `offer_fare_bundles`, `offer_pricing_lines` | built | Continue using rule-aware offer builder foundations. |
-| Bookings and PNR snapshots | `booking_workspaces`, `booking_records`, `internal_pnr_mirror_json` | built | Continue manual PNR mirror foundation; no provider execution. |
-| Tickets and EMDs | `ticket_records`, `ticket_coupons`, `emd_records`, `emd_coupons` | built | Recognize Phase 36.4 Tickets + EMD Foundation; do not add duplicate models. |
+| Bookings and PNR snapshots | `booking_workspaces`, `booking_records`, `BookingImportDraft`, `TripChangeOperation`, `internal_pnr_mirror_json` | built | Support readiness-driven, standalone manual, imported, and existing-trip change booking mirrors; no provider execution. |
+| Tickets and EMDs | `ticket_records`, `ticket_coupons`, `emd_records`, `emd_coupons`, `TicketExchangeOperation`, `EmdExchangeOperation` | built | Recognize Phase 36.4 Tickets + EMD Foundation and Phase 36.4.6 exchange mirror foundation; do not add duplicate models. |
 | Documents, versions, shares, templates, designer | `document_templates`, `rendered_documents`, `document_exports`, `document_deliveries`, `document_storage_records` | partially built | Defer full document designer/version/share layer to Phase 36.5. |
 | Fragmented AI logs | `AiTraceEvent` | add foundation now | Use one unified trace collection instead of many `ai_*_logs` tables. |
 | ADM risk events | `AdmRiskEvent` | add foundation now | Provide reviewable risk-event records without an ADM AI engine. |
@@ -27,11 +27,14 @@ Phase 36.4.5 adopts useful structures from the supplementary blueprint without r
 - `AirlineBrandAsset`
 - Static blueprint adoption API and `/platform/blueprint` UI
 - `SpecialServicesUnifiedFacade`
+- `BookingImportDraft`, `TripChangeOperation`, `TicketExchangeOperation`, and `EmdExchangeOperation`
+- Source-context fields for booking, ticket, and EMD mirror records
 
 ## Deferred
 
 - Full document designer, document versions, and document sharing
 - GDS parser UI, parser execution, and provider imports
+- Advanced parser training, provider reconciliation, and request/offer quote UX for trip changes
 - Visual airline dashboards
 - Live AI engines, AI model configuration, and ADM automation
 - Supplier credentials, health, failover, and execution
@@ -39,4 +42,4 @@ Phase 36.4.5 adopts useful structures from the supplementary blueprint without r
 
 ## Recognized Existing Work
 
-Phase 36.4 Tickets + EMD Foundation is already built. The booking workspace creation entry point fix is also recognized as the current canonical way to create or open booking workspaces from accepted-offer booking readiness packages.
+Phase 36.4 Tickets + EMD Foundation is already built. The booking workspace creation entry point fix is recognized as the canonical readiness-package entry point, and Phase 36.4.6 recognizes standalone manual, imported confirmation/GDS, and existing-trip change/exchange workflows as valid internal mirror paths.

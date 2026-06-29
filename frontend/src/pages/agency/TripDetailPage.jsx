@@ -8,11 +8,12 @@ import { loadCurrentAgency } from "../../lib/agency"
 export default function TripDetailPage({ tripId }) {
   const [state, setState] = useState(null)
   const [form, setForm] = useState({ trip_title: "", trip_status: "draft", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", link_request_id: "" })
+  const [changeForm, setChangeForm] = useState({ operation_type: "itinerary_change", reason: "", operation_id: "", original_ticket_record_id: "", original_emd_record_id: "" })
   const [error, setError] = useState("")
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds] = await Promise.all([
+    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds, changes] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
@@ -20,12 +21,13 @@ export default function TripDetailPage({ tripId }) {
       apiGet(`/api/agencies/${context.agency.id}/booking-workspaces?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/tickets?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/emds?trip_id=${encodeURIComponent(tripId)}`),
+      apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/change-operations`),
     ])
     const bookingRecordId = bookingWorkspaces.items?.[0]?.booking_record?.id
     const ticketEmdReadiness = bookingRecordId
       ? await apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`)
       : null
-    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness })
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], changes, ticketEmdReadiness })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -112,6 +114,77 @@ export default function TripDetailPage({ tripId }) {
     }
   }
 
+  async function startTripChange(event) {
+    event.preventDefault()
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/trips/${tripId}/change-operations`, {
+        operation_type: changeForm.operation_type,
+        reason: changeForm.reason || null,
+      })
+      setChangeForm((current) => ({ ...current, reason: "" }))
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function createChangeBooking() {
+    const operationId = changeForm.operation_id || state?.changes?.items?.[0]?.id
+    if (!operationId) {
+      setError("Create a trip change operation first.")
+      return
+    }
+    try {
+      const created = await apiPost(`/api/agencies/${state.agency.id}/trip-change-operations/${operationId}/create-change-booking`, {
+        source_context: "existing_trip_change",
+        trip_id: tripId,
+        title: `${state.trip.trip_reference} change booking`,
+        provider_target: "manual",
+        create_draft_record: true,
+        revision_reason: changeForm.reason || "Existing trip change mirror",
+      })
+      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function startTicketExchange() {
+    if (!changeForm.original_ticket_record_id) {
+      setError("Original ticket record id is required.")
+      return
+    }
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/ticket-exchange-operations`, {
+        original_ticket_record_id: changeForm.original_ticket_record_id,
+        operation_type: "exchange",
+        trip_id: tripId,
+        reason: changeForm.reason || null,
+      })
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function startEmdExchange() {
+    if (!changeForm.original_emd_record_id) {
+      setError("Original EMD record id is required.")
+      return
+    }
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/emd-exchange-operations`, {
+        original_emd_record_id: changeForm.original_emd_record_id,
+        operation_type: "exchange",
+        trip_id: tripId,
+        reason: changeForm.reason || null,
+      })
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const unlinkedRequests = (state?.requests || []).filter((request) => !request.trip_id || request.trip_id === tripId)
 
   return (
@@ -187,6 +260,16 @@ export default function TripDetailPage({ tripId }) {
           <AcceptedOfferPanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
 
           <TicketsEmdsTripPanel state={state} />
+
+          <ChangesExchangesPanel
+            changeForm={changeForm}
+            onChange={(updates) => setChangeForm((current) => ({ ...current, ...updates }))}
+            onCreateChangeBooking={createChangeBooking}
+            onStartEmdExchange={startEmdExchange}
+            onStartTicketExchange={startTicketExchange}
+            onStartTripChange={startTripChange}
+            state={state}
+          />
 
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
@@ -334,6 +417,52 @@ function TicketsEmdsTripPanel({ state }) {
         items={readiness?.warnings}
         render={(item) => item.message || JSON.stringify(item)}
       />
+    </Panel>
+  )
+}
+
+function ChangesExchangesPanel({ changeForm, onChange, onCreateChangeBooking, onStartEmdExchange, onStartTicketExchange, onStartTripChange, state }) {
+  const operations = state?.changes?.items || []
+  const ticketExchanges = state?.changes?.ticket_exchange_operations || []
+  const emdExchanges = state?.changes?.emd_exchange_operations || []
+  return (
+    <Panel title="Changes & Exchanges">
+      <form className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto]" onSubmit={onStartTripChange}>
+        <Select label="Change type" value={changeForm.operation_type} onChange={(value) => onChange({ operation_type: value })} options={["itinerary_change", "booking_change", "ticket_exchange", "ticket_reissue", "emd_exchange", "emd_reissue", "cancellation", "refund_quote", "service_change", "other"]} />
+        <Field label="Reason" value={changeForm.reason} onChange={(value) => onChange({ reason: value })} />
+        <div className="flex items-end">
+          <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Start trip change</button>
+        </div>
+      </form>
+      <div className="grid gap-3 md:grid-cols-4">
+        <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={`/agency/booking-imports?linked_trip_id=${state?.trip?.id || ""}`}>Attach imported GDS booking to this trip</a>
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateChangeBooking}>Create change booking mirror</button>
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartTicketExchange}>Start ticket exchange</button>
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartEmdExchange}>Start EMD exchange</button>
+      </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        <Field label="Change operation id" value={changeForm.operation_id} onChange={(value) => onChange({ operation_id: value })} />
+        <Field label="Original ticket record id" value={changeForm.original_ticket_record_id} onChange={(value) => onChange({ original_ticket_record_id: value })} />
+        <Field label="Original EMD record id" value={changeForm.original_emd_record_id} onChange={(value) => onChange({ original_emd_record_id: value })} />
+      </div>
+      <section className="grid gap-4 lg:grid-cols-3">
+        <SnapshotList
+          title="Trip Change Operations"
+          items={operations}
+          render={(item) => `${item.operation_type?.replaceAll("_", " ")} · ${item.status?.replaceAll("_", " ")} · ${item.new_booking_workspace_id || "no revised booking"}`}
+        />
+        <SnapshotList
+          title="Ticket Exchange Operations"
+          items={ticketExchanges}
+          render={(item) => `${item.operation_type?.replaceAll("_", " ")} · ${item.status?.replaceAll("_", " ")} · ${item.original_ticket_record_id} → ${item.new_ticket_record_id || "pending"}`}
+        />
+        <SnapshotList
+          title="EMD Exchange Operations"
+          items={emdExchanges}
+          render={(item) => `${item.operation_type?.replaceAll("_", " ")} · ${item.status?.replaceAll("_", " ")} · ${item.original_emd_record_id} → ${item.new_emd_record_id || "pending"}`}
+        />
+      </section>
+      <p className="text-sm text-slate-600">Change, exchange, refund, and void actions are internal mirrors only. No provider execution is performed.</p>
     </Panel>
   )
 }

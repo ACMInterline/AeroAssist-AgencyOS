@@ -359,6 +359,14 @@ class RequestStatus(str, Enum):
     ARCHIVED = "archived"
 
 
+class RequestPurpose(str, Enum):
+    NEW_TRIP = "new_trip"
+    TRIP_CHANGE = "trip_change"
+    EXCHANGE_QUOTE = "exchange_quote"
+    REFUND_QUOTE = "refund_quote"
+    SERVICE_ONLY = "service_only"
+
+
 class RequestPriority(str, Enum):
     LOW = "low"
     NORMAL = "normal"
@@ -477,6 +485,14 @@ class TripServiceStatus(str, Enum):
     REJECTED = "rejected"
     CANCELLED = "cancelled"
     FULFILLED = "fulfilled"
+
+
+class OfferPurpose(str, Enum):
+    NEW_BOOKING = "new_booking"
+    TRIP_CHANGE = "trip_change"
+    TICKET_EXCHANGE = "ticket_exchange"
+    EMD_EXCHANGE = "emd_exchange"
+    SERVICE_ONLY = "service_only"
 
 
 class OperationalServiceCategory(str, Enum):
@@ -1266,6 +1282,9 @@ class TravelRequest(BaseDocument):
     client_id: str
     created_by_user_id: str
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    request_purpose: RequestPurpose = RequestPurpose.NEW_TRIP
     request_reference: str
     title: str
     status: RequestStatus = RequestStatus.NEW
@@ -1308,6 +1327,9 @@ class TravelRequestCreate(BaseModel):
 
     client_id: str
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    request_purpose: RequestPurpose = RequestPurpose.NEW_TRIP
     title: str
     status: RequestStatus = RequestStatus.NEW
     priority: RequestPriority = RequestPriority.NORMAL
@@ -1336,6 +1358,9 @@ class TravelRequestUpdate(BaseModel):
 
     title: Optional[str] = None
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    request_purpose: Optional[RequestPurpose] = None
     status: Optional[RequestStatus] = None
     priority: Optional[RequestPriority] = None
     source: Optional[RequestSource] = None
@@ -2655,6 +2680,9 @@ class OfferWorkspace(BaseDocument):
     agency_id: str
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     title: str
     status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
     currency: str = "EUR"
@@ -2669,6 +2697,9 @@ class OfferWorkspaceCreate(BaseModel):
 
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     title: str
     status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
     currency: str = "EUR"
@@ -2681,6 +2712,9 @@ class OfferWorkspaceUpdate(BaseModel):
 
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: Optional[OfferPurpose] = None
     title: Optional[str] = None
     status: Optional[OfferWorkspaceStatus] = None
     currency: Optional[str] = None
@@ -2693,6 +2727,9 @@ class OfferOption(BaseDocument):
     workspace_id: str
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     label: str
     option_type: OfferOptionType = OfferOptionType.FLIGHT
     status: OfferOptionStatus = OfferOptionStatus.DRAFT
@@ -2712,6 +2749,9 @@ class OfferOption(BaseDocument):
 class OfferOptionCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     label: str
     option_type: OfferOptionType = OfferOptionType.FLIGHT
     status: OfferOptionStatus = OfferOptionStatus.DRAFT
@@ -2731,6 +2771,9 @@ class OfferOptionCreate(BaseModel):
 class OfferOptionUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    existing_trip_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    offer_purpose: Optional[OfferPurpose] = None
     label: Optional[str] = None
     option_type: Optional[OfferOptionType] = None
     status: Optional[OfferOptionStatus] = None
@@ -2951,6 +2994,108 @@ class BookingRecordStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class BookingSourceContext(str, Enum):
+    OFFER_READINESS = "offer_readiness"
+    STANDALONE_MANUAL = "standalone_manual"
+    IMPORTED_GDS = "imported_gds"
+    IMPORTED_CONFIRMATION = "imported_confirmation"
+    EXISTING_TRIP_CHANGE = "existing_trip_change"
+
+
+class TicketSourceContext(str, Enum):
+    BOOKING_RECORD = "booking_record"
+    STANDALONE_MANUAL = "standalone_manual"
+    IMPORTED_GDS = "imported_gds"
+    IMPORTED_CONFIRMATION = "imported_confirmation"
+    EXCHANGE_REISSUE = "exchange_reissue"
+    EXISTING_TRIP_CHANGE = "existing_trip_change"
+
+
+class EmdSourceContext(str, Enum):
+    BOOKING_SERVICE = "booking_service"
+    STANDALONE_MANUAL = "standalone_manual"
+    IMPORTED_GDS = "imported_gds"
+    IMPORTED_CONFIRMATION = "imported_confirmation"
+    EXCHANGE_REISSUE = "exchange_reissue"
+    EXISTING_TRIP_CHANGE = "existing_trip_change"
+
+
+class BookingImportDraftSourceType(str, Enum):
+    CRYPTIC_GDS = "cryptic_gds"
+    ITINERARY_CONFIRMATION_TEXT = "itinerary_confirmation_text"
+    MANUAL_TEXT = "manual_text"
+    EMAIL_IMPORT = "email_import"
+    PDF_IMPORT = "pdf_import"
+    OTHER = "other"
+
+
+class BookingImportParserStatus(str, Enum):
+    DRAFT = "draft"
+    PARSED = "parsed"
+    NEEDS_REVIEW = "needs_review"
+    IMPORTED = "imported"
+    FAILED = "failed"
+
+
+class BookingImportContext(str, Enum):
+    NEW_BOOKING = "new_booking"
+    EXISTING_TRIP_CHANGE = "existing_trip_change"
+    STANDALONE_TICKET = "standalone_ticket"
+    STANDALONE_EMD = "standalone_emd"
+    OTHER = "other"
+
+
+class TripChangeOperationType(str, Enum):
+    ITINERARY_CHANGE = "itinerary_change"
+    BOOKING_CHANGE = "booking_change"
+    TICKET_EXCHANGE = "ticket_exchange"
+    TICKET_REISSUE = "ticket_reissue"
+    EMD_EXCHANGE = "emd_exchange"
+    EMD_REISSUE = "emd_reissue"
+    CANCELLATION = "cancellation"
+    REFUND_QUOTE = "refund_quote"
+    SERVICE_CHANGE = "service_change"
+    OTHER = "other"
+
+
+class TripChangeOperationStatus(str, Enum):
+    DRAFT = "draft"
+    EVALUATING = "evaluating"
+    QUOTED = "quoted"
+    ACCEPTED = "accepted"
+    MIRRORED = "mirrored"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
+class TicketExchangeOperationType(str, Enum):
+    EXCHANGE = "exchange"
+    REISSUE = "reissue"
+    VOID = "void"
+    REFUND = "refund"
+    NAME_CORRECTION = "name_correction"
+    SCHEDULE_CHANGE_REISSUE = "schedule_change_reissue"
+    OTHER = "other"
+
+
+class EmdExchangeOperationType(str, Enum):
+    EXCHANGE = "exchange"
+    REISSUE = "reissue"
+    VOID = "void"
+    REFUND = "refund"
+    SERVICE_CHANGE = "service_change"
+    OTHER = "other"
+
+
+class ExchangeOperationStatus(str, Enum):
+    DRAFT = "draft"
+    QUOTED = "quoted"
+    ACCEPTED = "accepted"
+    MIRRORED = "mirrored"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+
 class OfferAcceptance(BaseDocument):
     agency_id: str
     workspace_id: str
@@ -3025,12 +3170,17 @@ class BookingReadinessPackage(BaseDocument):
 
 class BookingWorkspace(BaseDocument):
     agency_id: str
-    trip_id: str
+    source_context: BookingSourceContext = BookingSourceContext.OFFER_READINESS
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    trip_id: Optional[str] = None
     request_id: Optional[str] = None
     offer_workspace_id: Optional[str] = None
     offer_option_id: Optional[str] = None
     offer_acceptance_id: Optional[str] = None
-    booking_readiness_package_id: str
+    booking_readiness_package_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     workspace_number: str
     title: str
@@ -3055,10 +3205,17 @@ class BookingWorkspace(BaseDocument):
 class BookingRecord(BaseDocument):
     agency_id: str
     booking_workspace_id: str
-    trip_id: str
+    source_context: BookingSourceContext = BookingSourceContext.OFFER_READINESS
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    trip_id: Optional[str] = None
     request_id: Optional[str] = None
-    booking_readiness_package_id: str
+    booking_readiness_package_id: Optional[str] = None
     offer_acceptance_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    original_booking_record_id: Optional[str] = None
+    revision_reason: Optional[str] = None
     pnr_locator: Optional[str] = None
     provider: BookingProviderTarget = BookingProviderTarget.MANUAL
     provider_status: BookingRecordProviderStatus = BookingRecordProviderStatus.DRAFT
@@ -3088,6 +3245,32 @@ class BookingCreateFromReadinessRequest(BaseModel):
     create_draft_record: bool = True
 
 
+class ManualBookingWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    trip_id: Optional[str] = None
+    title: Optional[str] = None
+    provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    pnr_locator: Optional[str] = None
+    passengers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    segments_json: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_json: Dict[str, Any] = Field(default_factory=dict)
+    services_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_json: Dict[str, Any] = Field(default_factory=dict)
+    special_items_json: Dict[str, Any] = Field(default_factory=dict)
+    ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    create_draft_record: bool = True
+    source_context: BookingSourceContext = BookingSourceContext.STANDALONE_MANUAL
+    import_draft_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    original_booking_record_id: Optional[str] = None
+    revision_reason: Optional[str] = None
+
+
 class BookingWorkspaceStatusUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
@@ -3112,6 +3295,151 @@ class BookingRecordUpdate(BaseModel):
     provider_payload_json: Optional[Dict[str, Any]] = None
     provider_response_json: Optional[Dict[str, Any]] = None
     internal_notes: Optional[str] = None
+
+
+class BookingImportDraft(BaseDocument):
+    agency_id: str
+    created_by_user_id: Optional[str] = None
+    source_type: BookingImportDraftSourceType = BookingImportDraftSourceType.CRYPTIC_GDS
+    raw_text: str
+    parsed_json: Dict[str, Any] = Field(default_factory=dict)
+    parser_status: BookingImportParserStatus = BookingImportParserStatus.DRAFT
+    linked_client_id: Optional[str] = None
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    linked_trip_id: Optional[str] = None
+    import_context: BookingImportContext = BookingImportContext.NEW_BOOKING
+    linked_booking_workspace_id: Optional[str] = None
+    linked_booking_record_id: Optional[str] = None
+    linked_ticket_record_ids: List[str] = Field(default_factory=list)
+    linked_emd_record_ids: List[str] = Field(default_factory=list)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    error_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class BookingImportDraftCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    source_type: BookingImportDraftSourceType = BookingImportDraftSourceType.CRYPTIC_GDS
+    raw_text: str
+    linked_client_id: Optional[str] = None
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    linked_trip_id: Optional[str] = None
+    import_context: BookingImportContext = BookingImportContext.NEW_BOOKING
+
+
+class BookingImportDraftImportRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    title: Optional[str] = None
+    provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    create_draft_record: bool = True
+    create_ticket_mirrors: bool = False
+    create_emd_mirrors: bool = False
+    internal_notes: Optional[str] = None
+
+
+class TripChangeOperation(BaseDocument):
+    agency_id: str
+    trip_id: str
+    request_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_option_id: Optional[str] = None
+    source_booking_workspace_id: Optional[str] = None
+    source_booking_record_id: Optional[str] = None
+    new_booking_workspace_id: Optional[str] = None
+    new_booking_record_id: Optional[str] = None
+    operation_type: TripChangeOperationType
+    status: TripChangeOperationStatus = TripChangeOperationStatus.DRAFT
+    reason: Optional[str] = None
+    change_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    original_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    proposed_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+
+
+class TripChangeOperationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    request_id: Optional[str] = None
+    source_booking_workspace_id: Optional[str] = None
+    source_booking_record_id: Optional[str] = None
+    operation_type: TripChangeOperationType
+    reason: Optional[str] = None
+    change_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    original_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    proposed_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class TicketExchangeOperation(BaseDocument):
+    agency_id: str
+    trip_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    original_ticket_record_id: str
+    new_ticket_record_id: Optional[str] = None
+    operation_type: TicketExchangeOperationType
+    status: ExchangeOperationStatus = ExchangeOperationStatus.DRAFT
+    reason: Optional[str] = None
+    residual_value_amount: Optional[float] = None
+    additional_collection_amount: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    tax_difference_amount: Optional[float] = None
+    currency: Optional[str] = None
+    fare_difference_json: Dict[str, Any] = Field(default_factory=dict)
+    original_ticket_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    new_ticket_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+
+
+class TicketExchangeOperationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    trip_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    original_ticket_record_id: str
+    operation_type: TicketExchangeOperationType
+    reason: Optional[str] = None
+    residual_value_amount: Optional[float] = None
+    additional_collection_amount: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    tax_difference_amount: Optional[float] = None
+    currency: Optional[str] = None
+    fare_difference_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EmdExchangeOperation(BaseDocument):
+    agency_id: str
+    trip_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    original_emd_record_id: str
+    new_emd_record_id: Optional[str] = None
+    operation_type: EmdExchangeOperationType
+    status: ExchangeOperationStatus = ExchangeOperationStatus.DRAFT
+    reason: Optional[str] = None
+    residual_value_amount: Optional[float] = None
+    additional_collection_amount: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    currency: Optional[str] = None
+    original_emd_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    new_emd_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+
+
+class EmdExchangeOperationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    trip_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    original_emd_record_id: str
+    operation_type: EmdExchangeOperationType
+    reason: Optional[str] = None
+    residual_value_amount: Optional[float] = None
+    additional_collection_amount: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    currency: Optional[str] = None
 
 
 class AiTraceType(str, Enum):
@@ -3896,11 +4224,16 @@ class BookingSegmentUpdate(BookingSegmentCreate):
 class TicketRecord(BaseDocument):
     agency_id: str
     booking_id: Optional[str] = None
+    source_context: TicketSourceContext = TicketSourceContext.BOOKING_RECORD
     trip_id: Optional[str] = None
+    client_id: Optional[str] = None
     request_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
+    original_ticket_record_id: Optional[str] = None
+    exchange_operation_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
     booking_passenger_id: Optional[str] = None
     passenger_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     ticket_number: Optional[str] = None
@@ -3968,9 +4301,9 @@ class TicketRecordUpdate(TicketRecordCreate):
 class TicketCoupon(BaseDocument):
     agency_id: str
     ticket_record_id: str
-    booking_record_id: str
-    booking_workspace_id: str
-    trip_id: str
+    booking_record_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    trip_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     coupon_number: int
@@ -3997,14 +4330,46 @@ class TicketCreateFromBookingRequest(BaseModel):
     internal_notes: Optional[str] = None
 
 
+class ManualTicketCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    booking_record_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    segments_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    ticket_number: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_provider: BookingProviderTarget = BookingProviderTarget.MANUAL
+    issue_status: TicketStatus = TicketStatus.DRAFT
+    currency: Optional[str] = None
+    base_fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    internal_notes: Optional[str] = None
+    create_coupons: bool = True
+    source_context: TicketSourceContext = TicketSourceContext.STANDALONE_MANUAL
+    original_ticket_record_id: Optional[str] = None
+    exchange_operation_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
+
+
 class EMDRecord(BaseDocument):
     agency_id: str
     booking_id: Optional[str] = None
+    source_context: EmdSourceContext = EmdSourceContext.BOOKING_SERVICE
     trip_id: Optional[str] = None
+    client_id: Optional[str] = None
     request_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
+    original_emd_record_id: Optional[str] = None
+    exchange_operation_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
     booking_passenger_id: Optional[str] = None
     ticket_id: Optional[str] = None
     ticket_record_id: Optional[str] = None
@@ -4097,9 +4462,9 @@ class EmdRecordUpdate(BaseModel):
 class EmdCoupon(BaseDocument):
     agency_id: str
     emd_record_id: str
-    booking_record_id: str
-    booking_workspace_id: str
-    trip_id: str
+    booking_record_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    trip_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     ticket_coupon_id: Optional[str] = None
@@ -4123,6 +4488,37 @@ class EmdCreateFromBookingServiceRequest(BaseModel):
     ticket_record_id: Optional[str] = None
     create_coupons: bool = True
     internal_notes: Optional[str] = None
+
+
+class ManualEmdCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    booking_record_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_record_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_label: Optional[str] = None
+    service_category: Optional[str] = None
+    linked_service_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    linked_segment_ids: List[str] = Field(default_factory=list)
+    linked_ticket_coupon_ids: List[str] = Field(default_factory=list)
+    emd_number: Optional[str] = None
+    emd_type: EmdType = EmdType.MANUAL_MIRROR
+    issue_status: EmdStatus = EmdStatus.DRAFT
+    currency: Optional[str] = None
+    amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    internal_notes: Optional[str] = None
+    create_coupons: bool = True
+    source_context: EmdSourceContext = EmdSourceContext.STANDALONE_MANUAL
+    original_emd_record_id: Optional[str] = None
+    exchange_operation_id: Optional[str] = None
+    import_draft_id: Optional[str] = None
 
 
 class TicketEmdTimelineEvent(BaseModel):

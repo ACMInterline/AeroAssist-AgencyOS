@@ -19,7 +19,7 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/agent/*` | intentionally rejected | Duplicates `/agency/*` and would split agency workflow navigation. |
 | `/admin/*` | intentionally rejected | Duplicates `/platform/*` and would blur platform governance boundaries. |
 
-No redirects or aliases are added in Phase 36.4.5. Documentation and API/UI mapping are preferred so future work remains explicit.
+No redirects or aliases are added in Phase 36.4.5 or Phase 36.4.6. Documentation and API/UI mapping are preferred so future work remains explicit.
 
 ## Route Mapping
 
@@ -28,11 +28,13 @@ No redirects or aliases are added in Phase 36.4.5. Documentation and API/UI mapp
 | `/agent/clients` | `/agency/clients` |
 | `/agent/trip-requests` | `/agency/requests` and `/agency/trips` |
 | `/agent/parser` | future `/agency/parser` |
+| `/agent/parser/imports` | `/agency/booking-imports` |
 | `/admin/exception-rules` | `/platform/rules-services` |
 | `/admin/special-services` | `/platform/rules-services` |
 | `/documents` | `/agency/documents` and future `/platform/document-templates` |
 | `/tickets` | `/agency/tickets-emds` |
 | `/bookings` | `/agency/booking-workspaces` |
+| `/changes` or `/exchanges` | `/agency/trips/{trip_id}` changes panel and `/agency/tickets-emds` exchange actions |
 
 ## Boundary
 

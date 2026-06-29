@@ -5,6 +5,8 @@ from database import Database, get_database
 from models import (
     EmdCreateFromBookingServiceRequest,
     EmdRecordUpdate,
+    ManualEmdCreate,
+    ManualTicketCreate,
     TicketCreateFromBookingRequest,
     TicketRecordUpdate,
 )
@@ -81,6 +83,21 @@ async def create_ticket_from_booking_record(
     if result is None:
         raise not_found("Booking record not found.")
     return result
+
+
+@router.post("/tickets/manual", status_code=status.HTTP_201_CREATED)
+async def create_manual_ticket(
+    agency_id: str,
+    payload: ManualTicketCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    service = TicketEmdService(db)
+    try:
+        return await service.create_manual_ticket(agency_id, payload, user)
+    except TicketEmdError as exc:
+        raise bad_request(exc)
 
 
 @router.get("/tickets/{ticket_record_id}")
@@ -161,6 +178,21 @@ async def create_emd_from_booking_service(
     if result is None:
         raise not_found("Booking record not found.")
     return result
+
+
+@router.post("/emds/manual", status_code=status.HTTP_201_CREATED)
+async def create_manual_emd(
+    agency_id: str,
+    payload: ManualEmdCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    service = TicketEmdService(db)
+    try:
+        return await service.create_manual_emd(agency_id, payload, user)
+    except TicketEmdError as exc:
+        raise bad_request(exc)
 
 
 @router.get("/emds/{emd_record_id}")

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const statuses = ["draft", "ready_to_issue", "issued", "voided", "refunded", "exchanged", "cancelled"]
@@ -12,7 +12,10 @@ export default function TicketsEmdsPage() {
   const [state, setState] = useState(null)
   const [tab, setTab] = useState("tickets")
   const [filters, setFilters] = useState({ status: "", provider: "", service_key: "", search: "" })
+  const [modal, setModal] = useState("")
+  const [form, setForm] = useState(defaultForm())
   const [error, setError] = useState("")
+  const [working, setWorking] = useState(false)
 
   async function load() {
     const context = await loadCurrentAgency()
@@ -26,6 +29,84 @@ export default function TicketsEmdsPage() {
   useEffect(() => {
     load().catch((err) => setError(err.message))
   }, [])
+
+  async function submitModal(event) {
+    event.preventDefault()
+    setWorking(true)
+    setError("")
+    try {
+      if (modal === "ticket") {
+        const created = await apiPost(`/api/agencies/${state.agency.id}/tickets/manual`, {
+          booking_record_id: form.booking_record_id || null,
+          booking_workspace_id: form.booking_workspace_id || null,
+          trip_id: form.trip_id || null,
+          client_id: form.client_id || null,
+          passenger_id: form.passenger_id || null,
+          ticket_number: form.ticket_number || null,
+          validating_carrier: form.validating_carrier || null,
+          currency: form.currency || null,
+          base_fare_amount: amount(form.base_fare_amount),
+          taxes_amount: amount(form.taxes_amount),
+          total_amount: amount(form.total_amount),
+          segments_snapshot_json: parseJson(form.segments_snapshot_json, []),
+          internal_notes: form.internal_notes || null,
+          source_context: "standalone_manual",
+        })
+        window.location.href = `/agency/tickets/${created.ticket.id}`
+        return
+      }
+      if (modal === "emd") {
+        const created = await apiPost(`/api/agencies/${state.agency.id}/emds/manual`, {
+          booking_record_id: form.booking_record_id || null,
+          booking_workspace_id: form.booking_workspace_id || null,
+          ticket_record_id: form.ticket_record_id || null,
+          trip_id: form.trip_id || null,
+          client_id: form.client_id || null,
+          passenger_id: form.passenger_id || null,
+          emd_number: form.emd_number || null,
+          service_key: form.service_key || null,
+          service_label: form.service_label || null,
+          service_category: form.service_category || null,
+          emd_type: form.emd_type || "manual_mirror",
+          currency: form.currency || null,
+          amount: amount(form.base_fare_amount),
+          taxes_amount: amount(form.taxes_amount),
+          total_amount: amount(form.total_amount),
+          internal_notes: form.internal_notes || null,
+          source_context: "standalone_manual",
+        })
+        window.location.href = `/agency/emds/${created.emd.id}`
+        return
+      }
+      if (modal === "ticket_exchange") {
+        await apiPost(`/api/agencies/${state.agency.id}/ticket-exchange-operations`, {
+          original_ticket_record_id: form.original_record_id,
+          operation_type: form.operation_type || "exchange",
+          trip_id: form.trip_id || null,
+          booking_record_id: form.booking_record_id || null,
+          reason: form.internal_notes || null,
+          currency: form.currency || null,
+        })
+      }
+      if (modal === "emd_exchange") {
+        await apiPost(`/api/agencies/${state.agency.id}/emd-exchange-operations`, {
+          original_emd_record_id: form.original_record_id,
+          operation_type: form.operation_type || "exchange",
+          trip_id: form.trip_id || null,
+          booking_record_id: form.booking_record_id || null,
+          reason: form.internal_notes || null,
+          currency: form.currency || null,
+        })
+      }
+      setModal("")
+      setForm(defaultForm())
+      await load()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setWorking(false)
+    }
+  }
 
   const filteredTickets = useMemo(() => {
     const search = filters.search.toLowerCase()
@@ -56,7 +137,13 @@ export default function TicketsEmdsPage() {
               <h2 className="text-2xl font-semibold text-slate-950">Tickets & EMDs</h2>
               <p className="mt-1 text-sm text-slate-600">Internal mirrors only. Live issuance is disabled.</p>
             </div>
-            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
+            <div className="flex flex-wrap gap-2">
+              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => setModal("ticket")}>Create manual ticket</button>
+              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => setModal("emd")}>Create manual EMD</button>
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => setModal("ticket_exchange")}>Start ticket exchange</button>
+              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => setModal("emd_exchange")}>Start EMD exchange</button>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
+            </div>
           </div>
 
           <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-[180px_minmax(0,1fr)_180px_180px_180px]">
@@ -77,9 +164,62 @@ export default function TicketsEmdsPage() {
           </section>
 
           {tab === "tickets" ? <TicketList items={filteredTickets} /> : <EmdList items={filteredEmds} />}
+          {modal ? <MirrorModal form={form} modal={modal} onChange={(updates) => setForm({ ...form, ...updates })} onClose={() => setModal("")} onSubmit={submitModal} working={working} /> : null}
         </div>
       </ProtectedRoute>
     </AgencyLayout>
+  )
+}
+
+function MirrorModal({ form, modal, onChange, onClose, onSubmit, working }) {
+  const isTicket = modal === "ticket"
+  const isEmd = modal === "emd"
+  const isExchange = modal === "ticket_exchange" || modal === "emd_exchange"
+  const exchangeOptions = modal === "emd_exchange" ? ["exchange", "reissue", "void", "refund", "service_change", "other"] : ["exchange", "reissue", "void", "refund", "name_correction", "schedule_change_reissue", "other"]
+  const title = {
+    ticket: "Create manual ticket",
+    emd: "Create manual EMD",
+    ticket_exchange: "Start ticket exchange",
+    emd_exchange: "Start EMD exchange",
+  }[modal]
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <form className="max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white shadow-xl" onSubmit={onSubmit}>
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Internal mirror only</p>
+            <h3 className="text-xl font-semibold text-slate-950">{title}</h3>
+            <p className="mt-1 text-sm text-slate-600">No provider action, issuance, exchange, refund, or void is performed.</p>
+          </div>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-4 p-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            {isExchange ? <Field label="Original record id" value={form.original_record_id} onChange={(value) => onChange({ original_record_id: value })} required /> : null}
+            {isExchange ? <Select label="Operation type" value={form.operation_type} options={exchangeOptions} onChange={(value) => onChange({ operation_type: value })} /> : null}
+            <Field label="Booking record id" value={form.booking_record_id} onChange={(value) => onChange({ booking_record_id: value })} />
+            <Field label="Booking workspace id" value={form.booking_workspace_id} onChange={(value) => onChange({ booking_workspace_id: value })} />
+            <Field label="Trip id/reference" value={form.trip_id} onChange={(value) => onChange({ trip_id: value })} />
+            <Field label="Passenger id" value={form.passenger_id} onChange={(value) => onChange({ passenger_id: value })} />
+            {isTicket ? <Field label="Ticket number" value={form.ticket_number} onChange={(value) => onChange({ ticket_number: value })} /> : null}
+            {isTicket ? <Field label="Validating carrier" value={form.validating_carrier} onChange={(value) => onChange({ validating_carrier: value.toUpperCase() })} /> : null}
+            {isEmd ? <Field label="EMD number" value={form.emd_number} onChange={(value) => onChange({ emd_number: value })} /> : null}
+            {isEmd ? <Field label="Ticket record id" value={form.ticket_record_id} onChange={(value) => onChange({ ticket_record_id: value })} /> : null}
+            {isEmd ? <Field label="Service key" value={form.service_key} onChange={(value) => onChange({ service_key: value.toUpperCase() })} /> : null}
+            {isEmd ? <Field label="Service label" value={form.service_label} onChange={(value) => onChange({ service_label: value })} /> : null}
+            <Field label="Currency" value={form.currency} onChange={(value) => onChange({ currency: value.toUpperCase() })} />
+            <Field label="Base / amount" value={form.base_fare_amount} onChange={(value) => onChange({ base_fare_amount: value })} />
+            <Field label="Taxes" value={form.taxes_amount} onChange={(value) => onChange({ taxes_amount: value })} />
+            <Field label="Total" value={form.total_amount} onChange={(value) => onChange({ total_amount: value })} />
+          </div>
+          {isTicket ? <TextArea label="Segment / coupon snapshot JSON" value={form.segments_snapshot_json} onChange={(value) => onChange({ segments_snapshot_json: value })} /> : null}
+          <TextArea label={isExchange ? "Reason / notes" : "Internal notes"} value={form.internal_notes} onChange={(value) => onChange({ internal_notes: value })} plain />
+        </div>
+        <div className="flex justify-end border-t border-slate-200 p-5">
+          <button className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-60" type="submit" disabled={working}>{working ? "Working..." : title}</button>
+        </div>
+      </form>
+    </div>
   )
 }
 
@@ -129,9 +269,74 @@ function EmdList({ items }) {
   )
 }
 
+function Field({ label: fieldLabel, required, value, onChange }) {
+  return (
+    <label className="text-sm font-medium text-slate-700">
+      {fieldLabel}
+      <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" required={required} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  )
+}
+
+function Select({ label: fieldLabel, value, options, onChange }) {
+  return (
+    <label className="text-sm font-medium text-slate-700">
+      {fieldLabel}
+      <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => <option value={option} key={option}>{label(option)}</option>)}
+      </select>
+    </label>
+  )
+}
+
+function TextArea({ label: fieldLabel, plain, value, onChange }) {
+  return (
+    <label className="block text-sm font-medium text-slate-700">
+      {fieldLabel}
+      <textarea className="mt-1 min-h-24 w-full rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" spellCheck={plain ? undefined : false} value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
+  )
+}
+
 function passengerName(item) {
   const passenger = item.passenger_snapshot_json || {}
   return passenger.display_name || passenger.snapshot_display_name || `${passenger.first_name || ""} ${passenger.last_name || ""}`.trim() || item.passenger_id || "Passenger"
+}
+
+function defaultForm() {
+  return {
+    booking_record_id: "",
+    booking_workspace_id: "",
+    trip_id: "",
+    client_id: "",
+    passenger_id: "",
+    ticket_record_id: "",
+    ticket_number: "",
+    validating_carrier: "",
+    emd_number: "",
+    emd_type: "manual_mirror",
+    service_key: "",
+    service_label: "",
+    service_category: "",
+    original_record_id: "",
+    operation_type: "exchange",
+    currency: "EUR",
+    base_fare_amount: "",
+    taxes_amount: "",
+    total_amount: "",
+    segments_snapshot_json: "[]",
+    internal_notes: "",
+  }
+}
+
+function parseJson(value, fallback) {
+  const text = String(value || "").trim()
+  if (!text) return fallback
+  return JSON.parse(text)
+}
+
+function amount(value) {
+  return value === "" || value === null || value === undefined ? null : Number(value)
 }
 
 function label(value) {

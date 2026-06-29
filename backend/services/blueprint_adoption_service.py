@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_4_5_supplementary_blueprint_sync"
+PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -91,9 +91,17 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Booking UX",
         "concept": "Booking workspace creation entry point",
         "supplementary_concept": "booking workflow create/open action",
-        "current_equivalent": "/agency/booking-workspaces with Create booking workspace modal backed by booking readiness packages",
+        "current_equivalent": "/agency/booking-workspaces with readiness, manual booking, and import entry points",
         "status": "built",
-        "action": "Recognize the post-Phase 36.4 UX fix as the canonical creation entry point.",
+        "action": "Recognize accepted-offer readiness, standalone manual, import, and existing-trip change booking paths.",
+    },
+    {
+        "category": "Standalone/Import/Change",
+        "concept": "Non-linear agency booking workflows",
+        "supplementary_concept": "manual bookings, imported confirmations, existing trip changes, exchanges, reissues",
+        "current_equivalent": "BookingImportDraft, TripChangeOperation, TicketExchangeOperation, EmdExchangeOperation, source-context fields",
+        "status": "built",
+        "action": "Adopt as internal mirror foundations without provider execution, live exchange, refund, void, or payment actions.",
     },
 ]
 
@@ -114,11 +122,13 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/clients", "agencyos": "/agency/clients"},
         {"supplementary": "/agent/trip-requests", "agencyos": "/agency/requests and /agency/trips"},
         {"supplementary": "/agent/parser", "agencyos": "future /agency/parser"},
+        {"supplementary": "/agent/parser/imports", "agencyos": "/agency/booking-imports"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
         {"supplementary": "/bookings", "agencyos": "/agency/booking-workspaces"},
+        {"supplementary": "/changes or /exchanges", "agencyos": "/agency/trips/{trip_id} and /agency/tickets-emds"},
     ],
     "aliases_added": False,
 }
@@ -182,6 +192,10 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineBrandAsset",
             "Blueprint adoption governance API/UI",
             "SpecialServicesUnifiedFacade",
+            "BookingImportDraft",
+            "TripChangeOperation",
+            "TicketExchangeOperation",
+            "EmdExchangeOperation",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -190,10 +204,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Booking workspace and BookingRecord/PNR mirror foundation",
             "Tickets + EMD Foundation built in Phase 36.4",
             "Booking workspace creation entry point fixed after Phase 36.4",
+            "Standalone booking, import draft, and existing-trip change/exchange foundations built in Phase 36.4.6",
         ],
         "deferred": [
             "Full document designer and document version/share layer",
-            "GDS parser UI and parser training workflows",
+            "Advanced GDS parser UI, training workflows, and provider reconciliation",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",
@@ -207,7 +222,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
         "next_immediate_phase": "Phase 36.5 - Document Foundation / Offer-Trip-Booking-Ticket Document Layer",
-        "gap_count": 6,
+        "gap_count": 7,
         "rejected_route_count": len(ROUTE_POLICY["rejected_routes"]),
     }
 

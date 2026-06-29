@@ -60,6 +60,7 @@ The repository currently contains:
 - Phase 36.3: Booking workspace and manual PNR mirror foundation.
 - Phase 36.4: Ticket and EMD mirror foundation.
 - Phase 36.4.5: Supplementary blueprint adoption and unified workflow sync.
+- Phase 36.4.6: Standalone booking, import draft, and existing-trip change/exchange foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1000,6 +1001,22 @@ Implemented scope:
 Avoid adding:
 
 - `/agent` or `/admin` route roots, live provider execution, real ticketing/EMD issuance, supplier credentials, full document designer, full AI engines, visual airline dashboards, payments, invoices/accounting, or duplicate trip/request/offer/booking/ticket/EMD models.
+
+### Phase 36.4.6: Standalone Booking, Import Draft, And Existing-Trip Change/Exchange Foundation
+
+Implemented scope:
+
+- Extended booking workspace, booking record, ticket record, and EMD record mirrors with source-context and standalone/import/change linkage fields.
+- Added `BookingImportDraft`, `TripChangeOperation`, `TicketExchangeOperation`, and `EmdExchangeOperation` foundation records with Mongo indexes.
+- Added internal-only APIs for manual booking workspaces, manual ticket/EMD mirrors, booking import drafts, conservative import parsing, trip change operations, and ticket/EMD exchange mirror operations.
+- Added `/agency/booking-imports` plus booking workspace, ticket/EMD, and trip detail UI entry points for manual/import/change workflows.
+- Added request/offer linkage fields for future change/exchange quotes without rebuilding offer builder.
+- Readiness flags and non-blocking counts under `booking_foundation`, `ticket_emd_foundation`, `change_exchange_foundation`, and `blueprint_sync`.
+- Recognition that agencies need four valid internal workflows: request/offer-driven, standalone manual, imported GDS/confirmation, and existing-trip change/exchange.
+
+Avoid adding:
+
+- Live GDS/NDC/supplier calls, live booking creation, real ticket/EMD issuance, real exchange/reissue/refund/void execution, payments, invoices/accounting, full document designer, `/agent` or `/admin` route roots, or duplicate trip/request/offer/booking/ticket/EMD models.
 
 ### Phase 37: Provider Import And Issuance Provenance
 

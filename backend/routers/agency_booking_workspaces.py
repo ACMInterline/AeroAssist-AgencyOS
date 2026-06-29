@@ -6,6 +6,7 @@ from models import (
     BookingCreateFromReadinessRequest,
     BookingRecordUpdate,
     BookingWorkspaceStatusUpdate,
+    ManualBookingWorkspaceCreate,
 )
 from services.booking_workspace_service import BookingWorkspaceError, BookingWorkspaceService
 from services.tenant_service import assert_agency_access, require_any_agency_role
@@ -83,6 +84,21 @@ async def create_booking_workspace_from_readiness(
     if result is None:
         raise not_found("Booking readiness package not found.")
     return result
+
+
+@router.post("/booking-workspaces/manual", status_code=status.HTTP_201_CREATED)
+async def create_manual_booking_workspace(
+    agency_id: str,
+    payload: ManualBookingWorkspaceCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    service = BookingWorkspaceService(db)
+    try:
+        return await service.create_manual_booking_workspace(agency_id, payload, user)
+    except BookingWorkspaceError as exc:
+        raise bad_request(exc)
 
 
 @router.get("/booking-workspaces/{booking_workspace_id}")

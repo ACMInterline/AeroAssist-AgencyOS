@@ -12,13 +12,16 @@ from models import (
     BookingRecordStatus,
     BookingRecordUpdate,
     BookingRecordProviderStatus,
+    BookingSourceContext,
     BookingTimelineEvent,
     BookingWorkspace,
     BookingWorkspaceStatus,
+    ManualBookingWorkspaceCreate,
+    TripTimelineEvent,
 )
 
 
-PHASE_LABEL = "phase_36_4_5_supplementary_blueprint_sync"
+PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
 ACTIVE_WORKSPACE_STATUSES = {
     BookingWorkspaceStatus.DRAFT.value,
     BookingWorkspaceStatus.READY_TO_BOOK.value,
@@ -166,6 +169,7 @@ class BookingWorkspaceService:
         source_snapshot = await self._source_snapshot(agency_id, readiness, acceptance, trip)
         workspace = BookingWorkspace(
             agency_id=agency_id,
+            source_context=BookingSourceContext.OFFER_READINESS,
             trip_id=readiness["trip_id"],
             request_id=readiness.get("request_id"),
             offer_workspace_id=readiness.get("workspace_id"),
@@ -221,6 +225,139 @@ class BookingWorkspaceService:
                 "workspace_status": created_workspace.get("status"),
             },
         )
+        return await self.get_booking_workspace(agency_id, created_workspace["id"])
+
+    async def create_manual_booking_workspace(
+        self,
+        agency_id: str,
+        payload: ManualBookingWorkspaceCreate,
+        user: dict,
+    ) -> dict[str, Any]:
+        source_context = _as_value(payload.source_context or BookingSourceContext.STANDALONE_MANUAL.value)
+        if source_context not in {
+            BookingSourceContext.STANDALONE_MANUAL.value,
+            BookingSourceContext.EXISTING_TRIP_CHANGE.value,
+            BookingSourceContext.IMPORTED_GDS.value,
+            BookingSourceContext.IMPORTED_CONFIRMATION.value,
+        }:
+            raise BookingWorkspaceError("Manual booking workspace source context is not supported.")
+        trip = None
+        if payload.trip_id:
+            trip = await self.db.collection("trip_dossiers").find_one({"agency_id": agency_id, "id": payload.trip_id})
+            if trip is None:
+                trip = await self.db.collection("trip_dossiers").find_one({"agency_id": agency_id, "trip_reference": payload.trip_id})
+            if trip is None:
+                raise BookingWorkspaceError("Trip dossier not found for manual booking workspace.")
+        trip_id = (trip or {}).get("id") or payload.trip_id
+
+        workspace_number = await self._next_workspace_number(agency_id)
+        title = payload.title or self._manual_workspace_title(workspace_number, trip, payload.pnr_locator)
+        provider_target = _as_value(payload.provider_target or BookingProviderTarget.MANUAL.value)
+        source_snapshot = {
+            "phase": PHASE_LABEL,
+            "source_context": source_context,
+            "snapshotted_at": _now_iso(),
+            "provider_execution_disabled": True,
+            "manual_entry": True,
+            "trip": _summary_from_trip(trip),
+            "import_draft_id": payload.import_draft_id,
+            "trip_change_operation_id": payload.trip_change_operation_id,
+        }
+        workspace = BookingWorkspace(
+            agency_id=agency_id,
+            source_context=source_context,
+            client_id=payload.client_id,
+            passenger_ids=payload.passenger_ids or [],
+            trip_id=trip_id,
+            booking_readiness_package_id=None,
+            import_draft_id=payload.import_draft_id,
+            trip_change_operation_id=payload.trip_change_operation_id,
+            workspace_number=workspace_number,
+            title=title,
+            status=BookingWorkspaceStatus.DRAFT,
+            provider_target=provider_target,
+            source_snapshot_json=source_snapshot,
+            passengers_snapshot_json=payload.passengers_json or [],
+            segments_snapshot_json=payload.segments_json or [],
+            pricing_snapshot_json=payload.pricing_json or {},
+            services_snapshot_json=payload.services_json or {},
+            pets_snapshot_json=payload.pets_json or {},
+            special_items_snapshot_json=payload.special_items_json or {},
+            warnings_json=[],
+            ssr_json=payload.ssr_json or [],
+            osi_json=payload.osi_json or [],
+            internal_notes=payload.internal_notes,
+            created_by_user_id=user.get("id"),
+        )
+        created_workspace = await self.db.collection("booking_workspaces").insert_one(workspace.model_dump(mode="json"))
+
+        created_record = None
+        if payload.create_draft_record:
+            record = BookingRecord(
+                agency_id=agency_id,
+                booking_workspace_id=created_workspace["id"],
+                source_context=source_context,
+                client_id=payload.client_id,
+                passenger_ids=payload.passenger_ids or [],
+                trip_id=trip_id,
+                import_draft_id=payload.import_draft_id,
+                trip_change_operation_id=payload.trip_change_operation_id,
+                original_booking_record_id=payload.original_booking_record_id,
+                revision_reason=payload.revision_reason,
+                pnr_locator=payload.pnr_locator,
+                provider=provider_target,
+                provider_status=BookingRecordProviderStatus.DRAFT,
+                booking_status=BookingRecordStatus.DRAFT,
+                passengers_json=payload.passengers_json or [],
+                segments_json=payload.segments_json or [],
+                pricing_json=payload.pricing_json or {},
+                services_json=payload.services_json or {},
+                pets_json=payload.pets_json or {},
+                special_items_json=payload.special_items_json or {},
+                ssr_json=payload.ssr_json or [],
+                osi_json=payload.osi_json or [],
+                internal_pnr_mirror_json=self._internal_manual_pnr_mirror(created_workspace, payload, provider_target, source_context),
+                warnings_json=[],
+                internal_notes=payload.internal_notes,
+                created_by_user_id=user.get("id"),
+            )
+            created_record = await self.db.collection("booking_records").insert_one(record.model_dump(mode="json"))
+            created_workspace = await self.db.collection("booking_workspaces").update_one(
+                {"agency_id": agency_id, "id": created_workspace["id"]},
+                {"booking_record_id": created_record["id"]},
+            ) or created_workspace
+
+        await self._write_timeline(
+            agency_id,
+            created_workspace["id"],
+            "booking_workspace.created_manual",
+            "Manual booking workspace created",
+            user.get("id"),
+            booking_record_id=(created_record or {}).get("id"),
+            trip_id=trip_id,
+            description="Created an internal booking workspace and PNR mirror without provider execution.",
+            payload_json={
+                "source_context": source_context,
+                "provider_execution_disabled": True,
+                "import_draft_id": payload.import_draft_id,
+                "trip_change_operation_id": payload.trip_change_operation_id,
+            },
+        )
+        if trip_id:
+            await self._write_trip_timeline(
+                agency_id,
+                trip_id,
+                user.get("id"),
+                "trip.booking_workspace_created_manual",
+                "Manual booking workspace created",
+                f"{created_workspace.get('workspace_number')} linked to this trip.",
+                {
+                    "booking_workspace_id": created_workspace["id"],
+                    "booking_record_id": (created_record or {}).get("id"),
+                    "source_context": source_context,
+                    "provider_execution_disabled": True,
+                },
+            )
         return await self.get_booking_workspace(agency_id, created_workspace["id"])
 
     async def list_booking_workspaces(
@@ -565,6 +702,20 @@ class BookingWorkspaceService:
             return f"{workspace_number} · {trip['trip_reference']}"
         return f"{workspace_number} · Trip {readiness.get('trip_id')}"
 
+    def _manual_workspace_title(
+        self,
+        workspace_number: str,
+        trip: dict[str, Any] | None,
+        pnr_locator: str | None,
+    ) -> str:
+        if trip and trip.get("trip_title"):
+            return f"{workspace_number} · {trip['trip_title']}"
+        if trip and trip.get("trip_reference"):
+            return f"{workspace_number} · {trip['trip_reference']}"
+        if pnr_locator:
+            return f"{workspace_number} · PNR {pnr_locator}"
+        return f"{workspace_number} · Manual booking workspace"
+
     async def _source_snapshot(
         self,
         agency_id: str,
@@ -596,6 +747,7 @@ class BookingWorkspaceService:
         return BookingRecord(
             agency_id=workspace["agency_id"],
             booking_workspace_id=workspace["id"],
+            source_context=BookingSourceContext.OFFER_READINESS,
             trip_id=workspace["trip_id"],
             request_id=workspace.get("request_id"),
             booking_readiness_package_id=readiness["id"],
@@ -656,6 +808,37 @@ class BookingWorkspaceService:
             "warnings": readiness.get("warnings_json") or [],
         }
 
+    def _internal_manual_pnr_mirror(
+        self,
+        workspace: dict[str, Any],
+        payload: ManualBookingWorkspaceCreate,
+        provider_target: str,
+        source_context: str,
+    ) -> dict[str, Any]:
+        return {
+            "phase": PHASE_LABEL,
+            "mirrored_at": _now_iso(),
+            "provider_execution_disabled": True,
+            "manual_entry": True,
+            "source_context": source_context,
+            "booking_workspace_id": workspace.get("id"),
+            "import_draft_id": payload.import_draft_id,
+            "trip_change_operation_id": payload.trip_change_operation_id,
+            "provider_target": provider_target,
+            "pnr_locator": payload.pnr_locator,
+            "status": "draft",
+            "passengers": payload.passengers_json or [],
+            "segments": payload.segments_json or [],
+            "pricing": payload.pricing_json or {},
+            "services": payload.services_json or {},
+            "pets": payload.pets_json or {},
+            "special_items": payload.special_items_json or {},
+            "ssr": payload.ssr_json or [],
+            "osi": payload.osi_json or [],
+            "internal_notes": payload.internal_notes,
+            "warnings": [],
+        }
+
     async def _write_timeline(
         self,
         agency_id: str,
@@ -683,3 +866,24 @@ class BookingWorkspaceService:
             metadata=payload_json or {},
         )
         await self.db.collection("booking_timeline_events").insert_one(event.model_dump(mode="json"))
+
+    async def _write_trip_timeline(
+        self,
+        agency_id: str,
+        trip_id: str,
+        actor_user_id: str | None,
+        event_type: str,
+        title: str,
+        summary: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        event = TripTimelineEvent(
+            agency_id=agency_id,
+            trip_id=trip_id,
+            actor_user_id=actor_user_id,
+            event_type=event_type,
+            title=title,
+            summary=summary,
+            metadata=metadata or {},
+        )
+        await self.db.collection("trip_timeline_events").insert_one(event.model_dump(mode="json"))

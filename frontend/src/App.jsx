@@ -5,6 +5,7 @@ import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
+import BookingImportsPage from "./pages/agency/BookingImportsPage"
 import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPage"
 import BookingWorkspacesPage from "./pages/agency/BookingWorkspacesPage"
 import BookingsPage from "./pages/agency/BookingsPage"
@@ -331,6 +332,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/booking-workspaces") {
     return <BookingWorkspacesPage />
+  }
+
+  if (window.location.pathname === "/agency/booking-imports") {
+    return <BookingImportsPage />
   }
 
   if (window.location.pathname === "/agency/tickets-emds") {

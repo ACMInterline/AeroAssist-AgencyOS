@@ -6,24 +6,30 @@ from typing import Any
 from database import Database
 from models import (
     EMDRecord,
+    EmdSourceContext,
     EmdCoupon,
     EmdCouponStatus,
     EmdCreateFromBookingServiceRequest,
     EmdRecordUpdate,
     EmdStatus,
     EmdType,
+    BookingProviderTarget,
+    ManualEmdCreate,
+    ManualTicketCreate,
     TicketCoupon,
     TicketCouponStatus,
     TicketCreateFromBookingRequest,
     TicketEmdTimelineEvent,
     TicketRecord,
     TicketRecordUpdate,
+    TicketSourceContext,
     TicketStatus,
     TicketType,
+    TripTimelineEvent,
 )
 
 
-PHASE_LABEL = "phase_36_4_5_supplementary_blueprint_sync"
+PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
 
 
 class TicketEmdError(ValueError):
@@ -209,6 +215,7 @@ class TicketEmdService:
         readiness = source.get("booking_readiness_package") or {}
         ticket = TicketRecord(
             agency_id=agency_id,
+            source_context=TicketSourceContext.BOOKING_RECORD,
             trip_id=booking_record.get("trip_id"),
             request_id=booking_record.get("request_id"),
             booking_workspace_id=booking_record.get("booking_workspace_id"),
@@ -318,6 +325,7 @@ class TicketEmdService:
 
         emd = EMDRecord(
             agency_id=agency_id,
+            source_context=EmdSourceContext.BOOKING_SERVICE,
             trip_id=booking_record.get("trip_id"),
             request_id=booking_record.get("request_id"),
             booking_workspace_id=booking_record.get("booking_workspace_id"),
@@ -383,6 +391,241 @@ class TicketEmdService:
             description="Created a draft internal EMD mirror without EMD provider issuance.",
             payload_json={"provider_emd_issuance_disabled": True, "service_key": created.get("service_key")},
         )
+        return await self.get_emd_detail(agency_id, created["id"])
+
+    async def create_manual_ticket(
+        self,
+        agency_id: str,
+        payload: ManualTicketCreate,
+        user: dict,
+    ) -> dict[str, Any]:
+        booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
+        if payload.booking_record_id and booking_record is None:
+            raise TicketEmdError("Booking record not found for manual ticket.")
+        workspace = await self._get_workspace_for_record(agency_id, booking_record) if booking_record else await self._get_workspace(agency_id, payload.booking_workspace_id)
+        if payload.booking_workspace_id and workspace is None:
+            raise TicketEmdError("Booking workspace not found for manual ticket.")
+        passenger = self._select_passenger(booking_record, payload.passenger_id) if booking_record else None
+        passenger_snapshot = payload.passenger_snapshot_json or passenger or {}
+        segments = payload.segments_snapshot_json or (booking_record or {}).get("segments_json") or (workspace or {}).get("segments_snapshot_json") or []
+        pricing = payload.pricing_snapshot_json or (booking_record or {}).get("pricing_json") or (workspace or {}).get("pricing_snapshot_json") or {}
+        pricing_summary = pricing.get("summary") if isinstance(pricing, dict) else {}
+        pricing_summary = pricing_summary or pricing if isinstance(pricing, dict) else {}
+        source_context = _enum_value(payload.source_context or TicketSourceContext.STANDALONE_MANUAL.value)
+        trip_id = payload.trip_id or (booking_record or {}).get("trip_id") or (workspace or {}).get("trip_id")
+        booking_workspace_id = payload.booking_workspace_id or (booking_record or {}).get("booking_workspace_id") or (workspace or {}).get("id")
+        provider = _enum_value(payload.issuing_provider or (booking_record or {}).get("provider") or (workspace or {}).get("provider_target") or "manual")
+        ticket = TicketRecord(
+            agency_id=agency_id,
+            source_context=source_context,
+            trip_id=trip_id,
+            request_id=(booking_record or {}).get("request_id") or (workspace or {}).get("request_id"),
+            booking_workspace_id=booking_workspace_id,
+            booking_record_id=(booking_record or {}).get("id") or payload.booking_record_id,
+            client_id=payload.client_id or (booking_record or {}).get("client_id") or (workspace or {}).get("client_id"),
+            passenger_id=payload.passenger_id or self._passenger_id(passenger),
+            passenger_snapshot_json=passenger_snapshot,
+            original_ticket_record_id=payload.original_ticket_record_id,
+            exchange_operation_id=payload.exchange_operation_id,
+            import_draft_id=payload.import_draft_id,
+            ticket_number=payload.ticket_number,
+            validating_airline_code=payload.validating_carrier,
+            validating_carrier=payload.validating_carrier,
+            issuing_provider=provider,
+            issue_status=payload.issue_status,
+            status=payload.issue_status,
+            ticket_type=TicketType.MANUAL_MIRROR,
+            currency=payload.currency or pricing_summary.get("currency"),
+            base_fare_amount=payload.base_fare_amount if payload.base_fare_amount is not None else pricing_summary.get("base_fare_amount") or pricing_summary.get("base_fare"),
+            taxes_amount=payload.taxes_amount if payload.taxes_amount is not None else pricing_summary.get("taxes_amount") or pricing_summary.get("taxes"),
+            total_amount=payload.total_amount if payload.total_amount is not None else pricing_summary.get("total_amount"),
+            pricing_snapshot_json=pricing,
+            fare_basis_json=self._fare_basis_snapshot(segments),
+            segments_snapshot_json=segments,
+            warnings_json=[],
+            internal_notes=payload.internal_notes,
+            created_by_user_id=user.get("id"),
+        )
+        created = await self.db.collection("ticket_records").insert_one(ticket.model_dump(mode="json"))
+        coupons = []
+        if payload.create_coupons:
+            for index, segment in enumerate(segments):
+                coupon = TicketCoupon(
+                    agency_id=agency_id,
+                    ticket_record_id=created["id"],
+                    booking_record_id=created.get("booking_record_id"),
+                    booking_workspace_id=created.get("booking_workspace_id"),
+                    trip_id=created.get("trip_id"),
+                    passenger_id=created.get("passenger_id"),
+                    segment_id=_segment_identity(segment, index),
+                    coupon_number=index + 1,
+                    marketing_carrier=segment.get("marketing_airline_code") or segment.get("marketing_airline"),
+                    operating_carrier=segment.get("operating_airline_code") or segment.get("operating_airline"),
+                    flight_number=segment.get("flight_number"),
+                    origin_airport_code=segment.get("origin_airport_code") or segment.get("origin_airport"),
+                    destination_airport_code=segment.get("destination_airport_code") or segment.get("destination_airport"),
+                    departure_at=_date_time(segment.get("departure_at") or segment.get("departure_datetime")),
+                    arrival_at=_date_time(segment.get("arrival_at") or segment.get("arrival_datetime")),
+                    cabin=segment.get("cabin") or segment.get("cabin_class"),
+                    rbd=segment.get("rbd") or segment.get("booking_class"),
+                    fare_basis=segment.get("fare_basis"),
+                    coupon_status=TicketCouponStatus.DRAFT,
+                    segment_snapshot_json=segment,
+                )
+                coupons.append(await self.db.collection("ticket_coupons").insert_one(coupon.model_dump(mode="json")))
+            if coupons:
+                created = await self.db.collection("ticket_records").update_one(
+                    {"agency_id": agency_id, "id": created["id"]},
+                    {"coupons_json": coupons},
+                ) or created
+        await self._write_timeline(
+            agency_id,
+            "ticket.created_manual",
+            "Manual ticket mirror created",
+            user.get("id"),
+            ticket_record_id=created["id"],
+            booking_record_id=created.get("booking_record_id"),
+            booking_workspace_id=created.get("booking_workspace_id"),
+            trip_id=created.get("trip_id"),
+            description="Created an internal ticket mirror without ticketing provider execution.",
+            payload_json={"source_context": source_context, "provider_ticketing_disabled": True},
+        )
+        if created.get("trip_id"):
+            await self._write_trip_timeline(
+                agency_id,
+                created["trip_id"],
+                user.get("id"),
+                "trip.ticket_mirror_created_manual",
+                "Manual ticket mirror created",
+                created.get("ticket_number") or created["id"],
+                {"ticket_record_id": created["id"], "source_context": source_context, "provider_ticketing_disabled": True},
+            )
+        return await self.get_ticket_detail(agency_id, created["id"])
+
+    async def create_manual_emd(
+        self,
+        agency_id: str,
+        payload: ManualEmdCreate,
+        user: dict,
+    ) -> dict[str, Any]:
+        booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
+        if payload.booking_record_id and booking_record is None:
+            raise TicketEmdError("Booking record not found for manual EMD.")
+        workspace = await self._get_workspace_for_record(agency_id, booking_record) if booking_record else await self._get_workspace(agency_id, payload.booking_workspace_id)
+        if payload.booking_workspace_id and workspace is None:
+            raise TicketEmdError("Booking workspace not found for manual EMD.")
+        ticket = None
+        if payload.ticket_record_id:
+            ticket = await self.db.collection("ticket_records").find_one({"agency_id": agency_id, "id": payload.ticket_record_id})
+            if ticket is None:
+                raise TicketEmdError("Ticket record not found for manual EMD.")
+        passenger = self._select_passenger(booking_record, payload.passenger_id) if booking_record else None
+        source_context = _enum_value(payload.source_context or EmdSourceContext.STANDALONE_MANUAL.value)
+        trip_id = payload.trip_id or (booking_record or {}).get("trip_id") or (workspace or {}).get("trip_id") or (ticket or {}).get("trip_id")
+        booking_workspace_id = payload.booking_workspace_id or (booking_record or {}).get("booking_workspace_id") or (workspace or {}).get("id") or (ticket or {}).get("booking_workspace_id")
+        service_snapshot = payload.linked_service_snapshot_json or {
+            "service_key": payload.service_key,
+            "service_catalogue_id": payload.service_catalogue_id,
+            "service_label": payload.service_label,
+            "service_category": payload.service_category,
+        }
+        emd = EMDRecord(
+            agency_id=agency_id,
+            source_context=source_context,
+            trip_id=trip_id,
+            request_id=(booking_record or {}).get("request_id") or (workspace or {}).get("request_id"),
+            booking_workspace_id=booking_workspace_id,
+            booking_record_id=(booking_record or {}).get("id") or payload.booking_record_id,
+            ticket_record_id=payload.ticket_record_id,
+            ticket_id=payload.ticket_record_id,
+            client_id=payload.client_id or (booking_record or {}).get("client_id") or (workspace or {}).get("client_id") or (ticket or {}).get("client_id"),
+            passenger_id=payload.passenger_id or self._passenger_id(passenger) or (ticket or {}).get("passenger_id"),
+            passenger_snapshot_json=(ticket or {}).get("passenger_snapshot_json") or passenger or {},
+            original_emd_record_id=payload.original_emd_record_id,
+            exchange_operation_id=payload.exchange_operation_id,
+            import_draft_id=payload.import_draft_id,
+            emd_number=payload.emd_number,
+            emd_type=payload.emd_type,
+            service_code=payload.service_key,
+            service_name=payload.service_label,
+            service_key=payload.service_key,
+            service_catalogue_id=payload.service_catalogue_id,
+            service_label=payload.service_label or payload.service_key or "Manual EMD service",
+            service_category=payload.service_category,
+            linked_service_snapshot_json=service_snapshot,
+            linked_segment_ids=payload.linked_segment_ids or [],
+            linked_ticket_coupon_ids=payload.linked_ticket_coupon_ids or [],
+            issuing_provider=BookingProviderTarget.MANUAL,
+            issue_status=payload.issue_status,
+            status=payload.issue_status,
+            currency=payload.currency,
+            amount=payload.amount,
+            taxes_amount=payload.taxes_amount,
+            total_amount=payload.total_amount,
+            pricing_snapshot_json={
+                "amount": payload.amount,
+                "taxes_amount": payload.taxes_amount,
+                "total_amount": payload.total_amount,
+                "currency": payload.currency,
+            },
+            warnings_json=[],
+            internal_notes=payload.internal_notes,
+            created_by_user_id=user.get("id"),
+        )
+        created = await self.db.collection("emd_records").insert_one(emd.model_dump(mode="json"))
+        coupons = []
+        if payload.create_coupons:
+            coupon_sources = await self._coupons_by_ids(agency_id, payload.linked_ticket_coupon_ids)
+            if not coupon_sources:
+                coupon_sources = self._segments_by_ids(
+                    (booking_record or {}).get("segments_json") or (workspace or {}).get("segments_snapshot_json") or (ticket or {}).get("segments_snapshot_json") or [],
+                    payload.linked_segment_ids or [],
+                )
+            if not coupon_sources:
+                coupon_sources = [{}]
+            for index, source in enumerate(coupon_sources):
+                segment = source.get("segment_snapshot_json") or source if isinstance(source, dict) else {}
+                coupon = EmdCoupon(
+                    agency_id=agency_id,
+                    emd_record_id=created["id"],
+                    booking_record_id=created.get("booking_record_id"),
+                    booking_workspace_id=created.get("booking_workspace_id"),
+                    trip_id=created.get("trip_id"),
+                    passenger_id=created.get("passenger_id"),
+                    segment_id=source.get("segment_id") or (_segment_identity(segment, index) if segment else None),
+                    ticket_coupon_id=source.get("id") if source.get("ticket_record_id") else None,
+                    coupon_number=index + 1,
+                    service_key=created.get("service_key"),
+                    service_label=created.get("service_label"),
+                    service_category=created.get("service_category"),
+                    coupon_status=EmdCouponStatus.DRAFT,
+                    service_snapshot_json=service_snapshot,
+                    segment_snapshot_json=segment,
+                )
+                coupons.append(await self.db.collection("emd_coupons").insert_one(coupon.model_dump(mode="json")))
+        await self._write_timeline(
+            agency_id,
+            "emd.created_manual",
+            "Manual EMD mirror created",
+            user.get("id"),
+            emd_record_id=created["id"],
+            ticket_record_id=created.get("ticket_record_id"),
+            booking_record_id=created.get("booking_record_id"),
+            booking_workspace_id=created.get("booking_workspace_id"),
+            trip_id=created.get("trip_id"),
+            description="Created an internal EMD mirror without EMD provider issuance.",
+            payload_json={"source_context": source_context, "provider_emd_issuance_disabled": True},
+        )
+        if created.get("trip_id"):
+            await self._write_trip_timeline(
+                agency_id,
+                created["trip_id"],
+                user.get("id"),
+                "trip.emd_mirror_created_manual",
+                "Manual EMD mirror created",
+                created.get("emd_number") or created["id"],
+                {"emd_record_id": created["id"], "source_context": source_context, "provider_emd_issuance_disabled": True},
+            )
         return await self.get_emd_detail(agency_id, created["id"])
 
     async def list_tickets(self, agency_id: str, filters: dict[str, Any]) -> dict[str, Any]:
@@ -637,6 +880,13 @@ class TicketEmdService:
             {"agency_id": agency_id, "id": workspace_id}
         )
 
+    async def _get_workspace(self, agency_id: str, booking_workspace_id: str | None) -> dict[str, Any] | None:
+        if not booking_workspace_id:
+            return None
+        return await self.db.collection("booking_workspaces").find_one(
+            {"agency_id": agency_id, "id": booking_workspace_id}
+        )
+
     async def _get_trip(self, agency_id: str, trip_id: str | None) -> dict[str, Any] | None:
         if not trip_id:
             return None
@@ -743,6 +993,17 @@ class TicketEmdService:
         wanted = set(linked_segment_ids)
         return [item for item in coupons if item.get("segment_id") in wanted]
 
+    async def _coupons_by_ids(self, agency_id: str, coupon_ids: list[str]) -> list[dict[str, Any]]:
+        if not coupon_ids:
+            return []
+        found = []
+        wanted = set(coupon_ids)
+        for coupon_id in wanted:
+            coupon = await self.db.collection("ticket_coupons").find_one({"agency_id": agency_id, "id": coupon_id})
+            if coupon:
+                found.append(coupon)
+        return found
+
     def _service_mapping_summary(self, service: dict[str, Any]) -> dict[str, Any]:
         mapping = _service_catalogue_mapping(service)
         return {
@@ -789,3 +1050,24 @@ class TicketEmdService:
             },
         )
         await self.db.collection("ticket_emd_timeline_events").insert_one(event.model_dump(mode="json"))
+
+    async def _write_trip_timeline(
+        self,
+        agency_id: str,
+        trip_id: str,
+        actor_user_id: str | None,
+        event_type: str,
+        title: str,
+        summary: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
+        event = TripTimelineEvent(
+            agency_id=agency_id,
+            trip_id=trip_id,
+            actor_user_id=actor_user_id,
+            event_type=event_type,
+            title=title,
+            summary=summary,
+            metadata=metadata or {},
+        )
+        await self.db.collection("trip_timeline_events").insert_one(event.model_dump(mode="json"))

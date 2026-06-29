@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_5_supplementary_blueprint_sync",
+        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
     }
 
 
@@ -76,11 +76,15 @@ async def summary(
             "booking_readiness_packages": await db.collection("booking_readiness_packages").count(),
             "booking_workspaces": await db.collection("booking_workspaces").count(),
             "booking_records": await db.collection("booking_records").count(),
+            "booking_import_drafts": await db.collection("booking_import_drafts").count(),
+            "trip_change_operations": await db.collection("trip_change_operations").count(),
             "bookings": await db.collection("bookings").count(),
             "tickets": await db.collection("ticket_records").count(),
             "ticket_coupons": await db.collection("ticket_coupons").count(),
             "emds": await db.collection("emd_records").count(),
             "emd_coupons": await db.collection("emd_coupons").count(),
+            "ticket_exchange_operations": await db.collection("ticket_exchange_operations").count(),
+            "emd_exchange_operations": await db.collection("emd_exchange_operations").count(),
             "ticket_emd_timeline_events": await db.collection("ticket_emd_timeline_events").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
@@ -178,6 +182,7 @@ async def summary(
             "Booking workspace and manual PNR mirror foundation",
             "Ticket and EMD mirror foundation",
             "Supplementary blueprint adoption and canonical route sync foundation",
+            "Standalone booking, import draft, and existing-trip change/exchange mirror foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -185,6 +190,7 @@ async def summary(
             "Public document links",
             "Automatic document sending or provider webhooks",
             "Automatic booking, ticketing, or airline execution from portal actions",
+            "Live GDS/NDC/provider exchange, refund, void, or reissue execution",
         ],
     }
 

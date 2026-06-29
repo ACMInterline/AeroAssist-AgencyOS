@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -21,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.4.5 supplementary blueprint sync.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.4.6 standalone booking and change/exchange workflow sync.",
 )
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_5_supplementary_blueprint_sync",
+        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
     }
 
 
@@ -183,6 +183,8 @@ async def readiness() -> dict:
     booking_workspace_ready_count = await database.collection("booking_workspaces").count({"status": "ready_to_book"})
     booking_workspace_blocked_count = await database.collection("booking_workspaces").count({"status": "blocked"})
     booking_workspace_cancelled_count = await database.collection("booking_workspaces").count({"status": "cancelled"})
+    booking_import_draft_count = await database.collection("booking_import_drafts").count()
+    trip_change_operation_count = await database.collection("trip_change_operations").count()
     ticket_record_count = await database.collection("ticket_records").count()
     ticket_coupon_count = await database.collection("ticket_coupons").count()
     emd_record_count = await database.collection("emd_records").count()
@@ -191,6 +193,8 @@ async def readiness() -> dict:
     ticket_issued_count = await database.collection("ticket_records").count({"issue_status": "issued"})
     emd_draft_count = await database.collection("emd_records").count({"issue_status": "draft"})
     emd_issued_count = await database.collection("emd_records").count({"issue_status": "issued"})
+    ticket_exchange_operation_count = await database.collection("ticket_exchange_operations").count()
+    emd_exchange_operation_count = await database.collection("emd_exchange_operations").count()
     ai_trace_event_count = await database.collection("ai_trace_events").count()
     adm_risk_event_count = await database.collection("adm_risk_events").count()
     gds_parse_sample_count = await database.collection("gds_parse_samples").count()
@@ -210,7 +214,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_5_supplementary_blueprint_sync",
+        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -398,18 +402,24 @@ async def readiness() -> dict:
             "booking_record_mirror_enabled": True,
             "booking_timeline_enabled": True,
             "manual_pnr_mirror_enabled": True,
+            "manual_booking_workspace_enabled": True,
+            "standalone_booking_record_enabled": True,
+            "booking_import_draft_enabled": True,
+            "booking_import_parser_stub_enabled": True,
+            "existing_trip_change_booking_enabled": True,
             "provider_execution_disabled": True,
             "service_catalogue_booking_snapshot_enabled": True,
             "trip_booking_workspace_link_enabled": True,
             "agency_booking_workspace_ui_enabled": True,
             "booking_workspace_count": booking_workspace_count,
             "booking_record_count": booking_record_count,
+            "booking_import_draft_count": booking_import_draft_count,
             "booking_timeline_event_count": booking_timeline_event_count,
             "booking_workspace_ready_count": booking_workspace_ready_count,
             "booking_workspace_blocked_count": booking_workspace_blocked_count,
             "booking_workspace_cancelled_count": booking_workspace_cancelled_count,
             "readiness_required": False,
-            "diagnostic": "Booking workspaces and PNR mirrors are manual foundations created from readiness packages; provider execution remains disabled.",
+            "diagnostic": "Booking workspaces and PNR mirrors can be created from readiness packages, manual entry, imports, or existing-trip change operations; provider execution remains disabled.",
         },
         "ticket_emd_foundation": {
             "ticket_record_foundation_enabled": True,
@@ -421,6 +431,14 @@ async def readiness() -> dict:
             "ticket_emd_readiness_enabled": True,
             "manual_ticket_mirror_enabled": True,
             "manual_emd_mirror_enabled": True,
+            "manual_ticket_creation_enabled": True,
+            "standalone_ticket_creation_enabled": True,
+            "manual_emd_creation_enabled": True,
+            "standalone_emd_creation_enabled": True,
+            "ticket_emd_import_association_ready": True,
+            "ticket_exchange_operation_foundation_enabled": True,
+            "emd_exchange_operation_foundation_enabled": True,
+            "exchange_reissue_mirror_enabled": True,
             "service_catalogue_emd_mapping_enabled": True,
             "provider_ticketing_disabled": True,
             "provider_emd_issuance_disabled": True,
@@ -433,8 +451,26 @@ async def readiness() -> dict:
             "ticket_issued_count": ticket_issued_count,
             "emd_draft_count": emd_draft_count,
             "emd_issued_count": emd_issued_count,
+            "ticket_exchange_operation_count": ticket_exchange_operation_count,
+            "emd_exchange_operation_count": emd_exchange_operation_count,
             "readiness_required": False,
             "diagnostic": "Ticket and EMD records are internal mirrors only; provider ticketing and EMD issuance are disabled.",
+        },
+        "change_exchange_foundation": {
+            "trip_change_operation_foundation_enabled": True,
+            "ticket_exchange_operation_foundation_enabled": True,
+            "emd_exchange_operation_foundation_enabled": True,
+            "existing_trip_change_booking_enabled": True,
+            "request_offer_change_linkage_ready": True,
+            "provider_exchange_execution_disabled": True,
+            "provider_refund_execution_disabled": True,
+            "provider_void_execution_disabled": True,
+            "booking_import_draft_count": booking_import_draft_count,
+            "trip_change_operation_count": trip_change_operation_count,
+            "ticket_exchange_operation_count": ticket_exchange_operation_count,
+            "emd_exchange_operation_count": emd_exchange_operation_count,
+            "readiness_required": False,
+            "diagnostic": "Change, exchange, refund, and void workflows are internal planning/mirror records only; no provider execution is enabled.",
         },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
@@ -448,6 +484,9 @@ async def readiness() -> dict:
             "supplementary_agent_admin_routes_rejected": True,
             "tickets_emd_phase_36_4_recognized": True,
             "booking_workspace_creation_entrypoint_recognized": True,
+            "standalone_booking_ticket_emd_workflow_recognized": True,
+            "gds_confirmation_import_foundation_enabled": True,
+            "existing_trip_change_exchange_workflow_recognized": True,
             "phase_36_5_documents_ready": True,
             "ai_trace_event_count": ai_trace_event_count,
             "adm_risk_event_count": adm_risk_event_count,
@@ -501,7 +540,9 @@ app.include_router(agency_special_services.router)
 app.include_router(agency_offer_builder.router)
 app.include_router(agency_offer_acceptance.router)
 app.include_router(agency_booking_workspaces.router)
+app.include_router(agency_booking_imports.router)
 app.include_router(agency_ticket_emd.router)
+app.include_router(agency_trip_changes.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)
