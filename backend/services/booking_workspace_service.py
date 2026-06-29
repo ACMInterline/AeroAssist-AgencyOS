@@ -93,6 +93,32 @@ def _summary_from_readiness(readiness: dict[str, Any] | None) -> dict[str, Any] 
     }
 
 
+def _summary_from_offer_workspace(workspace: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not workspace:
+        return None
+    return {
+        "id": workspace.get("id"),
+        "title": workspace.get("title"),
+        "status": workspace.get("status"),
+        "currency": workspace.get("currency"),
+        "request_id": workspace.get("request_id"),
+        "trip_id": workspace.get("trip_id"),
+    }
+
+
+def _summary_from_booking_workspace(workspace: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not workspace:
+        return None
+    return {
+        "id": workspace.get("id"),
+        "workspace_number": workspace.get("workspace_number"),
+        "title": workspace.get("title"),
+        "status": workspace.get("status"),
+        "provider_target": workspace.get("provider_target"),
+        "booking_record_id": workspace.get("booking_record_id"),
+    }
+
+
 class BookingWorkspaceService:
     def __init__(self, db: Database) -> None:
         self.db = db
@@ -229,6 +255,71 @@ class BookingWorkspaceService:
                     "trip_summary": _summary_from_trip(trips.get(workspace.get("trip_id"))),
                     "warning_count": len(workspace.get("warnings_json") or []),
                     "policy_violation_count": len(workspace.get("policy_violations_json") or []),
+                }
+            )
+        items.sort(key=lambda item: str(item.get("updated_at") or item.get("created_at") or ""), reverse=True)
+        return {"items": items}
+
+    async def list_eligible_booking_readiness_packages(self, agency_id: str) -> dict[str, Any]:
+        packages = await self.db.collection("booking_readiness_packages").find_many({"agency_id": agency_id})
+        eligible_statuses = {
+            BookingReadinessStatus.DRAFT.value,
+            BookingReadinessStatus.READY.value,
+            BookingReadinessStatus.BLOCKED.value,
+        }
+        packages = [item for item in packages if item.get("status") in eligible_statuses]
+
+        trips = {
+            item["id"]: item
+            for item in await self.db.collection("trip_dossiers").find_many({"agency_id": agency_id})
+        }
+        acceptances = {
+            item["id"]: item
+            for item in await self.db.collection("offer_acceptances").find_many({"agency_id": agency_id})
+        }
+        offer_workspaces = {
+            item["id"]: item
+            for item in await self.db.collection("offer_workspaces").find_many({"agency_id": agency_id})
+        }
+        booking_workspaces = await self.db.collection("booking_workspaces").find_many({"agency_id": agency_id})
+
+        active_by_package: dict[str, dict[str, Any]] = {}
+        for workspace in booking_workspaces:
+            package_id = workspace.get("booking_readiness_package_id")
+            if not package_id or workspace.get("status") not in ACTIVE_WORKSPACE_STATUSES:
+                continue
+            current = active_by_package.get(package_id)
+            active_by_package[package_id] = _latest([item for item in [current, workspace] if item]) or workspace
+
+        items: list[dict[str, Any]] = []
+        for package in packages:
+            existing_workspace = active_by_package.get(package["id"])
+            acceptance = acceptances.get(package.get("acceptance_id"))
+            offer_workspace = offer_workspaces.get(package.get("workspace_id"))
+            items.append(
+                {
+                    "id": package["id"],
+                    "booking_readiness_package_id": package["id"],
+                    "trip_id": package.get("trip_id"),
+                    "request_id": package.get("request_id"),
+                    "workspace_id": package.get("workspace_id"),
+                    "option_id": package.get("option_id"),
+                    "acceptance_id": package.get("acceptance_id"),
+                    "status": package.get("status"),
+                    "provider_target": package.get("provider_target"),
+                    "warning_count": len(package.get("warnings_json") or []),
+                    "policy_violation_count": len(package.get("policy_violations_json") or []),
+                    "required_document_count": len(package.get("required_documents_json") or []),
+                    "created_at": package.get("created_at"),
+                    "updated_at": package.get("updated_at"),
+                    "trip_summary": _summary_from_trip(trips.get(package.get("trip_id"))),
+                    "accepted_offer_summary": _summary_from_acceptance(acceptance),
+                    "offer_workspace_summary": _summary_from_offer_workspace(offer_workspace),
+                    "workspace_summary": _summary_from_offer_workspace(offer_workspace),
+                    "booking_workspace_already_exists": existing_workspace is not None,
+                    "booking_workspace_id": (existing_workspace or {}).get("id"),
+                    "booking_workspace_summary": _summary_from_booking_workspace(existing_workspace),
+                    "can_create_booking_workspace": existing_workspace is None,
                 }
             )
         items.sort(key=lambda item: str(item.get("updated_at") or item.get("created_at") or ""), reverse=True)

@@ -56,6 +56,17 @@ async def list_booking_workspaces(
     )
 
 
+@router.get("/booking-readiness-packages")
+async def list_booking_readiness_packages(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    service = BookingWorkspaceService(db)
+    return await service.list_eligible_booking_readiness_packages(agency_id)
+
+
 @router.post("/booking-workspaces/from-readiness", status_code=status.HTTP_201_CREATED)
 async def create_booking_workspace_from_readiness(
     agency_id: str,

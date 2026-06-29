@@ -195,6 +195,7 @@ def main() -> int:
     paths = openapi.get("paths") or {}
     for path, method in [
         ("/api/agencies/{agency_id}/booking-workspaces", "get"),
+        ("/api/agencies/{agency_id}/booking-readiness-packages", "get"),
         ("/api/agencies/{agency_id}/booking-workspaces/from-readiness", "post"),
         ("/api/agencies/{agency_id}/booking-workspaces/{booking_workspace_id}", "get"),
         ("/api/agencies/{agency_id}/booking-workspaces/{booking_workspace_id}/status", "post"),
@@ -263,6 +264,15 @@ def main() -> int:
     if not any(item.get("service_catalogue_snapshot_json") or item.get("service_catalogue_id") or item.get("service_code") for item in service_items):
         raise AssertionError("Service snapshot did not preserve catalogue or service mapping fields.")
 
+    eligible_before = get(f"/api/agencies/{agency_id}/booking-readiness-packages", OWNER_HEADERS)
+    before_item = next((item for item in eligible_before.get("items", []) if item["id"] == readiness_package["id"]), None)
+    if before_item is None:
+        raise AssertionError("Eligible booking readiness list did not include the accepted package.")
+    if before_item.get("booking_workspace_already_exists") is not False:
+        raise AssertionError("Eligible booking readiness package was incorrectly marked as already created.")
+    if not before_item.get("trip_summary") or not before_item.get("accepted_offer_summary") or not before_item.get("workspace_summary"):
+        raise AssertionError("Eligible booking readiness package did not include required summaries.")
+
     created = post(
         f"/api/agencies/{agency_id}/booking-workspaces/from-readiness",
         {
@@ -302,6 +312,13 @@ def main() -> int:
         raise AssertionError("Duplicate create did not reuse the active booking workspace.")
     if not any(item.get("code") == "existing_booking_workspace_reused" for item in duplicate.get("warnings", [])):
         raise AssertionError("Duplicate create did not return reuse warning.")
+
+    eligible_after = get(f"/api/agencies/{agency_id}/booking-readiness-packages", OWNER_HEADERS)
+    after_item = next((item for item in eligible_after.get("items", []) if item["id"] == readiness_package["id"]), None)
+    if after_item is None or after_item.get("booking_workspace_id") != workspace["id"]:
+        raise AssertionError("Eligible booking readiness list did not expose the existing booking workspace.")
+    if after_item.get("booking_workspace_already_exists") is not True or after_item.get("can_create_booking_workspace") is not False:
+        raise AssertionError("Eligible booking readiness list did not mark the package as open-only after creation.")
 
     listed = get(
         f"/api/agencies/{agency_id}/booking-workspaces?trip_id={accepted['acceptance']['trip_id']}",
