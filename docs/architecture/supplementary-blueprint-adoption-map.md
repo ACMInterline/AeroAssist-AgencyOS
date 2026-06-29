@@ -1,0 +1,42 @@
+# Supplementary Blueprint Adoption Map
+
+Phase 36.4.5 adopts useful structures from the supplementary blueprint without replacing AgencyOS architecture. `/platform/*` and `/agency/*` remain canonical, provider execution stays disabled, and existing request/trip/offer/booking/ticket/EMD models remain the source of truth.
+
+| Supplementary concept | Current AgencyOS equivalent | Status | Action |
+|---|---|---|---|
+| `users`, `roles`, `user_roles`, `permissions`, `role_permissions` | `platform_users`, `auth_identities`, `auth_sessions`, `agency_staff_memberships`, invitations, platform/agency role helpers | built differently | Do not duplicate RBAC; current platform and agency role model remains canonical. |
+| Airline intelligence tables | `airline_profiles`, `airline_intelligence_profiles`, contacts, fleet, aircraft, routes, fare families, RBD rows, fare rules, ancillaries, interline, distribution, PSS/GDS parameters, `unified_exception_rules` | partially built | Use existing Phase 36 airline structures; add only `AirlineBrandAsset` as safe foundation. |
+| Supplier endpoints, credentials, health, failover | Provider targets and provider payload/response placeholders on booking records/workspaces | planned later | No live supplier execution, credentials, failover, or health checks yet. |
+| GDS parser samples and normalizer traces | `GdsParseSample` and `AiTraceEvent` | add foundation now | Preserve samples and traces without provider calls or parser automation. |
+| Trip requests and trip segments | `request_intakes`, `travel_requests`, `request_segments`, `trip_dossiers`, `trip_segments` | built | Map to existing request-to-trip lifecycle. |
+| Offers and offer items | `offer_workspaces`, `offer_options`, `offer_builder_segments`, `offer_fare_bundles`, `offer_pricing_lines` | built | Continue using rule-aware offer builder foundations. |
+| Bookings and PNR snapshots | `booking_workspaces`, `booking_records`, `internal_pnr_mirror_json` | built | Continue manual PNR mirror foundation; no provider execution. |
+| Tickets and EMDs | `ticket_records`, `ticket_coupons`, `emd_records`, `emd_coupons` | built | Recognize Phase 36.4 Tickets + EMD Foundation; do not add duplicate models. |
+| Documents, versions, shares, templates, designer | `document_templates`, `rendered_documents`, `document_exports`, `document_deliveries`, `document_storage_records` | partially built | Defer full document designer/version/share layer to Phase 36.5. |
+| Fragmented AI logs | `AiTraceEvent` | add foundation now | Use one unified trace collection instead of many `ai_*_logs` tables. |
+| ADM risk events | `AdmRiskEvent` | add foundation now | Provide reviewable risk-event records without an ADM AI engine. |
+| Audit logs and system events | `audit_events` plus workflow timeline events | built differently | Do not duplicate audit logs; defer formal error/API usage telemetry. |
+| Passenger, medical, cargo, VIP special service modules | `PassengerServiceRequest`, request pets/items, trip service items, service catalogue, rules/services registry, exception engine, SSR/OSI generator | built differently | Add `SpecialServicesUnifiedFacade`; do not rebuild parallel special-service modules. |
+| `/agent/*` and `/admin/*` route shells | `/agency/*` and `/platform/*` | intentionally rejected | Keep canonical route roots and document mappings instead of aliases. |
+
+## Adopted Now
+
+- `AiTraceEvent`
+- `AdmRiskEvent`
+- `GdsParseSample`
+- `AirlineBrandAsset`
+- Static blueprint adoption API and `/platform/blueprint` UI
+- `SpecialServicesUnifiedFacade`
+
+## Deferred
+
+- Full document designer, document versions, and document sharing
+- GDS parser UI, parser execution, and provider imports
+- Visual airline dashboards
+- Live AI engines, AI model configuration, and ADM automation
+- Supplier credentials, health, failover, and execution
+- Payments, invoices/accounting expansion, settlement, and live ticket/EMD issuance
+
+## Recognized Existing Work
+
+Phase 36.4 Tickets + EMD Foundation is already built. The booking workspace creation entry point fix is also recognized as the current canonical way to create or open booking workspaces from accepted-offer booking readiness packages.

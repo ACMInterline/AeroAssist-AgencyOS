@@ -59,6 +59,7 @@ The repository currently contains:
 - Phase 36.2.5: Reference data consumer map and service catalogue governance.
 - Phase 36.3: Booking workspace and manual PNR mirror foundation.
 - Phase 36.4: Ticket and EMD mirror foundation.
+- Phase 36.4.5: Supplementary blueprint adoption and unified workflow sync.
 
 Phase 35 navigation hotfix:
 
@@ -982,6 +983,23 @@ Implemented scope:
 Avoid adding:
 
 - Live ticket issuance, live EMD issuance, GDS/NDC/supplier calls, BSP/ARC settlement, payment capture, invoices/accounting postings, or backward mutation of accepted offer/booking readiness snapshots.
+
+### Phase 36.4.5: Supplementary Blueprint Adoption And Unified Workflow Sync
+
+Implemented scope:
+
+- Supplementary blueprint adoption map documenting existing equivalents, adopted foundations, deferred ideas, and rejected structures.
+- Canonical route policy keeping `/platform/*` and `/agency/*` as the app roots while rejecting supplementary `/agent/*` and `/admin/*`.
+- `AiTraceEvent`, `AdmRiskEvent`, `GdsParseSample`, and `AirlineBrandAsset` foundation records with Mongo indexes.
+- Static `BlueprintAdoptionService` and platform governance APIs under `/api/platform/blueprint`.
+- Platform UI route `/platform/blueprint` for adoption map, route policy, gaps, and next phase recommendations.
+- `SpecialServicesUnifiedFacade` over the existing rules/services, exception, SSR/OSI, and service catalogue foundations.
+- Readiness flags and non-blocking counts under `blueprint_sync`.
+- Recognition that Phase 36.4 already built Tickets + EMD Foundation and that the booking workspace creation entry UX fix is canonical.
+
+Avoid adding:
+
+- `/agent` or `/admin` route roots, live provider execution, real ticketing/EMD issuance, supplier credentials, full document designer, full AI engines, visual airline dashboards, payments, invoices/accounting, or duplicate trip/request/offer/booking/ticket/EMD models.
 
 ### Phase 37: Provider Import And Issuance Provenance
 

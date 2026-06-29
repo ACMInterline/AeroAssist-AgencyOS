@@ -6,7 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.reference_domain_usage_service import list_domain_usage, reference_action_required
@@ -20,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.4 ticket and EMD foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.4.5 supplementary blueprint sync.",
 )
 
 app.add_middleware(
@@ -47,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_ticket_emd_foundation",
+        "phase": "phase_36_4_5_supplementary_blueprint_sync",
     }
 
 
@@ -190,6 +191,13 @@ async def readiness() -> dict:
     ticket_issued_count = await database.collection("ticket_records").count({"issue_status": "issued"})
     emd_draft_count = await database.collection("emd_records").count({"issue_status": "draft"})
     emd_issued_count = await database.collection("emd_records").count({"issue_status": "issued"})
+    ai_trace_event_count = await database.collection("ai_trace_events").count()
+    adm_risk_event_count = await database.collection("adm_risk_events").count()
+    gds_parse_sample_count = await database.collection("gds_parse_samples").count()
+    airline_brand_asset_count = await database.collection("airline_brand_assets").count()
+    blueprint_adoption = get_blueprint_adoption_map()
+    blueprint_gaps = get_blueprint_gap_summary()
+    blueprint_route_policy = get_blueprint_route_policy()
     branded_logo_count = len(
         [
             item
@@ -202,7 +210,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_ticket_emd_foundation",
+        "phase": "phase_36_4_5_supplementary_blueprint_sync",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -428,6 +436,29 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Ticket and EMD records are internal mirrors only; provider ticketing and EMD issuance are disabled.",
         },
+        "blueprint_sync": {
+            "supplementary_blueprint_adoption_map_enabled": True,
+            "canonical_route_policy_enabled": True,
+            "ai_trace_foundation_enabled": True,
+            "adm_risk_event_foundation_enabled": True,
+            "gds_parse_sample_foundation_enabled": True,
+            "airline_brand_asset_foundation_enabled": True,
+            "special_services_unified_facade_enabled": True,
+            "platform_blueprint_ui_enabled": True,
+            "supplementary_agent_admin_routes_rejected": True,
+            "tickets_emd_phase_36_4_recognized": True,
+            "booking_workspace_creation_entrypoint_recognized": True,
+            "phase_36_5_documents_ready": True,
+            "ai_trace_event_count": ai_trace_event_count,
+            "adm_risk_event_count": adm_risk_event_count,
+            "gds_parse_sample_count": gds_parse_sample_count,
+            "airline_brand_asset_count": airline_brand_asset_count,
+            "blueprint_adoption_item_count": len(blueprint_adoption.get("items") or []),
+            "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
+            "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
+            "readiness_required": False,
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations; /platform and /agency remain canonical.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -455,6 +486,7 @@ async def audit_events() -> dict:
 
 app.include_router(auth.router)
 app.include_router(platform.router)
+app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)

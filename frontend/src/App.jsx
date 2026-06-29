@@ -50,6 +50,7 @@ import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailP
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
+import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
@@ -81,6 +82,7 @@ const routes = {
   "/login": LoginPage,
   "/platform": PlatformDashboardPage,
   "/platform/agencies": PlatformAgenciesPage,
+  "/platform/blueprint": PlatformBlueprintPage,
   "/platform/airlines": AirlinesPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,

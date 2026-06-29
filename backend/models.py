@@ -3114,6 +3114,101 @@ class BookingRecordUpdate(BaseModel):
     internal_notes: Optional[str] = None
 
 
+class AiTraceType(str, Enum):
+    PARSING = "parsing"
+    OFFER_BUILDER = "offer_builder"
+    PNR_FIX = "pnr_fix"
+    RULES_SERVICES = "rules_services"
+    AIRLINE_INTELLIGENCE = "airline_intelligence"
+    ADM_RISK = "adm_risk"
+    DOCUMENT_GENERATION = "document_generation"
+    DEBUG_CONSOLE = "debug_console"
+
+
+class AdmRiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class GdsParseSampleMode(str, Enum):
+    PNR = "pnr"
+    AVAIL = "avail"
+    FARE = "fare"
+    TICKETING = "ticketing"
+    OTHER = "other"
+
+
+class GdsParseSampleSource(str, Enum):
+    MANUAL = "manual"
+    TRAVELPORT = "travelport"
+    AMADEUS = "amadeus"
+    SUPPLIER = "supplier"
+    OTHER = "other"
+
+
+class AirlineBrandAssetType(str, Enum):
+    LOGO = "logo"
+    COLOR_PALETTE = "color_palette"
+    TYPOGRAPHY = "typography"
+    GUIDELINE = "guideline"
+    IMAGE = "image"
+    OTHER = "other"
+
+
+class AiTraceEvent(BaseDocument):
+    agency_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    user_id: Optional[str] = None
+    trace_type: AiTraceType
+    source_module: str
+    input_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    output_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    confidence: Optional[float] = None
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    error_json: Dict[str, Any] = Field(default_factory=dict)
+    provider: Optional[str] = None
+    model_name: Optional[str] = None
+
+
+class AdmRiskEvent(BaseDocument):
+    agency_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    request_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_option_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    ticket_record_id: Optional[str] = None
+    emd_record_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    risk_level: AdmRiskLevel = AdmRiskLevel.LOW
+    risk_factors_json: List[Dict[str, Any]] = Field(default_factory=list)
+    recommended_actions_json: List[Dict[str, Any]] = Field(default_factory=list)
+    source_context_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+
+
+class GdsParseSample(BaseDocument):
+    agency_id: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    mode: GdsParseSampleMode = GdsParseSampleMode.PNR
+    raw_text: str
+    parsed_json: Dict[str, Any] = Field(default_factory=dict)
+    source: GdsParseSampleSource = GdsParseSampleSource.MANUAL
+    notes: Optional[str] = None
+
+
+class AirlineBrandAsset(BaseDocument):
+    airline_id: str
+    asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
+    label: str
+    asset_url: Optional[str] = None
+    asset_json: Dict[str, Any] = Field(default_factory=dict)
+    active: bool = True
+
+
 class RefundExchangeCaseType(str, Enum):
     REFUND = "refund"
     EXCHANGE = "exchange"

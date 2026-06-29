@@ -23,7 +23,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_36_4_ticket_emd_foundation"
+PHASE_LABEL = "phase_36_4_5_supplementary_blueprint_sync"
 
 
 class TicketEmdError(ValueError):
