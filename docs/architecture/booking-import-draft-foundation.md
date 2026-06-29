@@ -29,6 +29,8 @@ The parser may extract:
 
 The parser does not call GDS, NDC, email, PDF, OCR, AI, or supplier providers.
 
+The agency UI presents parsed imports as agent-friendly passenger, segment, SSR/OSI, ticket number, EMD number, and warning panels. The full parsed JSON is retained in a collapsed advanced section for audit/debug review only.
+
 ## API Entry Points
 
 - `GET /api/agencies/{agency_id}/booking-import-drafts`

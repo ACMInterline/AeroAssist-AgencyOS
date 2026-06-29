@@ -8,7 +8,20 @@ import { loadCurrentAgency } from "../../lib/agency"
 export default function TripDetailPage({ tripId }) {
   const [state, setState] = useState(null)
   const [form, setForm] = useState({ trip_title: "", trip_status: "draft", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", link_request_id: "" })
-  const [changeForm, setChangeForm] = useState({ operation_type: "itinerary_change", reason: "", operation_id: "", original_ticket_record_id: "", original_emd_record_id: "" })
+  const [changeForm, setChangeForm] = useState({
+    operation_type: "itinerary_change",
+    reason: "",
+    source_booking_workspace_id: "",
+    source_booking_record_id: "",
+    summary_text: "",
+    proposed_change_notes: "",
+    internal_notes: "",
+    original_snapshot_json: "",
+    proposed_snapshot_json: "",
+    operation_id: "",
+    original_ticket_record_id: "",
+    original_emd_record_id: "",
+  })
   const [error, setError] = useState("")
 
   async function load() {
@@ -120,8 +133,25 @@ export default function TripDetailPage({ tripId }) {
       await apiPost(`/api/agencies/${state.agency.id}/trips/${tripId}/change-operations`, {
         operation_type: changeForm.operation_type,
         reason: changeForm.reason || null,
+        source_booking_workspace_id: changeForm.source_booking_workspace_id || null,
+        source_booking_record_id: changeForm.source_booking_record_id || null,
+        change_summary_json: compactObject({
+          summary_text: changeForm.summary_text,
+          proposed_change_notes: changeForm.proposed_change_notes,
+          internal_notes: changeForm.internal_notes,
+        }),
+        original_snapshot_json: parseOptionalJson(changeForm.original_snapshot_json, "Original snapshot"),
+        proposed_snapshot_json: parseOptionalJson(changeForm.proposed_snapshot_json, "Proposed snapshot"),
       })
-      setChangeForm((current) => ({ ...current, reason: "" }))
+      setChangeForm((current) => ({
+        ...current,
+        reason: "",
+        summary_text: "",
+        proposed_change_notes: "",
+        internal_notes: "",
+        original_snapshot_json: "",
+        proposed_snapshot_json: "",
+      }))
       await load()
     } catch (err) {
       setError(err.message)
@@ -141,7 +171,9 @@ export default function TripDetailPage({ tripId }) {
         title: `${state.trip.trip_reference} change booking`,
         provider_target: "manual",
         create_draft_record: true,
-        revision_reason: changeForm.reason || "Existing trip change mirror",
+        original_booking_record_id: changeForm.source_booking_record_id || null,
+        revision_reason: changeForm.summary_text || changeForm.reason || "Existing trip change mirror",
+        internal_notes: changeForm.internal_notes || null,
       })
       window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
     } catch (err) {
@@ -427,24 +459,47 @@ function ChangesExchangesPanel({ changeForm, onChange, onCreateChangeBooking, on
   const emdExchanges = state?.changes?.emd_exchange_operations || []
   return (
     <Panel title="Changes & Exchanges">
-      <form className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)_auto]" onSubmit={onStartTripChange}>
-        <Select label="Change type" value={changeForm.operation_type} onChange={(value) => onChange({ operation_type: value })} options={["itinerary_change", "booking_change", "ticket_exchange", "ticket_reissue", "emd_exchange", "emd_reissue", "cancellation", "refund_quote", "service_change", "other"]} />
-        <Field label="Reason" value={changeForm.reason} onChange={(value) => onChange({ reason: value })} />
-        <div className="flex items-end">
+      <form className="space-y-4" onSubmit={onStartTripChange}>
+        <section className="space-y-3">
+          <h4 className="text-sm font-semibold text-slate-950">Start trip change</h4>
+          <div className="grid gap-3 md:grid-cols-3">
+            <Select label="Operation type" value={changeForm.operation_type} onChange={(value) => onChange({ operation_type: value })} options={["itinerary_change", "booking_change", "ticket_exchange", "ticket_reissue", "emd_exchange", "emd_reissue", "cancellation", "refund_quote", "service_change", "other"]} />
+            <Field label="Source booking workspace id optional" value={changeForm.source_booking_workspace_id} onChange={(value) => onChange({ source_booking_workspace_id: value })} />
+            <Field label="Source booking record id optional" value={changeForm.source_booking_record_id} onChange={(value) => onChange({ source_booking_record_id: value })} />
+            <Field label="Reason" value={changeForm.reason} onChange={(value) => onChange({ reason: value })} />
+            <Field label="Summary text" value={changeForm.summary_text} onChange={(value) => onChange({ summary_text: value })} />
+            <Field label="Proposed change notes" value={changeForm.proposed_change_notes} onChange={(value) => onChange({ proposed_change_notes: value })} />
+            <Textarea label="Internal notes" value={changeForm.internal_notes} onChange={(value) => onChange({ internal_notes: value })} />
+          </div>
+          <details className="rounded-md border border-slate-200 bg-slate-50 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced change snapshots</summary>
+            <p className="mt-2 text-sm text-slate-600">Advanced only. Structured fields above build the change summary unless snapshot JSON is provided.</p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <RawTextarea label="Original snapshot JSON" value={changeForm.original_snapshot_json} onChange={(value) => onChange({ original_snapshot_json: value })} />
+              <RawTextarea label="Proposed snapshot JSON" value={changeForm.proposed_snapshot_json} onChange={(value) => onChange({ proposed_snapshot_json: value })} />
+            </div>
+          </details>
           <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Start trip change</button>
-        </div>
+        </section>
       </form>
-      <div className="grid gap-3 md:grid-cols-4">
-        <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={`/agency/booking-imports?linked_trip_id=${state?.trip?.id || ""}`}>Attach imported GDS booking to this trip</a>
-        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateChangeBooking}>Create change booking mirror</button>
-        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartTicketExchange}>Start ticket exchange</button>
-        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartEmdExchange}>Start EMD exchange</button>
-      </div>
-      <div className="grid gap-3 md:grid-cols-3">
-        <Field label="Change operation id" value={changeForm.operation_id} onChange={(value) => onChange({ operation_id: value })} />
-        <Field label="Original ticket record id" value={changeForm.original_ticket_record_id} onChange={(value) => onChange({ original_ticket_record_id: value })} />
-        <Field label="Original EMD record id" value={changeForm.original_emd_record_id} onChange={(value) => onChange({ original_emd_record_id: value })} />
-      </div>
+      <section className="space-y-3">
+        <h4 className="text-sm font-semibold text-slate-950">Change booking mirror</h4>
+        <div className="grid gap-3 md:grid-cols-4">
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={`/agency/booking-imports?linked_trip_id=${state?.trip?.id || ""}`}>Attach imported GDS booking to this trip</a>
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={`/agency/booking-workspaces?mode=manual_booking&trip_id=${state?.trip?.id || ""}`}>Open structured booking form</a>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateChangeBooking}>Create change booking mirror</button>
+          <Field label="Change operation id" value={changeForm.operation_id} onChange={(value) => onChange({ operation_id: value })} />
+        </div>
+      </section>
+      <section className="space-y-3">
+        <h4 className="text-sm font-semibold text-slate-950">Ticket and EMD exchanges</h4>
+        <div className="grid gap-3 md:grid-cols-4">
+          <Field label="Original ticket record id" value={changeForm.original_ticket_record_id} onChange={(value) => onChange({ original_ticket_record_id: value })} />
+          <Field label="Original EMD record id" value={changeForm.original_emd_record_id} onChange={(value) => onChange({ original_emd_record_id: value })} />
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartTicketExchange}>Start ticket exchange</button>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onStartEmdExchange}>Start EMD exchange</button>
+        </div>
+      </section>
       <section className="grid gap-4 lg:grid-cols-3">
         <SnapshotList
           title="Trip Change Operations"
@@ -503,6 +558,24 @@ function Textarea({ label, value, onChange }) {
   return <label className="grid gap-1 text-sm font-medium text-slate-700 md:col-span-3">{label}<textarea className="min-h-20 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)} /></label>
 }
 
+function RawTextarea({ label, value, onChange }) {
+  return <label className="grid gap-1 text-sm font-medium text-slate-700">{label}<textarea className="min-h-24 rounded-md border border-slate-300 px-3 py-2 font-mono text-xs font-normal" value={value} onChange={(event) => onChange(event.target.value)} spellCheck={false} /></label>
+}
+
 function Select({ label, value, onChange, options }) {
   return <label className="grid gap-1 text-sm font-medium text-slate-700">{label}<select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)}>{options.map((option) => <option value={option} key={option}>{option.replaceAll("_", " ")}</option>)}</select></label>
+}
+
+function compactObject(item) {
+  return Object.fromEntries(Object.entries(item).filter(([, value]) => value !== "" && value !== null && value !== undefined))
+}
+
+function parseOptionalJson(value, label) {
+  const text = String(value || "").trim()
+  if (!text) return {}
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`${label} JSON must be valid.`)
+  }
 }

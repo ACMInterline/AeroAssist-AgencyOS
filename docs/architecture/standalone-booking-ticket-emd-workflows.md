@@ -37,6 +37,10 @@ Ticket and EMD mirrors carry compatible source contexts, including `exchange_rei
 - `/agency/tickets-emds`
 - `/agency/trips/{trip_id}`
 
+Manual booking, ticket, and EMD creation use structured agent-facing sections as the primary UX. Agents enter passengers, flight segments, pricing, SSR/OSI, services, ticket coupons, and EMD coupon/service data through normal fields; the frontend derives the existing backend snapshot payloads from those fields.
+
+Raw snapshot JSON remains available only as a collapsed advanced fallback for debugging, migration, or exceptional support cases. A raw override must parse as valid JSON before the form submits.
+
 ## Boundaries
 
 All records are internal mirrors. No live booking, ticketing, EMD issuance, exchange, refund, void, payment, invoice, accounting, GDS, NDC, or supplier action is executed.

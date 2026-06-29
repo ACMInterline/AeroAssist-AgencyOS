@@ -19,6 +19,8 @@ Phase 36.4.6 adds internal foundations for servicing existing trips without crea
 5. Mirror revised ticket or EMD records with source context `exchange_reissue`.
 6. Preserve links to original ticket/EMD records and operation records.
 
+The trip detail UI captures change type, reason, source booking links, summary text, proposed change notes, and internal notes as structured fields. Original/proposed snapshots remain available only in collapsed advanced JSON fields, and revised booking mirrors link agents back to the structured booking workspace flow for the current trip.
+
 ## Request And Offer Linkage
 
 Phase 36.4.6 adds optional purpose/linkage fields to request and offer foundations:

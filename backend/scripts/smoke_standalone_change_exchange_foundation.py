@@ -82,6 +82,9 @@ def main() -> int:
     blueprint = readiness.get("blueprint_sync") or {}
     for key in [
         "manual_booking_workspace_enabled",
+        "structured_manual_booking_form_enabled",
+        "structured_import_preview_enabled",
+        "raw_json_advanced_fallback_enabled",
         "standalone_booking_record_enabled",
         "booking_import_draft_enabled",
         "booking_import_parser_stub_enabled",
@@ -92,8 +95,11 @@ def main() -> int:
             raise AssertionError(f"Readiness missing booking flag: {key}")
     for key in [
         "manual_ticket_creation_enabled",
+        "structured_manual_ticket_form_enabled",
         "standalone_ticket_creation_enabled",
         "manual_emd_creation_enabled",
+        "structured_manual_emd_form_enabled",
+        "raw_json_advanced_fallback_enabled",
         "standalone_emd_creation_enabled",
         "ticket_emd_import_association_ready",
         "ticket_exchange_operation_foundation_enabled",
@@ -136,14 +142,34 @@ def main() -> int:
         {
             "id": "seg-1",
             "sequence": 1,
+            "coupon_number": 1,
             "marketing_airline_code": "LH",
+            "operating_airline_code": "LH",
             "flight_number": "1703",
             "origin_airport_code": "SOF",
             "destination_airport_code": "FRA",
+            "departure_date": "2026-12-13",
+            "departure_datetime": "2026-12-13T08:30:00",
+            "cabin": "economy",
             "booking_class": "Y",
+            "rbd": "Y",
+            "status_code": "HK",
         }
     ]
     passengers = [{"id": "pax-1", "first_name": "Manual", "last_name": "Traveler", "display_name": "Manual Traveler"}]
+    pricing = {"summary": {"currency": "EUR", "base_fare_amount": 100, "taxes_amount": 25, "fees_amount": 0, "total_amount": 125}}
+    services = {
+        "items": [
+            {
+                "service_category": "mobility assistance",
+                "service_label": "Wheelchair assistance",
+                "passenger_reference": "pax-1",
+                "segment_reference": "seg-1",
+                "quantity": 1,
+                "service_catalogue_id": "manual-wchr",
+            }
+        ]
+    }
 
     manual_booking = post(
         f"/api/agencies/{agency_id}/booking-workspaces/manual",
@@ -154,8 +180,10 @@ def main() -> int:
             "pnr_locator": "MNL123",
             "passengers_json": passengers,
             "segments_json": segments,
-            "pricing_json": {"summary": {"currency": "EUR", "base_fare_amount": 100, "taxes_amount": 25, "total_amount": 125}},
-            "ssr_json": [{"ssr_code": "WCHR"}],
+            "pricing_json": pricing,
+            "ssr_json": [{"ssr_code": "WCHR", "airline_code": "LH", "passenger_reference": "pax-1", "segment_reference": "seg-1", "free_text": "WHEELCHAIR"}],
+            "osi_json": [{"airline_code": "LH", "text": "VIP PASSENGER", "passenger_reference": "pax-1"}],
+            "services_json": services,
             "create_draft_record": True,
             "source_context": "standalone_manual",
         },
@@ -175,9 +203,13 @@ def main() -> int:
             "booking_record_id": record["id"],
             "trip_id": trip["id"],
             "passenger_id": "pax-1",
+            "passenger_snapshot_json": passengers[0],
             "ticket_number": "2201111111111",
             "validating_carrier": "LH",
             "segments_snapshot_json": segments,
+            "pricing_snapshot_json": pricing,
+            "base_fare_amount": 100,
+            "taxes_amount": 25,
             "total_amount": 125,
             "currency": "EUR",
             "source_context": "standalone_manual",
@@ -209,8 +241,28 @@ def main() -> int:
             "passenger_id": "pax-1",
             "emd_number": "2203333333333",
             "service_key": "WCHR",
+            "service_catalogue_id": "manual-wchr",
             "service_label": "Wheelchair assistance",
+            "service_category": "mobility assistance",
+            "linked_service_snapshot_json": {
+                "service_key": "WCHR",
+                "service_label": "Wheelchair assistance",
+                "service_category": "mobility assistance",
+                "emd_coupons": [
+                    {
+                        "coupon_number": 1,
+                        "rfic": "E",
+                        "rfisc": "0B5",
+                        "service_description": "Wheelchair assistance",
+                        "status": "draft",
+                        "related_segment_reference": "seg-1",
+                    }
+                ],
+            },
+            "linked_segment_ids": ["seg-1"],
             "amount": 0,
+            "taxes_amount": 0,
+            "total_amount": 0,
             "currency": "EUR",
             "source_context": "standalone_manual",
         },
@@ -265,7 +317,17 @@ def main() -> int:
 
     change_op = post(
         f"/api/agencies/{agency_id}/trips/{trip['id']}/change-operations",
-        {"operation_type": "itinerary_change", "reason": "Smoke itinerary change"},
+        {
+            "operation_type": "itinerary_change",
+            "reason": "Smoke itinerary change",
+            "source_booking_workspace_id": workspace["id"],
+            "source_booking_record_id": record["id"],
+            "change_summary_json": {
+                "summary_text": "Structured smoke change",
+                "proposed_change_notes": "Move outbound flight later",
+                "internal_notes": "No provider execution",
+            },
+        },
         OWNER_HEADERS,
         201,
     )["operation"]

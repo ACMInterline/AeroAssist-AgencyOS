@@ -524,6 +524,7 @@ This repository currently contains the Phase 0 architecture specifications, Phas
 - `BookingImportDraft` staging records for cryptic GDS or itinerary confirmation text, with conservative deterministic parse previews.
 - `TripChangeOperation`, `TicketExchangeOperation`, and `EmdExchangeOperation` foundations for existing-trip servicing and internal exchange/reissue mirrors.
 - Manual ticket and EMD mirror creation with optional booking record, booking workspace, trip, client, and passenger links.
+- Structured manual booking, ticket, EMD, import preview, and trip-change UI sections; raw JSON snapshots remain collapsed advanced fallback inputs only.
 - Agency UI entry points on `/agency/booking-workspaces`, `/agency/booking-imports`, `/agency/tickets-emds`, and trip detail.
 - Readiness flags under `booking_foundation`, `ticket_emd_foundation`, `change_exchange_foundation`, and `blueprint_sync`.
 - Request/offer linkage fields for future trip-change and exchange/refund quote flows.

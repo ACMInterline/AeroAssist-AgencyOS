@@ -122,6 +122,7 @@ export default function BookingImportsPage() {
 
 function DraftCard({ draft, onImport, onParse, working }) {
   const parsed = draft.parsed_json || {}
+  const warnings = draft.warnings_json || parsed.warnings || []
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -142,12 +143,72 @@ function DraftCard({ draft, onImport, onParse, working }) {
         <Metric label="Tickets" value={(parsed.ticket_numbers || []).length} />
         <Metric label="EMDs" value={(parsed.emd_numbers || []).length} />
       </div>
-      {draft.warnings_json?.length ? (
-        <div className="mt-4 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          {draft.warnings_json.map((warning) => warning.message || warning.code).join(" · ")}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <PreviewTable title="Passengers" items={parsed.passengers || []} columns={[
+          ["Name", (item) => item.display_name || item.name || `${item.first_name || ""} ${item.last_name || ""}`.trim() || item.raw || "Passenger"],
+          ["Type", (item) => item.passenger_type || item.type || "not set"],
+        ]} />
+        <PreviewTable title="Segments" items={parsed.segments || []} columns={[
+          ["Flight", (item) => [item.marketing_airline_code || item.airline, item.flight_number].filter(Boolean).join(" ") || item.raw || "Flight"],
+          ["Route", (item) => `${item.origin_airport_code || item.origin || "?"} to ${item.destination_airport_code || item.destination || "?"}`],
+          ["Date", (item) => item.departure_date || item.date || "not set"],
+        ]} />
+        <PreviewTable title="SSR / OSI" items={[...(parsed.ssr || []), ...(parsed.osi || [])]} columns={[
+          ["Type", (item) => item.ssr_code ? "SSR" : "OSI"],
+          ["Code / airline", (item) => item.ssr_code || item.airline_code || item.airline || "not set"],
+          ["Text", (item) => item.free_text || item.text || item.raw || "not set"],
+        ]} />
+        <PreviewTable title="Ticket numbers" items={(parsed.ticket_numbers || []).map((number) => ({ number }))} columns={[
+          ["Ticket", (item) => item.number],
+        ]} />
+        <PreviewTable title="EMD numbers" items={(parsed.emd_numbers || []).map((number) => ({ number }))} columns={[
+          ["EMD", (item) => item.number],
+        ]} />
+        <WarningsPanel warnings={warnings} />
+      </div>
+      <details className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced parsed JSON</summary>
+        <pre className="mt-3 max-h-56 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(parsed, null, 2)}</pre>
+      </details>
+    </section>
+  )
+}
+
+function PreviewTable({ columns, items, title }) {
+  return (
+    <section className="min-w-0">
+      <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
+      {items.length ? (
+        <div className="mt-2 overflow-hidden rounded-md border border-slate-200">
+          <div className="grid gap-2 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+            {columns.map(([heading]) => <span key={heading}>{heading}</span>)}
+          </div>
+          <div className="divide-y divide-slate-100">
+            {items.map((item, index) => (
+              <div className="grid gap-2 px-3 py-2 text-sm text-slate-700" key={item.id || item.number || index} style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+                {columns.map(([heading, render]) => <span className="truncate" key={heading}>{render(item)}</span>)}
+              </div>
+            ))}
+          </div>
         </div>
-      ) : null}
-      <pre className="mt-4 max-h-56 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(parsed, null, 2)}</pre>
+      ) : (
+        <p className="mt-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-sm text-slate-500">None found.</p>
+      )}
+    </section>
+  )
+}
+
+function WarningsPanel({ warnings }) {
+  return (
+    <section>
+      <h4 className="text-sm font-semibold text-slate-950">Warnings</h4>
+      {warnings.length ? (
+        <div className="mt-2 space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          {warnings.map((warning, index) => <p key={warning.code || index}>{warning.message || warning.code || String(warning)}</p>)}
+        </div>
+      ) : (
+        <p className="mt-2 rounded-md border border-dashed border-slate-200 px-3 py-2 text-sm text-slate-500">None found.</p>
+      )}
     </section>
   )
 }
