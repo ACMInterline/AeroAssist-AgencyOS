@@ -14,6 +14,7 @@ import DocumentDetailPage from "./pages/agency/DocumentDetailPage"
 import DocumentStoragePage from "./pages/agency/DocumentStoragePage"
 import DocumentTemplatesPage from "./pages/agency/DocumentTemplatesPage"
 import DocumentsPage from "./pages/agency/DocumentsPage"
+import EmdDetailPage from "./pages/agency/EmdDetailPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
@@ -38,6 +39,8 @@ import RequestsPage from "./pages/agency/RequestsPage"
 import TripCreatePage from "./pages/agency/TripCreatePage"
 import TripDetailPage from "./pages/agency/TripDetailPage"
 import TripsPage from "./pages/agency/TripsPage"
+import TicketDetailPage from "./pages/agency/TicketDetailPage"
+import TicketsEmdsPage from "./pages/agency/TicketsEmdsPage"
 import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
 import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
 import LoginPage from "./pages/auth/LoginPage"
@@ -197,6 +200,16 @@ export default function App() {
     return <BookingWorkspaceDetailPage bookingWorkspaceId={bookingWorkspaceMatch[1]} />
   }
 
+  const ticketMatch = window.location.pathname.match(/^\/agency\/tickets\/([^/]+)$/)
+  if (ticketMatch) {
+    return <TicketDetailPage ticketRecordId={ticketMatch[1]} />
+  }
+
+  const emdMatch = window.location.pathname.match(/^\/agency\/emds\/([^/]+)$/)
+  if (emdMatch) {
+    return <EmdDetailPage emdRecordId={emdMatch[1]} />
+  }
+
   const bookingMatch = window.location.pathname.match(/^\/agency\/bookings\/([^/]+)$/)
   if (bookingMatch) {
     return <BookingDetailPage bookingId={bookingMatch[1]} />
@@ -316,6 +329,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/booking-workspaces") {
     return <BookingWorkspacesPage />
+  }
+
+  if (window.location.pathname === "/agency/tickets-emds") {
+    return <TicketsEmdsPage />
   }
 
   if (window.location.pathname === "/agency/invoices") {

@@ -18,7 +18,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_36_3_booking_pnr_foundation"
+PHASE_LABEL = "phase_36_4_ticket_emd_foundation"
 ACTIVE_WORKSPACE_STATUSES = {
     BookingWorkspaceStatus.DRAFT.value,
     BookingWorkspaceStatus.READY_TO_BOOK.value,

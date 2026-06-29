@@ -12,14 +12,20 @@ export default function TripDetailPage({ tripId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces] = await Promise.all([
+    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/booking-readiness`),
       apiGet(`/api/agencies/${context.agency.id}/booking-workspaces?trip_id=${encodeURIComponent(tripId)}`),
+      apiGet(`/api/agencies/${context.agency.id}/tickets?trip_id=${encodeURIComponent(tripId)}`),
+      apiGet(`/api/agencies/${context.agency.id}/emds?trip_id=${encodeURIComponent(tripId)}`),
     ])
-    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [] })
+    const bookingRecordId = bookingWorkspaces.items?.[0]?.booking_record?.id
+    const ticketEmdReadiness = bookingRecordId
+      ? await apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`)
+      : null
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -180,6 +186,8 @@ export default function TripDetailPage({ tripId }) {
 
           <AcceptedOfferPanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
 
+          <TicketsEmdsTripPanel state={state} />
+
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
           </section>
@@ -299,6 +307,33 @@ function AcceptedOfferPanel({ state, onCreateOrOpenBookingWorkspace }) {
           </button>
         </div>
       </div>
+    </Panel>
+  )
+}
+
+function TicketsEmdsTripPanel({ state }) {
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const readiness = state?.ticketEmdReadiness
+  return (
+    <Panel title="Tickets & EMDs">
+      <div className="grid gap-4 lg:grid-cols-4">
+        <Metric label="Tickets" value={state?.tickets?.length || 0} />
+        <Metric label="EMDs" value={state?.emds?.length || 0} />
+        <Metric label="Missing ticket #" value={readiness?.missing_ticket_numbers ?? 0} />
+        <Metric label="Services without EMD" value={readiness?.services_without_emd?.length ?? 0} />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
+        <p className="text-sm text-slate-600">Ticket and EMD records are internal mirrors only. Live issuance is disabled.</p>
+        <div className="flex flex-wrap gap-2">
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/tickets-emds">Open Tickets & EMDs</a>
+          {bookingWorkspace ? <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>Open booking workspace</a> : null}
+        </div>
+      </div>
+      <SnapshotList
+        title="EMD Readiness Warnings"
+        items={readiness?.warnings}
+        render={(item) => item.message || JSON.stringify(item)}
+      />
     </Panel>
   )
 }

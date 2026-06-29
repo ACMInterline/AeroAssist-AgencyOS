@@ -58,6 +58,7 @@ The repository currently contains:
 - Phase 36.2: Offer acceptance, trip accepted-offer snapshot, and booking readiness.
 - Phase 36.2.5: Reference data consumer map and service catalogue governance.
 - Phase 36.3: Booking workspace and manual PNR mirror foundation.
+- Phase 36.4: Ticket and EMD mirror foundation.
 
 Phase 35 navigation hotfix:
 
@@ -965,16 +966,33 @@ Avoid adding:
 
 - Live GDS/NDC/supplier calls, provider booking execution, ticketing, EMD issuance, invoices, payments, document designer actions, or backward mutation of accepted offer/request snapshots.
 
-### Phase 37: Provider Import, Ticket, And EMD Mirror Records
+### Phase 36.4: Tickets And EMD Foundation
+
+Implemented scope:
+
+- Extended compatible `TicketRecord` and `EMDRecord` mirror fields linked to `BookingRecord` and `BookingWorkspace`.
+- `TicketCoupon` records for coupon-level passenger/segment ticket status.
+- `EmdCoupon` records for service/segment/coupon-level EMD status.
+- `TicketEmdTimelineEvent` records for ticket and EMD mirror lifecycle events.
+- Agency APIs for ticket list/detail/update/create-from-booking, EMD list/detail/update/create-from-booking-service, and ticket/EMD readiness.
+- Agency UI routes `/agency/tickets-emds`, `/agency/tickets/{ticket_record_id}`, and `/agency/emds/{emd_record_id}` plus booking workspace and trip summary panels.
+- Service catalogue EMD mappings are preserved in EMD mirrors and readiness summaries.
+- Readiness flags and non-blocking counts under `ticket_emd_foundation`.
+
+Avoid adding:
+
+- Live ticket issuance, live EMD issuance, GDS/NDC/supplier calls, BSP/ARC settlement, payment capture, invoices/accounting postings, or backward mutation of accepted offer/booking readiness snapshots.
+
+### Phase 37: Provider Import And Issuance Provenance
 
 Recommended scope:
 
-- Provider import provenance and deeper ticket/EMD mirror state with raw source payload preservation.
+- Provider import provenance, raw source payload preservation, and deeper ticket/EMD reconciliation.
 - Manual import/reconciliation workflow and provenance metadata.
 
 Avoid adding:
 
-- Direct GDS commands, NDC execution, or automated ticketing.
+- Direct GDS commands, NDC execution, automated ticketing, or settlement without explicit authorization.
 
 ### Phase 38: Invoices And Payments
 

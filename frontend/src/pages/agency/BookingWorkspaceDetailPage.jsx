@@ -19,7 +19,13 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   async function load() {
     const context = await loadCurrentAgency()
     const detail = await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces/${bookingWorkspaceId}`)
-    setState({ ...context, ...detail })
+    const bookingRecordId = detail.booking_record?.id
+    const [tickets, emds, ticketEmdReadiness] = bookingRecordId ? await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/tickets?booking_record_id=${encodeURIComponent(bookingRecordId)}`),
+      apiGet(`/api/agencies/${context.agency.id}/emds?booking_record_id=${encodeURIComponent(bookingRecordId)}`),
+      apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`),
+    ]) : [{ items: [] }, { items: [] }, null]
+    setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness })
     setStatusForm({ status: detail.booking_workspace?.status || "draft" })
     setRecordForm({
       pnr_locator: detail.booking_record?.pnr_locator || "",
@@ -82,6 +88,37 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
       await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/cancel`)
       setMessage("Booking workspace cancelled.")
       await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function createDraftTicket() {
+    if (!state?.booking_record?.id) return
+    setError("")
+    setMessage("")
+    try {
+      const created = await apiPost(`/api/agencies/${state.agency.id}/tickets/from-booking-record`, {
+        booking_record_id: state.booking_record.id,
+        create_coupons: true,
+      })
+      window.location.href = `/agency/tickets/${created.ticket.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function createDraftEmd() {
+    if (!state?.booking_record?.id) return
+    setError("")
+    setMessage("")
+    try {
+      const created = await apiPost(`/api/agencies/${state.agency.id}/emds/from-booking-service`, {
+        booking_record_id: state.booking_record.id,
+        ticket_record_id: state.tickets?.[0]?.id || null,
+        create_coupons: true,
+      })
+      window.location.href = `/agency/emds/${created.emd.id}`
     } catch (err) {
       setError(err.message)
     }
@@ -156,9 +193,48 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                   <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Create Live Booking</button>
                 </div>
               </Panel>
+
+              <Panel title="Tickets & EMDs">
+                <div className="grid gap-2">
+                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!record}>Create draft ticket mirror</button>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftEmd} disabled={!record}>Create draft EMD mirror from service</button>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Issue ticket</button>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Issue EMD</button>
+                </div>
+                <p className="text-xs text-slate-500">Live issuance is not implemented in this phase.</p>
+              </Panel>
             </div>
 
             <div className="space-y-4">
+              <Panel title="Ticket / EMD Readiness">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <Summary label="Tickets" value={state?.ticketEmdReadiness?.ticket_count ?? 0} />
+                  <Summary label="EMDs" value={state?.ticketEmdReadiness?.emd_count ?? 0} />
+                  <Summary label="Missing ticket #" value={state?.ticketEmdReadiness?.missing_ticket_numbers ?? 0} />
+                  <Summary label="Missing EMD #" value={state?.ticketEmdReadiness?.missing_emd_numbers ?? 0} />
+                </div>
+                <SnapshotList items={state?.ticketEmdReadiness?.warnings} render={(item) => item.message || JSON.stringify(item)} />
+              </Panel>
+
+              <section className="grid gap-4 lg:grid-cols-2">
+                <Panel title="Linked Tickets">
+                  <LinkedList
+                    items={state?.tickets}
+                    empty="No ticket mirrors yet."
+                    href={(item) => `/agency/tickets/${item.id}`}
+                    render={(item) => `${item.ticket_number || "Draft ticket"} · ${label(item.issue_status || item.status)}`}
+                  />
+                </Panel>
+                <Panel title="Linked EMDs">
+                  <LinkedList
+                    items={state?.emds}
+                    empty="No EMD mirrors yet."
+                    href={(item) => `/agency/emds/${item.id}`}
+                    render={(item) => `${item.emd_number || "Draft EMD"} · ${item.service_label || item.service_key || "Service"}`}
+                  />
+                </Panel>
+              </section>
+
               <Panel title="Source Summary">
                 <div className="grid gap-3 md:grid-cols-3">
                   <Summary label="Readiness" value={label(state?.readiness_summary?.status)} />
@@ -251,6 +327,16 @@ function SnapshotList({ items, render }) {
   return (
     <div className="divide-y divide-slate-100 rounded-md border border-slate-200">
       {list.map((item, index) => <div className="p-3 text-sm text-slate-700" key={item.id || index}>{render(item)}</div>)}
+    </div>
+  )
+}
+
+function LinkedList({ items, empty, href, render }) {
+  const list = items || []
+  if (!list.length) return <p className="text-sm text-slate-500">{empty}</p>
+  return (
+    <div className="divide-y divide-slate-100 rounded-md border border-slate-200">
+      {list.map((item) => <a className="block p-3 text-sm font-medium text-blue-700" href={href(item)} key={item.id}>{render(item)}</a>)}
     </div>
   )
 }

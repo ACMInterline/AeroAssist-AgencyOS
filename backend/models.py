@@ -3528,6 +3528,7 @@ class BookingSegmentStatus(str, Enum):
 
 class TicketStatus(str, Enum):
     DRAFT = "draft"
+    READY_TO_ISSUE = "ready_to_issue"
     ISSUED = "issued"
     VOIDED = "voided"
     REFUNDED = "refunded"
@@ -3535,18 +3536,49 @@ class TicketStatus(str, Enum):
     CANCELLED = "cancelled"
 
 
+class TicketType(str, Enum):
+    ETICKET = "eticket"
+    PAPER = "paper"
+    MANUAL_MIRROR = "manual_mirror"
+    OTHER = "other"
+
+
+class TicketCouponStatus(str, Enum):
+    DRAFT = "draft"
+    OPEN = "open"
+    CHECKED_IN = "checked_in"
+    FLOWN = "flown"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    VOIDED = "voided"
+    SUSPENDED = "suspended"
+    CANCELLED = "cancelled"
+
+
 class EmdType(str, Enum):
     EMD_S = "emd_s"
     EMD_A = "emd_a"
+    MANUAL_MIRROR = "manual_mirror"
     UNKNOWN = "unknown"
 
 
 class EmdStatus(str, Enum):
     DRAFT = "draft"
+    READY_TO_ISSUE = "ready_to_issue"
     ISSUED = "issued"
     VOIDED = "voided"
     REFUNDED = "refunded"
     EXCHANGED = "exchanged"
+    CANCELLED = "cancelled"
+
+
+class EmdCouponStatus(str, Enum):
+    DRAFT = "draft"
+    OPEN = "open"
+    USED = "used"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    VOIDED = "voided"
     CANCELLED = "cancelled"
 
 
@@ -3768,21 +3800,45 @@ class BookingSegmentUpdate(BookingSegmentCreate):
 
 class TicketRecord(BaseDocument):
     agency_id: str
-    booking_id: str
+    booking_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    request_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
     booking_passenger_id: Optional[str] = None
-    ticket_number: str
-    validating_airline_code: str
+    passenger_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    ticket_number: Optional[str] = None
+    validating_airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_provider: BookingProviderTarget = BookingProviderTarget.MANUAL
     issue_date: Optional[date] = None
     status: TicketStatus = TicketStatus.DRAFT
-    base_fare_amount: float = 0
-    taxes_amount: float = 0
-    total_amount: float = 0
-    currency: str = "EUR"
+    issue_status: TicketStatus = TicketStatus.DRAFT
+    ticket_type: TicketType = TicketType.MANUAL_MIRROR
+    base_fare_amount: Optional[float] = 0
+    taxes_amount: Optional[float] = 0
+    total_amount: Optional[float] = 0
+    currency: Optional[str] = "EUR"
     fare_basis: Optional[str] = None
     coupon_summary: Optional[str] = None
+    pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    fare_basis_json: Dict[str, Any] = Field(default_factory=dict)
+    fare_bundle_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    rules_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    segments_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    coupons_json: List[Dict[str, Any]] = Field(default_factory=list)
+    provider_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    provider_response_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    voided_at: Optional[datetime] = None
+    refunded_at: Optional[datetime] = None
+    exchanged_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
 
 
 class TicketRecordCreate(BaseModel):
@@ -3807,28 +3863,94 @@ class TicketRecordCreate(BaseModel):
 class TicketRecordUpdate(TicketRecordCreate):
     ticket_number: Optional[str] = None
     validating_airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issue_status: Optional[TicketStatus] = None
+    pricing_snapshot_json: Optional[Dict[str, Any]] = None
+    provider_payload_json: Optional[Dict[str, Any]] = None
+    provider_response_json: Optional[Dict[str, Any]] = None
+
+
+class TicketCoupon(BaseDocument):
+    agency_id: str
+    ticket_record_id: str
+    booking_record_id: str
+    booking_workspace_id: str
+    trip_id: str
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    coupon_number: int
+    marketing_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    flight_number: Optional[str] = None
+    origin_airport_code: Optional[str] = None
+    destination_airport_code: Optional[str] = None
+    departure_at: Optional[datetime] = None
+    arrival_at: Optional[datetime] = None
+    cabin: Optional[str] = None
+    rbd: Optional[str] = None
+    fare_basis: Optional[str] = None
+    coupon_status: TicketCouponStatus = TicketCouponStatus.DRAFT
+    segment_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class TicketCreateFromBookingRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    booking_record_id: str
+    passenger_id: Optional[str] = None
+    create_coupons: bool = True
+    internal_notes: Optional[str] = None
 
 
 class EMDRecord(BaseDocument):
     agency_id: str
-    booking_id: str
+    booking_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    request_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
     booking_passenger_id: Optional[str] = None
     ticket_id: Optional[str] = None
-    service_code: str
-    service_name: str
-    emd_number: str
+    ticket_record_id: Optional[str] = None
+    passenger_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    service_code: Optional[str] = None
+    service_name: Optional[str] = None
+    emd_number: Optional[str] = None
     emd_type: EmdType = EmdType.UNKNOWN
     rfic_code: Optional[str] = None
     rfisc_code: Optional[str] = None
+    reason_for_issuance_code: Optional[str] = None
+    reason_for_issuance_subcode: Optional[str] = None
     reason_for_issuance: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    service_label: Optional[str] = None
+    service_category: Optional[str] = None
+    linked_service_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    linked_segment_ids: List[str] = Field(default_factory=list)
+    linked_ticket_coupon_ids: List[str] = Field(default_factory=list)
+    issuing_provider: BookingProviderTarget = BookingProviderTarget.MANUAL
     issue_date: Optional[date] = None
     status: EmdStatus = EmdStatus.DRAFT
-    amount: float = 0
-    currency: str = "EUR"
+    issue_status: EmdStatus = EmdStatus.DRAFT
+    amount: Optional[float] = 0
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = "EUR"
     associated_segment_ids: List[str] = Field(default_factory=list)
+    pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    provider_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    provider_response_json: Dict[str, Any] = Field(default_factory=dict)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    voided_at: Optional[datetime] = None
+    refunded_at: Optional[datetime] = None
+    exchanged_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
 
 
 class EMDRecordCreate(BaseModel):
@@ -3857,6 +3979,73 @@ class EMDRecordUpdate(EMDRecordCreate):
     service_code: Optional[str] = None
     service_name: Optional[str] = None
     emd_number: Optional[str] = None
+
+
+class EmdRecordUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    emd_number: Optional[str] = None
+    emd_type: Optional[EmdType] = None
+    reason_for_issuance_code: Optional[str] = None
+    reason_for_issuance_subcode: Optional[str] = None
+    issue_status: Optional[EmdStatus] = None
+    currency: Optional[str] = None
+    amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    pricing_snapshot_json: Optional[Dict[str, Any]] = None
+    provider_payload_json: Optional[Dict[str, Any]] = None
+    provider_response_json: Optional[Dict[str, Any]] = None
+    internal_notes: Optional[str] = None
+
+
+class EmdCoupon(BaseDocument):
+    agency_id: str
+    emd_record_id: str
+    booking_record_id: str
+    booking_workspace_id: str
+    trip_id: str
+    passenger_id: Optional[str] = None
+    segment_id: Optional[str] = None
+    ticket_coupon_id: Optional[str] = None
+    coupon_number: int
+    service_key: Optional[str] = None
+    service_label: Optional[str] = None
+    service_category: Optional[str] = None
+    coupon_status: EmdCouponStatus = EmdCouponStatus.DRAFT
+    service_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    segment_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EmdCreateFromBookingServiceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    booking_record_id: str
+    passenger_id: Optional[str] = None
+    service_key: Optional[str] = None
+    service_catalogue_id: Optional[str] = None
+    linked_segment_ids: Optional[List[str]] = None
+    ticket_record_id: Optional[str] = None
+    create_coupons: bool = True
+    internal_notes: Optional[str] = None
+
+
+class TicketEmdTimelineEvent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(default_factory=new_id)
+    agency_id: str
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    ticket_record_id: Optional[str] = None
+    emd_record_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    event_type: str
+    title: str
+    description: Optional[str] = None
+    actor_user_id: Optional[str] = None
+    payload_json: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime = Field(default_factory=now_utc)
 
 
 class Invoice(BaseDocument):

@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_3_booking_pnr_foundation",
+        "phase": "phase_36_4_ticket_emd_foundation",
     }
 
 
@@ -78,7 +78,10 @@ async def summary(
             "booking_records": await db.collection("booking_records").count(),
             "bookings": await db.collection("bookings").count(),
             "tickets": await db.collection("ticket_records").count(),
+            "ticket_coupons": await db.collection("ticket_coupons").count(),
             "emds": await db.collection("emd_records").count(),
+            "emd_coupons": await db.collection("emd_coupons").count(),
+            "ticket_emd_timeline_events": await db.collection("ticket_emd_timeline_events").count(),
             "invoices": await db.collection("invoices").count(),
             "payments": await db.collection("payment_records").count(),
             "portal_mappings": await db.collection("portal_access_mappings").count(),
@@ -169,6 +172,7 @@ async def summary(
             "Reference enrichment import packs and aviation normalization foundation",
             "Offer acceptance, trip accepted-offer snapshots, and booking readiness foundation",
             "Booking workspace and manual PNR mirror foundation",
+            "Ticket and EMD mirror foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

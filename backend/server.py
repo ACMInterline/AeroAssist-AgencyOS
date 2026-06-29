@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.reference_domain_usage_service import list_domain_usage, reference_action_required
@@ -20,7 +20,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.3 booking and PNR foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.4 ticket and EMD foundation.",
 )
 
 app.add_middleware(
@@ -47,7 +47,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_3_booking_pnr_foundation",
+        "phase": "phase_36_4_ticket_emd_foundation",
     }
 
 
@@ -182,6 +182,14 @@ async def readiness() -> dict:
     booking_workspace_ready_count = await database.collection("booking_workspaces").count({"status": "ready_to_book"})
     booking_workspace_blocked_count = await database.collection("booking_workspaces").count({"status": "blocked"})
     booking_workspace_cancelled_count = await database.collection("booking_workspaces").count({"status": "cancelled"})
+    ticket_record_count = await database.collection("ticket_records").count()
+    ticket_coupon_count = await database.collection("ticket_coupons").count()
+    emd_record_count = await database.collection("emd_records").count()
+    emd_coupon_count = await database.collection("emd_coupons").count()
+    ticket_draft_count = await database.collection("ticket_records").count({"issue_status": "draft"})
+    ticket_issued_count = await database.collection("ticket_records").count({"issue_status": "issued"})
+    emd_draft_count = await database.collection("emd_records").count({"issue_status": "draft"})
+    emd_issued_count = await database.collection("emd_records").count({"issue_status": "issued"})
     branded_logo_count = len(
         [
             item
@@ -194,7 +202,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_3_booking_pnr_foundation",
+        "phase": "phase_36_4_ticket_emd_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -395,6 +403,31 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Booking workspaces and PNR mirrors are manual foundations created from readiness packages; provider execution remains disabled.",
         },
+        "ticket_emd_foundation": {
+            "ticket_record_foundation_enabled": True,
+            "ticket_coupon_foundation_enabled": True,
+            "emd_record_foundation_enabled": True,
+            "emd_coupon_foundation_enabled": True,
+            "ticket_from_booking_enabled": True,
+            "emd_from_booking_service_enabled": True,
+            "ticket_emd_readiness_enabled": True,
+            "manual_ticket_mirror_enabled": True,
+            "manual_emd_mirror_enabled": True,
+            "service_catalogue_emd_mapping_enabled": True,
+            "provider_ticketing_disabled": True,
+            "provider_emd_issuance_disabled": True,
+            "agency_ticket_emd_ui_enabled": True,
+            "ticket_record_count": ticket_record_count,
+            "ticket_coupon_count": ticket_coupon_count,
+            "emd_record_count": emd_record_count,
+            "emd_coupon_count": emd_coupon_count,
+            "ticket_draft_count": ticket_draft_count,
+            "ticket_issued_count": ticket_issued_count,
+            "emd_draft_count": emd_draft_count,
+            "emd_issued_count": emd_issued_count,
+            "readiness_required": False,
+            "diagnostic": "Ticket and EMD records are internal mirrors only; provider ticketing and EMD issuance are disabled.",
+        },
         "form_profiles": {
             "global_field_library_enabled": True,
             "agency_form_profiles_enabled": True,
@@ -436,6 +469,7 @@ app.include_router(agency_special_services.router)
 app.include_router(agency_offer_builder.router)
 app.include_router(agency_offer_acceptance.router)
 app.include_router(agency_booking_workspaces.router)
+app.include_router(agency_ticket_emd.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)
