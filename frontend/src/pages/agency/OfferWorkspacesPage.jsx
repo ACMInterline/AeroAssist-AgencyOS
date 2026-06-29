@@ -78,7 +78,7 @@ export default function OfferWorkspacesPage() {
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Offers</p>
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-950">Offer Workspaces</h2>
-                <p className="mt-1 text-sm text-slate-600">Internal option building, rule checks, and comparison matrices.</p>
+                <p className="mt-1 text-sm text-slate-600">Internal option building, rule checks, comparison matrices, and acceptance readiness.</p>
               </div>
               <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                 <Columns3 className="h-3.5 w-3.5" />

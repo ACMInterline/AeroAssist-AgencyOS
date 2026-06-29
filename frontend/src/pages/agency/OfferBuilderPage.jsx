@@ -25,18 +25,20 @@ export default function OfferBuilderPage({ workspaceId }) {
   const [fareForm, setFareForm] = useState(emptyFare)
   const [priceForm, setPriceForm] = useState(emptyPrice)
   const [editForm, setEditForm] = useState({ label: "", main_airline_code: "", internal_notes: "" })
+  const [acceptCandidate, setAcceptCandidate] = useState(null)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
   async function load(preferredOptionId = selectedOptionId) {
     const context = await loadCurrentAgency()
-    const [detail, comparison] = await Promise.all([
+    const [detail, comparison, acceptance] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}`),
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/comparison`),
+      apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/acceptance`),
     ])
     const urlOption = new URLSearchParams(window.location.search).get("option")
     const nextSelected = preferredOptionId || urlOption || detail.options?.[0]?.id || ""
-    setState({ ...context, ...detail, matrix: comparison.matrix })
+    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance })
     setSelectedOptionId(nextSelected)
     const selected = detail.options?.find((option) => option.id === nextSelected) || detail.options?.[0]
     if (selected) {
@@ -169,7 +171,28 @@ export default function OfferBuilderPage({ workspaceId }) {
     await load(selectedOption.id)
   }
 
+  async function acceptOption() {
+    if (!acceptCandidate) return
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(
+        `/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/options/${acceptCandidate.id}/accept`,
+        {
+          acceptance_source: "internal",
+          provider_target: "manual",
+        },
+      )
+      setAcceptCandidate(null)
+      setMessage("Offer accepted. The trip accepted-offer snapshot and booking readiness package were refreshed.")
+      await load(acceptCandidate.id)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const pricing = selectedOption?.pricing_summary_json || {}
+  const acceptedOptionId = state?.acceptance?.acceptance?.option_id
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -199,6 +222,15 @@ export default function OfferBuilderPage({ workspaceId }) {
                   <CheckCircle2 className="h-4 w-4" />
                   Recommend
                 </button>
+                <button
+                  className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold"
+                  type="button"
+                  onClick={() => setAcceptCandidate(selectedOption)}
+                  disabled={!selectedOption || selectedOption?.id === acceptedOptionId}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  {selectedOption?.id === acceptedOptionId ? "Accepted" : "Accept"}
+                </button>
               </div>
             </div>
           </div>
@@ -227,7 +259,11 @@ export default function OfferBuilderPage({ workspaceId }) {
                   }} key={option.id}>
                     <span>
                       <span className="block font-semibold text-slate-950">{option.label}</span>
-                      <span className="block text-xs text-slate-500">{option.status?.replaceAll("_", " ")} · {money((option.pricing_summary_json || {}).total_amount, (option.pricing_summary_json || {}).currency)}</span>
+                      <span className="block text-xs text-slate-500">
+                        {option.id === acceptedOptionId ? "accepted" : option.status?.replaceAll("_", " ")}
+                        {" · "}
+                        {money((option.pricing_summary_json || {}).total_amount, (option.pricing_summary_json || {}).currency)}
+                      </span>
                     </span>
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{option.main_airline_code || "TBD"}</span>
                   </button>
@@ -315,6 +351,12 @@ export default function OfferBuilderPage({ workspaceId }) {
               </form>
             </aside>
           </section>
+          <AcceptModal
+            option={acceptCandidate}
+            grouped={grouped}
+            onCancel={() => setAcceptCandidate(null)}
+            onConfirm={acceptOption}
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -377,6 +419,44 @@ function MiniMatrix({ matrix, selectedOptionId }) {
         ))}
       </div>
     </section>
+  )
+}
+
+function AcceptModal({ option, grouped, onCancel, onConfirm }) {
+  if (!option) return null
+  const pricing = option.pricing_summary_json || {}
+  const fare = grouped.fareBundles?.[0]
+  const route = grouped.segments?.length
+    ? grouped.segments.map((segment) => `${segment.origin_airport}-${segment.destination_airport}`).join(" / ")
+    : "Route pending"
+  const warnings = option.warnings_json || []
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
+      <section className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-xl">
+        <h3 className="text-lg font-semibold text-slate-950">Accept Option</h3>
+        <div className="mt-4 space-y-3 text-sm text-slate-700">
+          <p>
+            <span className="font-semibold text-slate-950">{option.label}</span>
+          </p>
+          <p>Pricing: {money(pricing.total_amount, pricing.currency)}</p>
+          <p>Route: {route}</p>
+          <p>Fare bundle: {fare ? `${fare.fare_family_name} · ${fare.cabin_class}` : "Fare bundle pending"}</p>
+          <p>Warnings: {warnings.length}</p>
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+            Acceptance creates or updates the trip operational baseline and booking readiness package. It does not
+            create a live booking, PNR, ticket, EMD, invoice, or supplier action.
+          </p>
+        </div>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onConfirm}>
+            Accept option
+          </button>
+        </div>
+      </section>
+    </div>
   )
 }
 

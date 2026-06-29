@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_1_rule_aware_offer_builder",
+        "phase": "phase_36_2_offer_acceptance_booking_readiness",
     }
 
 
@@ -71,6 +71,9 @@ async def summary(
             "offer_fare_bundles": await db.collection("offer_fare_bundles").count(),
             "offer_pricing_lines": await db.collection("offer_pricing_lines").count(),
             "offer_comparison_snapshots": await db.collection("offer_comparison_snapshots").count(),
+            "offer_acceptances": await db.collection("offer_acceptances").count(),
+            "trip_accepted_offer_snapshots": await db.collection("trip_accepted_offer_snapshots").count(),
+            "booking_readiness_packages": await db.collection("booking_readiness_packages").count(),
             "bookings": await db.collection("bookings").count(),
             "tickets": await db.collection("ticket_records").count(),
             "emds": await db.collection("emd_records").count(),
@@ -162,6 +165,7 @@ async def summary(
             "Global field library and agency form profile foundation",
             "Platform reference data console and enriched country metadata foundation",
             "Reference enrichment import packs and aviation normalization foundation",
+            "Offer acceptance, trip accepted-offer snapshots, and booking readiness foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",

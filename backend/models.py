@@ -2880,6 +2880,108 @@ class OfferRecommendationRequest(BaseModel):
     rank: Optional[int] = None
 
 
+class OfferAcceptanceSource(str, Enum):
+    INTERNAL = "internal"
+    CLIENT_PREVIEW = "client_preview"
+    MANUAL = "manual"
+    IMPORTED = "imported"
+
+
+class OfferAcceptanceStatus(str, Enum):
+    ACCEPTED = "accepted"
+    SUPERSEDED = "superseded"
+    CANCELLED = "cancelled"
+
+
+class BookingReadinessStatus(str, Enum):
+    DRAFT = "draft"
+    READY = "ready"
+    BLOCKED = "blocked"
+    BOOKED = "booked"
+    CANCELLED = "cancelled"
+
+
+class BookingProviderTarget(str, Enum):
+    MANUAL = "manual"
+    TRAVELPORT = "travelport"
+    AMADEUS = "amadeus"
+    NDC = "ndc"
+    SUPPLIER = "supplier"
+    OTHER = "other"
+
+
+class OfferAcceptance(BaseDocument):
+    agency_id: str
+    workspace_id: str
+    option_id: str
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    accepted_by_user_id: Optional[str] = None
+    accepted_at: datetime = Field(default_factory=now_utc)
+    acceptance_source: OfferAcceptanceSource = OfferAcceptanceSource.INTERNAL
+    status: OfferAcceptanceStatus = OfferAcceptanceStatus.ACCEPTED
+    accepted_pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_routing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_fare_bundle_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_services_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_pets_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_special_items_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    rules_feasibility_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    client_visible_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+
+
+class OfferAcceptanceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    acceptance_source: OfferAcceptanceSource = OfferAcceptanceSource.INTERNAL
+    provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    client_visible_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+
+
+class TripAcceptedOfferSnapshot(BaseDocument):
+    agency_id: str
+    trip_id: str
+    request_id: Optional[str] = None
+    workspace_id: str
+    option_id: str
+    acceptance_id: str
+    confirmed_segments_json: List[Dict[str, Any]] = Field(default_factory=list)
+    confirmed_passengers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    confirmed_fare_bundle_json: Dict[str, Any] = Field(default_factory=dict)
+    confirmed_pricing_json: Dict[str, Any] = Field(default_factory=dict)
+    confirmed_services_json: Dict[str, Any] = Field(default_factory=dict)
+    confirmed_pets_json: Dict[str, Any] = Field(default_factory=dict)
+    confirmed_special_items_json: Dict[str, Any] = Field(default_factory=dict)
+    ssr_osi_preview_json: Dict[str, Any] = Field(default_factory=dict)
+    booking_readiness_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class BookingReadinessPackage(BaseDocument):
+    agency_id: str
+    trip_id: str
+    request_id: Optional[str] = None
+    workspace_id: Optional[str] = None
+    option_id: Optional[str] = None
+    acceptance_id: Optional[str] = None
+    status: BookingReadinessStatus = BookingReadinessStatus.DRAFT
+    provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    passengers_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    segments_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    services_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    pets_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    special_items_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
+    osi_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_violations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    readiness_checks_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+
+
 class RefundExchangeCaseType(str, Enum):
     REFUND = "refund"
     EXCHANGE = "exchange"

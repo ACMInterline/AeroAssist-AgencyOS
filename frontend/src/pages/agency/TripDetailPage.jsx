@@ -12,9 +12,13 @@ export default function TripDetailPage({ tripId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const detail = await apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`)
-    const requests = await apiGet(`/api/agencies/${context.agency.id}/requests`)
-    setState({ ...context, ...detail, requests: requests.items })
+    const [detail, requests, acceptedOffer, bookingReadiness] = await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
+      apiGet(`/api/agencies/${context.agency.id}/requests`),
+      apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
+      apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/booking-readiness`),
+    ])
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -151,6 +155,8 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
+          <AcceptedOfferPanel state={state} />
+
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
           </section>
@@ -172,6 +178,116 @@ function Panel({ title, children }) {
 
 function FuturePanel({ title }) {
   return <section className="rounded-lg border border-dashed border-slate-300 bg-white p-4"><h3 className="text-sm font-semibold text-slate-950">{title}</h3><p className="mt-2 text-xs text-slate-500">Future phase. This dossier can anchor the workflow later, but no functionality is active here yet.</p></section>
+}
+
+function AcceptedOfferPanel({ state }) {
+  const snapshot = state?.acceptedOffer?.accepted_offer
+  const acceptance = state?.acceptedOffer?.acceptance
+  const readiness = state?.bookingReadiness?.booking_readiness
+  if (!snapshot && !readiness) {
+    return (
+      <Panel title="Accepted Offer + Booking Readiness">
+        <EmptyState title="No accepted offer" body="Accepted offer snapshots appear here after an offer option is accepted." />
+      </Panel>
+    )
+  }
+  const pricing = snapshot?.confirmed_pricing_json?.summary || readiness?.pricing_snapshot_json?.summary || {}
+  const services = snapshot?.confirmed_services_json || readiness?.services_snapshot_json || {}
+  const pets = snapshot?.confirmed_pets_json || readiness?.pets_snapshot_json || {}
+  const items = snapshot?.confirmed_special_items_json || readiness?.special_items_snapshot_json || {}
+  const ssr = readiness?.ssr_json || snapshot?.ssr_osi_preview_json?.ssr || []
+  const osi = readiness?.osi_json || snapshot?.ssr_osi_preview_json?.osi || []
+  return (
+    <Panel title="Accepted Offer + Booking Readiness">
+      <div className="grid gap-4 lg:grid-cols-4">
+        <Metric label="Acceptance" value={acceptance?.status || "snapshot"} />
+        <Metric label="Readiness" value={readiness?.status || "pending"} />
+        <Metric label="Pricing" value={money(pricing.total_amount, pricing.currency)} />
+        <Metric label="Provider" value={readiness?.provider_target || "manual"} />
+      </div>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <SnapshotList
+          title="Confirmed Segments"
+          items={snapshot?.confirmed_segments_json || readiness?.segments_snapshot_json}
+          render={(item) => `${item.sequence || item.segment_order}. ${item.origin_airport || item.origin_airport_code} to ${item.destination_airport || item.destination_airport_code}${item.flight_number ? ` · ${item.flight_number}` : ""}`}
+        />
+        <SnapshotList
+          title="Confirmed Fare"
+          items={snapshot?.confirmed_fare_bundle_json?.items}
+          render={(item) => `${item.fare_family_name} · ${item.cabin_class}${item.booking_class ? ` · ${item.booking_class}` : ""}`}
+        />
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <SnapshotList
+          title="Services"
+          items={[
+            ...(services.trip_service_items || []),
+            ...(services.passenger_service_requests || []),
+            ...(services.requested_services || []),
+          ]}
+          render={(item) => item.service_label || item.service_name || item.service_code || item.category || "Service"}
+        />
+        <SnapshotList
+          title="Pets + Special Items"
+          items={[...(pets.items || []), ...(items.items || [])]}
+          render={(item) => item.pet_name || item.item_label || item.item_type || item.service_code || "Item"}
+        />
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <SnapshotList
+          title="SSR Preview"
+          items={ssr}
+          render={(item) => item.ssr_code || item.code || JSON.stringify(item)}
+        />
+        <SnapshotList
+          title="OSI Preview"
+          items={osi}
+          render={(item) => item.osi_text || item.text || JSON.stringify(item)}
+        />
+      </section>
+      <section className="grid gap-4 lg:grid-cols-2">
+        <SnapshotList
+          title="Warnings"
+          items={readiness?.warnings_json}
+          render={(item) => item.message || JSON.stringify(item)}
+        />
+        <SnapshotList
+          title="Required Documents"
+          items={readiness?.required_documents_json}
+          render={(item) => item.label || item.document_type || JSON.stringify(item)}
+        />
+      </section>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
+        <p className="text-sm text-slate-600">Booking creation is not active in this phase.</p>
+        <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>
+          Create Booking
+        </button>
+      </div>
+    </Panel>
+  )
+}
+
+function SnapshotList({ title, items, render }) {
+  const list = items || []
+  return (
+    <section>
+      <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
+      {list.length ? (
+        <div className="mt-2 divide-y divide-slate-100 rounded-md border border-slate-200">
+          {list.map((item, index) => (
+            <div className="p-3 text-sm text-slate-700" key={item.id || index}>
+              {render(item)}
+            </div>
+          ))}
+        </div>
+      ) : <p className="mt-2 text-sm text-slate-500">None recorded.</p>}
+    </section>
+  )
+}
+
+function money(amount, currency) {
+  if (amount === null || amount === undefined || amount === "") return "Not priced"
+  return `${Number(amount).toFixed(2)} ${currency || "EUR"}`
 }
 
 function List({ items, empty, render }) {

@@ -201,6 +201,9 @@ AGENCY_OWNED_COLLECTIONS = [
     "offer_fare_bundles",
     "offer_pricing_lines",
     "offer_comparison_snapshots",
+    "offer_acceptances",
+    "trip_accepted_offer_snapshots",
+    "booking_readiness_packages",
     "bookings",
     "booking_passengers",
     "booking_segments",
@@ -327,6 +330,21 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "offer_comparison_snapshots": [
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING)],
             [("agency_id", ASCENDING), ("generated_at", ASCENDING)],
+        ],
+        "offer_acceptances": [
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("option_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
+        "trip_accepted_offer_snapshots": [
+            [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("acceptance_id", ASCENDING)],
+        ],
+        "booking_readiness_packages": [
+            [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("acceptance_id", ASCENDING)],
         ],
         "bookings": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("offer_id", ASCENDING)]],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],

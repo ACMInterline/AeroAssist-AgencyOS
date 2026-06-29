@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_offer_acceptance, agency_offer_builder, agency_special_services, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_reference, platform_rules_services, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.secret_service import check_secret
@@ -18,7 +18,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.1 rule-aware offer builder.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.2 offer acceptance and booking readiness.",
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_1_rule_aware_offer_builder",
+        "phase": "phase_36_2_offer_acceptance_booking_readiness",
     }
 
 
@@ -156,6 +156,9 @@ async def readiness() -> dict:
     offer_fare_bundle_count = await database.collection("offer_fare_bundles").count()
     offer_pricing_line_count = await database.collection("offer_pricing_lines").count()
     offer_comparison_snapshot_count = await database.collection("offer_comparison_snapshots").count()
+    offer_acceptance_count = await database.collection("offer_acceptances").count()
+    trip_accepted_offer_snapshot_count = await database.collection("trip_accepted_offer_snapshots").count()
+    booking_readiness_package_count = await database.collection("booking_readiness_packages").count()
     branded_logo_count = len(
         [
             item
@@ -168,7 +171,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_1_rule_aware_offer_builder",
+        "phase": "phase_36_2_offer_acceptance_booking_readiness",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -315,14 +318,24 @@ async def readiness() -> dict:
             "rule_evaluation_in_offer_builder_enabled": True,
             "pricing_recalculation_enabled": True,
             "recommendation_flagging_enabled": True,
+            "offer_acceptance_enabled": True,
+            "accepted_offer_snapshot_enabled": True,
+            "booking_readiness_package_enabled": True,
+            "offer_to_trip_acceptance_enabled": True,
+            "rules_aware_acceptance_enabled": True,
+            "ssr_osi_booking_preview_enabled": True,
+            "agency_acceptance_ui_enabled": True,
             "offer_workspace_count": offer_workspace_count,
             "offer_option_count": offer_option_count,
             "offer_segment_count": offer_builder_segment_count,
             "offer_fare_bundle_count": offer_fare_bundle_count,
             "offer_pricing_line_count": offer_pricing_line_count,
             "offer_comparison_snapshot_count": offer_comparison_snapshot_count,
+            "offer_acceptance_count": offer_acceptance_count,
+            "trip_accepted_offer_snapshot_count": trip_accepted_offer_snapshot_count,
+            "booking_readiness_package_count": booking_readiness_package_count,
             "readiness_required": False,
-            "diagnostic": "Offer builder workspaces and internal comparison matrices are additive; missing option data requires manual completion but does not affect deployment readiness.",
+            "diagnostic": "Offer builder acceptance snapshots and booking readiness packages are additive; no real booking, ticketing, or supplier execution is performed.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,
@@ -362,6 +375,7 @@ app.include_router(requests.router)
 app.include_router(trips.router)
 app.include_router(agency_special_services.router)
 app.include_router(agency_offer_builder.router)
+app.include_router(agency_offer_acceptance.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)

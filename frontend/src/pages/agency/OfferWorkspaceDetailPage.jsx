@@ -18,11 +18,12 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, comparison] = await Promise.all([
+    const [detail, comparison, acceptance] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}`),
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/comparison`),
+      apiGet(`/api/agencies/${context.agency.id}/offer-workspaces/${workspaceId}/acceptance`),
     ])
-    setState({ ...context, ...detail, matrix: comparison.matrix })
+    setState({ ...context, ...detail, matrix: comparison.matrix, acceptance })
   }
 
   useEffect(() => {
@@ -73,6 +74,24 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
     await load()
   }
 
+  async function acceptOption(optionId) {
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(
+        `/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/options/${optionId}/accept`,
+        {
+          acceptance_source: "internal",
+          provider_target: "manual",
+        },
+      )
+      setMessage("Offer option accepted. Trip snapshot and booking readiness were refreshed.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   async function saveSnapshot() {
     await apiPost(`/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/comparison/snapshot`)
     setMessage("Comparison snapshot saved.")
@@ -105,6 +124,8 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
           </div>
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
+
+          <AcceptancePanel state={state} />
 
           <section className="grid gap-4 md:grid-cols-5">
             <Metric label="Options" value={childCounts.options} />
@@ -141,7 +162,14 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
               {(state?.options || []).length ? (
                 <div className="grid gap-4 lg:grid-cols-2">
                   {state.options.map((option) => (
-                    <OptionCard option={option} key={option.id} onClone={() => cloneOption(option.id)} onRecommend={() => recommendOption(option.id)} />
+                    <OptionCard
+                      option={option}
+                      key={option.id}
+                      acceptedOptionId={state.acceptance?.acceptance?.option_id}
+                      onAccept={() => acceptOption(option.id)}
+                      onClone={() => cloneOption(option.id)}
+                      onRecommend={() => recommendOption(option.id)}
+                    />
                   ))}
                 </div>
               ) : (
@@ -168,14 +196,62 @@ function contextLabel(state) {
   return parts.length ? parts.join(" | ") : "Manual workspace"
 }
 
-function OptionCard({ option, onClone, onRecommend }) {
-  const pricing = option.pricing_summary_json || {}
-  const warnings = option.warnings_json || []
+function AcceptancePanel({ state }) {
+  const acceptance = state?.acceptance?.acceptance
+  const readiness = state?.acceptance?.booking_readiness
+  const history = state?.acceptance?.history || []
+  const superseded = history.filter((item) => item.status === "superseded").length
+  if (!acceptance) {
+    return (
+      <section className="rounded-lg border border-dashed border-slate-300 bg-white p-5">
+        <h3 className="font-semibold text-slate-950">Acceptance</h3>
+        <p className="mt-2 text-sm text-slate-500">No offer option has been accepted for this workspace yet.</p>
+      </section>
+    )
+  }
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-5">
+    <section className="rounded-lg border border-emerald-200 bg-white p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{option.status?.replaceAll("_", " ")} · {option.provider_name}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{acceptance.status}</p>
+          <h3 className="mt-1 font-semibold text-slate-950">Accepted Offer</h3>
+          <p className="mt-1 text-sm text-slate-600">{acceptance.client_visible_summary_json?.option_label || acceptance.option_id}</p>
+          {superseded ? (
+            <p className="mt-2 text-sm text-amber-700">
+              {superseded} previous acceptance was superseded for this workspace.
+            </p>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {acceptance.trip_id ? (
+            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/trips/${acceptance.trip_id}`}>
+              Open trip
+            </a>
+          ) : null}
+          {readiness ? (
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              Readiness: {readiness.status}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function OptionCard({ option, acceptedOptionId, onAccept, onClone, onRecommend }) {
+  const pricing = option.pricing_summary_json || {}
+  const warnings = option.warnings_json || []
+  const accepted = option.id === acceptedOptionId
+  return (
+    <article
+      className={`rounded-lg border bg-white p-5 ${accepted ? "border-emerald-300" : "border-slate-200"}`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {accepted ? "accepted" : option.status?.replaceAll("_", " ")} · {option.provider_name}
+          </p>
           <h3 className="mt-1 font-semibold text-slate-950">{option.label}</h3>
           <p className="mt-1 text-sm text-slate-600">{option.main_airline_code || "Airline pending"} · {option.option_type?.replaceAll("_", " ")}</p>
         </div>
@@ -195,6 +271,15 @@ function OptionCard({ option, onClone, onRecommend }) {
         <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onRecommend}>
           <CheckCircle2 className="h-4 w-4" />
           Recommend
+        </button>
+        <button
+          className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold"
+          type="button"
+          onClick={onAccept}
+          disabled={accepted}
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          {accepted ? "Accepted" : "Accept"}
         </button>
       </div>
     </article>

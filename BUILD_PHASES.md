@@ -54,6 +54,8 @@ The repository currently contains:
 - Phase 34.3: Reference data enrichment import packs and aviation normalization.
 - Phase 35: Trip dossier foundation and request-to-trip operational shell.
 - Phase 36.0: Unified Airline Intelligence, Rules & Services foundation.
+- Phase 36.1: Rule-aware offer builder and internal comparison matrix.
+- Phase 36.2: Offer acceptance, trip accepted-offer snapshot, and booking readiness.
 
 Phase 35 navigation hotfix:
 
@@ -899,16 +901,35 @@ Avoid adding:
 
 - Full offer builder bundles, visual maps, airline dashboards, AI reasoning/calls, ticketing, document designer, automatic booking, scraping, or large fake airline datasets.
 
-### Future Phase: Offer Builder And Comparison Matrix
+### Phase 36.1: Rule-Aware Offer Builder And Internal Comparison Matrix
 
-Recommended scope:
+Implemented scope:
 
-- Modern offer comparison matrix aligned to request segments, services, passengers, and trip attachment rules.
-- Offer acceptance/commercialization workflow that attaches to trip early.
+- Agency-owned offer workspaces linked to requests and/or trip dossiers.
+- Rule-aware offer options with segments, fare bundles, pricing lines, rule summaries, service feasibility, warnings, and recommendation metadata.
+- Internal comparison matrix generation and saved comparison snapshots.
+- Request and trip entry points to create or open offer workspaces without replacing source records.
+- Agency offer workspace list, detail, and builder UI routes.
+- Readiness flags and non-blocking counts under `offer_builder`.
 
 Avoid adding:
 
-- Live fare search, supplier booking, or payment capture.
+- Live fare search, supplier booking, payment capture, or client share links.
+
+### Phase 36.2: Offer Acceptance, Trip Snapshot, And Booking Readiness
+
+Implemented scope:
+
+- `OfferAcceptance` records that snapshot accepted pricing, routing, fare bundle, services, pets, special items, rule feasibility, and client-visible summary.
+- `TripAcceptedOfferSnapshot` records that anchor the accepted offer to the trip operational baseline.
+- `BookingReadinessPackage` records with provider target, passengers, segments, pricing, service snapshots, SSR/OSI previews, warnings, required documents, policy violations, and readiness checks.
+- Safe supersede/cancel lifecycle for accepted options without deleting prior snapshots.
+- Agency acceptance/readiness APIs and UI panels on offer workspace, builder, and trip dossier pages.
+- Readiness flags and non-blocking counts under `offer_builder`.
+
+Avoid adding:
+
+- Live GDS/NDC/supplier calls, PNR creation, ticketing, EMD issuance, invoices, payments, or document designer actions.
 
 ### Phase 37: Booking/Ticket/EMD Mirror Records
 
