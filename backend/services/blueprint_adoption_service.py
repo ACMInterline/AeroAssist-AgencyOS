@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
+PHASE_LABEL = "phase_36_5_document_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -51,9 +51,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Documents",
         "concept": "Documents, templates, shares, designer",
         "supplementary_concept": "documents, document_versions, document_shares, document_templates, document designer",
-        "current_equivalent": "document_templates, rendered_documents, document_exports, document_deliveries, document_storage_records",
-        "status": "partially built",
-        "action": "Keep current render/export/delivery foundations; defer full document designer/version/share layer to Phase 36.5.",
+        "current_equivalent": "document_templates, document_render_jobs, document_packages, document_share_records, rendered_documents, document_exports, document_deliveries, document_storage_records",
+        "status": "built",
+        "action": "Recognize Phase 36.5 document foundation; defer visual designer, version governance, public links, and automatic delivery.",
     },
     {
         "category": "AI systems",
@@ -136,32 +136,32 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 36.5",
-        "title": "Document Foundation / Offer-Trip-Booking-Ticket Document Layer",
-        "reason": "The next immediate gap is a unified document layer over accepted offers, trips, booking records, ticket mirrors, and EMD mirrors.",
+        "phase": "Phase 37",
+        "title": "Provider Import And Issuance Provenance",
+        "reason": "Document foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 36.6",
+        "phase": "Phase 37.1",
         "title": "GDS Parser Foundation + Training Samples",
         "reason": "GdsParseSample and AiTraceEvent prepare safe parser samples without provider execution.",
     },
     {
-        "phase": "Phase 36.7",
+        "phase": "Phase 37.2",
         "title": "Airline Intelligence Data Expansion",
         "reason": "Existing airline intelligence tables can receive curated data packs and brand assets.",
     },
     {
-        "phase": "Phase 36.8",
+        "phase": "Phase 37.3",
         "title": "Special Services UX Unification",
         "reason": "The facade keeps current services canonical while future UI can unify medical, cargo, VIP, and PRM flows.",
     },
     {
-        "phase": "Phase 36.9",
+        "phase": "Phase 37.4",
         "title": "AI Trace / ADM Risk Console",
         "reason": "AiTraceEvent and AdmRiskEvent foundations need an operator review console before any automation.",
     },
     {
-        "phase": "Phase 37",
+        "phase": "Phase 38",
         "title": "Live Provider/Supplier Execution Planning",
         "reason": "Provider execution must remain disabled by default until explicit integration governance is designed.",
     },
@@ -196,6 +196,10 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "TripChangeOperation",
             "TicketExchangeOperation",
             "EmdExchangeOperation",
+            "DocumentRenderJob",
+            "DocumentPackage",
+            "DocumentShareRecord",
+            "DocumentContextService and DocumentRenderService",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -205,9 +209,10 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Tickets + EMD Foundation built in Phase 36.4",
             "Booking workspace creation entry point fixed after Phase 36.4",
             "Standalone booking, import draft, and existing-trip change/exchange foundations built in Phase 36.4.6",
+            "Document foundation built in Phase 36.5",
         ],
         "deferred": [
-            "Full document designer and document version/share layer",
+            "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
             "Advanced GDS parser UI, training workflows, and provider reconciliation",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
@@ -221,7 +226,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 36.5 - Document Foundation / Offer-Trip-Booking-Ticket Document Layer",
+        "next_immediate_phase": "Phase 37 - Provider Import And Issuance Provenance",
         "gap_count": 7,
         "rejected_route_count": len(ROUTE_POLICY["rejected_routes"]),
     }

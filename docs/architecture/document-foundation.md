@@ -1,0 +1,62 @@
+# Document Foundation
+
+Phase 36.5 adds a unified internal document foundation for AgencyOS operational records. It is a preview/package/share-record layer only; it does not send emails, create public links, execute providers, require PDF export, collect signatures, process payments, create invoices/accounting entries, or perform settlement.
+
+## Core Records
+
+- `DocumentTemplate` now supports platform default template metadata through `scope`, `template_key`, `template_type`, `title`, `active`, `locale`, layout/content blocks, and required context metadata while preserving legacy template fields.
+- `DocumentRenderJob` stores one generated internal preview with source context, render status, format, normalized render context, rendered HTML/text, warnings, and staff provenance.
+- `DocumentPackage` groups render jobs for a shared operational source such as a trip, booking workspace, ticket/EMD set, import review, or internal case.
+- `DocumentShareRecord` records a manual/internal share intent for a render job or package. It is an audit foundation, not live delivery.
+
+## Context Sources
+
+`DocumentContextService` normalizes document input from:
+
+- requests
+- offer workspaces/options/acceptances
+- trip dossiers
+- booking workspaces and booking records
+- ticket records and EMD records
+- booking import drafts
+- trip change operations
+- ticket exchange operations and EMD exchange operations
+- passenger service requests
+- mixed manual context
+
+The normalized context includes agency/client/passenger snapshots, trip summary, itinerary segments, booking/PNR summary, pricing, ticket/EMD summaries and coupons, service rows, SSR/OSI rows, pets/special items, change/exchange summaries, warnings, and source links.
+
+## APIs
+
+Platform owners can inspect and seed default templates:
+
+- `GET /api/platform/documents/templates`
+- `POST /api/platform/documents/templates/seed-defaults`
+
+Agencies can preview context, render documents, rerender existing jobs, create packages, and record manual/internal shares:
+
+- `GET /api/agencies/{agency_id}/documents/templates`
+- `GET /api/agencies/{agency_id}/documents/templates/{template_id}`
+- `POST /api/agencies/{agency_id}/documents/context-preview`
+- `GET /api/agencies/{agency_id}/documents/render-jobs`
+- `POST /api/agencies/{agency_id}/documents/render-jobs`
+- `GET /api/agencies/{agency_id}/documents/render-jobs/{render_job_id}`
+- `POST /api/agencies/{agency_id}/documents/render-jobs/{render_job_id}/rerender`
+- `GET /api/agencies/{agency_id}/documents/packages`
+- `POST /api/agencies/{agency_id}/documents/packages`
+- `GET /api/agencies/{agency_id}/documents/packages/{package_id}`
+- `POST /api/agencies/{agency_id}/documents/share-records`
+
+## UI Entry Points
+
+- `/agency/documents` is the unified agency document foundation console.
+- `/platform/document-templates` lists and seeds platform default document templates.
+- Trip detail links to trip confirmation, internal case summary, booking documents, ticket/EMD receipts, and change summaries when linked records exist.
+- Offer workspace and offer builder link to offer summary/comparison documents.
+- Booking workspace detail links to booking confirmation, PNR mirror, and internal case summary documents.
+- Tickets & EMDs link to ticket and EMD receipt documents.
+- Booking imports link to import review summary documents.
+
+## Readiness
+
+`/api/readiness` exposes a non-blocking `document_foundation` section with template, render job, package, share record, legacy rendered document, and export counts. The section explicitly keeps `live_delivery_disabled`, `e_signature_disabled`, and `payment_invoice_accounting_disabled` true, with `pdf_export_required` and `readiness_required` false.

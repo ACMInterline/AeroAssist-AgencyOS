@@ -232,6 +232,9 @@ export default function OfferBuilderPage({ workspaceId }) {
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{state?.workspace?.title}</h2>
               </div>
               <div className="flex flex-wrap gap-2">
+                <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_summary", selectedOption ? "offer_option" : "offer_workspace", selectedOption?.id || workspaceId)}>
+                  Documents
+                </a>
                 <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={cloneOption} disabled={!selectedOption}>
                   <Copy className="h-4 w-4" />
                   Clone
@@ -500,4 +503,13 @@ function displayValue(value) {
   if (value === null || value === undefined || value === "") return "Not set"
   if (typeof value === "boolean") return value ? "Yes" : "No"
   return String(value)
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }

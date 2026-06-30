@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_documents, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -21,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.4.6 standalone booking and change/exchange workflow sync.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.5 document foundation.",
 )
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
+        "phase": "phase_36_5_document_foundation",
     }
 
 
@@ -199,6 +199,12 @@ async def readiness() -> dict:
     adm_risk_event_count = await database.collection("adm_risk_events").count()
     gds_parse_sample_count = await database.collection("gds_parse_samples").count()
     airline_brand_asset_count = await database.collection("airline_brand_assets").count()
+    document_template_count = await database.collection("document_templates").count()
+    document_render_job_count = await database.collection("document_render_jobs").count()
+    document_package_count = await database.collection("document_packages").count()
+    document_share_record_count = await database.collection("document_share_records").count()
+    rendered_document_count = await database.collection("rendered_documents").count()
+    document_export_count = await database.collection("document_exports").count()
     blueprint_adoption = get_blueprint_adoption_map()
     blueprint_gaps = get_blueprint_gap_summary()
     blueprint_route_policy = get_blueprint_route_policy()
@@ -214,7 +220,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
+        "phase": "phase_36_5_document_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -478,6 +484,33 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Change, exchange, refund, and void workflows are internal planning/mirror records only; no provider execution is enabled.",
         },
+        "document_foundation": {
+            "document_template_foundation_enabled": True,
+            "default_document_templates_enabled": True,
+            "document_context_builder_enabled": True,
+            "document_render_job_enabled": True,
+            "document_package_enabled": True,
+            "document_share_record_foundation_enabled": True,
+            "agency_documents_ui_enabled": True,
+            "trip_documents_entrypoint_enabled": True,
+            "booking_documents_entrypoint_enabled": True,
+            "ticket_emd_documents_entrypoint_enabled": True,
+            "offer_documents_entrypoint_enabled": True,
+            "import_review_document_entrypoint_enabled": True,
+            "html_document_preview_enabled": True,
+            "pdf_export_required": False,
+            "live_delivery_disabled": True,
+            "e_signature_disabled": True,
+            "payment_invoice_accounting_disabled": True,
+            "document_template_count": document_template_count,
+            "document_render_job_count": document_render_job_count,
+            "document_package_count": document_package_count,
+            "document_share_record_count": document_share_record_count,
+            "rendered_document_count": rendered_document_count,
+            "document_export_count": document_export_count,
+            "readiness_required": False,
+            "diagnostic": "Document templates, context previews, render jobs, packages, and internal/manual share records are enabled; live delivery, e-signature, provider execution, payments, invoices/accounting, and settlement remain disabled.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -535,6 +568,7 @@ app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)
+app.include_router(platform_documents.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
@@ -549,6 +583,7 @@ app.include_router(agency_booking_workspaces.router)
 app.include_router(agency_booking_imports.router)
 app.include_router(agency_ticket_emd.router)
 app.include_router(agency_trip_changes.router)
+app.include_router(agency_documents.router)
 app.include_router(offers.router)
 app.include_router(bookings.router)
 app.include_router(finance.router)

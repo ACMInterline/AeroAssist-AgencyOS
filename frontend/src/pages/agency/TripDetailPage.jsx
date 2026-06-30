@@ -293,6 +293,8 @@ export default function TripDetailPage({ tripId }) {
 
           <TicketsEmdsTripPanel state={state} />
 
+          <TripDocumentsPanel state={state} tripId={tripId} />
+
           <ChangesExchangesPanel
             changeForm={changeForm}
             onChange={(updates) => setChangeForm((current) => ({ ...current, ...updates }))}
@@ -303,8 +305,8 @@ export default function TripDetailPage({ tripId }) {
             state={state}
           />
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {["Bookings", "Tickets / EMDs", "Documents", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
+          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {["Bookings", "Tickets / EMDs", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
           </section>
 
           <Panel title="Timeline"><List items={state?.timeline} empty="No trip timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>
@@ -453,6 +455,30 @@ function TicketsEmdsTripPanel({ state }) {
   )
 }
 
+function TripDocumentsPanel({ state, tripId }) {
+  const trip = state?.trip
+  const change = state?.changes?.items?.[0]
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const ticket = state?.tickets?.[0]
+  const emd = state?.emds?.[0]
+  const sourceId = trip?.id || tripId
+  return (
+    <Panel title="Documents">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
+        <p className="text-sm text-slate-600">Generate internal document previews from this trip dossier and linked mirrors.</p>
+        <div className="flex flex-wrap gap-2">
+          <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={documentHref("trip_confirmation", "trip", sourceId)}>Trip confirmation</a>
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("internal_case_summary", "trip", sourceId)}>Internal case summary</a>
+          {bookingWorkspace ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("booking_confirmation", "booking_workspace", bookingWorkspace.id)}>Booking document</a> : null}
+          {ticket ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("ticket_receipt", "ticket_record", ticket.id)}>Ticket receipt</a> : null}
+          {emd ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("emd_receipt", "emd_record", emd.id)}>EMD receipt</a> : null}
+          {change ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("trip_change_summary", "trip_change_operation", change.id)}>Change summary</a> : null}
+        </div>
+      </div>
+    </Panel>
+  )
+}
+
 function ChangesExchangesPanel({ changeForm, onChange, onCreateChangeBooking, onStartEmdExchange, onStartTicketExchange, onStartTripChange, state }) {
   const operations = state?.changes?.items || []
   const ticketExchanges = state?.changes?.ticket_exchange_operations || []
@@ -578,4 +604,13 @@ function parseOptionalJson(value, label) {
   } catch {
     throw new Error(`${label} JSON must be valid.`)
   }
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }

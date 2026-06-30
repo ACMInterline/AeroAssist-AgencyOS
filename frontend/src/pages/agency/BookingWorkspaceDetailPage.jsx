@@ -194,6 +194,15 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 </div>
               </Panel>
 
+              <Panel title="Documents">
+                <div className="grid gap-2">
+                  <a className="aa-primary-action rounded-md px-3 py-2 text-center text-sm font-semibold" href={documentHref("booking_confirmation", "booking_workspace", workspace?.id)}>Booking confirmation</a>
+                  <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={documentHref("pnr_mirror", record ? "booking_record" : "booking_workspace", record?.id || workspace?.id)}>PNR mirror</a>
+                  {record ? <a className="rounded-md border border-slate-300 px-3 py-2 text-center text-sm font-semibold" href={documentHref("internal_case_summary", "booking_record", record.id)}>Internal case summary</a> : null}
+                </div>
+                <p className="text-xs text-slate-500">Document previews are generated from stored internal mirrors only.</p>
+              </Panel>
+
               <Panel title="Tickets & EMDs">
                 <div className="grid gap-2">
                   <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!record}>Create draft ticket mirror</button>
@@ -353,4 +362,13 @@ function label(value) {
 
 function labelValue(value) {
   return String(value || "").replaceAll("_", " ")
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }

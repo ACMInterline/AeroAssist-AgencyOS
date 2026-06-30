@@ -1018,6 +1018,23 @@ Avoid adding:
 
 - Live GDS/NDC/supplier calls, live booking creation, real ticket/EMD issuance, real exchange/reissue/refund/void execution, payments, invoices/accounting, full document designer, `/agent` or `/admin` route roots, or duplicate trip/request/offer/booking/ticket/EMD models.
 
+### Phase 36.5: Document Foundation / Offer-Trip-Booking-Ticket-EMD Documents
+
+Implemented scope:
+
+- Extended document types and templates for offer summaries/comparisons, trip confirmations, booking confirmations, PNR mirrors, ticket receipts, EMD receipts, service confirmations, medical/pet/special-item summaries, change/exchange/refund/import review summaries, and internal case summaries.
+- Added `DocumentRenderJob`, `DocumentPackage`, and `DocumentShareRecord` foundation records with agency-owned indexes.
+- Added `DocumentContextService` to normalize context from requests, offers, trips, booking workspaces/records, tickets, EMDs, booking imports, trip changes, ticket/EMD exchanges, service requests, and mixed context.
+- Added `DocumentRenderService` for platform default template seeding, internal HTML/Markdown/JSON preview rendering, rerendering, packages, and manual/internal share records.
+- Added agency document APIs under `/api/agencies/{agency_id}/documents/*` and platform default-template APIs under `/api/platform/documents/*`.
+- Reworked `/agency/documents` into the unified document foundation console and added document entry points from trip detail, offer workspace/builder, booking workspace detail, Tickets & EMDs, and booking imports.
+- Added `/platform/document-templates` for platform owners to inspect and seed default document templates.
+- Added readiness flags and counts under `document_foundation` while keeping live delivery, e-signature, payments, invoice/accounting, settlement, provider execution, and required PDF export disabled.
+
+Avoid adding:
+
+- Full visual document designer, public document links, automatic delivery integrations, e-signature, payment or invoice/accounting workflows, settlement, live provider execution, or duplicate request/trip/offer/booking/ticket/EMD models.
+
 ### Phase 37: Provider Import And Issuance Provenance
 
 Recommended scope:
@@ -1040,11 +1057,11 @@ Avoid adding:
 
 - Payment gateway processing unless explicitly authorized.
 
-### Phase 39: Document Template Builder And Generation
+### Phase 39: Document Template Builder And Delivery Hardening
 
 Recommended scope:
 
-- Broader document template builder, generation flows, and request/trip/document snapshot alignment.
+- Broader document template builder, versioning, governed delivery, and request/trip/document snapshot hardening on top of the Phase 36.5 document foundation.
 
 Avoid adding:
 

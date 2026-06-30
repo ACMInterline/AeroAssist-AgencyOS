@@ -89,7 +89,10 @@ export default function BookingImportsPage() {
               <h2 className="text-2xl font-semibold text-slate-950">Booking Imports</h2>
               <p className="mt-1 text-sm text-slate-600">Import data into internal booking, ticket, and EMD mirrors only. No provider action is performed.</p>
             </div>
-            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
+            <div className="flex flex-wrap gap-2">
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/documents?document_type=import_review_summary&source_context_type=booking_import_draft">Documents</a>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
+            </div>
           </div>
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
@@ -133,6 +136,7 @@ function DraftCard({ draft, onImport, onParse, working }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => onParse(draft.id)} disabled={working}>{working ? "Working..." : "Parse"}</button>
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("import_review_summary", "booking_import_draft", draft.id)}>Review document</a>
           <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => onImport(draft.id)} disabled={working}>{working ? "Working..." : "Import as manual booking"}</button>
         </div>
       </div>
@@ -244,4 +248,13 @@ function Metric({ label: metricLabel, value }) {
 
 function label(value) {
   return String(value || "none").replaceAll("_", " ")
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }

@@ -54,7 +54,7 @@ def assert_safe(value: object) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_36_4_6_standalone_change_exchange_foundation":
+    if health.get("phase") != "phase_36_5_document_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     readiness = get("/api/readiness")
     if not readiness.get("ok"):

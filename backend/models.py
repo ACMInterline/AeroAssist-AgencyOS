@@ -5611,12 +5611,94 @@ class DocumentTemplateScope(str, Enum):
 
 class DocumentType(str, Enum):
     OFFER_SUMMARY = "offer_summary"
+    OFFER_COMPARISON = "offer_comparison"
+    TRIP_CONFIRMATION = "trip_confirmation"
     BOOKING_CONFIRMATION = "booking_confirmation"
+    PNR_MIRROR = "pnr_mirror"
     ITINERARY_SUMMARY = "itinerary_summary"
+    TICKET_RECEIPT = "ticket_receipt"
     TICKET_RECEIPT_SUMMARY = "ticket_receipt_summary"
+    EMD_RECEIPT = "emd_receipt"
     EMD_RECEIPT_SUMMARY = "emd_receipt_summary"
+    SERVICE_CONFIRMATION = "service_confirmation"
+    MEDICAL_ASSISTANCE_SUMMARY = "medical_assistance_summary"
+    PET_TRAVEL_SUMMARY = "pet_travel_summary"
+    SPECIAL_BAGGAGE_SUMMARY = "special_baggage_summary"
+    TRIP_CHANGE_SUMMARY = "trip_change_summary"
+    EXCHANGE_QUOTE = "exchange_quote"
+    EXCHANGE_CONFIRMATION = "exchange_confirmation"
+    REFUND_QUOTE = "refund_quote"
+    IMPORT_REVIEW_SUMMARY = "import_review_summary"
+    INTERNAL_CASE_SUMMARY = "internal_case_summary"
+    CUSTOM = "custom"
     INVOICE_SUMMARY = "invoice_summary"
     SERVICE_SUMMARY = "service_summary"
+
+
+class DocumentSourceContextType(str, Enum):
+    REQUEST = "request"
+    OFFER_WORKSPACE = "offer_workspace"
+    OFFER_OPTION = "offer_option"
+    OFFER_ACCEPTANCE = "offer_acceptance"
+    TRIP = "trip"
+    BOOKING_WORKSPACE = "booking_workspace"
+    BOOKING_RECORD = "booking_record"
+    TICKET_RECORD = "ticket_record"
+    EMD_RECORD = "emd_record"
+    BOOKING_IMPORT_DRAFT = "booking_import_draft"
+    TRIP_CHANGE_OPERATION = "trip_change_operation"
+    TICKET_EXCHANGE_OPERATION = "ticket_exchange_operation"
+    EMD_EXCHANGE_OPERATION = "emd_exchange_operation"
+    SERVICE_REQUEST = "service_request"
+    MIXED_CONTEXT = "mixed_context"
+
+
+class DocumentRenderStatus(str, Enum):
+    DRAFT = "draft"
+    RENDERED = "rendered"
+    FAILED = "failed"
+    ARCHIVED = "archived"
+
+
+class DocumentRenderFormat(str, Enum):
+    HTML = "html"
+    PDF = "pdf"
+    MARKDOWN = "markdown"
+    JSON = "json"
+
+
+class DocumentPackageType(str, Enum):
+    OFFER_PACKAGE = "offer_package"
+    TRIP_PACKAGE = "trip_package"
+    BOOKING_PACKAGE = "booking_package"
+    TICKET_EMD_PACKAGE = "ticket_emd_package"
+    SERVICE_PACKAGE = "service_package"
+    CHANGE_EXCHANGE_PACKAGE = "change_exchange_package"
+    IMPORT_REVIEW_PACKAGE = "import_review_package"
+    INTERNAL_CASE_PACKAGE = "internal_case_package"
+    CUSTOM = "custom"
+
+
+class DocumentPackageStatus(str, Enum):
+    DRAFT = "draft"
+    READY = "ready"
+    EXPORTED = "exported"
+    ARCHIVED = "archived"
+
+
+class DocumentShareStatus(str, Enum):
+    DRAFT = "draft"
+    READY = "ready"
+    SENT_MANUALLY = "sent_manually"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+class DocumentShareChannel(str, Enum):
+    MANUAL_DOWNLOAD = "manual_download"
+    MANUAL_EMAIL = "manual_email"
+    PORTAL = "portal"
+    INTERNAL = "internal"
 
 
 class DocumentTemplateStatus(str, Enum):
@@ -5645,13 +5727,23 @@ class RenderedDocumentStatus(str, Enum):
 class DocumentTemplate(BaseDocument):
     agency_id: Optional[str] = None
     template_scope: DocumentTemplateScope = DocumentTemplateScope.PLATFORM_DEFAULT
+    scope: Optional[str] = None
+    template_key: Optional[str] = None
+    template_type: Optional[str] = None
     document_type: DocumentType
     name: str
+    title: Optional[str] = None
     description: Optional[str] = None
     status: DocumentTemplateStatus = DocumentTemplateStatus.ACTIVE
+    active: bool = True
     language: str = "en"
+    locale: str = "en"
     version: int = 1
+    branding_profile_id: Optional[str] = None
     template_config: Dict[str, Any] = Field(default_factory=dict)
+    layout_json: Dict[str, Any] = Field(default_factory=dict)
+    content_blocks_json: List[Dict[str, Any]] = Field(default_factory=list)
+    required_context_json: Dict[str, Any] = Field(default_factory=dict)
     created_by_user_id: Optional[str] = None
 
 
@@ -5687,6 +5779,96 @@ class RenderDocumentRequest(BaseModel):
     client_visible: bool = True
     internal_notes: Optional[str] = None
     language: str = "en"
+
+
+class DocumentContextPreviewRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    source_context_type: DocumentSourceContextType
+    source_context_id: Optional[str] = None
+    source_context_ids_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentRenderJobCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    template_id: Optional[str] = None
+    template_key: Optional[str] = None
+    document_type: DocumentType
+    source_context_type: DocumentSourceContextType
+    source_context_id: Optional[str] = None
+    source_context_ids_json: Dict[str, Any] = Field(default_factory=dict)
+    render_format: DocumentRenderFormat = DocumentRenderFormat.HTML
+    render_context_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+
+
+class DocumentRenderJob(BaseDocument):
+    agency_id: str
+    template_id: Optional[str] = None
+    template_key: Optional[str] = None
+    document_type: DocumentType
+    source_context_type: DocumentSourceContextType
+    source_context_id: Optional[str] = None
+    source_context_ids_json: Dict[str, Any] = Field(default_factory=dict)
+    render_status: DocumentRenderStatus = DocumentRenderStatus.DRAFT
+    render_format: DocumentRenderFormat = DocumentRenderFormat.HTML
+    render_context_json: Dict[str, Any] = Field(default_factory=dict)
+    rendered_html: Optional[str] = None
+    rendered_text: Optional[str] = None
+    rendered_file_record_id: Optional[str] = None
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    error_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class DocumentPackageCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    package_type: DocumentPackageType
+    title: str
+    source_context_type: DocumentSourceContextType
+    source_context_id: Optional[str] = None
+    source_context_ids_json: Dict[str, Any] = Field(default_factory=dict)
+    document_render_job_ids: List[str] = Field(default_factory=list)
+
+
+class DocumentPackage(BaseDocument):
+    agency_id: str
+    package_type: DocumentPackageType
+    title: str
+    source_context_type: DocumentSourceContextType
+    source_context_id: Optional[str] = None
+    source_context_ids_json: Dict[str, Any] = Field(default_factory=dict)
+    document_render_job_ids: List[str] = Field(default_factory=list)
+    status: DocumentPackageStatus = DocumentPackageStatus.DRAFT
+    created_by_user_id: Optional[str] = None
+
+
+class DocumentShareRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    document_render_job_id: Optional[str] = None
+    document_package_id: Optional[str] = None
+    share_status: DocumentShareStatus = DocumentShareStatus.READY
+    share_channel: DocumentShareChannel = DocumentShareChannel.INTERNAL
+    recipient_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    expires_at: Optional[datetime] = None
+
+
+class DocumentShareRecord(BaseDocument):
+    agency_id: str
+    document_render_job_id: Optional[str] = None
+    document_package_id: Optional[str] = None
+    share_status: DocumentShareStatus = DocumentShareStatus.DRAFT
+    share_channel: DocumentShareChannel = DocumentShareChannel.INTERNAL
+    recipient_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    access_token_hash: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    sent_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
 
 
 class RenderedDocument(BaseDocument):

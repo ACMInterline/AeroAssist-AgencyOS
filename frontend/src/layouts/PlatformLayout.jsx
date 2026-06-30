@@ -1,6 +1,7 @@
 import Building2 from "lucide-react/dist/esm/icons/building-2.js"
 import ClipboardCheck from "lucide-react/dist/esm/icons/clipboard-check.js"
 import Database from "lucide-react/dist/esm/icons/database.js"
+import FileText from "lucide-react/dist/esm/icons/file-text.js"
 import GitBranch from "lucide-react/dist/esm/icons/git-branch.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
@@ -42,6 +43,10 @@ export default function PlatformLayout({ children, user }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/rules-services">
               <ClipboardCheck className="h-4 w-4" />
               Rules & Services
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/document-templates">
+              <FileText className="h-4 w-4" />
+              Documents
             </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/blueprint">
               <GitBranch className="h-4 w-4" />

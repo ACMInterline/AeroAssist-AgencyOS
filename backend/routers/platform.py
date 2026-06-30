@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_4_6_standalone_change_exchange_foundation",
+        "phase": "phase_36_5_document_foundation",
     }
 
 
@@ -102,6 +102,9 @@ async def summary(
             "unified_exception_rules": await db.collection("unified_exception_rules").count(),
             "passenger_service_requests": await db.collection("passenger_service_requests").count(),
             "document_templates": await db.collection("document_templates").count(),
+            "document_render_jobs": await db.collection("document_render_jobs").count(),
+            "document_packages": await db.collection("document_packages").count(),
+            "document_share_records": await db.collection("document_share_records").count(),
             "rendered_documents": await db.collection("rendered_documents").count(),
             "document_exports": await db.collection("document_exports").count(),
             "document_deliveries": await db.collection("document_deliveries").count(),

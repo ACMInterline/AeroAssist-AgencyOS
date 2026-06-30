@@ -31,7 +31,7 @@ No redirects or aliases are added in Phase 36.4.5 or Phase 36.4.6. Documentation
 | `/agent/parser/imports` | `/agency/booking-imports` |
 | `/admin/exception-rules` | `/platform/rules-services` |
 | `/admin/special-services` | `/platform/rules-services` |
-| `/documents` | `/agency/documents` and future `/platform/document-templates` |
+| `/documents` | `/agency/documents` and `/platform/document-templates` |
 | `/tickets` | `/agency/tickets-emds` |
 | `/bookings` | `/agency/booking-workspaces` |
 | `/changes` or `/exchanges` | `/agency/trips/{trip_id}` changes panel and `/agency/tickets-emds` exchange actions |

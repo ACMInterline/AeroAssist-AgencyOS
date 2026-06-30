@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_36_4_6_standalone_change_exchange_foundation"
+EXPECTED_PHASE = "phase_36_5_document_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -102,6 +102,9 @@ def main() -> int:
     ticket_item = next((item for item in adoption.get("items", []) if item.get("category") == "Tickets/EMDs"), {})
     if ticket_item.get("status") != "built" or "Phase 36.4" not in ticket_item.get("action", ""):
         raise AssertionError("Blueprint adoption map did not recognize Phase 36.4 Tickets + EMD Foundation.")
+    document_item = next((item for item in adoption.get("items", []) if item.get("category") == "Documents"), {})
+    if document_item.get("status") != "built" or "Phase 36.5" not in document_item.get("action", ""):
+        raise AssertionError("Blueprint adoption map did not recognize Phase 36.5 Document Foundation.")
 
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
@@ -114,14 +117,16 @@ def main() -> int:
         raise AssertionError("Route policy should not add /agent or /admin aliases in this phase.")
 
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
-    if "Phase 36.5" not in gaps.get("next_immediate_phase", ""):
-        raise AssertionError("Gap summary did not identify Phase 36.5 Documents as next.")
+    if "Phase 37" not in gaps.get("next_immediate_phase", ""):
+        raise AssertionError("Gap summary did not identify Phase 37 provider provenance as next.")
     if not any("Tickets + EMD Foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Tickets + EMD Foundation as already built.")
+    if not any("Document foundation" in item for item in gaps.get("already_built", [])):
+        raise AssertionError("Gap summary did not recognize Document Foundation as already built.")
 
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 36.5":
-        raise AssertionError("Next phase recommendations did not start with Phase 36.5.")
+    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 37":
+        raise AssertionError("Next phase recommendations did not start with Phase 37.")
 
     summary = get("/api/platform/summary", OWNER_HEADERS)
     for collection_name in ["ai_trace_events", "adm_risk_events", "gds_parse_samples", "airline_brand_assets"]:

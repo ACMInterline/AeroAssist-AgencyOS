@@ -142,6 +142,7 @@ export default function TicketsEmdsPage() {
               <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("emd")}>Create manual EMD</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("ticket_exchange")}>Start ticket exchange</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("emd_exchange")}>Start EMD exchange</button>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/documents?document_type=ticket_receipt&source_context_type=ticket_record">Documents</a>
               <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
             </div>
           </div>
@@ -402,19 +403,23 @@ function TicketList({ items }) {
   if (!items.length) return <EmptyState title="No tickets found" body="Create draft ticket mirrors from a booking workspace." />
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <span>Ticket</span><span>Passenger</span><span>Booking workspace</span><span>Provider</span><span>Status</span><span>Amount</span>
+      <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr_150px] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span>Ticket</span><span>Passenger</span><span>Booking workspace</span><span>Provider</span><span>Status</span><span>Amount</span><span>Actions</span>
       </div>
       <div className="divide-y divide-slate-100">
         {items.map((item) => (
-          <a className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" href={`/agency/tickets/${item.id}`} key={item.id}>
-            <span className="font-semibold text-slate-950">{item.ticket_number || "Draft ticket"}</span>
+          <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr_150px] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" key={item.id}>
+            <a className="font-semibold text-blue-700" href={`/agency/tickets/${item.id}`}>{item.ticket_number || "Draft ticket"}</a>
             <span>{passengerName(item)}</span>
             <span>{item.booking_workspace_id || "Not linked"}</span>
             <span>{label(item.issuing_provider)}</span>
             <span>{label(item.issue_status || item.status)}</span>
             <span>{money(item.total_amount, item.currency)}</span>
-          </a>
+            <span className="flex flex-wrap gap-2">
+              <a className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" href={`/agency/tickets/${item.id}`}>Open</a>
+              <a className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" href={documentHref("ticket_receipt", "ticket_record", item.id)}>Receipt</a>
+            </span>
+          </div>
         ))}
       </div>
     </div>
@@ -425,19 +430,23 @@ function EmdList({ items }) {
   if (!items.length) return <EmptyState title="No EMDs found" body="Create draft EMD mirrors from booking services." />
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <span>EMD</span><span>Service</span><span>Passenger</span><span>Provider</span><span>Status</span><span>Amount</span>
+      <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr_150px] gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <span>EMD</span><span>Service</span><span>Passenger</span><span>Provider</span><span>Status</span><span>Amount</span><span>Actions</span>
       </div>
       <div className="divide-y divide-slate-100">
         {items.map((item) => (
-          <a className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" href={`/agency/emds/${item.id}`} key={item.id}>
-            <span className="font-semibold text-slate-950">{item.emd_number || "Draft EMD"}</span>
+          <div className="grid grid-cols-[1fr_1fr_1fr_0.8fr_0.8fr_0.8fr_150px] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" key={item.id}>
+            <a className="font-semibold text-blue-700" href={`/agency/emds/${item.id}`}>{item.emd_number || "Draft EMD"}</a>
             <span>{item.service_label || item.service_key || "Manual service"}</span>
             <span>{passengerName(item)}</span>
             <span>{label(item.issuing_provider)}</span>
             <span>{label(item.issue_status || item.status)}</span>
             <span>{money(item.total_amount ?? item.amount, item.currency)}</span>
-          </a>
+            <span className="flex flex-wrap gap-2">
+              <a className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" href={`/agency/emds/${item.id}`}>Open</a>
+              <a className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" href={documentHref("emd_receipt", "emd_record", item.id)}>Receipt</a>
+            </span>
+          </div>
         ))}
       </div>
     </div>
@@ -734,4 +743,13 @@ function label(value) {
 function money(amountValue, currency) {
   if (amountValue === null || amountValue === undefined || amountValue === "") return "Not priced"
   return `${Number(amountValue).toFixed(2)} ${currency || "EUR"}`
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }

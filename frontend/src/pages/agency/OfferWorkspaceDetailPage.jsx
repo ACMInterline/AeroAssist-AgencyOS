@@ -137,6 +137,9 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
                 <p className="mt-1 text-sm text-slate-600">{contextLabel(state)}</p>
               </div>
               <div className="flex flex-wrap gap-2">
+                <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_summary", "offer_workspace", workspaceId)}>
+                  Documents
+                </a>
                 <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={saveSnapshot}>
                   <Copy className="h-4 w-4" />
                   Snapshot
@@ -260,6 +263,9 @@ function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
               Readiness: {readiness.status}
             </span>
           ) : null}
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_comparison", "offer_workspace", state?.workspace?.id)}>
+            Offer documents
+          </a>
           {bookingWorkspace ? (
             <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>
               Open booking workspace
@@ -382,4 +388,13 @@ function displayValue(value) {
   if (value === null || value === undefined || value === "") return "Not set"
   if (typeof value === "boolean") return value ? "Yes" : "No"
   return String(value)
+}
+
+function documentHref(documentType, sourceContextType, sourceContextId) {
+  const params = new URLSearchParams({
+    document_type: documentType,
+    source_context_type: sourceContextType,
+    source_context_id: sourceContextId || "",
+  })
+  return `/agency/documents?${params.toString()}`
 }
