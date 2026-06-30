@@ -146,6 +146,10 @@ class DocumentContextService:
             "pets_rows": [],
             "special_items_rows": [],
             "change_exchange_summary": {},
+            "parser_run_summary": {},
+            "parsed_entities": [],
+            "parse_corrections": [],
+            "training_samples": [],
             "warnings_json": [],
             "source_links": [],
         }
@@ -356,7 +360,7 @@ class DocumentContextService:
         draft = await self.db.collection("booking_import_drafts").find_one({"agency_id": agency_id, "id": booking_import_draft_id})
         if not draft:
             return None
-        parsed = _as_dict(draft.get("parsed_json"))
+        parsed = _as_dict(draft.get("normalized_preview_json")) or _as_dict(draft.get("parsed_json"))
         context = await self._base(agency_id)
         context["source_context_type"] = "booking_import_draft"
         context["source_context_id"] = booking_import_draft_id
@@ -373,12 +377,75 @@ class DocumentContextService:
                 "id": draft["id"],
                 "source_type": draft.get("source_type"),
                 "parser_status": draft.get("parser_status"),
+                "latest_parser_run_id": draft.get("latest_parser_run_id"),
+                "overall_confidence": draft.get("overall_confidence"),
                 "record_locator": parsed.get("record_locator"),
                 "import_context": draft.get("import_context"),
             }
         )
+        if draft.get("latest_parser_run_id"):
+            parser_context = await self.build_gds_parser_run_context(agency_id, draft["latest_parser_run_id"])
+            if parser_context:
+                context["parser_run_summary"] = parser_context.get("parser_run_summary") or {}
+                context["parsed_entities"] = parser_context.get("parsed_entities") or []
+                context["parse_corrections"] = parser_context.get("parse_corrections") or []
+                context["training_samples"] = parser_context.get("training_samples") or []
         context["warnings_json"].extend(_as_list(draft.get("warnings_json")) + _as_list(parsed.get("warnings")))
         context["source_links"].append({"type": "booking_import_draft", "id": booking_import_draft_id})
+        return context
+
+    async def build_gds_parser_run_context(self, agency_id: str, parser_run_id: str) -> dict[str, Any] | None:
+        run = await self.db.collection("gds_parser_runs").find_one({"agency_id": agency_id, "id": parser_run_id})
+        if not run:
+            return None
+        preview = _as_dict(run.get("normalized_preview_json"))
+        context = await self._base(agency_id)
+        context["source_context_type"] = "gds_parser_run"
+        context["source_context_id"] = parser_run_id
+        context["passenger_snapshots"] = [_passenger_row(item) for item in _as_list(preview.get("passengers"))]
+        context["itinerary_segments"] = [_segment_row(item) for item in _as_list(preview.get("segments"))]
+        context["ssr_rows"] = _as_list(preview.get("ssr"))
+        context["osi_rows"] = _as_list(preview.get("osi"))
+        context["ticket_numbers"] = _as_list(preview.get("ticket_numbers"))
+        context["emd_numbers"] = _as_list(preview.get("emd_numbers"))
+        context["pricing_summary"] = _pricing_summary(preview.get("pricing"))
+        context["parser_run_summary"] = _compact(
+            {
+                "id": run["id"],
+                "booking_import_draft_id": run.get("booking_import_draft_id"),
+                "parser_profile_id": run.get("parser_profile_id"),
+                "parser_version_id": run.get("parser_version_id"),
+                "provider_family_detected": run.get("provider_family_detected"),
+                "input_format_detected": run.get("input_format_detected"),
+                "parse_status": run.get("parse_status"),
+                "overall_confidence": run.get("overall_confidence"),
+                "record_locator": preview.get("record_locator"),
+                "passengers": run.get("extracted_passenger_count"),
+                "segments": run.get("extracted_segment_count"),
+                "tickets": run.get("extracted_ticket_count"),
+                "emds": run.get("extracted_emd_count"),
+            }
+        )
+        entities = await self.db.collection("gds_parsed_entities").find_many({"agency_id": agency_id, "parser_run_id": parser_run_id})
+        context["parsed_entities"] = [
+            _compact(
+                {
+                    "id": item.get("id"),
+                    "entity_type": item.get("entity_type"),
+                    "summary": _as_dict(item.get("normalized_json")).get("summary"),
+                    "confidence": item.get("confidence"),
+                    "status": item.get("status"),
+                    "source_text": item.get("source_text"),
+                }
+            )
+            for item in entities
+        ]
+        context["parse_corrections"] = await self.db.collection("gds_parse_corrections").find_many({"agency_id": agency_id, "parser_run_id": parser_run_id})
+        context["training_samples"] = await self.db.collection("gds_parse_training_samples").find_many({"agency_id": agency_id, "parser_run_id": parser_run_id})
+        context["warnings_json"].extend(_as_list(run.get("warnings_json")) + _as_list(preview.get("warnings")))
+        if run.get("booking_import_draft_id"):
+            context["source_links"].append({"type": "booking_import_draft", "id": run["booking_import_draft_id"]})
+        context["source_links"].append({"type": "gds_parser_run", "id": parser_run_id})
         return context
 
     async def build_trip_change_context(self, agency_id: str, trip_change_operation_id: str) -> dict[str, Any] | None:
@@ -494,6 +561,8 @@ class DocumentContextService:
             return await self.build_emd_context(agency_id, source_context_id)
         if source_context_type == "booking_import_draft" and source_context_id:
             return await self.build_import_review_context(agency_id, source_context_id)
+        if source_context_type == "gds_parser_run" and source_context_id:
+            return await self.build_gds_parser_run_context(agency_id, source_context_id)
         if source_context_type == "trip_change_operation" and source_context_id:
             return await self.build_trip_change_context(agency_id, source_context_id)
         if source_context_type == "ticket_exchange_operation" and source_context_id:

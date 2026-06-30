@@ -53,7 +53,7 @@ export default function BookingImportsPage() {
     setWorking(id)
     setError("")
     try {
-      await apiPost(`/api/agencies/${state.agency.id}/booking-import-drafts/${id}/parse`, {})
+      await apiPost(`/api/agencies/${state.agency.id}/gds-parser/booking-import-drafts/${id}/parse`, {})
       await load()
     } catch (err) {
       setError(err.message)
@@ -90,6 +90,7 @@ export default function BookingImportsPage() {
               <p className="mt-1 text-sm text-slate-600">Import data into internal booking, ticket, and EMD mirrors only. No provider action is performed.</p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/gds-parser">GDS Parser</a>
               <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/documents?document_type=import_review_summary&source_context_type=booking_import_draft">Documents</a>
               <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
             </div>
@@ -124,8 +125,10 @@ export default function BookingImportsPage() {
 }
 
 function DraftCard({ draft, onImport, onParse, working }) {
-  const parsed = draft.parsed_json || {}
+  const parsed = draft.normalized_preview_json || draft.parsed_json || {}
   const warnings = draft.warnings_json || parsed.warnings || []
+  const entityCounts = draft.parsed_entity_counts_json || {}
+  const lowConfidence = draft.overall_confidence !== null && draft.overall_confidence !== undefined && Number(draft.overall_confidence) < 0.6
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -135,17 +138,20 @@ function DraftCard({ draft, onImport, onParse, working }) {
           <p className="mt-1 text-sm text-slate-600">{label(draft.parser_status)} · {draft.linked_trip_id || "No trip link"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => onParse(draft.id)} disabled={working}>{working ? "Working..." : "Parse"}</button>
-          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("import_review_summary", "booking_import_draft", draft.id)}>Review document</a>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => onParse(draft.id)} disabled={working}>{working ? "Working..." : "Parse with GDS Parser"}</button>
+          {draft.latest_parser_run_id ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/gds-parser?parser_run_id=${draft.latest_parser_run_id}`}>{lowConfidence ? "Correct low-confidence parse" : "Open parser run"}</a> : null}
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("booking_import_review_summary", "booking_import_draft", draft.id)}>Review document</a>
           <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => onImport(draft.id)} disabled={working}>{working ? "Working..." : "Import as manual booking"}</button>
         </div>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-5">
-        <Metric label="Passengers" value={(parsed.passengers || []).length} />
-        <Metric label="Segments" value={(parsed.segments || []).length} />
-        <Metric label="SSR" value={(parsed.ssr || []).length} />
-        <Metric label="Tickets" value={(parsed.ticket_numbers || []).length} />
-        <Metric label="EMDs" value={(parsed.emd_numbers || []).length} />
+      <div className="mt-4 grid gap-3 md:grid-cols-7">
+        <Metric label="Confidence" value={formatConfidence(draft.overall_confidence || parsed.overall_confidence)} tone={lowConfidence ? "amber" : "slate"} />
+        <Metric label="Run status" value={label(parsed.parse_status || draft.parser_status)} />
+        <Metric label="Passengers" value={entityCounts.passengers ?? (parsed.passengers || []).length} />
+        <Metric label="Segments" value={entityCounts.segments ?? (parsed.segments || []).length} />
+        <Metric label="SSR" value={entityCounts.ssr ?? (parsed.ssr || []).length} />
+        <Metric label="Tickets" value={entityCounts.tickets ?? (parsed.ticket_numbers || []).length} />
+        <Metric label="EMDs" value={entityCounts.emds ?? (parsed.emd_numbers || []).length} />
       </div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <PreviewTable title="Passengers" items={parsed.passengers || []} columns={[
@@ -237,13 +243,20 @@ function Select({ label: fieldLabel, value, options, onChange }) {
   )
 }
 
-function Metric({ label: metricLabel, value }) {
+function Metric({ label: metricLabel, value, tone = "slate" }) {
+  const toneClass = tone === "amber" ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50"
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+    <div className={`rounded-md border px-3 py-2 ${toneClass}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{metricLabel}</p>
       <p className="mt-1 text-lg font-semibold text-slate-950">{value}</p>
     </div>
   )
+}
+
+function formatConfidence(value) {
+  if (value === null || value === undefined || value === "") return "not set"
+  const number = Number(value)
+  return Number.isFinite(number) ? `${Math.round(number * 100)}%` : String(value)
 }
 
 function label(value) {

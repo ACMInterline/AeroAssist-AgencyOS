@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_5_document_foundation"
+PHASE_LABEL = "phase_36_6_gds_parser_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -27,9 +27,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "GDS/Supplier",
         "concept": "Supplier and parser layer",
         "supplementary_concept": "supplier_endpoints, supplier_credentials, supplier_health, supplier_failover_log, gds_ai_normalizer_traces",
-        "current_equivalent": "provider target placeholders on booking records/workspaces plus provider payload/response snapshots; no live supplier execution",
-        "status": "add foundation now",
-        "action": "Add GdsParseSample and unified AiTraceEvent foundations; defer credentials, health, failover, and execution.",
+        "current_equivalent": "gds_parser_profiles, gds_parser_versions, gds_parser_runs, gds_parsed_entities, gds_parse_corrections, gds_parse_training_samples, gds_parser_evaluation_runs, plus provider target placeholders on booking records/workspaces; no live supplier execution",
+        "status": "built",
+        "action": "Use Phase 36.6 governed parser foundations; defer credentials, health, failover, and execution.",
     },
     {
         "category": "Requests/Trips/Offers/Bookings",
@@ -121,11 +121,12 @@ ROUTE_POLICY: dict[str, Any] = {
     "route_mappings": [
         {"supplementary": "/agent/clients", "agencyos": "/agency/clients"},
         {"supplementary": "/agent/trip-requests", "agencyos": "/agency/requests and /agency/trips"},
-        {"supplementary": "/agent/parser", "agencyos": "future /agency/parser"},
-        {"supplementary": "/agent/parser/imports", "agencyos": "/agency/booking-imports"},
+        {"supplementary": "/agent/parser", "agencyos": "/agency/gds-parser"},
+        {"supplementary": "/agent/parser/imports", "agencyos": "/agency/booking-imports and /agency/gds-parser"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
+        {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
         {"supplementary": "/bookings", "agencyos": "/agency/booking-workspaces"},
         {"supplementary": "/changes or /exchanges", "agencyos": "/agency/trips/{trip_id} and /agency/tickets-emds"},
@@ -138,12 +139,7 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
         "phase": "Phase 37",
         "title": "Provider Import And Issuance Provenance",
-        "reason": "Document foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
-    },
-    {
-        "phase": "Phase 37.1",
-        "title": "GDS Parser Foundation + Training Samples",
-        "reason": "GdsParseSample and AiTraceEvent prepare safe parser samples without provider execution.",
+        "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
         "phase": "Phase 37.2",
@@ -200,6 +196,13 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "DocumentPackage",
             "DocumentShareRecord",
             "DocumentContextService and DocumentRenderService",
+            "GdsParserProfile",
+            "GdsParserVersion",
+            "GdsParserRun",
+            "GdsParsedEntity",
+            "GdsParseCorrection",
+            "GdsParseTrainingSample",
+            "GdsParserEvaluationRun",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -210,10 +213,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Booking workspace creation entry point fixed after Phase 36.4",
             "Standalone booking, import draft, and existing-trip change/exchange foundations built in Phase 36.4.6",
             "Document foundation built in Phase 36.5",
+            "GDS parser foundation and training samples built in Phase 36.6",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
-            "Advanced GDS parser UI, training workflows, and provider reconciliation",
+            "Full GDS grammar coverage, provider reconciliation, and live supplier execution",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",
@@ -227,7 +231,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
         "next_immediate_phase": "Phase 37 - Provider Import And Issuance Provenance",
-        "gap_count": 7,
+        "gap_count": 6,
         "rejected_route_count": len(ROUTE_POLICY["rejected_routes"]),
     }
 

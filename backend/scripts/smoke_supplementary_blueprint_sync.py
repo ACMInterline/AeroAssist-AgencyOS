@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_36_5_document_foundation"
+EXPECTED_PHASE = "phase_36_6_gds_parser_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -77,6 +77,7 @@ def main() -> int:
         "tickets_emd_phase_36_4_recognized",
         "booking_workspace_creation_entrypoint_recognized",
         "phase_36_5_documents_ready",
+        "phase_36_6_gds_parser_ready",
     ]:
         if blueprint_sync.get(flag) is not True:
             raise AssertionError(f"Blueprint sync readiness missing flag: {flag}")
@@ -105,6 +106,9 @@ def main() -> int:
     document_item = next((item for item in adoption.get("items", []) if item.get("category") == "Documents"), {})
     if document_item.get("status") != "built" or "Phase 36.5" not in document_item.get("action", ""):
         raise AssertionError("Blueprint adoption map did not recognize Phase 36.5 Document Foundation.")
+    parser_item = next((item for item in adoption.get("items", []) if item.get("category") == "GDS/Supplier"), {})
+    if parser_item.get("status") != "built" or "Phase 36.6" not in parser_item.get("action", ""):
+        raise AssertionError("Blueprint adoption map did not recognize Phase 36.6 GDS Parser Foundation.")
 
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
@@ -123,13 +127,15 @@ def main() -> int:
         raise AssertionError("Gap summary did not recognize Tickets + EMD Foundation as already built.")
     if not any("Document foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Document Foundation as already built.")
+    if not any("GDS parser foundation" in item for item in gaps.get("already_built", [])):
+        raise AssertionError("Gap summary did not recognize GDS Parser Foundation as already built.")
 
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
     if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 37":
         raise AssertionError("Next phase recommendations did not start with Phase 37.")
 
     summary = get("/api/platform/summary", OWNER_HEADERS)
-    for collection_name in ["ai_trace_events", "adm_risk_events", "gds_parse_samples", "airline_brand_assets"]:
+    for collection_name in ["ai_trace_events", "adm_risk_events", "gds_parse_samples", "gds_parser_runs", "gds_parse_training_samples", "airline_brand_assets"]:
         if collection_name not in (summary.get("counts") or {}):
             raise AssertionError(f"Platform summary missing collection count: {collection_name}")
 

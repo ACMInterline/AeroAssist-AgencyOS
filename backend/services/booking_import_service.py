@@ -19,6 +19,7 @@ from models import (
     TicketSourceContext,
 )
 from services.booking_workspace_service import BookingWorkspaceService
+from services.gds_parser_service import GdsParserService
 from services.ticket_emd_service import TicketEmdService
 
 
@@ -69,24 +70,10 @@ class BookingImportService:
         return {"draft": created, "provider_execution_disabled": True}
 
     async def parse_import_draft(self, agency_id: str, draft_id: str, user: dict) -> dict[str, Any] | None:
-        draft = await self.get_import_draft(agency_id, draft_id)
-        if not draft:
+        result = await GdsParserService(self.db).parse_booking_import_draft(agency_id, draft_id, {}, user)
+        if not result:
             return None
-        parsed = self._parse_text(draft.get("raw_text") or "")
-        parser_status = BookingImportParserStatus.PARSED.value
-        warnings = parsed.get("warnings") or []
-        if warnings or not parsed.get("record_locator") or not parsed.get("segments"):
-            parser_status = BookingImportParserStatus.NEEDS_REVIEW.value
-        updated = await self.db.collection("booking_import_drafts").update_one(
-            {"agency_id": agency_id, "id": draft_id},
-            {
-                "parsed_json": parsed,
-                "parser_status": parser_status,
-                "warnings_json": warnings,
-                "error_json": {},
-            },
-        )
-        return {"draft": updated, "parsed": parsed, "provider_execution_disabled": True}
+        return {**result, "provider_execution_disabled": True}
 
     async def import_draft_as_booking(
         self,

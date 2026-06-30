@@ -22,6 +22,8 @@ const documentTypes = [
   "exchange_confirmation",
   "refund_quote",
   "import_review_summary",
+  "booking_import_review_summary",
+  "gds_parse_review_summary",
   "internal_case_summary",
 ]
 
@@ -35,6 +37,7 @@ const sourceTypes = [
   ["ticket_record", "Ticket record"],
   ["emd_record", "EMD record"],
   ["booking_import_draft", "Booking import draft"],
+  ["gds_parser_run", "GDS parser run"],
   ["trip_change_operation", "Trip change operation"],
   ["ticket_exchange_operation", "Ticket exchange operation"],
   ["emd_exchange_operation", "EMD exchange operation"],

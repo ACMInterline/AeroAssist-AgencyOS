@@ -21,7 +21,7 @@ from models import (
 from services.document_context_service import DocumentContextService
 
 
-PHASE_LABEL = "phase_36_5_document_foundation"
+PHASE_LABEL = "phase_36_6_gds_parser_foundation"
 
 
 DEFAULT_TEMPLATES = [
@@ -42,6 +42,8 @@ DEFAULT_TEMPLATES = [
     ("exchange_confirmation", "exchange_confirmation", "Exchange Confirmation", "Internal exchange/reissue mirror confirmation."),
     ("refund_quote", "refund_quote", "Refund Quote", "Internal refund quote summary."),
     ("import_review_summary", "import_review_summary", "Import Review Summary", "Booking import parse/review summary."),
+    ("booking_import_review_summary", "booking_import_review_summary", "Booking Import Review Summary", "Governed booking import parser review summary."),
+    ("gds_parse_review_summary", "gds_parse_review_summary", "GDS Parse Review Summary", "Parser run confidence, entities, warnings, and correction summary."),
     ("internal_case_summary", "internal_case_summary", "Internal Case Summary", "Internal operational case summary."),
 ]
 
@@ -331,7 +333,13 @@ class DocumentRenderService:
             body += _section("Change / exchange", _key_values([("Operation", change.get("operation_type")), ("Reason", change.get("reason")), ("Original", change.get("original_ticket_record_id") or change.get("original_emd_record_id") or change.get("source_booking_record_id")), ("New mirror", change.get("new_ticket_record_id") or change.get("new_emd_record_id") or change.get("new_booking_record_id"))]))
         if context.get("import_summary"):
             imported = context["import_summary"]
-            body += _section("Import review", _key_values([("Source type", imported.get("source_type")), ("Parser status", imported.get("parser_status")), ("Record locator", imported.get("record_locator")), ("Tickets parsed", len(context.get("ticket_numbers") or [])), ("EMDs parsed", len(context.get("emd_numbers") or []))]))
+            body += _section("Import review", _key_values([("Source type", imported.get("source_type")), ("Parser status", imported.get("parser_status")), ("Parser run", imported.get("latest_parser_run_id")), ("Confidence", imported.get("overall_confidence")), ("Record locator", imported.get("record_locator")), ("Tickets parsed", len(context.get("ticket_numbers") or [])), ("EMDs parsed", len(context.get("emd_numbers") or []))]))
+        if context.get("parser_run_summary"):
+            parser = context["parser_run_summary"]
+            body += _section("Parser run", _key_values([("Status", parser.get("parse_status")), ("Confidence", parser.get("overall_confidence")), ("Detected provider", parser.get("provider_family_detected")), ("Detected format", parser.get("input_format_detected")), ("Profile", parser.get("parser_profile_id")), ("Version", parser.get("parser_version_id"))]))
+            body += _section("Parsed entities", _table(["Type", "Summary", "Confidence", "Status"], [[item.get("entity_type"), item.get("summary"), item.get("confidence"), item.get("status")] for item in context.get("parsed_entities") or []]))
+            body += _section("Corrections", _table(["Type", "Entity", "Reason"], [[item.get("correction_type"), item.get("parsed_entity_id"), item.get("correction_reason")] for item in context.get("parse_corrections") or []]))
+            body += _section("Training samples", _table(["Title", "Status", "Difficulty"], [[item.get("sample_title"), item.get("sample_status"), item.get("difficulty")] for item in context.get("training_samples") or []]))
         body += _section("Source links", _table(["Type", "Id"], [[item.get("type"), item.get("id")] for item in context.get("source_links") or []]))
         return title, _shell(title, context, body, warnings), _render_text(title, context, warnings)
 
@@ -343,7 +351,7 @@ class DocumentRenderService:
             context = await self.contexts.build_mixed_context(agency_id, payload.source_context_ids_json or {})
             warnings.append({"code": "source_context_missing", "message": "Primary source context was not found; rendered from available manual context only."})
         if payload.render_format == "pdf":
-            warnings.append({"code": "pdf_not_required", "message": "PDF export is not required in Phase 36.5; HTML preview was rendered."})
+            warnings.append({"code": "pdf_not_required", "message": "PDF export is not required in Phase 36.6; HTML preview was rendered."})
         context.setdefault("warnings_json", []).extend(warnings)
         title, rendered_html, rendered_text = self._render(str(payload.document_type), context, template)
         job = DocumentRenderJob(

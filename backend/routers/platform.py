@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_5_document_foundation",
+        "phase": "phase_36_6_gds_parser_foundation",
     }
 
 
@@ -89,6 +89,13 @@ async def summary(
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),
+            "gds_parser_profiles": await db.collection("gds_parser_profiles").count(),
+            "gds_parser_versions": await db.collection("gds_parser_versions").count(),
+            "gds_parser_runs": await db.collection("gds_parser_runs").count(),
+            "gds_parsed_entities": await db.collection("gds_parsed_entities").count(),
+            "gds_parse_corrections": await db.collection("gds_parse_corrections").count(),
+            "gds_parse_training_samples": await db.collection("gds_parse_training_samples").count(),
+            "gds_parser_evaluation_runs": await db.collection("gds_parser_evaluation_runs").count(),
             "airline_brand_assets": await db.collection("airline_brand_assets").count(),
             "invoices": await db.collection("invoices").count(),
             "payments": await db.collection("payment_records").count(),
@@ -186,6 +193,8 @@ async def summary(
             "Ticket and EMD mirror foundation",
             "Supplementary blueprint adoption and canonical route sync foundation",
             "Standalone booking, import draft, and existing-trip change/exchange mirror foundation",
+            "Document foundation for templates, render jobs, packages, and internal share records",
+            "GDS parser profiles, versions, runs, entities, corrections, training samples, and evaluations foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -194,6 +203,8 @@ async def summary(
             "Automatic document sending or provider webhooks",
             "Automatic booking, ticketing, or airline execution from portal actions",
             "Live GDS/NDC/provider exchange, refund, void, or reissue execution",
+            "External AI parser execution",
+            "Full GDS host grammar coverage and provider reconciliation",
         ],
     }
 

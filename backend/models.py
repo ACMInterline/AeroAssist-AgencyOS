@@ -3304,6 +3304,12 @@ class BookingImportDraft(BaseDocument):
     raw_text: str
     parsed_json: Dict[str, Any] = Field(default_factory=dict)
     parser_status: BookingImportParserStatus = BookingImportParserStatus.DRAFT
+    latest_parser_run_id: Optional[str] = None
+    parser_profile_id: Optional[str] = None
+    parser_version_id: Optional[str] = None
+    overall_confidence: Optional[float] = None
+    parsed_entity_counts_json: Dict[str, Any] = Field(default_factory=dict)
+    normalized_preview_json: Dict[str, Any] = Field(default_factory=dict)
     linked_client_id: Optional[str] = None
     linked_passenger_ids: List[str] = Field(default_factory=list)
     linked_trip_id: Optional[str] = None
@@ -3470,10 +3476,123 @@ class GdsParseSampleMode(str, Enum):
 
 class GdsParseSampleSource(str, Enum):
     MANUAL = "manual"
+    BOOKING_IMPORT_DRAFT = "booking_import_draft"
+    PARSER_RUN = "parser_run"
+    MANUAL_UPLOAD = "manual_upload"
+    SYNTHETIC = "synthetic"
     TRAVELPORT = "travelport"
     AMADEUS = "amadeus"
     SUPPLIER = "supplier"
     OTHER = "other"
+
+
+class GdsProviderFamily(str, Enum):
+    AMADEUS = "amadeus"
+    SABRE = "sabre"
+    TRAVELPORT = "travelport"
+    GENERIC_GDS = "generic_gds"
+    AIRLINE_CONFIRMATION = "airline_confirmation"
+    AGENCY_ITINERARY = "agency_itinerary"
+    MIXED = "mixed"
+    UNKNOWN = "unknown"
+
+
+class GdsInputFormat(str, Enum):
+    CRYPTIC_PNR = "cryptic_pnr"
+    ITINERARY_TEXT = "itinerary_text"
+    TICKET_TEXT = "ticket_text"
+    EMD_TEXT = "emd_text"
+    PRICING_TEXT = "pricing_text"
+    QUEUE_MESSAGE = "queue_message"
+    EMAIL_CONFIRMATION = "email_confirmation"
+    MIXED_TEXT = "mixed_text"
+    UNKNOWN = "unknown"
+
+
+class GdsParserStrategy(str, Enum):
+    REGEX_RULES = "regex_rules"
+    SECTION_RULES = "section_rules"
+    HYBRID_RULES = "hybrid_rules"
+    MANUAL_REVIEW_ONLY = "manual_review_only"
+
+
+class GdsParserVersionStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class GdsParserRunStatus(str, Enum):
+    PARSED = "parsed"
+    PARTIAL = "partial"
+    FAILED = "failed"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+
+
+class GdsParsedEntityType(str, Enum):
+    PASSENGER = "passenger"
+    SEGMENT = "segment"
+    TICKET = "ticket"
+    TICKET_COUPON = "ticket_coupon"
+    EMD = "emd"
+    EMD_COUPON = "emd_coupon"
+    SSR = "ssr"
+    OSI = "osi"
+    PRICING = "pricing"
+    FARE_BASIS = "fare_basis"
+    BAGGAGE = "baggage"
+    CONTACT = "contact"
+    REMARK = "remark"
+    DOCUMENT = "document"
+    UNKNOWN = "unknown"
+
+
+class GdsParsedEntityStatus(str, Enum):
+    EXTRACTED = "extracted"
+    ACCEPTED = "accepted"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    IGNORED = "ignored"
+
+
+class GdsParseCorrectionType(str, Enum):
+    ACCEPT = "accept"
+    CORRECT = "correct"
+    REJECT = "reject"
+    IGNORE = "ignore"
+    ADD_MISSING = "add_missing"
+
+
+class GdsParseSampleScope(str, Enum):
+    PLATFORM = "platform"
+    AGENCY = "agency"
+
+
+class GdsParseSampleStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    PROMOTED = "promoted"
+
+
+class GdsParseSampleDifficulty(str, Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+    EDGE_CASE = "edge_case"
+
+
+class GdsParseSampleRedactionStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    REDACTED = "redacted"
+
+
+class GdsParserEvaluationStatus(str, Enum):
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class AirlineBrandAssetType(str, Enum):
@@ -3521,11 +3640,185 @@ class AdmRiskEvent(BaseDocument):
 class GdsParseSample(BaseDocument):
     agency_id: Optional[str] = None
     created_by_user_id: Optional[str] = None
+    scope: GdsParseSampleScope = GdsParseSampleScope.AGENCY
+    booking_import_draft_id: Optional[str] = None
+    parser_run_id: Optional[str] = None
+    provider_family: GdsProviderFamily = GdsProviderFamily.UNKNOWN
+    input_format: GdsInputFormat = GdsInputFormat.UNKNOWN
+    sample_title: Optional[str] = None
     mode: GdsParseSampleMode = GdsParseSampleMode.PNR
     raw_text: str
     parsed_json: Dict[str, Any] = Field(default_factory=dict)
+    expected_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    corrected_payload_json: Optional[Dict[str, Any]] = None
+    sample_status: GdsParseSampleStatus = GdsParseSampleStatus.DRAFT
+    difficulty: GdsParseSampleDifficulty = GdsParseSampleDifficulty.MEDIUM
+    tags: List[str] = Field(default_factory=list)
+    redaction_status: GdsParseSampleRedactionStatus = GdsParseSampleRedactionStatus.NOT_REQUIRED
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
     source: GdsParseSampleSource = GdsParseSampleSource.MANUAL
     notes: Optional[str] = None
+
+
+class GdsParserProfile(BaseDocument):
+    profile_key: str
+    title: str
+    description: Optional[str] = None
+    provider_family: GdsProviderFamily = GdsProviderFamily.GENERIC_GDS
+    input_format: GdsInputFormat = GdsInputFormat.CRYPTIC_PNR
+    active: bool = True
+    default_for_provider_family: bool = False
+    parser_strategy: GdsParserStrategy = GdsParserStrategy.HYBRID_RULES
+    confidence_threshold_import: float = 0.80
+    confidence_threshold_warning: float = 0.60
+    created_by_user_id: Optional[str] = None
+
+
+class GdsParserVersion(BaseDocument):
+    parser_profile_id: str
+    version_label: str
+    status: GdsParserVersionStatus = GdsParserVersionStatus.DRAFT
+    rules_json: Dict[str, Any] = Field(default_factory=dict)
+    extraction_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    known_limitations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    change_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    activated_at: Optional[datetime] = None
+
+
+class GdsParserRun(BaseDocument):
+    agency_id: str
+    booking_import_draft_id: Optional[str] = None
+    parser_profile_id: Optional[str] = None
+    parser_version_id: Optional[str] = None
+    input_hash: str
+    input_excerpt: str
+    provider_family_detected: GdsProviderFamily = GdsProviderFamily.UNKNOWN
+    input_format_detected: GdsInputFormat = GdsInputFormat.UNKNOWN
+    parse_status: GdsParserRunStatus = GdsParserRunStatus.MANUAL_REVIEW_REQUIRED
+    overall_confidence: float = 0.0
+    extracted_passenger_count: int = 0
+    extracted_segment_count: int = 0
+    extracted_ticket_count: int = 0
+    extracted_emd_count: int = 0
+    extracted_ssr_count: int = 0
+    extracted_osi_count: int = 0
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    errors_json: List[Dict[str, Any]] = Field(default_factory=list)
+    extracted_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    normalized_preview_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+
+
+class GdsParsedEntity(BaseDocument):
+    agency_id: str
+    parser_run_id: str
+    booking_import_draft_id: Optional[str] = None
+    entity_type: GdsParsedEntityType
+    entity_key: Optional[str] = None
+    source_text: str
+    normalized_json: Dict[str, Any] = Field(default_factory=dict)
+    confidence: float = 0.0
+    status: GdsParsedEntityStatus = GdsParsedEntityStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    corrected_by_user_id: Optional[str] = None
+    corrected_at: Optional[datetime] = None
+
+
+class GdsParseCorrection(BaseDocument):
+    agency_id: str
+    parser_run_id: str
+    parsed_entity_id: Optional[str] = None
+    booking_import_draft_id: Optional[str] = None
+    correction_type: GdsParseCorrectionType
+    entity_type: GdsParsedEntityType = GdsParsedEntityType.UNKNOWN
+    before_json: Dict[str, Any] = Field(default_factory=dict)
+    after_json: Dict[str, Any] = Field(default_factory=dict)
+    correction_reason: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class GdsParserEvaluationRun(BaseDocument):
+    parser_profile_id: str
+    parser_version_id: str
+    sample_ids: List[str] = Field(default_factory=list)
+    evaluation_status: GdsParserEvaluationStatus = GdsParserEvaluationStatus.RUNNING
+    sample_count: int = 0
+    exact_match_count: int = 0
+    partial_match_count: int = 0
+    failed_count: int = 0
+    average_confidence: float = 0.0
+    passenger_accuracy: Optional[float] = None
+    segment_accuracy: Optional[float] = None
+    ticket_accuracy: Optional[float] = None
+    emd_accuracy: Optional[float] = None
+    ssr_osi_accuracy: Optional[float] = None
+    pricing_accuracy: Optional[float] = None
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    results_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+
+
+class GdsParserVersionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    version_label: str
+    rules_json: Dict[str, Any] = Field(default_factory=dict)
+    extraction_schema_json: Dict[str, Any] = Field(default_factory=dict)
+    known_limitations_json: List[Dict[str, Any]] = Field(default_factory=list)
+    change_notes: Optional[str] = None
+
+
+class GdsParserParseTextRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    raw_text: str
+    parser_profile_id: Optional[str] = None
+    parser_version_id: Optional[str] = None
+    booking_import_draft_id: Optional[str] = None
+
+
+class GdsParserCorrectionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    parser_run_id: str
+    parsed_entity_id: Optional[str] = None
+    booking_import_draft_id: Optional[str] = None
+    correction_type: GdsParseCorrectionType
+    entity_type: GdsParsedEntityType = GdsParsedEntityType.UNKNOWN
+    before_json: Dict[str, Any] = Field(default_factory=dict)
+    after_json: Dict[str, Any] = Field(default_factory=dict)
+    correction_reason: Optional[str] = None
+
+
+class GdsParseTrainingSampleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    scope: GdsParseSampleScope = GdsParseSampleScope.AGENCY
+    sample_title: Optional[str] = None
+    expected_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    corrected_payload_json: Optional[Dict[str, Any]] = None
+    difficulty: GdsParseSampleDifficulty = GdsParseSampleDifficulty.MEDIUM
+    tags: List[str] = Field(default_factory=list)
+    redaction_status: GdsParseSampleRedactionStatus = GdsParseSampleRedactionStatus.NOT_REQUIRED
+
+
+class GdsParseTrainingSampleReview(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    sample_status: GdsParseSampleStatus
+    corrected_payload_json: Optional[Dict[str, Any]] = None
+    review_notes: Optional[str] = None
+    redaction_status: Optional[GdsParseSampleRedactionStatus] = None
+
+
+class GdsParserEvaluationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    parser_profile_id: str
+    parser_version_id: str
+    sample_ids: List[str] = Field(default_factory=list)
 
 
 class AirlineBrandAsset(BaseDocument):
@@ -5629,6 +5922,8 @@ class DocumentType(str, Enum):
     EXCHANGE_CONFIRMATION = "exchange_confirmation"
     REFUND_QUOTE = "refund_quote"
     IMPORT_REVIEW_SUMMARY = "import_review_summary"
+    BOOKING_IMPORT_REVIEW_SUMMARY = "booking_import_review_summary"
+    GDS_PARSE_REVIEW_SUMMARY = "gds_parse_review_summary"
     INTERNAL_CASE_SUMMARY = "internal_case_summary"
     CUSTOM = "custom"
     INVOICE_SUMMARY = "invoice_summary"
@@ -5646,6 +5941,7 @@ class DocumentSourceContextType(str, Enum):
     TICKET_RECORD = "ticket_record"
     EMD_RECORD = "emd_record"
     BOOKING_IMPORT_DRAFT = "booking_import_draft"
+    GDS_PARSER_RUN = "gds_parser_run"
     TRIP_CHANGE_OPERATION = "trip_change_operation"
     TICKET_EXCHANGE_OPERATION = "ticket_exchange_operation"
     EMD_EXCHANGE_OPERATION = "emd_exchange_operation"

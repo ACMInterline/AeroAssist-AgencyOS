@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_documents, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -21,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.5 document foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.6 GDS parser foundation.",
 )
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_5_document_foundation",
+        "phase": "phase_36_6_gds_parser_foundation",
     }
 
 
@@ -198,6 +198,15 @@ async def readiness() -> dict:
     ai_trace_event_count = await database.collection("ai_trace_events").count()
     adm_risk_event_count = await database.collection("adm_risk_events").count()
     gds_parse_sample_count = await database.collection("gds_parse_samples").count()
+    parser_profile_count = await database.collection("gds_parser_profiles").count()
+    parser_version_count = await database.collection("gds_parser_versions").count()
+    parser_run_count = await database.collection("gds_parser_runs").count()
+    parsed_entity_count = await database.collection("gds_parsed_entities").count()
+    parse_correction_count = await database.collection("gds_parse_corrections").count()
+    training_sample_count = await database.collection("gds_parse_training_samples").count()
+    parser_evaluation_run_count = await database.collection("gds_parser_evaluation_runs").count()
+    low_confidence_parser_run_count = await database.collection("gds_parser_runs").count({"parse_status": "manual_review_required"})
+    approved_training_sample_count = await database.collection("gds_parse_training_samples").count({"sample_status": "approved"})
     airline_brand_asset_count = await database.collection("airline_brand_assets").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
@@ -220,7 +229,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_5_document_foundation",
+        "phase": "phase_36_6_gds_parser_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -511,6 +520,36 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Document templates, context previews, render jobs, packages, and internal/manual share records are enabled; live delivery, e-signature, provider execution, payments, invoices/accounting, and settlement remain disabled.",
         },
+        "gds_parser_foundation": {
+            "parser_profile_foundation_enabled": True,
+            "parser_version_foundation_enabled": True,
+            "parser_run_foundation_enabled": True,
+            "parsed_entity_foundation_enabled": True,
+            "parse_correction_foundation_enabled": True,
+            "training_sample_foundation_enabled": True,
+            "parser_evaluation_foundation_enabled": True,
+            "agency_gds_parser_ui_enabled": True,
+            "platform_gds_parser_governance_ui_enabled": True,
+            "booking_import_parser_integration_enabled": True,
+            "parser_document_context_enabled": True,
+            "conservative_parser_rules_enabled": True,
+            "manual_review_required_for_low_confidence": True,
+            "explicit_import_required": True,
+            "live_gds_connection_disabled": True,
+            "live_provider_execution_disabled": True,
+            "external_ai_parser_disabled": True,
+            "parser_profile_count": parser_profile_count,
+            "parser_version_count": parser_version_count,
+            "parser_run_count": parser_run_count,
+            "parsed_entity_count": parsed_entity_count,
+            "parse_correction_count": parse_correction_count,
+            "training_sample_count": training_sample_count,
+            "parser_evaluation_run_count": parser_evaluation_run_count,
+            "low_confidence_parser_run_count": low_confidence_parser_run_count,
+            "approved_training_sample_count": approved_training_sample_count,
+            "readiness_required": False,
+            "diagnostic": "Governed GDS parser profiles, versions, runs, entities, corrections, training samples, and evaluations are enabled. Parsing is deterministic and conservative; import remains explicit and no live GDS/provider/AI parser connection is enabled.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -527,6 +566,7 @@ async def readiness() -> dict:
             "gds_confirmation_import_foundation_enabled": True,
             "existing_trip_change_exchange_workflow_recognized": True,
             "phase_36_5_documents_ready": True,
+            "phase_36_6_gds_parser_ready": True,
             "ai_trace_event_count": ai_trace_event_count,
             "adm_risk_event_count": adm_risk_event_count,
             "gds_parse_sample_count": gds_parse_sample_count,
@@ -569,6 +609,7 @@ app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_documents.router)
+app.include_router(platform_gds_parser.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
@@ -581,6 +622,7 @@ app.include_router(agency_offer_builder.router)
 app.include_router(agency_offer_acceptance.router)
 app.include_router(agency_booking_workspaces.router)
 app.include_router(agency_booking_imports.router)
+app.include_router(agency_gds_parser.router)
 app.include_router(agency_ticket_emd.router)
 app.include_router(agency_trip_changes.router)
 app.include_router(agency_documents.router)

@@ -27,6 +27,7 @@ import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetai
 import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
 import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
+import GdsParserPage from "./pages/agency/GdsParserPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
 import PassengersPage from "./pages/agency/PassengersPage"
@@ -54,6 +55,7 @@ import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
+import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
@@ -90,6 +92,7 @@ const routes = {
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
   "/platform/document-templates": PlatformDocumentTemplatesPage,
+  "/platform/gds-parser": PlatformGdsParserPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -98,6 +101,7 @@ const routes = {
   "/agency/settings/forms": FormProfilesPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/documents": DocumentsPage,
+  "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,
   "/agency/document-templates": DocumentTemplatesPage,
   "/agency/portal-actions": AgencyPortalActionsPage,
@@ -339,6 +343,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/booking-imports") {
     return <BookingImportsPage />
+  }
+
+  if (window.location.pathname === "/agency/gds-parser") {
+    return <GdsParserPage />
   }
 
   if (window.location.pathname === "/agency/tickets-emds") {

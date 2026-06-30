@@ -1035,16 +1035,33 @@ Avoid adding:
 
 - Full visual document designer, public document links, automatic delivery integrations, e-signature, payment or invoice/accounting workflows, settlement, live provider execution, or duplicate request/trip/offer/booking/ticket/EMD models.
 
+### Phase 36.6: GDS Parser Foundation + Training Samples
+
+Implemented scope:
+
+- Added governed parser profiles, parser versions, parser runs, parsed entities, parse corrections, training samples, and parser evaluation records.
+- Extended booking import drafts with latest parser run id, profile/version ids, overall confidence, entity counts, and normalized structured previews.
+- Added deterministic `GdsParserService` rules for conservative PNR/itinerary/ticket/EMD/pricing/SSR/OSI extraction without external calls.
+- Added agency APIs under `/api/agencies/{agency_id}/gds-parser/*` for profile listing, parse-text, import-draft parsing, run/entity review, corrections, and training sample creation.
+- Added platform APIs under `/api/platform/gds-parser/*` for default profile/version seeding, version creation/activation, training sample review, and parser evaluations.
+- Added `/agency/gds-parser` and `/platform/gds-parser` UI routes, plus booking-import and document-foundation entry points.
+- Added `gds_parser_run` document context plus `gds_parse_review_summary` and `booking_import_review_summary` document types/templates.
+- Added readiness flags and counts under `gds_parser_foundation`.
+
+Avoid adding:
+
+- Live GDS/NDC/provider connectivity, external AI parser calls, automatic mirror import, full host grammar coverage, provider reconciliation, live booking/ticket/EMD/exchange/refund/void execution, payments, invoices/accounting, settlement, `/agent` or `/admin` routes, or duplicate booking/ticket/EMD models.
+
 ### Phase 37: Provider Import And Issuance Provenance
 
 Recommended scope:
 
-- Provider import provenance, raw source payload preservation, and deeper ticket/EMD reconciliation.
+- Provider import provenance, raw source payload preservation, parser-run-to-provider reconciliation, and deeper ticket/EMD reconciliation.
 - Manual import/reconciliation workflow and provenance metadata.
 
 Avoid adding:
 
-- Direct GDS commands, NDC execution, automated ticketing, or settlement without explicit authorization.
+- Direct GDS commands, NDC execution, automated ticketing, live EMD issuance, exchange/refund/void execution, or settlement without explicit authorization.
 
 ### Phase 38: Invoices And Payments
 

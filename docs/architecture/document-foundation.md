@@ -19,6 +19,7 @@ Phase 36.5 adds a unified internal document foundation for AgencyOS operational 
 - booking workspaces and booking records
 - ticket records and EMD records
 - booking import drafts
+- GDS parser runs
 - trip change operations
 - ticket exchange operations and EMD exchange operations
 - passenger service requests
@@ -56,7 +57,12 @@ Agencies can preview context, render documents, rerender existing jobs, create p
 - Booking workspace detail links to booking confirmation, PNR mirror, and internal case summary documents.
 - Tickets & EMDs link to ticket and EMD receipt documents.
 - Booking imports link to import review summary documents.
+- GDS parser runs link to parse review summary documents.
 
 ## Readiness
 
 `/api/readiness` exposes a non-blocking `document_foundation` section with template, render job, package, share record, legacy rendered document, and export counts. The section explicitly keeps `live_delivery_disabled`, `e_signature_disabled`, and `payment_invoice_accounting_disabled` true, with `pdf_export_required` and `readiness_required` false.
+
+## Phase 36.6 Parser Context
+
+Phase 36.6 adds `gds_parser_run` as a document source context and default templates for `gds_parse_review_summary` and `booking_import_review_summary`. Parser documents summarize detected provider/input format, confidence, extracted entities, warnings, corrections, and training sample status without performing delivery or provider actions.
