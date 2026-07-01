@@ -66,3 +66,7 @@ Agencies can preview context, render documents, rerender existing jobs, create p
 ## Phase 36.6 Parser Context
 
 Phase 36.6 adds `gds_parser_run` as a document source context and default templates for `gds_parse_review_summary` and `booking_import_review_summary`. Parser documents summarize detected provider/input format, confidence, extracted entities, warnings, corrections, and training sample status without performing delivery or provider actions.
+
+## Phase 36.7 Policy Context
+
+Phase 36.7 adds `airline_policy_source`, `airline_policy_extraction_run`, and `airline_policy_approved_knowledge` as document source contexts. Default templates `airline_policy_extraction_summary` and `airline_policy_review_summary` summarize policy source metadata, detected sections, extraction run counts, candidate rule/pricing/communication/EMD/exception rows, warnings, review corrections, and approved knowledge records. These documents are internal review summaries only; they do not publish policies, call providers, perform AI extraction, or auto-promote policy candidates.

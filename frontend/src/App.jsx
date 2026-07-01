@@ -3,6 +3,7 @@ import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
+import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -49,6 +50,7 @@ import LoginPage from "./pages/auth/LoginPage"
 import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
+import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
@@ -93,6 +95,7 @@ const routes = {
   "/platform/documents": PlatformDocumentTemplatesPage,
   "/platform/document-templates": PlatformDocumentTemplatesPage,
   "/platform/gds-parser": PlatformGdsParserPage,
+  "/platform/airline-policy-ingestion": AirlinePolicyIngestionPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -100,6 +103,7 @@ const routes = {
   "/agency/reference": ReferenceDataPage,
   "/agency/settings/forms": FormProfilesPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
+  "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,

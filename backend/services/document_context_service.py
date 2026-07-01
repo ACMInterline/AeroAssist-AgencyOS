@@ -150,6 +150,12 @@ class DocumentContextService:
             "parsed_entities": [],
             "parse_corrections": [],
             "training_samples": [],
+            "policy_source_summary": {},
+            "policy_sections": [],
+            "policy_extraction_summary": {},
+            "policy_candidates": {},
+            "policy_review_corrections": [],
+            "approved_policy_knowledge": [],
             "warnings_json": [],
             "source_links": [],
         }
@@ -448,6 +454,109 @@ class DocumentContextService:
         context["source_links"].append({"type": "gds_parser_run", "id": parser_run_id})
         return context
 
+    async def build_airline_policy_source_context(self, agency_id: str, policy_source_id: str) -> dict[str, Any] | None:
+        source = await self.db.collection("airline_policy_sources").find_one({"id": policy_source_id})
+        if not source:
+            return None
+        if source.get("scope") == "agency" and source.get("agency_id") != agency_id:
+            return None
+        context = await self._base(agency_id)
+        context["source_context_type"] = "airline_policy_source"
+        context["source_context_id"] = policy_source_id
+        context["policy_source_summary"] = _compact(
+            {
+                "id": source["id"],
+                "scope": source.get("scope"),
+                "agency_id": source.get("agency_id"),
+                "airline_id": source.get("airline_id"),
+                "airline_iata_code": source.get("airline_iata_code"),
+                "airline_name": source.get("airline_name_snapshot"),
+                "service_domain": source.get("service_domain"),
+                "service_family": source.get("service_family"),
+                "source_title": source.get("source_title"),
+                "source_type": source.get("source_type"),
+                "ingestion_status": source.get("ingestion_status"),
+                "confidence_overall": source.get("confidence_overall"),
+                "effective_from": source.get("effective_from"),
+                "effective_to": source.get("effective_to"),
+                "raw_text_hash": source.get("raw_text_hash"),
+            }
+        )
+        context["policy_sections"] = await self.db.collection("airline_policy_sections").find_many({"policy_source_id": policy_source_id})
+        runs = await self.db.collection("airline_policy_extraction_runs").find_many({"policy_source_id": policy_source_id})
+        runs.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+        if runs:
+            context["policy_extraction_summary"] = self._policy_extraction_summary(runs[0])
+            context["policy_candidates"] = await self._policy_candidates(policy_source_id, runs[0]["id"])
+        else:
+            context["policy_candidates"] = await self._policy_candidates(policy_source_id)
+        context["policy_review_corrections"] = await self.db.collection("airline_policy_review_corrections").find_many({"policy_source_id": policy_source_id})
+        context["approved_policy_knowledge"] = await self.db.collection("airline_policy_approved_knowledge_records").find_many({"policy_source_id": policy_source_id})
+        context["warnings_json"].extend(_as_list(source.get("warnings_json")))
+        context["source_links"].append({"type": "airline_policy_source", "id": policy_source_id})
+        return context
+
+    async def build_airline_policy_extraction_run_context(self, agency_id: str, extraction_run_id: str) -> dict[str, Any] | None:
+        run = await self.db.collection("airline_policy_extraction_runs").find_one({"id": extraction_run_id})
+        if not run:
+            return None
+        source = await self.db.collection("airline_policy_sources").find_one({"id": run.get("policy_source_id")})
+        if not source:
+            return None
+        if source.get("scope") == "agency" and source.get("agency_id") != agency_id:
+            return None
+        context = await self.build_airline_policy_source_context(agency_id, source["id"])
+        if context is None:
+            return None
+        context["source_context_type"] = "airline_policy_extraction_run"
+        context["source_context_id"] = extraction_run_id
+        context["policy_extraction_summary"] = self._policy_extraction_summary(run)
+        context["policy_candidates"] = await self._policy_candidates(source["id"], extraction_run_id)
+        context["warnings_json"].extend(_as_list(run.get("warnings_json")))
+        context["source_links"].append({"type": "airline_policy_extraction_run", "id": extraction_run_id})
+        return context
+
+    async def build_airline_policy_approved_knowledge_context(self, agency_id: str, knowledge_id: str) -> dict[str, Any] | None:
+        record = await self.db.collection("airline_policy_approved_knowledge_records").find_one({"id": knowledge_id})
+        if not record:
+            return None
+        context = await self.build_airline_policy_source_context(agency_id, record.get("policy_source_id")) or await self._base(agency_id)
+        context["source_context_type"] = "airline_policy_approved_knowledge"
+        context["source_context_id"] = knowledge_id
+        context["approved_policy_knowledge"] = [record]
+        context["source_links"].append({"type": "airline_policy_approved_knowledge", "id": knowledge_id})
+        return context
+
+    def _policy_extraction_summary(self, run: dict[str, Any]) -> dict[str, Any]:
+        return _compact(
+            {
+                "id": run.get("id"),
+                "extractor_version": run.get("extractor_version"),
+                "extraction_status": run.get("extraction_status"),
+                "overall_confidence": run.get("overall_confidence"),
+                "rules": run.get("extracted_rule_count"),
+                "prices": run.get("extracted_price_count"),
+                "communication": run.get("extracted_ssr_osi_count"),
+                "emd_rules": run.get("extracted_emd_rule_count"),
+                "exceptions": run.get("extracted_exception_count"),
+                "distribution": run.get("extracted_distribution_count"),
+            }
+        )
+
+    async def _policy_candidates(self, policy_source_id: str, extraction_run_id: str | None = None) -> dict[str, Any]:
+        query = {"policy_source_id": policy_source_id}
+        if extraction_run_id:
+            query["extraction_run_id"] = extraction_run_id
+        groups = {
+            "rules": await self.db.collection("airline_policy_extracted_rules").find_many(query),
+            "prices": await self.db.collection("airline_policy_extracted_prices").find_many(query),
+            "communication_rules": await self.db.collection("airline_policy_extracted_communication_rules").find_many(query),
+            "emd_rules": await self.db.collection("airline_policy_extracted_emd_rules").find_many(query),
+            "exceptions": await self.db.collection("airline_policy_extracted_exceptions").find_many(query),
+        }
+        groups["counts"] = {key: len(value) for key, value in groups.items()}
+        return groups
+
     async def build_trip_change_context(self, agency_id: str, trip_change_operation_id: str) -> dict[str, Any] | None:
         operation = await self.db.collection("trip_change_operations").find_one({"agency_id": agency_id, "id": trip_change_operation_id})
         if not operation:
@@ -563,6 +672,12 @@ class DocumentContextService:
             return await self.build_import_review_context(agency_id, source_context_id)
         if source_context_type == "gds_parser_run" and source_context_id:
             return await self.build_gds_parser_run_context(agency_id, source_context_id)
+        if source_context_type == "airline_policy_source" and source_context_id:
+            return await self.build_airline_policy_source_context(agency_id, source_context_id)
+        if source_context_type == "airline_policy_extraction_run" and source_context_id:
+            return await self.build_airline_policy_extraction_run_context(agency_id, source_context_id)
+        if source_context_type == "airline_policy_approved_knowledge" and source_context_id:
+            return await self.build_airline_policy_approved_knowledge_context(agency_id, source_context_id)
         if source_context_type == "trip_change_operation" and source_context_id:
             return await self.build_trip_change_context(agency_id, source_context_id)
         if source_context_type == "ticket_exchange_operation" and source_context_id:

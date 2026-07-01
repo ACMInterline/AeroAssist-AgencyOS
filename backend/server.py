@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -21,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.6 GDS parser foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.7 airline policy ingestion foundation.",
 )
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_6_gds_parser_foundation",
+        "phase": "phase_36_7_airline_policy_ingestion_foundation",
     }
 
 
@@ -208,6 +208,20 @@ async def readiness() -> dict:
     low_confidence_parser_run_count = await database.collection("gds_parser_runs").count({"parse_status": "manual_review_required"})
     approved_training_sample_count = await database.collection("gds_parse_training_samples").count({"sample_status": "approved"})
     airline_brand_asset_count = await database.collection("airline_brand_assets").count()
+    policy_sources = await database.collection("airline_policy_sources").find_many()
+    policy_source_count = len(policy_sources)
+    policy_section_count = await database.collection("airline_policy_sections").count()
+    policy_extraction_run_count = await database.collection("airline_policy_extraction_runs").count()
+    extracted_rule_candidate_count = await database.collection("airline_policy_extracted_rules").count()
+    extracted_price_candidate_count = await database.collection("airline_policy_extracted_prices").count()
+    extracted_communication_candidate_count = await database.collection("airline_policy_extracted_communication_rules").count()
+    extracted_emd_rule_candidate_count = await database.collection("airline_policy_extracted_emd_rules").count()
+    extracted_exception_candidate_count = await database.collection("airline_policy_extracted_exceptions").count()
+    policy_review_correction_count = await database.collection("airline_policy_review_corrections").count()
+    approved_knowledge_record_count = await database.collection("airline_policy_approved_knowledge_records").count()
+    pending_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") in {"draft", "extracted", "reviewed"}])
+    approved_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") == "approved"])
+    rejected_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") == "rejected"])
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -229,7 +243,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_6_gds_parser_foundation",
+        "phase": "phase_36_7_airline_policy_ingestion_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -550,6 +564,40 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Governed GDS parser profiles, versions, runs, entities, corrections, training samples, and evaluations are enabled. Parsing is deterministic and conservative; import remains explicit and no live GDS/provider/AI parser connection is enabled.",
         },
+        "airline_policy_ingestion_foundation": {
+            "policy_source_foundation_enabled": True,
+            "policy_section_detection_enabled": True,
+            "policy_extraction_run_enabled": True,
+            "extracted_rule_candidates_enabled": True,
+            "extracted_price_candidates_enabled": True,
+            "extracted_communication_candidates_enabled": True,
+            "extracted_emd_rule_candidates_enabled": True,
+            "extracted_exception_candidates_enabled": True,
+            "review_correction_foundation_enabled": True,
+            "approved_knowledge_foundation_enabled": True,
+            "platform_policy_ingestion_ui_enabled": True,
+            "agency_policy_library_ui_enabled": True,
+            "document_policy_summary_context_enabled": True,
+            "deterministic_extraction_enabled": True,
+            "external_ai_policy_extraction_disabled": True,
+            "auto_promotion_disabled": True,
+            "platform_review_required_for_global_knowledge": True,
+            "policy_source_count": policy_source_count,
+            "policy_section_count": policy_section_count,
+            "policy_extraction_run_count": policy_extraction_run_count,
+            "extracted_rule_candidate_count": extracted_rule_candidate_count,
+            "extracted_price_candidate_count": extracted_price_candidate_count,
+            "extracted_communication_candidate_count": extracted_communication_candidate_count,
+            "extracted_emd_rule_candidate_count": extracted_emd_rule_candidate_count,
+            "extracted_exception_candidate_count": extracted_exception_candidate_count,
+            "policy_review_correction_count": policy_review_correction_count,
+            "approved_knowledge_record_count": approved_knowledge_record_count,
+            "pending_policy_source_count": pending_policy_source_count,
+            "approved_policy_source_count": approved_policy_source_count,
+            "rejected_policy_source_count": rejected_policy_source_count,
+            "readiness_required": False,
+            "diagnostic": "Airline policy ingestion stores raw sources, detected sections, deterministic extraction candidates, human review corrections, and approved knowledge records. External AI extraction and automatic global promotion remain disabled.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -610,6 +658,7 @@ app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_documents.router)
 app.include_router(platform_gds_parser.router)
+app.include_router(platform_airline_policy_ingestion.router)
 app.include_router(agencies.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
@@ -623,6 +672,7 @@ app.include_router(agency_offer_acceptance.router)
 app.include_router(agency_booking_workspaces.router)
 app.include_router(agency_booking_imports.router)
 app.include_router(agency_gds_parser.router)
+app.include_router(agency_airline_policy_library.router)
 app.include_router(agency_ticket_emd.router)
 app.include_router(agency_trip_changes.router)
 app.include_router(agency_documents.router)

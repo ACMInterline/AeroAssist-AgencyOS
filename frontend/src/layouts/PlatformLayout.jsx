@@ -36,6 +36,10 @@ export default function PlatformLayout({ children, user }) {
               <Plane className="h-4 w-4" />
               Airlines / Knowledge
             </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-policy-ingestion">
+              <FileText className="h-4 w-4" />
+              Policy Ingestion
+            </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/reference">
               <Database className="h-4 w-4" />
               Reference Data

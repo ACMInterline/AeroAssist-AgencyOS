@@ -49,6 +49,10 @@ Platform governance APIs live under `/api/platform/gds-parser/*`, with UI at `/p
 
 `DocumentContextService` supports `gds_parser_run` as a source context. Document types `gds_parse_review_summary` and `booking_import_review_summary` render parser confidence, extracted entities, warnings, corrections, and training sample status.
 
+## Phase 36.7 Policy Ingestion Relationship
+
+Airline policy ingestion is separate from the GDS parser. Phase 36.7 stores policy-derived SSR/OSI and GDS examples in policy communication candidate records so later phases can decide whether reviewed policy examples should inform parser samples or SSR/OSI generation. No parser profile, parser version, booking import, or live GDS behavior is changed by policy ingestion.
+
 ## Boundaries
 
 - No live GDS/NDC/provider connection.

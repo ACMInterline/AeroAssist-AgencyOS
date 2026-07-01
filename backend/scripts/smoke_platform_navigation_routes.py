@@ -10,7 +10,7 @@ from pathlib import Path
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_36_6_gds_parser_foundation"
+EXPECTED_PHASE = "phase_36_7_airline_policy_ingestion_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -65,13 +65,15 @@ def main() -> int:
     require_text(app, [
         '"/platform/agencies": PlatformAgenciesPage',
         '"/platform/airlines": AirlinesPage',
+        '"/platform/airline-policy-ingestion": AirlinePolicyIngestionPage',
         'import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"',
         'import AirlinesPage from "./pages/platform/AirlinesPage"',
+        'import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"',
         "PlatformAgencyDetailPage",
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",
     ], "App platform routes")
-    require_text(layout, ["Summary", "Agencies", "Reference Data", "Airlines / Knowledge", 'href="/platform/agencies"', 'href="/platform/airlines"'], "Platform header")
+    require_text(layout, ["Summary", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", 'href="/platform/agencies"', 'href="/platform/airlines"', 'href="/platform/airline-policy-ingestion"'], "Platform header")
     reject_text(layout, ["Agency Workspace", 'href="/agency"'], "Platform header")
     require_text(dashboard, ['href="/platform/agencies"', "Manage agencies"], "Platform dashboard")
     require_text(agencies, ["Agencies", "Create Agency", "Promise.allSettled", "agencies = state?.agencies || []"], "Platform agencies defensive route")

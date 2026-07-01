@@ -3821,6 +3821,478 @@ class GdsParserEvaluationCreate(BaseModel):
     sample_ids: List[str] = Field(default_factory=list)
 
 
+class AirlinePolicyScope(str, Enum):
+    PLATFORM = "platform"
+    AGENCY = "agency"
+
+
+class AirlinePolicySourceType(str, Enum):
+    PASTED_TEXT = "pasted_text"
+    UPLOADED_TEXT = "uploaded_text"
+    AIRLINE_WEBSITE_COPY = "airline_website_copy"
+    TRADE_SUPPORT_COPY = "trade_support_copy"
+    GDS_HELPDESK_COPY = "gds_helpdesk_copy"
+    EMAIL_POLICY_COPY = "email_policy_copy"
+    MANUAL_NOTE = "manual_note"
+    OTHER = "other"
+
+
+class AirlinePolicyRedactionStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    REDACTED = "redacted"
+
+
+class AirlinePolicyIngestionStatus(str, Enum):
+    DRAFT = "draft"
+    EXTRACTED = "extracted"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    ARCHIVED = "archived"
+
+
+class AirlinePolicySectionCategory(str, Enum):
+    GENERAL = "general"
+    APPLICABILITY = "applicability"
+    EMBARGOES = "embargoes"
+    HOW_TO_BOOK = "how_to_book"
+    MANDATORY_OPTIONAL = "mandatory_optional"
+    PRICING = "pricing"
+    SERVICES = "services"
+    AIRPORT_HANDLING = "airport_handling"
+    DOCUMENTS = "documents"
+    COUNTRY_RESTRICTIONS = "country_restrictions"
+    CHANGES_REFUNDS = "changes_refunds"
+    DISRUPTION = "disruption"
+    DISTRIBUTION = "distribution"
+    GDS_NDC = "gds_ndc"
+    SSR_OSI = "ssr_osi"
+    EMD_PAYMENT = "emd_payment"
+    INTERLINE = "interline"
+    EXCEPTIONS = "exceptions"
+    OTHER = "other"
+
+
+class AirlinePolicyExtractionStatus(str, Enum):
+    EXTRACTED = "extracted"
+    PARTIAL = "partial"
+    FAILED = "failed"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+
+
+class AirlinePolicyRuleType(str, Enum):
+    APPLICABILITY = "applicability"
+    MANDATORY_OPTIONAL = "mandatory_optional"
+    ELIGIBILITY = "eligibility"
+    BOOKING_DEADLINE = "booking_deadline"
+    ROUTE_RESTRICTION = "route_restriction"
+    AIRPORT_RESTRICTION = "airport_restriction"
+    CONNECTION_RESTRICTION = "connection_restriction"
+    CABIN_RESTRICTION = "cabin_restriction"
+    AIRCRAFT_RESTRICTION = "aircraft_restriction"
+    PASSENGER_AGE = "passenger_age"
+    PASSENGER_TYPE = "passenger_type"
+    REQUIRED_DOCUMENT = "required_document"
+    OPERATIONAL_REQUIREMENT = "operational_requirement"
+    REFUND_CHANGE = "refund_change"
+    DISRUPTION = "disruption"
+    OTHER = "other"
+
+
+class AirlinePolicyCandidateStatus(str, Enum):
+    EXTRACTED = "extracted"
+    ACCEPTED = "accepted"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    PROMOTED = "promoted"
+
+
+class AirlinePolicyMandatoryOptional(str, Enum):
+    MANDATORY = "mandatory"
+    OPTIONAL = "optional"
+    BOTH = "both"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyPriceType(str, Enum):
+    SERVICE_FEE = "service_fee"
+    ANCILLARY_FEE = "ancillary_fee"
+    FARE_INCLUDED = "fare_included"
+    EMD_FEE = "emd_fee"
+    AIRPORT_COLLECTED = "airport_collected"
+    AIRLINE_DIRECT_COLLECTED = "airline_direct_collected"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyPriceBasis(str, Enum):
+    PER_PASSENGER = "per_passenger"
+    PER_DIRECTION = "per_direction"
+    PER_SEGMENT = "per_segment"
+    PER_JOURNEY = "per_journey"
+    PER_BOOKING = "per_booking"
+    ROUNDTRIP_DOUBLED = "roundtrip_doubled"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyDirectConnecting(str, Enum):
+    DIRECT = "direct"
+    CONNECTING = "connecting"
+    BOTH = "both"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyCommunicationType(str, Enum):
+    SSR = "ssr"
+    OSI = "osi"
+    OTHS = "oths"
+    GDS_ENTRY = "gds_entry"
+    NDC = "ndc"
+    MANUAL_AIRLINE_CONTACT = "manual_airline_contact"
+    AIRLINE_PORTAL = "airline_portal"
+    OTHER = "other"
+
+
+class AirlinePolicyGdsSystem(str, Enum):
+    AMADEUS = "amadeus"
+    SABRE = "sabre"
+    TRAVELPORT = "travelport"
+    GENERIC = "generic"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyEmdType(str, Enum):
+    EMD_A = "emd_a"
+    EMD_S = "emd_s"
+    EITHER = "either"
+    NOT_APPLICABLE = "not_applicable"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyExceptionType(str, Enum):
+    EMBARGO = "embargo"
+    ROUTE_BLOCK = "route_block"
+    AIRPORT_BLOCK = "airport_block"
+    CONNECTION_BLOCK = "connection_block"
+    OVERNIGHT_FORBIDDEN = "overnight_forbidden"
+    AIRPORT_CHANGE_FORBIDDEN = "airport_change_forbidden"
+    TRAIN_BUS_FORBIDDEN = "train_bus_forbidden"
+    PARTNER_AIRLINE_LIMITATION = "partner_airline_limitation"
+    COUNTRY_DOCUMENT_RULE = "country_document_rule"
+    CABIN_LIMITATION = "cabin_limitation"
+    AIRCRAFT_LIMITATION = "aircraft_limitation"
+    WEATHER_TEMPERATURE = "weather_temperature"
+    MANUAL_REVIEW_REQUIRED = "manual_review_required"
+    OTHER = "other"
+
+
+class AirlinePolicyReviewTargetType(str, Enum):
+    RULE = "rule"
+    PRICE = "price"
+    COMMUNICATION_RULE = "communication_rule"
+    EMD_RULE = "emd_rule"
+    EXCEPTION = "exception"
+    SECTION = "section"
+    SOURCE = "source"
+
+
+class AirlinePolicyCorrectionType(str, Enum):
+    ACCEPT = "accept"
+    CORRECT = "correct"
+    REJECT = "reject"
+    PROMOTE = "promote"
+    ARCHIVE = "archive"
+    ADD_MISSING = "add_missing"
+
+
+class AirlinePolicyKnowledgeType(str, Enum):
+    APPLICABILITY_RULE = "applicability_rule"
+    PRICING_RULE = "pricing_rule"
+    COMMUNICATION_RULE = "communication_rule"
+    EMD_RULE = "emd_rule"
+    EXCEPTION_RULE = "exception_rule"
+    DOCUMENT_REQUIREMENT = "document_requirement"
+    OPERATIONAL_REQUIREMENT = "operational_requirement"
+    DISTRIBUTION_RULE = "distribution_rule"
+    LIFECYCLE_RULE = "lifecycle_rule"
+
+
+class AirlinePolicyApprovedKnowledgeStatus(str, Enum):
+    APPROVED = "approved"
+    SUPERSEDED = "superseded"
+    ARCHIVED = "archived"
+
+
+class AirlinePolicySource(BaseDocument):
+    scope: AirlinePolicyScope = AirlinePolicyScope.PLATFORM
+    agency_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    airline_iata_code: Optional[str] = None
+    airline_name_snapshot: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    source_type: AirlinePolicySourceType = AirlinePolicySourceType.PASTED_TEXT
+    source_title: str
+    source_url: Optional[str] = None
+    source_date: Optional[date] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    raw_text: str
+    raw_text_hash: str
+    language: str = "en"
+    redaction_status: AirlinePolicyRedactionStatus = AirlinePolicyRedactionStatus.NOT_REQUIRED
+    ingestion_status: AirlinePolicyIngestionStatus = AirlinePolicyIngestionStatus.DRAFT
+    confidence_overall: Optional[float] = None
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by_user_id: Optional[str] = None
+
+
+class AirlinePolicySection(BaseDocument):
+    policy_source_id: str
+    airline_id: Optional[str] = None
+    section_key: str
+    section_title: str
+    section_order: int = 0
+    section_text: str
+    detected_category: AirlinePolicySectionCategory = AirlinePolicySectionCategory.OTHER
+    confidence: float = 0.0
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class AirlinePolicyExtractionRun(BaseDocument):
+    policy_source_id: str
+    airline_id: Optional[str] = None
+    extractor_version: str = "phase_36_7_deterministic_v1"
+    extraction_status: AirlinePolicyExtractionStatus = AirlinePolicyExtractionStatus.MANUAL_REVIEW_REQUIRED
+    overall_confidence: float = 0.0
+    extracted_rule_count: int = 0
+    extracted_price_count: int = 0
+    extracted_exception_count: int = 0
+    extracted_ssr_osi_count: int = 0
+    extracted_emd_rule_count: int = 0
+    extracted_distribution_count: int = 0
+    warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    errors_json: List[Dict[str, Any]] = Field(default_factory=list)
+    extraction_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by_user_id: Optional[str] = None
+
+
+class AirlinePolicyExtractedRule(BaseDocument):
+    extraction_run_id: str
+    policy_source_id: str
+    section_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    rule_type: AirlinePolicyRuleType = AirlinePolicyRuleType.OTHER
+    normalized_condition_json: Dict[str, Any] = Field(default_factory=dict)
+    normalized_action_json: Dict[str, Any] = Field(default_factory=dict)
+    source_excerpt: str
+    confidence: float = 0.0
+    status: AirlinePolicyCandidateStatus = AirlinePolicyCandidateStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class AirlinePolicyExtractedPrice(BaseDocument):
+    extraction_run_id: str
+    policy_source_id: str
+    section_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    mandatory_optional: AirlinePolicyMandatoryOptional = AirlinePolicyMandatoryOptional.UNKNOWN
+    price_type: AirlinePolicyPriceType = AirlinePolicyPriceType.UNKNOWN
+    currency: Optional[str] = None
+    amount: Optional[float] = None
+    amount_min: Optional[float] = None
+    amount_max: Optional[float] = None
+    price_basis: AirlinePolicyPriceBasis = AirlinePolicyPriceBasis.UNKNOWN
+    route_band: Optional[str] = None
+    direct_connecting: AirlinePolicyDirectConnecting = AirlinePolicyDirectConnecting.UNKNOWN
+    origin_scope_json: Dict[str, Any] = Field(default_factory=dict)
+    destination_scope_json: Dict[str, Any] = Field(default_factory=dict)
+    cabin_scope_json: Dict[str, Any] = Field(default_factory=dict)
+    age_scope_json: Dict[str, Any] = Field(default_factory=dict)
+    fare_basis_or_designator: Optional[str] = None
+    emd_required: Optional[bool] = None
+    source_excerpt: str
+    confidence: float = 0.0
+    status: AirlinePolicyCandidateStatus = AirlinePolicyCandidateStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class AirlinePolicyExtractedCommunicationRule(BaseDocument):
+    extraction_run_id: str
+    policy_source_id: str
+    section_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    communication_type: AirlinePolicyCommunicationType = AirlinePolicyCommunicationType.OTHER
+    ssr_code: Optional[str] = None
+    osi_keyword: Optional[str] = None
+    gds_system: Optional[AirlinePolicyGdsSystem] = None
+    input_template: Optional[str] = None
+    example_text: Optional[str] = None
+    passenger_association_required: Optional[bool] = None
+    segment_association_required: Optional[bool] = None
+    airline_confirmation_required: Optional[bool] = None
+    confirmation_statuses_json: List[Dict[str, Any]] = Field(default_factory=list)
+    rejection_patterns_json: List[Dict[str, Any]] = Field(default_factory=list)
+    ndc_supported: Optional[bool] = None
+    source_excerpt: str
+    confidence: float = 0.0
+    status: AirlinePolicyCandidateStatus = AirlinePolicyCandidateStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class AirlinePolicyExtractedEmdRule(BaseDocument):
+    extraction_run_id: str
+    policy_source_id: str
+    section_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    emd_required: Optional[bool] = None
+    fee_included_in_fare: Optional[bool] = None
+    emd_type: AirlinePolicyEmdType = AirlinePolicyEmdType.UNKNOWN
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    service_subcode: Optional[str] = None
+    asvc_available: Optional[bool] = None
+    icw_ticket_required: Optional[bool] = None
+    icw_coupon_required: Optional[bool] = None
+    standalone_allowed: Optional[bool] = None
+    associated_ssr_code: Optional[str] = None
+    validating_carrier_rule: Optional[str] = None
+    plating_carrier_rule: Optional[str] = None
+    interline_allowed: Optional[bool] = None
+    interline_restricted: Optional[bool] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    refund_conditions_json: Dict[str, Any] = Field(default_factory=dict)
+    change_conditions_json: Dict[str, Any] = Field(default_factory=dict)
+    issuance_channel_json: Dict[str, Any] = Field(default_factory=dict)
+    gds_command_examples_json: List[Dict[str, Any]] = Field(default_factory=list)
+    source_excerpt: str
+    confidence: float = 0.0
+    status: AirlinePolicyCandidateStatus = AirlinePolicyCandidateStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class AirlinePolicyExtractedException(BaseDocument):
+    extraction_run_id: str
+    policy_source_id: str
+    section_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    exception_type: AirlinePolicyExceptionType = AirlinePolicyExceptionType.OTHER
+    normalized_condition_json: Dict[str, Any] = Field(default_factory=dict)
+    normalized_action_json: Dict[str, Any] = Field(default_factory=dict)
+    source_excerpt: str
+    confidence: float = 0.0
+    status: AirlinePolicyCandidateStatus = AirlinePolicyCandidateStatus.EXTRACTED
+    correction_json: Optional[Dict[str, Any]] = None
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+
+
+class AirlinePolicyReviewCorrection(BaseDocument):
+    policy_source_id: str
+    extraction_run_id: Optional[str] = None
+    target_type: AirlinePolicyReviewTargetType
+    target_id: Optional[str] = None
+    correction_type: AirlinePolicyCorrectionType
+    before_json: Dict[str, Any] = Field(default_factory=dict)
+    after_json: Dict[str, Any] = Field(default_factory=dict)
+    correction_reason: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+
+
+class AirlinePolicyApprovedKnowledgeRecord(BaseDocument):
+    policy_source_id: str
+    extraction_run_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    service_domain: str
+    service_family: str
+    service_variant: Optional[str] = None
+    knowledge_type: AirlinePolicyKnowledgeType
+    normalized_payload_json: Dict[str, Any] = Field(default_factory=dict)
+    source_excerpt: str
+    source_section_id: Optional[str] = None
+    confidence: float = 0.0
+    status: AirlinePolicyApprovedKnowledgeStatus = AirlinePolicyApprovedKnowledgeStatus.APPROVED
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    approved_by_user_id: Optional[str] = None
+    approved_at: Optional[datetime] = None
+
+
+class AirlinePolicySourceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    airline_iata_code: Optional[str] = None
+    airline_name_snapshot: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    source_type: AirlinePolicySourceType = AirlinePolicySourceType.PASTED_TEXT
+    source_title: str
+    source_url: Optional[str] = None
+    source_date: Optional[date] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    raw_text: str
+    language: str = "en"
+    notes: Optional[str] = None
+
+
+class AirlinePolicyExtractionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    extractor_version: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+
+
+class AirlinePolicyReviewCorrectionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_source_id: str
+    extraction_run_id: Optional[str] = None
+    target_type: AirlinePolicyReviewTargetType
+    target_id: Optional[str] = None
+    correction_type: AirlinePolicyCorrectionType
+    before_json: Dict[str, Any] = Field(default_factory=dict)
+    after_json: Dict[str, Any] = Field(default_factory=dict)
+    correction_reason: Optional[str] = None
+
+
+class AirlinePolicyPromoteCandidateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_source_id: str
+    extraction_run_id: Optional[str] = None
+    target_type: AirlinePolicyReviewTargetType
+    target_id: str
+    knowledge_type: Optional[AirlinePolicyKnowledgeType] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
@@ -5924,6 +6396,8 @@ class DocumentType(str, Enum):
     IMPORT_REVIEW_SUMMARY = "import_review_summary"
     BOOKING_IMPORT_REVIEW_SUMMARY = "booking_import_review_summary"
     GDS_PARSE_REVIEW_SUMMARY = "gds_parse_review_summary"
+    AIRLINE_POLICY_EXTRACTION_SUMMARY = "airline_policy_extraction_summary"
+    AIRLINE_POLICY_REVIEW_SUMMARY = "airline_policy_review_summary"
     INTERNAL_CASE_SUMMARY = "internal_case_summary"
     CUSTOM = "custom"
     INVOICE_SUMMARY = "invoice_summary"
@@ -5942,6 +6416,9 @@ class DocumentSourceContextType(str, Enum):
     EMD_RECORD = "emd_record"
     BOOKING_IMPORT_DRAFT = "booking_import_draft"
     GDS_PARSER_RUN = "gds_parser_run"
+    AIRLINE_POLICY_SOURCE = "airline_policy_source"
+    AIRLINE_POLICY_EXTRACTION_RUN = "airline_policy_extraction_run"
+    AIRLINE_POLICY_APPROVED_KNOWLEDGE = "airline_policy_approved_knowledge"
     TRIP_CHANGE_OPERATION = "trip_change_operation"
     TICKET_EXCHANGE_OPERATION = "ticket_exchange_operation"
     EMD_EXCHANGE_OPERATION = "emd_exchange_operation"

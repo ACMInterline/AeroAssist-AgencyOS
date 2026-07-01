@@ -1052,6 +1052,22 @@ Avoid adding:
 
 - Live GDS/NDC/provider connectivity, external AI parser calls, automatic mirror import, full host grammar coverage, provider reconciliation, live booking/ticket/EMD/exchange/refund/void execution, payments, invoices/accounting, settlement, `/agent` or `/admin` routes, or duplicate booking/ticket/EMD models.
 
+### Phase 36.7: Airline Policy Ingestion Foundation
+
+Implemented scope:
+
+- Added governed airline policy source, section, extraction run, extracted rule/price/communication/EMD/exception candidate, review correction, and approved knowledge records.
+- Added deterministic `AirlinePolicyIngestionService` extraction for obvious service identity, age/applicability, pricing, SSR/OSI/GDS/NDC communication, EMD/RFIC/RFISC, and exception text signals.
+- Added platform governance APIs under `/api/platform/airline-policy/*` for source creation, section detection, extraction, candidate review, explicit promotion, and approved knowledge listing.
+- Added agency APIs under `/api/agencies/{agency_id}/airline-policy/*` for read-only approved library access, local source creation/extraction/review, and submit-for-platform-review.
+- Added `/platform/airline-policy-ingestion` and `/agency/airline-policy-library` UI routes.
+- Added document source contexts for `airline_policy_source`, `airline_policy_extraction_run`, and `airline_policy_approved_knowledge`, plus policy extraction/review summary document templates.
+- Added readiness flags and counts under `airline_policy_ingestion_foundation`.
+
+Avoid adding:
+
+- External AI extraction, airline scraping, live GDS/NDC/provider calls, automatic global promotion, full comparison matrix, full SSR/OSI/EMD engine replacement, ticketing/EMD/payment/refund/void/accounting/settlement execution, `/agent` or `/admin` routes, or duplicate rules/services/reference/document/GDS foundations.
+
 ### Phase 37: Provider Import And Issuance Provenance
 
 Recommended scope:

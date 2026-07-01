@@ -21,7 +21,7 @@ from models import (
 from services.document_context_service import DocumentContextService
 
 
-PHASE_LABEL = "phase_36_6_gds_parser_foundation"
+PHASE_LABEL = "phase_36_7_airline_policy_ingestion_foundation"
 
 
 DEFAULT_TEMPLATES = [
@@ -44,6 +44,8 @@ DEFAULT_TEMPLATES = [
     ("import_review_summary", "import_review_summary", "Import Review Summary", "Booking import parse/review summary."),
     ("booking_import_review_summary", "booking_import_review_summary", "Booking Import Review Summary", "Governed booking import parser review summary."),
     ("gds_parse_review_summary", "gds_parse_review_summary", "GDS Parse Review Summary", "Parser run confidence, entities, warnings, and correction summary."),
+    ("airline_policy_extraction_summary", "airline_policy_extraction_summary", "Airline Policy Extraction Summary", "Policy source, section detection, candidate extraction, and warnings summary."),
+    ("airline_policy_review_summary", "airline_policy_review_summary", "Airline Policy Review Summary", "Human review, correction, and approved policy knowledge summary."),
     ("internal_case_summary", "internal_case_summary", "Internal Case Summary", "Internal operational case summary."),
 ]
 
@@ -173,12 +175,16 @@ def _render_text(title: str, context: dict[str, Any], warnings: list[dict[str, A
     ticket = context.get("ticket_summary") or {}
     emd = context.get("emd_summary") or {}
     change = context.get("change_exchange_summary") or {}
+    policy_source = context.get("policy_source_summary") or {}
+    policy_extraction = context.get("policy_extraction_summary") or {}
     for label, value in [
         ("Trip", trip.get("trip_reference") or trip.get("trip_title")),
         ("Booking", booking.get("pnr_locator") or booking.get("workspace_number")),
         ("Ticket", ticket.get("ticket_number")),
         ("EMD", emd.get("emd_number")),
         ("Change/exchange", change.get("operation_type")),
+        ("Policy source", policy_source.get("source_title")),
+        ("Policy extraction", policy_extraction.get("extraction_status")),
     ]:
         if value:
             parts.append(f"{label}: {value}")
@@ -198,11 +204,13 @@ def _title(document_type: str, context: dict[str, Any], template: dict[str, Any]
     booking = context.get("booking_summary") or {}
     ticket = context.get("ticket_summary") or {}
     emd = context.get("emd_summary") or {}
+    policy = context.get("policy_source_summary") or {}
     suffix = (
         trip.get("trip_reference")
         or booking.get("pnr_locator")
         or ticket.get("ticket_number")
         or emd.get("emd_number")
+        or policy.get("source_title")
         or context.get("source_context_id")
     )
     return f"{base} {suffix}" if suffix else base
@@ -302,6 +310,9 @@ class DocumentRenderService:
         ticket = context.get("ticket_summary") or {}
         emd = context.get("emd_summary") or {}
         change = context.get("change_exchange_summary") or {}
+        policy_source = context.get("policy_source_summary") or {}
+        policy_extraction = context.get("policy_extraction_summary") or {}
+        policy_candidates = context.get("policy_candidates") or {}
         warnings = list(context.get("warnings_json") or [])
         source = context.get("source_context_type")
         body = _section(
@@ -313,7 +324,7 @@ class DocumentRenderService:
                     ("Client", client.get("display_name")),
                     ("Trip", trip.get("trip_reference") or trip.get("trip_title")),
                     ("PNR", booking.get("pnr_locator")),
-                    ("Status", booking.get("status") or ticket.get("status") or emd.get("status") or change.get("status")),
+                    ("Status", booking.get("status") or ticket.get("status") or emd.get("status") or change.get("status") or policy_source.get("ingestion_status") or policy_extraction.get("extraction_status")),
                 ]
             ),
         )
@@ -340,6 +351,18 @@ class DocumentRenderService:
             body += _section("Parsed entities", _table(["Type", "Summary", "Confidence", "Status"], [[item.get("entity_type"), item.get("summary"), item.get("confidence"), item.get("status")] for item in context.get("parsed_entities") or []]))
             body += _section("Corrections", _table(["Type", "Entity", "Reason"], [[item.get("correction_type"), item.get("parsed_entity_id"), item.get("correction_reason")] for item in context.get("parse_corrections") or []]))
             body += _section("Training samples", _table(["Title", "Status", "Difficulty"], [[item.get("sample_title"), item.get("sample_status"), item.get("difficulty")] for item in context.get("training_samples") or []]))
+        if policy_source:
+            body += _section("Policy source", _key_values([("Airline", policy_source.get("airline_iata_code") or policy_source.get("airline_name")), ("Service domain", policy_source.get("service_domain")), ("Service family", policy_source.get("service_family")), ("Source type", policy_source.get("source_type")), ("Status", policy_source.get("ingestion_status")), ("Confidence", policy_source.get("confidence_overall"))]))
+            body += _section("Detected sections", _table(["#", "Category", "Title", "Confidence"], [[item.get("section_order"), item.get("detected_category"), item.get("section_title"), item.get("confidence")] for item in context.get("policy_sections") or []]))
+        if policy_extraction:
+            body += _section("Policy extraction", _key_values([("Status", policy_extraction.get("extraction_status")), ("Confidence", policy_extraction.get("overall_confidence")), ("Rules", policy_extraction.get("rules")), ("Prices", policy_extraction.get("prices")), ("SSR / OSI", policy_extraction.get("communication")), ("EMD rules", policy_extraction.get("emd_rules")), ("Exceptions", policy_extraction.get("exceptions"))]))
+            body += _section("Rule candidates", _table(["Type", "Service", "Excerpt", "Confidence", "Status"], [[item.get("rule_type"), item.get("service_family"), item.get("source_excerpt"), item.get("confidence"), item.get("status")] for item in policy_candidates.get("rules") or []]))
+            body += _section("Pricing candidates", _table(["Amount", "Basis", "Service", "Excerpt", "Status"], [[_money(item.get("amount"), item.get("currency")), item.get("price_basis"), item.get("service_family"), item.get("source_excerpt"), item.get("status")] for item in policy_candidates.get("prices") or []]))
+            body += _section("Communication candidates", _table(["Type", "Code", "Provider", "Excerpt", "Status"], [[item.get("communication_type"), item.get("ssr_code") or item.get("osi_keyword"), item.get("gds_system"), item.get("source_excerpt"), item.get("status")] for item in policy_candidates.get("communication_rules") or []]))
+            body += _section("EMD candidates", _table(["Type", "RFIC", "RFISC", "Excerpt", "Status"], [[item.get("emd_type"), item.get("rfic"), item.get("rfisc"), item.get("source_excerpt"), item.get("status")] for item in policy_candidates.get("emd_rules") or []]))
+            body += _section("Exception candidates", _table(["Type", "Excerpt", "Confidence", "Status"], [[item.get("exception_type"), item.get("source_excerpt"), item.get("confidence"), item.get("status")] for item in policy_candidates.get("exceptions") or []]))
+            body += _section("Policy corrections", _table(["Type", "Target", "Reason"], [[item.get("correction_type"), item.get("target_id"), item.get("correction_reason")] for item in context.get("policy_review_corrections") or []]))
+            body += _section("Approved policy knowledge", _table(["Type", "Service", "Excerpt", "Approved"], [[item.get("knowledge_type"), item.get("service_family"), item.get("source_excerpt"), item.get("approved_at")] for item in context.get("approved_policy_knowledge") or []]))
         body += _section("Source links", _table(["Type", "Id"], [[item.get("type"), item.get("id")] for item in context.get("source_links") or []]))
         return title, _shell(title, context, body, warnings), _render_text(title, context, warnings)
 
@@ -351,7 +374,7 @@ class DocumentRenderService:
             context = await self.contexts.build_mixed_context(agency_id, payload.source_context_ids_json or {})
             warnings.append({"code": "source_context_missing", "message": "Primary source context was not found; rendered from available manual context only."})
         if payload.render_format == "pdf":
-            warnings.append({"code": "pdf_not_required", "message": "PDF export is not required in Phase 36.6; HTML preview was rendered."})
+            warnings.append({"code": "pdf_not_required", "message": "PDF export is not required in Phase 36.7; HTML preview was rendered."})
         context.setdefault("warnings_json", []).extend(warnings)
         title, rendered_html, rendered_text = self._render(str(payload.document_type), context, template)
         job = DocumentRenderJob(

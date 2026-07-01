@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_6_gds_parser_foundation"
+PHASE_LABEL = "phase_36_7_airline_policy_ingestion_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -214,6 +214,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Standalone booking, import draft, and existing-trip change/exchange foundations built in Phase 36.4.6",
             "Document foundation built in Phase 36.5",
             "GDS parser foundation and training samples built in Phase 36.6",
+            "Airline policy ingestion source, extraction, review, and approved knowledge foundation built in Phase 36.7",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
