@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -21,7 +21,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.7 airline policy ingestion foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.8 service taxonomy foundation.",
 )
 
 app.add_middleware(
@@ -48,7 +48,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_7_airline_policy_ingestion_foundation",
+        "phase": "phase_36_8_service_taxonomy_foundation",
     }
 
 
@@ -222,6 +222,15 @@ async def readiness() -> dict:
     pending_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") in {"draft", "extracted", "reviewed"}])
     approved_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") == "approved"])
     rejected_policy_source_count = len([item for item in policy_sources if item.get("ingestion_status") == "rejected"])
+    taxonomy_domain_count = await database.collection("canonical_service_domains").count()
+    taxonomy_family_count = await database.collection("canonical_service_families").count()
+    taxonomy_variant_count = await database.collection("canonical_service_variants").count()
+    taxonomy_alias_count = await database.collection("airline_service_aliases").count()
+    taxonomy_applicability_dimension_count = await database.collection("service_applicability_dimensions").count()
+    taxonomy_outcome_type_count = await database.collection("service_policy_outcome_types").count()
+    taxonomy_mapping_rule_count = await database.collection("service_taxonomy_mapping_rules").count()
+    taxonomy_candidate_link_count = await database.collection("policy_candidate_taxonomy_links").count()
+    taxonomy_review_correction_count = await database.collection("service_taxonomy_review_corrections").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -243,7 +252,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_7_airline_policy_ingestion_foundation",
+        "phase": "phase_36_8_service_taxonomy_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -598,6 +607,34 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Airline policy ingestion stores raw sources, detected sections, deterministic extraction candidates, human review corrections, and approved knowledge records. External AI extraction and automatic global promotion remain disabled.",
         },
+        "service_taxonomy_foundation": {
+            "taxonomy_domains_enabled": True,
+            "taxonomy_families_enabled": True,
+            "taxonomy_variants_enabled": True,
+            "airline_service_aliases_enabled": True,
+            "applicability_dimensions_enabled": True,
+            "outcome_types_enabled": True,
+            "mapping_rules_enabled": True,
+            "policy_candidate_taxonomy_links_enabled": True,
+            "taxonomy_review_corrections_enabled": True,
+            "platform_service_taxonomy_ui_enabled": True,
+            "agency_service_taxonomy_ui_enabled": True,
+            "deterministic_taxonomy_mapping_enabled": True,
+            "external_ai_taxonomy_mapping_disabled": True,
+            "agency_auto_promotion_disabled": True,
+            "taxonomy_seeding_enabled": True,
+            "domain_count": taxonomy_domain_count,
+            "family_count": taxonomy_family_count,
+            "variant_count": taxonomy_variant_count,
+            "alias_count": taxonomy_alias_count,
+            "applicability_dimension_count": taxonomy_applicability_dimension_count,
+            "outcome_type_count": taxonomy_outcome_type_count,
+            "mapping_rule_count": taxonomy_mapping_rule_count,
+            "candidate_link_count": taxonomy_candidate_link_count,
+            "review_correction_count": taxonomy_review_correction_count,
+            "readiness_required": False,
+            "diagnostic": "Canonical service taxonomy maps airline policy terms, commercial labels, SSR/GDS codes, and extracted policy candidates into normalized domains, families, and variants only; it does not perform SSR/OSI communication mapping, EMD/RFIC/RFISC payment mechanics, pricing matrices, provider execution, or live GDS/NDC connectivity.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -656,6 +693,7 @@ app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)
+app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_documents.router)
 app.include_router(platform_gds_parser.router)
 app.include_router(platform_airline_policy_ingestion.router)
@@ -673,6 +711,7 @@ app.include_router(agency_booking_workspaces.router)
 app.include_router(agency_booking_imports.router)
 app.include_router(agency_gds_parser.router)
 app.include_router(agency_airline_policy_library.router)
+app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_ticket_emd.router)
 app.include_router(agency_trip_changes.router)
 app.include_router(agency_documents.router)

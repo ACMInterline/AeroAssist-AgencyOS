@@ -4293,6 +4293,445 @@ class AirlinePolicyPromoteCandidateRequest(BaseModel):
     knowledge_type: Optional[AirlinePolicyKnowledgeType] = None
 
 
+class ServiceTaxonomyStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class ServiceTaxonomyGovernanceStatus(str, Enum):
+    SEED = "seed"
+    PLATFORM_APPROVED = "platform_approved"
+    PLATFORM_REVIEW = "platform_review"
+    AGENCY_SUGGESTED = "agency_suggested"
+    DEPRECATED = "deprecated"
+
+
+class AirlineServiceAliasType(str, Enum):
+    POLICY_TERM = "policy_term"
+    COMMERCIAL_NAME = "commercial_name"
+    SSR_CODE = "ssr_code"
+    GDS_CODE = "gds_code"
+    NDC_LABEL = "ndc_label"
+    INTERNAL_LABEL = "internal_label"
+    OTHER = "other"
+
+
+class ServiceTaxonomyReviewStatus(str, Enum):
+    SUGGESTED = "suggested"
+    CONFIRMED = "confirmed"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+
+class ServiceApplicabilityValueType(str, Enum):
+    TEXT = "text"
+    NUMBER = "number"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    ENUM = "enum"
+    REGION = "region"
+    AIRPORT = "airport"
+    COUNTRY = "country"
+    CARRIER = "carrier"
+    DURATION = "duration"
+    MONEY = "money"
+    JSON = "json"
+
+
+class ServicePolicyOutcomeSeverity(str, Enum):
+    INFO = "info"
+    ADVISORY = "advisory"
+    WARNING = "warning"
+    BLOCKER = "blocker"
+
+
+class ServiceTaxonomyMatchType(str, Enum):
+    EXACT = "exact"
+    CONTAINS = "contains"
+    REGEX = "regex"
+    TOKEN = "token"
+    SSR_CODE = "ssr_code"
+
+
+class ServiceTaxonomyRuleScope(str, Enum):
+    GLOBAL = "global"
+    AGENCY = "agency"
+
+
+class PolicyCandidateTaxonomyCandidateType(str, Enum):
+    EXTRACTED_RULE = "extracted_rule"
+    EXTRACTED_PRICE = "extracted_price"
+    EXTRACTED_COMMUNICATION = "extracted_communication"
+    EXTRACTED_EMD_RULE = "extracted_emd_rule"
+    EXTRACTED_EXCEPTION = "extracted_exception"
+    APPROVED_KNOWLEDGE = "approved_knowledge"
+
+
+class ServiceTaxonomyCorrectionScope(str, Enum):
+    AGENCY_LOCAL = "agency_local"
+    PLATFORM_GLOBAL_REVIEW = "platform_global_review"
+
+
+class ServiceTaxonomyPromotionStatus(str, Enum):
+    NOT_REQUESTED = "not_requested"
+    PENDING_REVIEW = "pending_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class CanonicalServiceDomain(BaseDocument):
+    code: str
+    name: str
+    description: Optional[str] = None
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.SEED
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+
+
+class CanonicalServiceFamily(BaseDocument):
+    domain_id: Optional[str] = None
+    domain_code: str
+    code: str
+    name: str
+    description: Optional[str] = None
+    default_ssr_codes: List[str] = Field(default_factory=list)
+    related_service_catalogue_keys: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.SEED
+
+
+class CanonicalServiceVariant(BaseDocument):
+    domain_code: str
+    family_code: str
+    code: str
+    name: str
+    description: Optional[str] = None
+    standard_ssr_code: Optional[str] = None
+    known_airline_terms: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.SEED
+
+
+class AirlineServiceAlias(BaseDocument):
+    airline_code: Optional[str] = None
+    alias_text: str
+    alias_type: AirlineServiceAliasType = AirlineServiceAliasType.POLICY_TERM
+    normalized_alias_text: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.75
+    review_status: ServiceTaxonomyReviewStatus = ServiceTaxonomyReviewStatus.SUGGESTED
+    source_policy_id: Optional[str] = None
+    source_extraction_run_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    is_global: bool = True
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+
+
+class ServiceApplicabilityDimension(BaseDocument):
+    code: str
+    name: str
+    value_type: ServiceApplicabilityValueType = ServiceApplicabilityValueType.TEXT
+    description: Optional[str] = None
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+
+
+class ServicePolicyOutcomeType(BaseDocument):
+    code: str
+    name: str
+    description: Optional[str] = None
+    severity: ServicePolicyOutcomeSeverity = ServicePolicyOutcomeSeverity.INFO
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+
+
+class ServiceTaxonomyMappingRule(BaseDocument):
+    rule_name: str
+    airline_code: Optional[str] = None
+    match_type: ServiceTaxonomyMatchType = ServiceTaxonomyMatchType.EXACT
+    match_value: str
+    normalized_match_value: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    alias_type: AirlineServiceAliasType = AirlineServiceAliasType.POLICY_TERM
+    confidence_score: float = 0.75
+    priority: int = 100
+    scope: ServiceTaxonomyRuleScope = ServiceTaxonomyRuleScope.GLOBAL
+    agency_id: Optional[str] = None
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    created_by_user_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class PolicyCandidateTaxonomyLink(BaseDocument):
+    agency_id: Optional[str] = None
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: str
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    mapping_rule_id: Optional[str] = None
+    alias_id: Optional[str] = None
+    confidence_score: float = 0.0
+    review_status: ServiceTaxonomyReviewStatus = ServiceTaxonomyReviewStatus.SUGGESTED
+    reviewer_notes: Optional[str] = None
+    evidence_text: Optional[str] = None
+
+
+class ServiceTaxonomyReviewCorrection(BaseDocument):
+    agency_id: Optional[str] = None
+    policy_candidate_taxonomy_link_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: str
+    previous_domain_code: Optional[str] = None
+    previous_family_code: Optional[str] = None
+    previous_variant_code: Optional[str] = None
+    corrected_domain_code: str
+    corrected_family_code: str
+    corrected_variant_code: Optional[str] = None
+    correction_reason: Optional[str] = None
+    reviewer_user_id: Optional[str] = None
+    correction_scope: ServiceTaxonomyCorrectionScope = ServiceTaxonomyCorrectionScope.PLATFORM_GLOBAL_REVIEW
+    promotion_requested: bool = False
+    promotion_status: ServiceTaxonomyPromotionStatus = ServiceTaxonomyPromotionStatus.NOT_REQUESTED
+
+
+class CanonicalServiceDomainCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    code: str
+    name: str
+    description: Optional[str] = None
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.PLATFORM_APPROVED
+
+
+class CanonicalServiceDomainUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    sort_order: Optional[int] = None
+    status: Optional[ServiceTaxonomyStatus] = None
+    is_global: Optional[bool] = None
+    governance_status: Optional[ServiceTaxonomyGovernanceStatus] = None
+
+
+class CanonicalServiceFamilyCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    domain_id: Optional[str] = None
+    domain_code: str
+    code: str
+    name: str
+    description: Optional[str] = None
+    default_ssr_codes: List[str] = Field(default_factory=list)
+    related_service_catalogue_keys: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.PLATFORM_APPROVED
+
+
+class CanonicalServiceFamilyUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    domain_id: Optional[str] = None
+    domain_code: Optional[str] = None
+    code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    default_ssr_codes: Optional[List[str]] = None
+    related_service_catalogue_keys: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+    status: Optional[ServiceTaxonomyStatus] = None
+    is_global: Optional[bool] = None
+    governance_status: Optional[ServiceTaxonomyGovernanceStatus] = None
+
+
+class CanonicalServiceVariantCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    domain_code: str
+    family_code: str
+    code: str
+    name: str
+    description: Optional[str] = None
+    standard_ssr_code: Optional[str] = None
+    known_airline_terms: List[str] = Field(default_factory=list)
+    sort_order: int = 100
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    is_global: bool = True
+    governance_status: ServiceTaxonomyGovernanceStatus = ServiceTaxonomyGovernanceStatus.PLATFORM_APPROVED
+
+
+class CanonicalServiceVariantUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    standard_ssr_code: Optional[str] = None
+    known_airline_terms: Optional[List[str]] = None
+    sort_order: Optional[int] = None
+    status: Optional[ServiceTaxonomyStatus] = None
+    is_global: Optional[bool] = None
+    governance_status: Optional[ServiceTaxonomyGovernanceStatus] = None
+
+
+class AirlineServiceAliasCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    alias_text: str
+    alias_type: AirlineServiceAliasType = AirlineServiceAliasType.POLICY_TERM
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.75
+    review_status: ServiceTaxonomyReviewStatus = ServiceTaxonomyReviewStatus.CONFIRMED
+    source_policy_id: Optional[str] = None
+    source_extraction_run_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    is_global: bool = True
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+
+
+class AirlineServiceAliasUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    alias_text: Optional[str] = None
+    alias_type: Optional[AirlineServiceAliasType] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    confidence_score: Optional[float] = None
+    review_status: Optional[ServiceTaxonomyReviewStatus] = None
+    status: Optional[ServiceTaxonomyStatus] = None
+
+
+class ServiceTaxonomyMappingRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rule_name: str
+    airline_code: Optional[str] = None
+    match_type: ServiceTaxonomyMatchType = ServiceTaxonomyMatchType.EXACT
+    match_value: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    alias_type: AirlineServiceAliasType = AirlineServiceAliasType.POLICY_TERM
+    confidence_score: float = 0.75
+    priority: int = 100
+    scope: ServiceTaxonomyRuleScope = ServiceTaxonomyRuleScope.GLOBAL
+    agency_id: Optional[str] = None
+    status: ServiceTaxonomyStatus = ServiceTaxonomyStatus.ACTIVE
+    notes: Optional[str] = None
+
+
+class ServiceTaxonomyMappingRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rule_name: Optional[str] = None
+    airline_code: Optional[str] = None
+    match_type: Optional[ServiceTaxonomyMatchType] = None
+    match_value: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    alias_type: Optional[AirlineServiceAliasType] = None
+    confidence_score: Optional[float] = None
+    priority: Optional[int] = None
+    scope: Optional[ServiceTaxonomyRuleScope] = None
+    agency_id: Optional[str] = None
+    status: Optional[ServiceTaxonomyStatus] = None
+    notes: Optional[str] = None
+
+
+class ServiceTaxonomyMapCandidateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    text: str
+    airline_code: Optional[str] = None
+    candidate_type: Optional[PolicyCandidateTaxonomyCandidateType] = None
+    agency_id: Optional[str] = None
+
+
+class PolicyCandidateTaxonomyLinkCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: str
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    mapping_rule_id: Optional[str] = None
+    alias_id: Optional[str] = None
+    confidence_score: Optional[float] = None
+    review_status: ServiceTaxonomyReviewStatus = ServiceTaxonomyReviewStatus.SUGGESTED
+    reviewer_notes: Optional[str] = None
+    evidence_text: Optional[str] = None
+
+
+class PolicyCandidateTaxonomyLinkUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    mapping_rule_id: Optional[str] = None
+    alias_id: Optional[str] = None
+    confidence_score: Optional[float] = None
+    review_status: Optional[ServiceTaxonomyReviewStatus] = None
+    reviewer_notes: Optional[str] = None
+    evidence_text: Optional[str] = None
+
+
+class ServiceTaxonomyReviewCorrectionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_candidate_taxonomy_link_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: str
+    previous_domain_code: Optional[str] = None
+    previous_family_code: Optional[str] = None
+    previous_variant_code: Optional[str] = None
+    corrected_domain_code: str
+    corrected_family_code: str
+    corrected_variant_code: Optional[str] = None
+    correction_reason: Optional[str] = None
+    correction_scope: ServiceTaxonomyCorrectionScope = ServiceTaxonomyCorrectionScope.PLATFORM_GLOBAL_REVIEW
+    promotion_requested: bool = False
+    promotion_status: ServiceTaxonomyPromotionStatus = ServiceTaxonomyPromotionStatus.NOT_REQUESTED
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

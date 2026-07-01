@@ -36,6 +36,8 @@ Every candidate stores a source excerpt, confidence, status, and optional correc
 
 Phase 36.7 does not replace `AirlineRulesCore`, `UnifiedExceptionRule`, service catalogue mappings, SSR/OSI generation, or the exception engine. Approved policy knowledge is a governed source-backed foundation that later phases can promote into canonical taxonomy, comparison, pricing, SSR/OSI, EMD, and exception structures.
 
+Phase 36.8 adds taxonomy links on top of Phase 36.7 policy candidates and approved knowledge. Policy ingestion remains the source/provenance and extraction layer; service taxonomy maps reviewed wording or candidate evidence into canonical service domains, families, and variants. Taxonomy mapping does not perform SSR/OSI communication, EMD/RFIC/RFISC payment mechanics, pricing matrices, or policy comparison.
+
 ## Document Integration
 
 Document context supports `airline_policy_source`, `airline_policy_extraction_run`, and `airline_policy_approved_knowledge`. Default document templates `airline_policy_extraction_summary` and `airline_policy_review_summary` summarize source metadata, detected sections, candidate counts, warnings, corrections, and approved knowledge records.

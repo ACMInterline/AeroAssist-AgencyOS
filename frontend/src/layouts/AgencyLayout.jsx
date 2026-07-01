@@ -11,6 +11,7 @@ import Plane from "lucide-react/dist/esm/icons/plane.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
 import Settings from "lucide-react/dist/esm/icons/settings.js"
 import Sparkles from "lucide-react/dist/esm/icons/sparkles.js"
+import Tags from "lucide-react/dist/esm/icons/tags.js"
 import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
 import { apiDeleteSession } from "../lib/api"
@@ -26,6 +27,7 @@ const primaryNav = [
   { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: Files },
   { label: "GDS Parser", description: "Parse review", href: "/agency/gds-parser", icon: Database },
   { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: Database },
+  { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: Tags },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

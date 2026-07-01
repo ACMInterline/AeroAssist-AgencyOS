@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_7_airline_policy_ingestion_foundation"
+PHASE_LABEL = "phase_36_8_service_taxonomy_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -75,9 +75,17 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Special Services",
         "concept": "Unified special services",
         "supplementary_concept": "PassengerServiceRequest, MedicalServiceRequest, CargoLikeItem, VipServiceRequest, ExceptionRule, SSR/OSI generator, rules engine",
-        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings",
+        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings, canonical service taxonomy domains/families/variants/aliases",
         "status": "built differently",
-        "action": "Add lightweight special-services unified facade; do not rebuild parallel medical/cargo/VIP modules.",
+        "action": "Use the lightweight special-services facade and Phase 36.8 canonical taxonomy; do not rebuild parallel medical/cargo/VIP modules.",
+    },
+    {
+        "category": "Service Taxonomy",
+        "concept": "Canonical special and ancillary service taxonomy",
+        "supplementary_concept": "normalized service families, SSR/GDS labels, ancillary terms, policy applicability and outcomes",
+        "current_equivalent": "canonical_service_domains, canonical_service_families, canonical_service_variants, airline_service_aliases, service_applicability_dimensions, service_policy_outcome_types, service_taxonomy_mapping_rules, policy_candidate_taxonomy_links, service_taxonomy_review_corrections",
+        "status": "built",
+        "action": "Recognize Phase 36.8 taxonomy as canonical mapping foundation only; defer SSR/OSI/EMD/payment/pricing matrix execution.",
     },
     {
         "category": "Routes",
@@ -203,6 +211,15 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "GdsParseCorrection",
             "GdsParseTrainingSample",
             "GdsParserEvaluationRun",
+            "CanonicalServiceDomain",
+            "CanonicalServiceFamily",
+            "CanonicalServiceVariant",
+            "AirlineServiceAlias",
+            "ServiceApplicabilityDimension",
+            "ServicePolicyOutcomeType",
+            "ServiceTaxonomyMappingRule",
+            "PolicyCandidateTaxonomyLink",
+            "ServiceTaxonomyReviewCorrection",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -215,10 +232,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Document foundation built in Phase 36.5",
             "GDS parser foundation and training samples built in Phase 36.6",
             "Airline policy ingestion source, extraction, review, and approved knowledge foundation built in Phase 36.7",
+            "Canonical special and ancillary service taxonomy foundation built in Phase 36.8",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
             "Full GDS grammar coverage, provider reconciliation, and live supplier execution",
+            "Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized pricing matrices, and policy comparison matrix",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",

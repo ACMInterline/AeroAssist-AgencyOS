@@ -61,6 +61,10 @@ The repository currently contains:
 - Phase 36.4: Ticket and EMD mirror foundation.
 - Phase 36.4.5: Supplementary blueprint adoption and unified workflow sync.
 - Phase 36.4.6: Standalone booking, import draft, and existing-trip change/exchange foundation.
+- Phase 36.5: Document foundation.
+- Phase 36.6: GDS parser foundation and training samples.
+- Phase 36.7: Airline policy ingestion foundation.
+- Phase 36.8: Canonical special / ancillary services taxonomy.
 
 Phase 35 navigation hotfix:
 
@@ -1067,6 +1071,23 @@ Implemented scope:
 Avoid adding:
 
 - External AI extraction, airline scraping, live GDS/NDC/provider calls, automatic global promotion, full comparison matrix, full SSR/OSI/EMD engine replacement, ticketing/EMD/payment/refund/void/accounting/settlement execution, `/agent` or `/admin` routes, or duplicate rules/services/reference/document/GDS foundations.
+
+### Phase 36.8: Canonical Special / Ancillary Services Taxonomy
+
+Implemented scope:
+
+- Added canonical service domain, family, and variant records for special/ancillary service normalization.
+- Added airline service aliases, deterministic mapping rules, applicability dimensions, policy outcome types, candidate taxonomy links, and taxonomy review corrections.
+- Added idempotent baseline taxonomy seeding for children, mobility, medical, pets/animals, baggage/special items, seating, meals, VIP/protocol, disruption, documents, claims, distribution/payment, and fallback domains.
+- Added conservative deterministic mapping from airline terms, commercial labels, SSR/GDS codes, and Phase 36.7 policy candidates into canonical domain/family/variant results.
+- Added platform APIs under `/api/platform/service-taxonomy/*` for global taxonomy governance, seeding, mapping tests, candidate links, and review corrections.
+- Added agency APIs under `/api/agencies/{agency_id}/service-taxonomy/*` for read-only taxonomy lookup, deterministic mapping, agency-local candidate links, and agency-local corrections.
+- Added `/platform/service-taxonomy` and `/agency/service-taxonomy` UI routes.
+- Added readiness flags and counts under `service_taxonomy_foundation`.
+
+Avoid adding:
+
+- Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized ancillary pricing matrices, policy comparison matrix, live GDS/NDC/provider connectivity, live booking/ticketing/EMD issuance, scraping, external AI mapping, agency auto-promotion, `/agent` or `/admin` routes, or replacement of the service catalogue and Rules & Services foundations.
 
 ### Phase 37: Provider Import And Issuance Provenance
 
