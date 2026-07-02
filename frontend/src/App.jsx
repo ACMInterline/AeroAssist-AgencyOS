@@ -22,6 +22,7 @@ import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
+import AgencyOfferDecisionPacksPage from "./pages/agency/OfferDecisionPacksPage"
 import AgencyOfferPolicyAdvisorPage from "./pages/agency/OfferPolicyAdvisorPage"
 import OfferWorkspaceDetailPage from "./pages/agency/OfferWorkspaceDetailPage"
 import OfferWorkspacesPage from "./pages/agency/OfferWorkspacesPage"
@@ -65,6 +66,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
+import PlatformOfferDecisionPacksPage from "./pages/platform/OfferDecisionPacksPage"
 import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorPage"
 import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
@@ -112,6 +114,7 @@ const routes = {
   "/platform/ancillary-pricing": PlatformAncillaryPricingPage,
   "/platform/policy-comparison": PlatformPolicyComparisonPage,
   "/platform/offer-policy-advisor": PlatformOfferPolicyAdvisorPage,
+  "/platform/offer-decision-packs": PlatformOfferDecisionPacksPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -126,6 +129,7 @@ const routes = {
   "/agency/policy-comparison": AgencyPolicyComparisonPage,
   "/agency/airline-service-advisor": AirlineServiceAdvisorPage,
   "/agency/offer-policy-advisor": AgencyOfferPolicyAdvisorPage,
+  "/agency/offer-decision-packs": AgencyOfferDecisionPacksPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,

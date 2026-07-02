@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_2_offer_policy_advisor_integration_foundation"
+PHASE_LABEL = "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -120,6 +120,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Attach policy comparison, service advisor, ancillary quote, service mechanics, and taxonomy metadata to offer workspaces without automatic airline selection, offer price mutation, provider execution, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Pack",
+        "concept": "Offer builder advisor consumption and decision pack",
+        "supplementary_concept": "offer decision pack, advisor evidence bundle, option review evidence, manual review notes",
+        "current_equivalent": "offer_decision_packs, offer_decision_pack_options, offer_decision_pack_evidence, offer_decision_pack_warnings, offer_decision_pack_review_notes, offer_decision_pack_snapshots",
+        "status": "foundation adopted",
+        "action": "Consume saved advisor evidence into human-reviewed offer decision packs without automatic ranking, offer price mutation, booking, ticketing, EMD issuance, payment, invoice, accounting, settlement, or provider execution.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -172,6 +180,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/service-advisor", "agencyos": "/agency/airline-service-advisor"},
         {"supplementary": "/admin/offer-advisor", "agencyos": "/platform/offer-policy-advisor"},
         {"supplementary": "/agent/offer-advisor", "agencyos": "/agency/offer-policy-advisor"},
+        {"supplementary": "/admin/offer-decision-packs", "agencyos": "/platform/offer-decision-packs"},
+        {"supplementary": "/agent/offer-decision-packs", "agencyos": "/agency/offer-decision-packs"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -189,17 +199,17 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 37.3",
+        "phase": "Phase 37.4",
         "title": "Airline Intelligence Data Expansion",
         "reason": "Existing airline intelligence tables can receive curated data packs and brand assets.",
     },
     {
-        "phase": "Phase 37.4",
+        "phase": "Phase 37.5",
         "title": "Special Services UX Unification",
         "reason": "The facade keeps current services canonical while future UI can unify medical, cargo, VIP, and PRM flows.",
     },
     {
-        "phase": "Phase 37.5",
+        "phase": "Phase 37.6",
         "title": "AI Trace / ADM Risk Console",
         "reason": "AiTraceEvent and AdmRiskEvent foundations need an operator review console before any automation.",
     },
@@ -276,6 +286,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Ancillary pricing schema and exception engine expansion foundation built in Phase 37.0",
             "Policy comparison and service advisor foundation built in Phase 37.1",
             "Offer builder policy advisor integration foundation built in Phase 37.2",
+            "Offer builder advisor consumption and decision pack foundation built in Phase 37.3",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_ancillary_pricing, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 37.2 offer policy advisor integration foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 37.3 offer builder advisor consumption decision pack foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_2_offer_policy_advisor_integration_foundation",
+        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
     }
 
 
@@ -264,6 +264,12 @@ async def readiness() -> dict:
     offer_policy_advisor_warning_count = await database.collection("offer_policy_advisor_warnings").count()
     offer_policy_advisor_decision_note_count = await database.collection("offer_policy_advisor_decision_notes").count()
     offer_policy_advisor_saved_snapshot_count = await database.collection("offer_policy_advisor_saved_snapshots").count()
+    offer_decision_pack_count = await database.collection("offer_decision_packs").count()
+    offer_decision_pack_option_count = await database.collection("offer_decision_pack_options").count()
+    offer_decision_pack_evidence_count = await database.collection("offer_decision_pack_evidence").count()
+    offer_decision_pack_warning_count = await database.collection("offer_decision_pack_warnings").count()
+    offer_decision_pack_review_note_count = await database.collection("offer_decision_pack_review_notes").count()
+    offer_decision_pack_snapshot_count = await database.collection("offer_decision_pack_snapshots").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -285,7 +291,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_2_offer_policy_advisor_integration_foundation",
+        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -780,6 +786,32 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 37.2 links offer workspaces/options to metadata-only policy comparison and service advisor context. It does not auto-select airlines, alter offer pricing, book, issue, charge, invoice, settle, scrape, call external AI, or execute providers.",
         },
+        "offer_builder_advisor_consumption_decision_pack_foundation": {
+            "decision_packs_enabled": True,
+            "option_evidence_enabled": True,
+            "decision_pack_warnings_enabled": True,
+            "review_notes_enabled": True,
+            "immutable_snapshots_enabled": True,
+            "advisor_snapshot_consumption_enabled": True,
+            "offer_builder_consumption_enabled": True,
+            "agency_decision_pack_ui_enabled": True,
+            "platform_decision_pack_ui_enabled": True,
+            "human_review_required_enabled": True,
+            "auto_recommendation_disabled": True,
+            "offer_price_mutation_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "ticket_emd_issuance_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "decision_pack_count": offer_decision_pack_count,
+            "option_count": offer_decision_pack_option_count,
+            "option_evidence_count": offer_decision_pack_evidence_count,
+            "warning_count": offer_decision_pack_warning_count,
+            "review_note_count": offer_decision_pack_review_note_count,
+            "saved_snapshot_count": offer_decision_pack_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 37.3 consumes saved advisor evidence inside offer workflows and creates metadata-only decision packs for human review. It does not rank winners, mutate prices, book, issue tickets or EMDs, charge, invoice, settle, or execute providers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -840,6 +872,7 @@ app.include_router(platform_rules_services.router)
 app.include_router(platform_ancillary_pricing.router)
 app.include_router(platform_policy_comparison.router)
 app.include_router(platform_offer_policy_advisor.router)
+app.include_router(platform_offer_decision_packs.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -863,6 +896,7 @@ app.include_router(agency_airline_policy_library.router)
 app.include_router(agency_ancillary_pricing.router)
 app.include_router(agency_policy_comparison.router)
 app.include_router(agency_offer_policy_advisor.router)
+app.include_router(agency_offer_decision_packs.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

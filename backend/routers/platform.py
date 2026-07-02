@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_2_offer_policy_advisor_integration_foundation",
+        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
     }
 
 
@@ -106,6 +106,12 @@ async def summary(
             "offer_policy_advisor_warnings": await db.collection("offer_policy_advisor_warnings").count(),
             "offer_policy_advisor_decision_notes": await db.collection("offer_policy_advisor_decision_notes").count(),
             "offer_policy_advisor_saved_snapshots": await db.collection("offer_policy_advisor_saved_snapshots").count(),
+            "offer_decision_packs": await db.collection("offer_decision_packs").count(),
+            "offer_decision_pack_options": await db.collection("offer_decision_pack_options").count(),
+            "offer_decision_pack_evidence": await db.collection("offer_decision_pack_evidence").count(),
+            "offer_decision_pack_warnings": await db.collection("offer_decision_pack_warnings").count(),
+            "offer_decision_pack_review_notes": await db.collection("offer_decision_pack_review_notes").count(),
+            "offer_decision_pack_snapshots": await db.collection("offer_decision_pack_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),
@@ -238,6 +244,7 @@ async def summary(
             "Ancillary pricing schema and exception engine expansion foundation",
             "Airline policy comparison and service advisor foundation",
             "Offer builder policy advisor integration foundation",
+            "Offer builder advisor consumption and decision pack foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -251,6 +258,7 @@ async def summary(
             "Invoice, payment, accounting, BSP/ARC, and settlement execution from ancillary estimates",
             "Automatic airline recommendation or provider execution from service advisor metadata",
             "Automatic offer airline selection, offer price mutation, booking, ticketing, EMD issuance, payment, invoice, settlement, or provider execution from offer policy advisor metadata",
+            "Automatic winner ranking, offer price mutation, booking, ticketing, EMD issuance, payment, invoice, settlement, or provider execution from offer decision packs",
         ],
     }
 

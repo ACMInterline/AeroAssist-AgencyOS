@@ -69,6 +69,7 @@ The repository currently contains:
 - Phase 37.0: Airline ancillary pricing schema and exception engine expansion.
 - Phase 37.1: Airline policy comparison and service advisor foundation.
 - Phase 37.2: Offer builder policy advisor integration foundation.
+- Phase 37.3: Offer builder advisor consumption and decision pack foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1162,6 +1163,20 @@ Implemented scope:
 Avoid adding:
 
 - Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 37.3: Offer Builder Advisor Consumption / Decision Pack Foundation
+
+Implemented scope:
+
+- Added offer decision packs, option-level evidence rows, warning summaries, review notes, and immutable decision pack snapshots.
+- Added deterministic advisor evidence consumption from offer policy advisor contexts/saved snapshots, comparison rows, ancillary quote results, service mechanics metadata, taxonomy references, and offer workspace/option context.
+- Added agency APIs and `/agency/offer-decision-packs` for pack build/rebuild, advisor evidence attach, review note create/update, evidence/warning listing, and immutable snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-packs`.
+- Added readiness flags and counts under `offer_builder_advisor_consumption_decision_pack_foundation`.
+
+Avoid adding:
+
+- Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
