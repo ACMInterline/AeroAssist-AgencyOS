@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_8_service_taxonomy_foundation"
+PHASE_LABEL = "phase_36_9_service_mechanics_mapping_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -75,9 +75,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Special Services",
         "concept": "Unified special services",
         "supplementary_concept": "PassengerServiceRequest, MedicalServiceRequest, CargoLikeItem, VipServiceRequest, ExceptionRule, SSR/OSI generator, rules engine",
-        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings, canonical service taxonomy domains/families/variants/aliases",
+        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings, canonical service taxonomy domains/families/variants/aliases, and service mechanics metadata",
         "status": "built differently",
-        "action": "Use the lightweight special-services facade and Phase 36.8 canonical taxonomy; do not rebuild parallel medical/cargo/VIP modules.",
+        "action": "Use the lightweight special-services facade, Phase 36.8 canonical taxonomy, and Phase 36.9 service mechanics mapping; do not rebuild parallel medical/cargo/VIP modules.",
     },
     {
         "category": "Service Taxonomy",
@@ -85,7 +85,15 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "supplementary_concept": "normalized service families, SSR/GDS labels, ancillary terms, policy applicability and outcomes",
         "current_equivalent": "canonical_service_domains, canonical_service_families, canonical_service_variants, airline_service_aliases, service_applicability_dimensions, service_policy_outcome_types, service_taxonomy_mapping_rules, policy_candidate_taxonomy_links, service_taxonomy_review_corrections",
         "status": "built",
-        "action": "Recognize Phase 36.8 taxonomy as canonical mapping foundation only; defer SSR/OSI/EMD/payment/pricing matrix execution.",
+        "action": "Recognize Phase 36.8 taxonomy as canonical meaning foundation; keep mechanics and execution in separate layers.",
+    },
+    {
+        "category": "Service Mechanics",
+        "concept": "SSR/OSI and EMD/RFIC/RFISC service mechanics",
+        "supplementary_concept": "SSR/OSI request mechanics, recognition patterns, EMD issuance metadata, RFIC/RFISC maps, interline, lifecycle",
+        "current_equivalent": "airline_service_communication_rules, ssr_osi_templates, ssr_osi_requirements, ssr_status_recognition_rules, airline_rejection_patterns, airline_service_payment_rules, airline_emd_issuance_rules, airline_rfic_rfisc_mappings, airline_emd_interline_rules, airline_emd_lifecycle_rules, policy_candidate_mechanics_links",
+        "status": "foundation adopted",
+        "action": "Map communication mechanics separately from payment/EMD mechanics without live SSR/OSI transmission, ticket/EMD issuance, provider execution, or agency auto-promotion.",
     },
     {
         "category": "Routes",
@@ -233,11 +241,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "GDS parser foundation and training samples built in Phase 36.6",
             "Airline policy ingestion source, extraction, review, and approved knowledge foundation built in Phase 36.7",
             "Canonical special and ancillary service taxonomy foundation built in Phase 36.8",
+            "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation built in Phase 36.9",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
             "Full GDS grammar coverage, provider reconciliation, and live supplier execution",
-            "Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized pricing matrices, and policy comparison matrix",
+            "Live SSR/OSI transmission, live ticket/EMD issuance, normalized pricing matrices, and policy comparison matrix",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",

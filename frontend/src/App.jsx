@@ -29,6 +29,7 @@ import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
 import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
 import GdsParserPage from "./pages/agency/GdsParserPage"
+import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
 import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
@@ -61,6 +62,7 @@ import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemp
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
+import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"
 import PlatformServiceTaxonomyPage from "./pages/platform/ServiceTaxonomyPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
 import PortalActionsPage from "./pages/portal/PortalActionsPage"
@@ -99,6 +101,7 @@ const routes = {
   "/platform/gds-parser": PlatformGdsParserPage,
   "/platform/airline-policy-ingestion": AirlinePolicyIngestionPage,
   "/platform/service-taxonomy": PlatformServiceTaxonomyPage,
+  "/platform/service-mechanics": PlatformServiceMechanicsPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -108,6 +111,7 @@ const routes = {
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
+  "/agency/service-mechanics": AgencyServiceMechanicsPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,
@@ -359,6 +363,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/service-taxonomy") {
     return <AgencyServiceTaxonomyPage />
+  }
+
+  if (window.location.pathname === "/agency/service-mechanics") {
+    return <AgencyServiceMechanicsPage />
   }
 
   if (window.location.pathname === "/agency/tickets-emds") {

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
+from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -21,7 +22,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.8 service taxonomy foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 36.9 service mechanics mapping foundation.",
 )
 
 app.add_middleware(
@@ -48,7 +49,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_8_service_taxonomy_foundation",
+        "phase": "phase_36_9_service_mechanics_mapping_foundation",
     }
 
 
@@ -231,6 +232,17 @@ async def readiness() -> dict:
     taxonomy_mapping_rule_count = await database.collection("service_taxonomy_mapping_rules").count()
     taxonomy_candidate_link_count = await database.collection("policy_candidate_taxonomy_links").count()
     taxonomy_review_correction_count = await database.collection("service_taxonomy_review_corrections").count()
+    mechanics_communication_rule_count = await database.collection("airline_service_communication_rules").count()
+    mechanics_ssr_osi_template_count = await database.collection("ssr_osi_templates").count()
+    mechanics_ssr_osi_requirement_count = await database.collection("ssr_osi_requirements").count()
+    mechanics_status_recognition_rule_count = await database.collection("ssr_status_recognition_rules").count()
+    mechanics_rejection_pattern_count = await database.collection("airline_rejection_patterns").count()
+    mechanics_payment_rule_count = await database.collection("airline_service_payment_rules").count()
+    mechanics_emd_issuance_rule_count = await database.collection("airline_emd_issuance_rules").count()
+    mechanics_rfic_rfisc_mapping_count = await database.collection("airline_rfic_rfisc_mappings").count()
+    mechanics_emd_interline_rule_count = await database.collection("airline_emd_interline_rules").count()
+    mechanics_emd_lifecycle_rule_count = await database.collection("airline_emd_lifecycle_rules").count()
+    mechanics_candidate_link_count = await database.collection("policy_candidate_mechanics_links").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -252,7 +264,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_8_service_taxonomy_foundation",
+        "phase": "phase_36_9_service_mechanics_mapping_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -635,6 +647,39 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Canonical service taxonomy maps airline policy terms, commercial labels, SSR/GDS codes, and extracted policy candidates into normalized domains, families, and variants only; it does not perform SSR/OSI communication mapping, EMD/RFIC/RFISC payment mechanics, pricing matrices, provider execution, or live GDS/NDC connectivity.",
         },
+        "service_mechanics_mapping_foundation": {
+            "communication_rules_enabled": True,
+            "ssr_osi_templates_enabled": True,
+            "ssr_osi_requirements_enabled": True,
+            "ssr_status_recognition_enabled": True,
+            "airline_rejection_patterns_enabled": True,
+            "payment_rules_enabled": True,
+            "emd_issuance_rules_enabled": True,
+            "rfic_rfisc_mappings_enabled": True,
+            "emd_interline_rules_enabled": True,
+            "emd_lifecycle_rules_enabled": True,
+            "candidate_mechanics_links_enabled": True,
+            "platform_service_mechanics_ui_enabled": True,
+            "agency_service_mechanics_ui_enabled": True,
+            "deterministic_mechanics_lookup_enabled": True,
+            "communication_payment_separation_enforced": True,
+            "provider_execution_disabled": True,
+            "emd_issuance_disabled": True,
+            "agency_auto_promotion_disabled": True,
+            "communication_rule_count": mechanics_communication_rule_count,
+            "ssr_osi_template_count": mechanics_ssr_osi_template_count,
+            "ssr_osi_requirement_count": mechanics_ssr_osi_requirement_count,
+            "status_recognition_rule_count": mechanics_status_recognition_rule_count,
+            "rejection_pattern_count": mechanics_rejection_pattern_count,
+            "payment_rule_count": mechanics_payment_rule_count,
+            "emd_issuance_rule_count": mechanics_emd_issuance_rule_count,
+            "rfic_rfisc_mapping_count": mechanics_rfic_rfisc_mapping_count,
+            "emd_interline_rule_count": mechanics_emd_interline_rule_count,
+            "emd_lifecycle_rule_count": mechanics_emd_lifecycle_rule_count,
+            "candidate_mechanics_link_count": mechanics_candidate_link_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 36.9 maps canonical services to SSR/OSI communication and EMD/RFIC/RFISC payment mechanics separately. It is metadata-only and does not execute provider actions, issue tickets/EMDs, process payments, or perform settlement.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -694,6 +739,7 @@ app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
+app.include_router(platform_service_mechanics.router)
 app.include_router(platform_documents.router)
 app.include_router(platform_gds_parser.router)
 app.include_router(platform_airline_policy_ingestion.router)
@@ -712,6 +758,7 @@ app.include_router(agency_booking_imports.router)
 app.include_router(agency_gds_parser.router)
 app.include_router(agency_airline_policy_library.router)
 app.include_router(agency_service_taxonomy.router)
+app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)
 app.include_router(agency_trip_changes.router)
 app.include_router(agency_documents.router)

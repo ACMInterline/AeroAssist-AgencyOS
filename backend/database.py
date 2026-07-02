@@ -405,6 +405,39 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "service_taxonomy_mapping_rules": [[("id", ASCENDING)]],
         "policy_candidate_taxonomy_links": [[("id", ASCENDING)]],
         "service_taxonomy_review_corrections": [[("id", ASCENDING)]],
+        "airline_service_communication_rules": [
+            {"keys": [("id", ASCENDING)], "name": "airline_service_communication_rules_id_unique"},
+        ],
+        "ssr_osi_templates": [
+            {"keys": [("id", ASCENDING)], "name": "ssr_osi_templates_id_unique"},
+        ],
+        "ssr_osi_requirements": [
+            {"keys": [("id", ASCENDING)], "name": "ssr_osi_requirements_id_unique"},
+        ],
+        "ssr_status_recognition_rules": [
+            {"keys": [("id", ASCENDING)], "name": "ssr_status_recognition_rules_id_unique"},
+        ],
+        "airline_rejection_patterns": [
+            {"keys": [("id", ASCENDING)], "name": "airline_rejection_patterns_id_unique"},
+        ],
+        "airline_service_payment_rules": [
+            {"keys": [("id", ASCENDING)], "name": "airline_service_payment_rules_id_unique"},
+        ],
+        "airline_emd_issuance_rules": [
+            {"keys": [("id", ASCENDING)], "name": "airline_emd_issuance_rules_id_unique"},
+        ],
+        "airline_rfic_rfisc_mappings": [
+            {"keys": [("id", ASCENDING)], "name": "airline_rfic_rfisc_mappings_id_unique"},
+        ],
+        "airline_emd_interline_rules": [
+            {"keys": [("id", ASCENDING)], "name": "airline_emd_interline_rules_id_unique"},
+        ],
+        "airline_emd_lifecycle_rules": [
+            {"keys": [("id", ASCENDING)], "name": "airline_emd_lifecycle_rules_id_unique"},
+        ],
+        "policy_candidate_mechanics_links": [
+            {"keys": [("id", ASCENDING)], "name": "policy_candidate_mechanics_links_id_unique"},
+        ],
         "airline_rules_core": [[("airline_id", ASCENDING)], [("id", ASCENDING)]],
         "unified_exception_rules": [[("id", ASCENDING)]],
         "agency_staff_memberships": [[("agency_id", ASCENDING), ("user_id", ASCENDING)]],
@@ -835,6 +868,67 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("promotion_status", ASCENDING)], "name": "service_taxonomy_review_corrections_promotion_status_lookup"},
             {"keys": [("agency_id", ASCENDING), ("promotion_status", ASCENDING)], "name": "service_taxonomy_review_corrections_agency_promotion_status_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "service_taxonomy_review_corrections_created_at_lookup"},
+        ],
+        "airline_service_communication_rules": [
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_service_communication_rules_airline_taxonomy_lookup"},
+            {"keys": [("communication_channel", ASCENDING), ("request_method", ASCENDING), ("status", ASCENDING)], "name": "airline_service_communication_rules_channel_method_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("is_global", ASCENDING), ("status", ASCENDING)], "name": "airline_service_communication_rules_scope_status_lookup"},
+            {"keys": [("source_policy_id", ASCENDING), ("approved_knowledge_record_id", ASCENDING)], "name": "airline_service_communication_rules_policy_knowledge_lookup"},
+        ],
+        "ssr_osi_templates": [
+            {"keys": [("communication_rule_id", ASCENDING)], "name": "ssr_osi_templates_communication_rule_lookup"},
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "ssr_osi_templates_airline_taxonomy_lookup"},
+            {"keys": [("gds_system", ASCENDING), ("template_type", ASCENDING), ("status", ASCENDING)], "name": "ssr_osi_templates_gds_type_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("is_global", ASCENDING), ("status", ASCENDING)], "name": "ssr_osi_templates_scope_status_lookup"},
+        ],
+        "ssr_osi_requirements": [
+            {"keys": [("communication_rule_id", ASCENDING)], "name": "ssr_osi_requirements_communication_rule_lookup"},
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "ssr_osi_requirements_airline_taxonomy_lookup"},
+            {"keys": [("requirement_type", ASCENDING), ("status", ASCENDING)], "name": "ssr_osi_requirements_type_status_lookup"},
+        ],
+        "ssr_status_recognition_rules": [
+            {"keys": [("airline_code", ASCENDING), ("gds_system", ASCENDING), ("ssr_code", ASCENDING), ("status", ASCENDING), ("priority", ASCENDING)], "name": "ssr_status_recognition_rules_airline_gds_ssr_status_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "ssr_status_recognition_rules_taxonomy_lookup"},
+            {"keys": [("normalized_match_value", ASCENDING)], "name": "ssr_status_recognition_rules_normalized_match_lookup"},
+        ],
+        "airline_rejection_patterns": [
+            {"keys": [("airline_code", ASCENDING), ("gds_system", ASCENDING), ("rejection_code", ASCENDING)], "name": "airline_rejection_patterns_airline_gds_code_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_rejection_patterns_taxonomy_lookup"},
+            {"keys": [("reason_category", ASCENDING), ("severity", ASCENDING), ("status", ASCENDING)], "name": "airline_rejection_patterns_reason_severity_status_lookup"},
+            {"keys": [("normalized_pattern_text", ASCENDING)], "name": "airline_rejection_patterns_normalized_text_lookup"},
+        ],
+        "airline_service_payment_rules": [
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_service_payment_rules_airline_taxonomy_lookup"},
+            {"keys": [("payment_required", ASCENDING), ("separate_emd_required", ASCENDING), ("payment_timing", ASCENDING)], "name": "airline_service_payment_rules_payment_emd_timing_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("is_global", ASCENDING), ("status", ASCENDING)], "name": "airline_service_payment_rules_scope_status_lookup"},
+            {"keys": [("source_policy_id", ASCENDING), ("approved_knowledge_record_id", ASCENDING)], "name": "airline_service_payment_rules_policy_knowledge_lookup"},
+        ],
+        "airline_emd_issuance_rules": [
+            {"keys": [("payment_rule_id", ASCENDING)], "name": "airline_emd_issuance_rules_payment_rule_lookup"},
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_emd_issuance_rules_airline_taxonomy_lookup"},
+            {"keys": [("emd_type", ASCENDING), ("rfic", ASCENDING), ("rfisc", ASCENDING), ("status", ASCENDING)], "name": "airline_emd_issuance_rules_type_rfic_rfisc_status_lookup"},
+            {"keys": [("gds_system", ASCENDING), ("status", ASCENDING)], "name": "airline_emd_issuance_rules_gds_status_lookup"},
+        ],
+        "airline_rfic_rfisc_mappings": [
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_rfic_rfisc_mappings_airline_taxonomy_lookup"},
+            {"keys": [("airline_code", ASCENDING), ("rfic", ASCENDING), ("rfisc", ASCENDING), ("status", ASCENDING)], "name": "airline_rfic_rfisc_mappings_airline_rfic_rfisc_status_lookup"},
+            {"keys": [("source_policy_id", ASCENDING), ("approved_knowledge_record_id", ASCENDING)], "name": "airline_rfic_rfisc_mappings_policy_knowledge_lookup"},
+        ],
+        "airline_emd_interline_rules": [
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_emd_interline_rules_airline_taxonomy_lookup"},
+            {"keys": [("interline_allowed", ASCENDING), ("status", ASCENDING)], "name": "airline_emd_interline_rules_allowed_status_lookup"},
+        ],
+        "airline_emd_lifecycle_rules": [
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_emd_lifecycle_rules_airline_taxonomy_lookup"},
+            {"keys": [("refundable", ASCENDING), ("exchangeable", ASCENDING), ("voidable", ASCENDING), ("status", ASCENDING)], "name": "airline_emd_lifecycle_rules_lifecycle_status_lookup"},
+        ],
+        "policy_candidate_mechanics_links": [
+            {"keys": [("candidate_type", ASCENDING), ("candidate_id", ASCENDING)], "name": "policy_candidate_mechanics_links_candidate_lookup"},
+            {"keys": [("taxonomy_link_id", ASCENDING)], "name": "policy_candidate_mechanics_links_taxonomy_link_lookup"},
+            {"keys": [("mechanics_type", ASCENDING), ("mechanics_record_id", ASCENDING)], "name": "policy_candidate_mechanics_links_mechanics_record_lookup"},
+            {"keys": [("policy_source_id", ASCENDING), ("extraction_run_id", ASCENDING)], "name": "policy_candidate_mechanics_links_source_run_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("review_status", ASCENDING)], "name": "policy_candidate_mechanics_links_agency_review_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "policy_candidate_mechanics_links_taxonomy_lookup"},
         ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],

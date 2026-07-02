@@ -28,6 +28,7 @@ const primaryNav = [
   { label: "GDS Parser", description: "Parse review", href: "/agency/gds-parser", icon: Database },
   { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: Database },
   { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: Tags },
+  { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: ClipboardList },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

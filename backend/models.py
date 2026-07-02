@@ -4732,6 +4732,826 @@ class ServiceTaxonomyReviewCorrectionCreate(BaseModel):
     promotion_status: ServiceTaxonomyPromotionStatus = ServiceTaxonomyPromotionStatus.NOT_REQUESTED
 
 
+class ServiceMechanicsStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    DEPRECATED = "deprecated"
+    ARCHIVED = "archived"
+
+
+class ServiceMechanicsReviewStatus(str, Enum):
+    SUGGESTED = "suggested"
+    CONFIRMED = "confirmed"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+
+class ServiceMechanicsCommunicationChannel(str, Enum):
+    GDS = "gds"
+    NDC = "ndc"
+    AIRLINE_PORTAL = "airline_portal"
+    EMAIL = "email"
+    PHONE = "phone"
+    MANUAL = "manual"
+    OTHER = "other"
+
+
+class ServiceMechanicsGdsSystem(str, Enum):
+    AMADEUS = "amadeus"
+    SABRE = "sabre"
+    TRAVELPORT = "travelport"
+    GALILEO = "galileo"
+    WORLDSPAN = "worldspan"
+    OTHER = "other"
+
+
+class ServiceMechanicsRequestMethod(str, Enum):
+    SSR = "ssr"
+    OSI = "osi"
+    OTHS = "oths"
+    REMARK = "remark"
+    MANUAL_CONTACT = "manual_contact"
+    NDC_SERVICE = "ndc_service"
+    OTHER = "other"
+
+
+class SsrOsiTemplateType(str, Enum):
+    SSR = "ssr"
+    OSI = "osi"
+    OTHS = "oths"
+    REMARK = "remark"
+    OTHER = "other"
+
+
+class SsrOsiRequirementType(str, Enum):
+    PASSENGER_DATA = "passenger_data"
+    SEGMENT_DATA = "segment_data"
+    DOCUMENT = "document"
+    MEDICAL_FORM = "medical_form"
+    AGE = "age"
+    CONTACT = "contact"
+    FREE_TEXT = "free_text"
+    APPROVAL = "approval"
+    DEADLINE = "deadline"
+    OTHER = "other"
+
+
+class ServiceMechanicsMatchType(str, Enum):
+    EXACT = "exact"
+    CONTAINS = "contains"
+    REGEX = "regex"
+    TOKEN = "token"
+
+
+class SsrRecognizedStatus(str, Enum):
+    REQUESTED = "requested"
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+    WAITLISTED = "waitlisted"
+    UNABLE = "unable"
+    UNKNOWN = "unknown"
+
+
+class AirlineRejectionReasonCategory(str, Enum):
+    AGE_RESTRICTION = "age_restriction"
+    ROUTE_RESTRICTION = "route_restriction"
+    CONNECTION_RESTRICTION = "connection_restriction"
+    EQUIPMENT_RESTRICTION = "equipment_restriction"
+    CAPACITY = "capacity"
+    DOCUMENTATION = "documentation"
+    DEADLINE = "deadline"
+    INTERLINE = "interline"
+    CHANNEL_NOT_SUPPORTED = "channel_not_supported"
+    PAYMENT_REQUIRED = "payment_required"
+    UNKNOWN = "unknown"
+
+
+class ServiceMechanicsSeverity(str, Enum):
+    INFO = "info"
+    ADVISORY = "advisory"
+    WARNING = "warning"
+    BLOCKER = "blocker"
+
+
+class ServicePaymentTiming(str, Enum):
+    BEFORE_TICKETING = "before_ticketing"
+    AFTER_TICKETING = "after_ticketing"
+    BEFORE_DEPARTURE = "before_departure"
+    AT_AIRPORT = "at_airport"
+    NOT_APPLICABLE = "not_applicable"
+    UNKNOWN = "unknown"
+
+
+class AirlineEmdType(str, Enum):
+    EMD_A = "emd_a"
+    EMD_S = "emd_s"
+    UNKNOWN = "unknown"
+    NOT_REQUIRED = "not_required"
+
+
+class PolicyCandidateMechanicsType(str, Enum):
+    COMMUNICATION_RULE = "communication_rule"
+    SSR_OSI_TEMPLATE = "ssr_osi_template"
+    REQUIREMENT = "requirement"
+    STATUS_RECOGNITION = "status_recognition"
+    REJECTION_PATTERN = "rejection_pattern"
+    PAYMENT_RULE = "payment_rule"
+    EMD_ISSUANCE_RULE = "emd_issuance_rule"
+    RFIC_RFISC_MAPPING = "rfic_rfisc_mapping"
+    INTERLINE_RULE = "interline_rule"
+    LIFECYCLE_RULE = "lifecycle_rule"
+
+
+class AirlineServiceCommunicationRule(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    canonical_service_label: Optional[str] = None
+    communication_channel: ServiceMechanicsCommunicationChannel = ServiceMechanicsCommunicationChannel.GDS
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    request_method: ServiceMechanicsRequestMethod = ServiceMechanicsRequestMethod.SSR
+    ssr_code: Optional[str] = None
+    osi_required: bool = False
+    oths_required: bool = False
+    passenger_association_required: bool = True
+    segment_association_required: bool = True
+    airline_confirmation_required: bool = True
+    manual_contact_required: bool = False
+    ndc_supported: Optional[bool] = None
+    gds_supported: Optional[bool] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SsrOsiTemplate(BaseDocument):
+    communication_rule_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    gds_system: ServiceMechanicsGdsSystem = ServiceMechanicsGdsSystem.AMADEUS
+    template_type: SsrOsiTemplateType = SsrOsiTemplateType.SSR
+    ssr_code: Optional[str] = None
+    template_text: str
+    example_text: Optional[str] = None
+    required_fields: List[str] = Field(default_factory=list)
+    passenger_placeholder_supported: bool = True
+    segment_placeholder_supported: bool = True
+    free_text_allowed: bool = True
+    max_length: Optional[int] = None
+    validation_notes: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    is_global: bool = True
+    agency_id: Optional[str] = None
+
+
+class SsrOsiRequirement(BaseDocument):
+    communication_rule_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    requirement_type: SsrOsiRequirementType = SsrOsiRequirementType.OTHER
+    requirement_code: str
+    requirement_label: str
+    mandatory: bool = True
+    applies_to_passenger: bool = True
+    applies_to_segment: bool = False
+    validation_hint: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class SsrStatusRecognitionRule(BaseDocument):
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    ssr_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    match_type: ServiceMechanicsMatchType = ServiceMechanicsMatchType.CONTAINS
+    match_value: str
+    normalized_match_value: str
+    recognized_status: SsrRecognizedStatus = SsrRecognizedStatus.UNKNOWN
+    confidence_score: float = 0.75
+    priority: int = 100
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineRejectionPattern(BaseDocument):
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    rejection_code: Optional[str] = None
+    pattern_text: str
+    normalized_pattern_text: str
+    reason_category: AirlineRejectionReasonCategory = AirlineRejectionReasonCategory.UNKNOWN
+    severity: ServiceMechanicsSeverity = ServiceMechanicsSeverity.WARNING
+    suggested_action: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineServicePaymentRule(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    payment_required: bool = False
+    fee_included_in_fare: bool = False
+    separate_emd_required: bool = False
+    payment_timing: ServicePaymentTiming = ServicePaymentTiming.UNKNOWN
+    validating_carrier_required: Optional[bool] = None
+    plating_carrier_restriction: Optional[str] = None
+    passenger_association_required: bool = True
+    segment_association_required: bool = True
+    interline_allowed: Optional[bool] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    no_show_refundable: Optional[bool] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineEmdIssuanceRule(BaseDocument):
+    payment_rule_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    emd_type: AirlineEmdType = AirlineEmdType.UNKNOWN
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_subcode: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    asvc_available: Optional[bool] = None
+    icw_ticket_required: Optional[bool] = None
+    icw_coupon_required: Optional[bool] = None
+    standalone_allowed: Optional[bool] = None
+    validating_carrier_rules: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    issuance_command_example: Optional[str] = None
+    refund_command_example: Optional[str] = None
+    exchange_command_example: Optional[str] = None
+    void_command_example: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineRficRfiscMapping(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    rfic: str
+    rfisc: str
+    service_subcode: Optional[str] = None
+    commercial_name: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    emd_type: AirlineEmdType = AirlineEmdType.UNKNOWN
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineEmdInterlineRule(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    interline_allowed: bool = False
+    plating_carrier_required: Optional[str] = None
+    validating_carrier_must_equal_operating: Optional[bool] = None
+    validating_carrier_must_equal_marketing: Optional[bool] = None
+    partner_airline_restrictions: List[str] = Field(default_factory=list)
+    restriction_text: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineEmdLifecycleRule(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    reissuable: Optional[bool] = None
+    refund_conditions: Optional[str] = None
+    exchange_conditions: Optional[str] = None
+    void_conditions: Optional[str] = None
+    no_show_policy: Optional[str] = None
+    residual_value_policy: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class PolicyCandidateMechanicsLink(BaseDocument):
+    agency_id: Optional[str] = None
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_type: PolicyCandidateMechanicsType
+    mechanics_record_id: str
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.0
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class AirlineServiceCommunicationRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    canonical_service_label: Optional[str] = None
+    communication_channel: ServiceMechanicsCommunicationChannel = ServiceMechanicsCommunicationChannel.GDS
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    request_method: ServiceMechanicsRequestMethod = ServiceMechanicsRequestMethod.SSR
+    ssr_code: Optional[str] = None
+    osi_required: bool = False
+    oths_required: bool = False
+    passenger_association_required: bool = True
+    segment_association_required: bool = True
+    airline_confirmation_required: bool = True
+    manual_contact_required: bool = False
+    ndc_supported: Optional[bool] = None
+    gds_supported: Optional[bool] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineServiceCommunicationRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    canonical_service_label: Optional[str] = None
+    communication_channel: Optional[ServiceMechanicsCommunicationChannel] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    request_method: Optional[ServiceMechanicsRequestMethod] = None
+    ssr_code: Optional[str] = None
+    osi_required: Optional[bool] = None
+    oths_required: Optional[bool] = None
+    passenger_association_required: Optional[bool] = None
+    segment_association_required: Optional[bool] = None
+    airline_confirmation_required: Optional[bool] = None
+    manual_contact_required: Optional[bool] = None
+    ndc_supported: Optional[bool] = None
+    gds_supported: Optional[bool] = None
+    status: Optional[ServiceMechanicsStatus] = None
+    review_status: Optional[ServiceMechanicsReviewStatus] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class SsrOsiTemplateCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    communication_rule_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    gds_system: ServiceMechanicsGdsSystem = ServiceMechanicsGdsSystem.AMADEUS
+    template_type: SsrOsiTemplateType = SsrOsiTemplateType.SSR
+    ssr_code: Optional[str] = None
+    template_text: str
+    example_text: Optional[str] = None
+    required_fields: List[str] = Field(default_factory=list)
+    passenger_placeholder_supported: bool = True
+    segment_placeholder_supported: bool = True
+    free_text_allowed: bool = True
+    max_length: Optional[int] = None
+    validation_notes: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    is_global: bool = True
+    agency_id: Optional[str] = None
+
+
+class SsrOsiTemplateUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    communication_rule_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    template_type: Optional[SsrOsiTemplateType] = None
+    ssr_code: Optional[str] = None
+    template_text: Optional[str] = None
+    example_text: Optional[str] = None
+    required_fields: Optional[List[str]] = None
+    passenger_placeholder_supported: Optional[bool] = None
+    segment_placeholder_supported: Optional[bool] = None
+    free_text_allowed: Optional[bool] = None
+    max_length: Optional[int] = None
+    validation_notes: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+
+
+class SsrOsiRequirementCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    communication_rule_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    requirement_type: SsrOsiRequirementType = SsrOsiRequirementType.OTHER
+    requirement_code: str
+    requirement_label: str
+    mandatory: bool = True
+    applies_to_passenger: bool = True
+    applies_to_segment: bool = False
+    validation_hint: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class SsrOsiRequirementUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    communication_rule_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    requirement_type: Optional[SsrOsiRequirementType] = None
+    requirement_code: Optional[str] = None
+    requirement_label: Optional[str] = None
+    mandatory: Optional[bool] = None
+    applies_to_passenger: Optional[bool] = None
+    applies_to_segment: Optional[bool] = None
+    validation_hint: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class SsrStatusRecognitionRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    ssr_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    match_type: ServiceMechanicsMatchType = ServiceMechanicsMatchType.CONTAINS
+    match_value: str
+    recognized_status: SsrRecognizedStatus = SsrRecognizedStatus.UNKNOWN
+    confidence_score: float = 0.75
+    priority: int = 100
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class SsrStatusRecognitionRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    ssr_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    match_type: Optional[ServiceMechanicsMatchType] = None
+    match_value: Optional[str] = None
+    recognized_status: Optional[SsrRecognizedStatus] = None
+    confidence_score: Optional[float] = None
+    priority: Optional[int] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class AirlineRejectionPatternCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    rejection_code: Optional[str] = None
+    pattern_text: str
+    reason_category: AirlineRejectionReasonCategory = AirlineRejectionReasonCategory.UNKNOWN
+    severity: ServiceMechanicsSeverity = ServiceMechanicsSeverity.WARNING
+    suggested_action: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineRejectionPatternUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    rejection_code: Optional[str] = None
+    pattern_text: Optional[str] = None
+    reason_category: Optional[AirlineRejectionReasonCategory] = None
+    severity: Optional[ServiceMechanicsSeverity] = None
+    suggested_action: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class AirlineServicePaymentRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    payment_required: bool = False
+    fee_included_in_fare: bool = False
+    separate_emd_required: bool = False
+    payment_timing: ServicePaymentTiming = ServicePaymentTiming.UNKNOWN
+    validating_carrier_required: Optional[bool] = None
+    plating_carrier_restriction: Optional[str] = None
+    passenger_association_required: bool = True
+    segment_association_required: bool = True
+    interline_allowed: Optional[bool] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    no_show_refundable: Optional[bool] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineServicePaymentRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    payment_required: Optional[bool] = None
+    fee_included_in_fare: Optional[bool] = None
+    separate_emd_required: Optional[bool] = None
+    payment_timing: Optional[ServicePaymentTiming] = None
+    validating_carrier_required: Optional[bool] = None
+    plating_carrier_restriction: Optional[str] = None
+    passenger_association_required: Optional[bool] = None
+    segment_association_required: Optional[bool] = None
+    interline_allowed: Optional[bool] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    no_show_refundable: Optional[bool] = None
+    status: Optional[ServiceMechanicsStatus] = None
+    review_status: Optional[ServiceMechanicsReviewStatus] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineEmdIssuanceRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    payment_rule_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    emd_type: AirlineEmdType = AirlineEmdType.UNKNOWN
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_subcode: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    asvc_available: Optional[bool] = None
+    icw_ticket_required: Optional[bool] = None
+    icw_coupon_required: Optional[bool] = None
+    standalone_allowed: Optional[bool] = None
+    validating_carrier_rules: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    issuance_command_example: Optional[str] = None
+    refund_command_example: Optional[str] = None
+    exchange_command_example: Optional[str] = None
+    void_command_example: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineEmdIssuanceRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    payment_rule_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    emd_type: Optional[AirlineEmdType] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_subcode: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    asvc_available: Optional[bool] = None
+    icw_ticket_required: Optional[bool] = None
+    icw_coupon_required: Optional[bool] = None
+    standalone_allowed: Optional[bool] = None
+    validating_carrier_rules: Optional[str] = None
+    gds_system: Optional[ServiceMechanicsGdsSystem] = None
+    issuance_command_example: Optional[str] = None
+    refund_command_example: Optional[str] = None
+    exchange_command_example: Optional[str] = None
+    void_command_example: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class AirlineRficRfiscMappingCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    rfic: str
+    rfisc: str
+    service_subcode: Optional[str] = None
+    commercial_name: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    emd_type: AirlineEmdType = AirlineEmdType.UNKNOWN
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineRficRfiscMappingUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_subcode: Optional[str] = None
+    commercial_name: Optional[str] = None
+    reason_for_issuance_description: Optional[str] = None
+    emd_type: Optional[AirlineEmdType] = None
+    status: Optional[ServiceMechanicsStatus] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineEmdInterlineRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    interline_allowed: bool = False
+    plating_carrier_required: Optional[str] = None
+    validating_carrier_must_equal_operating: Optional[bool] = None
+    validating_carrier_must_equal_marketing: Optional[bool] = None
+    partner_airline_restrictions: List[str] = Field(default_factory=list)
+    restriction_text: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineEmdInterlineRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    interline_allowed: Optional[bool] = None
+    plating_carrier_required: Optional[str] = None
+    validating_carrier_must_equal_operating: Optional[bool] = None
+    validating_carrier_must_equal_marketing: Optional[bool] = None
+    partner_airline_restrictions: Optional[List[str]] = None
+    restriction_text: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class AirlineEmdLifecycleRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    reissuable: Optional[bool] = None
+    refund_conditions: Optional[str] = None
+    exchange_conditions: Optional[str] = None
+    void_conditions: Optional[str] = None
+    no_show_policy: Optional[str] = None
+    residual_value_policy: Optional[str] = None
+    status: ServiceMechanicsStatus = ServiceMechanicsStatus.ACTIVE
+
+
+class AirlineEmdLifecycleRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    refundable: Optional[bool] = None
+    exchangeable: Optional[bool] = None
+    voidable: Optional[bool] = None
+    reissuable: Optional[bool] = None
+    refund_conditions: Optional[str] = None
+    exchange_conditions: Optional[str] = None
+    void_conditions: Optional[str] = None
+    no_show_policy: Optional[str] = None
+    residual_value_policy: Optional[str] = None
+    status: Optional[ServiceMechanicsStatus] = None
+
+
+class PolicyCandidateMechanicsLinkCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_type: PolicyCandidateMechanicsType
+    mechanics_record_id: str
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.0
+    review_status: ServiceMechanicsReviewStatus = ServiceMechanicsReviewStatus.SUGGESTED
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class PolicyCandidateMechanicsLinkUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: Optional[PolicyCandidateTaxonomyCandidateType] = None
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_type: Optional[PolicyCandidateMechanicsType] = None
+    mechanics_record_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    confidence_score: Optional[float] = None
+    review_status: Optional[ServiceMechanicsReviewStatus] = None
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class ServiceMechanicsLookupRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

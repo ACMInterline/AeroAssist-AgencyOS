@@ -10,7 +10,7 @@ from pathlib import Path
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_36_8_service_taxonomy_foundation"
+EXPECTED_PHASE = "phase_36_9_service_mechanics_mapping_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -67,15 +67,17 @@ def main() -> int:
         '"/platform/airlines": AirlinesPage',
         '"/platform/airline-policy-ingestion": AirlinePolicyIngestionPage',
         '"/platform/service-taxonomy": PlatformServiceTaxonomyPage',
+        '"/platform/service-mechanics": PlatformServiceMechanicsPage',
         'import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"',
         'import AirlinesPage from "./pages/platform/AirlinesPage"',
         'import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"',
         'import PlatformServiceTaxonomyPage from "./pages/platform/ServiceTaxonomyPage"',
+        'import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"',
         "PlatformAgencyDetailPage",
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",
     ], "App platform routes")
-    require_text(layout, ["Summary", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", 'href="/platform/agencies"', 'href="/platform/airlines"', 'href="/platform/airline-policy-ingestion"', 'href="/platform/service-taxonomy"'], "Platform header")
+    require_text(layout, ["Summary", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", "Service Mechanics", 'href="/platform/agencies"', 'href="/platform/airlines"', 'href="/platform/airline-policy-ingestion"', 'href="/platform/service-taxonomy"', 'href="/platform/service-mechanics"'], "Platform header")
     reject_text(layout, ["Agency Workspace", 'href="/agency"'], "Platform header")
     require_text(dashboard, ['href="/platform/agencies"', "Manage agencies"], "Platform dashboard")
     require_text(agencies, ["Agencies", "Create Agency", "Promise.allSettled", "agencies = state?.agencies || []"], "Platform agencies defensive route")

@@ -65,6 +65,7 @@ The repository currently contains:
 - Phase 36.6: GDS parser foundation and training samples.
 - Phase 36.7: Airline policy ingestion foundation.
 - Phase 36.8: Canonical special / ancillary services taxonomy.
+- Phase 36.9: SSR / OSI / EMD / RFIC / RFISC service mechanics mapping foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1088,6 +1089,22 @@ Implemented scope:
 Avoid adding:
 
 - Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized ancillary pricing matrices, policy comparison matrix, live GDS/NDC/provider connectivity, live booking/ticketing/EMD issuance, scraping, external AI mapping, agency auto-promotion, `/agent` or `/admin` routes, or replacement of the service catalogue and Rules & Services foundations.
+
+### Phase 36.9: SSR / OSI / EMD / RFIC / RFISC Mapping Foundation
+
+Implemented scope:
+
+- Added separate communication mechanics records for airline service request channels, SSR/OSI/OTHS templates, request requirements, status recognition, and rejection/unable patterns.
+- Added separate payment mechanics records for service payment rules, EMD issuance metadata, RFIC/RFISC mappings, interline restrictions, and EMD lifecycle rules.
+- Added candidate mechanics links that connect Phase 36.7 policy candidates and Phase 36.8 taxonomy links to mechanics records without automatic global promotion.
+- Added deterministic airline + canonical domain/family/variant lookup that returns `communication` and `payment` sections separately with warnings for no-match results.
+- Added platform APIs under `/api/platform/service-mechanics/*` for global mechanics governance and agency APIs under `/api/agencies/{agency_id}/service-mechanics/*` for read-only lookup plus agency-local candidate links.
+- Added `/platform/service-mechanics` and `/agency/service-mechanics` UI routes.
+- Added readiness flags and counts under `service_mechanics_mapping_foundation`.
+
+Avoid adding:
+
+- Live SSR/OSI transmission, live GDS/NDC/provider execution, live booking/ticket/EMD issuance, payment capture, invoice/accounting posting, BSP/ARC settlement, automated refund/exchange/void execution, scraping, external AI mapping/extraction, agency auto-promotion, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 37: Provider Import And Issuance Provenance
 
