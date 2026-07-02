@@ -7138,6 +7138,142 @@ class OfferDecisionAuditSnapshotCreate(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportStatus(str, Enum):
+    GENERATED = "generated"
+    ARCHIVED = "archived"
+
+
+class OfferDecisionExportSectionKey(str, Enum):
+    DECISION_PACK = "decision_pack"
+    OPTIONS = "options"
+    EVIDENCE = "evidence"
+    WARNINGS = "warnings"
+    REVIEW_NOTES = "review_notes"
+    EXPLANATIONS = "explanations"
+    TIMELINE = "timeline"
+    REASONS = "reasons"
+    ACKNOWLEDGEMENTS = "acknowledgements"
+    AUDIT_SNAPSHOTS = "audit_snapshots"
+
+
+class OfferDecisionExportArtifactType(str, Enum):
+    PDF_METADATA = "pdf_metadata"
+    REVIEW_JSON_SNAPSHOT = "review_json_snapshot"
+
+
+class OfferDecisionExportRecipientType(str, Enum):
+    INTERNAL = "internal"
+    CLIENT_REVIEW = "client_review"
+    AGENCY_REVIEW = "agency_review"
+
+
+class OfferDecisionExportAuditEventType(str, Enum):
+    GENERATED = "generated"
+    VIEWED = "viewed"
+    RECIPIENT_DRAFT_CREATED = "recipient_draft_created"
+
+
+class OfferDecisionExport(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    export_name: str
+    export_status: OfferDecisionExportStatus = OfferDecisionExportStatus.GENERATED
+    generated_by: Optional[str] = None
+    generated_at: datetime = Field(default_factory=now_utc)
+    section_count: int = 0
+    artifact_count: int = 0
+    recipient_draft_count: int = 0
+    export_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    source_counts_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    pdf_export_metadata_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportSection(BaseDocument):
+    agency_id: str
+    export_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    section_key: OfferDecisionExportSectionKey
+    section_title: str
+    section_order: int
+    record_count: int = 0
+    section_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportArtifact(BaseDocument):
+    agency_id: str
+    export_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    artifact_type: OfferDecisionExportArtifactType = OfferDecisionExportArtifactType.PDF_METADATA
+    artifact_name: str
+    filename: Optional[str] = None
+    mime_type: str = "application/json"
+    artifact_json: Dict[str, Any] = Field(default_factory=dict)
+    file_generated: bool = False
+    binary_storage_disabled: bool = True
+    public_link_created: bool = False
+    automatic_sending_disabled: bool = True
+    metadata_only: bool = True
+
+
+class OfferDecisionExportRecipientDraft(BaseDocument):
+    agency_id: str
+    export_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    recipient_type: OfferDecisionExportRecipientType = OfferDecisionExportRecipientType.INTERNAL
+    recipient_name: Optional[str] = None
+    recipient_email: Optional[str] = None
+    subject: str
+    message_body: str
+    delivery_status: str = "draft"
+    sent_at: Optional[datetime] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    metadata_only: bool = True
+
+
+class OfferDecisionExportAuditEvent(BaseDocument):
+    agency_id: str
+    export_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    event_type: OfferDecisionExportAuditEventType = OfferDecisionExportAuditEventType.GENERATED
+    actor: Optional[str] = None
+    actor_type: OfferDecisionActorType = OfferDecisionActorType.SYSTEM
+    description: str
+    event_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    workflow_automation_disabled: bool = True
+
+
+class OfferDecisionExportGenerateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    export_name: Optional[str] = None
+    include_recipient_draft: bool = False
+    recipient_type: OfferDecisionExportRecipientType = OfferDecisionExportRecipientType.INTERNAL
+    recipient_name: Optional[str] = None
+    recipient_email: Optional[str] = None
+    subject: Optional[str] = None
+    message_body: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

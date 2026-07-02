@@ -22,6 +22,7 @@ import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
+import AgencyOfferDecisionExportsPage from "./pages/agency/OfferDecisionExportsPage"
 import AgencyOfferDecisionExplanationsPage from "./pages/agency/OfferDecisionExplanationsPage"
 import AgencyOfferDecisionPacksPage from "./pages/agency/OfferDecisionPacksPage"
 import AgencyOfferPolicyAdvisorPage from "./pages/agency/OfferPolicyAdvisorPage"
@@ -67,6 +68,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
+import PlatformOfferDecisionExportsPage from "./pages/platform/OfferDecisionExportsPage"
 import PlatformOfferDecisionExplanationsPage from "./pages/platform/OfferDecisionExplanationsPage"
 import PlatformOfferDecisionPacksPage from "./pages/platform/OfferDecisionPacksPage"
 import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorPage"
@@ -118,6 +120,7 @@ const routes = {
   "/platform/offer-policy-advisor": PlatformOfferPolicyAdvisorPage,
   "/platform/offer-decision-packs": PlatformOfferDecisionPacksPage,
   "/platform/offer-decision-explanations": PlatformOfferDecisionExplanationsPage,
+  "/platform/offer-decision-exports": PlatformOfferDecisionExportsPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -134,6 +137,7 @@ const routes = {
   "/agency/offer-policy-advisor": AgencyOfferPolicyAdvisorPage,
   "/agency/offer-decision-packs": AgencyOfferDecisionPacksPage,
   "/agency/offer-decision-explanations": AgencyOfferDecisionExplanationsPage,
+  "/agency/offer-decision-exports": AgencyOfferDecisionExportsPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,

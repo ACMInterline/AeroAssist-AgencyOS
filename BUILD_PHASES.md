@@ -71,6 +71,7 @@ The repository currently contains:
 - Phase 37.2: Offer builder policy advisor integration foundation.
 - Phase 37.3: Offer builder advisor consumption and decision pack foundation.
 - Phase 37.4: Offer explanation and decision timeline foundation.
+- Phase 37.5: Offer decision pack PDF and shareable review export foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1192,6 +1193,20 @@ Implemented scope:
 Avoid adding:
 
 - Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 37.5: Offer Decision Pack PDF / Shareable Review Export Foundation
+
+Implemented scope:
+
+- Added offer decision export records, ordered export sections, metadata-only PDF/JSON artifact records, unsent recipient drafts, and export audit events.
+- Added deterministic export generation from existing decision packs, option evidence, warnings, review notes, explanations, timeline events, reasons, acknowledgements, and audit snapshots.
+- Added agency APIs and `/agency/offer-decision-exports` for export generation, listing, detail review, artifact metadata, recipient drafts, and audit events.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-exports`.
+- Added readiness flags and counts under `offer_decision_export_foundation`.
+
+Avoid adding:
+
+- Automatic email sending, public links, live PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

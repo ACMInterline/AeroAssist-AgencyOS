@@ -6,7 +6,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 from smoke_service_mechanics_mapping_foundation import main as mechanics_smoke_main
 
 
-EXPECTED_PHASE = "phase_37_4_offer_explanation_decision_timeline_foundation"
+EXPECTED_PHASE = "phase_37_5_offer_decision_export_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:

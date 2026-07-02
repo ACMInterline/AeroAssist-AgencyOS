@@ -64,7 +64,7 @@ def assert_safe(payload: dict) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_37_4_offer_explanation_decision_timeline_foundation":
+    if health.get("phase") != "phase_37_5_offer_decision_export_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agency_id = get("/api/agencies", OWNER_HEADERS)["items"][0]["id"]
