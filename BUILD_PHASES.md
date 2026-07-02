@@ -68,6 +68,7 @@ The repository currently contains:
 - Phase 36.9: SSR / OSI / EMD / RFIC / RFISC service mechanics mapping foundation.
 - Phase 37.0: Airline ancillary pricing schema and exception engine expansion.
 - Phase 37.1: Airline policy comparison and service advisor foundation.
+- Phase 37.2: Offer builder policy advisor integration foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1147,6 +1148,20 @@ Implemented scope:
 Avoid adding:
 
 - Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline recommendation, external AI, scraping, agency-to-global auto-promotion, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 37.2: Offer Builder Policy Advisor Integration Foundation
+
+Implemented scope:
+
+- Added offer policy advisor contexts, offer-linked airline rows, warnings, manual decision notes, and saved snapshots.
+- Added deterministic offer advisor integration that builds metadata context from offer workspaces/options, compares airlines through the Phase 37.1 advisor layer, links ancillary quote results, stores service mechanics lookup metadata, and preserves taxonomy references.
+- Added agency APIs and `/agency/offer-policy-advisor` for offer-linked context build/evaluate, artifact attach, manual notes, warnings, and saved snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-policy-advisor`.
+- Added readiness flags and counts under `offer_policy_advisor_integration_foundation`.
+
+Avoid adding:
+
+- Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

@@ -22,6 +22,7 @@ import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
+import AgencyOfferPolicyAdvisorPage from "./pages/agency/OfferPolicyAdvisorPage"
 import OfferWorkspaceDetailPage from "./pages/agency/OfferWorkspaceDetailPage"
 import OfferWorkspacesPage from "./pages/agency/OfferWorkspacesPage"
 import RefundExchangeCaseCreatePage from "./pages/agency/RefundExchangeCaseCreatePage"
@@ -64,6 +65,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
+import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorPage"
 import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
@@ -109,6 +111,7 @@ const routes = {
   "/platform/service-mechanics": PlatformServiceMechanicsPage,
   "/platform/ancillary-pricing": PlatformAncillaryPricingPage,
   "/platform/policy-comparison": PlatformPolicyComparisonPage,
+  "/platform/offer-policy-advisor": PlatformOfferPolicyAdvisorPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -122,6 +125,7 @@ const routes = {
   "/agency/ancillary-pricing": AgencyAncillaryPricingPage,
   "/agency/policy-comparison": AgencyPolicyComparisonPage,
   "/agency/airline-service-advisor": AirlineServiceAdvisorPage,
+  "/agency/offer-policy-advisor": AgencyOfferPolicyAdvisorPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,
@@ -385,6 +389,10 @@ export default function App() {
 
   if (window.location.pathname === "/agency/airline-service-advisor") {
     return <AirlineServiceAdvisorPage />
+  }
+
+  if (window.location.pathname === "/agency/offer-policy-advisor") {
+    return <AgencyOfferPolicyAdvisorPage />
   }
 
   if (window.location.pathname === "/agency/tickets-emds") {

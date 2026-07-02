@@ -58,6 +58,10 @@ export default function PlatformLayout({ children, user }) {
               <Rows3 className="h-4 w-4" />
               Policy Comparison
             </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-policy-advisor">
+              <Rows3 className="h-4 w-4" />
+              Offer Advisor
+            </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/reference">
               <Database className="h-4 w-4" />
               Reference Data

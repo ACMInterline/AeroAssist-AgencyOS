@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_1_policy_comparison_service_advisor_foundation",
+        "phase": "phase_37_2_offer_policy_advisor_integration_foundation",
     }
 
 
@@ -101,6 +101,11 @@ async def summary(
             "service_advisor_scenarios": await db.collection("airline_service_advisor_scenarios").count(),
             "service_advisor_results": await db.collection("airline_service_advisor_results").count(),
             "policy_comparison_saved_views": await db.collection("airline_policy_comparison_saved_views").count(),
+            "offer_policy_advisor_contexts": await db.collection("offer_policy_advisor_contexts").count(),
+            "offer_policy_advisor_airline_rows": await db.collection("offer_policy_advisor_airline_rows").count(),
+            "offer_policy_advisor_warnings": await db.collection("offer_policy_advisor_warnings").count(),
+            "offer_policy_advisor_decision_notes": await db.collection("offer_policy_advisor_decision_notes").count(),
+            "offer_policy_advisor_saved_snapshots": await db.collection("offer_policy_advisor_saved_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),
@@ -232,6 +237,7 @@ async def summary(
             "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation",
             "Ancillary pricing schema and exception engine expansion foundation",
             "Airline policy comparison and service advisor foundation",
+            "Offer builder policy advisor integration foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -244,6 +250,7 @@ async def summary(
             "Full GDS host grammar coverage and provider reconciliation",
             "Invoice, payment, accounting, BSP/ARC, and settlement execution from ancillary estimates",
             "Automatic airline recommendation or provider execution from service advisor metadata",
+            "Automatic offer airline selection, offer price mutation, booking, ticketing, EMD issuance, payment, invoice, settlement, or provider execution from offer policy advisor metadata",
         ],
     }
 

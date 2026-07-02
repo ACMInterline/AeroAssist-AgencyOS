@@ -33,6 +33,7 @@ const primaryNav = [
   { label: "Ancillary Pricing", description: "Prices and exceptions", href: "/agency/ancillary-pricing", icon: ClipboardList },
   { label: "Policy Comparison", description: "Airline operations", href: "/agency/policy-comparison", icon: Rows3 },
   { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: ClipboardList },
+  { label: "Offer Advisor", description: "Offer policy context", href: "/agency/offer-policy-advisor", icon: Rows3 },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

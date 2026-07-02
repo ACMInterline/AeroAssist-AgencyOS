@@ -6483,6 +6483,190 @@ class AirlinePolicyComparisonSavedViewUpdate(BaseModel):
     status: Optional[PolicyComparisonStatus] = None
 
 
+class OfferPolicyAdvisorContextStatus(str, Enum):
+    BUILT = "built"
+    EVALUATED = "evaluated"
+    ATTACHED = "attached"
+    ARCHIVED = "archived"
+
+
+class OfferPolicyAdvisorDecisionNoteStatus(str, Enum):
+    DRAFT = "draft"
+    RECORDED = "recorded"
+    REVIEWED = "reviewed"
+    ARCHIVED = "archived"
+
+
+class OfferPolicyAdvisorWarningSource(str, Enum):
+    CONTEXT = "context"
+    POLICY_COMPARISON = "policy_comparison"
+    SERVICE_ADVISOR = "service_advisor"
+    ANCILLARY_PRICING = "ancillary_pricing"
+    SERVICE_MECHANICS = "service_mechanics"
+    MANUAL_NOTE = "manual_note"
+
+
+class OfferPolicyAdvisorContext(BaseDocument):
+    agency_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    context_name: str
+    context_status: OfferPolicyAdvisorContextStatus = OfferPolicyAdvisorContextStatus.BUILT
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    policy_comparison_snapshot_id: Optional[str] = None
+    advisor_scenario_id: Optional[str] = None
+    advisor_result_id: Optional[str] = None
+    quote_result_ids: List[str] = Field(default_factory=list)
+    service_mechanics_lookup_json: Dict[str, Any] = Field(default_factory=dict)
+    taxonomy_refs_json: Dict[str, Any] = Field(default_factory=dict)
+    offer_workspace_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    offer_option_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_context_json: Dict[str, Any] = Field(default_factory=dict)
+    service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    source_links_json: List[Dict[str, Any]] = Field(default_factory=list)
+    row_count: int = 0
+    warning_count: int = 0
+    manual_review_required: bool = False
+    metadata_only: bool = True
+    auto_recommendation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+    created_by_user_id: Optional[str] = None
+
+
+class OfferPolicyAdvisorAirlineRow(BaseDocument):
+    agency_id: str
+    context_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    policy_comparison_snapshot_id: Optional[str] = None
+    policy_comparison_row_id: Optional[str] = None
+    advisor_result_id: Optional[str] = None
+    quote_result_id: Optional[str] = None
+    service_mechanics_lookup_json: Dict[str, Any] = Field(default_factory=dict)
+    ancillary_pricing_quote_json: Dict[str, Any] = Field(default_factory=dict)
+    taxonomy_refs_json: Dict[str, Any] = Field(default_factory=dict)
+    warning_level: PolicyComparisonWarningLevel = PolicyComparisonWarningLevel.NONE
+    operational_complexity_score: Optional[int] = None
+    manual_contact_required: bool = False
+    emd_required: bool = False
+    pricing_summary: Optional[str] = None
+    advisor_summary: Optional[str] = None
+    row_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferPolicyAdvisorWarning(BaseDocument):
+    agency_id: str
+    context_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    warning_level: PolicyComparisonWarningLevel = PolicyComparisonWarningLevel.INFO
+    warning_type: str
+    message: str
+    source: OfferPolicyAdvisorWarningSource = OfferPolicyAdvisorWarningSource.CONTEXT
+    source_record_id: Optional[str] = None
+    human_review_required: bool = True
+    metadata_only: bool = True
+
+
+class OfferPolicyAdvisorDecisionNote(BaseDocument):
+    agency_id: str
+    context_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    note_title: str
+    note_body: str
+    note_status: OfferPolicyAdvisorDecisionNoteStatus = OfferPolicyAdvisorDecisionNoteStatus.RECORDED
+    policy_comparison_snapshot_id: Optional[str] = None
+    advisor_result_id: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    human_reviewed: bool = True
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    auto_recommendation_disabled: bool = True
+
+
+class OfferPolicyAdvisorSavedSnapshot(BaseDocument):
+    agency_id: str
+    context_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    snapshot_name: str
+    policy_comparison_snapshot_id: Optional[str] = None
+    advisor_scenario_id: Optional[str] = None
+    advisor_result_id: Optional[str] = None
+    quote_result_ids: List[str] = Field(default_factory=list)
+    airline_row_ids: List[str] = Field(default_factory=list)
+    warning_ids: List[str] = Field(default_factory=list)
+    decision_note_ids: List[str] = Field(default_factory=list)
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferPolicyAdvisorContextBuildRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    context_name: Optional[str] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_context_json: Dict[str, Any] = Field(default_factory=dict)
+    service_context_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferPolicyAdvisorEvaluationRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_codes: Optional[List[str]] = None
+    route_context_json: Optional[Dict[str, Any]] = None
+    passenger_context_json: Optional[Dict[str, Any]] = None
+    service_context_json: Optional[Dict[str, Any]] = None
+
+
+class OfferPolicyAdvisorAttachmentRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_comparison_snapshot_id: Optional[str] = None
+    advisor_scenario_id: Optional[str] = None
+    advisor_result_id: Optional[str] = None
+    quote_result_ids: List[str] = Field(default_factory=list)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferPolicyAdvisorDecisionNoteCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    offer_option_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    note_title: str
+    note_body: str
+    note_status: OfferPolicyAdvisorDecisionNoteStatus = OfferPolicyAdvisorDecisionNoteStatus.RECORDED
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferPolicyAdvisorSavedSnapshotCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_name: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
