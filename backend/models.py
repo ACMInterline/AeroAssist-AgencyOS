@@ -6896,6 +6896,248 @@ class OfferDecisionPackSnapshotCreate(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExplanationType(str, Enum):
+    OPERATIONAL = "operational"
+    POLICY = "policy"
+    PRICING = "pricing"
+    MECHANICS = "mechanics"
+    WARNING = "warning"
+    EVIDENCE = "evidence"
+    REVIEW = "review"
+    COMPARISON = "comparison"
+    SUMMARY = "summary"
+    DETAILED_EXPLANATION = "detailed_explanation"
+
+
+class OfferDecisionTimelineEventType(str, Enum):
+    CREATED = "created"
+    ADVISOR_ATTACHED = "advisor_attached"
+    COMPARISON_GENERATED = "comparison_generated"
+    WARNING_ADDED = "warning_added"
+    REVIEW_STARTED = "review_started"
+    REVIEW_COMPLETED = "review_completed"
+    NOTE_ADDED = "note_added"
+    SNAPSHOT_SAVED = "snapshot_saved"
+    DECISION_PACK_CLOSED = "decision_pack_closed"
+    MANUAL_OVERRIDE_RECORDED = "manual_override_recorded"
+
+
+class OfferDecisionActorType(str, Enum):
+    AGENCY = "agency"
+    PLATFORM = "platform"
+    SYSTEM = "system"
+
+
+class OfferDecisionEvidenceReferenceType(str, Enum):
+    ADVISOR_RESULT = "advisor_result"
+    COMPARISON_SNAPSHOT = "comparison_snapshot"
+    PRICING_RULE = "pricing_rule"
+    MECHANICS_RULE = "mechanics_rule"
+    POLICY_RECORD = "policy_record"
+    TAXONOMY = "taxonomy"
+    EXCEPTION = "exception"
+    WARNING = "warning"
+    REVIEW_NOTE = "review_note"
+    KNOWLEDGE_RECORD = "knowledge_record"
+
+
+class OfferDecisionReasonCategory(str, Enum):
+    POLICY = "policy"
+    COMMERCIAL = "commercial"
+    OPERATIONAL = "operational"
+    CUSTOMER = "customer"
+    AIRLINE = "airline"
+    MANUAL = "manual"
+    PRICING = "pricing"
+    MECHANICS = "mechanics"
+    RISK = "risk"
+
+
+class OfferDecisionReasonImportance(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class OfferDecisionAcknowledgementType(str, Enum):
+    READ = "read"
+    REVIEWED = "reviewed"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    REQUIRES_FOLLOWUP = "requires_followup"
+
+
+class OfferDecisionExplanation(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    title: str
+    explanation_type: OfferDecisionExplanationType = OfferDecisionExplanationType.SUMMARY
+    explanation_text: str
+    created_by: Optional[str] = None
+    finalized: bool = False
+    finalized_at: Optional[datetime] = None
+    archived: bool = False
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    immutable_once_finalized: bool = True
+    metadata_only: bool = True
+    human_review_only: bool = True
+    automatic_recommendation_disabled: bool = True
+    provider_execution_disabled: bool = True
+
+
+class OfferDecisionTimelineEvent(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    timestamp: datetime = Field(default_factory=now_utc)
+    event_type: OfferDecisionTimelineEventType = OfferDecisionTimelineEventType.CREATED
+    actor: Optional[str] = None
+    actor_type: OfferDecisionActorType = OfferDecisionActorType.SYSTEM
+    description: str
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    workflow_automation_disabled: bool = True
+
+
+class OfferDecisionEvidenceReference(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    reference_type: OfferDecisionEvidenceReferenceType
+    reference_id: str
+    display_name: str
+    summary: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    immutable_reference: bool = True
+    metadata_only: bool = True
+
+
+class OfferDecisionReason(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    offer_option_id: Optional[str] = None
+    reason_category: OfferDecisionReasonCategory = OfferDecisionReasonCategory.MANUAL
+    importance: OfferDecisionReasonImportance = OfferDecisionReasonImportance.MEDIUM
+    text: str
+    created_by: Optional[str] = None
+    archived: bool = False
+    ai_generated: bool = False
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    human_review_only: bool = True
+
+
+class OfferDecisionAcknowledgement(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    acknowledged_by: str
+    acknowledged_at: datetime = Field(default_factory=now_utc)
+    acknowledgement_type: OfferDecisionAcknowledgementType = OfferDecisionAcknowledgementType.REVIEWED
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    human_review_only: bool = True
+
+
+class OfferDecisionAuditSnapshot(BaseDocument):
+    agency_id: str
+    decision_pack_id: str
+    offer_workspace_id: str
+    snapshot_name: str
+    explanation_ids: List[str] = Field(default_factory=list)
+    timeline_event_ids: List[str] = Field(default_factory=list)
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    reason_ids: List[str] = Field(default_factory=list)
+    acknowledgement_ids: List[str] = Field(default_factory=list)
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    metadata_only: bool = True
+    human_review_only: bool = True
+
+
+class OfferDecisionExplanationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    offer_option_id: Optional[str] = None
+    title: str
+    explanation_type: OfferDecisionExplanationType = OfferDecisionExplanationType.SUMMARY
+    explanation_text: str
+    finalized: bool = False
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExplanationUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    title: Optional[str] = None
+    explanation_type: Optional[OfferDecisionExplanationType] = None
+    explanation_text: Optional[str] = None
+    finalized: Optional[bool] = None
+    archived: Optional[bool] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+
+
+class OfferDecisionTimelineEventCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    offer_option_id: Optional[str] = None
+    event_type: OfferDecisionTimelineEventType = OfferDecisionTimelineEventType.CREATED
+    actor: Optional[str] = None
+    actor_type: OfferDecisionActorType = OfferDecisionActorType.AGENCY
+    description: str
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionReasonCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    offer_option_id: Optional[str] = None
+    reason_category: OfferDecisionReasonCategory = OfferDecisionReasonCategory.MANUAL
+    importance: OfferDecisionReasonImportance = OfferDecisionReasonImportance.MEDIUM
+    text: str
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionReasonUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    reason_category: Optional[OfferDecisionReasonCategory] = None
+    importance: Optional[OfferDecisionReasonImportance] = None
+    text: Optional[str] = None
+    archived: Optional[bool] = None
+    metadata_json: Optional[Dict[str, Any]] = None
+
+
+class OfferDecisionAcknowledgementCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    acknowledged_by: str
+    acknowledgement_type: OfferDecisionAcknowledgementType = OfferDecisionAcknowledgementType.REVIEWED
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionAuditSnapshotCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_pack_id: str
+    snapshot_name: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

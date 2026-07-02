@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation"
+PHASE_LABEL = "phase_37_4_offer_explanation_decision_timeline_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -128,6 +128,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Consume saved advisor evidence into human-reviewed offer decision packs without automatic ranking, offer price mutation, booking, ticketing, EMD issuance, payment, invoice, accounting, settlement, or provider execution.",
     },
     {
+        "category": "Offer Decision Explanation",
+        "concept": "Offer explanation and decision timeline",
+        "supplementary_concept": "decision explanation, evidence references, decision reasons, acknowledgements, timeline, audit snapshots",
+        "current_equivalent": "offer_decision_explanations, offer_decision_timeline_events, offer_decision_evidence_references, offer_decision_reasons, offer_decision_acknowledgements, offer_decision_audit_snapshots",
+        "status": "foundation adopted",
+        "action": "Record human explanation and immutable audit timelines for offer decision packs without automatic recommendation, price mutation, provider execution, booking, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -182,6 +190,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-advisor", "agencyos": "/agency/offer-policy-advisor"},
         {"supplementary": "/admin/offer-decision-packs", "agencyos": "/platform/offer-decision-packs"},
         {"supplementary": "/agent/offer-decision-packs", "agencyos": "/agency/offer-decision-packs"},
+        {"supplementary": "/admin/offer-decision-explanations", "agencyos": "/platform/offer-decision-explanations"},
+        {"supplementary": "/agent/offer-decision-explanations", "agencyos": "/agency/offer-decision-explanations"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -287,6 +297,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Policy comparison and service advisor foundation built in Phase 37.1",
             "Offer builder policy advisor integration foundation built in Phase 37.2",
             "Offer builder advisor consumption and decision pack foundation built in Phase 37.3",
+            "Offer explanation and decision timeline foundation built in Phase 37.4",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_ancillary_pricing, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 37.3 offer builder advisor consumption decision pack foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 37.4 offer explanation and decision timeline foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
+        "phase": "phase_37_4_offer_explanation_decision_timeline_foundation",
     }
 
 
@@ -270,6 +270,12 @@ async def readiness() -> dict:
     offer_decision_pack_warning_count = await database.collection("offer_decision_pack_warnings").count()
     offer_decision_pack_review_note_count = await database.collection("offer_decision_pack_review_notes").count()
     offer_decision_pack_snapshot_count = await database.collection("offer_decision_pack_snapshots").count()
+    offer_decision_explanation_count = await database.collection("offer_decision_explanations").count()
+    offer_decision_timeline_event_count = await database.collection("offer_decision_timeline_events").count()
+    offer_decision_evidence_reference_count = await database.collection("offer_decision_evidence_references").count()
+    offer_decision_reason_count = await database.collection("offer_decision_reasons").count()
+    offer_decision_acknowledgement_count = await database.collection("offer_decision_acknowledgements").count()
+    offer_decision_audit_snapshot_count = await database.collection("offer_decision_audit_snapshots").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -291,7 +297,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
+        "phase": "phase_37_4_offer_explanation_decision_timeline_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -812,6 +818,33 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 37.3 consumes saved advisor evidence inside offer workflows and creates metadata-only decision packs for human review. It does not rank winners, mutate prices, book, issue tickets or EMDs, charge, invoice, settle, or execute providers.",
         },
+        "offer_decision_explanation_foundation": {
+            "decision_explanations_enabled": True,
+            "decision_timeline_enabled": True,
+            "decision_reasons_enabled": True,
+            "evidence_reference_enabled": True,
+            "acknowledgements_enabled": True,
+            "immutable_snapshots_enabled": True,
+            "agency_ui_enabled": True,
+            "platform_ui_enabled": True,
+            "human_review_only_enabled": True,
+            "provider_execution_disabled": True,
+            "booking_disabled": True,
+            "ticketing_disabled": True,
+            "emd_disabled": True,
+            "payment_disabled": True,
+            "invoice_disabled": True,
+            "settlement_disabled": True,
+            "automatic_recommendation_disabled": True,
+            "explanations": offer_decision_explanation_count,
+            "timeline_events": offer_decision_timeline_event_count,
+            "reasons": offer_decision_reason_count,
+            "evidence_references": offer_decision_evidence_reference_count,
+            "acknowledgements": offer_decision_acknowledgement_count,
+            "snapshots": offer_decision_audit_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 37.4 records human explanation, reason, evidence reference, acknowledgement, timeline, and immutable audit snapshot metadata for offer decision packs. It does not rank winners, mutate prices, book, issue tickets or EMDs, charge, invoice, settle, scrape, call external AI, or execute providers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -837,7 +870,7 @@ async def readiness() -> dict:
             "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
             "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
             "readiness_required": False,
-            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations; /platform and /agency remain canonical.",
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 37.4; /platform and /agency remain canonical.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,
@@ -873,6 +906,7 @@ app.include_router(platform_ancillary_pricing.router)
 app.include_router(platform_policy_comparison.router)
 app.include_router(platform_offer_policy_advisor.router)
 app.include_router(platform_offer_decision_packs.router)
+app.include_router(platform_offer_decision_explanations.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -897,6 +931,7 @@ app.include_router(agency_ancillary_pricing.router)
 app.include_router(agency_policy_comparison.router)
 app.include_router(agency_offer_policy_advisor.router)
 app.include_router(agency_offer_decision_packs.router)
+app.include_router(agency_offer_decision_explanations.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

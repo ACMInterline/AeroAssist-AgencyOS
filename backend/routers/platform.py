@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation",
+        "phase": "phase_37_4_offer_explanation_decision_timeline_foundation",
     }
 
 
@@ -112,6 +112,12 @@ async def summary(
             "offer_decision_pack_warnings": await db.collection("offer_decision_pack_warnings").count(),
             "offer_decision_pack_review_notes": await db.collection("offer_decision_pack_review_notes").count(),
             "offer_decision_pack_snapshots": await db.collection("offer_decision_pack_snapshots").count(),
+            "offer_decision_explanations": await db.collection("offer_decision_explanations").count(),
+            "offer_decision_timeline_events": await db.collection("offer_decision_timeline_events").count(),
+            "offer_decision_evidence_references": await db.collection("offer_decision_evidence_references").count(),
+            "offer_decision_reasons": await db.collection("offer_decision_reasons").count(),
+            "offer_decision_acknowledgements": await db.collection("offer_decision_acknowledgements").count(),
+            "offer_decision_audit_snapshots": await db.collection("offer_decision_audit_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

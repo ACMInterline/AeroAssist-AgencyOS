@@ -35,6 +35,7 @@ const primaryNav = [
   { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: ClipboardList },
   { label: "Offer Advisor", description: "Offer policy context", href: "/agency/offer-policy-advisor", icon: Rows3 },
   { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: Rows3 },
+  { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: Rows3 },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

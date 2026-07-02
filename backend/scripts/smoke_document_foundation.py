@@ -5,7 +5,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, flatten_service_snapshot
 from smoke_ticket_emd_foundation import create_booking_record, service_key
 
 
-EXPECTED_PHASE = "phase_37_3_offer_builder_advisor_consumption_decision_pack_foundation"
+EXPECTED_PHASE = "phase_37_4_offer_explanation_decision_timeline_foundation"
 
 
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:
