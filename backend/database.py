@@ -993,6 +993,40 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("review_status", ASCENDING)], "name": "policy_candidate_pricing_links_agency_review_lookup"},
             {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "policy_candidate_pricing_links_taxonomy_lookup"},
         ],
+        "airline_policy_comparison_profiles": [
+            {"keys": [("id", ASCENDING)], "name": "airline_policy_comparison_profiles_id_unique", "unique": True},
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_policy_comparison_profiles_airline_taxonomy_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("is_global", ASCENDING), ("status", ASCENDING)], "name": "airline_policy_comparison_profiles_scope_status_lookup"},
+            {"keys": [("review_status", ASCENDING), ("status", ASCENDING)], "name": "airline_policy_comparison_profiles_review_status_lookup"},
+        ],
+        "airline_policy_comparison_snapshots": [
+            {"keys": [("id", ASCENDING)], "name": "airline_policy_comparison_snapshots_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("created_at", ASCENDING)], "name": "airline_policy_comparison_snapshots_agency_created_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_policy_comparison_snapshots_taxonomy_lookup"},
+            {"keys": [("generated_from", ASCENDING)], "name": "airline_policy_comparison_snapshots_generated_from_lookup"},
+        ],
+        "airline_policy_comparison_rows": [
+            {"keys": [("id", ASCENDING)], "name": "airline_policy_comparison_rows_id_unique", "unique": True},
+            {"keys": [("snapshot_id", ASCENDING), ("airline_code", ASCENDING)], "name": "airline_policy_comparison_rows_snapshot_airline_lookup"},
+            {"keys": [("airline_code", ASCENDING), ("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_policy_comparison_rows_airline_taxonomy_lookup"},
+            {"keys": [("warning_level", ASCENDING), ("operational_complexity_score", ASCENDING)], "name": "airline_policy_comparison_rows_warning_complexity_lookup"},
+        ],
+        "airline_service_advisor_scenarios": [
+            {"keys": [("id", ASCENDING)], "name": "airline_service_advisor_scenarios_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("created_at", ASCENDING)], "name": "airline_service_advisor_scenarios_agency_created_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_service_advisor_scenarios_taxonomy_lookup"},
+        ],
+        "airline_service_advisor_results": [
+            {"keys": [("id", ASCENDING)], "name": "airline_service_advisor_results_id_unique", "unique": True},
+            {"keys": [("scenario_id", ASCENDING), ("created_at", ASCENDING)], "name": "airline_service_advisor_results_scenario_created_lookup"},
+            {"keys": [("result_status", ASCENDING)], "name": "airline_service_advisor_results_status_lookup"},
+            {"keys": [("comparison_snapshot_id", ASCENDING)], "name": "airline_service_advisor_results_snapshot_lookup"},
+        ],
+        "airline_policy_comparison_saved_views": [
+            {"keys": [("id", ASCENDING)], "name": "airline_policy_comparison_saved_views_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("is_global", ASCENDING), ("status", ASCENDING)], "name": "airline_policy_comparison_saved_views_scope_status_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("variant_code", ASCENDING)], "name": "airline_policy_comparison_saved_views_taxonomy_lookup"},
+        ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],
         "refund_exchange_cases": [

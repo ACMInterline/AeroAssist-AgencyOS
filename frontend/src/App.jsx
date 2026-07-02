@@ -4,6 +4,7 @@ import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDet
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
+import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -30,6 +31,7 @@ import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
 import GdsParserPage from "./pages/agency/GdsParserPage"
 import AgencyAncillaryPricingPage from "./pages/agency/AncillaryPricingPage"
+import AgencyPolicyComparisonPage from "./pages/agency/PolicyComparisonPage"
 import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
 import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
@@ -62,6 +64,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
+import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
 import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"
@@ -105,6 +108,7 @@ const routes = {
   "/platform/service-taxonomy": PlatformServiceTaxonomyPage,
   "/platform/service-mechanics": PlatformServiceMechanicsPage,
   "/platform/ancillary-pricing": PlatformAncillaryPricingPage,
+  "/platform/policy-comparison": PlatformPolicyComparisonPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -116,6 +120,8 @@ const routes = {
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
   "/agency/ancillary-pricing": AgencyAncillaryPricingPage,
+  "/agency/policy-comparison": AgencyPolicyComparisonPage,
+  "/agency/airline-service-advisor": AirlineServiceAdvisorPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,
@@ -371,6 +377,14 @@ export default function App() {
 
   if (window.location.pathname === "/agency/service-mechanics") {
     return <AgencyServiceMechanicsPage />
+  }
+
+  if (window.location.pathname === "/agency/policy-comparison") {
+    return <AgencyPolicyComparisonPage />
+  }
+
+  if (window.location.pathname === "/agency/airline-service-advisor") {
+    return <AirlineServiceAdvisorPage />
   }
 
   if (window.location.pathname === "/agency/tickets-emds") {

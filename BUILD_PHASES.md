@@ -67,6 +67,7 @@ The repository currently contains:
 - Phase 36.8: Canonical special / ancillary services taxonomy.
 - Phase 36.9: SSR / OSI / EMD / RFIC / RFISC service mechanics mapping foundation.
 - Phase 37.0: Airline ancillary pricing schema and exception engine expansion.
+- Phase 37.1: Airline policy comparison and service advisor foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1089,7 +1090,7 @@ Implemented scope:
 
 Avoid adding:
 
-- Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized ancillary pricing matrices, policy comparison matrix, live GDS/NDC/provider connectivity, live booking/ticketing/EMD issuance, scraping, external AI mapping, agency auto-promotion, `/agent` or `/admin` routes, or replacement of the service catalogue and Rules & Services foundations.
+- Full SSR/OSI instruction mapping, EMD/RFIC/RFISC payment mechanics, normalized ancillary pricing matrices, live GDS/NDC/provider connectivity, live booking/ticketing/EMD issuance, scraping, external AI mapping, agency auto-promotion, `/agent` or `/admin` routes, or replacement of the service catalogue and Rules & Services foundations.
 
 ### Phase 36.9: SSR / OSI / EMD / RFIC / RFISC Mapping Foundation
 
@@ -1131,6 +1132,21 @@ Implemented scope:
 Avoid adding:
 
 - Invoice/payment/accounting/ledger/BSP/ARC/settlement logic, EMD/ticket issuance, live GDS/NDC/provider execution, automatic policy/taxonomy/mechanics/pricing promotion, external AI, scraping, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 37.1: Airline Policy Comparison And Service Advisor Foundation
+
+Implemented scope:
+
+- Added airline policy comparison profiles, generated comparison snapshots, normalized comparison rows, service advisor scenarios/results, and saved comparison views.
+- Added deterministic comparison/advisor service that consumes taxonomy, policy, mechanics, pricing, and exception metadata while returning safe empty summaries when records are missing.
+- Added operational complexity scoring from deterministic metadata only; the score is not an automatic airline recommendation.
+- Added platform APIs and `/platform/policy-comparison` for global comparison profile governance, comparison generation, advisor evaluation, and saved views.
+- Added agency APIs, `/agency/policy-comparison`, and `/agency/airline-service-advisor` for read-only global profile consumption and agency-local snapshots, scenarios, results, and saved views.
+- Added readiness flags and counts under `policy_comparison_service_advisor_foundation`.
+
+Avoid adding:
+
+- Live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline recommendation, external AI, scraping, agency-to-global auto-promotion, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

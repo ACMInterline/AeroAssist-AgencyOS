@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_0_ancillary_pricing_exception_foundation",
+        "phase": "phase_37_1_policy_comparison_service_advisor_foundation",
     }
 
 
@@ -95,6 +95,12 @@ async def summary(
             "price_quote_scenarios": await db.collection("airline_service_price_quote_scenarios").count(),
             "price_quote_results": await db.collection("airline_service_price_quote_results").count(),
             "candidate_pricing_links": await db.collection("policy_candidate_pricing_links").count(),
+            "policy_comparison_profiles": await db.collection("airline_policy_comparison_profiles").count(),
+            "policy_comparison_snapshots": await db.collection("airline_policy_comparison_snapshots").count(),
+            "policy_comparison_rows": await db.collection("airline_policy_comparison_rows").count(),
+            "service_advisor_scenarios": await db.collection("airline_service_advisor_scenarios").count(),
+            "service_advisor_results": await db.collection("airline_service_advisor_results").count(),
+            "policy_comparison_saved_views": await db.collection("airline_policy_comparison_saved_views").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),
@@ -225,6 +231,7 @@ async def summary(
             "Canonical service taxonomy foundation",
             "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation",
             "Ancillary pricing schema and exception engine expansion foundation",
+            "Airline policy comparison and service advisor foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -236,6 +243,7 @@ async def summary(
             "External AI parser execution",
             "Full GDS host grammar coverage and provider reconciliation",
             "Invoice, payment, accounting, BSP/ARC, and settlement execution from ancillary estimates",
+            "Automatic airline recommendation or provider execution from service advisor metadata",
         ],
     }
 

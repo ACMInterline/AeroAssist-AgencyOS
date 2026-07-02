@@ -9,6 +9,7 @@ import Menu from "lucide-react/dist/esm/icons/menu.js"
 import Palette from "lucide-react/dist/esm/icons/palette.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
+import Rows3 from "lucide-react/dist/esm/icons/rows-3.js"
 import Settings from "lucide-react/dist/esm/icons/settings.js"
 import Sparkles from "lucide-react/dist/esm/icons/sparkles.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
@@ -30,6 +31,8 @@ const primaryNav = [
   { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: Tags },
   { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: ClipboardList },
   { label: "Ancillary Pricing", description: "Prices and exceptions", href: "/agency/ancillary-pricing", icon: ClipboardList },
+  { label: "Policy Comparison", description: "Airline operations", href: "/agency/policy-comparison", icon: Rows3 },
+  { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: ClipboardList },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

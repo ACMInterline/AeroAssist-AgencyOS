@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_0_ancillary_pricing_exception_foundation"
+PHASE_LABEL = "phase_37_1_policy_comparison_service_advisor_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -104,6 +104,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Use deterministic non-binding quote estimates and advisory exception metadata without invoices, payments, settlement, EMD/ticket issuance, provider execution, external AI, or agency auto-promotion.",
     },
     {
+        "category": "Policy Comparison",
+        "concept": "Airline policy comparison and service advisor",
+        "supplementary_concept": "airline comparison matrix, service advisor, operational guidance rows, saved comparison views",
+        "current_equivalent": "airline_policy_comparison_profiles, airline_policy_comparison_snapshots, airline_policy_comparison_rows, airline_service_advisor_scenarios, airline_service_advisor_results, airline_policy_comparison_saved_views",
+        "status": "foundation adopted",
+        "action": "Use metadata-only comparison/advisor views with deterministic complexity scoring; do not recommend airlines automatically or execute providers, EMDs, payments, invoices, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -151,6 +159,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/ancillary-pricing", "agencyos": "/platform/ancillary-pricing"},
         {"supplementary": "/agent/ancillary-pricing", "agencyos": "/agency/ancillary-pricing"},
+        {"supplementary": "/admin/policy-comparison", "agencyos": "/platform/policy-comparison"},
+        {"supplementary": "/agent/policy-comparison", "agencyos": "/agency/policy-comparison"},
+        {"supplementary": "/agent/service-advisor", "agencyos": "/agency/airline-service-advisor"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -253,11 +264,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Canonical special and ancillary service taxonomy foundation built in Phase 36.8",
             "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation built in Phase 36.9",
             "Ancillary pricing schema and exception engine expansion foundation built in Phase 37.0",
+            "Policy comparison and service advisor foundation built in Phase 37.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
             "Full GDS grammar coverage, provider reconciliation, and live supplier execution",
-            "Live SSR/OSI transmission, live ticket/EMD issuance, policy comparison matrix, and provider-priced reconciliation",
+            "Live SSR/OSI transmission, live ticket/EMD issuance, automatic airline recommendation, and provider-priced reconciliation",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",

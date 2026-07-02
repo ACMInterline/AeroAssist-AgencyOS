@@ -6177,6 +6177,312 @@ class AncillaryPricingLookupRequest(BaseModel):
     variant_code: Optional[str] = None
 
 
+class PolicyComparisonReviewStatus(str, Enum):
+    SUGGESTED = "suggested"
+    CONFIRMED = "confirmed"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+
+class PolicyComparisonStatus(str, Enum):
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class PolicyComparisonGeneratedFrom(str, Enum):
+    MANUAL = "manual"
+    POLICY_LOOKUP = "policy_lookup"
+    REQUEST_CONTEXT = "request_context"
+    OFFER_CONTEXT = "offer_context"
+    OTHER = "other"
+
+
+class PolicyComparisonWarningLevel(str, Enum):
+    NONE = "none"
+    INFO = "info"
+    ADVISORY = "advisory"
+    WARNING = "warning"
+    BLOCKER = "blocker"
+
+
+class ServiceAdvisorResultStatus(str, Enum):
+    EVALUATED = "evaluated"
+    NO_DATA = "no_data"
+    MANUAL_REVIEW = "manual_review"
+    BLOCKED = "blocked"
+    UNKNOWN = "unknown"
+
+
+class AirlinePolicyComparisonProfile(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    display_name: str
+    commercial_names: List[str] = Field(default_factory=list)
+    taxonomy_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    communication_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    payment_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    exception_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    source_policy_ids: List[str] = Field(default_factory=list)
+    approved_knowledge_record_ids: List[str] = Field(default_factory=list)
+    confidence_score: Optional[float] = None
+    review_status: PolicyComparisonReviewStatus = PolicyComparisonReviewStatus.SUGGESTED
+    status: PolicyComparisonStatus = PolicyComparisonStatus.ACTIVE
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlinePolicyComparisonSnapshot(BaseDocument):
+    agency_id: Optional[str] = None
+    snapshot_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_context_json: Dict[str, Any] = Field(default_factory=dict)
+    service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    comparison_rows_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    generated_from: PolicyComparisonGeneratedFrom = PolicyComparisonGeneratedFrom.MANUAL
+
+
+class AirlinePolicyComparisonRow(BaseDocument):
+    snapshot_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    commercial_name: Optional[str] = None
+    mandatory_optional_summary: Optional[str] = None
+    age_rules_summary: Optional[str] = None
+    route_restrictions_summary: Optional[str] = None
+    connection_restrictions_summary: Optional[str] = None
+    documents_required_summary: Optional[str] = None
+    deadline_summary: Optional[str] = None
+    ssr_osi_summary: Optional[str] = None
+    confirmation_summary: Optional[str] = None
+    emd_required: Optional[bool] = None
+    emd_type: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    pricing_summary: Optional[str] = None
+    refund_change_summary: Optional[str] = None
+    ndc_gds_support_summary: Optional[str] = None
+    manual_contact_required: Optional[bool] = None
+    warning_level: PolicyComparisonWarningLevel = PolicyComparisonWarningLevel.NONE
+    operational_complexity_score: Optional[int] = None
+    confidence_score: Optional[float] = None
+    source_summary: Optional[str] = None
+    row_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineServiceAdvisorScenario(BaseDocument):
+    agency_id: Optional[str] = None
+    scenario_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    passenger_age: Optional[int] = None
+    passenger_type: Optional[str] = None
+    route_type: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    cabin: Optional[str] = None
+    segment_count: Optional[int] = None
+    direction_count: Optional[int] = None
+    requested_service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+
+
+class AirlineServiceAdvisorResult(BaseDocument):
+    scenario_id: str
+    result_status: ServiceAdvisorResultStatus = ServiceAdvisorResultStatus.UNKNOWN
+    advisory_rows_json: List[Dict[str, Any]] = Field(default_factory=list)
+    comparison_snapshot_id: Optional[str] = None
+    operational_warnings: List[str] = Field(default_factory=list)
+    blocker_count: int = 0
+    warning_count: int = 0
+    advisory_count: int = 0
+    manual_contact_required_count: int = 0
+    emd_required_count: int = 0
+    estimated_price_available_count: int = 0
+    explanation: str
+
+
+class AirlinePolicyComparisonSavedView(BaseDocument):
+    agency_id: Optional[str] = None
+    view_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    visible_columns: List[str] = Field(default_factory=list)
+    filters_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    is_global: bool = True
+    status: PolicyComparisonStatus = PolicyComparisonStatus.ACTIVE
+
+
+class AirlinePolicyComparisonProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    display_name: Optional[str] = None
+    commercial_names: List[str] = Field(default_factory=list)
+    taxonomy_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    communication_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    payment_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    exception_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    source_policy_ids: List[str] = Field(default_factory=list)
+    approved_knowledge_record_ids: List[str] = Field(default_factory=list)
+    confidence_score: Optional[float] = None
+    review_status: PolicyComparisonReviewStatus = PolicyComparisonReviewStatus.SUGGESTED
+    status: PolicyComparisonStatus = PolicyComparisonStatus.ACTIVE
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlinePolicyComparisonProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    display_name: Optional[str] = None
+    commercial_names: Optional[List[str]] = None
+    taxonomy_summary_json: Optional[Dict[str, Any]] = None
+    communication_summary_json: Optional[Dict[str, Any]] = None
+    payment_summary_json: Optional[Dict[str, Any]] = None
+    pricing_summary_json: Optional[Dict[str, Any]] = None
+    exception_summary_json: Optional[Dict[str, Any]] = None
+    source_policy_ids: Optional[List[str]] = None
+    approved_knowledge_record_ids: Optional[List[str]] = None
+    confidence_score: Optional[float] = None
+    review_status: Optional[PolicyComparisonReviewStatus] = None
+    status: Optional[PolicyComparisonStatus] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlinePolicyComparisonBuildRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    display_name: Optional[str] = None
+    review_status: PolicyComparisonReviewStatus = PolicyComparisonReviewStatus.SUGGESTED
+    notes: Optional[str] = None
+    is_global: bool = True
+
+
+class AirlinePolicyComparisonRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_name: Optional[str] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_context_json: Dict[str, Any] = Field(default_factory=dict)
+    service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    generated_from: PolicyComparisonGeneratedFrom = PolicyComparisonGeneratedFrom.MANUAL
+
+
+class AirlinePolicyComparisonSnapshotCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    snapshot_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_context_json: Dict[str, Any] = Field(default_factory=dict)
+    service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    comparison_rows_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    generated_from: PolicyComparisonGeneratedFrom = PolicyComparisonGeneratedFrom.MANUAL
+
+
+class AirlineServiceAdvisorScenarioCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scenario_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    passenger_age: Optional[int] = None
+    passenger_type: Optional[str] = None
+    route_type: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    cabin: Optional[str] = None
+    segment_count: Optional[int] = None
+    direction_count: Optional[int] = None
+    requested_service_context_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+
+
+class AirlineServiceAdvisorEvaluationRequest(AirlineServiceAdvisorScenarioCreate):
+    scenario_id: Optional[str] = None
+
+
+class AirlinePolicyComparisonSavedViewCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    view_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    visible_columns: List[str] = Field(default_factory=list)
+    filters_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    is_global: bool = True
+    status: PolicyComparisonStatus = PolicyComparisonStatus.ACTIVE
+
+
+class AirlinePolicyComparisonSavedViewUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    view_name: Optional[str] = None
+    airline_codes: Optional[List[str]] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    visible_columns: Optional[List[str]] = None
+    filters_json: Optional[Dict[str, Any]] = None
+    sort_json: Optional[Dict[str, Any]] = None
+    is_global: Optional[bool] = None
+    status: Optional[PolicyComparisonStatus] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
