@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_5_offer_decision_export_foundation"
+PHASE_LABEL = "phase_37_6_offer_decision_export_preview_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -144,6 +144,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only review export records for decision packs and explanations without automatic sending, public links, recommendations, offer price mutation, provider execution, booking, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Export Preview",
+        "concept": "Offer decision export render preview",
+        "supplementary_concept": "render preview, preview sections, preview blocks, validation checks, immutable preview snapshots",
+        "current_equivalent": "offer_decision_export_previews, offer_decision_export_preview_sections, offer_decision_export_preview_blocks, offer_decision_export_preview_validations, offer_decision_export_preview_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only render preview records for offer decision exports without real PDF delivery, automatic sending, public links, recommendations, offer price mutation, provider execution, booking, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -202,6 +210,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-explanations", "agencyos": "/agency/offer-decision-explanations"},
         {"supplementary": "/admin/offer-decision-exports", "agencyos": "/platform/offer-decision-exports"},
         {"supplementary": "/agent/offer-decision-exports", "agencyos": "/agency/offer-decision-exports"},
+        {"supplementary": "/admin/offer-decision-export-previews", "agencyos": "/platform/offer-decision-export-previews"},
+        {"supplementary": "/agent/offer-decision-export-previews", "agencyos": "/agency/offer-decision-export-previews"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -219,12 +229,12 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 37.6",
+        "phase": "Phase 37.7",
         "title": "Airline Intelligence Data Expansion",
         "reason": "Existing airline intelligence tables can receive curated data packs and brand assets.",
     },
     {
-        "phase": "Phase 37.7",
+        "phase": "Phase 37.8",
         "title": "Special Services UX Unification",
         "reason": "The facade keeps current services canonical while future UI can unify medical, cargo, VIP, and PRM flows.",
     },
@@ -309,6 +319,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Offer builder advisor consumption and decision pack foundation built in Phase 37.3",
             "Offer explanation and decision timeline foundation built in Phase 37.4",
             "Offer decision export foundation built in Phase 37.5",
+            "Offer decision export preview foundation built in Phase 37.6",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

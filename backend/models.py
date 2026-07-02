@@ -7274,6 +7274,172 @@ class OfferDecisionExportGenerateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportPreviewStatus(str, Enum):
+    GENERATED = "generated"
+    VALIDATED = "validated"
+    SNAPSHOT_SAVED = "snapshot_saved"
+    ARCHIVED = "archived"
+
+
+class OfferDecisionExportPreviewSectionKey(str, Enum):
+    EXECUTIVE_SUMMARY = "executive_summary"
+    SELECTED_DECISION_PACK_OVERVIEW = "selected_decision_pack_overview"
+    OPTION_COMPARISON = "option_comparison"
+    ADVISOR_EVIDENCE = "advisor_evidence"
+    WARNINGS = "warnings"
+    HUMAN_REVIEW_NOTES = "human_review_notes"
+    EXPLANATION_NARRATIVE = "explanation_narrative"
+    DECISION_TIMELINE = "decision_timeline"
+    ACKNOWLEDGEMENT_STATUS = "acknowledgement_status"
+    EXPORT_ARTIFACT_METADATA = "export_artifact_metadata"
+    RECIPIENT_DRAFT_METADATA = "recipient_draft_metadata"
+    AUDIT_TRAIL = "audit_trail"
+
+
+class OfferDecisionExportPreviewBlockType(str, Enum):
+    HEADING = "heading"
+    PARAGRAPH = "paragraph"
+    KEY_VALUE_TABLE = "key_value_table"
+    WARNING_LIST = "warning_list"
+    EVIDENCE_LIST = "evidence_list"
+    TIMELINE_LIST = "timeline_list"
+    RECIPIENT_DRAFT = "recipient_draft"
+    ARTIFACT_REFERENCE = "artifact_reference"
+    SAFETY_DISCLAIMER = "safety_disclaimer"
+
+
+class OfferDecisionExportPreviewValidationKey(str, Enum):
+    MISSING_DECISION_PACK = "missing_decision_pack"
+    MISSING_EXPLANATION = "missing_explanation"
+    MISSING_TIMELINE = "missing_timeline"
+    MISSING_ACKNOWLEDGEMENTS = "missing_acknowledgements"
+    MISSING_RECIPIENT_DRAFT = "missing_recipient_draft"
+    MISSING_ARTIFACT_METADATA = "missing_artifact_metadata"
+    MISSING_INTERNAL_REVIEWER = "missing_internal_reviewer"
+    SAFETY_BOUNDARY_REMINDER = "safety_boundary_reminder"
+
+
+class OfferDecisionExportPreviewValidationStatus(str, Enum):
+    PASS = "pass"
+    WARNING = "warning"
+    REMINDER = "reminder"
+
+
+class OfferDecisionExportPreview(BaseDocument):
+    agency_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    explanation_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    source_artifact_ids: List[str] = Field(default_factory=list)
+    preview_status: OfferDecisionExportPreviewStatus = OfferDecisionExportPreviewStatus.GENERATED
+    render_profile: str = "internal_review"
+    template_profile: str = "metadata_preview"
+    generated_by: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    generated_at: datetime = Field(default_factory=now_utc)
+    reviewed_at: Optional[datetime] = None
+    section_count: int = 0
+    block_count: int = 0
+    validation_count: int = 0
+    snapshot_count: int = 0
+    preview_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    source_counts_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    metadata_only_rendering_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportPreviewSection(BaseDocument):
+    agency_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    section_key: OfferDecisionExportPreviewSectionKey
+    section_title: str
+    section_order: int
+    block_count: int = 0
+    section_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportPreviewBlock(BaseDocument):
+    agency_id: str
+    preview_id: str
+    section_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    section_key: OfferDecisionExportPreviewSectionKey
+    block_type: OfferDecisionExportPreviewBlockType
+    block_title: Optional[str] = None
+    block_order: int
+    block_json: Dict[str, Any] = Field(default_factory=dict)
+    source_record_type: Optional[str] = None
+    source_record_id: Optional[str] = None
+    metadata_only: bool = True
+
+
+class OfferDecisionExportPreviewValidation(BaseDocument):
+    agency_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    validation_key: OfferDecisionExportPreviewValidationKey
+    validation_status: OfferDecisionExportPreviewValidationStatus = OfferDecisionExportPreviewValidationStatus.PASS
+    severity: str = "info"
+    message: str
+    checked_by: Optional[str] = None
+    checked_at: datetime = Field(default_factory=now_utc)
+    validation_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportPreviewSnapshot(BaseDocument):
+    agency_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    snapshot_name: str
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    saved_by: Optional[str] = None
+    saved_at: datetime = Field(default_factory=now_utc)
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class OfferDecisionExportPreviewGenerateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    export_id: str
+    render_profile: str = "internal_review"
+    template_profile: str = "metadata_preview"
+    reviewed_by: Optional[str] = None
+    source_artifact_ids: List[str] = Field(default_factory=list)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportPreviewValidateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    internal_reviewer: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportPreviewSnapshotCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_name: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

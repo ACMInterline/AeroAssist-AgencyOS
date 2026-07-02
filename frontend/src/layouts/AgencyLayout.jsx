@@ -37,6 +37,7 @@ const primaryNav = [
   { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: Rows3 },
   { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: Rows3 },
   { label: "Decision Exports", description: "Review snapshots", href: "/agency/offer-decision-exports", icon: Files },
+  { label: "Export Previews", description: "Render review", href: "/agency/offer-decision-export-previews", icon: Files },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

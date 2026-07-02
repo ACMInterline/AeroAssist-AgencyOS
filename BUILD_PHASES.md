@@ -72,6 +72,7 @@ The repository currently contains:
 - Phase 37.3: Offer builder advisor consumption and decision pack foundation.
 - Phase 37.4: Offer explanation and decision timeline foundation.
 - Phase 37.5: Offer decision pack PDF and shareable review export foundation.
+- Phase 37.6: Offer decision export render preview foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1207,6 +1208,20 @@ Implemented scope:
 Avoid adding:
 
 - Automatic email sending, public links, live PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 37.6: Offer Decision Export Render Preview Foundation
+
+Implemented scope:
+
+- Added offer decision export preview records, ordered preview sections, typed render-preview blocks, metadata completeness validation records, and immutable preview snapshots.
+- Added deterministic preview generation from existing offer decision exports, export sections, artifacts, recipient drafts, audit events, decision pack metadata, explanations, timeline events, reasons, acknowledgements, and audit snapshots.
+- Added agency APIs and `/agency/offer-decision-export-previews` for preview generation, metadata validation, preview detail review, and immutable preview snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-export-previews`.
+- Added readiness flags and counts under `offer_decision_export_preview_foundation`.
+
+Avoid adding:
+
+- Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
