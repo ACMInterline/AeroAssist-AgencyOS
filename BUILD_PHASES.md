@@ -66,6 +66,7 @@ The repository currently contains:
 - Phase 36.7: Airline policy ingestion foundation.
 - Phase 36.8: Canonical special / ancillary services taxonomy.
 - Phase 36.9: SSR / OSI / EMD / RFIC / RFISC service mechanics mapping foundation.
+- Phase 37.0: Airline ancillary pricing schema and exception engine expansion.
 
 Phase 35 navigation hotfix:
 
@@ -1116,6 +1117,20 @@ Recommended scope:
 Avoid adding:
 
 - Direct GDS commands, NDC execution, automated ticketing, live EMD issuance, exchange/refund/void execution, or settlement without explicit authorization.
+
+### Phase 37.0: Airline Ancillary Pricing Schema And Exception Engine Expansion
+
+Implemented scope:
+
+- Added normalized ancillary pricing rules, price components, applicability dimensions, pricing matrices, matrix rows, expanded service exception rules, quote scenarios/results, and policy candidate pricing links.
+- Added deterministic quote evaluation that matches airline + canonical service pricing rules, applies conservative applicability filters, separates pricing from exceptions, sums fixed components, and flags range/percentage/unknown pricing for manual review.
+- Added platform APIs and `/platform/ancillary-pricing` for global pricing/exception governance.
+- Added agency APIs and `/agency/ancillary-pricing` for read-only pricing lookup, deterministic quote scenarios/results, and agency-local candidate pricing links.
+- Added readiness flags and counts under `ancillary_pricing_exception_foundation`.
+
+Avoid adding:
+
+- Invoice/payment/accounting/ledger/BSP/ARC/settlement logic, EMD/ticket issuance, live GDS/NDC/provider execution, automatic policy/taxonomy/mechanics/pricing promotion, external AI, scraping, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

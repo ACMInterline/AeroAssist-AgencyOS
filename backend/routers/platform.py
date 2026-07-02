@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_9_service_mechanics_mapping_foundation",
+        "phase": "phase_37_0_ancillary_pricing_exception_foundation",
     }
 
 
@@ -86,6 +86,15 @@ async def summary(
             "ticket_exchange_operations": await db.collection("ticket_exchange_operations").count(),
             "emd_exchange_operations": await db.collection("emd_exchange_operations").count(),
             "ticket_emd_timeline_events": await db.collection("ticket_emd_timeline_events").count(),
+            "ancillary_pricing_rules": await db.collection("airline_ancillary_pricing_rules").count(),
+            "ancillary_price_components": await db.collection("airline_ancillary_price_components").count(),
+            "ancillary_pricing_applicability": await db.collection("airline_ancillary_pricing_applicability").count(),
+            "ancillary_pricing_matrices": await db.collection("airline_ancillary_pricing_matrices").count(),
+            "ancillary_pricing_matrix_rows": await db.collection("airline_ancillary_pricing_matrix_rows").count(),
+            "airline_service_exception_rules": await db.collection("airline_service_exception_rules").count(),
+            "price_quote_scenarios": await db.collection("airline_service_price_quote_scenarios").count(),
+            "price_quote_results": await db.collection("airline_service_price_quote_results").count(),
+            "candidate_pricing_links": await db.collection("policy_candidate_pricing_links").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),
@@ -215,6 +224,7 @@ async def summary(
             "Airline policy ingestion source, extraction, review, and approved knowledge foundation",
             "Canonical service taxonomy foundation",
             "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation",
+            "Ancillary pricing schema and exception engine expansion foundation",
         ],
         "not_yet_implemented": [
             "Document upload workflows",
@@ -225,6 +235,7 @@ async def summary(
             "Live SSR/OSI/GDS/NDC/provider exchange, refund, void, or reissue execution",
             "External AI parser execution",
             "Full GDS host grammar coverage and provider reconciliation",
+            "Invoice, payment, accounting, BSP/ARC, and settlement execution from ancillary estimates",
         ],
     }
 

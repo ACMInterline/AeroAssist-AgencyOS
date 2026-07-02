@@ -63,7 +63,7 @@ def assert_no_storage_path(payload: dict) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_36_9_service_mechanics_mapping_foundation":
+    if health.get("phase") != "phase_37_0_ancillary_pricing_exception_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]

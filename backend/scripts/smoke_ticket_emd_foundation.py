@@ -13,7 +13,7 @@ from smoke_booking_pnr_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_36_9_service_mechanics_mapping_foundation"
+EXPECTED_PHASE = "phase_37_0_ancillary_pricing_exception_foundation"
 
 
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:

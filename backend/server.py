@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
+from routers import agency_ancillary_pricing, platform_ancillary_pricing
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -22,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 36.9 service mechanics mapping foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 37.0 ancillary pricing and exception foundation.",
 )
 
 app.add_middleware(
@@ -49,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_9_service_mechanics_mapping_foundation",
+        "phase": "phase_37_0_ancillary_pricing_exception_foundation",
     }
 
 
@@ -243,6 +244,15 @@ async def readiness() -> dict:
     mechanics_emd_interline_rule_count = await database.collection("airline_emd_interline_rules").count()
     mechanics_emd_lifecycle_rule_count = await database.collection("airline_emd_lifecycle_rules").count()
     mechanics_candidate_link_count = await database.collection("policy_candidate_mechanics_links").count()
+    ancillary_pricing_rule_count = await database.collection("airline_ancillary_pricing_rules").count()
+    ancillary_price_component_count = await database.collection("airline_ancillary_price_components").count()
+    ancillary_pricing_applicability_count = await database.collection("airline_ancillary_pricing_applicability").count()
+    ancillary_pricing_matrix_count = await database.collection("airline_ancillary_pricing_matrices").count()
+    ancillary_pricing_matrix_row_count = await database.collection("airline_ancillary_pricing_matrix_rows").count()
+    airline_service_exception_rule_count = await database.collection("airline_service_exception_rules").count()
+    price_quote_scenario_count = await database.collection("airline_service_price_quote_scenarios").count()
+    price_quote_result_count = await database.collection("airline_service_price_quote_results").count()
+    candidate_pricing_link_count = await database.collection("policy_candidate_pricing_links").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -264,7 +274,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_36_9_service_mechanics_mapping_foundation",
+        "phase": "phase_37_0_ancillary_pricing_exception_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -680,6 +690,37 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 36.9 maps canonical services to SSR/OSI communication and EMD/RFIC/RFISC payment mechanics separately. It is metadata-only and does not execute provider actions, issue tickets/EMDs, process payments, or perform settlement.",
         },
+        "ancillary_pricing_exception_foundation": {
+            "pricing_rules_enabled": True,
+            "price_components_enabled": True,
+            "pricing_applicability_enabled": True,
+            "pricing_matrices_enabled": True,
+            "pricing_matrix_rows_enabled": True,
+            "service_exception_rules_enabled": True,
+            "quote_scenarios_enabled": True,
+            "quote_results_enabled": True,
+            "candidate_pricing_links_enabled": True,
+            "platform_ancillary_pricing_ui_enabled": True,
+            "agency_ancillary_pricing_ui_enabled": True,
+            "deterministic_quote_evaluation_enabled": True,
+            "exception_engine_expansion_enabled": True,
+            "pricing_mechanics_reference_enabled": True,
+            "invoice_payment_settlement_disabled": True,
+            "emd_issuance_disabled": True,
+            "provider_execution_disabled": True,
+            "agency_auto_promotion_disabled": True,
+            "pricing_rule_count": ancillary_pricing_rule_count,
+            "price_component_count": ancillary_price_component_count,
+            "pricing_applicability_count": ancillary_pricing_applicability_count,
+            "pricing_matrix_count": ancillary_pricing_matrix_count,
+            "pricing_matrix_row_count": ancillary_pricing_matrix_row_count,
+            "service_exception_rule_count": airline_service_exception_rule_count,
+            "quote_scenario_count": price_quote_scenario_count,
+            "quote_result_count": price_quote_result_count,
+            "candidate_pricing_link_count": candidate_pricing_link_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 37.0 adds policy-based ancillary pricing estimates and expanded exception metadata. It does not create invoices, process payments, perform settlement, issue EMDs/tickets, or execute providers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -737,6 +778,7 @@ app.include_router(platform.router)
 app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
+app.include_router(platform_ancillary_pricing.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -757,6 +799,7 @@ app.include_router(agency_booking_workspaces.router)
 app.include_router(agency_booking_imports.router)
 app.include_router(agency_gds_parser.router)
 app.include_router(agency_airline_policy_library.router)
+app.include_router(agency_ancillary_pricing.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

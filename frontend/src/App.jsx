@@ -29,6 +29,7 @@ import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
 import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
 import GdsParserPage from "./pages/agency/GdsParserPage"
+import AgencyAncillaryPricingPage from "./pages/agency/AncillaryPricingPage"
 import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
 import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
@@ -55,6 +56,7 @@ import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailP
 import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
+import PlatformAncillaryPricingPage from "./pages/platform/AncillaryPricingPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
@@ -102,6 +104,7 @@ const routes = {
   "/platform/airline-policy-ingestion": AirlinePolicyIngestionPage,
   "/platform/service-taxonomy": PlatformServiceTaxonomyPage,
   "/platform/service-mechanics": PlatformServiceMechanicsPage,
+  "/platform/ancillary-pricing": PlatformAncillaryPricingPage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -112,6 +115,7 @@ const routes = {
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
+  "/agency/ancillary-pricing": AgencyAncillaryPricingPage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,

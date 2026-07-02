@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_36_9_service_mechanics_mapping_foundation"
+PHASE_LABEL = "phase_37_0_ancillary_pricing_exception_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -75,7 +75,7 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Special Services",
         "concept": "Unified special services",
         "supplementary_concept": "PassengerServiceRequest, MedicalServiceRequest, CargoLikeItem, VipServiceRequest, ExceptionRule, SSR/OSI generator, rules engine",
-        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings, canonical service taxonomy domains/families/variants/aliases, and service mechanics metadata",
+        "current_equivalent": "PassengerServiceRequest, request_pets, request_special_items, trip_service_items, unified_exception_rules, special_services_service, exception_engine_service, ssr_osi_generator_service, rules_and_services_registry, service catalogue mappings, canonical service taxonomy domains/families/variants/aliases, service mechanics metadata, and ancillary pricing/exception metadata",
         "status": "built differently",
         "action": "Use the lightweight special-services facade, Phase 36.8 canonical taxonomy, and Phase 36.9 service mechanics mapping; do not rebuild parallel medical/cargo/VIP modules.",
     },
@@ -94,6 +94,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_service_communication_rules, ssr_osi_templates, ssr_osi_requirements, ssr_status_recognition_rules, airline_rejection_patterns, airline_service_payment_rules, airline_emd_issuance_rules, airline_rfic_rfisc_mappings, airline_emd_interline_rules, airline_emd_lifecycle_rules, policy_candidate_mechanics_links",
         "status": "foundation adopted",
         "action": "Map communication mechanics separately from payment/EMD mechanics without live SSR/OSI transmission, ticket/EMD issuance, provider execution, or agency auto-promotion.",
+    },
+    {
+        "category": "Ancillary Pricing",
+        "concept": "Ancillary pricing schema and service exception expansion",
+        "supplementary_concept": "pricing rules, price components, applicability dimensions, pricing matrices, exception conditions, quote scenarios, policy candidate pricing links",
+        "current_equivalent": "airline_ancillary_pricing_rules, airline_ancillary_price_components, airline_ancillary_pricing_applicability, airline_ancillary_pricing_matrices, airline_ancillary_pricing_matrix_rows, airline_service_exception_rules, airline_service_price_quote_scenarios, airline_service_price_quote_results, policy_candidate_pricing_links",
+        "status": "foundation adopted",
+        "action": "Use deterministic non-binding quote estimates and advisory exception metadata without invoices, payments, settlement, EMD/ticket issuance, provider execution, external AI, or agency auto-promotion.",
     },
     {
         "category": "Routes",
@@ -141,6 +149,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/parser/imports", "agencyos": "/agency/booking-imports and /agency/gds-parser"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
+        {"supplementary": "/admin/ancillary-pricing", "agencyos": "/platform/ancillary-pricing"},
+        {"supplementary": "/agent/ancillary-pricing", "agencyos": "/agency/ancillary-pricing"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -242,11 +252,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline policy ingestion source, extraction, review, and approved knowledge foundation built in Phase 36.7",
             "Canonical special and ancillary service taxonomy foundation built in Phase 36.8",
             "SSR/OSI and EMD/RFIC/RFISC service mechanics mapping foundation built in Phase 36.9",
+            "Ancillary pricing schema and exception engine expansion foundation built in Phase 37.0",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
             "Full GDS grammar coverage, provider reconciliation, and live supplier execution",
-            "Live SSR/OSI transmission, live ticket/EMD issuance, normalized pricing matrices, and policy comparison matrix",
+            "Live SSR/OSI transmission, live ticket/EMD issuance, policy comparison matrix, and provider-priced reconciliation",
             "Visual airline dashboards",
             "Live AI engines and model configuration console",
             "Supplier credentials, health, failover, and execution",

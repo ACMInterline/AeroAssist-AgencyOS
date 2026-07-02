@@ -5552,6 +5552,631 @@ class ServiceMechanicsLookupRequest(BaseModel):
     variant_code: Optional[str] = None
 
 
+class AncillaryPricingStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class AncillaryPricingReviewStatus(str, Enum):
+    SUGGESTED = "suggested"
+    CONFIRMED = "confirmed"
+    CORRECTED = "corrected"
+    REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+
+
+class AncillaryPriceComponentType(str, Enum):
+    BASE_FEE = "base_fee"
+    SERVICE_FEE = "service_fee"
+    DIRECTION_FEE = "direction_fee"
+    SEGMENT_FEE = "segment_fee"
+    CONNECTION_FEE = "connection_fee"
+    DOCUMENT_FEE = "document_fee"
+    AIRPORT_FEE = "airport_fee"
+    CHILD_FEE = "child_fee"
+    ADULT_FEE = "adult_fee"
+    OTHER = "other"
+
+
+class AncillaryAmountType(str, Enum):
+    FIXED = "fixed"
+    RANGE = "range"
+    PERCENTAGE = "percentage"
+    INCLUDED = "included"
+    UNKNOWN = "unknown"
+
+
+class AncillaryAppliesPer(str, Enum):
+    PASSENGER = "passenger"
+    DIRECTION = "direction"
+    SEGMENT = "segment"
+    JOURNEY = "journey"
+    BOOKING = "booking"
+    COUPON = "coupon"
+    EMD = "emd"
+    OTHER = "other"
+
+
+class AncillaryApplicabilityOperator(str, Enum):
+    EQUALS = "equals"
+    NOT_EQUALS = "not_equals"
+    IN = "in"
+    NOT_IN = "not_in"
+    MIN = "min"
+    MAX = "max"
+    BETWEEN = "between"
+    CONTAINS = "contains"
+    EXISTS = "exists"
+    NOT_EXISTS = "not_exists"
+    ANY = "any"
+
+
+class AncillaryApplicabilityAppliesAs(str, Enum):
+    CONDITION = "condition"
+    EXCLUSION = "exclusion"
+    SURCHARGE = "surcharge"
+    DISCOUNT = "discount"
+    MANUAL_REVIEW = "manual_review"
+
+
+class AncillaryPricingScope(str, Enum):
+    GLOBAL = "global"
+    AGENCY = "agency"
+
+
+class AirlineServiceExceptionTypeExpanded(str, Enum):
+    SERVICE_NOT_PERMITTED = "service_not_permitted"
+    PRICING_NOT_AVAILABLE = "pricing_not_available"
+    ROUTE_RESTRICTION = "route_restriction"
+    CONNECTION_RESTRICTION = "connection_restriction"
+    AGE_RESTRICTION = "age_restriction"
+    COUNTRY_RESTRICTION = "country_restriction"
+    AIRPORT_RESTRICTION = "airport_restriction"
+    INTERLINE_RESTRICTION = "interline_restriction"
+    AIRCRAFT_RESTRICTION = "aircraft_restriction"
+    CABIN_RESTRICTION = "cabin_restriction"
+    DEADLINE_RESTRICTION = "deadline_restriction"
+    DOCUMENT_REQUIRED = "document_required"
+    MANUAL_CONTACT_REQUIRED = "manual_contact_required"
+    EMD_REQUIRED = "emd_required"
+    PAYMENT_RESTRICTION = "payment_restriction"
+    UNKNOWN = "unknown"
+
+
+class AirlineServiceExceptionOutcome(str, Enum):
+    PERMITTED = "permitted"
+    NOT_PERMITTED = "not_permitted"
+    MANUAL_REVIEW = "manual_review"
+    SURCHARGE_REQUIRED = "surcharge_required"
+    DOCUMENT_REQUIRED = "document_required"
+    AIRLINE_CONFIRMATION_REQUIRED = "airline_confirmation_required"
+    PAYMENT_REQUIRED = "payment_required"
+    UNKNOWN = "unknown"
+
+
+class AirlineServicePriceQuoteEvaluationStatus(str, Enum):
+    PRICED = "priced"
+    NO_PRICE_FOUND = "no_price_found"
+    MANUAL_REVIEW = "manual_review"
+    BLOCKED = "blocked"
+    UNKNOWN = "unknown"
+
+
+class PolicyCandidatePricingRecordType(str, Enum):
+    PRICING_RULE = "pricing_rule"
+    PRICE_COMPONENT = "price_component"
+    APPLICABILITY = "applicability"
+    PRICING_MATRIX = "pricing_matrix"
+    PRICING_MATRIX_ROW = "pricing_matrix_row"
+    EXCEPTION_RULE = "exception_rule"
+
+
+class AirlineAncillaryPricingRule(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    pricing_rule_name: str
+    pricing_status: AncillaryPricingStatus = AncillaryPricingStatus.DRAFT
+    review_status: AncillaryPricingReviewStatus = AncillaryPricingReviewStatus.SUGGESTED
+    mandatory_service: bool = False
+    optional_service: bool = True
+    fee_included_in_fare: bool = False
+    separate_fee_required: bool = False
+    emd_required: Optional[bool] = None
+    payment_rule_id: Optional[str] = None
+    emd_issuance_rule_id: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPriceComponent(BaseDocument):
+    pricing_rule_id: str
+    component_type: AncillaryPriceComponentType = AncillaryPriceComponentType.SERVICE_FEE
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    amount_type: AncillaryAmountType = AncillaryAmountType.UNKNOWN
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    tax_included: Optional[bool] = None
+    applies_per: AncillaryAppliesPer = AncillaryAppliesPer.PASSENGER
+    roundtrip_doubling_rule: bool = False
+    sequence: int = 100
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPricingApplicability(BaseDocument):
+    pricing_rule_id: str
+    dimension_code: str
+    operator: AncillaryApplicabilityOperator = AncillaryApplicabilityOperator.ANY
+    value: Optional[str] = None
+    value_json: Dict[str, Any] = Field(default_factory=dict)
+    applies_as: AncillaryApplicabilityAppliesAs = AncillaryApplicabilityAppliesAs.CONDITION
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+
+
+class AirlineAncillaryPricingMatrix(BaseDocument):
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    matrix_name: str
+    currency: Optional[str] = None
+    scope: AncillaryPricingScope = AncillaryPricingScope.GLOBAL
+    agency_id: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineAncillaryPricingMatrixRow(BaseDocument):
+    matrix_id: str
+    pricing_rule_id: Optional[str] = None
+    row_label: str
+    route_band: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_region: Optional[str] = None
+    destination_region: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    airport_pair: Optional[str] = None
+    passenger_type: Optional[str] = None
+    min_age: Optional[int] = None
+    max_age: Optional[int] = None
+    cabin: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    applies_per: AncillaryAppliesPer = AncillaryAppliesPer.PASSENGER
+    emd_required: Optional[bool] = None
+    notes: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    sort_order: int = 100
+
+
+class AirlineServiceExceptionRule(BaseDocument):
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    exception_name: str
+    exception_type: AirlineServiceExceptionTypeExpanded = AirlineServiceExceptionTypeExpanded.UNKNOWN
+    severity: ServiceMechanicsSeverity = ServiceMechanicsSeverity.WARNING
+    outcome: AirlineServiceExceptionOutcome = AirlineServiceExceptionOutcome.UNKNOWN
+    condition_json: Dict[str, Any] = Field(default_factory=dict)
+    explanation: str
+    suggested_action: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    pricing_rule_id: Optional[str] = None
+    mechanics_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+
+
+class AirlineServicePriceQuoteScenario(BaseDocument):
+    agency_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    scenario_name: str
+    passenger_age: Optional[int] = None
+    passenger_type: Optional[str] = None
+    route_type: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    cabin: Optional[str] = None
+    segment_count: Optional[int] = None
+    direction_count: Optional[int] = None
+    currency: Optional[str] = None
+    context_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineServicePriceQuoteResult(BaseDocument):
+    scenario_id: str
+    pricing_rule_ids: List[str] = Field(default_factory=list)
+    exception_rule_ids: List[str] = Field(default_factory=list)
+    estimated_amount: Optional[float] = None
+    currency: Optional[str] = None
+    amount_breakdown_json: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluation_status: AirlineServicePriceQuoteEvaluationStatus = AirlineServicePriceQuoteEvaluationStatus.UNKNOWN
+    warnings: List[str] = Field(default_factory=list)
+    explanation: str
+
+
+class PolicyCandidatePricingLink(BaseDocument):
+    agency_id: Optional[str] = None
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_link_id: Optional[str] = None
+    pricing_record_type: PolicyCandidatePricingRecordType
+    pricing_record_id: str
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.0
+    review_status: AncillaryPricingReviewStatus = AncillaryPricingReviewStatus.SUGGESTED
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class AirlineAncillaryPricingRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    pricing_rule_name: str
+    pricing_status: AncillaryPricingStatus = AncillaryPricingStatus.DRAFT
+    review_status: AncillaryPricingReviewStatus = AncillaryPricingReviewStatus.SUGGESTED
+    mandatory_service: bool = False
+    optional_service: bool = True
+    fee_included_in_fare: bool = False
+    separate_fee_required: bool = False
+    emd_required: Optional[bool] = None
+    payment_rule_id: Optional[str] = None
+    emd_issuance_rule_id: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPricingRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    pricing_rule_name: Optional[str] = None
+    pricing_status: Optional[AncillaryPricingStatus] = None
+    review_status: Optional[AncillaryPricingReviewStatus] = None
+    mandatory_service: Optional[bool] = None
+    optional_service: Optional[bool] = None
+    fee_included_in_fare: Optional[bool] = None
+    separate_fee_required: Optional[bool] = None
+    emd_required: Optional[bool] = None
+    payment_rule_id: Optional[str] = None
+    emd_issuance_rule_id: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPriceComponentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_rule_id: str
+    component_type: AncillaryPriceComponentType = AncillaryPriceComponentType.SERVICE_FEE
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    amount_type: AncillaryAmountType = AncillaryAmountType.UNKNOWN
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    tax_included: Optional[bool] = None
+    applies_per: AncillaryAppliesPer = AncillaryAppliesPer.PASSENGER
+    roundtrip_doubling_rule: bool = False
+    sequence: int = 100
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPriceComponentUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_rule_id: Optional[str] = None
+    component_type: Optional[AncillaryPriceComponentType] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    amount_type: Optional[AncillaryAmountType] = None
+    min_amount: Optional[float] = None
+    max_amount: Optional[float] = None
+    tax_included: Optional[bool] = None
+    applies_per: Optional[AncillaryAppliesPer] = None
+    roundtrip_doubling_rule: Optional[bool] = None
+    sequence: Optional[int] = None
+    status: Optional[AncillaryPricingStatus] = None
+    notes: Optional[str] = None
+
+
+class AirlineAncillaryPricingApplicabilityCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_rule_id: str
+    dimension_code: str
+    operator: AncillaryApplicabilityOperator = AncillaryApplicabilityOperator.ANY
+    value: Optional[str] = None
+    value_json: Dict[str, Any] = Field(default_factory=dict)
+    applies_as: AncillaryApplicabilityAppliesAs = AncillaryApplicabilityAppliesAs.CONDITION
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+
+
+class AirlineAncillaryPricingApplicabilityUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_rule_id: Optional[str] = None
+    dimension_code: Optional[str] = None
+    operator: Optional[AncillaryApplicabilityOperator] = None
+    value: Optional[str] = None
+    value_json: Optional[Dict[str, Any]] = None
+    applies_as: Optional[AncillaryApplicabilityAppliesAs] = None
+    status: Optional[AncillaryPricingStatus] = None
+
+
+class AirlineAncillaryPricingMatrixCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    matrix_name: str
+    currency: Optional[str] = None
+    scope: AncillaryPricingScope = AncillaryPricingScope.GLOBAL
+    agency_id: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineAncillaryPricingMatrixUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    matrix_name: Optional[str] = None
+    currency: Optional[str] = None
+    scope: Optional[AncillaryPricingScope] = None
+    agency_id: Optional[str] = None
+    status: Optional[AncillaryPricingStatus] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+
+
+class AirlineAncillaryPricingMatrixRowCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    matrix_id: str
+    pricing_rule_id: Optional[str] = None
+    row_label: str
+    route_band: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_region: Optional[str] = None
+    destination_region: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    airport_pair: Optional[str] = None
+    passenger_type: Optional[str] = None
+    min_age: Optional[int] = None
+    max_age: Optional[int] = None
+    cabin: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    applies_per: AncillaryAppliesPer = AncillaryAppliesPer.PASSENGER
+    emd_required: Optional[bool] = None
+    notes: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+    sort_order: int = 100
+
+
+class AirlineAncillaryPricingMatrixRowUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    matrix_id: Optional[str] = None
+    pricing_rule_id: Optional[str] = None
+    row_label: Optional[str] = None
+    route_band: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_region: Optional[str] = None
+    destination_region: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    airport_pair: Optional[str] = None
+    passenger_type: Optional[str] = None
+    min_age: Optional[int] = None
+    max_age: Optional[int] = None
+    cabin: Optional[str] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    applies_per: Optional[AncillaryAppliesPer] = None
+    emd_required: Optional[bool] = None
+    notes: Optional[str] = None
+    status: Optional[AncillaryPricingStatus] = None
+    sort_order: Optional[int] = None
+
+
+class AirlineServiceExceptionRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    exception_name: str
+    exception_type: AirlineServiceExceptionTypeExpanded = AirlineServiceExceptionTypeExpanded.UNKNOWN
+    severity: ServiceMechanicsSeverity = ServiceMechanicsSeverity.WARNING
+    outcome: AirlineServiceExceptionOutcome = AirlineServiceExceptionOutcome.UNKNOWN
+    condition_json: Dict[str, Any] = Field(default_factory=dict)
+    explanation: str
+    suggested_action: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    pricing_rule_id: Optional[str] = None
+    mechanics_record_id: Optional[str] = None
+    is_global: bool = True
+    agency_id: Optional[str] = None
+    status: AncillaryPricingStatus = AncillaryPricingStatus.ACTIVE
+
+
+class AirlineServiceExceptionRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    exception_name: Optional[str] = None
+    exception_type: Optional[AirlineServiceExceptionTypeExpanded] = None
+    severity: Optional[ServiceMechanicsSeverity] = None
+    outcome: Optional[AirlineServiceExceptionOutcome] = None
+    condition_json: Optional[Dict[str, Any]] = None
+    explanation: Optional[str] = None
+    suggested_action: Optional[str] = None
+    source_policy_id: Optional[str] = None
+    approved_knowledge_record_id: Optional[str] = None
+    pricing_rule_id: Optional[str] = None
+    mechanics_record_id: Optional[str] = None
+    is_global: Optional[bool] = None
+    agency_id: Optional[str] = None
+    status: Optional[AncillaryPricingStatus] = None
+
+
+class AirlineServicePriceQuoteScenarioCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    scenario_name: str
+    passenger_age: Optional[int] = None
+    passenger_type: Optional[str] = None
+    route_type: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    cabin: Optional[str] = None
+    segment_count: Optional[int] = None
+    direction_count: Optional[int] = None
+    currency: Optional[str] = None
+    context_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineServicePriceQuoteScenarioUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    scenario_name: Optional[str] = None
+    passenger_age: Optional[int] = None
+    passenger_type: Optional[str] = None
+    route_type: Optional[str] = None
+    direct_vs_connecting: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    origin_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    cabin: Optional[str] = None
+    segment_count: Optional[int] = None
+    direction_count: Optional[int] = None
+    currency: Optional[str] = None
+    context_json: Optional[Dict[str, Any]] = None
+
+
+class AirlineServicePriceQuoteEvaluationRequest(AirlineServicePriceQuoteScenarioCreate):
+    scenario_id: Optional[str] = None
+    store_result: bool = True
+
+
+class PolicyCandidatePricingLinkCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: PolicyCandidateTaxonomyCandidateType
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_link_id: Optional[str] = None
+    pricing_record_type: PolicyCandidatePricingRecordType
+    pricing_record_id: str
+    airline_code: Optional[str] = None
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+    confidence_score: float = 0.0
+    review_status: AncillaryPricingReviewStatus = AncillaryPricingReviewStatus.SUGGESTED
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class PolicyCandidatePricingLinkUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_source_id: Optional[str] = None
+    extraction_run_id: Optional[str] = None
+    candidate_type: Optional[PolicyCandidateTaxonomyCandidateType] = None
+    candidate_id: Optional[str] = None
+    taxonomy_link_id: Optional[str] = None
+    mechanics_link_id: Optional[str] = None
+    pricing_record_type: Optional[PolicyCandidatePricingRecordType] = None
+    pricing_record_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    domain_code: Optional[str] = None
+    family_code: Optional[str] = None
+    variant_code: Optional[str] = None
+    confidence_score: Optional[float] = None
+    review_status: Optional[AncillaryPricingReviewStatus] = None
+    evidence_text: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+
+
+class AncillaryPricingLookupRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_code: str
+    domain_code: str
+    family_code: str
+    variant_code: Optional[str] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
