@@ -152,6 +152,85 @@ async def get_database() -> Database:
     return database
 
 
+def normalize_index_spec(index_spec: Any, default_options: Optional[Dict[str, Any]] = None) -> tuple[list[tuple[str, Any]], Dict[str, Any]]:
+    options = dict(default_options or {})
+    if isinstance(index_spec, dict):
+        keys = list(index_spec["keys"])
+        options.update({key: value for key, value in index_spec.items() if key != "keys"})
+        return keys, options
+    return list(index_spec), options
+
+
+def index_options_compatible(existing: Dict[str, Any], requested_options: Dict[str, Any]) -> bool:
+    requested_unique = bool(requested_options.get("unique", False))
+    existing_unique = bool(existing.get("unique", False))
+    if requested_unique and not existing_unique:
+        return False
+
+    if "sparse" in requested_options:
+        if bool(existing.get("sparse", False)) != bool(requested_options["sparse"]):
+            return False
+    elif existing.get("sparse"):
+        return False
+
+    requested_partial = requested_options.get("partialFilterExpression")
+    existing_partial = existing.get("partialFilterExpression")
+    if requested_partial is not None:
+        if existing_partial != requested_partial:
+            return False
+    elif existing_partial is not None:
+        return False
+
+    for option_name in ["expireAfterSeconds", "collation"]:
+        requested_option = requested_options.get(option_name)
+        existing_option = existing.get(option_name)
+        if requested_option is not None:
+            if existing_option != requested_option:
+                return False
+        elif existing_option is not None:
+            return False
+
+    return True
+
+
+def describe_index(keys: list[tuple[str, Any]], options: Dict[str, Any]) -> str:
+    parts = [f"keys={keys}"]
+    if options.get("name"):
+        parts.append(f"name={options['name']!r}")
+    for key in ["unique", "sparse", "partialFilterExpression"]:
+        if key in options:
+            parts.append(f"{key}={options[key]!r}")
+    return ", ".join(parts)
+
+
+async def create_compatible_index(collection: Any, collection_name: str, index_spec: Any, **default_options: Any) -> None:
+    keys, options = normalize_index_spec(index_spec, default_options)
+    requested_name = options.get("name")
+    existing_indexes = await collection.index_information()
+
+    if requested_name and requested_name in existing_indexes:
+        existing = existing_indexes[requested_name]
+        existing_keys = list(existing.get("key") or [])
+        if existing_keys == keys and index_options_compatible(existing, options):
+            return
+        raise RuntimeError(
+            f"Mongo index conflict on {collection_name}.{requested_name}: "
+            f"existing keys={existing_keys}, requested {describe_index(keys, options)}"
+        )
+
+    for existing_name, existing in existing_indexes.items():
+        if list(existing.get("key") or []) != keys:
+            continue
+        if index_options_compatible(existing, options):
+            return
+        raise RuntimeError(
+            f"Mongo index conflict on {collection_name}: existing index {existing_name!r} "
+            f"has the same key pattern but incompatible options for requested {describe_index(keys, options)}"
+        )
+
+    await collection.create_index(keys, **options)
+
+
 AGENCY_OWNED_COLLECTIONS = [
     "agency_staff_memberships",
     "agency_workspaces",
@@ -257,8 +336,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
 
     for collection_name in AGENCY_OWNED_COLLECTIONS:
         collection = mongo_database[collection_name]
-        await collection.create_index([("id", ASCENDING)], unique=True)
-        await collection.create_index([("agency_id", ASCENDING)])
+        await create_compatible_index(collection, collection_name, [("id", ASCENDING)], unique=True)
+        await create_compatible_index(collection, collection_name, [("agency_id", ASCENDING)])
 
     unique_indexes = {
         "platform_users": [[("email", ASCENDING)]],
@@ -302,12 +381,27 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "airline_policy_extracted_exceptions": [[("id", ASCENDING)]],
         "airline_policy_review_corrections": [[("id", ASCENDING)]],
         "airline_policy_approved_knowledge_records": [[("id", ASCENDING)]],
-        "canonical_service_domains": [[("id", ASCENDING)], [("code", ASCENDING)]],
-        "canonical_service_families": [[("id", ASCENDING)], [("domain_code", ASCENDING), ("code", ASCENDING)]],
-        "canonical_service_variants": [[("id", ASCENDING)], [("domain_code", ASCENDING), ("family_code", ASCENDING), ("code", ASCENDING)]],
+        "canonical_service_domains": [
+            {"keys": [("id", ASCENDING)], "name": "canonical_service_domains_id_unique"},
+            {"keys": [("code", ASCENDING)], "name": "canonical_service_domains_code_unique"},
+        ],
+        "canonical_service_families": [
+            {"keys": [("id", ASCENDING)], "name": "canonical_service_families_id_unique"},
+            {"keys": [("domain_code", ASCENDING), ("code", ASCENDING)], "name": "canonical_service_families_domain_code_code_unique"},
+        ],
+        "canonical_service_variants": [
+            {"keys": [("id", ASCENDING)], "name": "canonical_service_variants_id_unique"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("code", ASCENDING)], "name": "canonical_service_variants_domain_family_code_unique"},
+        ],
         "airline_service_aliases": [[("id", ASCENDING)]],
-        "service_applicability_dimensions": [[("id", ASCENDING)], [("code", ASCENDING)]],
-        "service_policy_outcome_types": [[("id", ASCENDING)], [("code", ASCENDING)]],
+        "service_applicability_dimensions": [
+            {"keys": [("id", ASCENDING)], "name": "service_applicability_dimensions_id_unique"},
+            {"keys": [("code", ASCENDING)], "name": "service_applicability_dimensions_code_unique"},
+        ],
+        "service_policy_outcome_types": [
+            {"keys": [("id", ASCENDING)], "name": "service_policy_outcome_types_id_unique"},
+            {"keys": [("code", ASCENDING)], "name": "service_policy_outcome_types_code_unique"},
+        ],
         "service_taxonomy_mapping_rules": [[("id", ASCENDING)]],
         "policy_candidate_taxonomy_links": [[("id", ASCENDING)]],
         "service_taxonomy_review_corrections": [[("id", ASCENDING)]],
@@ -320,8 +414,9 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "invitations": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
     }
     for collection_name, index_specs in unique_indexes.items():
+        collection = mongo_database[collection_name]
         for spec in index_specs:
-            await mongo_database[collection_name].create_index(spec, unique=True)
+            await create_compatible_index(collection, collection_name, spec, unique=True)
 
     compound_indexes = {
         "client_profiles": [[("agency_id", ASCENDING), ("primary_email", ASCENDING)]],
@@ -693,58 +788,53 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("approved_at", ASCENDING)],
         ],
         "canonical_service_domains": [
-            [("code", ASCENDING)],
-            [("status", ASCENDING)],
-            [("governance_status", ASCENDING)],
-            [("sort_order", ASCENDING)],
+            {"keys": [("status", ASCENDING)], "name": "canonical_service_domains_status_lookup"},
+            {"keys": [("governance_status", ASCENDING)], "name": "canonical_service_domains_governance_status_lookup"},
+            {"keys": [("sort_order", ASCENDING)], "name": "canonical_service_domains_sort_order_lookup"},
         ],
         "canonical_service_families": [
-            [("domain_code", ASCENDING), ("code", ASCENDING)],
-            [("domain_code", ASCENDING), ("status", ASCENDING)],
-            [("status", ASCENDING)],
-            [("sort_order", ASCENDING)],
+            {"keys": [("domain_code", ASCENDING), ("status", ASCENDING)], "name": "canonical_service_families_domain_status_lookup"},
+            {"keys": [("status", ASCENDING)], "name": "canonical_service_families_status_lookup"},
+            {"keys": [("sort_order", ASCENDING)], "name": "canonical_service_families_sort_order_lookup"},
         ],
         "canonical_service_variants": [
-            [("family_code", ASCENDING), ("code", ASCENDING)],
-            [("domain_code", ASCENDING), ("family_code", ASCENDING), ("code", ASCENDING)],
-            [("domain_code", ASCENDING), ("family_code", ASCENDING), ("status", ASCENDING)],
-            [("status", ASCENDING)],
+            {"keys": [("family_code", ASCENDING), ("code", ASCENDING)], "name": "canonical_service_variants_family_code_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING), ("status", ASCENDING)], "name": "canonical_service_variants_domain_family_status_lookup"},
+            {"keys": [("status", ASCENDING)], "name": "canonical_service_variants_status_lookup"},
         ],
         "airline_service_aliases": [
-            [("airline_code", ASCENDING), ("normalized_alias_text", ASCENDING)],
-            [("alias_type", ASCENDING), ("status", ASCENDING)],
-            [("domain_code", ASCENDING), ("family_code", ASCENDING)],
-            [("agency_id", ASCENDING), ("status", ASCENDING)],
-            [("is_global", ASCENDING), ("status", ASCENDING)],
+            {"keys": [("airline_code", ASCENDING), ("normalized_alias_text", ASCENDING)], "name": "airline_service_aliases_airline_normalized_lookup"},
+            {"keys": [("alias_type", ASCENDING), ("status", ASCENDING)], "name": "airline_service_aliases_alias_type_status_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING)], "name": "airline_service_aliases_domain_family_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING)], "name": "airline_service_aliases_agency_status_lookup"},
+            {"keys": [("is_global", ASCENDING), ("status", ASCENDING)], "name": "airline_service_aliases_global_status_lookup"},
         ],
         "service_applicability_dimensions": [
-            [("code", ASCENDING)],
-            [("status", ASCENDING)],
-            [("sort_order", ASCENDING)],
+            {"keys": [("status", ASCENDING)], "name": "service_applicability_dimensions_status_lookup"},
+            {"keys": [("sort_order", ASCENDING)], "name": "service_applicability_dimensions_sort_order_lookup"},
         ],
         "service_policy_outcome_types": [
-            [("code", ASCENDING)],
-            [("severity", ASCENDING)],
-            [("status", ASCENDING)],
-            [("sort_order", ASCENDING)],
+            {"keys": [("severity", ASCENDING)], "name": "service_policy_outcome_types_severity_lookup"},
+            {"keys": [("status", ASCENDING)], "name": "service_policy_outcome_types_status_lookup"},
+            {"keys": [("sort_order", ASCENDING)], "name": "service_policy_outcome_types_sort_order_lookup"},
         ],
         "service_taxonomy_mapping_rules": [
-            [("airline_code", ASCENDING), ("status", ASCENDING), ("priority", ASCENDING), ("match_type", ASCENDING)],
-            [("normalized_match_value", ASCENDING)],
-            [("scope", ASCENDING), ("agency_id", ASCENDING), ("status", ASCENDING)],
-            [("domain_code", ASCENDING), ("family_code", ASCENDING)],
+            {"keys": [("airline_code", ASCENDING), ("status", ASCENDING), ("priority", ASCENDING), ("match_type", ASCENDING)], "name": "service_taxonomy_mapping_rules_airline_status_priority_match_lookup"},
+            {"keys": [("normalized_match_value", ASCENDING)], "name": "service_taxonomy_mapping_rules_normalized_match_lookup"},
+            {"keys": [("scope", ASCENDING), ("agency_id", ASCENDING), ("status", ASCENDING)], "name": "service_taxonomy_mapping_rules_scope_agency_status_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING)], "name": "service_taxonomy_mapping_rules_domain_family_lookup"},
         ],
         "policy_candidate_taxonomy_links": [
-            [("candidate_type", ASCENDING), ("candidate_id", ASCENDING)],
-            [("policy_source_id", ASCENDING), ("extraction_run_id", ASCENDING)],
-            [("agency_id", ASCENDING), ("review_status", ASCENDING)],
-            [("domain_code", ASCENDING), ("family_code", ASCENDING)],
+            {"keys": [("candidate_type", ASCENDING), ("candidate_id", ASCENDING)], "name": "policy_candidate_taxonomy_links_candidate_lookup"},
+            {"keys": [("policy_source_id", ASCENDING), ("extraction_run_id", ASCENDING)], "name": "policy_candidate_taxonomy_links_source_run_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("review_status", ASCENDING)], "name": "policy_candidate_taxonomy_links_agency_review_status_lookup"},
+            {"keys": [("domain_code", ASCENDING), ("family_code", ASCENDING)], "name": "policy_candidate_taxonomy_links_domain_family_lookup"},
         ],
         "service_taxonomy_review_corrections": [
-            [("candidate_type", ASCENDING), ("candidate_id", ASCENDING)],
-            [("promotion_status", ASCENDING)],
-            [("agency_id", ASCENDING), ("promotion_status", ASCENDING)],
-            [("created_at", ASCENDING)],
+            {"keys": [("candidate_type", ASCENDING), ("candidate_id", ASCENDING)], "name": "service_taxonomy_review_corrections_candidate_lookup"},
+            {"keys": [("promotion_status", ASCENDING)], "name": "service_taxonomy_review_corrections_promotion_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("promotion_status", ASCENDING)], "name": "service_taxonomy_review_corrections_agency_promotion_status_lookup"},
+            {"keys": [("created_at", ASCENDING)], "name": "service_taxonomy_review_corrections_created_at_lookup"},
         ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],
@@ -850,5 +940,6 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "agency_airline_overrides": [[("agency_id", ASCENDING), ("airline_id", ASCENDING)]],
     }
     for collection_name, index_specs in compound_indexes.items():
+        collection = mongo_database[collection_name]
         for spec in index_specs:
-            await mongo_database[collection_name].create_index(spec)
+            await create_compatible_index(collection, collection_name, spec)
