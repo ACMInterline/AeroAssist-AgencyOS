@@ -12,7 +12,7 @@ OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 READONLY_HEADERS = {"X-Demo-User-Email": "agency.readonly@aeroassist.dev"}
 PORTAL_HEADERS = {"X-Demo-User-Email": "anna.client@example.com"}
-EXPECTED_PHASE = "phase_39_2_airline_intelligence_knowledge_versioning_foundation"
+EXPECTED_PHASE = "phase_39_3_airline_intelligence_agency_consumption_bridge"
 
 
 def request(method: str, path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> tuple[int, dict]:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_2_airline_intelligence_knowledge_versioning_foundation"
+PHASE_LABEL = "phase_39_3_airline_intelligence_agency_consumption_bridge"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -19,9 +19,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Airline Intelligence",
         "concept": "Airlines and operating intelligence",
         "supplementary_concept": "airlines, airline_contacts, airline_fleet, aircraft, routes, fare families, RBD matrix, fare rules, ancillaries, interline, distribution, PSS/GDS parameters, exception rules",
-        "current_equivalent": "airline_profiles, airline_intelligence_profiles, airline_contacts, airline_fleet_types, aircraft_tail_numbers, aircraft_configurations, aircraft_seatmaps, airline_routes, airline_fare_families, airline_rbd_matrix_rows, airline_fare_rules, airline_ancillaries, airline_interline_agreements, airline_distribution_profiles, airline_pss_parameters, airline_gds_parameters, unified_exception_rules, airline_intelligence_data_packs with staged pack items, validation issues, import runs, review notes, and coverage snapshots, plus data pack review, promotion-readiness, knowledge versioning, and publication-control metadata",
+        "current_equivalent": "airline_profiles, airline_intelligence_profiles, airline_contacts, airline_fleet_types, aircraft_tail_numbers, aircraft_configurations, aircraft_seatmaps, airline_routes, airline_fare_families, airline_rbd_matrix_rows, airline_fare_rules, airline_ancillaries, airline_interline_agreements, airline_distribution_profiles, airline_pss_parameters, airline_gds_parameters, unified_exception_rules, airline_intelligence_data_packs with staged pack items, validation issues, import runs, review notes, and coverage snapshots, plus data pack review, promotion-readiness, knowledge versioning, publication-control metadata, and agency consumption bridge metadata",
         "status": "foundation adopted",
-        "action": "Use Phase 39.0 data packs, Phase 39.1 review records, and Phase 39.2 knowledge versions as metadata-only staging, review, and publication-control evidence before any future explicit promotion into operational airline tables.",
+        "action": "Use Phase 39.0 data packs, Phase 39.1 review records, Phase 39.2 knowledge versions, and Phase 39.3 agency consumption bridge records as metadata-only staging, review, publication-control, and safe-use evidence before any future explicit promotion into operational airline tables.",
     },
     {
         "category": "Airline Intelligence Data Packs",
@@ -46,6 +46,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_intelligence_knowledge_versions, airline_intelligence_knowledge_version_items, airline_intelligence_knowledge_release_channels, airline_intelligence_knowledge_release_assignments, airline_intelligence_knowledge_version_comparisons, airline_intelligence_knowledge_rollback_plans, airline_intelligence_knowledge_version_snapshots",
         "status": "foundation adopted",
         "action": "Group reviewed airline intelligence into governed metadata-only knowledge versions with release-channel visibility, comparison, rollback planning, and agency read-only version summaries without operational promotion or public publishing.",
+    },
+    {
+        "category": "Airline Intelligence Agency Consumption",
+        "concept": "Agency safe-use consumption bridge",
+        "supplementary_concept": "agency consumption profiles, assignment views, usage readiness, notes, immutable consumption snapshots",
+        "current_equivalent": "airline_intelligence_agency_consumption_profiles, airline_intelligence_agency_knowledge_assignment_views, airline_intelligence_agency_usage_readiness, airline_intelligence_agency_consumption_notes, airline_intelligence_agency_consumption_snapshots",
+        "status": "foundation adopted",
+        "action": "Expose platform-governed airline intelligence knowledge versions to agency CRM, CMS, client portal, and offer builder work areas through read-only metadata and plain-language safe-use summaries without publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, payments, invoices, settlement, scraping, external APIs, or external AI.",
     },
     {
         "category": "GDS/Supplier",
@@ -270,9 +278,11 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/airline-data-packs", "agencyos": "/platform/airline-intelligence-data-packs"},
         {"supplementary": "/admin/airline-data-pack-reviews", "agencyos": "/platform/airline-intelligence-data-pack-reviews"},
         {"supplementary": "/admin/airline-knowledge-versions", "agencyos": "/platform/airline-intelligence-knowledge-versions"},
+        {"supplementary": "/admin/airline-agency-consumption", "agencyos": "/platform/airline-intelligence-agency-consumption"},
         {"supplementary": "/agent/airline-coverage", "agencyos": "/agency/airline-intelligence-coverage"},
         {"supplementary": "/agent/airline-review-coverage", "agencyos": "/agency/airline-intelligence-review-coverage"},
         {"supplementary": "/agent/airline-knowledge-versions", "agencyos": "/agency/airline-intelligence-knowledge-versions"},
+        {"supplementary": "/agent/airline-intelligence-usage", "agencyos": "/agency/airline-intelligence-consumption"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/ancillary-pricing", "agencyos": "/platform/ancillary-pricing"},
@@ -319,9 +329,9 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.3",
+        "phase": "Phase 39.4",
         "title": "Airline Intelligence Promotion Governance Hardening",
-        "reason": "Airline intelligence knowledge versions now group reviewed data into publication-control metadata; any future operational promotion still needs explicit migration governance.",
+        "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
     },
     {
         "phase": "Phase 37.8",
@@ -408,6 +418,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineIntelligenceKnowledgeVersionComparison",
             "AirlineIntelligenceKnowledgeRollbackPlan",
             "AirlineIntelligenceKnowledgeVersionSnapshot",
+            "AirlineIntelligenceAgencyConsumptionProfile",
+            "AirlineIntelligenceAgencyKnowledgeAssignmentView",
+            "AirlineIntelligenceAgencyUsageReadiness",
+            "AirlineIntelligenceAgencyConsumptionNote",
+            "AirlineIntelligenceAgencyConsumptionSnapshot",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -438,6 +453,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline intelligence data pack foundation built in Phase 39.0",
             "Airline intelligence data pack review and promotion-readiness foundation built in Phase 39.1",
             "Airline intelligence knowledge versioning and publication-control foundation built in Phase 39.2",
+            "Airline intelligence agency consumption bridge built in Phase 39.3",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

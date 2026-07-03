@@ -51,6 +51,10 @@ export default function PlatformLayout({ children, user }) {
               <Layers3 className="h-4 w-4" />
               Knowledge Versions
             </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-agency-consumption">
+              <Layers3 className="h-4 w-4" />
+              Agency Consumption
+            </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-policy-ingestion">
               <FileText className="h-4 w-4" />
               Policy Ingestion

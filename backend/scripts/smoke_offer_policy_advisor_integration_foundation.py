@@ -10,7 +10,7 @@ from smoke_service_mechanics_mapping_foundation import main as mechanics_smoke_m
 from smoke_service_taxonomy_foundation import main as taxonomy_smoke_main
 
 
-EXPECTED_PHASE = "phase_39_2_airline_intelligence_knowledge_versioning_foundation"
+EXPECTED_PHASE = "phase_39_3_airline_intelligence_agency_consumption_bridge"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:

@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_2_airline_intelligence_knowledge_versioning_foundation",
+        "phase": "phase_39_3_airline_intelligence_agency_consumption_bridge",
     }
 
 
@@ -179,6 +179,11 @@ async def summary(
             "airline_intelligence_knowledge_version_comparisons": await db.collection("airline_intelligence_knowledge_version_comparisons").count(),
             "airline_intelligence_knowledge_rollback_plans": await db.collection("airline_intelligence_knowledge_rollback_plans").count(),
             "airline_intelligence_knowledge_version_snapshots": await db.collection("airline_intelligence_knowledge_version_snapshots").count(),
+            "airline_intelligence_agency_consumption_profiles": await db.collection("airline_intelligence_agency_consumption_profiles").count(),
+            "airline_intelligence_agency_knowledge_assignment_views": await db.collection("airline_intelligence_agency_knowledge_assignment_views").count(),
+            "airline_intelligence_agency_usage_readiness": await db.collection("airline_intelligence_agency_usage_readiness").count(),
+            "airline_intelligence_agency_consumption_notes": await db.collection("airline_intelligence_agency_consumption_notes").count(),
+            "airline_intelligence_agency_consumption_snapshots": await db.collection("airline_intelligence_agency_consumption_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

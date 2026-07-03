@@ -1360,6 +1360,20 @@ Avoid adding:
 
 - Automatic promotion into operational airline tables, live scraping, external APIs, external AI, CMS publishing, client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 39.3: Airline Intelligence Agency Consumption Bridge
+
+Implemented scope:
+
+- Added airline intelligence agency consumption profiles, agency assignment views, usage readiness metadata, consumption notes, and immutable consumption snapshots.
+- Added platform APIs and `/platform/airline-intelligence-agency-consumption` for safe-use profile governance, readiness calculation, notes, and snapshots.
+- Added agency read-only APIs and `/agency/airline-intelligence-consumption` for CRM, agency website, client portal, and offer builder safe-use visibility without raw internal notes.
+- Added readiness flags and counts under `airline_intelligence_agency_consumption_bridge`.
+- Added `docs/architecture/airline-intelligence-agency-consumption-bridge.md`.
+
+Avoid adding:
+
+- Automatic publishing, CMS/client portal publication, recommendation engines, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

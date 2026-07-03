@@ -9974,6 +9974,191 @@ class AirlineIntelligenceKnowledgeVersionSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class AirlineIntelligenceAgencyConsumptionProfileStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEW = "review"
+    VISIBLE = "visible"
+    DISABLED = "disabled"
+
+
+class AirlineIntelligenceAgencyUsageArea(str, Enum):
+    CRM = "crm"
+    CMS = "cms"
+    CLIENT_PORTAL = "client_portal"
+    OFFER_BUILDER = "offer_builder"
+
+
+class AirlineIntelligenceAgencyUsageReadinessStatus(str, Enum):
+    NOT_AVAILABLE = "not_available"
+    NEEDS_REVIEW = "needs_review"
+    READY = "ready"
+    BLOCKED = "blocked"
+
+
+class AirlineIntelligenceAgencyConsumptionNoteType(str, Enum):
+    PLATFORM_INTERNAL = "platform_internal"
+    AGENCY_GUIDANCE = "agency_guidance"
+    CRM_USAGE = "crm_usage"
+    CMS_USAGE = "cms_usage"
+    CLIENT_PORTAL_PLANNING = "client_portal_planning"
+    OFFER_BUILDER_PLANNING = "offer_builder_planning"
+
+
+class AirlineIntelligenceAgencyConsumptionSnapshotType(str, Enum):
+    PROFILE_CREATED = "profile_created"
+    PROFILE_UPDATED = "profile_updated"
+    USAGE_READINESS_CALCULATED = "usage_readiness_calculated"
+    NOTE_CREATED = "note_created"
+    MANUAL = "manual"
+
+
+class AirlineIntelligenceAgencyConsumptionProfile(BaseDocument):
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    status: AirlineIntelligenceAgencyConsumptionProfileStatus = AirlineIntelligenceAgencyConsumptionProfileStatus.DRAFT
+    crm_safe: bool = False
+    cms_safe: bool = False
+    client_portal_safe: bool = False
+    offer_builder_safe: bool = False
+    plain_language_summary: Optional[str] = None
+    allowed_usage_notes: Optional[str] = None
+    blocked_usage_notes: Optional[str] = None
+    internal_owner_notes: Optional[str] = None
+    visible_to_agency: bool = False
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata_only: bool = True
+    automatic_publishing_disabled: bool = True
+
+
+class AirlineIntelligenceAgencyKnowledgeAssignmentView(BaseDocument):
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    release_assignment_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    status: AirlineIntelligenceAgencyConsumptionProfileStatus = AirlineIntelligenceAgencyConsumptionProfileStatus.DRAFT
+    crm_safe: bool = False
+    cms_safe: bool = False
+    client_portal_safe: bool = False
+    offer_builder_safe: bool = False
+    plain_language_summary: Optional[str] = None
+    allowed_usage_notes: Optional[str] = None
+    blocked_usage_notes: Optional[str] = None
+    metadata_only: bool = True
+    payloads_hidden: bool = True
+
+
+class AirlineIntelligenceAgencyUsageReadiness(BaseDocument):
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    usage_area: AirlineIntelligenceAgencyUsageArea
+    status: AirlineIntelligenceAgencyUsageReadinessStatus = AirlineIntelligenceAgencyUsageReadinessStatus.NOT_AVAILABLE
+    safe_for_usage: bool = False
+    plain_language_summary: Optional[str] = None
+    allowed_usage_notes: Optional[str] = None
+    blocked_usage_notes: Optional[str] = None
+    calculated_by: Optional[str] = None
+    calculated_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_publishing_disabled: bool = True
+
+
+class AirlineIntelligenceAgencyConsumptionNote(BaseDocument):
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    note_type: AirlineIntelligenceAgencyConsumptionNoteType = AirlineIntelligenceAgencyConsumptionNoteType.AGENCY_GUIDANCE
+    note: str
+    created_by: Optional[str] = None
+    visible_to_agency: bool = False
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceAgencyConsumptionSnapshot(BaseDocument):
+    agency_id: str
+    knowledge_version_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    snapshot_type: AirlineIntelligenceAgencyConsumptionSnapshotType = AirlineIntelligenceAgencyConsumptionSnapshotType.MANUAL
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceAgencyConsumptionProfileCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    status: AirlineIntelligenceAgencyConsumptionProfileStatus = AirlineIntelligenceAgencyConsumptionProfileStatus.DRAFT
+    crm_safe: Optional[bool] = None
+    cms_safe: Optional[bool] = None
+    client_portal_safe: Optional[bool] = None
+    offer_builder_safe: Optional[bool] = None
+    plain_language_summary: Optional[str] = None
+    allowed_usage_notes: Optional[str] = None
+    blocked_usage_notes: Optional[str] = None
+    internal_owner_notes: Optional[str] = None
+    visible_to_agency: Optional[bool] = None
+    created_by: Optional[str] = None
+
+
+class AirlineIntelligenceAgencyConsumptionProfileUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    release_channel_id: Optional[str] = None
+    status: Optional[AirlineIntelligenceAgencyConsumptionProfileStatus] = None
+    crm_safe: Optional[bool] = None
+    cms_safe: Optional[bool] = None
+    client_portal_safe: Optional[bool] = None
+    offer_builder_safe: Optional[bool] = None
+    plain_language_summary: Optional[str] = None
+    allowed_usage_notes: Optional[str] = None
+    blocked_usage_notes: Optional[str] = None
+    internal_owner_notes: Optional[str] = None
+    visible_to_agency: Optional[bool] = None
+    updated_by: Optional[str] = None
+
+
+class AirlineIntelligenceAgencyUsageReadinessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    knowledge_version_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    usage_area: Optional[AirlineIntelligenceAgencyUsageArea] = None
+    calculated_by: Optional[str] = None
+
+
+class AirlineIntelligenceAgencyConsumptionNoteCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    knowledge_version_id: str
+    release_channel_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    note_type: AirlineIntelligenceAgencyConsumptionNoteType = AirlineIntelligenceAgencyConsumptionNoteType.AGENCY_GUIDANCE
+    note: str
+    created_by: Optional[str] = None
+    visible_to_agency: bool = False
+
+
+class AirlineIntelligenceAgencyConsumptionSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    knowledge_version_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    snapshot_type: AirlineIntelligenceAgencyConsumptionSnapshotType = AirlineIntelligenceAgencyConsumptionSnapshotType.MANUAL
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER
