@@ -18,7 +18,7 @@ from models import (  # noqa: E402
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_39_3_airline_intelligence_agency_consumption_bridge"
+EXPECTED_PHASE = "phase_39_4_platform_agency_ux_consolidation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:

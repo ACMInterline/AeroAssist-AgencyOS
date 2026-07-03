@@ -19,7 +19,9 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/agent/*` | intentionally rejected | Duplicates `/agency/*` and would split agency workflow navigation. |
 | `/admin/*` | intentionally rejected | Duplicates `/platform/*` and would blur platform governance boundaries. |
 
-No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, Phase 37.8, Phase 37.9, Phase 38.0, Phase 38.1, Phase 38.2, Phase 39.0, Phase 39.1, Phase 39.2, or Phase 39.3. Documentation and API/UI mapping are preferred so future work remains explicit.
+No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, Phase 37.8, Phase 37.9, Phase 38.0, Phase 38.1, Phase 38.2, Phase 39.0, Phase 39.1, Phase 39.2, Phase 39.3, or Phase 39.4. Documentation and API/UI mapping are preferred so future work remains explicit.
+
+Phase 39.4 changes visible navigation wording and helper descriptions only. It keeps all route paths under the existing `/platform/*` and `/agency/*` roots.
 
 ## Route Mapping
 

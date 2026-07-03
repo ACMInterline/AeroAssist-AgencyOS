@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_3_airline_intelligence_agency_consumption_bridge",
+        "phase": "phase_39_4_platform_agency_ux_consolidation",
     }
 
 

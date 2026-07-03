@@ -17,52 +17,27 @@ import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
+import { agencyModuleGroups, flattenModuleGroups } from "../lib/moduleCatalog"
 import { agencyThemeStyle } from "../lib/theme"
 
-const primaryNav = [
-  { label: "Dashboard", description: "Workspace home", href: "/agency", icon: Building2 },
-  { label: "Requests", description: "Operational work", href: "/agency/requests", icon: ClipboardList },
-  { label: "Trips", description: "Dossiers", href: "/agency/trips", icon: Plane },
-  { label: "Offers", description: "Compare options", href: "/agency/offers", icon: Sparkles },
-  { label: "Booking Workspaces", description: "PNR mirrors", href: "/agency/booking-workspaces", icon: ClipboardList },
-  { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: Files },
-  { label: "GDS Parser", description: "Parse review", href: "/agency/gds-parser", icon: Database },
-  { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: Database },
-  { label: "Airline Coverage", description: "Data readiness", href: "/agency/airline-intelligence-coverage", icon: Plane },
-  { label: "Review Coverage", description: "Safe-use status", href: "/agency/airline-intelligence-review-coverage", icon: ClipboardList },
-  { label: "Knowledge Versions", description: "Visible airline data", href: "/agency/airline-intelligence-knowledge-versions", icon: Files },
-  { label: "Airline Intelligence Usage", description: "Safe-use bridge", href: "/agency/airline-intelligence-consumption", icon: Files },
-  { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: Tags },
-  { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: ClipboardList },
-  { label: "Ancillary Pricing", description: "Prices and exceptions", href: "/agency/ancillary-pricing", icon: ClipboardList },
-  { label: "Policy Comparison", description: "Airline operations", href: "/agency/policy-comparison", icon: Rows3 },
-  { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: ClipboardList },
-  { label: "Offer Advisor", description: "Offer policy context", href: "/agency/offer-policy-advisor", icon: Rows3 },
-  { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: Rows3 },
-  { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: Rows3 },
-  { label: "Decision Exports", description: "Review snapshots", href: "/agency/offer-decision-exports", icon: Files },
-  { label: "Export Previews", description: "Render review", href: "/agency/offer-decision-export-previews", icon: Files },
-  { label: "Export Releases", description: "Manual readiness", href: "/agency/offer-decision-export-releases", icon: Files },
-  { label: "Export Handoffs", description: "Manual metadata", href: "/agency/offer-decision-export-deliveries", icon: Files },
-  { label: "Export Outcomes", description: "Manual tracking", href: "/agency/offer-decision-export-delivery-outcomes", icon: Files },
-  { label: "Export Audits", description: "Review trail", href: "/agency/offer-decision-export-audit-reviews", icon: Files },
-  { label: "Export Governance", description: "Policy metadata", href: "/agency/offer-decision-export-governance", icon: Files },
-  { label: "Export Compliance", description: "Evidence metadata", href: "/agency/offer-decision-export-compliance", icon: Files },
-  { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
-  { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
-  { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },
-  { label: "Passengers", description: "Travelers", href: "/agency/passengers", icon: UserRound },
-  { label: "Documents", description: "Rendered files", href: "/agency/documents", icon: Files },
-]
+const iconMap = {
+  building: Building2,
+  clipboard: ClipboardList,
+  database: Database,
+  files: Files,
+  globe: Globe2,
+  inbox: Inbox,
+  plane: Plane,
+  plus: Plus,
+  rows: Rows3,
+  settings: Settings,
+  sparkles: Sparkles,
+  tags: Tags,
+  user: UserRound,
+  users: Users,
+}
 
-const secondaryNav = [
-  { label: "Team", description: "Staff access", href: "/agency", icon: Users, badge: "Dashboard" },
-  { label: "Website / CMS", description: "Public content", href: "/agency/website", icon: Globe2 },
-  { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: Files },
-  { label: "Reference Data", description: "Lookups and services", href: "/agency/reference", icon: Database },
-  { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: ClipboardList },
-  { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: Settings },
-]
+const allAgencyModules = flattenModuleGroups(agencyModuleGroups)
 
 async function logout() {
   await apiDeleteSession().catch(() => null)
@@ -85,7 +60,7 @@ export default function AgencyLayout({ children, user, agency }) {
   const initials = brandName.slice(0, 2).toUpperCase()
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/agency"
   const pageTitle = useMemo(() => {
-    const item = [...primaryNav, ...secondaryNav].find((navItem) => isActive(navItem, pathname))
+    const item = allAgencyModules.find((navItem) => isActive(navItem, pathname))
     return item?.label || "Agency Workspace"
   }, [pathname])
 
@@ -102,14 +77,13 @@ export default function AgencyLayout({ children, user, agency }) {
         {!collapsed ? (
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold" style={{ color: "var(--aa-text)" }}>{brandName}</p>
-            <p className="truncate text-xs" style={{ color: "var(--aa-muted-text)" }}>AgencyOS Workspace</p>
+            <p className="truncate text-xs" style={{ color: "var(--aa-muted-text)" }}>Agency Workspace</p>
           </div>
         ) : null}
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        <NavSection title="Workspace" items={primaryNav} pathname={pathname} collapsed={collapsed} />
-        <NavSection title="Operations" items={secondaryNav} pathname={pathname} collapsed={collapsed} />
+        {agencyModuleGroups.map((group) => <NavSection group={group} pathname={pathname} collapsed={collapsed} key={group.title} />)}
       </div>
 
       <div className="border-t p-3" style={{ borderColor: "var(--aa-border)" }}>
@@ -176,19 +150,24 @@ export default function AgencyLayout({ children, user, agency }) {
   )
 }
 
-function NavSection({ title, items, pathname, collapsed }) {
+function NavSection({ group, pathname, collapsed }) {
   return (
     <div className="mb-6">
-      {!collapsed ? <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--aa-muted-text)" }}>{title}</p> : null}
-      <nav className="grid gap-1" aria-label={title}>
-        {items.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} key={item.label} />)}
+      {!collapsed ? (
+        <div className="mb-2 px-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--aa-muted-text)" }}>{group.title}</p>
+          <p className="mt-1 text-[11px] leading-4" style={{ color: "var(--aa-muted-text)" }}>{group.description}</p>
+        </div>
+      ) : null}
+      <nav className="grid gap-1" aria-label={group.title}>
+        {group.items.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} key={`${group.title}-${item.href}-${item.label}`} />)}
       </nav>
     </div>
   )
 }
 
 function NavItem({ item, pathname, collapsed }) {
-  const Icon = item.icon
+  const Icon = iconMap[item.icon] || Files
   const active = isActive(item, pathname)
   const content = (
     <>

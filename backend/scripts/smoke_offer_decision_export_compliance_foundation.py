@@ -7,7 +7,7 @@ from smoke_offer_decision_export_governance_foundation import main as smoke_offe
 from smoke_offer_decision_pack_foundation import option_signature
 
 
-EXPECTED_PHASE = "phase_39_3_airline_intelligence_agency_consumption_bridge"
+EXPECTED_PHASE = "phase_39_4_platform_agency_ux_consolidation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:

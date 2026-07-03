@@ -79,6 +79,11 @@ The repository currently contains:
 - Phase 38.0: Offer decision export audit review foundation.
 - Phase 38.1: Offer decision export governance foundation.
 - Phase 38.2: Offer decision export compliance evidence foundation.
+- Phase 39.0: Airline intelligence data pack foundation.
+- Phase 39.1: Airline intelligence data pack review and promotion readiness foundation.
+- Phase 39.2: Airline intelligence knowledge versioning and publication control foundation.
+- Phase 39.3: Airline intelligence agency consumption bridge.
+- Phase 39.4: Platform / agency UX consolidation and navigation clarity.
 
 Phase 35 navigation hotfix:
 
@@ -1373,6 +1378,20 @@ Implemented scope:
 Avoid adding:
 
 - Automatic publishing, CMS/client portal publication, recommendation engines, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 39.4: Platform / Agency UX Consolidation And Navigation Clarity
+
+Implemented scope:
+
+- Added shared frontend module catalog metadata for route descriptions, audiences, helper badges, safety status, and visible labels.
+- Updated PlatformLayout and platform dashboard to use “Platform Console” and plain-language module groups for SaaS/agencies, airline intelligence governance, agency website/CMS governance, CRM/client portal governance, offer/document governance, and system readiness.
+- Updated AgencyLayout and agency dashboard to use “Agency Workspace” and plain-language module groups for daily work, clients/passengers, requests/offers/trips, website/CMS, airline intelligence visibility, documents/delivery, and settings.
+- Added readiness flags under `platform_agency_ux_consolidation`.
+- Added `docs/architecture/platform-agency-ux-consolidation.md`.
+
+Avoid adding:
+
+- New route roots, route aliases, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

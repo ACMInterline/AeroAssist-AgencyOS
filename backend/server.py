@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 39.3 airline intelligence agency consumption bridge.",
+    description="AeroAssist AgencyOS API foundation through Phase 39.4 platform/agency UX consolidation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_3_airline_intelligence_agency_consumption_bridge",
+        "phase": "phase_39_4_platform_agency_ux_consolidation",
     }
 
 
@@ -378,7 +378,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_3_airline_intelligence_agency_consumption_bridge",
+        "phase": "phase_39_4_platform_agency_ux_consolidation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -1296,6 +1296,31 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 39.3 exposes platform-governed airline intelligence knowledge versions to agencies through metadata-only consumption profiles, assignment views, usage readiness, notes, and snapshots. It does not publish CMS/client portal content, recommend airlines, execute providers, book, mutate PNRs, ticket, issue EMDs, charge, invoice, settle, scrape, call external APIs, call external AI, or send automatically.",
         },
+        "platform_agency_ux_consolidation": {
+            "platform_console_labels_enabled": True,
+            "agency_workspace_labels_enabled": True,
+            "owner_agency_separation_enabled": True,
+            "plain_language_navigation_enabled": True,
+            "canonical_routes_preserved": True,
+            "admin_agent_routes_rejected": True,
+            "metadata_only_ui_enabled": True,
+            "operational_execution_disabled": True,
+            "cms_publishing_disabled": True,
+            "client_portal_publishing_disabled": True,
+            "recommendation_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "provider_execution_disabled": True,
+            "scraping_disabled": True,
+            "external_api_calls_disabled": True,
+            "external_ai_disabled": True,
+            "automatic_sending_disabled": True,
+            "readiness_required": False,
+            "diagnostic": "Phase 39.4 clarifies Platform Console and Agency Workspace navigation with plain-language metadata-only UI. It does not publish CMS or client portal content, recommend airlines, execute providers, book, mutate PNRs, ticket, issue EMDs, charge, invoice, settle, scrape, call external APIs, call external AI, or send automatically.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1321,7 +1346,7 @@ async def readiness() -> dict:
             "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
             "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
             "readiness_required": False,
-            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 37.5; /platform and /agency remain canonical.",
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.4; /platform and /agency remain canonical.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,

@@ -5,6 +5,7 @@ import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { agencyModuleGroups } from "../../lib/moduleCatalog"
 
 export default function AgencyDashboardPage() {
   const [state, setState] = useState(null)
@@ -77,50 +78,19 @@ export default function AgencyDashboardPage() {
             </dl>
           </section>
           <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <a className="group rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/requests">
-              <h3 className="text-sm font-semibold text-slate-900">Operational requests</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Work active cases, passengers, segments, services, messages, and tasks.</p>
-            </a>
-            <a className="group rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/request-intakes">
-              <h3 className="text-sm font-semibold text-slate-900">Intake queue</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Review public and portal submissions before conversion.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/clients">
-              <h3 className="text-sm font-semibold text-slate-900">Clients</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Manage agency-owned client account/contact records.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/passengers">
-              <h3 className="text-sm font-semibold text-slate-900">Passengers</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Manage traveler profiles separately from clients.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/requests">
-              <h3 className="text-sm font-semibold text-slate-900">Requests</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Capture inquiries, intended segments, services, messages, tasks, and timeline events.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/offers">
-              <h3 className="text-sm font-semibold text-slate-900">Offers</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Build manual offers with route alternatives, fare options, price lines, and send snapshots.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/bookings">
-              <h3 className="text-sm font-semibold text-slate-900">Bookings</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Track PNRs, passengers, segments, tickets, EMDs, invoices, payments, and operational timeline.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/invoices">
-              <h3 className="text-sm font-semibold text-slate-900">Invoices</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Manage invoice line items, issued status, paid amount, and due amount without full accounting.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/payments">
-              <h3 className="text-sm font-semibold text-slate-900">Payments</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Record manual payments received outside AgencyOS and track reconciliation status.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/airline-intelligence">
-              <h3 className="text-sm font-semibold text-slate-900">Airline Intelligence</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Search published platform knowledge and maintain agency-specific annotations.</p>
-            </a>
-            <a className="rounded-lg border border-slate-200 bg-white p-6 hover:border-blue-300" href="/agency/documents">
-              <h3 className="text-sm font-semibold text-slate-900">Documents</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Review rendered documents, export files, and manual delivery records.</p>
-            </a>
+            {agencyModuleGroups.map((group) => (
+              <a className="rounded-lg border border-slate-200 bg-white p-5 hover:border-blue-300" href={group.items[0]?.href || "/agency"} key={group.title}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{group.safety}</span>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{group.description}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">{group.audience}</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{group.items.length} tools</span>
+                </div>
+              </a>
+            ))}
           </section>
         </div>
         )}

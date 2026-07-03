@@ -10,6 +10,20 @@ import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
+import { platformModuleGroups } from "../lib/moduleCatalog"
+
+const iconMap = {
+  building: Building2,
+  check: ClipboardCheck,
+  database: Database,
+  file: FileText,
+  git: GitBranch,
+  layers: Layers3,
+  plane: Plane,
+  rows: Rows3,
+  shield: ShieldCheck,
+  tags: Tags,
+}
 
 async function logout() {
   await apiDeleteSession().catch(() => null)
@@ -18,135 +32,57 @@ async function logout() {
 }
 
 export default function PlatformLayout({ children, user }) {
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "/platform"
   return (
     <div className="min-h-screen bg-slate-100">
       <aside className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AeroAssist Global</p>
-            <h1 className="text-lg font-semibold text-slate-950">Platform Owner Layer</h1>
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">AeroAssist Global</p>
+              <h1 className="text-lg font-semibold text-slate-950">Platform Console</h1>
+              <p className="mt-1 text-sm text-slate-600">System owner workspace for SaaS setup, airline intelligence, CMS, portal, offer evidence, and readiness metadata.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}
+              <button className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>Logout</button>
+            </div>
           </div>
-          <nav className="flex items-center gap-2 text-sm">
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform">
-              <ShieldCheck className="h-4 w-4" />
-              Summary
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/agencies">
-              <Building2 className="h-4 w-4" />
-              Agencies
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airlines">
-              <Plane className="h-4 w-4" />
-              Airlines / Knowledge
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-data-packs">
-              <FileText className="h-4 w-4" />
-              Airline Data Packs
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-data-pack-reviews">
-              <GitBranch className="h-4 w-4" />
-              Data Pack Reviews
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-knowledge-versions">
-              <Layers3 className="h-4 w-4" />
-              Knowledge Versions
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-agency-consumption">
-              <Layers3 className="h-4 w-4" />
-              Agency Consumption
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-policy-ingestion">
-              <FileText className="h-4 w-4" />
-              Policy Ingestion
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/service-taxonomy">
-              <Tags className="h-4 w-4" />
-              Service Taxonomy
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/service-mechanics">
-              <ClipboardCheck className="h-4 w-4" />
-              Service Mechanics
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/ancillary-pricing">
-              <ClipboardCheck className="h-4 w-4" />
-              Ancillary Pricing
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/policy-comparison">
-              <Rows3 className="h-4 w-4" />
-              Policy Comparison
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-policy-advisor">
-              <Rows3 className="h-4 w-4" />
-              Offer Advisor
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-packs">
-              <Rows3 className="h-4 w-4" />
-              Decision Packs
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-explanations">
-              <Rows3 className="h-4 w-4" />
-              Decision Explanations
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-exports">
-              <FileText className="h-4 w-4" />
-              Decision Exports
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-previews">
-              <FileText className="h-4 w-4" />
-              Export Previews
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-releases">
-              <FileText className="h-4 w-4" />
-              Export Releases
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-deliveries">
-              <FileText className="h-4 w-4" />
-              Export Handoffs
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-delivery-outcomes">
-              <FileText className="h-4 w-4" />
-              Export Outcomes
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-audit-reviews">
-              <FileText className="h-4 w-4" />
-              Export Audits
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-governance">
-              <FileText className="h-4 w-4" />
-              Export Governance
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/offer-decision-export-compliance">
-              <FileText className="h-4 w-4" />
-              Export Compliance
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/reference">
-              <Database className="h-4 w-4" />
-              Reference Data
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/rules-services">
-              <ClipboardCheck className="h-4 w-4" />
-              Rules & Services
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/document-templates">
-              <FileText className="h-4 w-4" />
-              Documents
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/gds-parser">
-              <Database className="h-4 w-4" />
-              GDS Parser
-            </a>
-            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/blueprint">
-              <GitBranch className="h-4 w-4" />
-              Blueprint
-            </a>
+          <nav className="grid gap-3 text-sm lg:grid-cols-2 xl:grid-cols-3" aria-label="Platform Console modules">
+            {platformModuleGroups.map((group) => <PlatformModuleGroup group={group} pathname={pathname} key={group.title} />)}
           </nav>
-          <div className="flex items-center gap-3">
-            {user ? <p className="text-sm text-slate-500">{user.full_name}</p> : null}
-            <button className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>Logout</button>
-          </div>
         </div>
       </aside>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
     </div>
+  )
+}
+
+function PlatformModuleGroup({ group, pathname }) {
+  return (
+    <section className="rounded-md border border-slate-200 bg-slate-50 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-700">{group.title}</p>
+          <p className="mt-1 text-xs leading-5 text-slate-500">{group.description}</p>
+        </div>
+        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-blue-700 ring-1 ring-blue-100">{group.safety}</span>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {group.items.map((item) => <PlatformModuleLink item={item} pathname={pathname} key={`${group.title}-${item.href}-${item.label}`} />)}
+      </div>
+    </section>
+  )
+}
+
+function PlatformModuleLink({ item, pathname }) {
+  const Icon = iconMap[item.icon] || FileText
+  const active = pathname === item.href || (item.href !== "/platform" && pathname.startsWith(`${item.href}/`))
+  return (
+    <a className={`inline-flex max-w-full items-center gap-2 rounded-md px-2.5 py-2 text-xs font-semibold ${active ? "bg-blue-600 text-white" : "bg-white text-slate-700 hover:bg-slate-100"}`} href={item.href} title={`${item.description} · ${item.badge || "Platform only"}`}>
+      <Icon className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">{item.label}</span>
+      {item.badge ? <span className={`hidden rounded-full px-1.5 py-0.5 text-[10px] sm:inline ${active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"}`}>{item.badge}</span> : null}
+    </a>
   )
 }

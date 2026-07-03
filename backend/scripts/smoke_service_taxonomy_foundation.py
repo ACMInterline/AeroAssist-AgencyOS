@@ -2,7 +2,7 @@
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_39_3_airline_intelligence_agency_consumption_bridge"
+EXPECTED_PHASE = "phase_39_4_platform_agency_ux_consolidation"
 
 SAMPLE_POLICY_TEXT = """General:
 Kids Solo applies to children aged 5 to 14 years. UMT applies to unaccompanied teenagers on selected flights.
