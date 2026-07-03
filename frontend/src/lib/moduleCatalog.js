@@ -6,6 +6,7 @@ export const platformModuleGroups = [
     safety: "Metadata only",
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
+      { label: "Subscriptions & Entitlements", description: "Plan and agency entitlement metadata", href: "/platform/saas-subscriptions", icon: "layers", badge: "No billing" },
       { label: "Agencies", description: "Subscribed travel agency workspaces", href: "/platform/agencies", icon: "building", badge: "Platform only" },
       { label: "Reference Data", description: "Shared platform lookup data", href: "/platform/reference", icon: "database", badge: "Platform only" },
       { label: "Blueprint", description: "Route and model alignment", href: "/platform/blueprint", icon: "git", badge: "Read-only" },
@@ -172,6 +173,7 @@ export const agencyModuleGroups = [
     safety: "Agency owned",
     items: [
       { label: "Team", description: "Staff access", href: "/agency", icon: "users", badge: "Dashboard" },
+      { label: "My Subscription", description: "Assigned plan and entitlements", href: "/agency/saas-subscription", icon: "layers", badge: "Agency read-only" },
       { label: "Reference Data", description: "Lookups and suggestions", href: "/agency/reference", icon: "database", badge: "Suggest only" },
       { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: "clipboard" },
       { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: "settings" },

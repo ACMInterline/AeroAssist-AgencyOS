@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_4_platform_agency_ux_consolidation",
+        "phase": "phase_39_5_saas_subscription_entitlement_foundation",
     }
 
 
@@ -184,6 +184,12 @@ async def summary(
             "airline_intelligence_agency_usage_readiness": await db.collection("airline_intelligence_agency_usage_readiness").count(),
             "airline_intelligence_agency_consumption_notes": await db.collection("airline_intelligence_agency_consumption_notes").count(),
             "airline_intelligence_agency_consumption_snapshots": await db.collection("airline_intelligence_agency_consumption_snapshots").count(),
+            "saas_subscription_plans": await db.collection("saas_subscription_plans").count(),
+            "saas_plan_entitlements": await db.collection("saas_plan_entitlements").count(),
+            "agency_subscription_assignments": await db.collection("agency_subscription_assignments").count(),
+            "agency_entitlement_readiness": await db.collection("agency_entitlement_readiness").count(),
+            "agency_subscription_review_notes": await db.collection("agency_subscription_review_notes").count(),
+            "agency_subscription_snapshots": await db.collection("agency_subscription_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_4_platform_agency_ux_consolidation"
+PHASE_LABEL = "phase_39_5_saas_subscription_entitlement_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -62,6 +62,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "frontend module catalog, PlatformLayout, AgencyLayout, platform dashboard, agency dashboard, and platform_agency_ux_consolidation readiness metadata",
         "status": "foundation adopted",
         "action": "Clarify platform-owner and agency-staff mental models through grouped metadata-only navigation without new route roots, publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, payments, invoices, settlement, scraping, external APIs, or external AI.",
+    },
+    {
+        "category": "SaaS Subscriptions",
+        "concept": "Subscription plans and agency entitlements",
+        "supplementary_concept": "plans, module entitlements, data-pack entitlements, agency subscription assignments, entitlement readiness, review notes, immutable snapshots",
+        "current_equivalent": "saas_subscription_plans, saas_plan_entitlements, agency_subscription_assignments, agency_entitlement_readiness, agency_subscription_review_notes, agency_subscription_snapshots",
+        "status": "foundation adopted",
+        "action": "Define metadata-only SaaS subscription and entitlement visibility without billing, payment, invoicing, settlement, automatic access enforcement, publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, scraping, external APIs, or external AI.",
     },
     {
         "category": "GDS/Supplier",
@@ -337,7 +345,7 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.5",
+        "phase": "Phase 39.6",
         "title": "Airline Intelligence Promotion Governance Hardening",
         "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
     },
@@ -431,6 +439,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineIntelligenceAgencyUsageReadiness",
             "AirlineIntelligenceAgencyConsumptionNote",
             "AirlineIntelligenceAgencyConsumptionSnapshot",
+            "SaaSSubscriptionPlan",
+            "SaaSPlanEntitlement",
+            "AgencySubscriptionAssignment",
+            "AgencyEntitlementReadiness",
+            "AgencySubscriptionReviewNote",
+            "AgencySubscriptionSnapshot",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -463,6 +477,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline intelligence knowledge versioning and publication-control foundation built in Phase 39.2",
             "Airline intelligence agency consumption bridge built in Phase 39.3",
             "Platform / agency UX consolidation built in Phase 39.4",
+            "SaaS subscription and entitlement foundation built in Phase 39.5",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

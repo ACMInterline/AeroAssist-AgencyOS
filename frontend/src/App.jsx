@@ -59,6 +59,7 @@ import RequestDetailPage from "./pages/agency/RequestDetailPage"
 import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
 import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
 import RequestsPage from "./pages/agency/RequestsPage"
+import SaaSSubscriptionPage from "./pages/agency/SaaSSubscriptionPage"
 import TripCreatePage from "./pages/agency/TripCreatePage"
 import TripDetailPage from "./pages/agency/TripDetailPage"
 import TripsPage from "./pages/agency/TripsPage"
@@ -97,6 +98,7 @@ import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorP
 import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
 import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
+import PlatformSaaSSubscriptionsPage from "./pages/platform/SaaSSubscriptionsPage"
 import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"
 import PlatformServiceTaxonomyPage from "./pages/platform/ServiceTaxonomyPage"
 import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
@@ -126,6 +128,7 @@ const routes = {
   "/invite/accept": InviteAcceptPage,
   "/login": LoginPage,
   "/platform": PlatformDashboardPage,
+  "/platform/saas-subscriptions": PlatformSaaSSubscriptionsPage,
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/blueprint": PlatformBlueprintPage,
   "/platform/airlines": AirlinesPage,
@@ -155,6 +158,7 @@ const routes = {
   "/platform/offer-decision-export-governance": PlatformOfferDecisionExportGovernancePage,
   "/platform/offer-decision-export-compliance": PlatformOfferDecisionExportCompliancePage,
   "/agency": AgencyDashboardPage,
+  "/agency/saas-subscription": SaaSSubscriptionPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
   "/agency/website/media": WebsiteMediaLibraryPage,

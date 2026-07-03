@@ -10159,6 +10159,269 @@ class AirlineIntelligenceAgencyConsumptionSnapshotCreateRequest(BaseModel):
     created_by: Optional[str] = None
 
 
+class SaaSSubscriptionPlanStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    RETIRED = "retired"
+
+
+class SaaSSubscriptionTier(str, Enum):
+    STARTER = "starter"
+    GROWTH = "growth"
+    PROFESSIONAL = "professional"
+    ENTERPRISE = "enterprise"
+    CUSTOM = "custom"
+
+
+class SaaSEntitlementScope(str, Enum):
+    MODULE = "module"
+    AIRLINE_INTELLIGENCE_DOMAIN = "airline_intelligence_domain"
+    DATA_PACK_CHANNEL = "data_pack_channel"
+    CRM = "crm"
+    CMS = "cms"
+    CLIENT_PORTAL = "client_portal"
+    OFFER_BUILDER = "offer_builder"
+    DOCUMENTS = "documents"
+    CUSTOM = "custom"
+
+
+class AgencySubscriptionAssignmentStatus(str, Enum):
+    DRAFT = "draft"
+    TRIAL = "trial"
+    ACTIVE = "active"
+    REVIEW = "review"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class AgencyEntitlementReadinessStatus(str, Enum):
+    NOT_READY = "not_ready"
+    NEEDS_REVIEW = "needs_review"
+    READY = "ready"
+    BLOCKED = "blocked"
+
+
+class AgencySubscriptionReviewNoteType(str, Enum):
+    PLATFORM_INTERNAL = "platform_internal"
+    AGENCY_VISIBLE = "agency_visible"
+    ENTITLEMENT_REVIEW = "entitlement_review"
+    RENEWAL_REVIEW = "renewal_review"
+    MANUAL_EXCEPTION = "manual_exception"
+
+
+class AgencySubscriptionSnapshotType(str, Enum):
+    PLAN_CREATED = "plan_created"
+    PLAN_UPDATED = "plan_updated"
+    ENTITLEMENT_CREATED = "entitlement_created"
+    ASSIGNMENT_CREATED = "assignment_created"
+    ASSIGNMENT_UPDATED = "assignment_updated"
+    READINESS_RECALCULATED = "readiness_recalculated"
+    NOTE_CREATED = "note_created"
+    MANUAL = "manual"
+
+
+class SaaSSubscriptionPlan(BaseDocument):
+    plan_name: str
+    plan_code: str
+    tier: SaaSSubscriptionTier = SaaSSubscriptionTier.STARTER
+    status: SaaSSubscriptionPlanStatus = SaaSSubscriptionPlanStatus.DRAFT
+    description: Optional[str] = None
+    included_modules: List[str] = Field(default_factory=list)
+    included_airline_intelligence_domains: List[str] = Field(default_factory=list)
+    included_data_pack_channels: List[str] = Field(default_factory=list)
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata_only: bool = True
+    billing_disabled: bool = True
+    payment_disabled: bool = True
+
+
+class SaaSPlanEntitlement(BaseDocument):
+    plan_id: str
+    entitlement_scope: SaaSEntitlementScope = SaaSEntitlementScope.MODULE
+    entitlement_key: str
+    label: str
+    description: Optional[str] = None
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    included: bool = True
+    manual_review_required: bool = False
+    metadata_only: bool = True
+
+
+class AgencySubscriptionAssignment(BaseDocument):
+    agency_id: str
+    plan_id: str
+    assignment_status: AgencySubscriptionAssignmentStatus = AgencySubscriptionAssignmentStatus.DRAFT
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    manual_review_required: bool = False
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    included_modules: List[str] = Field(default_factory=list)
+    included_airline_intelligence_domains: List[str] = Field(default_factory=list)
+    included_data_pack_channels: List[str] = Field(default_factory=list)
+    assigned_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata_only: bool = True
+    automatic_access_enforcement_disabled: bool = True
+
+
+class AgencyEntitlementReadiness(BaseDocument):
+    agency_id: str
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    entitlement_scope: SaaSEntitlementScope = SaaSEntitlementScope.MODULE
+    entitlement_key: str
+    status: AgencyEntitlementReadinessStatus = AgencyEntitlementReadinessStatus.NEEDS_REVIEW
+    crm_ready: bool = False
+    cms_ready: bool = False
+    client_portal_ready: bool = False
+    offer_builder_ready: bool = False
+    airline_intelligence_ready: bool = False
+    manual_review_required: bool = False
+    plain_language_summary: Optional[str] = None
+    calculated_by: Optional[str] = None
+    calculated_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_access_enforcement_disabled: bool = True
+
+
+class AgencySubscriptionReviewNote(BaseDocument):
+    agency_id: str
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    note_type: AgencySubscriptionReviewNoteType = AgencySubscriptionReviewNoteType.AGENCY_VISIBLE
+    note: str
+    created_by: Optional[str] = None
+    visible_to_agency: bool = False
+    metadata_only: bool = True
+
+
+class AgencySubscriptionSnapshot(BaseDocument):
+    agency_id: Optional[str] = None
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    snapshot_type: AgencySubscriptionSnapshotType = AgencySubscriptionSnapshotType.MANUAL
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class SaaSSubscriptionPlanCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    plan_name: str
+    plan_code: str
+    tier: SaaSSubscriptionTier = SaaSSubscriptionTier.STARTER
+    status: SaaSSubscriptionPlanStatus = SaaSSubscriptionPlanStatus.DRAFT
+    description: Optional[str] = None
+    included_modules: List[str] = Field(default_factory=list)
+    included_airline_intelligence_domains: List[str] = Field(default_factory=list)
+    included_data_pack_channels: List[str] = Field(default_factory=list)
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+
+
+class SaaSSubscriptionPlanUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    plan_name: Optional[str] = None
+    tier: Optional[SaaSSubscriptionTier] = None
+    status: Optional[SaaSSubscriptionPlanStatus] = None
+    description: Optional[str] = None
+    included_modules: Optional[List[str]] = None
+    included_airline_intelligence_domains: Optional[List[str]] = None
+    included_data_pack_channels: Optional[List[str]] = None
+    visibility_flags: Optional[Dict[str, bool]] = None
+    updated_by: Optional[str] = None
+
+
+class SaaSPlanEntitlementCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    plan_id: str
+    entitlement_scope: SaaSEntitlementScope = SaaSEntitlementScope.MODULE
+    entitlement_key: str
+    label: str
+    description: Optional[str] = None
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    included: bool = True
+    manual_review_required: bool = False
+
+
+class AgencySubscriptionAssignmentCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    plan_id: str
+    assignment_status: AgencySubscriptionAssignmentStatus = AgencySubscriptionAssignmentStatus.DRAFT
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    manual_review_required: bool = False
+    visibility_flags: Dict[str, bool] = Field(default_factory=dict)
+    included_modules: List[str] = Field(default_factory=list)
+    included_airline_intelligence_domains: List[str] = Field(default_factory=list)
+    included_data_pack_channels: List[str] = Field(default_factory=list)
+    assigned_by: Optional[str] = None
+
+
+class AgencySubscriptionAssignmentUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    assignment_status: Optional[AgencySubscriptionAssignmentStatus] = None
+    starts_at: Optional[datetime] = None
+    ends_at: Optional[datetime] = None
+    manual_review_required: Optional[bool] = None
+    visibility_flags: Optional[Dict[str, bool]] = None
+    included_modules: Optional[List[str]] = None
+    included_airline_intelligence_domains: Optional[List[str]] = None
+    included_data_pack_channels: Optional[List[str]] = None
+    updated_by: Optional[str] = None
+
+
+class AgencyEntitlementReadinessCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    entitlement_scope: SaaSEntitlementScope = SaaSEntitlementScope.MODULE
+    entitlement_key: str
+    status: AgencyEntitlementReadinessStatus = AgencyEntitlementReadinessStatus.NEEDS_REVIEW
+    crm_ready: bool = False
+    cms_ready: bool = False
+    client_portal_ready: bool = False
+    offer_builder_ready: bool = False
+    airline_intelligence_ready: bool = False
+    manual_review_required: bool = False
+    plain_language_summary: Optional[str] = None
+    calculated_by: Optional[str] = None
+
+
+class AgencySubscriptionReviewNoteCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    note_type: AgencySubscriptionReviewNoteType = AgencySubscriptionReviewNoteType.AGENCY_VISIBLE
+    note: str
+    created_by: Optional[str] = None
+    visible_to_agency: bool = False
+
+
+class AgencySubscriptionSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    assignment_id: Optional[str] = None
+    plan_id: Optional[str] = None
+    snapshot_type: AgencySubscriptionSnapshotType = AgencySubscriptionSnapshotType.MANUAL
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

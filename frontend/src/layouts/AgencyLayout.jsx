@@ -5,6 +5,7 @@ import Database from "lucide-react/dist/esm/icons/database.js"
 import Files from "lucide-react/dist/esm/icons/files.js"
 import Globe2 from "lucide-react/dist/esm/icons/globe-2.js"
 import Inbox from "lucide-react/dist/esm/icons/inbox.js"
+import Layers3 from "lucide-react/dist/esm/icons/layers-3.js"
 import Menu from "lucide-react/dist/esm/icons/menu.js"
 import Palette from "lucide-react/dist/esm/icons/palette.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
@@ -27,6 +28,7 @@ const iconMap = {
   files: Files,
   globe: Globe2,
   inbox: Inbox,
+  layers: Layers3,
   plane: Plane,
   plus: Plus,
   rows: Rows3,

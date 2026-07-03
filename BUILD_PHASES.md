@@ -84,6 +84,7 @@ The repository currently contains:
 - Phase 39.2: Airline intelligence knowledge versioning and publication control foundation.
 - Phase 39.3: Airline intelligence agency consumption bridge.
 - Phase 39.4: Platform / agency UX consolidation and navigation clarity.
+- Phase 39.5: SaaS subscription and entitlement foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1392,6 +1393,20 @@ Implemented scope:
 Avoid adding:
 
 - New route roots, route aliases, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 39.5: SaaS Subscription And Entitlement Foundation
+
+Implemented scope:
+
+- Added metadata-only SaaS subscription plans, plan entitlements, agency subscription assignments, entitlement readiness rows, review notes, and immutable subscription snapshots.
+- Added platform APIs and `/platform/saas-subscriptions` for “Subscriptions & Entitlements” governance in the Platform Console.
+- Added agency read-only APIs and `/agency/saas-subscription` for “My Subscription” visibility in the Agency Workspace.
+- Added readiness flags and counts under `saas_subscription_entitlement_foundation`.
+- Added `docs/architecture/saas-subscription-entitlement-foundation.md`.
+
+Avoid adding:
+
+- Billing, payment, invoice, settlement, automatic charging, Stripe, bank/card/tax/accounting logic, automatic access enforcement, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
