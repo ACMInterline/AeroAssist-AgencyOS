@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_ancillary_pricing, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 37.9 offer decision export manual delivery outcome foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 38.0 offer decision export audit review foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation",
+        "phase": "phase_38_0_offer_decision_export_audit_review_foundation",
     }
 
 
@@ -301,6 +301,10 @@ async def readiness() -> dict:
     offer_decision_export_delivery_receipt_count = await database.collection("offer_decision_export_delivery_receipts").count()
     offer_decision_export_delivery_issue_count = await database.collection("offer_decision_export_delivery_issues").count()
     offer_decision_export_delivery_outcome_snapshot_count = await database.collection("offer_decision_export_delivery_outcome_snapshots").count()
+    offer_decision_export_audit_review_count = await database.collection("offer_decision_export_audit_reviews").count()
+    offer_decision_export_audit_review_finding_count = await database.collection("offer_decision_export_audit_review_findings").count()
+    offer_decision_export_audit_review_checklist_item_count = await database.collection("offer_decision_export_audit_review_checklist_items").count()
+    offer_decision_export_audit_review_snapshot_count = await database.collection("offer_decision_export_audit_review_snapshots").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -322,7 +326,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation",
+        "phase": "phase_38_0_offer_decision_export_audit_review_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -993,6 +997,32 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 37.9 creates metadata-only manual delivery outcome tracking records after a human performs delivery outside AgencyOS. It records outcome status, human-entered events, receipt metadata, issue metadata, and immutable snapshots; it does not send email or SMS, create public links, deliver real PDFs, mutate offers or prices, recommend airlines, book, create or alter PNRs, issue tickets or EMDs, charge, invoice, settle, scrape, call external AI, or execute providers.",
         },
+        "offer_decision_export_audit_review_foundation": {
+            "audit_reviews_enabled": True,
+            "audit_review_findings_enabled": True,
+            "audit_review_checklists_enabled": True,
+            "immutable_audit_review_snapshots_enabled": True,
+            "agency_audit_review_ui_enabled": True,
+            "platform_audit_review_ui_enabled": True,
+            "metadata_only_review_enabled": True,
+            "automatic_sending_disabled": True,
+            "sms_sending_disabled": True,
+            "public_links_disabled": True,
+            "real_pdf_delivery_disabled": True,
+            "offer_price_mutation_disabled": True,
+            "automatic_recommendation_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticket_emd_issuance_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "review_count": offer_decision_export_audit_review_count,
+            "finding_count": offer_decision_export_audit_review_finding_count,
+            "checklist_item_count": offer_decision_export_audit_review_checklist_item_count,
+            "snapshot_count": offer_decision_export_audit_review_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 38.0 creates metadata-only audit reviews over decision pack, explanation, export, preview, release readiness, manual handoff, and manual outcome records. It reviews completeness, approval trail, handoff trail, outcome trail, unresolved issues, and immutable snapshot coverage without email/SMS sending, public links, real PDF delivery, offer price mutation, automatic recommendation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, settlement, scraping, or external AI.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1060,6 +1090,7 @@ app.include_router(platform_offer_decision_export_previews.router)
 app.include_router(platform_offer_decision_export_releases.router)
 app.include_router(platform_offer_decision_export_deliveries.router)
 app.include_router(platform_offer_decision_export_delivery_outcomes.router)
+app.include_router(platform_offer_decision_export_audit_reviews.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -1090,6 +1121,7 @@ app.include_router(agency_offer_decision_export_previews.router)
 app.include_router(agency_offer_decision_export_releases.router)
 app.include_router(agency_offer_decision_export_deliveries.router)
 app.include_router(agency_offer_decision_export_delivery_outcomes.router)
+app.include_router(agency_offer_decision_export_audit_reviews.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

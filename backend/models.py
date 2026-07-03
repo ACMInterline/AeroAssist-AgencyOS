@@ -8113,6 +8113,208 @@ class OfferDecisionExportDeliveryOutcomeSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportAuditReviewStatus(str, Enum):
+    DRAFT = "draft"
+    IN_REVIEW = "in_review"
+    COMPLETED = "completed"
+    HELD = "held"
+    CANCELLED = "cancelled"
+
+
+class OfferDecisionExportAuditReviewScope(str, Enum):
+    FULL_LIFECYCLE = "full_lifecycle"
+    EXPORT_ONLY = "export_only"
+    DELIVERY_ONLY = "delivery_only"
+    OUTCOME_ONLY = "outcome_only"
+
+
+class OfferDecisionExportAuditFindingType(str, Enum):
+    MISSING_DECISION_PACK = "missing_decision_pack"
+    MISSING_EXPLANATION = "missing_explanation"
+    MISSING_EXPORT = "missing_export"
+    MISSING_PREVIEW = "missing_preview"
+    MISSING_RELEASE_READINESS = "missing_release_readiness"
+    MISSING_HANDOFF = "missing_handoff"
+    MISSING_OUTCOME = "missing_outcome"
+    UNRESOLVED_DELIVERY_ISSUE = "unresolved_delivery_issue"
+    MISSING_IMMUTABLE_SNAPSHOT = "missing_immutable_snapshot"
+    METADATA_GAP = "metadata_gap"
+    OTHER = "other"
+
+
+class OfferDecisionExportAuditFindingSeverity(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class OfferDecisionExportAuditFindingStatus(str, Enum):
+    OPEN = "open"
+    RESOLVED = "resolved"
+    ACCEPTED = "accepted"
+
+
+class OfferDecisionExportAuditChecklistStatus(str, Enum):
+    PENDING = "pending"
+    PASSED = "passed"
+    FAILED = "failed"
+    NOT_APPLICABLE = "not_applicable"
+
+
+class OfferDecisionExportAuditReviewSnapshotType(str, Enum):
+    REVIEW_CREATED = "review_created"
+    CHECKLIST_REVIEW = "checklist_review"
+    FINAL_REVIEW = "final_review"
+    MANUAL = "manual"
+
+
+class OfferDecisionExportAuditReview(BaseDocument):
+    agency_id: str
+    review_scope: OfferDecisionExportAuditReviewScope = OfferDecisionExportAuditReviewScope.FULL_LIFECYCLE
+    review_status: OfferDecisionExportAuditReviewStatus = OfferDecisionExportAuditReviewStatus.DRAFT
+    title: str
+    decision_pack_id: Optional[str] = None
+    explanation_id: Optional[str] = None
+    export_id: Optional[str] = None
+    preview_id: Optional[str] = None
+    release_readiness_id: Optional[str] = None
+    handoff_id: Optional[str] = None
+    outcome_id: Optional[str] = None
+    finding_count: int = 0
+    unresolved_finding_count: int = 0
+    checklist_count: int = 0
+    passed_checklist_count: int = 0
+    snapshot_count: int = 0
+    completion_score: int = 0
+    coverage_summary: Dict[str, Any] = Field(default_factory=dict)
+    reviewed_by: Optional[str] = None
+    status_reason: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    audit_review_only_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    automatic_recommendation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    pnr_mutation_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportAuditReviewFinding(BaseDocument):
+    agency_id: str
+    review_id: str
+    finding_type: OfferDecisionExportAuditFindingType = OfferDecisionExportAuditFindingType.OTHER
+    severity: OfferDecisionExportAuditFindingSeverity = OfferDecisionExportAuditFindingSeverity.MEDIUM
+    finding_status: OfferDecisionExportAuditFindingStatus = OfferDecisionExportAuditFindingStatus.OPEN
+    title: str
+    description: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportAuditReviewChecklistItem(BaseDocument):
+    agency_id: str
+    review_id: str
+    item_key: str
+    label: str
+    item_status: OfferDecisionExportAuditChecklistStatus = OfferDecisionExportAuditChecklistStatus.PENDING
+    required: bool = True
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportAuditReviewSnapshot(BaseDocument):
+    agency_id: str
+    review_id: str
+    snapshot_type: OfferDecisionExportAuditReviewSnapshotType = OfferDecisionExportAuditReviewSnapshotType.REVIEW_CREATED
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    created_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class OfferDecisionExportAuditReviewCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    review_scope: OfferDecisionExportAuditReviewScope = OfferDecisionExportAuditReviewScope.FULL_LIFECYCLE
+    title: Optional[str] = None
+    export_id: Optional[str] = None
+    preview_id: Optional[str] = None
+    release_readiness_id: Optional[str] = None
+    handoff_id: Optional[str] = None
+    outcome_id: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    review_status: OfferDecisionExportAuditReviewStatus
+    status_reason: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewFindingCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    finding_type: OfferDecisionExportAuditFindingType = OfferDecisionExportAuditFindingType.OTHER
+    severity: OfferDecisionExportAuditFindingSeverity = OfferDecisionExportAuditFindingSeverity.MEDIUM
+    title: str
+    description: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewFindingUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    finding_status: OfferDecisionExportAuditFindingStatus
+    resolved_by: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewChecklistItemCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_key: str
+    label: str
+    item_status: OfferDecisionExportAuditChecklistStatus = OfferDecisionExportAuditChecklistStatus.PENDING
+    required: bool = True
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewChecklistItemUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_status: OfferDecisionExportAuditChecklistStatus
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportAuditReviewSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: OfferDecisionExportAuditReviewSnapshotType = OfferDecisionExportAuditReviewSnapshotType.REVIEW_CREATED
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

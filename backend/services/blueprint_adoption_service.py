@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation"
+PHASE_LABEL = "phase_38_0_offer_decision_export_audit_review_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -176,6 +176,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only human-recorded outcome tracking without email/SMS sending, public links, real PDF delivery, recommendations, offer price mutation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Export Audit Review",
+        "concept": "Offer decision export audit review",
+        "supplementary_concept": "lifecycle audit review, findings, checklist items, immutable review snapshots",
+        "current_equivalent": "offer_decision_export_audit_reviews, offer_decision_export_audit_review_findings, offer_decision_export_audit_review_checklist_items, offer_decision_export_audit_review_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only lifecycle audit reviews over decision packs, explanations, exports, previews, release readiness, manual handoffs, manual outcomes, unresolved issues, and snapshot coverage without email/SMS sending, public links, real PDF delivery, recommendations, offer price mutation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -242,6 +250,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-deliveries", "agencyos": "/agency/offer-decision-export-deliveries"},
         {"supplementary": "/admin/offer-decision-export-delivery-outcomes", "agencyos": "/platform/offer-decision-export-delivery-outcomes"},
         {"supplementary": "/agent/offer-decision-export-delivery-outcomes", "agencyos": "/agency/offer-decision-export-delivery-outcomes"},
+        {"supplementary": "/admin/offer-decision-export-audit-reviews", "agencyos": "/platform/offer-decision-export-audit-reviews"},
+        {"supplementary": "/agent/offer-decision-export-audit-reviews", "agencyos": "/agency/offer-decision-export-audit-reviews"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},

@@ -76,6 +76,7 @@ The repository currently contains:
 - Phase 37.7: Offer decision export approval and manual release readiness foundation.
 - Phase 37.8: Offer decision export manual delivery handoff foundation.
 - Phase 37.9: Offer decision export manual delivery outcome tracking foundation.
+- Phase 38.0: Offer decision export audit review foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1263,6 +1264,21 @@ Implemented scope:
 - Added agency APIs and `/agency/offer-decision-export-delivery-outcomes` for creating/listing outcomes, recording manual events, adding receipt metadata, adding/resolving issue metadata, and saving immutable outcome snapshots.
 - Added platform read-only diagnostics APIs and `/platform/offer-decision-export-delivery-outcomes`.
 - Added readiness flags and counts under `offer_decision_export_manual_delivery_outcome_foundation`.
+
+Avoid adding:
+
+- Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live PNR mutation, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 38.0: Offer Decision Export Audit Review Foundation
+
+Implemented scope:
+
+- Added offer decision export audit review records, findings, checklist items, and immutable review snapshots.
+- Added deterministic lifecycle coverage review over decision pack, explanation, export, preview, release readiness, manual delivery handoff, and manual delivery outcome metadata.
+- Added agency APIs and `/agency/offer-decision-export-audit-reviews` for creating/listing reviews, recording findings, checklist items, review status, and immutable snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-export-audit-reviews`.
+- Added readiness flags and counts under `offer_decision_export_audit_review_foundation`.
+- Added `docs/architecture/offer-decision-export-audit-review-foundation.md`.
 
 Avoid adding:
 
