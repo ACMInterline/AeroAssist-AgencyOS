@@ -7665,6 +7665,232 @@ class OfferDecisionExportReleaseSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportDeliveryHandoffStatus(str, Enum):
+    DRAFT = "draft"
+    PREPARED = "prepared"
+    HELD = "held"
+    HANDED_TO_HUMAN = "handed_to_human"
+    CANCELLED = "cancelled"
+
+
+class OfferDecisionExportDeliveryMethod(str, Enum):
+    MANUAL_EMAIL = "manual_email"
+    MANUAL_PORTAL_UPLOAD = "manual_portal_upload"
+    MANUAL_PRINT = "manual_print"
+    MANUAL_OTHER = "manual_other"
+
+
+class OfferDecisionExportDeliveryRecipientType(str, Enum):
+    CLIENT = "client"
+    PASSENGER = "passenger"
+    CORPORATE_CONTACT = "corporate_contact"
+    AGENCY_USER = "agency_user"
+    EXTERNAL_CONTACT = "external_contact"
+    OTHER = "other"
+
+
+class OfferDecisionExportDeliveryRecipientStatus(str, Enum):
+    PENDING_MANUAL_ACTION = "pending_manual_action"
+    MANUALLY_COMPLETED = "manually_completed"
+    SKIPPED = "skipped"
+    HELD = "held"
+
+
+class OfferDecisionExportDeliveryAttachmentFileType(str, Enum):
+    PDF_METADATA = "pdf_metadata"
+    JSON_METADATA = "json_metadata"
+    TEXT_METADATA = "text_metadata"
+    OTHER_METADATA = "other_metadata"
+
+
+class OfferDecisionExportDeliveryAttachmentSourceType(str, Enum):
+    EXPORT_ARTIFACT_METADATA = "export_artifact_metadata"
+    PREVIEW_METADATA = "preview_metadata"
+    MANUALLY_DESCRIBED_METADATA = "manually_described_metadata"
+
+
+class OfferDecisionExportDeliveryInstructionType(str, Enum):
+    EMAIL_COPY = "email_copy"
+    PORTAL_UPLOAD_NOTE = "portal_upload_note"
+    PRINT_NOTE = "print_note"
+    COMPLIANCE_NOTE = "compliance_note"
+    INTERNAL_NOTE = "internal_note"
+    OTHER = "other"
+
+
+class OfferDecisionExportDeliverySnapshotType(str, Enum):
+    PREPARED = "prepared"
+    HANDED_TO_HUMAN = "handed_to_human"
+    CANCELLED = "cancelled"
+    HELD = "held"
+
+
+class OfferDecisionExportDeliveryHandoff(BaseDocument):
+    agency_id: str
+    export_id: str
+    preview_id: Optional[str] = None
+    approval_id: Optional[str] = None
+    release_readiness_id: Optional[str] = None
+    title: str
+    status: OfferDecisionExportDeliveryHandoffStatus = OfferDecisionExportDeliveryHandoffStatus.DRAFT
+    delivery_method: OfferDecisionExportDeliveryMethod = OfferDecisionExportDeliveryMethod.MANUAL_EMAIL
+    recipient_count: int = 0
+    attachment_count: int = 0
+    instruction_count: int = 0
+    checklist_count: int = 0
+    snapshot_count: int = 0
+    safety_summary: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    status_reason: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    manual_delivery_only_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportDeliveryRecipient(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    recipient_type: OfferDecisionExportDeliveryRecipientType = OfferDecisionExportDeliveryRecipientType.CLIENT
+    display_name: str
+    email_metadata: Optional[str] = None
+    phone_metadata: Optional[str] = None
+    delivery_method: OfferDecisionExportDeliveryMethod = OfferDecisionExportDeliveryMethod.MANUAL_EMAIL
+    delivery_status: OfferDecisionExportDeliveryRecipientStatus = OfferDecisionExportDeliveryRecipientStatus.PENDING_MANUAL_ACTION
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+
+
+class OfferDecisionExportDeliveryAttachment(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    artifact_id: Optional[str] = None
+    preview_id: Optional[str] = None
+    filename: str
+    file_type: OfferDecisionExportDeliveryAttachmentFileType = OfferDecisionExportDeliveryAttachmentFileType.PDF_METADATA
+    source_type: OfferDecisionExportDeliveryAttachmentSourceType = OfferDecisionExportDeliveryAttachmentSourceType.MANUALLY_DESCRIBED_METADATA
+    size_label: Optional[str] = None
+    storage_reference_metadata: Optional[str] = None
+    public_link_created: bool = False
+    real_file_delivered: bool = False
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportDeliveryInstruction(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    instruction_type: OfferDecisionExportDeliveryInstructionType = OfferDecisionExportDeliveryInstructionType.INTERNAL_NOTE
+    title: str
+    body: str
+    required: bool = True
+    completed: bool = False
+    completed_by: Optional[str] = None
+    completed_at: Optional[datetime] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportDeliverySnapshot(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    snapshot_type: OfferDecisionExportDeliverySnapshotType = OfferDecisionExportDeliverySnapshotType.PREPARED
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    created_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class OfferDecisionExportDeliveryHandoffCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    export_id: str
+    preview_id: Optional[str] = None
+    approval_id: Optional[str] = None
+    release_readiness_id: Optional[str] = None
+    title: Optional[str] = None
+    delivery_method: OfferDecisionExportDeliveryMethod = OfferDecisionExportDeliveryMethod.MANUAL_EMAIL
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryHandoffStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: OfferDecisionExportDeliveryHandoffStatus
+    status_reason: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryRecipientCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    recipient_type: OfferDecisionExportDeliveryRecipientType = OfferDecisionExportDeliveryRecipientType.CLIENT
+    display_name: str
+    email_metadata: Optional[str] = None
+    phone_metadata: Optional[str] = None
+    delivery_method: OfferDecisionExportDeliveryMethod = OfferDecisionExportDeliveryMethod.MANUAL_EMAIL
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryRecipientStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    delivery_status: OfferDecisionExportDeliveryRecipientStatus
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryAttachmentCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    artifact_id: Optional[str] = None
+    preview_id: Optional[str] = None
+    filename: str
+    file_type: OfferDecisionExportDeliveryAttachmentFileType = OfferDecisionExportDeliveryAttachmentFileType.PDF_METADATA
+    source_type: OfferDecisionExportDeliveryAttachmentSourceType = OfferDecisionExportDeliveryAttachmentSourceType.MANUALLY_DESCRIBED_METADATA
+    size_label: Optional[str] = None
+    storage_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryInstructionCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    instruction_type: OfferDecisionExportDeliveryInstructionType = OfferDecisionExportDeliveryInstructionType.INTERNAL_NOTE
+    title: str
+    body: str
+    required: bool = True
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryInstructionCompletionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    completed: bool = True
+    completed_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliverySnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: OfferDecisionExportDeliverySnapshotType = OfferDecisionExportDeliverySnapshotType.PREPARED
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

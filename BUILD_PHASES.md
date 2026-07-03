@@ -1237,6 +1237,20 @@ Avoid adding:
 
 - Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
+### Phase 37.8: Offer Decision Export Manual Delivery Handoff Foundation
+
+Implemented scope:
+
+- Added offer decision export manual delivery handoff records, recipient metadata, attachment metadata, instruction/checklist metadata, and immutable handoff snapshots.
+- Added deterministic metadata handoff creation from existing offer decision exports, previews, approvals, and release readiness records.
+- Added agency APIs and `/agency/offer-decision-export-deliveries` for handoff metadata creation, manual status updates, recipient metadata, attachment metadata, instructions, instruction completion metadata, recipient status metadata, and immutable handoff snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-export-deliveries`.
+- Added readiness flags and counts under `offer_decision_export_manual_delivery_handoff_foundation`.
+
+Avoid adding:
+
+- Automatic email/SMS sending, SMTP/SMS/storage provider calls, public links, real PDF delivery/storage, live booking, live PNR mutation, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

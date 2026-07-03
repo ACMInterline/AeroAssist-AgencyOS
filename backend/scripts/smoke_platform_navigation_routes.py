@@ -10,7 +10,7 @@ from pathlib import Path
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_37_7_offer_decision_export_release_readiness_foundation"
+EXPECTED_PHASE = "phase_37_8_offer_decision_export_manual_delivery_handoff_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
