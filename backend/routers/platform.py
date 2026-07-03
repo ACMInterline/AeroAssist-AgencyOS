@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_38_0_offer_decision_export_audit_review_foundation",
+        "phase": "phase_38_1_offer_decision_export_governance_foundation",
     }
 
 
@@ -147,6 +147,13 @@ async def summary(
             "offer_decision_export_audit_review_findings": await db.collection("offer_decision_export_audit_review_findings").count(),
             "offer_decision_export_audit_review_checklist_items": await db.collection("offer_decision_export_audit_review_checklist_items").count(),
             "offer_decision_export_audit_review_snapshots": await db.collection("offer_decision_export_audit_review_snapshots").count(),
+            "offer_decision_export_governance_records": await db.collection("offer_decision_export_governance_records").count(),
+            "offer_decision_export_governance_rules": await db.collection("offer_decision_export_governance_rules").count(),
+            "offer_decision_export_retention_policies": await db.collection("offer_decision_export_retention_policies").count(),
+            "offer_decision_export_legal_bases": await db.collection("offer_decision_export_legal_bases").count(),
+            "offer_decision_export_archive_statuses": await db.collection("offer_decision_export_archive_statuses").count(),
+            "offer_decision_export_governance_exceptions": await db.collection("offer_decision_export_governance_exceptions").count(),
+            "offer_decision_export_governance_snapshots": await db.collection("offer_decision_export_governance_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

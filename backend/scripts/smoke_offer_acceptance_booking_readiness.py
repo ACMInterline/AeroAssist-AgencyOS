@@ -14,7 +14,7 @@ OWNER_HEADERS = (
     if OWNER_TOKEN
     else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 )
-EXPECTED_PHASE = "phase_38_0_offer_decision_export_audit_review_foundation"
+EXPECTED_PHASE = "phase_38_1_offer_decision_export_governance_foundation"
 
 
 def request(

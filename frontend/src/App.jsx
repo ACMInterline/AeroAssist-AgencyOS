@@ -25,6 +25,7 @@ import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
 import AgencyOfferDecisionExportAuditReviewsPage from "./pages/agency/OfferDecisionExportAuditReviewsPage"
 import AgencyOfferDecisionExportDeliveriesPage from "./pages/agency/OfferDecisionExportDeliveriesPage"
 import AgencyOfferDecisionExportDeliveryOutcomesPage from "./pages/agency/OfferDecisionExportDeliveryOutcomesPage"
+import AgencyOfferDecisionExportGovernancePage from "./pages/agency/OfferDecisionExportGovernancePage"
 import AgencyOfferDecisionExportPreviewsPage from "./pages/agency/OfferDecisionExportPreviewsPage"
 import AgencyOfferDecisionExportReleasesPage from "./pages/agency/OfferDecisionExportReleasesPage"
 import AgencyOfferDecisionExportsPage from "./pages/agency/OfferDecisionExportsPage"
@@ -76,6 +77,7 @@ import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
 import PlatformOfferDecisionExportAuditReviewsPage from "./pages/platform/OfferDecisionExportAuditReviewsPage"
 import PlatformOfferDecisionExportDeliveriesPage from "./pages/platform/OfferDecisionExportDeliveriesPage"
 import PlatformOfferDecisionExportDeliveryOutcomesPage from "./pages/platform/OfferDecisionExportDeliveryOutcomesPage"
+import PlatformOfferDecisionExportGovernancePage from "./pages/platform/OfferDecisionExportGovernancePage"
 import PlatformOfferDecisionExportPreviewsPage from "./pages/platform/OfferDecisionExportPreviewsPage"
 import PlatformOfferDecisionExportReleasesPage from "./pages/platform/OfferDecisionExportReleasesPage"
 import PlatformOfferDecisionExportsPage from "./pages/platform/OfferDecisionExportsPage"
@@ -136,6 +138,7 @@ const routes = {
   "/platform/offer-decision-export-deliveries": PlatformOfferDecisionExportDeliveriesPage,
   "/platform/offer-decision-export-delivery-outcomes": PlatformOfferDecisionExportDeliveryOutcomesPage,
   "/platform/offer-decision-export-audit-reviews": PlatformOfferDecisionExportAuditReviewsPage,
+  "/platform/offer-decision-export-governance": PlatformOfferDecisionExportGovernancePage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -158,6 +161,7 @@ const routes = {
   "/agency/offer-decision-export-deliveries": AgencyOfferDecisionExportDeliveriesPage,
   "/agency/offer-decision-export-delivery-outcomes": AgencyOfferDecisionExportDeliveryOutcomesPage,
   "/agency/offer-decision-export-audit-reviews": AgencyOfferDecisionExportAuditReviewsPage,
+  "/agency/offer-decision-export-governance": AgencyOfferDecisionExportGovernancePage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,

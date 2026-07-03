@@ -2,7 +2,7 @@
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post
 
 
-EXPECTED_PHASE = "phase_38_0_offer_decision_export_audit_review_foundation"
+EXPECTED_PHASE = "phase_38_1_offer_decision_export_governance_foundation"
 
 
 SAMPLE_POLICY_TEXT = """General:

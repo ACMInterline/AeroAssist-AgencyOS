@@ -58,7 +58,7 @@ def assert_no_custom_code(payload: dict) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_38_0_offer_decision_export_audit_review_foundation":
+    if health.get("phase") != "phase_38_1_offer_decision_export_governance_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]

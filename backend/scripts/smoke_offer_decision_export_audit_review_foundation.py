@@ -11,7 +11,7 @@ from smoke_offer_decision_export_release_readiness_foundation import create_prev
 from smoke_offer_decision_pack_foundation import option_signature
 
 
-EXPECTED_PHASE = "phase_38_0_offer_decision_export_audit_review_foundation"
+EXPECTED_PHASE = "phase_38_1_offer_decision_export_governance_foundation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:

@@ -8315,6 +8315,334 @@ class OfferDecisionExportAuditReviewSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportGovernanceScope(str, Enum):
+    EXPORT_LIFECYCLE = "export_lifecycle"
+    AUDIT_REVIEW = "audit_review"
+    DELIVERY_OUTCOME = "delivery_outcome"
+    RETENTION = "retention"
+    LEGAL_BASIS = "legal_basis"
+    ARCHIVE = "archive"
+
+
+class OfferDecisionExportGovernanceStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    REVIEW_NEEDED = "review_needed"
+    HELD = "held"
+    ARCHIVED_METADATA_ONLY = "archived_metadata_only"
+    CANCELLED = "cancelled"
+
+
+class OfferDecisionExportGovernanceRuleType(str, Enum):
+    RETENTION = "retention"
+    LEGAL_BASIS = "legal_basis"
+    ARCHIVE = "archive"
+    ACCESS_REVIEW = "access_review"
+    EXCEPTION_REVIEW = "exception_review"
+    SNAPSHOT_COVERAGE = "snapshot_coverage"
+    OTHER = "other"
+
+
+class OfferDecisionExportGovernanceRuleStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    RETIRED = "retired"
+
+
+class OfferDecisionExportRetentionAction(str, Enum):
+    RETAIN = "retain"
+    REVIEW = "review"
+    HOLD = "hold"
+    ARCHIVE_METADATA_ONLY = "archive_metadata_only"
+
+
+class OfferDecisionExportLegalBasisType(str, Enum):
+    CONTRACT = "contract"
+    CLIENT_CONSENT = "client_consent"
+    LEGAL_OBLIGATION = "legal_obligation"
+    LEGITIMATE_INTEREST = "legitimate_interest"
+    AGENCY_POLICY = "agency_policy"
+    OTHER = "other"
+
+
+class OfferDecisionExportArchiveStatusType(str, Enum):
+    NOT_ARCHIVED = "not_archived"
+    ELIGIBLE_FOR_METADATA_ARCHIVE = "eligible_for_metadata_archive"
+    ARCHIVED_METADATA_ONLY = "archived_metadata_only"
+    HOLD = "hold"
+    EXCEPTION_PENDING = "exception_pending"
+
+
+class OfferDecisionExportGovernanceExceptionType(str, Enum):
+    RETENTION_EXCEPTION = "retention_exception"
+    LEGAL_BASIS_GAP = "legal_basis_gap"
+    ARCHIVE_HOLD = "archive_hold"
+    POLICY_OVERRIDE = "policy_override"
+    SNAPSHOT_COVERAGE_GAP = "snapshot_coverage_gap"
+    OTHER = "other"
+
+
+class OfferDecisionExportGovernanceExceptionStatus(str, Enum):
+    OPEN = "open"
+    ACCEPTED = "accepted"
+    RESOLVED = "resolved"
+    WAIVED = "waived"
+
+
+class OfferDecisionExportGovernanceSnapshotType(str, Enum):
+    GOVERNANCE_CREATED = "governance_created"
+    POLICY_REVIEW = "policy_review"
+    ARCHIVE_REVIEW = "archive_review"
+    LEGAL_REVIEW = "legal_review"
+    MANUAL = "manual"
+
+
+class OfferDecisionExportGovernanceRecord(BaseDocument):
+    agency_id: str
+    governance_scope: OfferDecisionExportGovernanceScope = OfferDecisionExportGovernanceScope.EXPORT_LIFECYCLE
+    governance_status: OfferDecisionExportGovernanceStatus = OfferDecisionExportGovernanceStatus.DRAFT
+    title: str
+    export_id: Optional[str] = None
+    audit_review_id: Optional[str] = None
+    decision_pack_id: Optional[str] = None
+    outcome_id: Optional[str] = None
+    owner_label: Optional[str] = None
+    policy_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    rule_count: int = 0
+    retention_policy_count: int = 0
+    legal_basis_count: int = 0
+    archive_status_count: int = 0
+    exception_count: int = 0
+    open_exception_count: int = 0
+    snapshot_count: int = 0
+    status_reason: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    governance_only_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_mutation_disabled: bool = True
+    price_mutation_disabled: bool = True
+    recommendation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    pnr_mutation_disabled: bool = True
+    ticketing_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    payment_disabled: bool = True
+    invoice_disabled: bool = True
+    settlement_disabled: bool = True
+    scraping_disabled: bool = True
+    external_ai_disabled: bool = True
+
+
+class OfferDecisionExportGovernanceRule(BaseDocument):
+    agency_id: str
+    governance_record_id: Optional[str] = None
+    rule_type: OfferDecisionExportGovernanceRuleType = OfferDecisionExportGovernanceRuleType.OTHER
+    rule_status: OfferDecisionExportGovernanceRuleStatus = OfferDecisionExportGovernanceRuleStatus.DRAFT
+    rule_name: str
+    rule_text: Optional[str] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportRetentionPolicy(BaseDocument):
+    agency_id: str
+    governance_record_id: Optional[str] = None
+    policy_name: str
+    retention_period_days: int = 365
+    retention_action: OfferDecisionExportRetentionAction = OfferDecisionExportRetentionAction.REVIEW
+    review_required: bool = True
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    destructive_delete_disabled: bool = True
+
+
+class OfferDecisionExportLegalBasis(BaseDocument):
+    agency_id: str
+    governance_record_id: Optional[str] = None
+    basis_type: OfferDecisionExportLegalBasisType = OfferDecisionExportLegalBasisType.OTHER
+    basis_label: str
+    notes: Optional[str] = None
+    evidence_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportArchiveStatus(BaseDocument):
+    agency_id: str
+    governance_record_id: Optional[str] = None
+    export_id: Optional[str] = None
+    archive_status: OfferDecisionExportArchiveStatusType = OfferDecisionExportArchiveStatusType.NOT_ARCHIVED
+    status_reason: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    archive_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    real_archive_execution_disabled: bool = True
+
+
+class OfferDecisionExportGovernanceException(BaseDocument):
+    agency_id: str
+    governance_record_id: Optional[str] = None
+    exception_type: OfferDecisionExportGovernanceExceptionType = OfferDecisionExportGovernanceExceptionType.OTHER
+    exception_status: OfferDecisionExportGovernanceExceptionStatus = OfferDecisionExportGovernanceExceptionStatus.OPEN
+    severity: str = "medium"
+    title: str
+    description: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportGovernanceSnapshot(BaseDocument):
+    agency_id: str
+    governance_record_id: str
+    snapshot_type: OfferDecisionExportGovernanceSnapshotType = OfferDecisionExportGovernanceSnapshotType.GOVERNANCE_CREATED
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    created_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class OfferDecisionExportGovernanceRecordCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    governance_scope: OfferDecisionExportGovernanceScope = OfferDecisionExportGovernanceScope.EXPORT_LIFECYCLE
+    title: Optional[str] = None
+    export_id: Optional[str] = None
+    audit_review_id: Optional[str] = None
+    outcome_id: Optional[str] = None
+    owner_label: Optional[str] = None
+    policy_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceRecordUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    governance_status: OfferDecisionExportGovernanceStatus
+    status_reason: Optional[str] = None
+    owner_label: Optional[str] = None
+    policy_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceRuleCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rule_type: OfferDecisionExportGovernanceRuleType = OfferDecisionExportGovernanceRuleType.OTHER
+    rule_status: OfferDecisionExportGovernanceRuleStatus = OfferDecisionExportGovernanceRuleStatus.DRAFT
+    rule_name: str
+    rule_text: Optional[str] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceRuleUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rule_status: OfferDecisionExportGovernanceRuleStatus
+    rule_text: Optional[str] = None
+    effective_to: Optional[datetime] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportRetentionPolicyCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_name: str
+    retention_period_days: int = 365
+    retention_action: OfferDecisionExportRetentionAction = OfferDecisionExportRetentionAction.REVIEW
+    review_required: bool = True
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportRetentionPolicyUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    retention_action: OfferDecisionExportRetentionAction
+    review_required: bool = True
+    notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportLegalBasisCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    basis_type: OfferDecisionExportLegalBasisType = OfferDecisionExportLegalBasisType.OTHER
+    basis_label: str
+    notes: Optional[str] = None
+    evidence_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportLegalBasisUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    notes: Optional[str] = None
+    evidence_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportArchiveStatusCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    archive_status: OfferDecisionExportArchiveStatusType = OfferDecisionExportArchiveStatusType.NOT_ARCHIVED
+    status_reason: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    archive_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportArchiveStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    archive_status: OfferDecisionExportArchiveStatusType
+    status_reason: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    archive_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceExceptionCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    exception_type: OfferDecisionExportGovernanceExceptionType = OfferDecisionExportGovernanceExceptionType.OTHER
+    severity: str = "medium"
+    title: str
+    description: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceExceptionUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    exception_status: OfferDecisionExportGovernanceExceptionStatus
+    resolved_by: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportGovernanceSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: OfferDecisionExportGovernanceSnapshotType = OfferDecisionExportGovernanceSnapshotType.GOVERNANCE_CREATED
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

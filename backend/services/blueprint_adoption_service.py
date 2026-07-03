@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_38_0_offer_decision_export_audit_review_foundation"
+PHASE_LABEL = "phase_38_1_offer_decision_export_governance_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -184,6 +184,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only lifecycle audit reviews over decision packs, explanations, exports, previews, release readiness, manual handoffs, manual outcomes, unresolved issues, and snapshot coverage without email/SMS sending, public links, real PDF delivery, recommendations, offer price mutation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Export Governance",
+        "concept": "Offer decision export governance",
+        "supplementary_concept": "governance records, retention policies, legal bases, archive status, governance exceptions, immutable governance snapshots",
+        "current_equivalent": "offer_decision_export_governance_records, offer_decision_export_governance_rules, offer_decision_export_retention_policies, offer_decision_export_legal_bases, offer_decision_export_archive_statuses, offer_decision_export_governance_exceptions, offer_decision_export_governance_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only export governance records without email/SMS sending, public links, real PDF delivery, offer or price mutation, recommendation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, settlement, scraping, or external AI.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -252,6 +260,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-delivery-outcomes", "agencyos": "/agency/offer-decision-export-delivery-outcomes"},
         {"supplementary": "/admin/offer-decision-export-audit-reviews", "agencyos": "/platform/offer-decision-export-audit-reviews"},
         {"supplementary": "/agent/offer-decision-export-audit-reviews", "agencyos": "/agency/offer-decision-export-audit-reviews"},
+        {"supplementary": "/admin/offer-decision-export-governance", "agencyos": "/platform/offer-decision-export-governance"},
+        {"supplementary": "/agent/offer-decision-export-governance", "agencyos": "/agency/offer-decision-export-governance"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
