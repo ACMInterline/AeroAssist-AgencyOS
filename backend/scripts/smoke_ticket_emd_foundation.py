@@ -13,7 +13,7 @@ from smoke_booking_pnr_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_39_1_airline_intelligence_data_pack_review_foundation"
+EXPECTED_PHASE = "phase_39_2_airline_intelligence_knowledge_versioning_foundation"
 
 
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:

@@ -1346,6 +1346,20 @@ Avoid adding:
 
 - Automatic promotion into operational airline tables, live scraping, external APIs, external AI, CMS publishing, client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 39.2: Airline Intelligence Knowledge Versioning And Publication Control Foundation
+
+Implemented scope:
+
+- Added airline intelligence knowledge versions, version items, release channels, release assignments, version comparisons, rollback plans, and immutable version snapshots.
+- Added platform APIs and `/platform/airline-intelligence-knowledge-versions` for draft version creation, reviewed item inclusion, freeze/approve/published-metadata status, release-channel assignment, comparison, rollback planning, and snapshots.
+- Added agency read-only APIs and `/agency/airline-intelligence-knowledge-versions` for current/preview version visibility and plain-language change summaries without raw staged payload exposure.
+- Added readiness flags and counts under `airline_intelligence_knowledge_versioning_foundation`.
+- Added `docs/architecture/airline-intelligence-knowledge-versioning-foundation.md`.
+
+Avoid adding:
+
+- Automatic promotion into operational airline tables, live scraping, external APIs, external AI, CMS publishing, client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

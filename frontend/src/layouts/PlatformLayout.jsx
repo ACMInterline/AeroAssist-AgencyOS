@@ -3,6 +3,7 @@ import ClipboardCheck from "lucide-react/dist/esm/icons/clipboard-check.js"
 import Database from "lucide-react/dist/esm/icons/database.js"
 import FileText from "lucide-react/dist/esm/icons/file-text.js"
 import GitBranch from "lucide-react/dist/esm/icons/git-branch.js"
+import Layers3 from "lucide-react/dist/esm/icons/layers-3.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
 import Rows3 from "lucide-react/dist/esm/icons/rows-3.js"
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
@@ -45,6 +46,10 @@ export default function PlatformLayout({ children, user }) {
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-data-pack-reviews">
               <GitBranch className="h-4 w-4" />
               Data Pack Reviews
+            </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-knowledge-versions">
+              <Layers3 className="h-4 w-4" />
+              Knowledge Versions
             </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-policy-ingestion">
               <FileText className="h-4 w-4" />

@@ -9679,6 +9679,301 @@ class AirlineIntelligenceDataPackReviewSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class AirlineIntelligenceKnowledgeVersionStatus(str, Enum):
+    DRAFT = "draft"
+    FROZEN = "frozen"
+    APPROVED = "approved"
+    PUBLISHED = "published"
+    SUPERSEDED = "superseded"
+    ROLLED_BACK = "rolled_back"
+    ARCHIVED = "archived"
+
+
+class AirlineIntelligenceKnowledgeAgencyVisibilityMode(str, Enum):
+    HIDDEN = "hidden"
+    PREVIEW = "preview"
+    VISIBLE = "visible"
+
+
+class AirlineIntelligenceKnowledgeVersionItemInclusionStatus(str, Enum):
+    INCLUDED = "included"
+    EXCLUDED = "excluded"
+    NEEDS_REVIEW = "needs_review"
+
+
+class AirlineIntelligenceKnowledgeReleaseChannelAudience(str, Enum):
+    PLATFORM = "platform"
+    PILOT_AGENCIES = "pilot_agencies"
+    ALL_AGENCIES = "all_agencies"
+    INTERNAL_ONLY = "internal_only"
+
+
+class AirlineIntelligenceKnowledgeReleaseAssignmentStatus(str, Enum):
+    PLANNED = "planned"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    SUPERSEDED = "superseded"
+    ROLLED_BACK = "rolled_back"
+
+
+class AirlineIntelligenceKnowledgeRollbackPlanStatus(str, Enum):
+    DRAFT = "draft"
+    APPROVED = "approved"
+    EXECUTED_METADATA_ONLY = "executed_metadata_only"
+    CANCELLED = "cancelled"
+
+
+class AirlineIntelligenceKnowledgeVersionSnapshotType(str, Enum):
+    VERSION_CREATED = "version_created"
+    VERSION_FROZEN = "version_frozen"
+    VERSION_APPROVED = "version_approved"
+    VERSION_PUBLISHED_METADATA = "version_published_metadata"
+    VERSION_COMPARISON = "version_comparison"
+    ROLLBACK_PLAN = "rollback_plan"
+    MANUAL = "manual"
+
+
+class AirlineIntelligenceKnowledgeVersion(BaseDocument):
+    version_code: str
+    title: str
+    description: Optional[str] = None
+    status: AirlineIntelligenceKnowledgeVersionStatus = AirlineIntelligenceKnowledgeVersionStatus.DRAFT
+    source_pack_ids: List[str] = Field(default_factory=list)
+    source_review_ids: List[str] = Field(default_factory=list)
+    source_promotion_readiness_ids: List[str] = Field(default_factory=list)
+    coverage_summary: Optional[str] = None
+    publication_scope_metadata: Dict[str, Any] = Field(default_factory=dict)
+    agency_visibility_mode: AirlineIntelligenceKnowledgeAgencyVisibilityMode = AirlineIntelligenceKnowledgeAgencyVisibilityMode.HIDDEN
+    crm_safe: bool = False
+    cms_safe: bool = False
+    client_portal_safe: bool = False
+    offer_builder_safe: bool = False
+    created_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    published_by: Optional[str] = None
+    frozen_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    metadata_only: bool = True
+    operational_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceKnowledgeVersionItem(BaseDocument):
+    version_id: str
+    source_pack_item_id: str
+    target_domain: Optional[str] = None
+    target_record_key: Optional[str] = None
+    target_airline_code: Optional[str] = None
+    field_mapping_id: Optional[str] = None
+    conflict_ids: List[str] = Field(default_factory=list)
+    readiness_id: Optional[str] = None
+    inclusion_status: AirlineIntelligenceKnowledgeVersionItemInclusionStatus = AirlineIntelligenceKnowledgeVersionItemInclusionStatus.INCLUDED
+    inclusion_reason: Optional[str] = None
+    normalized_payload_preview: Dict[str, Any] = Field(default_factory=dict)
+    agency_plain_language_summary: Optional[str] = None
+    metadata_only: bool = True
+    operational_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceKnowledgeReleaseChannel(BaseDocument):
+    channel_code: str
+    name: str
+    description: Optional[str] = None
+    audience: AirlineIntelligenceKnowledgeReleaseChannelAudience = AirlineIntelligenceKnowledgeReleaseChannelAudience.INTERNAL_ONLY
+    is_active: bool = True
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceKnowledgeReleaseAssignment(BaseDocument):
+    channel_id: str
+    version_id: str
+    agency_id: Optional[str] = None
+    status: AirlineIntelligenceKnowledgeReleaseAssignmentStatus = AirlineIntelligenceKnowledgeReleaseAssignmentStatus.PLANNED
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    notes: Optional[str] = None
+    metadata_only: bool = True
+    operational_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceKnowledgeVersionComparison(BaseDocument):
+    base_version_id: str
+    compare_version_id: str
+    summary: Optional[str] = None
+    added_items: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_items: List[Dict[str, Any]] = Field(default_factory=list)
+    removed_items: List[Dict[str, Any]] = Field(default_factory=list)
+    conflict_summary: Optional[str] = None
+    agency_impact_summary: Optional[str] = None
+    cms_impact_summary: Optional[str] = None
+    client_portal_impact_summary: Optional[str] = None
+    offer_builder_impact_summary: Optional[str] = None
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceKnowledgeRollbackPlan(BaseDocument):
+    from_version_id: str
+    to_version_id: str
+    channel_id: Optional[str] = None
+    reason: str
+    impact_summary: Optional[str] = None
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
+    status: AirlineIntelligenceKnowledgeRollbackPlanStatus = AirlineIntelligenceKnowledgeRollbackPlanStatus.DRAFT
+    metadata_only: bool = True
+    operational_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceKnowledgeVersionSnapshot(BaseDocument):
+    version_id: str
+    snapshot_type: AirlineIntelligenceKnowledgeVersionSnapshotType = AirlineIntelligenceKnowledgeVersionSnapshotType.MANUAL
+    frozen_payload: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceKnowledgeVersionCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    version_code: str
+    title: str
+    description: Optional[str] = None
+    source_pack_ids: List[str] = Field(default_factory=list)
+    source_review_ids: List[str] = Field(default_factory=list)
+    source_promotion_readiness_ids: List[str] = Field(default_factory=list)
+    coverage_summary: Optional[str] = None
+    publication_scope_metadata: Dict[str, Any] = Field(default_factory=dict)
+    agency_visibility_mode: AirlineIntelligenceKnowledgeAgencyVisibilityMode = AirlineIntelligenceKnowledgeAgencyVisibilityMode.HIDDEN
+    crm_safe: bool = False
+    cms_safe: bool = False
+    client_portal_safe: bool = False
+    offer_builder_safe: bool = False
+    created_by: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeVersionUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[AirlineIntelligenceKnowledgeVersionStatus] = None
+    source_pack_ids: Optional[List[str]] = None
+    source_review_ids: Optional[List[str]] = None
+    source_promotion_readiness_ids: Optional[List[str]] = None
+    coverage_summary: Optional[str] = None
+    publication_scope_metadata: Optional[Dict[str, Any]] = None
+    agency_visibility_mode: Optional[AirlineIntelligenceKnowledgeAgencyVisibilityMode] = None
+    crm_safe: Optional[bool] = None
+    cms_safe: Optional[bool] = None
+    client_portal_safe: Optional[bool] = None
+    offer_builder_safe: Optional[bool] = None
+    approved_by: Optional[str] = None
+    published_by: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeVersionItemCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    source_pack_item_id: str
+    target_domain: Optional[str] = None
+    target_record_key: Optional[str] = None
+    target_airline_code: Optional[str] = None
+    field_mapping_id: Optional[str] = None
+    conflict_ids: List[str] = Field(default_factory=list)
+    readiness_id: Optional[str] = None
+    inclusion_status: AirlineIntelligenceKnowledgeVersionItemInclusionStatus = AirlineIntelligenceKnowledgeVersionItemInclusionStatus.INCLUDED
+    inclusion_reason: Optional[str] = None
+    normalized_payload_preview: Dict[str, Any] = Field(default_factory=dict)
+    agency_plain_language_summary: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeVersionItemUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    field_mapping_id: Optional[str] = None
+    conflict_ids: Optional[List[str]] = None
+    readiness_id: Optional[str] = None
+    inclusion_status: Optional[AirlineIntelligenceKnowledgeVersionItemInclusionStatus] = None
+    inclusion_reason: Optional[str] = None
+    normalized_payload_preview: Optional[Dict[str, Any]] = None
+    agency_plain_language_summary: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeReleaseChannelCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    channel_code: str
+    name: str
+    description: Optional[str] = None
+    audience: AirlineIntelligenceKnowledgeReleaseChannelAudience = AirlineIntelligenceKnowledgeReleaseChannelAudience.INTERNAL_ONLY
+    is_active: bool = True
+
+
+class AirlineIntelligenceKnowledgeReleaseChannelUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+    audience: Optional[AirlineIntelligenceKnowledgeReleaseChannelAudience] = None
+    is_active: Optional[bool] = None
+
+
+class AirlineIntelligenceKnowledgeReleaseAssignmentCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    channel_id: str
+    version_id: str
+    agency_id: Optional[str] = None
+    status: AirlineIntelligenceKnowledgeReleaseAssignmentStatus = AirlineIntelligenceKnowledgeReleaseAssignmentStatus.PLANNED
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeReleaseAssignmentUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[AirlineIntelligenceKnowledgeReleaseAssignmentStatus] = None
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class AirlineIntelligenceKnowledgeVersionComparisonCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    base_version_id: str
+    compare_version_id: str
+
+
+class AirlineIntelligenceKnowledgeRollbackPlanCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    from_version_id: str
+    to_version_id: str
+    channel_id: Optional[str] = None
+    reason: str
+    impact_summary: Optional[str] = None
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
+    status: AirlineIntelligenceKnowledgeRollbackPlanStatus = AirlineIntelligenceKnowledgeRollbackPlanStatus.DRAFT
+
+
+class AirlineIntelligenceKnowledgeRollbackPlanUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[AirlineIntelligenceKnowledgeRollbackPlanStatus] = None
+    impact_summary: Optional[str] = None
+    checklist: Optional[List[Dict[str, Any]]] = None
+
+
+class AirlineIntelligenceKnowledgeVersionSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: AirlineIntelligenceKnowledgeVersionSnapshotType = AirlineIntelligenceKnowledgeVersionSnapshotType.MANUAL
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

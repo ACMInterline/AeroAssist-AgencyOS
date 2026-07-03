@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_1_airline_intelligence_data_pack_review_foundation",
+        "phase": "phase_39_2_airline_intelligence_knowledge_versioning_foundation",
     }
 
 
@@ -172,6 +172,13 @@ async def summary(
             "airline_intelligence_data_pack_conflicts": await db.collection("airline_intelligence_data_pack_conflicts").count(),
             "airline_intelligence_data_pack_promotion_readiness": await db.collection("airline_intelligence_data_pack_promotion_readiness").count(),
             "airline_intelligence_data_pack_review_snapshots": await db.collection("airline_intelligence_data_pack_review_snapshots").count(),
+            "airline_intelligence_knowledge_versions": await db.collection("airline_intelligence_knowledge_versions").count(),
+            "airline_intelligence_knowledge_version_items": await db.collection("airline_intelligence_knowledge_version_items").count(),
+            "airline_intelligence_knowledge_release_channels": await db.collection("airline_intelligence_knowledge_release_channels").count(),
+            "airline_intelligence_knowledge_release_assignments": await db.collection("airline_intelligence_knowledge_release_assignments").count(),
+            "airline_intelligence_knowledge_version_comparisons": await db.collection("airline_intelligence_knowledge_version_comparisons").count(),
+            "airline_intelligence_knowledge_rollback_plans": await db.collection("airline_intelligence_knowledge_rollback_plans").count(),
+            "airline_intelligence_knowledge_version_snapshots": await db.collection("airline_intelligence_knowledge_version_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

@@ -30,6 +30,7 @@ const primaryNav = [
   { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: Database },
   { label: "Airline Coverage", description: "Data readiness", href: "/agency/airline-intelligence-coverage", icon: Plane },
   { label: "Review Coverage", description: "Safe-use status", href: "/agency/airline-intelligence-review-coverage", icon: ClipboardList },
+  { label: "Knowledge Versions", description: "Visible airline data", href: "/agency/airline-intelligence-knowledge-versions", icon: Files },
   { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: Tags },
   { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: ClipboardList },
   { label: "Ancillary Pricing", description: "Prices and exceptions", href: "/agency/ancillary-pricing", icon: ClipboardList },
