@@ -19,7 +19,7 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/agent/*` | intentionally rejected | Duplicates `/agency/*` and would split agency workflow navigation. |
 | `/admin/*` | intentionally rejected | Duplicates `/platform/*` and would blur platform governance boundaries. |
 
-No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, or Phase 37.8. Documentation and API/UI mapping are preferred so future work remains explicit.
+No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, Phase 37.8, or Phase 37.9. Documentation and API/UI mapping are preferred so future work remains explicit.
 
 ## Route Mapping
 
@@ -55,6 +55,8 @@ No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Pha
 | `/agent/offer-decision-export-releases` | `/agency/offer-decision-export-releases` |
 | `/admin/offer-decision-export-deliveries` | `/platform/offer-decision-export-deliveries` |
 | `/agent/offer-decision-export-deliveries` | `/agency/offer-decision-export-deliveries` |
+| `/admin/offer-decision-export-delivery-outcomes` | `/platform/offer-decision-export-delivery-outcomes` |
+| `/agent/offer-decision-export-delivery-outcomes` | `/agency/offer-decision-export-delivery-outcomes` |
 | `/documents` | `/agency/documents` and `/platform/document-templates` |
 | `/tickets` | `/agency/tickets-emds` |
 | `/bookings` | `/agency/booking-workspaces` |

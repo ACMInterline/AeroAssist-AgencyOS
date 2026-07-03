@@ -6,7 +6,7 @@ from smoke_offer_decision_export_release_readiness_foundation import create_prev
 from smoke_offer_decision_pack_foundation import option_signature
 
 
-EXPECTED_PHASE = "phase_37_8_offer_decision_export_manual_delivery_handoff_foundation"
+EXPECTED_PHASE = "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:

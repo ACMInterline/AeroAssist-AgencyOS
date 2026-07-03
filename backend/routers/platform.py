@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_8_offer_decision_export_manual_delivery_handoff_foundation",
+        "phase": "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation",
     }
 
 
@@ -138,6 +138,11 @@ async def summary(
             "offer_decision_export_delivery_attachments": await db.collection("offer_decision_export_delivery_attachments").count(),
             "offer_decision_export_delivery_instructions": await db.collection("offer_decision_export_delivery_instructions").count(),
             "offer_decision_export_delivery_snapshots": await db.collection("offer_decision_export_delivery_snapshots").count(),
+            "offer_decision_export_delivery_outcomes": await db.collection("offer_decision_export_delivery_outcomes").count(),
+            "offer_decision_export_delivery_outcome_events": await db.collection("offer_decision_export_delivery_outcome_events").count(),
+            "offer_decision_export_delivery_receipts": await db.collection("offer_decision_export_delivery_receipts").count(),
+            "offer_decision_export_delivery_issues": await db.collection("offer_decision_export_delivery_issues").count(),
+            "offer_decision_export_delivery_outcome_snapshots": await db.collection("offer_decision_export_delivery_outcome_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_8_offer_decision_export_manual_delivery_handoff_foundation"
+PHASE_LABEL = "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -168,6 +168,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only manual handoff records without email/SMS sending, SMTP/SMS/storage provider calls, public links, real PDF delivery, recommendations, offer price mutation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Export Delivery Outcome",
+        "concept": "Offer decision export manual delivery outcome tracking",
+        "supplementary_concept": "manual delivery outcome status, outcome events, receipts, issues, immutable outcome snapshots",
+        "current_equivalent": "offer_decision_export_delivery_outcomes, offer_decision_export_delivery_outcome_events, offer_decision_export_delivery_receipts, offer_decision_export_delivery_issues, offer_decision_export_delivery_outcome_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only human-recorded outcome tracking without email/SMS sending, public links, real PDF delivery, recommendations, offer price mutation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -232,6 +240,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-releases", "agencyos": "/agency/offer-decision-export-releases"},
         {"supplementary": "/admin/offer-decision-export-deliveries", "agencyos": "/platform/offer-decision-export-deliveries"},
         {"supplementary": "/agent/offer-decision-export-deliveries", "agencyos": "/agency/offer-decision-export-deliveries"},
+        {"supplementary": "/admin/offer-decision-export-delivery-outcomes", "agencyos": "/platform/offer-decision-export-delivery-outcomes"},
+        {"supplementary": "/agent/offer-decision-export-delivery-outcomes", "agencyos": "/agency/offer-decision-export-delivery-outcomes"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -342,6 +352,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Offer decision export preview foundation built in Phase 37.6",
             "Offer decision export release readiness foundation built in Phase 37.7",
             "Offer decision export manual delivery handoff foundation built in Phase 37.8",
+            "Offer decision export manual delivery outcome tracking foundation built in Phase 37.9",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

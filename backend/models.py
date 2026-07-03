@@ -7891,6 +7891,228 @@ class OfferDecisionExportDeliverySnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportDeliveryOutcomeStatus(str, Enum):
+    PENDING = "pending"
+    MANUALLY_SENT = "manually_sent"
+    FAILED = "failed"
+    CORRECTED = "corrected"
+    RESENT = "resent"
+    ACKNOWLEDGED = "acknowledged"
+    CLOSED = "closed"
+    CANCELLED = "cancelled"
+
+
+class OfferDecisionExportDeliveryOutcomeEventType(str, Enum):
+    SENT_RECORDED = "sent_recorded"
+    FAILED_RECORDED = "failed_recorded"
+    CORRECTION_RECORDED = "correction_recorded"
+    RESEND_RECORDED = "resend_recorded"
+    ACKNOWLEDGEMENT_RECORDED = "acknowledgement_recorded"
+    ISSUE_RECORDED = "issue_recorded"
+    ISSUE_RESOLVED = "issue_resolved"
+    CLOSED = "closed"
+
+
+class OfferDecisionExportDeliveryReceiptType(str, Enum):
+    CLIENT_ACKNOWLEDGEMENT = "client_acknowledgement"
+    INTERNAL_CONFIRMATION = "internal_confirmation"
+    EXTERNAL_REFERENCE = "external_reference"
+    MANUAL_NOTE = "manual_note"
+
+
+class OfferDecisionExportDeliveryIssueType(str, Enum):
+    WRONG_RECIPIENT = "wrong_recipient"
+    MISSING_ATTACHMENT = "missing_attachment"
+    OUTDATED_EXPORT = "outdated_export"
+    CLIENT_CORRECTION_REQUESTED = "client_correction_requested"
+    DELIVERY_FAILED = "delivery_failed"
+    OTHER = "other"
+
+
+class OfferDecisionExportDeliveryIssueStatus(str, Enum):
+    OPEN = "open"
+    RESOLVED = "resolved"
+    HELD = "held"
+
+
+class OfferDecisionExportDeliveryActorType(str, Enum):
+    AGENCY_USER = "agency_user"
+    PLATFORM_USER = "platform_user"
+    EXTERNAL_RECIPIENT = "external_recipient"
+    SYSTEM = "system"
+
+
+class OfferDecisionExportDeliveryOutcomeSnapshotType(str, Enum):
+    OUTCOME_RECORDED = "outcome_recorded"
+    ACKNOWLEDGED = "acknowledged"
+    ISSUE_REVIEW = "issue_review"
+    CLOSED = "closed"
+    MANUAL = "manual"
+
+
+class OfferDecisionExportDeliveryOutcome(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    export_id: Optional[str] = None
+    preview_id: Optional[str] = None
+    release_readiness_id: Optional[str] = None
+    title: str
+    outcome_status: OfferDecisionExportDeliveryOutcomeStatus = OfferDecisionExportDeliveryOutcomeStatus.PENDING
+    status_reason: Optional[str] = None
+    actor_type: OfferDecisionExportDeliveryActorType = OfferDecisionExportDeliveryActorType.AGENCY_USER
+    recorded_by: Optional[str] = None
+    event_count: int = 0
+    receipt_count: int = 0
+    issue_count: int = 0
+    unresolved_issue_count: int = 0
+    snapshot_count: int = 0
+    outcome_summary: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    manual_tracking_only_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    pnr_mutation_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportDeliveryOutcomeEvent(BaseDocument):
+    agency_id: str
+    outcome_id: str
+    handoff_id: str
+    event_type: OfferDecisionExportDeliveryOutcomeEventType = OfferDecisionExportDeliveryOutcomeEventType.SENT_RECORDED
+    actor_type: OfferDecisionExportDeliveryActorType = OfferDecisionExportDeliveryActorType.AGENCY_USER
+    actor_label: Optional[str] = None
+    event_title: Optional[str] = None
+    event_note: Optional[str] = None
+    occurred_at: datetime = Field(default_factory=now_utc)
+    event_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+    provider_execution_disabled: bool = True
+
+
+class OfferDecisionExportDeliveryReceipt(BaseDocument):
+    agency_id: str
+    outcome_id: str
+    handoff_id: str
+    receipt_type: OfferDecisionExportDeliveryReceiptType = OfferDecisionExportDeliveryReceiptType.MANUAL_NOTE
+    reference_label: Optional[str] = None
+    received_from: Optional[str] = None
+    received_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    external_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+
+
+class OfferDecisionExportDeliveryIssue(BaseDocument):
+    agency_id: str
+    outcome_id: str
+    handoff_id: str
+    issue_type: OfferDecisionExportDeliveryIssueType = OfferDecisionExportDeliveryIssueType.OTHER
+    issue_status: OfferDecisionExportDeliveryIssueStatus = OfferDecisionExportDeliveryIssueStatus.OPEN
+    severity: str = "medium"
+    title: str
+    description: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    manual_tracking_only_enabled: bool = True
+
+
+class OfferDecisionExportDeliveryOutcomeSnapshot(BaseDocument):
+    agency_id: str
+    outcome_id: str
+    handoff_id: str
+    snapshot_type: OfferDecisionExportDeliveryOutcomeSnapshotType = OfferDecisionExportDeliveryOutcomeSnapshotType.OUTCOME_RECORDED
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    created_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class OfferDecisionExportDeliveryOutcomeCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    handoff_id: str
+    title: Optional[str] = None
+    outcome_status: OfferDecisionExportDeliveryOutcomeStatus = OfferDecisionExportDeliveryOutcomeStatus.PENDING
+    actor_type: OfferDecisionExportDeliveryActorType = OfferDecisionExportDeliveryActorType.AGENCY_USER
+    recorded_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryOutcomeUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    outcome_status: OfferDecisionExportDeliveryOutcomeStatus
+    status_reason: Optional[str] = None
+    actor_type: OfferDecisionExportDeliveryActorType = OfferDecisionExportDeliveryActorType.AGENCY_USER
+    recorded_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryOutcomeEventCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    event_type: OfferDecisionExportDeliveryOutcomeEventType = OfferDecisionExportDeliveryOutcomeEventType.SENT_RECORDED
+    actor_type: OfferDecisionExportDeliveryActorType = OfferDecisionExportDeliveryActorType.AGENCY_USER
+    actor_label: Optional[str] = None
+    event_title: Optional[str] = None
+    event_note: Optional[str] = None
+    occurred_at: Optional[datetime] = None
+    event_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryReceiptCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    receipt_type: OfferDecisionExportDeliveryReceiptType = OfferDecisionExportDeliveryReceiptType.MANUAL_NOTE
+    reference_label: Optional[str] = None
+    received_from: Optional[str] = None
+    received_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    external_reference_metadata: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryIssueCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    issue_type: OfferDecisionExportDeliveryIssueType = OfferDecisionExportDeliveryIssueType.OTHER
+    severity: str = "medium"
+    title: str
+    description: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryIssueUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    issue_status: OfferDecisionExportDeliveryIssueStatus
+    resolved_by: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportDeliveryOutcomeSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: OfferDecisionExportDeliveryOutcomeSnapshotType = OfferDecisionExportDeliveryOutcomeSnapshotType.OUTCOME_RECORDED
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

@@ -91,7 +91,7 @@ def intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_37_8_offer_decision_export_manual_delivery_handoff_foundation":
+    if health.get("phase") != "phase_37_9_offer_decision_export_manual_delivery_outcome_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     get("/api/request-intakes", {"Authorization": "Bearer definitely-not-valid"}, 401)
