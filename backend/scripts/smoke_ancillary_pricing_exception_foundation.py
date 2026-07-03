@@ -4,7 +4,7 @@ from uuid import uuid4
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_38_2_offer_decision_export_compliance_foundation"
+EXPECTED_PHASE = "phase_39_0_airline_intelligence_data_pack_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:

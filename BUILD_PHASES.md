@@ -1314,6 +1314,22 @@ Avoid adding:
 
 - Automatic email/SMS/notification sending, public links, PDF/document delivery, live booking, live reservation creation, live PNR mutation, live GDS/provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer or price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
+### Phase 39.0: Airline Intelligence Data Pack Foundation
+
+Implemented scope:
+
+- Added governed airline intelligence data packs, staged data pack items, validation issues, import runs, review notes, and coverage snapshots.
+- Added deterministic local validation and inline JSON/CSV dry-run staging without scraping, external calls, external AI, or automatic promotion into operational airline tables.
+- Added platform APIs and `/platform/airline-intelligence-data-packs` for guided data pack creation, review, validation, dry runs, and coverage snapshots.
+- Added agency read-only APIs and `/agency/airline-intelligence-coverage` for plain-language coverage visibility without data-maintenance controls.
+- Added CRM, agency website/CMS, client portal, and offer-builder alignment metadata flags for future safe consumption.
+- Added readiness flags and counts under `airline_intelligence_data_pack_foundation`.
+- Added `docs/architecture/airline-intelligence-data-pack-foundation.md`.
+
+Avoid adding:
+
+- Live scraping, external APIs, external AI, automatic promotion into operational airline tables, recommendation engines, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, public client portal links, CMS publishing, automatic document delivery, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

@@ -11,7 +11,7 @@ from smoke_service_mechanics_mapping_foundation import main as mechanics_smoke_m
 from smoke_service_taxonomy_foundation import main as taxonomy_smoke_main
 
 
-EXPECTED_PHASE = "phase_38_2_offer_decision_export_compliance_foundation"
+EXPECTED_PHASE = "phase_39_0_airline_intelligence_data_pack_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:

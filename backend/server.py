@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_airline_intelligence_data_packs, agency_ancillary_pricing, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_airline_intelligence_data_packs, platform_ancillary_pricing, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 38.2 offer decision export compliance foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 39.0 airline intelligence data pack foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_38_2_offer_decision_export_compliance_foundation",
+        "phase": "phase_39_0_airline_intelligence_data_pack_foundation",
     }
 
 
@@ -318,6 +318,20 @@ async def readiness() -> dict:
     offer_decision_export_compliance_result_count = await database.collection("offer_decision_export_compliance_results").count()
     offer_decision_export_compliance_exception_count = await database.collection("offer_decision_export_compliance_exceptions").count()
     offer_decision_export_compliance_snapshot_count = await database.collection("offer_decision_export_compliance_snapshots").count()
+    airline_intelligence_data_pack_count = await database.collection("airline_intelligence_data_packs").count()
+    airline_intelligence_data_pack_item_count = await database.collection("airline_intelligence_data_pack_items").count()
+    airline_intelligence_data_pack_validation_issue_count = await database.collection("airline_intelligence_data_pack_validation_issues").count()
+    airline_intelligence_data_pack_import_run_count = await database.collection("airline_intelligence_data_pack_import_runs").count()
+    airline_intelligence_data_pack_review_note_count = await database.collection("airline_intelligence_data_pack_review_notes").count()
+    airline_intelligence_coverage_snapshot_count = await database.collection("airline_intelligence_coverage_snapshots").count()
+    airline_intelligence_data_packs = await database.collection("airline_intelligence_data_packs").find_many()
+    airline_data_packs_needing_review_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") in {"draft", "needs_review"}])
+    airline_data_pack_approved_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") == "approved"])
+    airline_data_pack_demo_count = len([item for item in airline_intelligence_data_packs if item.get("is_demo_data")])
+    airline_data_pack_agency_display_safe_count = len([item for item in airline_intelligence_data_packs if item.get("safe_for_agency_display")])
+    airline_data_pack_cms_display_safe_count = len([item for item in airline_intelligence_data_packs if item.get("safe_for_cms_display")])
+    airline_data_pack_client_portal_safe_count = len([item for item in airline_intelligence_data_packs if item.get("safe_for_client_portal_later")])
+    airline_data_pack_offer_builder_safe_count = len([item for item in airline_intelligence_data_packs if item.get("safe_for_offer_builder")])
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -339,7 +353,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_38_2_offer_decision_export_compliance_foundation",
+        "phase": "phase_39_0_airline_intelligence_data_pack_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -1110,6 +1124,50 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 38.2 creates metadata-only compliance evidence for offer decision exports and governance records. It records requirements, checks, pass/fail results, exceptions, and immutable compliance snapshots without sending, delivery, offer or price mutation, recommendation, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, settlement, scraping, external AI, GDS execution, or provider execution.",
         },
+        "airline_intelligence_data_pack_foundation": {
+            "data_packs_enabled": True,
+            "data_pack_items_enabled": True,
+            "data_pack_validation_enabled": True,
+            "data_pack_dry_runs_enabled": True,
+            "data_pack_review_notes_enabled": True,
+            "coverage_snapshots_enabled": True,
+            "platform_data_pack_ui_enabled": True,
+            "agency_coverage_ui_enabled": True,
+            "agency_read_only_consumption_enabled": True,
+            "crm_alignment_metadata_enabled": True,
+            "cms_alignment_metadata_enabled": True,
+            "client_portal_alignment_metadata_enabled": True,
+            "offer_builder_alignment_metadata_enabled": True,
+            "metadata_only_staging_enabled": True,
+            "automatic_promotion_disabled": True,
+            "scraping_disabled": True,
+            "external_ai_disabled": True,
+            "external_api_calls_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "public_client_portal_disabled": True,
+            "public_cms_publishing_disabled": True,
+            "automatic_sending_disabled": True,
+            "data_pack_count": airline_intelligence_data_pack_count,
+            "data_pack_item_count": airline_intelligence_data_pack_item_count,
+            "validation_issue_count": airline_intelligence_data_pack_validation_issue_count,
+            "import_run_count": airline_intelligence_data_pack_import_run_count,
+            "review_note_count": airline_intelligence_data_pack_review_note_count,
+            "coverage_snapshot_count": airline_intelligence_coverage_snapshot_count,
+            "packs_needing_review_count": airline_data_packs_needing_review_count,
+            "approved_pack_count": airline_data_pack_approved_count,
+            "demo_pack_count": airline_data_pack_demo_count,
+            "agency_display_safe_pack_count": airline_data_pack_agency_display_safe_count,
+            "cms_display_safe_pack_count": airline_data_pack_cms_display_safe_count,
+            "client_portal_safe_pack_count": airline_data_pack_client_portal_safe_count,
+            "offer_builder_safe_pack_count": airline_data_pack_offer_builder_safe_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 39.0 creates metadata-only airline intelligence data pack staging, validation, review, and coverage records. It does not scrape, call external APIs, use external AI, auto-promote records into operational airline tables, publish CMS/client portal content, recommend airlines, book, mutate PNRs, ticket, issue EMDs, charge, invoice, settle, send messages, or execute providers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1180,6 +1238,7 @@ app.include_router(platform_offer_decision_export_delivery_outcomes.router)
 app.include_router(platform_offer_decision_export_audit_reviews.router)
 app.include_router(platform_offer_decision_export_governance.router)
 app.include_router(platform_offer_decision_export_compliance.router)
+app.include_router(platform_airline_intelligence_data_packs.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -1213,6 +1272,7 @@ app.include_router(agency_offer_decision_export_delivery_outcomes.router)
 app.include_router(agency_offer_decision_export_audit_reviews.router)
 app.include_router(agency_offer_decision_export_governance.router)
 app.include_router(agency_offer_decision_export_compliance.router)
+app.include_router(agency_airline_intelligence_data_packs.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

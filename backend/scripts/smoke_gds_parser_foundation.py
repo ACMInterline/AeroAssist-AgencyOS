@@ -2,7 +2,7 @@
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post
 
 
-EXPECTED_PHASE = "phase_38_2_offer_decision_export_compliance_foundation"
+EXPECTED_PHASE = "phase_39_0_airline_intelligence_data_pack_foundation"
 
 
 RAW_GDS_TEXT = """RP/SOF1A0980/SOF1A0980 AA/SU 30JUN26/0915Z ABC123

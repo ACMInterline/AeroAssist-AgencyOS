@@ -8962,6 +8962,421 @@ class OfferDecisionExportComplianceSnapshotCreateRequest(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class AirlineIntelligenceDataPackType(str, Enum):
+    STARTER_PACK = "starter_pack"
+    AIRLINE_PROFILE_PACK = "airline_profile_pack"
+    FLEET_PACK = "fleet_pack"
+    FARE_PACK = "fare_pack"
+    SPECIAL_SERVICES_PACK = "special_services_pack"
+    CMS_BRANDING_PACK = "cms_branding_pack"
+    MIXED_PACK = "mixed_pack"
+
+
+class AirlineIntelligenceDataPackSourceType(str, Enum):
+    MANUAL = "manual"
+    CURATED = "curated"
+    AGENCY_SUPPLIED = "agency_supplied"
+    PLATFORM_SUPPLIED = "platform_supplied"
+    DEMO_SAMPLE = "demo_sample"
+    IMPORTED_FILE = "imported_file"
+
+
+class AirlineIntelligenceDataPackVerificationStatus(str, Enum):
+    DRAFT = "draft"
+    NEEDS_REVIEW = "needs_review"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    RETIRED = "retired"
+
+
+class AirlineIntelligenceDataPackTargetDomain(str, Enum):
+    AIRLINE_PROFILE = "airline_profile"
+    AIRLINE_CONTACTS = "airline_contacts"
+    FLEET = "fleet"
+    TAIL_NUMBERS = "tail_numbers"
+    AIRCRAFT_CONFIGURATIONS = "aircraft_configurations"
+    SEATMAPS = "seatmaps"
+    ROUTES = "routes"
+    FARE_FAMILIES = "fare_families"
+    RBD_MATRIX = "rbd_matrix"
+    FARE_RULES = "fare_rules"
+    ANCILLARIES = "ancillaries"
+    INTERLINE = "interline"
+    DISTRIBUTION = "distribution"
+    PSS_PARAMETERS = "pss_parameters"
+    GDS_PARAMETERS = "gds_parameters"
+    EXCEPTION_RULES = "exception_rules"
+    BRAND_ASSETS = "brand_assets"
+    SPECIAL_SERVICES_RULES = "special_services_rules"
+    CMS_CONTENT = "cms_content"
+    CLIENT_PORTAL_DISPLAY_METADATA = "client_portal_display_metadata"
+
+
+class AirlineIntelligenceDataPackItemProposedAction(str, Enum):
+    INSERT = "insert"
+    UPDATE = "update"
+    SKIP = "skip"
+    REVIEW_ONLY = "review_only"
+
+
+class AirlineIntelligenceDataPackItemValidationStatus(str, Enum):
+    NOT_CHECKED = "not_checked"
+    VALID = "valid"
+    WARNING = "warning"
+    INVALID = "invalid"
+
+
+class AirlineIntelligenceDataPackItemVerificationStatus(str, Enum):
+    UNVERIFIED = "unverified"
+    NEEDS_REVIEW = "needs_review"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class AirlineIntelligenceDataPackIssueSeverity(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+class AirlineIntelligenceDataPackIssueStatus(str, Enum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
+    IGNORED = "ignored"
+
+
+class AirlineIntelligenceDataPackImportRunType(str, Enum):
+    DRY_RUN = "dry_run"
+    VALIDATION = "validation"
+    STAGING = "staging"
+
+
+class AirlineIntelligenceDataPackImportRunStatus(str, Enum):
+    QUEUED = "queued"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+
+
+class AirlineIntelligenceDataPackImportSourceFormat(str, Enum):
+    JSON = "json"
+    CSV = "csv"
+    MANUAL = "manual"
+
+
+class AirlineIntelligenceDataPackReviewNoteType(str, Enum):
+    REVIEW = "review"
+    SOURCE = "source"
+    VERIFICATION = "verification"
+    AGENCY_DISPLAY = "agency_display"
+    CMS_DISPLAY = "cms_display"
+    CLIENT_PORTAL = "client_portal"
+    OFFER_BUILDER = "offer_builder"
+
+
+class AirlineIntelligenceDataPack(BaseDocument):
+    name: str
+    slug: str
+    description: Optional[str] = None
+    pack_type: AirlineIntelligenceDataPackType = AirlineIntelligenceDataPackType.MIXED_PACK
+    airline_codes: List[str] = Field(default_factory=list)
+    target_airline_ids: List[str] = Field(default_factory=list)
+    target_domains: List[str] = Field(default_factory=list)
+    source_type: AirlineIntelligenceDataPackSourceType = AirlineIntelligenceDataPackSourceType.MANUAL
+    source_reference: Optional[str] = None
+    source_url: Optional[str] = None
+    source_notes: Optional[str] = None
+    version_label: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: bool = False
+    is_operationally_verified: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    verification_status: AirlineIntelligenceDataPackVerificationStatus = AirlineIntelligenceDataPackVerificationStatus.DRAFT
+    confidence_score: float = 0.0
+    human_summary: Optional[str] = None
+    operator_guidance: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+    created_by: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceDataPackItem(BaseDocument):
+    pack_id: str
+    airline_id: Optional[str] = None
+    airline_iata_code: Optional[str] = None
+    target_domain: Optional[AirlineIntelligenceDataPackTargetDomain] = None
+    target_record_key: Optional[str] = None
+    display_name: str
+    plain_language_summary: Optional[str] = None
+    proposed_action: AirlineIntelligenceDataPackItemProposedAction = AirlineIntelligenceDataPackItemProposedAction.REVIEW_ONLY
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    normalized_payload: Dict[str, Any] = Field(default_factory=dict)
+    validation_status: AirlineIntelligenceDataPackItemValidationStatus = AirlineIntelligenceDataPackItemValidationStatus.NOT_CHECKED
+    verification_status: AirlineIntelligenceDataPackItemVerificationStatus = AirlineIntelligenceDataPackItemVerificationStatus.UNVERIFIED
+    confidence_score: float = 0.0
+    issue_count: int = 0
+    warning_count: int = 0
+    source_reference: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: bool = False
+    is_operationally_verified: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    metadata_only: bool = True
+    automatic_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceDataPackValidationIssue(BaseDocument):
+    pack_id: str
+    item_id: Optional[str] = None
+    severity: AirlineIntelligenceDataPackIssueSeverity = AirlineIntelligenceDataPackIssueSeverity.WARNING
+    issue_code: str
+    technical_message: Optional[str] = None
+    user_friendly_message: str
+    suggested_resolution: Optional[str] = None
+    field_path: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolved_by: Optional[str] = None
+    status: AirlineIntelligenceDataPackIssueStatus = AirlineIntelligenceDataPackIssueStatus.OPEN
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackImportRun(BaseDocument):
+    pack_id: str
+    run_type: AirlineIntelligenceDataPackImportRunType = AirlineIntelligenceDataPackImportRunType.DRY_RUN
+    status: AirlineIntelligenceDataPackImportRunStatus = AirlineIntelligenceDataPackImportRunStatus.QUEUED
+    source_format: AirlineIntelligenceDataPackImportSourceFormat = AirlineIntelligenceDataPackImportSourceFormat.MANUAL
+    total_items: int = 0
+    valid_items: int = 0
+    warning_items: int = 0
+    invalid_items: int = 0
+    skipped_items: int = 0
+    inserted_proposals: int = 0
+    updated_proposals: int = 0
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    summary: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackReviewNote(BaseDocument):
+    pack_id: str
+    item_id: Optional[str] = None
+    note_type: AirlineIntelligenceDataPackReviewNoteType = AirlineIntelligenceDataPackReviewNoteType.REVIEW
+    note: str
+    created_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceCoverageSnapshot(BaseDocument):
+    snapshot_label: str
+    airline_count: int = 0
+    airlines_with_profiles: int = 0
+    airlines_with_contacts: int = 0
+    airlines_with_fleet: int = 0
+    airlines_with_routes: int = 0
+    airlines_with_fare_families: int = 0
+    airlines_with_rbd_matrix: int = 0
+    airlines_with_fare_rules: int = 0
+    airlines_with_ancillaries: int = 0
+    airlines_with_interline: int = 0
+    airlines_with_distribution: int = 0
+    airlines_with_pss_parameters: int = 0
+    airlines_with_gds_parameters: int = 0
+    airlines_with_exception_rules: int = 0
+    airlines_with_brand_assets: int = 0
+    airlines_with_special_services_rules: int = 0
+    airlines_safe_for_agency_internal_crm: int = 0
+    airlines_safe_for_agency_display: int = 0
+    airlines_safe_for_cms_display: int = 0
+    airlines_safe_for_client_portal_later: int = 0
+    airlines_safe_for_offer_builder: int = 0
+    generated_at: datetime = Field(default_factory=now_utc)
+    diagnostic: Optional[str] = None
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    name: str
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    pack_type: AirlineIntelligenceDataPackType = AirlineIntelligenceDataPackType.MIXED_PACK
+    airline_codes: List[str] = Field(default_factory=list)
+    target_airline_ids: List[str] = Field(default_factory=list)
+    target_domains: List[AirlineIntelligenceDataPackTargetDomain] = Field(default_factory=list)
+    source_type: AirlineIntelligenceDataPackSourceType = AirlineIntelligenceDataPackSourceType.MANUAL
+    source_reference: Optional[str] = None
+    source_url: Optional[str] = None
+    source_notes: Optional[str] = None
+    version_label: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: bool = False
+    is_operationally_verified: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    verification_status: AirlineIntelligenceDataPackVerificationStatus = AirlineIntelligenceDataPackVerificationStatus.DRAFT
+    confidence_score: float = 0.0
+    human_summary: Optional[str] = None
+    operator_guidance: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+
+
+class AirlineIntelligenceDataPackUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    name: Optional[str] = None
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    pack_type: Optional[AirlineIntelligenceDataPackType] = None
+    airline_codes: Optional[List[str]] = None
+    target_airline_ids: Optional[List[str]] = None
+    target_domains: Optional[List[AirlineIntelligenceDataPackTargetDomain]] = None
+    source_type: Optional[AirlineIntelligenceDataPackSourceType] = None
+    source_reference: Optional[str] = None
+    source_url: Optional[str] = None
+    source_notes: Optional[str] = None
+    version_label: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: Optional[bool] = None
+    is_operationally_verified: Optional[bool] = None
+    safe_for_agency_internal_crm: Optional[bool] = None
+    safe_for_agency_display: Optional[bool] = None
+    safe_for_cms_display: Optional[bool] = None
+    safe_for_client_portal_later: Optional[bool] = None
+    safe_for_offer_builder: Optional[bool] = None
+    verification_status: Optional[AirlineIntelligenceDataPackVerificationStatus] = None
+    confidence_score: Optional[float] = None
+    human_summary: Optional[str] = None
+    operator_guidance: Optional[str] = None
+    warnings: Optional[List[str]] = None
+
+
+class AirlineIntelligenceDataPackItemCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    airline_iata_code: Optional[str] = None
+    target_domain: Optional[AirlineIntelligenceDataPackTargetDomain] = None
+    target_record_key: Optional[str] = None
+    display_name: str
+    plain_language_summary: Optional[str] = None
+    proposed_action: AirlineIntelligenceDataPackItemProposedAction = AirlineIntelligenceDataPackItemProposedAction.REVIEW_ONLY
+    payload: Dict[str, Any] = Field(default_factory=dict)
+    normalized_payload: Dict[str, Any] = Field(default_factory=dict)
+    validation_status: AirlineIntelligenceDataPackItemValidationStatus = AirlineIntelligenceDataPackItemValidationStatus.NOT_CHECKED
+    verification_status: AirlineIntelligenceDataPackItemVerificationStatus = AirlineIntelligenceDataPackItemVerificationStatus.UNVERIFIED
+    confidence_score: float = 0.0
+    source_reference: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: bool = False
+    is_operationally_verified: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+
+
+class AirlineIntelligenceDataPackItemUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    airline_id: Optional[str] = None
+    airline_iata_code: Optional[str] = None
+    target_domain: Optional[AirlineIntelligenceDataPackTargetDomain] = None
+    target_record_key: Optional[str] = None
+    display_name: Optional[str] = None
+    plain_language_summary: Optional[str] = None
+    proposed_action: Optional[AirlineIntelligenceDataPackItemProposedAction] = None
+    payload: Optional[Dict[str, Any]] = None
+    normalized_payload: Optional[Dict[str, Any]] = None
+    validation_status: Optional[AirlineIntelligenceDataPackItemValidationStatus] = None
+    verification_status: Optional[AirlineIntelligenceDataPackItemVerificationStatus] = None
+    confidence_score: Optional[float] = None
+    source_reference: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    is_demo_data: Optional[bool] = None
+    is_operationally_verified: Optional[bool] = None
+    safe_for_agency_internal_crm: Optional[bool] = None
+    safe_for_agency_display: Optional[bool] = None
+    safe_for_cms_display: Optional[bool] = None
+    safe_for_client_portal_later: Optional[bool] = None
+    safe_for_offer_builder: Optional[bool] = None
+
+
+class AirlineIntelligenceDataPackInlineJsonRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    inline_json: str
+    created_by: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackInlineCsvRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    inline_csv: str
+    created_by: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackImportRunCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    run_type: AirlineIntelligenceDataPackImportRunType = AirlineIntelligenceDataPackImportRunType.VALIDATION
+    source_format: AirlineIntelligenceDataPackImportSourceFormat = AirlineIntelligenceDataPackImportSourceFormat.MANUAL
+    created_by: Optional[str] = None
+    summary: Optional[str] = None
+    warnings: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+
+
+class AirlineIntelligenceDataPackValidationIssueAcknowledgeRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: AirlineIntelligenceDataPackIssueStatus = AirlineIntelligenceDataPackIssueStatus.ACKNOWLEDGED
+    resolved_by: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackReviewNoteCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_id: Optional[str] = None
+    note_type: AirlineIntelligenceDataPackReviewNoteType = AirlineIntelligenceDataPackReviewNoteType.REVIEW
+    note: str
+    created_by: Optional[str] = None
+
+
+class AirlineIntelligenceCoverageSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    snapshot_label: Optional[str] = None
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

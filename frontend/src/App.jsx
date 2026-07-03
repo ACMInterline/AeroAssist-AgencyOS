@@ -1,6 +1,7 @@
 import AgencyDashboardPage from "./pages/agency/AgencyDashboardPage"
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
+import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -65,6 +66,7 @@ import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
 import LoginPage from "./pages/auth/LoginPage"
 import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
+import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligenceDataPacksPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
 import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"
 import AirlinesPage from "./pages/platform/AirlinesPage"
@@ -121,6 +123,7 @@ const routes = {
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/blueprint": PlatformBlueprintPage,
   "/platform/airlines": AirlinesPage,
+  "/platform/airline-intelligence-data-packs": AirlineIntelligenceDataPacksPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -149,6 +152,7 @@ const routes = {
   "/agency/reference": ReferenceDataPage,
   "/agency/settings/forms": FormProfilesPage,
   "/agency/airline-intelligence": AirlineIntelligencePage,
+  "/agency/airline-intelligence-coverage": AirlineIntelligenceCoveragePage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
