@@ -11,7 +11,7 @@ BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 AGENCY_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
-EXPECTED_PHASE = "phase_39_0_airline_intelligence_data_pack_foundation"
+EXPECTED_PHASE = "phase_39_1_airline_intelligence_data_pack_review_foundation"
 
 
 def request(method: str, path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> tuple[int, dict]:

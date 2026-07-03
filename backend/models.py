@@ -9377,6 +9377,308 @@ class AirlineIntelligenceCoverageSnapshotCreateRequest(BaseModel):
     snapshot_label: Optional[str] = None
 
 
+class AirlineIntelligenceDataPackReviewStatus(str, Enum):
+    DRAFT = "draft"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    PROMOTION_READY = "promotion_ready"
+    BLOCKED = "blocked"
+
+
+class AirlineIntelligenceDataPackChecklistScope(str, Enum):
+    PACK = "pack"
+    ITEM = "item"
+
+
+class AirlineIntelligenceDataPackChecklistStatus(str, Enum):
+    OPEN = "open"
+    PASSED = "passed"
+    FAILED = "failed"
+    WAIVED = "waived"
+
+
+class AirlineIntelligenceDataPackFieldMappingStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEWED = "reviewed"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class AirlineIntelligenceDataPackConflictType(str, Enum):
+    DUPLICATE_STAGED_ITEM = "duplicate_staged_item"
+    FIELD_VALUE_CONFLICT = "field_value_conflict"
+    MISSING_FIELD_MAPPING = "missing_field_mapping"
+    MISSING_TARGET_REFERENCE = "missing_target_reference"
+    UNSAFE_SURFACE_FLAG = "unsafe_surface_flag"
+
+
+class AirlineIntelligenceDataPackConflictStatus(str, Enum):
+    OPEN = "open"
+    ACKNOWLEDGED = "acknowledged"
+    RESOLVED = "resolved"
+    IGNORED = "ignored"
+
+
+class AirlineIntelligenceDataPackPromotionReadinessStatus(str, Enum):
+    NOT_READY = "not_ready"
+    NEEDS_REVIEW = "needs_review"
+    READY = "ready"
+    BLOCKED = "blocked"
+    REJECTED = "rejected"
+
+
+class AirlineIntelligenceDataPackReviewSnapshotType(str, Enum):
+    REVIEW_CREATED = "review_created"
+    CHECKLIST_UPDATED = "checklist_updated"
+    FIELD_MAPPING_UPDATED = "field_mapping_updated"
+    CONFLICTS_DETECTED = "conflicts_detected"
+    READINESS_MARKED = "readiness_marked"
+    STATUS_CHANGED = "status_changed"
+
+
+class AirlineIntelligenceDataPackReview(BaseDocument):
+    pack_id: str
+    status: AirlineIntelligenceDataPackReviewStatus = AirlineIntelligenceDataPackReviewStatus.DRAFT
+    review_title: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    plain_language_coverage_summary: Optional[str] = None
+    decision_notes: Optional[str] = None
+    checklist_total_count: int = 0
+    checklist_passed_count: int = 0
+    checklist_failed_count: int = 0
+    field_mapping_count: int = 0
+    open_conflict_count: int = 0
+    promotion_ready: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    metadata_only: bool = True
+    automatic_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceDataPackReviewChecklistItem(BaseDocument):
+    review_id: str
+    pack_id: str
+    item_id: Optional[str] = None
+    scope: AirlineIntelligenceDataPackChecklistScope = AirlineIntelligenceDataPackChecklistScope.PACK
+    label: str
+    description: Optional[str] = None
+    status: AirlineIntelligenceDataPackChecklistStatus = AirlineIntelligenceDataPackChecklistStatus.OPEN
+    required: bool = True
+    completed_by: Optional[str] = None
+    completed_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackFieldMapping(BaseDocument):
+    pack_id: str
+    item_id: Optional[str] = None
+    source_payload_path: str
+    target_collection: str
+    target_field_path: str
+    target_record_key: Optional[str] = None
+    target_record_id: Optional[str] = None
+    mapping_status: AirlineIntelligenceDataPackFieldMappingStatus = AirlineIntelligenceDataPackFieldMappingStatus.DRAFT
+    mapping_confidence: float = 0.0
+    transformation_notes: Optional[str] = None
+    would_create_record: bool = False
+    would_update_record: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    metadata_only: bool = True
+    automatic_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceDataPackConflict(BaseDocument):
+    pack_id: str
+    item_id: Optional[str] = None
+    target_collection: Optional[str] = None
+    target_record_key: Optional[str] = None
+    conflict_type: AirlineIntelligenceDataPackConflictType = AirlineIntelligenceDataPackConflictType.FIELD_VALUE_CONFLICT
+    severity: AirlineIntelligenceDataPackIssueSeverity = AirlineIntelligenceDataPackIssueSeverity.WARNING
+    status: AirlineIntelligenceDataPackConflictStatus = AirlineIntelligenceDataPackConflictStatus.OPEN
+    plain_language_summary: str
+    technical_summary: Optional[str] = None
+    staged_value: Optional[Any] = None
+    existing_value: Optional[Any] = None
+    suggested_resolution: Optional[str] = None
+    detected_by: Optional[str] = None
+    detected_at: datetime = Field(default_factory=now_utc)
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackPromotionReadiness(BaseDocument):
+    pack_id: str
+    review_id: Optional[str] = None
+    status: AirlineIntelligenceDataPackPromotionReadinessStatus = AirlineIntelligenceDataPackPromotionReadinessStatus.NOT_READY
+    ready_for_promotion: bool = False
+    checklist_complete: bool = False
+    approved_mapping_count: int = 0
+    open_conflict_count: int = 0
+    blocked_reason: Optional[str] = None
+    readiness_summary: Optional[str] = None
+    marked_by: Optional[str] = None
+    marked_at: datetime = Field(default_factory=now_utc)
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+    metadata_only: bool = True
+    automatic_promotion_disabled: bool = True
+
+
+class AirlineIntelligenceDataPackReviewSnapshot(BaseDocument):
+    pack_id: str
+    review_id: Optional[str] = None
+    snapshot_type: AirlineIntelligenceDataPackReviewSnapshotType = AirlineIntelligenceDataPackReviewSnapshotType.REVIEW_CREATED
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceDataPackReviewCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    review_title: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    plain_language_coverage_summary: Optional[str] = None
+    decision_notes: Optional[str] = None
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+
+
+class AirlineIntelligenceDataPackReviewUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[AirlineIntelligenceDataPackReviewStatus] = None
+    review_title: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    rejected_by: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    plain_language_coverage_summary: Optional[str] = None
+    decision_notes: Optional[str] = None
+    safe_for_agency_internal_crm: Optional[bool] = None
+    safe_for_agency_display: Optional[bool] = None
+    safe_for_cms_display: Optional[bool] = None
+    safe_for_client_portal_later: Optional[bool] = None
+    safe_for_offer_builder: Optional[bool] = None
+
+
+class AirlineIntelligenceDataPackChecklistItemCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_id: Optional[str] = None
+    scope: AirlineIntelligenceDataPackChecklistScope = AirlineIntelligenceDataPackChecklistScope.PACK
+    label: str
+    description: Optional[str] = None
+    status: AirlineIntelligenceDataPackChecklistStatus = AirlineIntelligenceDataPackChecklistStatus.OPEN
+    required: bool = True
+    completed_by: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackChecklistItemUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[AirlineIntelligenceDataPackChecklistStatus] = None
+    completed_by: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackFieldMappingCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_id: Optional[str] = None
+    source_payload_path: str
+    target_collection: str
+    target_field_path: str
+    target_record_key: Optional[str] = None
+    target_record_id: Optional[str] = None
+    mapping_status: AirlineIntelligenceDataPackFieldMappingStatus = AirlineIntelligenceDataPackFieldMappingStatus.DRAFT
+    mapping_confidence: float = 0.0
+    transformation_notes: Optional[str] = None
+    would_create_record: bool = False
+    would_update_record: bool = False
+    safe_for_agency_internal_crm: bool = False
+    safe_for_agency_display: bool = False
+    safe_for_cms_display: bool = False
+    safe_for_client_portal_later: bool = False
+    safe_for_offer_builder: bool = False
+
+
+class AirlineIntelligenceDataPackFieldMappingUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    source_payload_path: Optional[str] = None
+    target_collection: Optional[str] = None
+    target_field_path: Optional[str] = None
+    target_record_key: Optional[str] = None
+    target_record_id: Optional[str] = None
+    mapping_status: Optional[AirlineIntelligenceDataPackFieldMappingStatus] = None
+    mapping_confidence: Optional[float] = None
+    transformation_notes: Optional[str] = None
+    would_create_record: Optional[bool] = None
+    would_update_record: Optional[bool] = None
+    safe_for_agency_internal_crm: Optional[bool] = None
+    safe_for_agency_display: Optional[bool] = None
+    safe_for_cms_display: Optional[bool] = None
+    safe_for_client_portal_later: Optional[bool] = None
+    safe_for_offer_builder: Optional[bool] = None
+
+
+class AirlineIntelligenceDataPackConflictUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: AirlineIntelligenceDataPackConflictStatus
+    resolved_by: Optional[str] = None
+    resolution_notes: Optional[str] = None
+
+
+class AirlineIntelligenceDataPackPromotionReadinessRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    review_id: Optional[str] = None
+    status: Optional[AirlineIntelligenceDataPackPromotionReadinessStatus] = None
+    marked_by: Optional[str] = None
+    blocked_reason: Optional[str] = None
+    readiness_summary: Optional[str] = None
+    safe_for_agency_internal_crm: Optional[bool] = None
+    safe_for_agency_display: Optional[bool] = None
+    safe_for_cms_display: Optional[bool] = None
+    safe_for_client_portal_later: Optional[bool] = None
+    safe_for_offer_builder: Optional[bool] = None
+
+
+class AirlineIntelligenceDataPackReviewSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_type: AirlineIntelligenceDataPackReviewSnapshotType = AirlineIntelligenceDataPackReviewSnapshotType.REVIEW_CREATED
+    created_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

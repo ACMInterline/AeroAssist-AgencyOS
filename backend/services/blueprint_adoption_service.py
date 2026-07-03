@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_0_airline_intelligence_data_pack_foundation"
+PHASE_LABEL = "phase_39_1_airline_intelligence_data_pack_review_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -19,9 +19,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Airline Intelligence",
         "concept": "Airlines and operating intelligence",
         "supplementary_concept": "airlines, airline_contacts, airline_fleet, aircraft, routes, fare families, RBD matrix, fare rules, ancillaries, interline, distribution, PSS/GDS parameters, exception rules",
-        "current_equivalent": "airline_profiles, airline_intelligence_profiles, airline_contacts, airline_fleet_types, aircraft_tail_numbers, aircraft_configurations, aircraft_seatmaps, airline_routes, airline_fare_families, airline_rbd_matrix_rows, airline_fare_rules, airline_ancillaries, airline_interline_agreements, airline_distribution_profiles, airline_pss_parameters, airline_gds_parameters, unified_exception_rules, and airline_intelligence_data_packs with staged pack items, validation issues, import runs, review notes, and coverage snapshots",
+        "current_equivalent": "airline_profiles, airline_intelligence_profiles, airline_contacts, airline_fleet_types, aircraft_tail_numbers, aircraft_configurations, aircraft_seatmaps, airline_routes, airline_fare_families, airline_rbd_matrix_rows, airline_fare_rules, airline_ancillaries, airline_interline_agreements, airline_distribution_profiles, airline_pss_parameters, airline_gds_parameters, unified_exception_rules, airline_intelligence_data_packs with staged pack items, validation issues, import runs, review notes, and coverage snapshots, plus data pack review and promotion-readiness metadata",
         "status": "foundation adopted",
-        "action": "Use Phase 39.0 data packs as metadata-only staging and review records before any future explicit promotion into operational airline tables.",
+        "action": "Use Phase 39.0 data packs and Phase 39.1 review records as metadata-only staging and promotion-readiness evidence before any future explicit promotion into operational airline tables.",
     },
     {
         "category": "Airline Intelligence Data Packs",
@@ -30,6 +30,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_intelligence_data_packs, airline_intelligence_data_pack_items, airline_intelligence_data_pack_validation_issues, airline_intelligence_data_pack_import_runs, airline_intelligence_data_pack_review_notes, airline_intelligence_coverage_snapshots",
         "status": "foundation adopted",
         "action": "Stage and validate airline intelligence metadata for future CRM, CMS, client portal, offer builder, and special-services use without scraping, external APIs, external AI, automatic promotion, recommendations, provider/GDS execution, booking, PNR mutation, ticketing, EMD issuance, payments, invoices, settlement, public publishing, or automatic sending.",
+    },
+    {
+        "category": "Airline Intelligence Data Pack Reviews",
+        "concept": "Data pack review and promotion-readiness metadata",
+        "supplementary_concept": "review checklist, field mapping, duplicate/conflict detection, promotion readiness, safe consumption flags",
+        "current_equivalent": "airline_intelligence_data_pack_reviews, airline_intelligence_data_pack_review_checklist_items, airline_intelligence_data_pack_field_mappings, airline_intelligence_data_pack_conflicts, airline_intelligence_data_pack_promotion_readiness, airline_intelligence_data_pack_review_snapshots",
+        "status": "foundation adopted",
+        "action": "Review staged airline data packs with checklist, mapping, conflict, readiness, and agency-readable coverage metadata without automatic promotion, scraping, external APIs, external AI, publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, payments, invoices, or settlement.",
     },
     {
         "category": "GDS/Supplier",
@@ -252,7 +260,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/parser", "agencyos": "/agency/gds-parser"},
         {"supplementary": "/agent/parser/imports", "agencyos": "/agency/booking-imports and /agency/gds-parser"},
         {"supplementary": "/admin/airline-data-packs", "agencyos": "/platform/airline-intelligence-data-packs"},
+        {"supplementary": "/admin/airline-data-pack-reviews", "agencyos": "/platform/airline-intelligence-data-pack-reviews"},
         {"supplementary": "/agent/airline-coverage", "agencyos": "/agency/airline-intelligence-coverage"},
+        {"supplementary": "/agent/airline-review-coverage", "agencyos": "/agency/airline-intelligence-review-coverage"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/ancillary-pricing", "agencyos": "/platform/ancillary-pricing"},
@@ -299,9 +309,9 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.0",
-        "title": "Airline Intelligence Data Expansion",
-        "reason": "Airline intelligence data packs now stage curated metadata before any future operational promotion.",
+        "phase": "Phase 39.1",
+        "title": "Airline Intelligence Review Hardening",
+        "reason": "Airline intelligence data pack review and promotion-readiness metadata now gates any future explicit operational promotion.",
     },
     {
         "phase": "Phase 37.8",
@@ -375,6 +385,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineIntelligenceDataPackImportRun",
             "AirlineIntelligenceDataPackReviewNote",
             "AirlineIntelligenceCoverageSnapshot",
+            "AirlineIntelligenceDataPackReview",
+            "AirlineIntelligenceDataPackReviewChecklistItem",
+            "AirlineIntelligenceDataPackFieldMapping",
+            "AirlineIntelligenceDataPackConflict",
+            "AirlineIntelligenceDataPackPromotionReadiness",
+            "AirlineIntelligenceDataPackReviewSnapshot",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -403,6 +419,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Offer decision export governance foundation built in Phase 38.1",
             "Offer decision export compliance evidence foundation built in Phase 38.2",
             "Airline intelligence data pack foundation built in Phase 39.0",
+            "Airline intelligence data pack review and promotion-readiness foundation built in Phase 39.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -14,7 +14,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_0_airline_intelligence_data_pack_foundation",
+        "phase": "phase_39_1_airline_intelligence_data_pack_review_foundation",
     }
 
 
@@ -166,6 +166,12 @@ async def summary(
             "airline_intelligence_data_pack_import_runs": await db.collection("airline_intelligence_data_pack_import_runs").count(),
             "airline_intelligence_data_pack_review_notes": await db.collection("airline_intelligence_data_pack_review_notes").count(),
             "airline_intelligence_coverage_snapshots": await db.collection("airline_intelligence_coverage_snapshots").count(),
+            "airline_intelligence_data_pack_reviews": await db.collection("airline_intelligence_data_pack_reviews").count(),
+            "airline_intelligence_data_pack_review_checklist_items": await db.collection("airline_intelligence_data_pack_review_checklist_items").count(),
+            "airline_intelligence_data_pack_field_mappings": await db.collection("airline_intelligence_data_pack_field_mappings").count(),
+            "airline_intelligence_data_pack_conflicts": await db.collection("airline_intelligence_data_pack_conflicts").count(),
+            "airline_intelligence_data_pack_promotion_readiness": await db.collection("airline_intelligence_data_pack_promotion_readiness").count(),
+            "airline_intelligence_data_pack_review_snapshots": await db.collection("airline_intelligence_data_pack_review_snapshots").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

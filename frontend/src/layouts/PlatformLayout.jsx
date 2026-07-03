@@ -42,6 +42,10 @@ export default function PlatformLayout({ children, user }) {
               <FileText className="h-4 w-4" />
               Airline Data Packs
             </a>
+            <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-intelligence-data-pack-reviews">
+              <GitBranch className="h-4 w-4" />
+              Data Pack Reviews
+            </a>
             <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href="/platform/airline-policy-ingestion">
               <FileText className="h-4 w-4" />
               Policy Ingestion

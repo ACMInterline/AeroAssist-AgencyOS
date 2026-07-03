@@ -1330,6 +1330,22 @@ Avoid adding:
 
 - Live scraping, external APIs, external AI, automatic promotion into operational airline tables, recommendation engines, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, public client portal links, CMS publishing, automatic document delivery, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 39.1: Airline Intelligence Data Pack Review And Promotion Readiness Foundation
+
+Implemented scope:
+
+- Added airline intelligence data pack review records, review checklist items, field mappings, duplicate/conflict metadata, promotion-readiness records, and immutable review snapshots.
+- Added metadata-only conflict detection for staged item duplicates, missing mappings, missing target references, and unsafe surface flags.
+- Added platform APIs and `/platform/airline-intelligence-data-pack-reviews` for review, approval/rejection metadata, checklist updates, field mapping, conflict review, promotion-readiness marking, and snapshots.
+- Added agency read-only APIs and `/agency/airline-intelligence-review-coverage` for plain-language safe-use coverage summaries.
+- Added safe-consumption flags for internal CRM, agency display, CMS website display, client portal display, and offer builder on review/readiness metadata.
+- Added readiness flags and counts under `airline_intelligence_data_pack_review_foundation`.
+- Added `docs/architecture/airline-intelligence-data-pack-review-foundation.md`.
+
+Avoid adding:
+
+- Automatic promotion into operational airline tables, live scraping, external APIs, external AI, CMS publishing, client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, payment/invoice/accounting/settlement logic, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:
