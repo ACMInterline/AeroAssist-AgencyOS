@@ -78,6 +78,7 @@ The repository currently contains:
 - Phase 37.9: Offer decision export manual delivery outcome tracking foundation.
 - Phase 38.0: Offer decision export audit review foundation.
 - Phase 38.1: Offer decision export governance foundation.
+- Phase 38.2: Offer decision export compliance evidence foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1298,6 +1299,20 @@ Implemented scope:
 Avoid adding:
 
 - Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live PNR mutation, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 38.2: Offer Decision Export Compliance Evidence Foundation
+
+Implemented scope:
+
+- Added offer decision export compliance evidence records, requirements, checks, pass/fail result metadata, exceptions, and immutable compliance snapshots.
+- Added agency APIs and `/agency/offer-decision-export-compliance` for creating/listing compliance metadata linked to export governance records.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-export-compliance`.
+- Added readiness flags and counts under `offer_decision_export_compliance_foundation`.
+- Added `docs/architecture/offer-decision-export-compliance-foundation.md`.
+
+Avoid adding:
+
+- Automatic email/SMS/notification sending, public links, PDF/document delivery, live booking, live reservation creation, live PNR mutation, live GDS/provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer or price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

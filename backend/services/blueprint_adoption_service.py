@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_38_1_offer_decision_export_governance_foundation"
+PHASE_LABEL = "phase_38_2_offer_decision_export_compliance_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -192,6 +192,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only export governance records without email/SMS sending, public links, real PDF delivery, offer or price mutation, recommendation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, settlement, scraping, or external AI.",
     },
     {
+        "category": "Offer Decision Export Compliance",
+        "concept": "Offer decision export compliance evidence",
+        "supplementary_concept": "compliance evidence, requirements, checks, pass/fail results, exceptions, immutable compliance snapshots",
+        "current_equivalent": "offer_decision_export_compliance_evidence, offer_decision_export_compliance_requirements, offer_decision_export_compliance_checks, offer_decision_export_compliance_results, offer_decision_export_compliance_exceptions, offer_decision_export_compliance_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only export compliance evidence without email/SMS sending, public links, real PDF delivery, offer or price mutation, recommendation, provider execution, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, accounting, settlement, GDS execution, scraping, or external AI.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -262,6 +270,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-audit-reviews", "agencyos": "/agency/offer-decision-export-audit-reviews"},
         {"supplementary": "/admin/offer-decision-export-governance", "agencyos": "/platform/offer-decision-export-governance"},
         {"supplementary": "/agent/offer-decision-export-governance", "agencyos": "/agency/offer-decision-export-governance"},
+        {"supplementary": "/admin/offer-decision-export-compliance", "agencyos": "/platform/offer-decision-export-compliance"},
+        {"supplementary": "/agent/offer-decision-export-compliance", "agencyos": "/agency/offer-decision-export-compliance"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},

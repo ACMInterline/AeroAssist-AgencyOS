@@ -43,6 +43,7 @@ const primaryNav = [
   { label: "Export Outcomes", description: "Manual tracking", href: "/agency/offer-decision-export-delivery-outcomes", icon: Files },
   { label: "Export Audits", description: "Review trail", href: "/agency/offer-decision-export-audit-reviews", icon: Files },
   { label: "Export Governance", description: "Policy metadata", href: "/agency/offer-decision-export-governance", icon: Files },
+  { label: "Export Compliance", description: "Evidence metadata", href: "/agency/offer-decision-export-compliance", icon: Files },
   { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: Files },
   { label: "Intakes", description: "Public queue", href: "/agency/request-intakes", icon: Inbox },
   { label: "Clients", description: "Accounts", href: "/agency/clients", icon: Users },

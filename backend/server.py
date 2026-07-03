@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_ancillary_pricing, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 38.1 offer decision export governance foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 38.2 offer decision export compliance foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_38_1_offer_decision_export_governance_foundation",
+        "phase": "phase_38_2_offer_decision_export_compliance_foundation",
     }
 
 
@@ -312,6 +312,12 @@ async def readiness() -> dict:
     offer_decision_export_archive_status_count = await database.collection("offer_decision_export_archive_statuses").count()
     offer_decision_export_governance_exception_count = await database.collection("offer_decision_export_governance_exceptions").count()
     offer_decision_export_governance_snapshot_count = await database.collection("offer_decision_export_governance_snapshots").count()
+    offer_decision_export_compliance_evidence_count = await database.collection("offer_decision_export_compliance_evidence").count()
+    offer_decision_export_compliance_requirement_count = await database.collection("offer_decision_export_compliance_requirements").count()
+    offer_decision_export_compliance_check_count = await database.collection("offer_decision_export_compliance_checks").count()
+    offer_decision_export_compliance_result_count = await database.collection("offer_decision_export_compliance_results").count()
+    offer_decision_export_compliance_exception_count = await database.collection("offer_decision_export_compliance_exceptions").count()
+    offer_decision_export_compliance_snapshot_count = await database.collection("offer_decision_export_compliance_snapshots").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -333,7 +339,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_38_1_offer_decision_export_governance_foundation",
+        "phase": "phase_38_2_offer_decision_export_compliance_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -1068,6 +1074,42 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 38.1 creates metadata-only governance records for offer decision exports, audit reviews, retention policies, legal bases, archive statuses, exceptions, and immutable governance snapshots. It does not send, deliver, mutate offers or prices, recommend, book, mutate PNRs, ticket, issue EMDs, charge, invoice, settle, scrape, call external AI, or execute providers.",
         },
+        "offer_decision_export_compliance_foundation": {
+            "compliance_evidence_enabled": True,
+            "compliance_requirements_enabled": True,
+            "compliance_checks_enabled": True,
+            "compliance_results_enabled": True,
+            "compliance_exceptions_enabled": True,
+            "immutable_compliance_snapshots_enabled": True,
+            "agency_compliance_ui_enabled": True,
+            "platform_compliance_ui_enabled": True,
+            "metadata_only_enabled": True,
+            "automatic_sending_disabled": True,
+            "sms_sending_disabled": True,
+            "public_links_disabled": True,
+            "real_pdf_delivery_disabled": True,
+            "offer_mutation_disabled": True,
+            "price_mutation_disabled": True,
+            "recommendation_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "payment_disabled": True,
+            "invoice_disabled": True,
+            "settlement_disabled": True,
+            "scraping_disabled": True,
+            "external_ai_disabled": True,
+            "evidence_count": offer_decision_export_compliance_evidence_count,
+            "requirement_count": offer_decision_export_compliance_requirement_count,
+            "check_count": offer_decision_export_compliance_check_count,
+            "result_count": offer_decision_export_compliance_result_count,
+            "exception_count": offer_decision_export_compliance_exception_count,
+            "snapshot_count": offer_decision_export_compliance_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 38.2 creates metadata-only compliance evidence for offer decision exports and governance records. It records requirements, checks, pass/fail results, exceptions, and immutable compliance snapshots without sending, delivery, offer or price mutation, recommendation, booking, PNR mutation, ticketing, EMD issuance, payment, invoice, settlement, scraping, external AI, GDS execution, or provider execution.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1137,6 +1179,7 @@ app.include_router(platform_offer_decision_export_deliveries.router)
 app.include_router(platform_offer_decision_export_delivery_outcomes.router)
 app.include_router(platform_offer_decision_export_audit_reviews.router)
 app.include_router(platform_offer_decision_export_governance.router)
+app.include_router(platform_offer_decision_export_compliance.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -1169,6 +1212,7 @@ app.include_router(agency_offer_decision_export_deliveries.router)
 app.include_router(agency_offer_decision_export_delivery_outcomes.router)
 app.include_router(agency_offer_decision_export_audit_reviews.router)
 app.include_router(agency_offer_decision_export_governance.router)
+app.include_router(agency_offer_decision_export_compliance.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

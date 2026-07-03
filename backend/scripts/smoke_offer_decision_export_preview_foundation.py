@@ -12,7 +12,7 @@ from smoke_service_taxonomy_foundation import main as smoke_service_taxonomy_fou
 from smoke_airline_policy_ingestion_foundation import main as smoke_airline_policy_ingestion_foundation
 
 
-EXPECTED_PHASE = "phase_38_1_offer_decision_export_governance_foundation"
+EXPECTED_PHASE = "phase_38_2_offer_decision_export_compliance_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:

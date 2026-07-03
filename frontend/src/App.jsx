@@ -23,6 +23,7 @@ import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
 import AgencyOfferDecisionExportAuditReviewsPage from "./pages/agency/OfferDecisionExportAuditReviewsPage"
+import AgencyOfferDecisionExportCompliancePage from "./pages/agency/OfferDecisionExportCompliancePage"
 import AgencyOfferDecisionExportDeliveriesPage from "./pages/agency/OfferDecisionExportDeliveriesPage"
 import AgencyOfferDecisionExportDeliveryOutcomesPage from "./pages/agency/OfferDecisionExportDeliveryOutcomesPage"
 import AgencyOfferDecisionExportGovernancePage from "./pages/agency/OfferDecisionExportGovernancePage"
@@ -75,6 +76,7 @@ import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
 import PlatformOfferDecisionExportAuditReviewsPage from "./pages/platform/OfferDecisionExportAuditReviewsPage"
+import PlatformOfferDecisionExportCompliancePage from "./pages/platform/OfferDecisionExportCompliancePage"
 import PlatformOfferDecisionExportDeliveriesPage from "./pages/platform/OfferDecisionExportDeliveriesPage"
 import PlatformOfferDecisionExportDeliveryOutcomesPage from "./pages/platform/OfferDecisionExportDeliveryOutcomesPage"
 import PlatformOfferDecisionExportGovernancePage from "./pages/platform/OfferDecisionExportGovernancePage"
@@ -139,6 +141,7 @@ const routes = {
   "/platform/offer-decision-export-delivery-outcomes": PlatformOfferDecisionExportDeliveryOutcomesPage,
   "/platform/offer-decision-export-audit-reviews": PlatformOfferDecisionExportAuditReviewsPage,
   "/platform/offer-decision-export-governance": PlatformOfferDecisionExportGovernancePage,
+  "/platform/offer-decision-export-compliance": PlatformOfferDecisionExportCompliancePage,
   "/agency": AgencyDashboardPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
@@ -162,6 +165,7 @@ const routes = {
   "/agency/offer-decision-export-delivery-outcomes": AgencyOfferDecisionExportDeliveryOutcomesPage,
   "/agency/offer-decision-export-audit-reviews": AgencyOfferDecisionExportAuditReviewsPage,
   "/agency/offer-decision-export-governance": AgencyOfferDecisionExportGovernancePage,
+  "/agency/offer-decision-export-compliance": AgencyOfferDecisionExportCompliancePage,
   "/agency/documents": DocumentsPage,
   "/agency/gds-parser": GdsParserPage,
   "/agency/document-storage": DocumentStoragePage,
