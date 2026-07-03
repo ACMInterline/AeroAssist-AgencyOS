@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_ancillary_pricing, agency_offer_decision_export_previews, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_previews, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
+from routers import agency_ancillary_pricing, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, platform_ancillary_pricing, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -23,7 +23,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 37.6 offer decision export preview foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 37.7 offer decision export release readiness foundation.",
 )
 
 app.add_middleware(
@@ -50,7 +50,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_6_offer_decision_export_preview_foundation",
+        "phase": "phase_37_7_offer_decision_export_release_readiness_foundation",
     }
 
 
@@ -286,6 +286,11 @@ async def readiness() -> dict:
     offer_decision_export_preview_block_count = await database.collection("offer_decision_export_preview_blocks").count()
     offer_decision_export_preview_validation_count = await database.collection("offer_decision_export_preview_validations").count()
     offer_decision_export_preview_snapshot_count = await database.collection("offer_decision_export_preview_snapshots").count()
+    offer_decision_export_approval_count = await database.collection("offer_decision_export_approvals").count()
+    offer_decision_export_approval_checkpoint_count = await database.collection("offer_decision_export_approval_checkpoints").count()
+    offer_decision_export_release_readiness_count = await database.collection("offer_decision_export_release_readiness").count()
+    offer_decision_export_release_hold_count = await database.collection("offer_decision_export_release_holds").count()
+    offer_decision_export_release_snapshot_count = await database.collection("offer_decision_export_release_snapshots").count()
     document_template_count = await database.collection("document_templates").count()
     document_render_job_count = await database.collection("document_render_jobs").count()
     document_package_count = await database.collection("document_packages").count()
@@ -307,7 +312,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_37_6_offer_decision_export_preview_foundation",
+        "phase": "phase_37_7_offer_decision_export_release_readiness_foundation",
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -902,6 +907,31 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 37.6 creates metadata-only render preview records for offer decision exports. It does not deliver PDFs, send email, create public links, mutate offers or prices, recommend airlines, book, issue tickets or EMDs, charge, invoice, settle, scrape, call external AI, or execute providers.",
         },
+        "offer_decision_export_release_readiness_foundation": {
+            "export_approvals_enabled": True,
+            "approval_checkpoints_enabled": True,
+            "release_readiness_enabled": True,
+            "release_holds_enabled": True,
+            "immutable_release_snapshots_enabled": True,
+            "agency_export_release_ui_enabled": True,
+            "platform_export_release_ui_enabled": True,
+            "human_approval_required_enabled": True,
+            "automatic_sending_disabled": True,
+            "public_links_disabled": True,
+            "real_pdf_delivery_disabled": True,
+            "offer_price_mutation_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "ticket_emd_issuance_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "approval_count": offer_decision_export_approval_count,
+            "checkpoint_count": offer_decision_export_approval_checkpoint_count,
+            "readiness_count": offer_decision_export_release_readiness_count,
+            "hold_count": offer_decision_export_release_hold_count,
+            "snapshot_count": offer_decision_export_release_snapshot_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 37.7 creates metadata-only human approval, checkpoint, manual release readiness, hold, and immutable release snapshot records for offer decision export previews. It does not send email, create public links, deliver real PDFs, mutate offers or prices, recommend airlines, book, issue tickets or EMDs, charge, invoice, settle, scrape, call external AI, or execute providers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -966,6 +996,7 @@ app.include_router(platform_offer_decision_packs.router)
 app.include_router(platform_offer_decision_explanations.router)
 app.include_router(platform_offer_decision_exports.router)
 app.include_router(platform_offer_decision_export_previews.router)
+app.include_router(platform_offer_decision_export_releases.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -993,6 +1024,7 @@ app.include_router(agency_offer_decision_packs.router)
 app.include_router(agency_offer_decision_explanations.router)
 app.include_router(agency_offer_decision_exports.router)
 app.include_router(agency_offer_decision_export_previews.router)
+app.include_router(agency_offer_decision_export_releases.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

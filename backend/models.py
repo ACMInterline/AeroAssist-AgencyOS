@@ -7440,6 +7440,231 @@ class OfferDecisionExportPreviewSnapshotCreate(BaseModel):
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OfferDecisionExportApprovalStatus(str, Enum):
+    DRAFT = "draft"
+    IN_REVIEW = "in_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SUPERSEDED = "superseded"
+
+
+class OfferDecisionExportApprovalCheckpointType(str, Enum):
+    PREVIEW_REVIEW = "preview_review"
+    ARTIFACT_METADATA_REVIEW = "artifact_metadata_review"
+    RECIPIENT_DRAFT_REVIEW = "recipient_draft_review"
+    SAFETY_BOUNDARY_REVIEW = "safety_boundary_review"
+    INTERNAL_APPROVAL = "internal_approval"
+    MANUAL_RELEASE_READINESS = "manual_release_readiness"
+
+
+class OfferDecisionExportApprovalCheckpointStatus(str, Enum):
+    PENDING = "pending"
+    PASSED = "passed"
+    WARNING = "warning"
+    FAILED = "failed"
+    WAIVED = "waived"
+
+
+class OfferDecisionExportReleaseReadinessStatus(str, Enum):
+    DRAFT = "draft"
+    READY = "ready_for_manual_release"
+    BLOCKED = "blocked"
+    SUPERSEDED = "superseded"
+
+
+class OfferDecisionExportReleaseHoldType(str, Enum):
+    MISSING_APPROVAL = "missing_approval"
+    MISSING_PREVIEW_SNAPSHOT = "missing_preview_snapshot"
+    MISSING_VALIDATION = "missing_validation"
+    SAFETY_BOUNDARY = "safety_boundary"
+    MANUAL_REVIEW = "manual_review"
+    OTHER = "other"
+
+
+class OfferDecisionExportReleaseHoldStatus(str, Enum):
+    ACTIVE = "active"
+    RELEASED = "released"
+
+
+class OfferDecisionExportApproval(BaseDocument):
+    agency_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    approval_name: str
+    approval_status: OfferDecisionExportApprovalStatus = OfferDecisionExportApprovalStatus.DRAFT
+    requested_by: Optional[str] = None
+    assigned_reviewer: Optional[str] = None
+    status_updated_by: Optional[str] = None
+    status_updated_at: Optional[datetime] = None
+    status_reason: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    checkpoint_count: int = 0
+    readiness_count: int = 0
+    approval_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    human_approval_required_enabled: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportApprovalCheckpoint(BaseDocument):
+    agency_id: str
+    approval_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    checkpoint_type: OfferDecisionExportApprovalCheckpointType = OfferDecisionExportApprovalCheckpointType.PREVIEW_REVIEW
+    checkpoint_status: OfferDecisionExportApprovalCheckpointStatus = OfferDecisionExportApprovalCheckpointStatus.PENDING
+    checkpoint_title: str
+    notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    sequence_order: int = 1
+    checkpoint_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class OfferDecisionExportReleaseReadiness(BaseDocument):
+    agency_id: str
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    approval_id: Optional[str] = None
+    readiness_name: str
+    readiness_status: OfferDecisionExportReleaseReadinessStatus = OfferDecisionExportReleaseReadinessStatus.DRAFT
+    prepared_by: Optional[str] = None
+    prepared_at: datetime = Field(default_factory=now_utc)
+    ready_for_manual_release: bool = False
+    human_approval_required_enabled: bool = True
+    active_hold_count: int = 0
+    released_hold_count: int = 0
+    snapshot_count: int = 0
+    readiness_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    source_counts_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+    real_pdf_delivery_disabled: bool = True
+    offer_price_mutation_disabled: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_emd_issuance_disabled: bool = True
+    payment_invoice_settlement_disabled: bool = True
+
+
+class OfferDecisionExportReleaseHold(BaseDocument):
+    agency_id: str
+    readiness_id: str
+    approval_id: Optional[str] = None
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    hold_type: OfferDecisionExportReleaseHoldType = OfferDecisionExportReleaseHoldType.MANUAL_REVIEW
+    hold_status: OfferDecisionExportReleaseHoldStatus = OfferDecisionExportReleaseHoldStatus.ACTIVE
+    severity: str = "medium"
+    title: str
+    reason: str
+    created_by: Optional[str] = None
+    released_by: Optional[str] = None
+    released_at: Optional[datetime] = None
+    release_notes: Optional[str] = None
+    hold_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+    public_links_disabled: bool = True
+
+
+class OfferDecisionExportReleaseSnapshot(BaseDocument):
+    agency_id: str
+    readiness_id: str
+    approval_id: Optional[str] = None
+    preview_id: str
+    export_id: str
+    decision_pack_id: Optional[str] = None
+    snapshot_name: str
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    saved_by: Optional[str] = None
+    saved_at: datetime = Field(default_factory=now_utc)
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class OfferDecisionExportApprovalCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    preview_id: str
+    approval_name: Optional[str] = None
+    assigned_reviewer: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportApprovalCheckpointCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    checkpoint_type: OfferDecisionExportApprovalCheckpointType = OfferDecisionExportApprovalCheckpointType.PREVIEW_REVIEW
+    checkpoint_status: OfferDecisionExportApprovalCheckpointStatus = OfferDecisionExportApprovalCheckpointStatus.PENDING
+    checkpoint_title: str
+    notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    checkpoint_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportApprovalStatusUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    approval_status: OfferDecisionExportApprovalStatus
+    status_reason: Optional[str] = None
+    status_updated_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportReleaseReadinessCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    preview_id: Optional[str] = None
+    approval_id: Optional[str] = None
+    readiness_name: Optional[str] = None
+    prepared_by: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportReleaseHoldCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    hold_type: OfferDecisionExportReleaseHoldType = OfferDecisionExportReleaseHoldType.MANUAL_REVIEW
+    severity: str = "medium"
+    title: str
+    reason: str
+    hold_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportReleaseHoldReleaseRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    released_by: Optional[str] = None
+    release_notes: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferDecisionExportReleaseSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    snapshot_name: Optional[str] = None
+    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineBrandAsset(BaseDocument):
     airline_id: str
     asset_type: AirlineBrandAssetType = AirlineBrandAssetType.OTHER

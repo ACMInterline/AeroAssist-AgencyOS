@@ -1223,6 +1223,20 @@ Avoid adding:
 
 - Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
+### Phase 37.7: Offer Decision Export Approval / Manual Release Readiness Foundation
+
+Implemented scope:
+
+- Added offer decision export approval records, approval checkpoints, manual release readiness records, release holds, and immutable release readiness snapshots.
+- Added deterministic metadata assembly from existing offer decision export previews, preview validations, preview snapshots, and source export metadata.
+- Added agency APIs and `/agency/offer-decision-export-releases` for creating approval metadata, recording checkpoints, updating approval status, preparing manual release readiness, adding/releasing holds, and saving immutable release snapshots.
+- Added platform read-only diagnostics APIs and `/platform/offer-decision-export-releases`.
+- Added readiness flags and counts under `offer_decision_export_release_readiness_foundation`.
+
+Avoid adding:
+
+- Automatic email/SMS sending, public links, real PDF delivery/storage, live booking, live SSR/OSI transmission, provider action, ticketing, EMD issuance, payment/invoice/accounting/BSP/ARC/settlement logic, automatic airline ranking/recommendation, automatic offer price mutation, external AI, scraping, agency-to-global mutation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

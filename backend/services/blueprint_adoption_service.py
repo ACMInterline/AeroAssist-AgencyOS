@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_37_6_offer_decision_export_preview_foundation"
+PHASE_LABEL = "phase_37_7_offer_decision_export_release_readiness_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -152,6 +152,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Create metadata-only render preview records for offer decision exports without real PDF delivery, automatic sending, public links, recommendations, offer price mutation, provider execution, booking, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
     },
     {
+        "category": "Offer Decision Export Release Readiness",
+        "concept": "Offer decision export approval and manual release readiness",
+        "supplementary_concept": "approval gates, release readiness, release holds, immutable release snapshots",
+        "current_equivalent": "offer_decision_export_approvals, offer_decision_export_approval_checkpoints, offer_decision_export_release_readiness, offer_decision_export_release_holds, offer_decision_export_release_snapshots",
+        "status": "foundation adopted",
+        "action": "Create metadata-only human approval gates, checkpoints, release readiness records, holds, and immutable release snapshots without real PDF delivery, automatic sending, public links, recommendations, offer price mutation, provider execution, booking, ticketing, EMD issuance, payment, invoice, accounting, or settlement.",
+    },
+    {
         "category": "Routes",
         "concept": "Route roots",
         "supplementary_concept": "/agent/* and /admin/* route shells",
@@ -212,6 +220,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-exports", "agencyos": "/agency/offer-decision-exports"},
         {"supplementary": "/admin/offer-decision-export-previews", "agencyos": "/platform/offer-decision-export-previews"},
         {"supplementary": "/agent/offer-decision-export-previews", "agencyos": "/agency/offer-decision-export-previews"},
+        {"supplementary": "/admin/offer-decision-export-releases", "agencyos": "/platform/offer-decision-export-releases"},
+        {"supplementary": "/agent/offer-decision-export-releases", "agencyos": "/agency/offer-decision-export-releases"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -320,6 +330,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Offer explanation and decision timeline foundation built in Phase 37.4",
             "Offer decision export foundation built in Phase 37.5",
             "Offer decision export preview foundation built in Phase 37.6",
+            "Offer decision export release readiness foundation built in Phase 37.7",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

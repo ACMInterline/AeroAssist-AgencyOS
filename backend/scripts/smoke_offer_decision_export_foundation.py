@@ -7,7 +7,7 @@ from smoke_offer_policy_advisor_integration_foundation import create_offer_works
 from smoke_policy_comparison_service_advisor_foundation import seed_airline_facts
 
 
-EXPECTED_PHASE = "phase_37_6_offer_decision_export_preview_foundation"
+EXPECTED_PHASE = "phase_37_7_offer_decision_export_release_readiness_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:
