@@ -7,6 +7,7 @@ export const platformModuleGroups = [
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
       { label: "Subscriptions & Entitlements", description: "Plan and agency entitlement metadata", href: "/platform/saas-subscriptions", icon: "layers", badge: "No billing" },
+      { label: "Feature Flags", description: "Agency feature visibility metadata", href: "/platform/feature-flags", icon: "layers", badge: "Metadata only" },
       { label: "Agencies", description: "Subscribed travel agency workspaces", href: "/platform/agencies", icon: "building", badge: "Platform only" },
       { label: "Reference Data", description: "Shared platform lookup data", href: "/platform/reference", icon: "database", badge: "Platform only" },
       { label: "Blueprint", description: "Route and model alignment", href: "/platform/blueprint", icon: "git", badge: "Read-only" },
@@ -174,6 +175,7 @@ export const agencyModuleGroups = [
     items: [
       { label: "Team", description: "Staff access", href: "/agency", icon: "users", badge: "Dashboard", entitlementKey: "dashboard" },
       { label: "My Subscription", description: "Assigned plan and entitlements", href: "/agency/saas-subscription", icon: "layers", badge: "Agency read-only", entitlementKey: "subscription" },
+      { label: "Feature Availability", description: "Feature visibility metadata", href: "/agency/feature-availability", icon: "layers", badge: "Agency read-only", entitlementKey: "settings" },
       { label: "Reference Data", description: "Lookups and suggestions", href: "/agency/reference", icon: "database", badge: "Suggest only", entitlementKey: "reference_data" },
       { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: "clipboard", entitlementKey: "form_profiles" },
       { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: "settings", entitlementKey: "settings" },
@@ -220,4 +222,28 @@ export function summarizeEntitlementVisibility(items, visibilityByKey = {}) {
     counts[status] = (counts[status] || 0) + 1
     return counts
   }, {})
+}
+
+export const featureFlagLabels = {
+  enabled: "Enabled",
+  disabled: "Disabled",
+  hidden: "Hidden",
+  beta: "Beta",
+  pilot: "Pilot",
+}
+
+export const featureFlagTone = {
+  enabled: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  disabled: "bg-slate-100 text-slate-600 ring-slate-200",
+  hidden: "bg-zinc-50 text-zinc-600 ring-zinc-200",
+  beta: "bg-sky-50 text-sky-700 ring-sky-200",
+  pilot: "bg-violet-50 text-violet-700 ring-violet-200",
+}
+
+export function featureFlagLabel(state) {
+  return featureFlagLabels[state] || featureFlagLabels.disabled
+}
+
+export function featureFlagClass(state) {
+  return featureFlagTone[state] || featureFlagTone.disabled
 }

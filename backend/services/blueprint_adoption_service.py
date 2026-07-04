@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_6_subscription_entitlement_ui_guardrails"
+PHASE_LABEL = "phase_39_7_agency_feature_flags_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -78,6 +78,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "SaaSSubscriptionService agency_module_visibility/platform_entitlement_visibility helpers, /api/platform/saas-subscriptions/entitlement-visibility, /api/agencies/{agency_id}/saas-subscriptions/module-visibility, frontend module catalog entitlement keys",
         "status": "foundation adopted",
         "action": "Show Included, Limited, Review required, Not included, and Unknown as informational UI hints only; do not bill, charge, invoice, settle, block routes destructively, enforce access automatically, execute providers, book, mutate PNRs, ticket, issue EMDs, scrape, call external APIs, call external AI, or send automatically.",
+    },
+    {
+        "category": "Agency Feature Flags",
+        "concept": "Agency-specific feature visibility metadata",
+        "supplementary_concept": "feature flags, agency feature visibility, feature review notes, immutable feature snapshots",
+        "current_equivalent": "AgencyFeatureFlag, AgencyFeatureFlagReview, AgencyFeatureFlagSnapshot, /api/platform/feature-flags, /api/agencies/{agency_id}/feature-flags, /platform/feature-flags, /agency/feature-availability",
+        "status": "foundation adopted",
+        "action": "Record agency-specific feature availability states for Platform Console review and Agency Workspace read-only visibility without billing, payments, automatic entitlement enforcement, feature blocking, provider execution, booking, PNR mutation, ticketing, EMD issuance, publishing, scraping, external APIs, external AI, or automatic sending.",
     },
     {
         "category": "GDS/Supplier",
@@ -353,7 +361,7 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.6",
+        "phase": "Phase 39.7",
         "title": "Airline Intelligence Promotion Governance Hardening",
         "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
     },
@@ -453,6 +461,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AgencyEntitlementReadiness",
             "AgencySubscriptionReviewNote",
             "AgencySubscriptionSnapshot",
+            "AgencyFeatureFlag",
+            "AgencyFeatureFlagReview",
+            "AgencyFeatureFlagSnapshot",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -487,6 +498,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Platform / agency UX consolidation built in Phase 39.4",
             "SaaS subscription and entitlement foundation built in Phase 39.5",
             "Subscription entitlement UI guardrails built in Phase 39.6",
+            "Agency feature flags foundation built in Phase 39.7",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

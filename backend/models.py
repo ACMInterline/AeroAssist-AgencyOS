@@ -10220,6 +10220,14 @@ class AgencySubscriptionSnapshotType(str, Enum):
     MANUAL = "manual"
 
 
+class AgencyFeatureFlagState(str, Enum):
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+    HIDDEN = "hidden"
+    BETA = "beta"
+    PILOT = "pilot"
+
+
 class SaaSSubscriptionPlan(BaseDocument):
     plan_name: str
     plan_code: str
@@ -10420,6 +10428,69 @@ class AgencySubscriptionSnapshotCreateRequest(BaseModel):
     snapshot_type: AgencySubscriptionSnapshotType = AgencySubscriptionSnapshotType.MANUAL
     snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     created_by: Optional[str] = None
+
+
+class AgencyFeatureFlag(BaseDocument):
+    agency_id: str
+    module_key: str
+    feature_key: str
+    display_name: str
+    state: AgencyFeatureFlagState = AgencyFeatureFlagState.DISABLED
+    visibility_note: Optional[str] = None
+    metadata_only: bool = True
+    automatic_enforcement_disabled: bool = True
+
+
+class AgencyFeatureFlagReview(BaseDocument):
+    agency_id: str
+    reviewer: Optional[str] = None
+    notes: str
+    metadata_only: bool = True
+
+
+class AgencyFeatureFlagSnapshot(BaseDocument):
+    agency_id: str
+    snapshot_date: datetime = Field(default_factory=now_utc)
+    immutable_json: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class AgencyFeatureFlagCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    module_key: str
+    feature_key: str
+    display_name: str
+    state: AgencyFeatureFlagState = AgencyFeatureFlagState.DISABLED
+    visibility_note: Optional[str] = None
+
+
+class AgencyFeatureFlagUpdateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    module_key: Optional[str] = None
+    feature_key: Optional[str] = None
+    display_name: Optional[str] = None
+    state: Optional[AgencyFeatureFlagState] = None
+    visibility_note: Optional[str] = None
+
+
+class AgencyFeatureFlagReviewCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    reviewer: Optional[str] = None
+    notes: str
+
+
+class AgencyFeatureFlagSnapshotCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: str
+    snapshot_date: Optional[datetime] = None
+    immutable_json: Dict[str, Any] = Field(default_factory=dict)
 
 
 class AirlineBrandAsset(BaseDocument):

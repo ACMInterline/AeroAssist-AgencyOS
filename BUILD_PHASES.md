@@ -86,6 +86,7 @@ The repository currently contains:
 - Phase 39.4: Platform / agency UX consolidation and navigation clarity.
 - Phase 39.5: SaaS subscription and entitlement foundation.
 - Phase 39.6: Subscription entitlement UI guardrails and navigation visibility.
+- Phase 39.7: Agency feature flags foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1424,6 +1425,21 @@ Implemented scope:
 Avoid adding:
 
 - Billing, payment, invoice, settlement, automatic charging, Stripe, bank/card/tax/accounting logic, automatic access enforcement, destructive route blocking, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 39.7: Agency Feature Flags Foundation
+
+Implemented scope:
+
+- Added metadata-only `AgencyFeatureFlag`, `AgencyFeatureFlagReview`, and `AgencyFeatureFlagSnapshot` records.
+- Added platform APIs and `/platform/feature-flags` for owner review of agency-specific feature visibility metadata.
+- Added agency read-only APIs and `/agency/feature-availability` for Feature Availability visibility.
+- Added Enabled, Disabled, Hidden, Beta, and Pilot badges.
+- Added readiness flags under `agency_feature_flags_foundation`.
+- Added `docs/architecture/agency-feature-flags-foundation.md`.
+
+Avoid adding:
+
+- Billing, payments, Stripe, taxation, accounting, subscription charging, automatic entitlement enforcement, feature blocking, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

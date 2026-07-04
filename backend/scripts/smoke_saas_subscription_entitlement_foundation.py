@@ -18,7 +18,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_39_6_subscription_entitlement_ui_guardrails"
+EXPECTED_PHASE = "phase_39_7_agency_feature_flags_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
