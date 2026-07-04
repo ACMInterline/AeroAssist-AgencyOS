@@ -85,6 +85,7 @@ The repository currently contains:
 - Phase 39.3: Airline intelligence agency consumption bridge.
 - Phase 39.4: Platform / agency UX consolidation and navigation clarity.
 - Phase 39.5: SaaS subscription and entitlement foundation.
+- Phase 39.6: Subscription entitlement UI guardrails and navigation visibility.
 
 Phase 35 navigation hotfix:
 
@@ -1407,6 +1408,22 @@ Implemented scope:
 Avoid adding:
 
 - Billing, payment, invoice, settlement, automatic charging, Stripe, bank/card/tax/accounting logic, automatic access enforcement, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 39.6: Subscription Entitlement UI Guardrails And Navigation Visibility
+
+Implemented scope:
+
+- Added read-only entitlement visibility summaries by agency/module using existing Phase 39.5 subscription collections.
+- Added agency module visibility API under `/api/agencies/{agency_id}/saas-subscriptions/module-visibility`.
+- Added platform review visibility API under `/api/platform/saas-subscriptions/entitlement-visibility`.
+- Added Agency Workspace navigation and dashboard badges for Included, Limited, Review required, Not included, and Unknown.
+- Added Platform Console subscription review visibility cards.
+- Added readiness flags under `subscription_entitlement_ui_guardrails`.
+- Added `docs/architecture/subscription-entitlement-ui-guardrails.md`.
+
+Avoid adding:
+
+- Billing, payment, invoice, settlement, automatic charging, Stripe, bank/card/tax/accounting logic, automatic access enforcement, destructive route blocking, CMS/client portal publishing, recommendations, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

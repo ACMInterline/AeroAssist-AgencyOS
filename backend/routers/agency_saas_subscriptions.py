@@ -29,6 +29,16 @@ async def get_agency_saas_subscription_summary(
     return await SaaSSubscriptionService(db).agency_summary(agency_id)
 
 
+@router.get("/module-visibility")
+async def get_agency_saas_module_visibility(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_agency_read(db, agency_id, user)
+    return await SaaSSubscriptionService(db).agency_module_visibility(agency_id)
+
+
 @router.get("/assignments")
 async def list_agency_saas_subscription_assignments(
     agency_id: str,

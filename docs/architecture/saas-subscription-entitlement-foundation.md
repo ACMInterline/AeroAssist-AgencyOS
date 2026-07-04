@@ -2,6 +2,8 @@
 
 Phase 39.5 adds metadata-only subscription and entitlement records for the Platform Console and read-only agency visibility.
 
+Phase 39.6 builds on these records with read-only UI guardrails and navigation badges documented in `docs/architecture/subscription-entitlement-ui-guardrails.md`.
+
 ## Platform Scope
 
 Platform users can define:

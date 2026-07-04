@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Building2 from "lucide-react/dist/esm/icons/building-2.js"
 import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list.js"
 import Database from "lucide-react/dist/esm/icons/database.js"
@@ -16,9 +16,9 @@ import Sparkles from "lucide-react/dist/esm/icons/sparkles.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
 import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
-import { apiDeleteSession } from "../lib/api"
+import { apiDeleteSession, apiGet } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
-import { agencyModuleGroups, flattenModuleGroups } from "../lib/moduleCatalog"
+import { agencyModuleGroups, entitlementLabel, entitlementTone, entitlementVisibilityForItem, flattenModuleGroups } from "../lib/moduleCatalog"
 import { agencyThemeStyle } from "../lib/theme"
 
 const iconMap = {
@@ -56,6 +56,8 @@ function isActive(item, pathname) {
 export default function AgencyLayout({ children, user, agency }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [entitlementVisibility, setEntitlementVisibility] = useState({})
+  const [entitlementNotice, setEntitlementNotice] = useState("")
   const themeStyle = agencyThemeStyle(agency)
   const brandName = agency?.branding?.brand_name || agency?.name || "AeroAssist"
   const sidebarLogo = agency?.branding?.logo_assets?.sidebar?.url || agency?.branding?.logo_url
@@ -65,6 +67,29 @@ export default function AgencyLayout({ children, user, agency }) {
     const item = allAgencyModules.find((navItem) => isActive(navItem, pathname))
     return item?.label || "Agency Workspace"
   }, [pathname])
+
+  useEffect(() => {
+    if (!agency?.id) {
+      setEntitlementVisibility({})
+      setEntitlementNotice("")
+      return
+    }
+    let active = true
+    apiGet(`/api/agencies/${agency.id}/saas-subscriptions/module-visibility`)
+      .then((result) => {
+        if (!active) return
+        setEntitlementVisibility(result.visibility_by_key || {})
+        setEntitlementNotice(result.notice || "")
+      })
+      .catch(() => {
+        if (!active) return
+        setEntitlementVisibility({})
+        setEntitlementNotice("")
+      })
+    return () => {
+      active = false
+    }
+  }, [agency?.id])
 
   const sidebar = (
     <aside className={`aa-sidebar flex h-full flex-col border-r ${collapsed ? "w-[92px]" : "w-[286px]"}`} style={{ background: "var(--aa-shell)", borderColor: "var(--aa-border)" }}>
@@ -85,7 +110,7 @@ export default function AgencyLayout({ children, user, agency }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {agencyModuleGroups.map((group) => <NavSection group={group} pathname={pathname} collapsed={collapsed} key={group.title} />)}
+        {agencyModuleGroups.map((group) => <NavSection group={group} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={group.title} />)}
       </div>
 
       <div className="border-t p-3" style={{ borderColor: "var(--aa-border)" }}>
@@ -100,6 +125,11 @@ export default function AgencyLayout({ children, user, agency }) {
             </div>
             <p className="mt-1">Brand presets control fonts, radius, colors, and surfaces.</p>
           </div>
+        ) : null}
+        {!collapsed ? (
+          <p className="mt-3 rounded-md border px-3 py-2 text-[11px] leading-4" style={{ borderColor: "var(--aa-border)", background: "var(--aa-muted-bg)", color: "var(--aa-muted-text)" }}>
+            {entitlementNotice || "Subscription visibility is informational only and does not automatically enforce access."}
+          </p>
         ) : null}
       </div>
     </aside>
@@ -152,7 +182,7 @@ export default function AgencyLayout({ children, user, agency }) {
   )
 }
 
-function NavSection({ group, pathname, collapsed }) {
+function NavSection({ group, pathname, collapsed, entitlementVisibility }) {
   return (
     <div className="mb-6">
       {!collapsed ? (
@@ -162,15 +192,16 @@ function NavSection({ group, pathname, collapsed }) {
         </div>
       ) : null}
       <nav className="grid gap-1" aria-label={group.title}>
-        {group.items.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} key={`${group.title}-${item.href}-${item.label}`} />)}
+        {group.items.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
       </nav>
     </div>
   )
 }
 
-function NavItem({ item, pathname, collapsed }) {
+function NavItem({ item, pathname, collapsed, entitlementVisibility }) {
   const Icon = iconMap[item.icon] || Files
   const active = isActive(item, pathname)
+  const visibility = entitlementVisibilityForItem(item, entitlementVisibility)
   const content = (
     <>
       <Icon className="h-4 w-4 shrink-0" />
@@ -180,8 +211,13 @@ function NavItem({ item, pathname, collapsed }) {
           <span className="block truncate text-[11px] opacity-75">{item.description}</span>
         </span>
       ) : null}
-      {!collapsed && item.badge ? <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--aa-muted-bg)" }}>{item.badge}</span> : null}
-      {!collapsed && item.disabled ? <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--aa-muted-bg)" }}>Soon</span> : null}
+      {!collapsed ? (
+        <span className="flex shrink-0 flex-col items-end gap-1">
+          {item.badge ? <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--aa-muted-bg)" }}>{item.badge}</span> : null}
+          {visibility ? <EntitlementBadge status={visibility.status} title={visibility.reason} /> : null}
+          {item.disabled ? <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--aa-muted-bg)" }}>Soon</span> : null}
+        </span>
+      ) : null}
     </>
   )
 
@@ -197,5 +233,13 @@ function NavItem({ item, pathname, collapsed }) {
     <a className={`aa-nav-item ${active ? "aa-nav-active" : ""}`} href={item.href} aria-current={active ? "page" : undefined} title={collapsed ? item.label : undefined}>
       {content}
     </a>
+  )
+}
+
+function EntitlementBadge({ status, title }) {
+  return (
+    <span className={`max-w-[104px] truncate rounded-full px-2 py-0.5 text-[9px] font-semibold ring-1 ${entitlementTone(status)}`} title={title || entitlementLabel(status)}>
+      {entitlementLabel(status)}
+    </span>
   )
 }

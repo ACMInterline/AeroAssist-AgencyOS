@@ -3,6 +3,7 @@ import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import PlatformLayout from "../../layouts/PlatformLayout"
 import { apiGet, apiPost } from "../../lib/api"
+import { entitlementLabel, entitlementTone } from "../../lib/moduleCatalog"
 
 const base = "/api/platform/saas-subscriptions"
 
@@ -33,7 +34,7 @@ export default function SaaSSubscriptionsPage() {
   const [working, setWorking] = useState("")
 
   async function load(openPlanId = selectedPlanId) {
-    const [me, summary, plans, entitlements, assignments, readiness, notes, snapshots, agencies] = await Promise.all([
+    const [me, summary, plans, entitlements, assignments, readiness, notes, snapshots, agencies, entitlementVisibility] = await Promise.all([
       apiGet("/api/auth/me"),
       apiGet(`${base}/summary`),
       apiGet(`${base}/plans`),
@@ -43,6 +44,7 @@ export default function SaaSSubscriptionsPage() {
       apiGet(`${base}/notes`),
       apiGet(`${base}/snapshots`),
       apiGet("/api/agencies"),
+      apiGet(`${base}/entitlement-visibility`).catch(() => ({ items: [] })),
     ])
     const planItems = plans.items || []
     setSelectedPlanId(openPlanId || planItems[0]?.id || "")
@@ -56,6 +58,7 @@ export default function SaaSSubscriptionsPage() {
       notes: notes.items || [],
       snapshots: snapshots.items || [],
       agencies: agencies.items || [],
+      entitlementVisibility: entitlementVisibility.items || [],
     })
   }
 
@@ -159,6 +162,36 @@ export default function SaaSSubscriptionsPage() {
 
           <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
+          </section>
+
+          <section className="rounded-lg border border-slate-200 bg-white p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-slate-950">Agency entitlement review visibility</h3>
+                <p className="mt-1 text-sm text-slate-600">Owner-review metadata only. Subscription visibility is informational only and does not automatically enforce access.</p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Read-only guardrail UI</span>
+            </div>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {state?.entitlementVisibility?.length ? state.entitlementVisibility.slice(0, 6).map((item) => (
+                <div className="rounded-md border border-slate-200 p-4" key={item.agency_id}>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-slate-950">{item.agency_name || item.agency_id}</p>
+                      <p className="mt-1 text-sm text-slate-600">{label(item.assignment_status)} · access enforcement disabled</p>
+                    </div>
+                    <Status text={item.manual_review_required ? "review required" : label(item.assignment_status)} ready={!item.manual_review_required && item.assignment_status === "active"} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {Object.entries(item.status_counts || {}).filter(([, count]) => count > 0).map(([status, count]) => (
+                      <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${entitlementTone(status)}`} key={status}>
+                        {count} {entitlementLabel(status)}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )) : <EmptyState title="No agency entitlement visibility" body="Agency visibility summaries appear after subscription metadata exists." />}
+            </div>
           </section>
 
           <section className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">

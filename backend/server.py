@@ -14,6 +14,7 @@ from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.reference_domain_usage_service import list_domain_usage, reference_action_required
 from services.reference_import_template_service import list_import_templates
+from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
 
@@ -23,7 +24,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 39.5 SaaS subscription and entitlement foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 39.6 subscription entitlement UI guardrails.",
 )
 
 app.add_middleware(
@@ -50,7 +51,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_5_saas_subscription_entitlement_foundation",
+        "phase": PHASE_LABEL,
     }
 
 
@@ -384,7 +385,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_5_saas_subscription_entitlement_foundation",
+        "phase": PHASE_LABEL,
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -1363,6 +1364,32 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 39.5 records SaaS subscription plans, entitlements, agency assignments, entitlement readiness, review notes, and immutable snapshots as metadata only. It does not bill, charge, invoice, settle, enforce access automatically, publish CMS/client portal content, recommend airlines, execute providers, book, mutate PNRs, ticket, issue EMDs, scrape, call external APIs, call external AI, or send automatically.",
         },
+        "subscription_entitlement_ui_guardrails": {
+            "entitlement_visibility_enabled": True,
+            "agency_navigation_badges_enabled": True,
+            "platform_entitlement_review_enabled": True,
+            "read_only_guardrail_ui_enabled": True,
+            "automatic_enforcement_disabled": True,
+            "billing_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "external_api_calls_disabled": True,
+            "external_ai_disabled": True,
+            "scraping_disabled": True,
+            "automatic_sending_disabled": True,
+            "visibility_statuses": ["included", "limited", "not_included", "review_required", "unknown"],
+            "agency_module_visibility_catalog_count": len(AGENCY_MODULE_VISIBILITY_CATALOG),
+            "plan_count": saas_subscription_plan_count,
+            "entitlement_count": saas_plan_entitlement_count,
+            "assignment_count": agency_subscription_assignment_count,
+            "readiness_count": agency_entitlement_readiness_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 39.6 adds read-only subscription entitlement visibility metadata for Platform Console review and Agency Workspace navigation badges. It remains informational only and does not bill, charge, invoice, settle, enforce access automatically, execute providers, book, mutate PNRs, ticket, issue EMDs, scrape, call external APIs, call external AI, or send automatically.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1388,7 +1415,7 @@ async def readiness() -> dict:
             "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
             "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
             "readiness_required": False,
-            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.5; /platform and /agency remain canonical.",
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.6; /platform and /agency remain canonical.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,

@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_39_5_saas_subscription_entitlement_foundation"
+PHASE_LABEL = "phase_39_6_subscription_entitlement_ui_guardrails"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -31,6 +31,43 @@ ASSIGNMENT_COLLECTION = "agency_subscription_assignments"
 READINESS_COLLECTION = "agency_entitlement_readiness"
 NOTE_COLLECTION = "agency_subscription_review_notes"
 SNAPSHOT_COLLECTION = "agency_subscription_snapshots"
+
+VISIBILITY_STATUSES = {"included", "limited", "not_included", "review_required", "unknown"}
+
+AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
+    {"key": "dashboard", "label": "Dashboard", "href": "/agency", "aliases": ["workspace_core", "dashboard"]},
+    {"key": "requests", "label": "Requests", "href": "/agency/requests", "aliases": ["requests", "request_builder", "daily_work"]},
+    {"key": "request_intakes", "label": "Intakes", "href": "/agency/request-intakes", "aliases": ["intakes", "request_intakes", "daily_work"]},
+    {"key": "gds_parser", "label": "GDS Parser", "href": "/agency/gds-parser", "aliases": ["gds_parser", "gds"]},
+    {"key": "crm", "label": "Clients & Passengers", "href": "/agency/clients", "aliases": ["crm", "clients", "passengers"]},
+    {"key": "client_portal", "label": "Portal Actions", "href": "/agency/portal-actions", "aliases": ["client_portal", "portal_actions"]},
+    {"key": "trips", "label": "Trips", "href": "/agency/trips", "aliases": ["trips", "trip_dossier"]},
+    {"key": "offers", "label": "Offers", "href": "/agency/offers", "aliases": ["offers", "offer_builder"]},
+    {"key": "booking_workspaces", "label": "Booking Workspaces", "href": "/agency/booking-workspaces", "aliases": ["booking_workspaces", "booking_foundation"]},
+    {"key": "booking_imports", "label": "Booking Imports", "href": "/agency/booking-imports", "aliases": ["booking_imports", "gds_imports"]},
+    {"key": "tickets_emds", "label": "Tickets & EMDs", "href": "/agency/tickets-emds", "aliases": ["tickets_emds", "ticketing", "emd_issuance"]},
+    {"key": "refunds_exchanges", "label": "Refunds & Exchanges", "href": "/agency/refunds-exchanges", "aliases": ["refunds_exchanges", "service_cases"]},
+    {"key": "cms", "label": "Website / CMS", "href": "/agency/website", "aliases": ["cms", "website", "website_cms"]},
+    {"key": "cms_media", "label": "CMS Media", "href": "/agency/website/media", "aliases": ["cms_media", "media_library", "cms"]},
+    {"key": "airline_intelligence", "label": "Airline Intelligence", "href": "/agency/airline-policy-library", "aliases": ["airline_intelligence", "policies", "service_mechanics", "service_taxonomy"]},
+    {"key": "airline_coverage", "label": "Airline Coverage", "href": "/agency/airline-intelligence-coverage", "aliases": ["airline_coverage", "data_pack_coverage", "airline_intelligence"]},
+    {"key": "knowledge_versions", "label": "Knowledge Versions", "href": "/agency/airline-intelligence-knowledge-versions", "aliases": ["knowledge_versions", "airline_intelligence"]},
+    {"key": "airline_intelligence_consumption", "label": "Airline Intelligence Usage", "href": "/agency/airline-intelligence-consumption", "aliases": ["airline_intelligence_consumption", "usage_readiness", "airline_intelligence"]},
+    {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
+    {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
+    {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},
+    {"key": "policy_comparison", "label": "Policy Comparison", "href": "/agency/policy-comparison", "aliases": ["policy_comparison", "airline_intelligence"]},
+    {"key": "airline_service_advisor", "label": "Service Advisor", "href": "/agency/airline-service-advisor", "aliases": ["airline_service_advisor", "policy_advisor", "airline_intelligence"]},
+    {"key": "offer_policy_advisor", "label": "Offer Advisor", "href": "/agency/offer-policy-advisor", "aliases": ["offer_policy_advisor", "offer_builder"]},
+    {"key": "documents", "label": "Documents", "href": "/agency/documents", "aliases": ["documents", "document_foundation"]},
+    {"key": "offer_decision_evidence", "label": "Offer Decision Evidence", "href": "/agency/offer-decision-packs", "aliases": ["offer_decision_evidence", "decision_packs", "documents"]},
+    {"key": "offer_exports", "label": "Decision Exports", "href": "/agency/offer-decision-exports", "aliases": ["offer_exports", "export_previews", "documents"]},
+    {"key": "manual_delivery", "label": "Manual Delivery", "href": "/agency/offer-decision-export-deliveries", "aliases": ["manual_delivery", "export_handoffs", "documents"]},
+    {"key": "settings", "label": "Settings", "href": "/agency/settings", "aliases": ["settings", "workspace_core"]},
+    {"key": "subscription", "label": "My Subscription", "href": "/agency/saas-subscription", "aliases": ["subscription", "saas_subscription", "workspace_core"]},
+    {"key": "reference_data", "label": "Reference Data", "href": "/agency/reference", "aliases": ["reference_data", "reference"]},
+    {"key": "form_profiles", "label": "Form Profiles", "href": "/agency/settings/forms", "aliases": ["form_profiles", "settings"]},
+]
 
 
 class SaaSSubscriptionService:
@@ -56,6 +93,8 @@ class SaaSSubscriptionService:
             "manual_review_assignment_count": len([item for item in assignments if item.get("manual_review_required")]),
             "platform_subscription_ui_enabled": True,
             "agency_subscription_visibility_ui_enabled": True,
+            "entitlement_visibility_enabled": True,
+            "read_only_guardrail_ui_enabled": True,
             **self.safety_flags(),
         }
 
@@ -75,7 +114,80 @@ class SaaSSubscriptionService:
             "plain_language_overview": "Your subscription view shows which modules and airline intelligence coverage are assigned to your agency. It is read-only and does not bill, charge, invoice, enforce access, publish, recommend, book, ticket, or issue EMDs.",
             "read_only": True,
             "payloads_hidden": True,
+            "entitlement_visibility_enabled": True,
+            "read_only_guardrail_ui_enabled": True,
             **self.safety_flags(),
+        }
+
+    async def agency_module_visibility(self, agency_id: str) -> dict[str, Any]:
+        assignments = await self.db.collection(ASSIGNMENT_COLLECTION).find_many({"agency_id": agency_id})
+        readiness = await self.db.collection(READINESS_COLLECTION).find_many({"agency_id": agency_id})
+        plan_ids = {item.get("plan_id") for item in assignments if item.get("plan_id")}
+        plans = [item for item in await self.db.collection(PLAN_COLLECTION).find_many() if item.get("id") in plan_ids]
+        entitlements = [item for item in await self.db.collection(ENTITLEMENT_COLLECTION).find_many() if item.get("plan_id") in plan_ids]
+        modules = [
+            self._module_visibility(module, assignments, plans, entitlements, readiness)
+            for module in AGENCY_MODULE_VISIBILITY_CATALOG
+        ]
+        return {
+            "phase": PHASE_LABEL,
+            "agency_id": agency_id,
+            "modules": modules,
+            "visibility_by_key": {item["key"]: item for item in modules},
+            "status_counts": self._status_counts(modules),
+            "assignment_count": len(assignments),
+            "readiness_count": len(readiness),
+            "informational_only": True,
+            "read_only": True,
+            "payloads_hidden": True,
+            "notice": "Subscription visibility is informational only and does not automatically enforce access.",
+            **self.ui_guardrail_flags(),
+        }
+
+    async def platform_entitlement_visibility(self, agency_id: str | None = None) -> dict[str, Any]:
+        filters = {"agency_id": agency_id} if agency_id else None
+        assignments = await self.db.collection(ASSIGNMENT_COLLECTION).find_many(filters)
+        assigned_agency_ids = {item.get("agency_id") for item in assignments if item.get("agency_id")}
+        if agency_id:
+            agency_ids = {agency_id}
+        else:
+            agencies = await self.db.collection("agencies").find_many()
+            agency_ids = assigned_agency_ids | {item.get("id") for item in agencies if item.get("id")}
+        agency_names = {
+            item.get("id"): item.get("name") or item.get("legal_name") or item.get("id")
+            for item in await self.db.collection("agencies").find_many()
+        }
+        items: list[dict[str, Any]] = []
+        for current_agency_id in sorted(agency_ids):
+            visibility = await self.agency_module_visibility(current_agency_id)
+            agency_assignments = [item for item in assignments if item.get("agency_id") == current_agency_id]
+            if not agency_assignments:
+                agency_assignments = await self.db.collection(ASSIGNMENT_COLLECTION).find_many({"agency_id": current_agency_id})
+            latest_assignment = self._latest_assignment(agency_assignments)
+            items.append(
+                {
+                    "agency_id": current_agency_id,
+                    "agency_name": agency_names.get(current_agency_id) or current_agency_id,
+                    "assignment_id": latest_assignment.get("id") if latest_assignment else None,
+                    "plan_id": latest_assignment.get("plan_id") if latest_assignment else None,
+                    "assignment_status": latest_assignment.get("assignment_status") if latest_assignment else "unknown",
+                    "manual_review_required": bool(latest_assignment and latest_assignment.get("manual_review_required")),
+                    "status_counts": visibility["status_counts"],
+                    "modules": visibility["modules"],
+                    "notice": visibility["notice"],
+                    "metadata_only": True,
+                    "read_only": True,
+                    "automatic_access_enforcement_disabled": True,
+                }
+            )
+        return {
+            "phase": PHASE_LABEL,
+            "items": items,
+            "agency_count": len(items),
+            "informational_only": True,
+            "read_only": True,
+            "owner_review_metadata_only": True,
+            **self.ui_guardrail_flags(),
         }
 
     async def create_plan(self, payload: SaaSSubscriptionPlanCreateRequest | dict[str, Any], user: dict | None = None) -> dict[str, Any]:
@@ -296,6 +408,140 @@ class SaaSSubscriptionService:
         if value is None:
             return ""
         return value.isoformat() if hasattr(value, "isoformat") else str(value)
+
+    def _latest_assignment(self, assignments: list[dict[str, Any]]) -> dict[str, Any] | None:
+        if not assignments:
+            return None
+        return sorted(
+            assignments,
+            key=lambda item: self._timestamp_sort_value(item.get("updated_at") or item.get("created_at")),
+            reverse=True,
+        )[0]
+
+    def _module_visibility(
+        self,
+        module: dict[str, Any],
+        assignments: list[dict[str, Any]],
+        plans: list[dict[str, Any]],
+        entitlements: list[dict[str, Any]],
+        readiness: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        aliases = {module["key"], *(module.get("aliases") or [])}
+        plan_by_id = {item.get("id"): item for item in plans}
+        active_assignments = [
+            item
+            for item in assignments
+            if enum_value(item.get("assignment_status")) not in {"cancelled", "expired"}
+        ]
+        matching_readiness = [
+            item
+            for item in readiness
+            if enum_value(item.get("entitlement_key")) in aliases
+            or enum_value(item.get("entitlement_scope")) in aliases
+        ]
+        matching_entitlements = [
+            item
+            for item in entitlements
+            if enum_value(item.get("entitlement_key")) in aliases
+            or any(self._flag_enabled(item.get("visibility_flags"), alias) for alias in aliases)
+        ]
+        included_by_assignment = any(
+            self._module_list_includes(item.get("included_modules"), aliases)
+            or any(self._flag_enabled(item.get("visibility_flags"), alias) for alias in aliases)
+            for item in active_assignments
+        )
+        included_by_plan = any(
+            self._module_list_includes(plan_by_id.get(item.get("plan_id"), {}).get("included_modules"), aliases)
+            or any(self._flag_enabled(plan_by_id.get(item.get("plan_id"), {}).get("visibility_flags"), alias) for alias in aliases)
+            for item in active_assignments
+        )
+        included_by_entitlement = any(item.get("included", True) is True for item in matching_entitlements)
+        explicitly_not_included = any(item.get("included") is False for item in matching_entitlements)
+        has_assignment = bool(assignments)
+        included = included_by_assignment or included_by_plan or included_by_entitlement
+        review_required = any(item.get("manual_review_required") for item in active_assignments + matching_readiness + matching_entitlements)
+        review_required = review_required or any(enum_value(item.get("assignment_status")) == "review" for item in active_assignments)
+        readiness_statuses = {enum_value(item.get("status")) for item in matching_readiness if item.get("status")}
+        if "needs_review" in readiness_statuses:
+            review_required = True
+
+        if not has_assignment:
+            status = "unknown"
+            reason = "No subscription assignment metadata is available for this agency."
+        elif review_required:
+            status = "review_required"
+            reason = "Platform review metadata is present for this entitlement."
+        elif included and ("not_ready" in readiness_statuses or "blocked" in readiness_statuses):
+            status = "limited"
+            reason = "The entitlement is assigned, but readiness metadata indicates a limited or blocked state."
+        elif included:
+            status = "included"
+            reason = "The current subscription metadata includes this module."
+        elif explicitly_not_included or has_assignment:
+            status = "not_included"
+            reason = "The current subscription metadata does not include this module."
+        else:
+            status = "unknown"
+            reason = "Subscription metadata does not describe this module yet."
+
+        if status not in VISIBILITY_STATUSES:
+            status = "unknown"
+        return {
+            "key": module["key"],
+            "label": module["label"],
+            "href": module.get("href"),
+            "status": status,
+            "badge": self._visibility_badge(status),
+            "reason": reason,
+            "matching_entitlement_count": len(matching_entitlements),
+            "matching_readiness_count": len(matching_readiness),
+            "included": status == "included",
+            "limited": status == "limited",
+            "review_required": status == "review_required",
+            "not_included": status == "not_included",
+            "unknown": status == "unknown",
+            "informational_only": True,
+            "automatic_access_enforcement_disabled": True,
+        }
+
+    def _module_list_includes(self, values: list[str] | None, aliases: set[str]) -> bool:
+        normalized_values = {enum_value(value) for value in values or []}
+        return bool(normalized_values & aliases)
+
+    def _flag_enabled(self, flags: dict[str, Any] | None, key: str) -> bool:
+        return bool((flags or {}).get(key))
+
+    def _visibility_badge(self, status: str) -> str:
+        return {
+            "included": "Included",
+            "limited": "Limited",
+            "not_included": "Not included",
+            "review_required": "Review required",
+            "unknown": "Unknown",
+        }.get(status, "Unknown")
+
+    def _status_counts(self, modules: list[dict[str, Any]]) -> dict[str, int]:
+        return {status: len([item for item in modules if item.get("status") == status]) for status in sorted(VISIBILITY_STATUSES)}
+
+    def ui_guardrail_flags(self) -> dict[str, bool]:
+        return {
+            "entitlement_visibility_enabled": True,
+            "agency_navigation_badges_enabled": True,
+            "platform_entitlement_review_enabled": True,
+            "read_only_guardrail_ui_enabled": True,
+            "automatic_enforcement_disabled": True,
+            "billing_disabled": True,
+            "payment_invoice_settlement_disabled": True,
+            "provider_execution_disabled": True,
+            "booking_execution_disabled": True,
+            "pnr_mutation_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "external_api_calls_disabled": True,
+            "external_ai_disabled": True,
+            "scraping_disabled": True,
+            "automatic_sending_disabled": True,
+        }
 
     def safety_flags(self) -> dict[str, bool]:
         return {

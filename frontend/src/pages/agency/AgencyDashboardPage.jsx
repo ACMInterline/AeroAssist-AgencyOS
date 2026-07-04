@@ -5,7 +5,7 @@ import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
-import { agencyModuleGroups } from "../../lib/moduleCatalog"
+import { agencyModuleGroups, entitlementLabel, entitlementTone, summarizeEntitlementVisibility } from "../../lib/moduleCatalog"
 
 export default function AgencyDashboardPage() {
   const [state, setState] = useState(null)
@@ -18,11 +18,12 @@ export default function AgencyDashboardPage() {
       const workspaces = agency ? await apiGet(`/api/agencies/${agency.id}/workspaces`) : { items: [] }
       const settings = workspaces.items[0] || null
       const staff = agency ? await apiGet(`/api/agencies/${agency.id}/staff`) : { items: [] }
-      const [requests, intakes] = agency ? await Promise.all([
+      const [requests, intakes, entitlementVisibility] = agency ? await Promise.all([
         apiGet(`/api/agencies/${agency.id}/requests`).catch(() => ({ items: [] })),
         apiGet(`/api/request-intakes?agency_id=${agency.id}`).catch(() => ({ items: [] })),
-      ]) : [{ items: [] }, { items: [] }]
-      setState({ me: context.me, agency, settings, staff: staff.items, requests: requests.items, intakes: intakes.items })
+        apiGet(`/api/agencies/${agency.id}/saas-subscriptions/module-visibility`).catch(() => ({ visibility_by_key: {}, notice: "" })),
+      ]) : [{ items: [] }, { items: [] }, { visibility_by_key: {}, notice: "" }]
+      setState({ me: context.me, agency, settings, staff: staff.items, requests: requests.items, intakes: intakes.items, entitlementVisibility })
     }
     loadAgency().catch((err) => setError(err.message))
   }, [])
@@ -88,13 +89,26 @@ export default function AgencyDashboardPage() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">{group.audience}</span>
                   <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{group.items.length} tools</span>
+                  <EntitlementGroupBadges counts={summarizeEntitlementVisibility(group.items, state?.entitlementVisibility?.visibility_by_key || {})} />
                 </div>
               </a>
             ))}
           </section>
+          <p className="text-xs text-slate-500">{state?.entitlementVisibility?.notice || "Subscription visibility is informational only and does not automatically enforce access."}</p>
         </div>
         )}
       </ProtectedRoute>
     </AgencyLayout>
   )
+}
+
+function EntitlementGroupBadges({ counts }) {
+  return Object.entries(counts)
+    .filter(([, count]) => count > 0)
+    .slice(0, 3)
+    .map(([status, count]) => (
+      <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ring-1 ${entitlementTone(status)}`} key={status}>
+        {count} {entitlementLabel(status)}
+      </span>
+    ))
 }

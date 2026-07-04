@@ -86,10 +86,10 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "Manual operations",
     items: [
-      { label: "Dashboard", description: "Workspace home", href: "/agency", icon: "building" },
-      { label: "Create request", description: "Start a staff request", href: "/agency/requests/new", icon: "plus" },
-      { label: "Intakes", description: "Public and portal queue", href: "/agency/request-intakes", icon: "inbox" },
-      { label: "GDS Parser", description: "Parse review only", href: "/agency/gds-parser", icon: "database", badge: "No provider calls" },
+      { label: "Dashboard", description: "Workspace home", href: "/agency", icon: "building", entitlementKey: "dashboard" },
+      { label: "Create request", description: "Start a staff request", href: "/agency/requests/new", icon: "plus", entitlementKey: "requests" },
+      { label: "Intakes", description: "Public and portal queue", href: "/agency/request-intakes", icon: "inbox", entitlementKey: "request_intakes" },
+      { label: "GDS Parser", description: "Parse review only", href: "/agency/gds-parser", icon: "database", badge: "No provider calls", entitlementKey: "gds_parser" },
     ],
   },
   {
@@ -98,9 +98,9 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "Agency owned",
     items: [
-      { label: "Clients", description: "Accounts and contacts", href: "/agency/clients", icon: "users" },
-      { label: "Passengers", description: "Traveler profiles", href: "/agency/passengers", icon: "user" },
-      { label: "Portal Actions", description: "Controlled client actions", href: "/agency/portal-actions", icon: "globe", badge: "Manual only" },
+      { label: "Clients", description: "Accounts and contacts", href: "/agency/clients", icon: "users", entitlementKey: "crm" },
+      { label: "Passengers", description: "Traveler profiles", href: "/agency/passengers", icon: "user", entitlementKey: "crm" },
+      { label: "Portal Actions", description: "Controlled client actions", href: "/agency/portal-actions", icon: "globe", badge: "Manual only", entitlementKey: "client_portal" },
     ],
   },
   {
@@ -109,13 +109,13 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "No live provider execution",
     items: [
-      { label: "Requests", description: "Operational work", href: "/agency/requests", icon: "clipboard" },
-      { label: "Trips", description: "Travel dossiers", href: "/agency/trips", icon: "plane" },
-      { label: "Offers", description: "Compare options", href: "/agency/offers", icon: "sparkles" },
-      { label: "Booking Workspaces", description: "PNR mirrors", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Mirror only" },
-      { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: "files", badge: "Review only" },
-      { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: "files", badge: "No issuance" },
-      { label: "Refunds & Exchanges", description: "Service cases", href: "/agency/refunds-exchanges", icon: "clipboard", badge: "Manual only" },
+      { label: "Requests", description: "Operational work", href: "/agency/requests", icon: "clipboard", entitlementKey: "requests" },
+      { label: "Trips", description: "Travel dossiers", href: "/agency/trips", icon: "plane", entitlementKey: "trips" },
+      { label: "Offers", description: "Compare options", href: "/agency/offers", icon: "sparkles", entitlementKey: "offers" },
+      { label: "Booking Workspaces", description: "PNR mirrors", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Mirror only", entitlementKey: "booking_workspaces" },
+      { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: "files", badge: "Review only", entitlementKey: "booking_imports" },
+      { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: "files", badge: "No issuance", entitlementKey: "tickets_emds" },
+      { label: "Refunds & Exchanges", description: "Service cases", href: "/agency/refunds-exchanges", icon: "clipboard", badge: "Manual only", entitlementKey: "refunds_exchanges" },
     ],
   },
   {
@@ -124,8 +124,8 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "No publishing yet",
     items: [
-      { label: "Website / CMS", description: "Public content drafts", href: "/agency/website", icon: "globe", badge: "No publishing yet" },
-      { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: "files", badge: "Public-safe media" },
+      { label: "Website / CMS", description: "Public content drafts", href: "/agency/website", icon: "globe", badge: "No publishing yet", entitlementKey: "cms" },
+      { label: "CMS Media", description: "Website assets", href: "/agency/website/media", icon: "files", badge: "Public-safe media", entitlementKey: "cms_media" },
     ],
   },
   {
@@ -134,17 +134,17 @@ export const agencyModuleGroups = [
     audience: "Agency read-only",
     safety: "Metadata only",
     items: [
-      { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: "database", badge: "Agency read-only" },
-      { label: "Airline Coverage", description: "Data readiness", href: "/agency/airline-intelligence-coverage", icon: "plane", badge: "Agency read-only" },
-      { label: "Review Coverage", description: "Safe-use status", href: "/agency/airline-intelligence-review-coverage", icon: "clipboard", badge: "Agency read-only" },
-      { label: "Knowledge Versions", description: "Visible airline data", href: "/agency/airline-intelligence-knowledge-versions", icon: "files", badge: "Agency read-only" },
-      { label: "Airline Intelligence Usage", description: "Safe-use bridge", href: "/agency/airline-intelligence-consumption", icon: "files", badge: "Agency read-only" },
-      { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: "tags", badge: "Agency read-only" },
-      { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: "clipboard", badge: "Metadata only" },
-      { label: "Ancillary Pricing", description: "Price estimates", href: "/agency/ancillary-pricing", icon: "clipboard", badge: "No payments" },
-      { label: "Policy Comparison", description: "Airline operations", href: "/agency/policy-comparison", icon: "rows", badge: "No recommendations" },
-      { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: "clipboard", badge: "Human review" },
-      { label: "Offer Advisor", description: "Offer policy context", href: "/agency/offer-policy-advisor", icon: "rows", badge: "Metadata only" },
+      { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: "database", badge: "Agency read-only", entitlementKey: "airline_intelligence" },
+      { label: "Airline Coverage", description: "Data readiness", href: "/agency/airline-intelligence-coverage", icon: "plane", badge: "Agency read-only", entitlementKey: "airline_coverage" },
+      { label: "Review Coverage", description: "Safe-use status", href: "/agency/airline-intelligence-review-coverage", icon: "clipboard", badge: "Agency read-only", entitlementKey: "airline_coverage" },
+      { label: "Knowledge Versions", description: "Visible airline data", href: "/agency/airline-intelligence-knowledge-versions", icon: "files", badge: "Agency read-only", entitlementKey: "knowledge_versions" },
+      { label: "Airline Intelligence Usage", description: "Safe-use bridge", href: "/agency/airline-intelligence-consumption", icon: "files", badge: "Agency read-only", entitlementKey: "airline_intelligence_consumption" },
+      { label: "Service Taxonomy", description: "Canonical services", href: "/agency/service-taxonomy", icon: "tags", badge: "Agency read-only", entitlementKey: "service_taxonomy" },
+      { label: "Service Mechanics", description: "SSR/EMD lookup", href: "/agency/service-mechanics", icon: "clipboard", badge: "Metadata only", entitlementKey: "service_mechanics" },
+      { label: "Ancillary Pricing", description: "Price estimates", href: "/agency/ancillary-pricing", icon: "clipboard", badge: "No payments", entitlementKey: "ancillary_pricing" },
+      { label: "Policy Comparison", description: "Airline operations", href: "/agency/policy-comparison", icon: "rows", badge: "No recommendations", entitlementKey: "policy_comparison" },
+      { label: "Service Advisor", description: "Operational guidance", href: "/agency/airline-service-advisor", icon: "clipboard", badge: "Human review", entitlementKey: "airline_service_advisor" },
+      { label: "Offer Advisor", description: "Offer policy context", href: "/agency/offer-policy-advisor", icon: "rows", badge: "Metadata only", entitlementKey: "offer_policy_advisor" },
     ],
   },
   {
@@ -153,17 +153,17 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "No automatic sending",
     items: [
-      { label: "Documents", description: "Rendered files", href: "/agency/documents", icon: "files", badge: "Manual only" },
-      { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: "rows", badge: "Human review" },
-      { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: "rows", badge: "Metadata only" },
-      { label: "Decision Exports", description: "Review snapshots", href: "/agency/offer-decision-exports", icon: "files", badge: "No sending" },
-      { label: "Export Previews", description: "Render review", href: "/agency/offer-decision-export-previews", icon: "files", badge: "No PDF delivery" },
-      { label: "Export Releases", description: "Manual readiness", href: "/agency/offer-decision-export-releases", icon: "files", badge: "Manual only" },
-      { label: "Export Handoffs", description: "Manual metadata", href: "/agency/offer-decision-export-deliveries", icon: "files", badge: "No sending" },
-      { label: "Export Outcomes", description: "Manual tracking", href: "/agency/offer-decision-export-delivery-outcomes", icon: "files", badge: "Metadata only" },
-      { label: "Export Audits", description: "Read-only review trail", href: "/agency/offer-decision-export-audit-reviews", icon: "files", badge: "Agency read-only" },
-      { label: "Export Policy", description: "Retention metadata", href: "/agency/offer-decision-export-governance", icon: "files", badge: "Metadata only" },
-      { label: "Export Compliance Evidence", description: "Proof metadata", href: "/agency/offer-decision-export-compliance", icon: "files", badge: "Metadata only" },
+      { label: "Documents", description: "Rendered files", href: "/agency/documents", icon: "files", badge: "Manual only", entitlementKey: "documents" },
+      { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: "rows", badge: "Human review", entitlementKey: "offer_decision_evidence" },
+      { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: "rows", badge: "Metadata only", entitlementKey: "offer_decision_evidence" },
+      { label: "Decision Exports", description: "Review snapshots", href: "/agency/offer-decision-exports", icon: "files", badge: "No sending", entitlementKey: "offer_exports" },
+      { label: "Export Previews", description: "Render review", href: "/agency/offer-decision-export-previews", icon: "files", badge: "No PDF delivery", entitlementKey: "offer_exports" },
+      { label: "Export Releases", description: "Manual readiness", href: "/agency/offer-decision-export-releases", icon: "files", badge: "Manual only", entitlementKey: "offer_exports" },
+      { label: "Export Handoffs", description: "Manual metadata", href: "/agency/offer-decision-export-deliveries", icon: "files", badge: "No sending", entitlementKey: "manual_delivery" },
+      { label: "Export Outcomes", description: "Manual tracking", href: "/agency/offer-decision-export-delivery-outcomes", icon: "files", badge: "Metadata only", entitlementKey: "manual_delivery" },
+      { label: "Export Audits", description: "Read-only review trail", href: "/agency/offer-decision-export-audit-reviews", icon: "files", badge: "Agency read-only", entitlementKey: "offer_decision_evidence" },
+      { label: "Export Policy", description: "Retention metadata", href: "/agency/offer-decision-export-governance", icon: "files", badge: "Metadata only", entitlementKey: "offer_decision_evidence" },
+      { label: "Export Compliance Evidence", description: "Proof metadata", href: "/agency/offer-decision-export-compliance", icon: "files", badge: "Metadata only", entitlementKey: "offer_decision_evidence" },
     ],
   },
   {
@@ -172,15 +172,52 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "Agency owned",
     items: [
-      { label: "Team", description: "Staff access", href: "/agency", icon: "users", badge: "Dashboard" },
-      { label: "My Subscription", description: "Assigned plan and entitlements", href: "/agency/saas-subscription", icon: "layers", badge: "Agency read-only" },
-      { label: "Reference Data", description: "Lookups and suggestions", href: "/agency/reference", icon: "database", badge: "Suggest only" },
-      { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: "clipboard" },
-      { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: "settings" },
+      { label: "Team", description: "Staff access", href: "/agency", icon: "users", badge: "Dashboard", entitlementKey: "dashboard" },
+      { label: "My Subscription", description: "Assigned plan and entitlements", href: "/agency/saas-subscription", icon: "layers", badge: "Agency read-only", entitlementKey: "subscription" },
+      { label: "Reference Data", description: "Lookups and suggestions", href: "/agency/reference", icon: "database", badge: "Suggest only", entitlementKey: "reference_data" },
+      { label: "Form Profiles", description: "Field menus", href: "/agency/settings/forms", icon: "clipboard", entitlementKey: "form_profiles" },
+      { label: "Settings", description: "Brand and theme", href: "/agency/settings", icon: "settings", entitlementKey: "settings" },
     ],
   },
 ]
 
 export function flattenModuleGroups(groups) {
   return groups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title })))
+}
+
+export const entitlementVisibilityLabels = {
+  included: "Included",
+  limited: "Limited",
+  review_required: "Review required",
+  not_included: "Not included",
+  unknown: "Unknown",
+}
+
+export const entitlementVisibilityTone = {
+  included: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  limited: "bg-amber-50 text-amber-700 ring-amber-200",
+  review_required: "bg-sky-50 text-sky-700 ring-sky-200",
+  not_included: "bg-slate-100 text-slate-600 ring-slate-200",
+  unknown: "bg-zinc-50 text-zinc-600 ring-zinc-200",
+}
+
+export function entitlementVisibilityForItem(item, visibilityByKey = {}) {
+  return visibilityByKey[item.entitlementKey] || visibilityByKey[item.href] || null
+}
+
+export function entitlementLabel(status) {
+  return entitlementVisibilityLabels[status] || entitlementVisibilityLabels.unknown
+}
+
+export function entitlementTone(status) {
+  return entitlementVisibilityTone[status] || entitlementVisibilityTone.unknown
+}
+
+export function summarizeEntitlementVisibility(items, visibilityByKey = {}) {
+  return items.reduce((counts, item) => {
+    const visibility = entitlementVisibilityForItem(item, visibilityByKey)
+    const status = visibility?.status || "unknown"
+    counts[status] = (counts[status] || 0) + 1
+    return counts
+  }, {})
 }

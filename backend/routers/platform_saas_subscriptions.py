@@ -45,6 +45,16 @@ async def get_platform_saas_subscription_summary(
     return await SaaSSubscriptionService(db).platform_summary()
 
 
+@router.get("/entitlement-visibility")
+async def get_platform_saas_entitlement_visibility(
+    agency_id: str | None = Query(default=None),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_read(user)
+    return await SaaSSubscriptionService(db).platform_entitlement_visibility(agency_id=agency_id)
+
+
 @router.get("/plans")
 async def list_platform_saas_subscription_plans(
     status_filter: str | None = Query(default=None, alias="status"),

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_5_saas_subscription_entitlement_foundation"
+PHASE_LABEL = "phase_39_6_subscription_entitlement_ui_guardrails"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -70,6 +70,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "saas_subscription_plans, saas_plan_entitlements, agency_subscription_assignments, agency_entitlement_readiness, agency_subscription_review_notes, agency_subscription_snapshots",
         "status": "foundation adopted",
         "action": "Define metadata-only SaaS subscription and entitlement visibility without billing, payment, invoicing, settlement, automatic access enforcement, publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, scraping, external APIs, or external AI.",
+    },
+    {
+        "category": "Subscription Entitlement UI Guardrails",
+        "concept": "Read-only subscription visibility hints",
+        "supplementary_concept": "module visibility badges, entitlement review summaries, agency navigation status hints",
+        "current_equivalent": "SaaSSubscriptionService agency_module_visibility/platform_entitlement_visibility helpers, /api/platform/saas-subscriptions/entitlement-visibility, /api/agencies/{agency_id}/saas-subscriptions/module-visibility, frontend module catalog entitlement keys",
+        "status": "foundation adopted",
+        "action": "Show Included, Limited, Review required, Not included, and Unknown as informational UI hints only; do not bill, charge, invoice, settle, block routes destructively, enforce access automatically, execute providers, book, mutate PNRs, ticket, issue EMDs, scrape, call external APIs, call external AI, or send automatically.",
     },
     {
         "category": "GDS/Supplier",
@@ -478,6 +486,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline intelligence agency consumption bridge built in Phase 39.3",
             "Platform / agency UX consolidation built in Phase 39.4",
             "SaaS subscription and entitlement foundation built in Phase 39.5",
+            "Subscription entitlement UI guardrails built in Phase 39.6",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

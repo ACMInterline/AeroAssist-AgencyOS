@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from auth import get_current_user, require_platform_role
 from config import get_settings
 from database import Database, get_database
+from services.saas_subscription_service import PHASE_LABEL
 
 router = APIRouter(prefix="/api/platform", tags=["platform"])
 
@@ -14,7 +15,7 @@ async def health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": "phase_39_5_saas_subscription_entitlement_foundation",
+        "phase": PHASE_LABEL,
     }
 
 
