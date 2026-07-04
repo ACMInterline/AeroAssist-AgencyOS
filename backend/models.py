@@ -10552,6 +10552,69 @@ class FeatureFlagBundleReview(BaseDocument):
     metadata_only: bool = True
 
 
+class AgencyFeatureBundleAssignment(BaseDocument):
+    assignment_id: str = Field(default_factory=new_id)
+    agency_id: str
+    bundle_id: str
+    assigned_by: Optional[str] = None
+    assigned_at: datetime = Field(default_factory=now_utc)
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    status: str = "assigned"
+    notes: Optional[str] = None
+    review_status: str = "pending_review"
+    metadata_only: bool = True
+    activation_logic_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+
+
+class AgencyFeatureBundleAssignmentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    assignment_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    bundle_id: str
+    assigned_by: Optional[str] = None
+    assigned_at: Optional[datetime] = None
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    status: str = "assigned"
+    notes: Optional[str] = None
+    review_status: str = "pending_review"
+
+
+class AgencyFeatureBundleAssignmentUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    bundle_id: Optional[str] = None
+    assigned_by: Optional[str] = None
+    assigned_at: Optional[datetime] = None
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    review_status: Optional[str] = None
+
+
+class AgencyFeatureBundleAssignmentHistory(BaseDocument):
+    assignment_id: str
+    agency_id: str
+    bundle_id: str
+    assigned_by: Optional[str] = None
+    assigned_at: Optional[datetime] = None
+    effective_date: Optional[date] = None
+    expiration_date: Optional[date] = None
+    status: str = "assigned"
+    notes: Optional[str] = None
+    review_status: str = "pending_review"
+    history_event: str = "recorded"
+    changed_by: Optional[str] = None
+    changed_at: datetime = Field(default_factory=now_utc)
+    metadata_only: bool = True
+    activation_logic_disabled: bool = True
+
+
 class AgencyFeatureFlagCreateRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

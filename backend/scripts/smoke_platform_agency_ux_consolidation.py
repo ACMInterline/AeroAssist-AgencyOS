@@ -5,7 +5,7 @@ import subprocess
 from smoke_booking_pnr_foundation import get
 
 
-EXPECTED_PHASE = "phase_39_9_feature_flag_bundle_foundation"
+EXPECTED_PHASE = "phase_40_0_feature_bundle_assignment_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

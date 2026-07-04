@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
+from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -25,7 +25,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 39.9 feature flag bundle foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 40.0 feature bundle assignment foundation.",
 )
 
 app.add_middleware(
@@ -364,6 +364,8 @@ async def readiness() -> dict:
     agency_feature_flag_readiness_count = await database.collection("agency_feature_flag_readiness").count()
     agency_feature_flag_bundle_count = await database.collection("agency_feature_flag_bundles").count()
     agency_feature_flag_bundle_review_count = await database.collection("agency_feature_flag_bundle_reviews").count()
+    agency_feature_bundle_assignment_count = await database.collection("agency_feature_bundle_assignments").count()
+    agency_feature_bundle_assignment_history_count = await database.collection("agency_feature_bundle_assignment_history").count()
     airline_intelligence_data_packs = await database.collection("airline_intelligence_data_packs").find_many()
     airline_data_packs_needing_review_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") in {"draft", "needs_review"}])
     airline_data_pack_approved_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") == "approved"])
@@ -1492,6 +1494,34 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 39.9 defines reusable feature flag bundle metadata for platform review and agency read-only visibility. Bundles do not enable features, enforce access, hide modules, decide permissions, bill, execute providers, publish, roll out changes, call external APIs, call external AI, scrape, send notifications, or start background workers.",
         },
+        "feature_bundle_assignment_foundation": {
+            "feature_bundle_assignments_enabled": True,
+            "feature_bundle_assignment_history_enabled": True,
+            "platform_assignment_metadata_crud_enabled": True,
+            "agency_read_only_assignment_visibility_enabled": True,
+            "delete_marks_inactive_enabled": True,
+            "history_preserved_enabled": True,
+            "metadata_only": True,
+            "no_activation_logic_enabled": True,
+            "feature_activation_disabled": True,
+            "runtime_execution_disabled": True,
+            "feature_flag_execution_disabled": True,
+            "entitlement_enforcement_disabled": True,
+            "entitlement_evaluation_disabled": True,
+            "billing_disabled": True,
+            "payments_disabled": True,
+            "stripe_disabled": True,
+            "licensing_disabled": True,
+            "permission_changes_disabled": True,
+            "provider_calls_disabled": True,
+            "external_ai_disabled": True,
+            "background_workers_disabled": True,
+            "cron_disabled": True,
+            "assignment_count": agency_feature_bundle_assignment_count,
+            "assignment_history_count": agency_feature_bundle_assignment_history_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 40.0 records agency feature bundle assignment metadata for platform review and agency read-only visibility. Assignments do not activate features, enforce entitlements, change permissions, bill, license, execute feature flags, call providers, call external AI, start background workers, run cron jobs, or deploy anything.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1517,7 +1547,7 @@ async def readiness() -> dict:
             "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
             "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
             "readiness_required": False,
-            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.9; /platform and /agency remain canonical.",
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 40.0; /platform and /agency remain canonical.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,
@@ -1570,6 +1600,7 @@ app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
 app.include_router(platform_feature_flag_bundles.router)
+app.include_router(platform_feature_bundle_assignments.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -1611,6 +1642,7 @@ app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)
 app.include_router(agency_feature_flag_bundles.router)
+app.include_router(agency_feature_bundle_assignments.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

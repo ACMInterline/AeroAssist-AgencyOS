@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_9_feature_flag_bundle_foundation"
+PHASE_LABEL = "phase_40_0_feature_bundle_assignment_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -102,6 +102,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureFlagBundle, FeatureFlagBundleSummary, FeatureFlagBundleReview, FeatureFlagBundleMember, BundleReadiness, /api/platform/feature-flag-bundles, /api/agencies/{agency_id}/feature-flag-bundles, /platform/feature-flag-bundles, /agency/feature-bundles",
         "status": "foundation adopted",
         "action": "Define reusable metadata-only groupings of feature flags for Platform Console review and Agency Workspace read-only visibility without enabling features, entitlement checks, route blocking, module hiding, permission decisions, billing, publishing, rollout, background workers, notifications, provider integrations, scraping, external APIs, or external AI.",
+    },
+    {
+        "category": "Feature Bundle Assignments",
+        "concept": "Agency feature bundle assignment metadata",
+        "supplementary_concept": "agency bundle assignment records, assignment history, inactive assignment metadata",
+        "current_equivalent": "AgencyFeatureBundleAssignment, AgencyFeatureBundleAssignmentHistory, AgencyFeatureBundleAssignmentService, /api/platform/feature-bundle-assignments, /api/platform/agencies/{agency_id}/bundle-assignments, /api/agencies/{agency_id}/feature-bundle-assignments, /platform/feature-bundle-assignments, /agency/assigned-bundles",
+        "status": "foundation adopted",
+        "action": "Record platform-owned agency bundle assignment metadata and immutable assignment history without activating features, evaluating entitlements, changing permissions, billing, licensing, executing feature flags, calling providers, running background workers or cron, calling external AI, or deploying anything.",
     },
     {
         "category": "GDS/Supplier",
@@ -362,6 +370,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-compliance", "agencyos": "/agency/offer-decision-export-compliance"},
         {"supplementary": "/admin/feature-flag-bundles", "agencyos": "/platform/feature-flag-bundles"},
         {"supplementary": "/agent/feature-bundles", "agencyos": "/agency/feature-bundles"},
+        {"supplementary": "/admin/feature-bundle-assignments", "agencyos": "/platform/feature-bundle-assignments"},
+        {"supplementary": "/agent/assigned-bundles", "agencyos": "/agency/assigned-bundles"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -489,6 +499,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureFlagBundleReview",
             "FeatureFlagBundleMember",
             "BundleReadiness",
+            "AgencyFeatureBundleAssignment",
+            "AgencyFeatureBundleAssignmentHistory",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -526,6 +538,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Agency feature flags foundation built in Phase 39.7",
             "Agency feature flag audit foundation built in Phase 39.8",
             "Feature flag bundles foundation built in Phase 39.9",
+            "Feature bundle assignment foundation built in Phase 40.0",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

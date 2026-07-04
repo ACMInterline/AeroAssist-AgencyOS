@@ -89,6 +89,7 @@ The repository currently contains:
 - Phase 39.7: Agency feature flags foundation.
 - Phase 39.8: Agency feature flag readiness and audit foundation.
 - Phase 39.9: Feature flag bundles foundation.
+- Phase 40.0: Agency feature bundle assignment foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1471,6 +1472,21 @@ Implemented scope:
 Avoid adding:
 
 - Runtime feature enforcement, entitlement checks, billing, payments, Stripe, taxation, accounting, execution logic, module hiding, permission decisions, publishing, rollout, percentage deployments, provider integrations, AI, scraping, background workers, notifications, email/SMS sending, API integrations, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.0: Agency Feature Bundle Assignment Foundation
+
+Implemented scope:
+
+- Added metadata-only `AgencyFeatureBundleAssignment`, `AgencyFeatureBundleAssignmentCreate`, and `AgencyFeatureBundleAssignmentHistory` records.
+- Added `agency_feature_bundle_assignments` and `agency_feature_bundle_assignment_history` collection/index registrations.
+- Added platform metadata CRUD APIs and `/platform/feature-bundle-assignments` for agency bundle assignment review.
+- Added agency read-only APIs and `/agency/assigned-bundles` for Assigned Bundles visibility.
+- Added readiness flags under `feature_bundle_assignment_foundation`.
+- Added `docs/architecture/feature-bundle-assignment-foundation.md`.
+
+Avoid adding:
+
+- Runtime feature enforcement, feature activation, entitlement evaluation, entitlement enforcement, billing, payments, Stripe, licensing, permission changes, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external AI, background workers, cron jobs, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

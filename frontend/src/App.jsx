@@ -1,5 +1,6 @@
 import AgencyDashboardPage from "./pages/agency/AgencyDashboardPage"
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
+import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
 import AgencyAirlineIntelligenceConsumptionPage from "./pages/agency/AirlineIntelligenceConsumptionPage"
@@ -86,6 +87,7 @@ import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
+import PlatformFeatureBundleAssignmentsPage from "./pages/platform/FeatureBundleAssignmentsPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
 import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
 import PlatformFeatureFlagsPage from "./pages/platform/FeatureFlagsPage"
@@ -138,6 +140,7 @@ const routes = {
   "/platform/feature-flags": PlatformFeatureFlagsPage,
   "/platform/feature-flag-audit": PlatformFeatureFlagAuditPage,
   "/platform/feature-flag-bundles": PlatformFeatureFlagBundlesPage,
+  "/platform/feature-bundle-assignments": PlatformFeatureBundleAssignmentsPage,
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/blueprint": PlatformBlueprintPage,
   "/platform/airlines": AirlinesPage,
@@ -171,6 +174,7 @@ const routes = {
   "/agency/feature-availability": FeatureAvailabilityPage,
   "/agency/feature-readiness": FeatureReadinessPage,
   "/agency/feature-bundles": FeatureBundlesPage,
+  "/agency/assigned-bundles": AssignedBundlesPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
   "/agency/website/media": WebsiteMediaLibraryPage,
