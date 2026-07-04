@@ -44,6 +44,7 @@ import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetai
 import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
 import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
 import FeatureAvailabilityPage from "./pages/agency/FeatureAvailabilityPage"
+import FeatureBundlesPage from "./pages/agency/FeatureBundlesPage"
 import FeatureReadinessPage from "./pages/agency/FeatureReadinessPage"
 import FormProfilesPage from "./pages/agency/FormProfilesPage"
 import GdsParserPage from "./pages/agency/GdsParserPage"
@@ -86,6 +87,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
+import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
 import PlatformFeatureFlagsPage from "./pages/platform/FeatureFlagsPage"
 import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
 import PlatformOfferDecisionExportAuditReviewsPage from "./pages/platform/OfferDecisionExportAuditReviewsPage"
@@ -135,6 +137,7 @@ const routes = {
   "/platform/saas-subscriptions": PlatformSaaSSubscriptionsPage,
   "/platform/feature-flags": PlatformFeatureFlagsPage,
   "/platform/feature-flag-audit": PlatformFeatureFlagAuditPage,
+  "/platform/feature-flag-bundles": PlatformFeatureFlagBundlesPage,
   "/platform/agencies": PlatformAgenciesPage,
   "/platform/blueprint": PlatformBlueprintPage,
   "/platform/airlines": AirlinesPage,
@@ -167,6 +170,7 @@ const routes = {
   "/agency/saas-subscription": SaaSSubscriptionPage,
   "/agency/feature-availability": FeatureAvailabilityPage,
   "/agency/feature-readiness": FeatureReadinessPage,
+  "/agency/feature-bundles": FeatureBundlesPage,
   "/agency/settings": AgencySettingsPage,
   "/agency/website": WebsiteBuilderPage,
   "/agency/website/media": WebsiteMediaLibraryPage,

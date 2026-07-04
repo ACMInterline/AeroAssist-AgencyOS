@@ -196,6 +196,8 @@ async def summary(
             "agency_feature_flag_snapshots": await db.collection("agency_feature_flag_snapshots").count(),
             "agency_feature_flag_audits": await db.collection("agency_feature_flag_audits").count(),
             "agency_feature_flag_readiness": await db.collection("agency_feature_flag_readiness").count(),
+            "agency_feature_flag_bundles": await db.collection("agency_feature_flag_bundles").count(),
+            "agency_feature_flag_bundle_reviews": await db.collection("agency_feature_flag_bundle_reviews").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),
             "gds_parse_samples": await db.collection("gds_parse_samples").count(),

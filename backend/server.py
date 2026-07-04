@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_feature_flag_audits, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
+from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -14,6 +14,7 @@ from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
 from services.reference_domain_usage_service import list_domain_usage, reference_action_required
 from services.reference_import_template_service import list_import_templates
+from services.agency_feature_flag_bundle_service import DEFAULT_FEATURE_FLAG_BUNDLES
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
@@ -24,7 +25,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 39.8 feature flag audit foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 39.9 feature flag bundle foundation.",
 )
 
 app.add_middleware(
@@ -361,6 +362,8 @@ async def readiness() -> dict:
     agency_feature_flag_snapshot_count = await database.collection("agency_feature_flag_snapshots").count()
     agency_feature_flag_audit_count = await database.collection("agency_feature_flag_audits").count()
     agency_feature_flag_readiness_count = await database.collection("agency_feature_flag_readiness").count()
+    agency_feature_flag_bundle_count = await database.collection("agency_feature_flag_bundles").count()
+    agency_feature_flag_bundle_review_count = await database.collection("agency_feature_flag_bundle_reviews").count()
     airline_intelligence_data_packs = await database.collection("airline_intelligence_data_packs").find_many()
     airline_data_packs_needing_review_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") in {"draft", "needs_review"}])
     airline_data_pack_approved_count = len([item for item in airline_intelligence_data_packs if item.get("verification_status") == "approved"])
@@ -1458,6 +1461,37 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 39.8 records feature flag audit history and readiness checklist metadata. It does not enforce features, block routes, change permissions, affect subscriptions, bill, execute providers, book, mutate PNRs, ticket, issue EMDs, publish CMS/client portal content, call external APIs, call external AI, scrape, or send automatically.",
         },
+        "feature_flag_bundle_foundation": {
+            "feature_flag_bundles_enabled": True,
+            "feature_flag_bundle_reviews_enabled": True,
+            "feature_flag_bundle_members_enabled": True,
+            "bundle_readiness_enabled": True,
+            "platform_bundle_read_only_enabled": True,
+            "agency_bundle_read_only_enabled": True,
+            "metadata_only": True,
+            "runtime_feature_enforcement_disabled": True,
+            "entitlement_checks_disabled": True,
+            "billing_disabled": True,
+            "execution_logic_disabled": True,
+            "module_hiding_disabled": True,
+            "permission_decisions_disabled": True,
+            "publishing_disabled": True,
+            "rollout_disabled": True,
+            "percentage_deployments_disabled": True,
+            "provider_integrations_disabled": True,
+            "external_ai_disabled": True,
+            "scraping_disabled": True,
+            "background_workers_disabled": True,
+            "notifications_disabled": True,
+            "email_sending_disabled": True,
+            "api_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "bundle_count": agency_feature_flag_bundle_count,
+            "bundle_review_count": agency_feature_flag_bundle_review_count,
+            "default_bundle_count": len(DEFAULT_FEATURE_FLAG_BUNDLES),
+            "readiness_required": False,
+            "diagnostic": "Phase 39.9 defines reusable feature flag bundle metadata for platform review and agency read-only visibility. Bundles do not enable features, enforce access, hide modules, decide permissions, bill, execute providers, publish, roll out changes, call external APIs, call external AI, scrape, send notifications, or start background workers.",
+        },
         "blueprint_sync": {
             "supplementary_blueprint_adoption_map_enabled": True,
             "canonical_route_policy_enabled": True,
@@ -1483,7 +1517,7 @@ async def readiness() -> dict:
             "blueprint_gap_count": blueprint_gaps.get("gap_count", 0),
             "blueprint_rejected_route_count": len(blueprint_route_policy.get("rejected_routes") or []),
             "readiness_required": False,
-            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.8; /platform and /agency remain canonical.",
+            "diagnostic": "Supplementary blueprint sync is documented and mapped to existing AgencyOS foundations through Phase 39.9; /platform and /agency remain canonical.",
         },
         "form_profiles": {
             "global_field_library_enabled": True,
@@ -1535,6 +1569,7 @@ app.include_router(platform_airline_intelligence_agency_consumption.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
+app.include_router(platform_feature_flag_bundles.router)
 app.include_router(platform_service_catalogue.router)
 app.include_router(platform_service_taxonomy.router)
 app.include_router(platform_service_mechanics.router)
@@ -1575,6 +1610,7 @@ app.include_router(agency_airline_intelligence_agency_consumption.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)
+app.include_router(agency_feature_flag_bundles.router)
 app.include_router(agency_service_taxonomy.router)
 app.include_router(agency_service_mechanics.router)
 app.include_router(agency_ticket_emd.router)

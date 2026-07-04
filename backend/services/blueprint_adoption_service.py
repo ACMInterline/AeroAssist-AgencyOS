@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_8_feature_flag_audit_foundation"
+PHASE_LABEL = "phase_39_9_feature_flag_bundle_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -94,6 +94,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness, /api/platform/feature-flags/audits, /api/platform/feature-flags/readiness, /api/agencies/{agency_id}/feature-readiness, /platform/feature-flag-audit, /agency/feature-readiness",
         "status": "foundation adopted",
         "action": "Record read-only feature flag audit history and readiness checklist metadata without feature enforcement, route blocking, permission changes, subscription changes, billing, provider execution, publishing, external APIs, external AI, scraping, or automatic sending.",
+    },
+    {
+        "category": "Feature Flag Bundles",
+        "concept": "Reusable feature flag bundle metadata",
+        "supplementary_concept": "Core Agency, CRM, Ticketing, Booking, Airline Intelligence, GDS, Finance, Premium Operations, Beta Features, Internal Testing",
+        "current_equivalent": "FeatureFlagBundle, FeatureFlagBundleSummary, FeatureFlagBundleReview, FeatureFlagBundleMember, BundleReadiness, /api/platform/feature-flag-bundles, /api/agencies/{agency_id}/feature-flag-bundles, /platform/feature-flag-bundles, /agency/feature-bundles",
+        "status": "foundation adopted",
+        "action": "Define reusable metadata-only groupings of feature flags for Platform Console review and Agency Workspace read-only visibility without enabling features, entitlement checks, route blocking, module hiding, permission decisions, billing, publishing, rollout, background workers, notifications, provider integrations, scraping, external APIs, or external AI.",
     },
     {
         "category": "GDS/Supplier",
@@ -352,6 +360,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-decision-export-governance", "agencyos": "/agency/offer-decision-export-governance"},
         {"supplementary": "/admin/offer-decision-export-compliance", "agencyos": "/platform/offer-decision-export-compliance"},
         {"supplementary": "/agent/offer-decision-export-compliance", "agencyos": "/agency/offer-decision-export-compliance"},
+        {"supplementary": "/admin/feature-flag-bundles", "agencyos": "/platform/feature-flag-bundles"},
+        {"supplementary": "/agent/feature-bundles", "agencyos": "/agency/feature-bundles"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -369,7 +379,7 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.8",
+        "phase": "Phase 39.10",
         "title": "Airline Intelligence Promotion Governance Hardening",
         "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
     },
@@ -474,6 +484,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AgencyFeatureFlagSnapshot",
             "AgencyFeatureFlagAudit",
             "AgencyFeatureFlagReadiness",
+            "FeatureFlagBundle",
+            "FeatureFlagBundleSummary",
+            "FeatureFlagBundleReview",
+            "FeatureFlagBundleMember",
+            "BundleReadiness",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -510,6 +525,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Subscription entitlement UI guardrails built in Phase 39.6",
             "Agency feature flags foundation built in Phase 39.7",
             "Agency feature flag audit foundation built in Phase 39.8",
+            "Feature flag bundles foundation built in Phase 39.9",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -10488,6 +10488,70 @@ class AgencyFeatureFlagReadiness(BaseDocument):
     feature_blocking_disabled: bool = True
 
 
+class FeatureFlagBundleMember(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    module_key: str
+    feature_key: str
+    display_name: str
+    description: Optional[str] = None
+    metadata_only: bool = True
+
+
+class BundleReadiness(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    documentation_complete: bool = False
+    bundle_review_complete: bool = False
+    member_flags_reviewed: bool = False
+    agency_visibility_reviewed: bool = False
+    testing_complete: bool = False
+    deployment_ready: bool = False
+    rollout_ready: bool = False
+    last_reviewed: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    metadata_only: bool = True
+
+
+class FeatureFlagBundle(BaseDocument):
+    bundle_key: str
+    bundle_name: str
+    description: Optional[str] = None
+    category: str = "general"
+    members: List[FeatureFlagBundleMember] = Field(default_factory=list)
+    review_status: str = "draft"
+    readiness: BundleReadiness = Field(default_factory=BundleReadiness)
+    visible_to_agencies: bool = True
+    metadata_only: bool = True
+    runtime_enforcement_disabled: bool = True
+    entitlement_checks_disabled: bool = True
+    rollout_disabled: bool = True
+
+
+class FeatureFlagBundleSummary(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    bundle_id: str
+    bundle_key: str
+    bundle_name: str
+    description: Optional[str] = None
+    category: str = "general"
+    flag_count: int = 0
+    review_status: str = "draft"
+    readiness: BundleReadiness = Field(default_factory=BundleReadiness)
+    last_updated: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class FeatureFlagBundleReview(BaseDocument):
+    bundle_id: Optional[str] = None
+    bundle_key: str
+    reviewer: Optional[str] = None
+    review_status: str = "draft"
+    notes: Optional[str] = None
+    metadata_only: bool = True
+
+
 class AgencyFeatureFlagCreateRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
