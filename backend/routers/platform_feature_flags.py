@@ -79,7 +79,7 @@ async def update_platform_feature_flag(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await AgencyFeatureFlagService(db).update_flag(flag_id, payload)
+        return await AgencyFeatureFlagService(db).update_flag(flag_id, payload, user)
     except ValueError as exc:
         raise bad_request(str(exc)) from exc
 

@@ -372,6 +372,8 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_feature_flags",
     "agency_feature_flag_reviews",
     "agency_feature_flag_snapshots",
+    "agency_feature_flag_audits",
+    "agency_feature_flag_readiness",
     "offer_acceptances",
     "trip_accepted_offer_snapshots",
     "booking_readiness_packages",
@@ -1634,6 +1636,16 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "agency_feature_flag_snapshots": [
             {"keys": [("id", ASCENDING)], "name": "agency_feature_flag_snapshots_id_unique", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("snapshot_date", ASCENDING)], "name": "agency_feature_flag_snapshots_agency_date_lookup"},
+        ],
+        "agency_feature_flag_audits": [
+            {"keys": [("id", ASCENDING)], "name": "agency_feature_flag_audits_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("changed_at", ASCENDING)], "name": "agency_feature_flag_audits_agency_changed_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("feature_key", ASCENDING)], "name": "agency_feature_flag_audits_agency_feature_lookup"},
+        ],
+        "agency_feature_flag_readiness": [
+            {"keys": [("id", ASCENDING)], "name": "agency_feature_flag_readiness_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("feature_key", ASCENDING)], "name": "agency_feature_flag_readiness_agency_feature_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("rollout_ready", ASCENDING)], "name": "agency_feature_flag_readiness_agency_rollout_lookup"},
         ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],

@@ -14,9 +14,10 @@ from models import (
     now_utc,
 )
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
+from services.agency_feature_flag_audit_service import AgencyFeatureFlagAuditService
 
 
-PHASE_LABEL = "phase_39_7_agency_feature_flags_foundation"
+PHASE_LABEL = "phase_39_8_feature_flag_audit_foundation"
 
 FLAG_COLLECTION = "agency_feature_flags"
 REVIEW_COLLECTION = "agency_feature_flag_reviews"
@@ -67,6 +68,7 @@ class AgencyFeatureFlagService:
         existing = await self.db.collection(FLAG_COLLECTION).find_one(
             {"agency_id": data["agency_id"], "module_key": data["module_key"], "feature_key": data["feature_key"]}
         )
+        actor = actor_from_user(user)
         if existing:
             updates = {
                 "module_key": data["module_key"],
@@ -82,16 +84,59 @@ class AgencyFeatureFlagService:
                 updates,
             )
             stored = updated or existing
+            previous_state = existing.get("state")
+            reason = "feature_flag_visibility_updated"
         else:
             flag = AgencyFeatureFlag(**data)
             stored = await self.db.collection(FLAG_COLLECTION).insert_one(flag.model_dump(mode="json"))
+            previous_state = None
+            reason = "feature_flag_visibility_created"
+        audit_service = AgencyFeatureFlagAuditService(self.db)
+        await audit_service.ensure_readiness(agency_id=data["agency_id"], feature_key=data["feature_key"], reviewed_by=actor)
+        await audit_service.record_audit(
+            agency_id=data["agency_id"],
+            feature_key=data["feature_key"],
+            previous_state=previous_state,
+            proposed_state=stored.get("state") or data.get("state") or "disabled",
+            changed_by=actor,
+            reason=reason,
+            notes=data.get("visibility_note"),
+            metadata={
+                "module_key": data.get("module_key"),
+                "display_name": data.get("display_name"),
+                "metadata_only": True,
+                "automatic_enforcement_disabled": True,
+            },
+        )
         return {"flag": self._flag_projection(stored), **self.safety_flags()}
 
-    async def update_flag(self, flag_id: str, payload: AgencyFeatureFlagUpdateRequest | dict[str, Any]) -> dict[str, Any]:
+    async def update_flag(self, flag_id: str, payload: AgencyFeatureFlagUpdateRequest | dict[str, Any], user: dict | None = None) -> dict[str, Any]:
         existing = await self._require_flag(flag_id)
         updates = payload_dict(payload)
         updated = await self.db.collection(FLAG_COLLECTION).update_one({"id": flag_id}, updates)
-        return {"flag": self._flag_projection(updated or existing), **self.safety_flags()}
+        stored = updated or existing
+        audit_service = AgencyFeatureFlagAuditService(self.db)
+        await audit_service.ensure_readiness(
+            agency_id=stored["agency_id"],
+            feature_key=stored["feature_key"],
+            reviewed_by=actor_from_user(user),
+        )
+        await audit_service.record_audit(
+            agency_id=stored["agency_id"],
+            feature_key=stored["feature_key"],
+            previous_state=existing.get("state"),
+            proposed_state=stored.get("state") or existing.get("state") or "disabled",
+            changed_by=actor_from_user(user),
+            reason="feature_flag_visibility_updated",
+            notes=updates.get("visibility_note") or existing.get("visibility_note"),
+            metadata={
+                "module_key": stored.get("module_key"),
+                "display_name": stored.get("display_name"),
+                "metadata_only": True,
+                "automatic_enforcement_disabled": True,
+            },
+        )
+        return {"flag": self._flag_projection(stored), **self.safety_flags()}
 
     async def create_review(self, payload: AgencyFeatureFlagReviewCreateRequest | dict[str, Any], user: dict | None = None) -> dict[str, Any]:
         data = payload_dict(payload)

@@ -2,6 +2,8 @@
 
 Phase 39.7 adds metadata-only agency feature flag records so Platform Console owners can describe feature visibility independently of subscription plans.
 
+Phase 39.8 builds on these records with read-only audit history and readiness checklist metadata documented in `docs/architecture/agency-feature-flag-audit-foundation.md`.
+
 ## Scope
 
 The foundation records:

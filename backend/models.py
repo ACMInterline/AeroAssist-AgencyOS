@@ -10456,6 +10456,38 @@ class AgencyFeatureFlagSnapshot(BaseDocument):
     metadata_only: bool = True
 
 
+class AgencyFeatureFlagAudit(BaseDocument):
+    agency_id: str
+    feature_key: str
+    previous_state: Optional[AgencyFeatureFlagState] = None
+    proposed_state: AgencyFeatureFlagState = AgencyFeatureFlagState.DISABLED
+    changed_by: Optional[str] = None
+    changed_at: datetime = Field(default_factory=now_utc)
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_enforcement_disabled: bool = True
+    feature_blocking_disabled: bool = True
+
+
+class AgencyFeatureFlagReadiness(BaseDocument):
+    agency_id: str
+    feature_key: str
+    documentation_complete: bool = False
+    ui_complete: bool = False
+    backend_complete: bool = False
+    api_complete: bool = False
+    testing_complete: bool = False
+    deployment_ready: bool = False
+    rollout_ready: bool = False
+    last_reviewed: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    metadata_only: bool = True
+    automatic_enforcement_disabled: bool = True
+    feature_blocking_disabled: bool = True
+
+
 class AgencyFeatureFlagCreateRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -87,6 +87,7 @@ The repository currently contains:
 - Phase 39.5: SaaS subscription and entitlement foundation.
 - Phase 39.6: Subscription entitlement UI guardrails and navigation visibility.
 - Phase 39.7: Agency feature flags foundation.
+- Phase 39.8: Agency feature flag readiness and audit foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1440,6 +1441,20 @@ Implemented scope:
 Avoid adding:
 
 - Billing, payments, Stripe, taxation, accounting, subscription charging, automatic entitlement enforcement, feature blocking, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 39.8: Agency Feature Flag Readiness And Audit Foundation
+
+Implemented scope:
+
+- Added metadata-only `AgencyFeatureFlagAudit` and `AgencyFeatureFlagReadiness` records.
+- Added platform read-only APIs and `/platform/feature-flag-audit` for feature audit history and readiness metadata.
+- Added agency read-only APIs and `/agency/feature-readiness` for feature readiness checklist visibility.
+- Added readiness flags under `feature_flag_audit_foundation`.
+- Added `docs/architecture/agency-feature-flag-audit-foundation.md`.
+
+Avoid adding:
+
+- Feature enforcement, route blocking, permission changes, subscription changes, billing, payments, Stripe, taxation, accounting, subscription charging, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external AI, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

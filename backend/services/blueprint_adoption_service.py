@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_39_7_agency_feature_flags_foundation"
+PHASE_LABEL = "phase_39_8_feature_flag_audit_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -86,6 +86,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AgencyFeatureFlag, AgencyFeatureFlagReview, AgencyFeatureFlagSnapshot, /api/platform/feature-flags, /api/agencies/{agency_id}/feature-flags, /platform/feature-flags, /agency/feature-availability",
         "status": "foundation adopted",
         "action": "Record agency-specific feature availability states for Platform Console review and Agency Workspace read-only visibility without billing, payments, automatic entitlement enforcement, feature blocking, provider execution, booking, PNR mutation, ticketing, EMD issuance, publishing, scraping, external APIs, external AI, or automatic sending.",
+    },
+    {
+        "category": "Agency Feature Flag Audit",
+        "concept": "Feature flag readiness and audit history metadata",
+        "supplementary_concept": "feature audit trail, feature readiness checklist, rollout review metadata",
+        "current_equivalent": "AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness, /api/platform/feature-flags/audits, /api/platform/feature-flags/readiness, /api/agencies/{agency_id}/feature-readiness, /platform/feature-flag-audit, /agency/feature-readiness",
+        "status": "foundation adopted",
+        "action": "Record read-only feature flag audit history and readiness checklist metadata without feature enforcement, route blocking, permission changes, subscription changes, billing, provider execution, publishing, external APIs, external AI, scraping, or automatic sending.",
     },
     {
         "category": "GDS/Supplier",
@@ -361,7 +369,7 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
     },
     {
-        "phase": "Phase 39.7",
+        "phase": "Phase 39.8",
         "title": "Airline Intelligence Promotion Governance Hardening",
         "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
     },
@@ -464,6 +472,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AgencyFeatureFlag",
             "AgencyFeatureFlagReview",
             "AgencyFeatureFlagSnapshot",
+            "AgencyFeatureFlagAudit",
+            "AgencyFeatureFlagReadiness",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -499,6 +509,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "SaaS subscription and entitlement foundation built in Phase 39.5",
             "Subscription entitlement UI guardrails built in Phase 39.6",
             "Agency feature flags foundation built in Phase 39.7",
+            "Agency feature flag audit foundation built in Phase 39.8",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
