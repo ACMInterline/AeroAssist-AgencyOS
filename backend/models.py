@@ -10943,6 +10943,81 @@ class FeatureBundleRolloutScheduleUpdate(BaseModel):
     approval_summary: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutEventType(str, Enum):
+    PLAN_CREATED = "plan_created"
+    PLAN_EDITED = "plan_edited"
+    APPROVAL_REQUESTED = "approval_requested"
+    APPROVAL_GRANTED = "approval_granted"
+    APPROVAL_REJECTED = "approval_rejected"
+    SCHEDULE_CREATED = "schedule_created"
+    SCHEDULE_CHANGED = "schedule_changed"
+    ROLLOUT_STARTED = "rollout_started"
+    ROLLOUT_COMPLETED = "rollout_completed"
+    ROLLBACK_PLANNED = "rollback_planned"
+    NOTE_ADDED = "note_added"
+
+
+class FeatureBundleRolloutActor(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    actor_id: Optional[str] = None
+    actor_type: str = "platform_user"
+    display_name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
+    metadata_only: bool = True
+    permission_changes_disabled: bool = True
+
+
+class FeatureBundleRolloutTimelineEntry(BaseDocument):
+    timeline_entry_id: str = Field(default_factory=new_id)
+    rollout_plan_id: str
+    agency_id: str
+    bundle_id: Optional[str] = None
+    event_type: FeatureBundleRolloutEventType
+    event_label: Optional[str] = None
+    actor: FeatureBundleRolloutActor = Field(default_factory=FeatureBundleRolloutActor)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    description: Optional[str] = None
+    source: str = "platform_metadata"
+    related_schedule_id: Optional[str] = None
+    related_approval_id: Optional[str] = None
+    related_assignment_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    timeline_metadata_only: bool = True
+    feature_bundle_enablement_disabled: bool = True
+    agency_permission_changes_disabled: bool = True
+    rollout_plan_execution_disabled: bool = True
+    background_jobs_disabled: bool = True
+    provider_calls_disabled: bool = True
+    email_sending_disabled: bool = True
+    notification_sending_disabled: bool = True
+    rollout_state_enforcement_disabled: bool = True
+    subscription_modification_disabled: bool = True
+    automation_disabled: bool = True
+    publishing_disabled: bool = True
+
+
+class FeatureBundleRolloutTimelineEntryCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    timeline_entry_id: Optional[str] = None
+    rollout_plan_id: str
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    event_type: FeatureBundleRolloutEventType
+    event_label: Optional[str] = None
+    actor: Optional[FeatureBundleRolloutActor] = None
+    occurred_at: Optional[datetime] = None
+    description: Optional[str] = None
+    source: str = "platform_metadata"
+    related_schedule_id: Optional[str] = None
+    related_approval_id: Optional[str] = None
+    related_assignment_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

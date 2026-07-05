@@ -205,6 +205,7 @@ async def summary(
             "feature_bundle_rollout_approvals": await db.collection("feature_bundle_rollout_approvals").count(),
             "feature_bundle_rollout_approval_notes": await db.collection("feature_bundle_rollout_approval_notes").count(),
             "feature_bundle_rollout_schedules": await db.collection("feature_bundle_rollout_schedules").count(),
+            "feature_bundle_rollout_timeline_entries": await db.collection("feature_bundle_rollout_timeline_entries").count(),
             "rollout_dashboard_views": await db.collection("rollout_dashboard_views").count(),
             "rollout_dashboard_snapshots": await db.collection("rollout_dashboard_snapshots").count(),
             "capability_catalog": await db.collection("capability_catalog").count(),

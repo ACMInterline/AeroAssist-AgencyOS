@@ -383,6 +383,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "feature_bundle_rollout_approvals",
     "feature_bundle_rollout_approval_notes",
     "feature_bundle_rollout_schedules",
+    "feature_bundle_rollout_timeline_entries",
     "rollout_dashboard_views",
     "rollout_dashboard_snapshots",
     "offer_acceptances",
@@ -1727,6 +1728,15 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("bundle_id", ASCENDING), ("schedule_status", ASCENDING)], "name": "feature_bundle_rollout_schedules_bundle_status_lookup"},
             {"keys": [("planned_start", ASCENDING)], "name": "feature_bundle_rollout_schedules_planned_start_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "feature_bundle_rollout_schedules_created_lookup"},
+        ],
+        "feature_bundle_rollout_timeline_entries": [
+            {"keys": [("id", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_id_unique", "unique": True},
+            {"keys": [("timeline_entry_id", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_entry_unique", "unique": True},
+            {"keys": [("rollout_plan_id", ASCENDING), ("occurred_at", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_plan_occurred_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("occurred_at", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_agency_occurred_lookup"},
+            {"keys": [("bundle_id", ASCENDING), ("event_type", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_bundle_event_lookup"},
+            {"keys": [("event_type", ASCENDING), ("occurred_at", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_event_occurred_lookup"},
+            {"keys": [("created_at", ASCENDING)], "name": "feature_bundle_rollout_timeline_entries_created_lookup"},
         ],
         "rollout_dashboard_views": [
             {"keys": [("id", ASCENDING)], "name": "rollout_dashboard_views_id_unique", "unique": True},

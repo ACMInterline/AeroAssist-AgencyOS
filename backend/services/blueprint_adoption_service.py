@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_5_feature_bundle_rollout_schedule_foundation"
+PHASE_LABEL = "phase_40_6_feature_bundle_rollout_timeline_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -142,6 +142,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutSchedule, FeatureBundleRolloutScheduleService, /api/platform/feature-bundle-rollout-schedule, /api/agencies/{agency_id}/feature-bundle-rollout-schedule, /platform/feature-bundle-rollout-schedule, /agency/rollout-schedule",
         "status": "foundation adopted",
         "action": "Record intended rollout timing metadata after approval review without executing rollouts, activating features, changing entitlements, modifying permissions, starting cron jobs, schedulers, workers, queues, timers, or background execution, calling external APIs, using AI, billing, or publishing automatically.",
+    },
+    {
+        "category": "Feature Bundle Rollout Timeline",
+        "concept": "Feature bundle rollout historical timeline metadata",
+        "supplementary_concept": "rollout timeline entries, actors, event types, plan/agency/bundle/event/date filters, agency read-only timeline visibility",
+        "current_equivalent": "FeatureBundleRolloutTimelineEntry, FeatureBundleRolloutActor, FeatureBundleRolloutEventType, FeatureBundleRolloutTimelineService, /api/platform/feature-bundle-rollout-timeline, /api/agencies/{agency_id}/feature-bundle-rollout-timeline, /platform/feature-bundle-rollout-timeline, /agency/rollout-timeline",
+        "status": "foundation adopted",
+        "action": "Record historical rollout event metadata with actor, timestamp, description, related-record references, and newest-first filters without enabling bundles, changing permissions, executing rollout plans, scheduling jobs, publishing, calling providers, sending email/notifications, enforcing rollout state, modifying subscriptions, or automating actions.",
     },
     {
         "category": "Rollout Dashboard",
@@ -428,6 +436,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-approval", "agencyos": "/agency/rollout-approval"},
         {"supplementary": "/admin/feature-bundle-rollout-schedule", "agencyos": "/platform/feature-bundle-rollout-schedule"},
         {"supplementary": "/agent/rollout-schedule", "agencyos": "/agency/rollout-schedule"},
+        {"supplementary": "/admin/feature-bundle-rollout-timeline", "agencyos": "/platform/feature-bundle-rollout-timeline"},
+        {"supplementary": "/agent/rollout-timeline", "agencyos": "/agency/rollout-timeline"},
         {"supplementary": "/admin/rollout-dashboard", "agencyos": "/platform/rollout-dashboard"},
         {"supplementary": "/agent/rollout-dashboard", "agencyos": "/agency/rollout-dashboard"},
         {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
@@ -569,6 +579,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureBundleRolloutApprovalNote",
             "FeatureBundleRolloutApprovalTimelineEntry",
             "FeatureBundleRolloutSchedule",
+            "FeatureBundleRolloutTimelineEntry",
+            "FeatureBundleRolloutActor",
+            "FeatureBundleRolloutEventType",
             "RolloutDashboardSummary",
             "RolloutDashboardSection",
             "RolloutDashboardCounts",
@@ -618,6 +631,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Rollout dashboard foundation built in Phase 40.3",
             "Feature bundle rollout approval foundation built in Phase 40.4",
             "Feature bundle rollout schedule foundation built in Phase 40.5",
+            "Feature bundle rollout timeline foundation built in Phase 40.6",
             "Capability catalog foundation built in Phase 40.1",
         ],
         "deferred": [

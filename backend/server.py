@@ -7,7 +7,7 @@ from config import assert_startup_safe, configure_logging, get_settings, validat
 from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
-from routers import agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_schedule, agency_rollout_dashboard, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_schedule, platform_rollout_dashboard
+from routers import agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -21,6 +21,7 @@ from services.feature_bundle_rollout_approval_service import APPROVAL_STATUSES
 from services.feature_bundle_rollout_plan_service import PLAN_STAGES
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES
 from services.feature_bundle_rollout_schedule_service import SCHEDULE_STATUSES
+from services.feature_bundle_rollout_timeline_service import TIMELINE_EVENT_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
 from services.secret_service import check_secret
@@ -32,7 +33,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 40.5 rollout schedule foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 40.6 rollout timeline foundation.",
 )
 
 app.add_middleware(
@@ -397,6 +398,12 @@ async def readiness() -> dict:
     feature_bundle_rollout_schedule_status_counts = {
         status: len([item for item in feature_bundle_rollout_schedule_records if item.get("schedule_status") == status])
         for status in SCHEDULE_STATUSES
+    }
+    feature_bundle_rollout_timeline_records = await database.collection("feature_bundle_rollout_timeline_entries").find_many()
+    feature_bundle_rollout_timeline_count = len(feature_bundle_rollout_timeline_records)
+    feature_bundle_rollout_timeline_event_type_counts = {
+        event_type: len([item for item in feature_bundle_rollout_timeline_records if item.get("event_type") == event_type])
+        for event_type in TIMELINE_EVENT_TYPES
     }
     rollout_dashboard_view_count = await database.collection("rollout_dashboard_views").count()
     rollout_dashboard_snapshot_count = await database.collection("rollout_dashboard_snapshots").count()
@@ -1702,6 +1709,45 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 40.5 records intended rollout schedule metadata only. It does not execute rollouts, activate features, change entitlements, modify permissions, start cron jobs, schedulers, workers, queues, timers, or background execution, call external APIs, use AI, bill, or publish anything automatically.",
         },
+        "feature_bundle_rollout_timeline_foundation": {
+            "feature_bundle_rollout_timeline_entries_enabled": True,
+            "feature_bundle_rollout_actor_metadata_enabled": True,
+            "feature_bundle_rollout_event_type_metadata_enabled": True,
+            "platform_rollout_timeline_metadata_create_enabled": True,
+            "platform_rollout_timeline_read_enabled": True,
+            "agency_rollout_timeline_read_only_enabled": True,
+            "timeline_filter_by_plan_enabled": True,
+            "timeline_filter_by_agency_enabled": True,
+            "timeline_filter_by_bundle_enabled": True,
+            "timeline_filter_by_event_type_enabled": True,
+            "timeline_filter_by_date_enabled": True,
+            "newest_first_enabled": True,
+            "metadata_only": True,
+            "historical_timeline_only": True,
+            "feature_bundles_enablement_disabled": True,
+            "feature_bundle_enablement_disabled": True,
+            "agency_permission_changes_disabled": True,
+            "rollout_plan_execution_disabled": True,
+            "rollout_execution_disabled": True,
+            "background_jobs_disabled": True,
+            "background_workers_disabled": True,
+            "scheduled_jobs_disabled": True,
+            "cron_jobs_disabled": True,
+            "automation_disabled": True,
+            "publishing_disabled": True,
+            "provider_calls_disabled": True,
+            "provider_execution_disabled": True,
+            "external_api_calls_disabled": True,
+            "email_sending_disabled": True,
+            "notifications_disabled": True,
+            "notification_sending_disabled": True,
+            "rollout_state_enforcement_disabled": True,
+            "subscription_modification_disabled": True,
+            "timeline_entry_count": feature_bundle_rollout_timeline_count,
+            "timeline_event_type_counts": feature_bundle_rollout_timeline_event_type_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 40.6 records metadata-only rollout timeline history. It does not enable feature bundles, change agency permissions, execute rollout plans, schedule background jobs, publish, call providers, send emails or notifications, enforce rollout state, modify subscriptions, or introduce automation.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -1867,6 +1913,7 @@ app.include_router(platform_feature_bundle_rollout_readiness.router)
 app.include_router(platform_feature_bundle_rollout_plans.router)
 app.include_router(platform_feature_bundle_rollout_approvals.router)
 app.include_router(platform_feature_bundle_rollout_schedule.router)
+app.include_router(platform_feature_bundle_rollout_timeline.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -1915,6 +1962,7 @@ app.include_router(agency_feature_bundle_rollout_readiness.router)
 app.include_router(agency_feature_bundle_rollout_plans.router)
 app.include_router(agency_feature_bundle_rollout_approvals.router)
 app.include_router(agency_feature_bundle_rollout_schedule.router)
+app.include_router(agency_feature_bundle_rollout_timeline.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

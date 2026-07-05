@@ -34,6 +34,7 @@ Phase 40.2 adds feature bundle rollout plan APIs only under `/api/platform/featu
 Phase 40.3 adds read-only rollout dashboard APIs only under `/api/platform/rollout-dashboard/*` and `/api/agencies/{agency_id}/rollout-dashboard/*`, plus frontend pages under `/platform/rollout-dashboard` and `/agency/rollout-dashboard`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.4 adds feature bundle rollout approval APIs only under `/api/platform/feature-bundle-rollout-approvals/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-approvals/*`, plus frontend pages under `/platform/feature-bundle-rollout-approvals` and `/agency/rollout-approval`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.5 adds feature bundle rollout schedule APIs only under `/api/platform/feature-bundle-rollout-schedule/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-schedule/*`, plus frontend pages under `/platform/feature-bundle-rollout-schedule` and `/agency/rollout-schedule`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, cron jobs, schedulers, workers, queues, timers, or rollout execution.
+Phase 40.6 adds feature bundle rollout timeline APIs only under `/api/platform/feature-bundle-rollout-timeline/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-timeline/*`, plus frontend pages under `/platform/feature-bundle-rollout-timeline` and `/agency/rollout-timeline`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, background jobs, provider calls, publishing, notifications, subscription changes, automation, or rollout execution.
 
 ## Route Mapping
 
@@ -89,6 +90,8 @@ Phase 40.5 adds feature bundle rollout schedule APIs only under `/api/platform/f
 | `/agent/rollout-approval` | `/agency/rollout-approval` |
 | `/admin/feature-bundle-rollout-schedule` | `/platform/feature-bundle-rollout-schedule` |
 | `/agent/rollout-schedule` | `/agency/rollout-schedule` |
+| `/admin/feature-bundle-rollout-timeline` | `/platform/feature-bundle-rollout-timeline` |
+| `/agent/rollout-timeline` | `/agency/rollout-timeline` |
 | `/admin/rollout-dashboard` | `/platform/rollout-dashboard` |
 | `/agent/rollout-dashboard` | `/agency/rollout-dashboard` |
 | `/admin/capabilities` | `/platform/capabilities` |

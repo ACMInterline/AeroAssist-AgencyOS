@@ -7,6 +7,7 @@ import AgencyRolloutDashboardPage from "./pages/agency/RolloutDashboardPage"
 import RolloutApprovalPage from "./pages/agency/RolloutApprovalPage"
 import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
+import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
 import AgencyAirlineIntelligenceConsumptionPage from "./pages/agency/AirlineIntelligenceConsumptionPage"
@@ -99,6 +100,7 @@ import PlatformFeatureBundleRolloutApprovalsPage from "./pages/platform/FeatureB
 import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
 import PlatformFeatureBundleRolloutReadinessPage from "./pages/platform/FeatureBundleRolloutReadinessPage"
 import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
+import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
 import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
@@ -157,6 +159,7 @@ const routes = {
   "/platform/feature-bundle-rollout-plans": PlatformFeatureBundleRolloutPlansPage,
   "/platform/feature-bundle-rollout-approvals": PlatformFeatureBundleRolloutApprovalsPage,
   "/platform/feature-bundle-rollout-schedule": PlatformFeatureBundleRolloutSchedulePage,
+  "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -197,6 +200,7 @@ const routes = {
   "/agency/rollout-plans": RolloutPlansPage,
   "/agency/rollout-approval": RolloutApprovalPage,
   "/agency/rollout-schedule": RolloutSchedulePage,
+  "/agency/rollout-timeline": RolloutTimelinePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

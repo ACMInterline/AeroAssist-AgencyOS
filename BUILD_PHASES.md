@@ -96,6 +96,7 @@ The repository currently contains:
 - Phase 40.3: Agency capability rollout dashboard foundation.
 - Phase 40.4: Feature bundle rollout approval foundation.
 - Phase 40.5: Feature bundle rollout schedule foundation.
+- Phase 40.6: Feature bundle rollout timeline foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1592,6 +1593,22 @@ Implemented scope:
 Avoid adding:
 
 - Actual rollout execution, feature activation, entitlement behavior changes, permission changes, cron jobs, schedulers, workers, queues, timers, background execution, external API calls, AI functionality, billing logic, automatic publishing, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.6: Feature Bundle Rollout Timeline Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutTimelineEntry`, `FeatureBundleRolloutActor`, and `FeatureBundleRolloutEventType` models.
+- Added `feature_bundle_rollout_timeline_entries` collection/index registration.
+- Added platform create/list/read APIs and `/platform/feature-bundle-rollout-timeline` for historical rollout event metadata.
+- Added agency read-only APIs and `/agency/rollout-timeline` scoped to the selected agency.
+- Added filters by rollout plan, agency, bundle, event type, and date range with newest-first timeline ordering.
+- Added readiness flags under `feature_bundle_rollout_timeline_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-timeline-foundation.md`.
+
+Avoid adding:
+
+- Feature bundle enablement, agency permission changes, rollout plan execution, background jobs, scheduled jobs, publishing, provider calls, email sending, notification sending, rollout state enforcement, subscription modification, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
