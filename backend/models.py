@@ -10615,6 +10615,69 @@ class AgencyFeatureBundleAssignmentHistory(BaseDocument):
     activation_logic_disabled: bool = True
 
 
+class FeatureBundleRolloutReadinessStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEWING = "reviewing"
+    READY = "ready"
+    BLOCKED = "blocked"
+
+
+class FeatureBundleRolloutChecklistStatus(str, Enum):
+    PENDING = "pending"
+    PASSED = "passed"
+    WARNING = "warning"
+    BLOCKED = "blocked"
+
+
+class FeatureBundleRolloutChecklistItem(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_key: str
+    label: str
+    status: FeatureBundleRolloutChecklistStatus = FeatureBundleRolloutChecklistStatus.PENDING
+    notes: Optional[str] = None
+    metadata_only: bool = True
+
+
+class FeatureBundleRolloutReadiness(BaseDocument):
+    agency_id: str
+    bundle_id: str
+    assignment_id: str
+    readiness_status: FeatureBundleRolloutReadinessStatus = FeatureBundleRolloutReadinessStatus.DRAFT
+    checklist_items: List[FeatureBundleRolloutChecklistItem] = Field(default_factory=list)
+    notes: Optional[str] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    metadata_only: bool = True
+    activation_logic_disabled: bool = True
+    feature_access_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_execution_disabled: bool = True
+
+
+class CapabilityCatalogEntry(BaseDocument):
+    code: str
+    name: str
+    description: Optional[str] = None
+    category: str = "general"
+    module: str = "general"
+    status: str = "active"
+    visibility: str = "platform_and_agency"
+    tags: List[str] = Field(default_factory=list)
+    required_feature_flags: List[str] = Field(default_factory=list)
+    required_bundles: List[str] = Field(default_factory=list)
+    recommended_bundles: List[str] = Field(default_factory=list)
+    dependencies: List[str] = Field(default_factory=list)
+    ui_routes: List[str] = Field(default_factory=list)
+    documentation_links: List[str] = Field(default_factory=list)
+    introduced_phase: str = "phase_40_1_capability_catalog_foundation"
+    deprecated: bool = False
+    notes: Optional[str] = None
+    metadata_only: bool = True
+    execution_logic_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+
+
 class AgencyFeatureFlagCreateRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

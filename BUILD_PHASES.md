@@ -90,6 +90,8 @@ The repository currently contains:
 - Phase 39.8: Agency feature flag readiness and audit foundation.
 - Phase 39.9: Feature flag bundles foundation.
 - Phase 40.0: Agency feature bundle assignment foundation.
+- Phase 40.1: Capability catalog foundation.
+- Phase 40.1: Feature bundle rollout readiness foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1487,6 +1489,38 @@ Implemented scope:
 Avoid adding:
 
 - Runtime feature enforcement, feature activation, entitlement evaluation, entitlement enforcement, billing, payments, Stripe, licensing, permission changes, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external AI, background workers, cron jobs, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.1: Capability Catalog Foundation
+
+Implemented scope:
+
+- Added metadata-only `CapabilityCatalogEntry` records.
+- Added `capability_catalog` collection/index registration.
+- Added read-only platform APIs and `/platform/capabilities` for capability catalog review.
+- Added read-only agency APIs and `/agency/capabilities` for informational capability visibility.
+- Added category/module listing metadata for catalog filters.
+- Added readiness flags under `capability_catalog_foundation`.
+- Added `docs/architecture/capability-catalog-foundation.md`.
+
+Avoid adding:
+
+- Runtime feature enforcement, entitlement checks or evaluation, billing, payments, subscriptions charging, feature activation, route blocking, permission decisions, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS publishing, client portal publishing, scraping, external APIs, external services, external AI, background workers, cron jobs, email/SMS/notification sending, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.1: Feature Bundle Rollout Readiness Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutReadiness` and `FeatureBundleRolloutChecklistItem` records.
+- Added `agency_feature_bundle_rollout_readiness` collection/index registration.
+- Added platform review APIs and `/platform/feature-bundle-rollout-readiness` for assigned-bundle readiness metadata.
+- Added agency read-only APIs and `/agency/bundle-rollout-readiness` for Bundle Rollout Readiness summaries.
+- Added default readiness views generated from Phase 40.0 assignment metadata.
+- Added readiness flags under `feature_bundle_rollout_readiness_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-readiness-foundation.md`.
+
+Avoid adding:
+
+- Feature activation, feature deactivation, runtime access enforcement, route blocking, permission changes, entitlement evaluation/enforcement, billing, payments, Stripe, licensing, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS/client portal publishing, scraping, external APIs, external AI, background workers, cron jobs, email/SMS/notification sending, rollout execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

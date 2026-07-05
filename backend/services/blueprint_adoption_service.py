@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_0_feature_bundle_assignment_foundation"
+PHASE_LABEL = "phase_40_1_feature_bundle_rollout_readiness_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -110,6 +110,22 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AgencyFeatureBundleAssignment, AgencyFeatureBundleAssignmentHistory, AgencyFeatureBundleAssignmentService, /api/platform/feature-bundle-assignments, /api/platform/agencies/{agency_id}/bundle-assignments, /api/agencies/{agency_id}/feature-bundle-assignments, /platform/feature-bundle-assignments, /agency/assigned-bundles",
         "status": "foundation adopted",
         "action": "Record platform-owned agency bundle assignment metadata and immutable assignment history without activating features, evaluating entitlements, changing permissions, billing, licensing, executing feature flags, calling providers, running background workers or cron, calling external AI, or deploying anything.",
+    },
+    {
+        "category": "Feature Bundle Rollout Readiness",
+        "concept": "Assigned bundle readiness review metadata",
+        "supplementary_concept": "rollout checklist, readiness status, warning and blocker summaries, agency read-only readiness visibility",
+        "current_equivalent": "FeatureBundleRolloutReadiness, FeatureBundleRolloutChecklistItem, FeatureBundleRolloutReadinessService, /api/platform/feature-bundle-rollout-readiness, /api/agencies/{agency_id}/feature-bundle-rollout-readiness, /platform/feature-bundle-rollout-readiness, /agency/bundle-rollout-readiness",
+        "status": "foundation adopted",
+        "action": "Record metadata-only readiness statuses and checklists for assigned feature bundles without activating or deactivating features, enforcing access, blocking routes, changing permissions, billing, sending email or SMS, calling providers, calling external APIs, scraping, publishing, or executing rollout logic.",
+    },
+    {
+        "category": "Capability Catalog",
+        "concept": "Canonical capability inventory",
+        "supplementary_concept": "capability catalogue, capability dependencies, feature/bundle references, documentation map",
+        "current_equivalent": "CapabilityCatalogEntry, CapabilityCatalogService, capability_catalog, /api/platform/capabilities, /api/agencies/{agency_id}/capabilities, /platform/capabilities, /agency/capabilities",
+        "status": "foundation adopted",
+        "action": "Record the canonical metadata inventory of AgencyOS capabilities and their feature flag, bundle, dependency, UI route, and documentation references without enforcement, entitlement evaluation, feature activation, route blocking, billing, provider execution, publishing, external services, background workers, or AI execution.",
     },
     {
         "category": "GDS/Supplier",
@@ -372,6 +388,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/feature-bundles", "agencyos": "/agency/feature-bundles"},
         {"supplementary": "/admin/feature-bundle-assignments", "agencyos": "/platform/feature-bundle-assignments"},
         {"supplementary": "/agent/assigned-bundles", "agencyos": "/agency/assigned-bundles"},
+        {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
+        {"supplementary": "/agent/capabilities", "agencyos": "/agency/capabilities"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -539,6 +557,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Agency feature flag audit foundation built in Phase 39.8",
             "Feature flag bundles foundation built in Phase 39.9",
             "Feature bundle assignment foundation built in Phase 40.0",
+            "Feature bundle rollout readiness foundation built in Phase 40.1",
+            "Capability catalog foundation built in Phase 40.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
