@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_3_rollout_dashboard_foundation"
+PHASE_LABEL = "phase_40_4_feature_bundle_rollout_approval_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -126,6 +126,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutPlan, FeatureBundleRolloutPlanService, /api/platform/feature-bundle-rollout-plans, /api/agencies/{agency_id}/feature-bundle-rollout-plans, /platform/feature-bundle-rollout-plans, /agency/rollout-plans",
         "status": "foundation adopted",
         "action": "Record metadata-only rollout plan stages, target windows, owners, readiness references, assignment references, notes, and checklist summaries without activating features, enforcing access, blocking routes, publishing, sending, billing, calling providers, calling external APIs, using AI, scraping, or executing rollout logic.",
+    },
+    {
+        "category": "Feature Bundle Rollout Approvals",
+        "concept": "Feature bundle rollout approval metadata",
+        "supplementary_concept": "rollout plan approvals, review status, approval notes, review timeline, agency read-only approval visibility",
+        "current_equivalent": "FeatureBundleRolloutApproval, FeatureBundleRolloutApprovalSummary, FeatureBundleRolloutApprovalNote, FeatureBundleRolloutApprovalTimelineEntry, FeatureBundleRolloutApprovalService, /api/platform/feature-bundle-rollout-approvals, /api/agencies/{agency_id}/feature-bundle-rollout-approvals, /platform/feature-bundle-rollout-approvals, /agency/rollout-approval",
+        "status": "foundation adopted",
+        "action": "Record metadata-only approval status, notes, and timeline records for rollout plans without enabling features, enforcing permissions, gating runtime access, billing, Stripe/payment providers, authentication changes, deployment automation, cron jobs, webhooks, background workers, email/SMS/notifications, AI/OpenAI, scraping, publishing, or executing rollouts.",
     },
     {
         "category": "Rollout Dashboard",
@@ -408,6 +416,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
         {"supplementary": "/agent/rollout-plans", "agencyos": "/agency/rollout-plans"},
+        {"supplementary": "/admin/feature-bundle-rollout-approvals", "agencyos": "/platform/feature-bundle-rollout-approvals"},
+        {"supplementary": "/agent/rollout-approval", "agencyos": "/agency/rollout-approval"},
         {"supplementary": "/admin/rollout-dashboard", "agencyos": "/platform/rollout-dashboard"},
         {"supplementary": "/agent/rollout-dashboard", "agencyos": "/agency/rollout-dashboard"},
         {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
@@ -544,6 +554,10 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureBundleRolloutReadiness",
             "FeatureBundleRolloutChecklistItem",
             "FeatureBundleRolloutPlan",
+            "FeatureBundleRolloutApproval",
+            "FeatureBundleRolloutApprovalSummary",
+            "FeatureBundleRolloutApprovalNote",
+            "FeatureBundleRolloutApprovalTimelineEntry",
             "RolloutDashboardSummary",
             "RolloutDashboardSection",
             "RolloutDashboardCounts",
@@ -591,6 +605,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Feature bundle rollout readiness foundation built in Phase 40.1",
             "Feature bundle rollout plan foundation built in Phase 40.2",
             "Rollout dashboard foundation built in Phase 40.3",
+            "Feature bundle rollout approval foundation built in Phase 40.4",
             "Capability catalog foundation built in Phase 40.1",
         ],
         "deferred": [

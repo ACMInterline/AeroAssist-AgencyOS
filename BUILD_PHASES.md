@@ -94,6 +94,7 @@ The repository currently contains:
 - Phase 40.1: Feature bundle rollout readiness foundation.
 - Phase 40.2: Feature bundle rollout plan foundation.
 - Phase 40.3: Agency capability rollout dashboard foundation.
+- Phase 40.4: Feature bundle rollout approval foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1557,6 +1558,23 @@ Implemented scope:
 Avoid adding:
 
 - Real entitlement enforcement, billing, payment processing, execution engines, provider execution, AI execution, publishing, rollout automation, background workers, schedulers, email/SMS sending, feature activation, permission enforcement, route blocking, webhook execution, scraping, external API calls, state transitions, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.4: Feature Bundle Rollout Approval Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutApproval`, `FeatureBundleRolloutApprovalSummary`, `FeatureBundleRolloutApprovalNote`, and `FeatureBundleRolloutApprovalTimelineEntry` models.
+- Added `feature_bundle_rollout_approvals` and `feature_bundle_rollout_approval_notes` collection/index registration.
+- Added platform list/create/update/read APIs and `/platform/feature-bundle-rollout-approvals` for rollout approval metadata.
+- Added platform approval note and timeline metadata views.
+- Added agency read-only APIs and `/agency/rollout-approval` scoped to the selected agency.
+- Added approval statuses `draft`, `submitted`, `under_review`, `approved`, `rejected`, and `archived`.
+- Added readiness flags under `feature_bundle_rollout_approval_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-approval-foundation.md`.
+
+Avoid adding:
+
+- Actual feature enablement, permission enforcement, runtime gating, billing, Stripe, payment providers, authentication changes, deployment automation, cron jobs, webhooks, background workers, email, SMS, notifications, AI, OpenAI, scraping, publishing, rollout execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

@@ -18,7 +18,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_40_3_rollout_dashboard_foundation"
+EXPECTED_PHASE = "phase_40_4_feature_bundle_rollout_approval_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

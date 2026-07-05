@@ -10716,6 +10716,153 @@ class FeatureBundleRolloutPlanUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class FeatureBundleRolloutApprovalStatus(str, Enum):
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutApprovalSummary(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    total_count: int = 0
+    by_status: Dict[str, int] = Field(default_factory=dict)
+    draft_count: int = 0
+    submitted_count: int = 0
+    under_review_count: int = 0
+    approved_count: int = 0
+    rejected_count: int = 0
+    archived_count: int = 0
+    metadata_only: bool = True
+    read_only: bool = True
+
+
+class FeatureBundleRolloutApprovalTimelineEntry(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    timeline_entry_id: str = Field(default_factory=new_id)
+    approval_id: Optional[str] = None
+    rollout_plan_id: str
+    agency_id: str
+    event_type: str
+    status: Optional[FeatureBundleRolloutApprovalStatus] = None
+    actor: Optional[str] = None
+    occurred_at: datetime = Field(default_factory=now_utc)
+    notes: Optional[str] = None
+    metadata_only: bool = True
+    execution_disabled: bool = True
+
+
+class FeatureBundleRolloutApproval(BaseDocument):
+    approval_id: str = Field(default_factory=new_id)
+    rollout_plan_id: str
+    agency_id: str
+    bundle_id: Optional[str] = None
+    status: FeatureBundleRolloutApprovalStatus = FeatureBundleRolloutApprovalStatus.DRAFT
+    reviewer: Optional[str] = None
+    submitted_by: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    approval_summary: FeatureBundleRolloutApprovalSummary = Field(default_factory=FeatureBundleRolloutApprovalSummary)
+    timeline: List[FeatureBundleRolloutApprovalTimelineEntry] = Field(default_factory=list)
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata_only: bool = True
+    approval_metadata_only: bool = True
+    feature_enablement_disabled: bool = True
+    feature_activation_disabled: bool = True
+    route_blocking_disabled: bool = True
+    runtime_gating_disabled: bool = True
+    permission_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    payments_disabled: bool = True
+    stripe_disabled: bool = True
+    payment_provider_disabled: bool = True
+    provider_execution_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    authentication_changes_disabled: bool = True
+    deployment_automation_disabled: bool = True
+    rollout_execution_disabled: bool = True
+    background_workers_disabled: bool = True
+    cron_disabled: bool = True
+    webhook_execution_disabled: bool = True
+    email_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    notifications_disabled: bool = True
+    ai_execution_disabled: bool = True
+    openai_disabled: bool = True
+    scraping_disabled: bool = True
+    publishing_disabled: bool = True
+
+
+class FeatureBundleRolloutApprovalNote(BaseDocument):
+    note_id: str = Field(default_factory=new_id)
+    approval_id: str
+    rollout_plan_id: str
+    agency_id: str
+    note_text: str
+    note_type: str = "review_note"
+    author: Optional[str] = None
+    agency_visible: bool = True
+    metadata_only: bool = True
+    read_only_for_agency: bool = True
+    execution_disabled: bool = True
+
+
+class FeatureBundleRolloutApprovalCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: str
+    agency_id: Optional[str] = None
+    status: FeatureBundleRolloutApprovalStatus = FeatureBundleRolloutApprovalStatus.DRAFT
+    reviewer: Optional[str] = None
+    submitted_by: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class FeatureBundleRolloutApprovalUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    status: Optional[FeatureBundleRolloutApprovalStatus] = None
+    reviewer: Optional[str] = None
+    submitted_by: Optional[str] = None
+    submitted_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class FeatureBundleRolloutApprovalNoteCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    note_text: str
+    note_type: str = "review_note"
+    agency_visible: bool = True
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

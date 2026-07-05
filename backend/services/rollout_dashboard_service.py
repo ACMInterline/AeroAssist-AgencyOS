@@ -17,7 +17,7 @@ from services.feature_bundle_rollout_plan_service import PLAN_STAGES, FeatureBun
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES, FeatureBundleRolloutReadinessService
 
 
-PHASE_LABEL = "phase_40_3_rollout_dashboard_foundation"
+PHASE_LABEL = "phase_40_4_feature_bundle_rollout_approval_foundation"
 
 VIEW_COLLECTION = "rollout_dashboard_views"
 SNAPSHOT_COLLECTION = "rollout_dashboard_snapshots"
