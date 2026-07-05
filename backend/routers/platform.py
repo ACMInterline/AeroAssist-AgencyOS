@@ -201,6 +201,7 @@ async def summary(
             "agency_feature_bundle_assignments": await db.collection("agency_feature_bundle_assignments").count(),
             "agency_feature_bundle_assignment_history": await db.collection("agency_feature_bundle_assignment_history").count(),
             "agency_feature_bundle_rollout_readiness": await db.collection("agency_feature_bundle_rollout_readiness").count(),
+            "agency_feature_bundle_rollout_plans": await db.collection("agency_feature_bundle_rollout_plans").count(),
             "capability_catalog": await db.collection("capability_catalog").count(),
             "ai_trace_events": await db.collection("ai_trace_events").count(),
             "adm_risk_events": await db.collection("adm_risk_events").count(),

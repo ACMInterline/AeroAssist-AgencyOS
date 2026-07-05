@@ -10655,6 +10655,67 @@ class FeatureBundleRolloutReadiness(BaseDocument):
     provider_execution_disabled: bool = True
 
 
+class FeatureBundleRolloutPlanStage(str, Enum):
+    DRAFT = "draft"
+    READINESS_REVIEW = "readiness_review"
+    SCHEDULED = "scheduled"
+    PAUSED = "paused"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutPlan(BaseDocument):
+    rollout_plan_id: str = Field(default_factory=new_id)
+    agency_id: str
+    bundle_id: str
+    plan_name: str
+    rollout_stage: FeatureBundleRolloutPlanStage = FeatureBundleRolloutPlanStage.DRAFT
+    target_start_date: Optional[date] = None
+    target_end_date: Optional[date] = None
+    rollout_owner: Optional[str] = None
+    checklist_summary: Dict[str, Any] = Field(default_factory=dict)
+    readiness_snapshot_id: Optional[str] = None
+    assigned_bundle_id: Optional[str] = None
+    notes: Optional[str] = None
+    metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    feature_activation_disabled: bool = True
+    feature_access_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_execution_disabled: bool = True
+
+
+class FeatureBundleRolloutPlanCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    agency_id: str
+    bundle_id: str
+    plan_name: str
+    rollout_stage: FeatureBundleRolloutPlanStage = FeatureBundleRolloutPlanStage.DRAFT
+    target_start_date: Optional[date] = None
+    target_end_date: Optional[date] = None
+    rollout_owner: Optional[str] = None
+    checklist_summary: Dict[str, Any] = Field(default_factory=dict)
+    readiness_snapshot_id: Optional[str] = None
+    assigned_bundle_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class FeatureBundleRolloutPlanUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    bundle_id: Optional[str] = None
+    plan_name: Optional[str] = None
+    rollout_stage: Optional[FeatureBundleRolloutPlanStage] = None
+    target_start_date: Optional[date] = None
+    target_end_date: Optional[date] = None
+    rollout_owner: Optional[str] = None
+    checklist_summary: Optional[Dict[str, Any]] = None
+    readiness_snapshot_id: Optional[str] = None
+    assigned_bundle_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class CapabilityCatalogEntry(BaseDocument):
     code: str
     name: str

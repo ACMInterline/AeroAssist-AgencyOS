@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_1_feature_bundle_rollout_readiness_foundation"
+PHASE_LABEL = "phase_40_2_feature_bundle_rollout_plan_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -118,6 +118,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutReadiness, FeatureBundleRolloutChecklistItem, FeatureBundleRolloutReadinessService, /api/platform/feature-bundle-rollout-readiness, /api/agencies/{agency_id}/feature-bundle-rollout-readiness, /platform/feature-bundle-rollout-readiness, /agency/bundle-rollout-readiness",
         "status": "foundation adopted",
         "action": "Record metadata-only readiness statuses and checklists for assigned feature bundles without activating or deactivating features, enforcing access, blocking routes, changing permissions, billing, sending email or SMS, calling providers, calling external APIs, scraping, publishing, or executing rollout logic.",
+    },
+    {
+        "category": "Feature Bundle Rollout Plans",
+        "concept": "Feature bundle rollout planning metadata",
+        "supplementary_concept": "rollout plan names, stages, target windows, owners, readiness snapshots, checklist summaries, agency read-only plan visibility",
+        "current_equivalent": "FeatureBundleRolloutPlan, FeatureBundleRolloutPlanService, /api/platform/feature-bundle-rollout-plans, /api/agencies/{agency_id}/feature-bundle-rollout-plans, /platform/feature-bundle-rollout-plans, /agency/rollout-plans",
+        "status": "foundation adopted",
+        "action": "Record metadata-only rollout plan stages, target windows, owners, readiness references, assignment references, notes, and checklist summaries without activating features, enforcing access, blocking routes, publishing, sending, billing, calling providers, calling external APIs, using AI, scraping, or executing rollout logic.",
     },
     {
         "category": "Capability Catalog",
@@ -388,6 +396,10 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/feature-bundles", "agencyos": "/agency/feature-bundles"},
         {"supplementary": "/admin/feature-bundle-assignments", "agencyos": "/platform/feature-bundle-assignments"},
         {"supplementary": "/agent/assigned-bundles", "agencyos": "/agency/assigned-bundles"},
+        {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
+        {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
+        {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
+        {"supplementary": "/agent/rollout-plans", "agencyos": "/agency/rollout-plans"},
         {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
         {"supplementary": "/agent/capabilities", "agencyos": "/agency/capabilities"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
@@ -558,6 +570,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Feature flag bundles foundation built in Phase 39.9",
             "Feature bundle assignment foundation built in Phase 40.0",
             "Feature bundle rollout readiness foundation built in Phase 40.1",
+            "Feature bundle rollout plan foundation built in Phase 40.2",
             "Capability catalog foundation built in Phase 40.1",
         ],
         "deferred": [

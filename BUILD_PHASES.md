@@ -92,6 +92,7 @@ The repository currently contains:
 - Phase 40.0: Agency feature bundle assignment foundation.
 - Phase 40.1: Capability catalog foundation.
 - Phase 40.1: Feature bundle rollout readiness foundation.
+- Phase 40.2: Feature bundle rollout plan foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1521,6 +1522,23 @@ Implemented scope:
 Avoid adding:
 
 - Feature activation, feature deactivation, runtime access enforcement, route blocking, permission changes, entitlement evaluation/enforcement, billing, payments, Stripe, licensing, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS/client portal publishing, scraping, external APIs, external AI, background workers, cron jobs, email/SMS/notification sending, rollout execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.2: Feature Bundle Rollout Plan Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutPlan` records.
+- Added `agency_feature_bundle_rollout_plans` collection/index registration.
+- Added platform list/create/update/read APIs and `/platform/feature-bundle-rollout-plans` for rollout plan metadata.
+- Added agency read-only list/read APIs and `/agency/rollout-plans` for rollout plan summaries.
+- Added rollout stages `draft`, `readiness_review`, `scheduled`, `paused`, and `archived`.
+- Added readiness snapshot references, assigned bundle references, target windows, owner metadata, notes, and checklist summaries.
+- Added readiness flags under `feature_bundle_rollout_plan_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-plan-foundation.md`.
+
+Avoid adding:
+
+- Feature activation, feature deactivation, rollout execution, runtime access enforcement, route blocking, permission changes, entitlement evaluation/enforcement, billing, payments, Stripe, licensing, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS/client portal publishing, scraping, external APIs, external AI or AI execution, background workers, cron jobs, email/SMS/notification sending, publishing, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
