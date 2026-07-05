@@ -10,7 +10,7 @@ from services.capability_catalog_service import DEFAULT_CAPABILITY_CATALOG
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 
 
-EXPECTED_PHASE = "phase_40_7_feature_bundle_dependency_foundation"
+EXPECTED_PHASE = "phase_40_8_feature_bundle_rollout_risk_register_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

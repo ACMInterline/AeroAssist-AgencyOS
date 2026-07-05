@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_7_feature_bundle_dependency_foundation"
+PHASE_LABEL = "phase_40_8_feature_bundle_rollout_risk_register_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -118,6 +118,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleDependency, FeatureBundleDependencyReference, FeatureBundleDependencyType, FeatureBundleDependencyService, /api/platform/feature-bundle-dependencies, /api/agencies/{agency_id}/feature-bundle-dependencies, /platform/feature-bundle-dependencies, /agency/bundle-dependencies",
         "status": "foundation adopted",
         "action": "Record informational dependency metadata from bundles to bundles, capabilities, approvals, rollout plans, schedules, and readiness checklists without executing rollouts, scheduling background jobs, enforcing dependencies, blocking rollouts, activating bundles, modifying permissions, sending notifications, publishing, calling providers, or automating actions.",
+    },
+    {
+        "category": "Feature Bundle Rollout Risk Register",
+        "concept": "Feature bundle rollout risk register metadata",
+        "supplementary_concept": "rollout risks, missing approval, dependency readiness, agency impact, schedule conflicts, documentation gaps, operational concerns",
+        "current_equivalent": "FeatureBundleRolloutRisk, FeatureBundleRolloutRiskImpact, FeatureBundleRolloutRiskLikelihood, FeatureBundleRolloutRiskStatus, FeatureBundleRolloutRiskService, /api/platform/feature-bundle-rollout-risks, /api/agencies/{agency_id}/feature-bundle-rollout-risks, /platform/feature-bundle-rollout-risks, /agency/rollout-risks",
+        "status": "foundation adopted",
+        "action": "Record informational rollout risk metadata with impact, likelihood, status, mitigation, owner, and review notes without executing rollouts, enforcing risk decisions, blocking anything, sending notifications, activating bundles, automating actions, or calling external providers.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -438,6 +446,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/assigned-bundles", "agencyos": "/agency/assigned-bundles"},
         {"supplementary": "/admin/feature-bundle-dependencies", "agencyos": "/platform/feature-bundle-dependencies"},
         {"supplementary": "/agent/bundle-dependencies", "agencyos": "/agency/bundle-dependencies"},
+        {"supplementary": "/admin/feature-bundle-rollout-risks", "agencyos": "/platform/feature-bundle-rollout-risks"},
+        {"supplementary": "/agent/rollout-risks", "agencyos": "/agency/rollout-risks"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -584,6 +594,10 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureBundleDependency",
             "FeatureBundleDependencyReference",
             "FeatureBundleDependencyType",
+            "FeatureBundleRolloutRisk",
+            "FeatureBundleRolloutRiskImpact",
+            "FeatureBundleRolloutRiskLikelihood",
+            "FeatureBundleRolloutRiskStatus",
             "FeatureBundleRolloutReadiness",
             "FeatureBundleRolloutChecklistItem",
             "FeatureBundleRolloutPlan",

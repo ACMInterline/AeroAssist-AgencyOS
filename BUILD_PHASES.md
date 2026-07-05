@@ -98,6 +98,7 @@ The repository currently contains:
 - Phase 40.5: Feature bundle rollout schedule foundation.
 - Phase 40.6: Feature bundle rollout timeline foundation.
 - Phase 40.7: Feature bundle rollout dependency foundation.
+- Phase 40.8: Feature bundle rollout risk register foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1626,6 +1627,22 @@ Implemented scope:
 Avoid adding:
 
 - Rollout plan execution, background jobs, dependency enforcement, rollout blocking, feature bundle activation, permission modification, notifications, publishing, provider calls, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.8: Feature Bundle Rollout Risk Register Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutRisk`, `FeatureBundleRolloutRiskImpact`, `FeatureBundleRolloutRiskLikelihood`, and `FeatureBundleRolloutRiskStatus` models.
+- Added `feature_bundle_rollout_risks` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-risks` for risk register metadata.
+- Added agency read-only APIs and `/agency/rollout-risks` scoped to the selected agency.
+- Added filters by agency, bundle, rollout plan, status, impact, and likelihood.
+- Added readiness flags under `feature_bundle_rollout_risk_register_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-risk-register-foundation.md`.
+
+Avoid adding:
+
+- Rollout execution, risk decision enforcement, rollout blocking, notifications, feature bundle activation, automation, external provider calls, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

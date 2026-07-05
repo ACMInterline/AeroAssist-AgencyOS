@@ -11098,6 +11098,98 @@ class FeatureBundleDependencyUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutRiskImpact(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class FeatureBundleRolloutRiskLikelihood(str, Enum):
+    RARE = "rare"
+    UNLIKELY = "unlikely"
+    POSSIBLE = "possible"
+    LIKELY = "likely"
+    ALMOST_CERTAIN = "almost_certain"
+
+
+class FeatureBundleRolloutRiskStatus(str, Enum):
+    OPEN = "open"
+    REVIEWING = "reviewing"
+    MITIGATING = "mitigating"
+    MITIGATED = "mitigated"
+    ACCEPTED = "accepted"
+    CLOSED = "closed"
+    DELETED = "deleted"
+
+
+class FeatureBundleRolloutRisk(BaseDocument):
+    risk_id: str = Field(default_factory=new_id)
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    rollout_plan_id: Optional[str] = None
+    dependency_id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    impact: FeatureBundleRolloutRiskImpact = FeatureBundleRolloutRiskImpact.MEDIUM
+    likelihood: FeatureBundleRolloutRiskLikelihood = FeatureBundleRolloutRiskLikelihood.POSSIBLE
+    status: FeatureBundleRolloutRiskStatus = FeatureBundleRolloutRiskStatus.OPEN
+    mitigation_notes: Optional[str] = None
+    owner: Optional[str] = None
+    review_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    risk_register_metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    risk_decision_enforcement_disabled: bool = True
+    risk_blocking_disabled: bool = True
+    feature_bundle_activation_disabled: bool = True
+    notification_sending_disabled: bool = True
+    external_provider_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutRiskCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    risk_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    rollout_plan_id: Optional[str] = None
+    dependency_id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    impact: FeatureBundleRolloutRiskImpact = FeatureBundleRolloutRiskImpact.MEDIUM
+    likelihood: FeatureBundleRolloutRiskLikelihood = FeatureBundleRolloutRiskLikelihood.POSSIBLE
+    status: FeatureBundleRolloutRiskStatus = FeatureBundleRolloutRiskStatus.OPEN
+    mitigation_notes: Optional[str] = None
+    owner: Optional[str] = None
+    review_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutRiskUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    rollout_plan_id: Optional[str] = None
+    dependency_id: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    impact: Optional[FeatureBundleRolloutRiskImpact] = None
+    likelihood: Optional[FeatureBundleRolloutRiskLikelihood] = None
+    status: Optional[FeatureBundleRolloutRiskStatus] = None
+    mitigation_notes: Optional[str] = None
+    owner: Optional[str] = None
+    review_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

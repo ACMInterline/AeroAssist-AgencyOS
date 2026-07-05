@@ -7,6 +7,7 @@ import CapabilitiesPage from "./pages/agency/CapabilitiesPage"
 import AgencyRolloutDashboardPage from "./pages/agency/RolloutDashboardPage"
 import RolloutApprovalPage from "./pages/agency/RolloutApprovalPage"
 import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
+import RolloutRisksPage from "./pages/agency/RolloutRisksPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
@@ -101,6 +102,7 @@ import PlatformFeatureBundleAssignmentsPage from "./pages/platform/FeatureBundle
 import PlatformFeatureBundleRolloutApprovalsPage from "./pages/platform/FeatureBundleRolloutApprovalsPage"
 import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
 import PlatformFeatureBundleRolloutReadinessPage from "./pages/platform/FeatureBundleRolloutReadinessPage"
+import PlatformFeatureBundleRolloutRisksPage from "./pages/platform/FeatureBundleRolloutRisksPage"
 import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
@@ -161,6 +163,7 @@ const routes = {
   "/platform/feature-bundle-rollout-readiness": PlatformFeatureBundleRolloutReadinessPage,
   "/platform/feature-bundle-rollout-plans": PlatformFeatureBundleRolloutPlansPage,
   "/platform/feature-bundle-rollout-approvals": PlatformFeatureBundleRolloutApprovalsPage,
+  "/platform/feature-bundle-rollout-risks": PlatformFeatureBundleRolloutRisksPage,
   "/platform/feature-bundle-rollout-schedule": PlatformFeatureBundleRolloutSchedulePage,
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
@@ -203,6 +206,7 @@ const routes = {
   "/agency/bundle-rollout-readiness": BundleRolloutReadinessPage,
   "/agency/rollout-plans": RolloutPlansPage,
   "/agency/rollout-approval": RolloutApprovalPage,
+  "/agency/rollout-risks": RolloutRisksPage,
   "/agency/rollout-schedule": RolloutSchedulePage,
   "/agency/rollout-timeline": RolloutTimelinePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
