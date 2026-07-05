@@ -11277,6 +11277,112 @@ class FeatureBundleRolloutIssueUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutDecisionCategory(str, Enum):
+    READINESS = "readiness"
+    APPROVAL = "approval"
+    SCHEDULE = "schedule"
+    DEPENDENCY = "dependency"
+    RISK = "risk"
+    ISSUE = "issue"
+    ROLLOUT_SCOPE = "rollout_scope"
+    OPERATIONAL = "operational"
+    GOVERNANCE = "governance"
+
+
+class FeatureBundleRolloutDecisionStatus(str, Enum):
+    DRAFT = "draft"
+    PROPOSED = "proposed"
+    ACCEPTED = "accepted"
+    DEFERRED = "deferred"
+    REJECTED = "rejected"
+    SUPERSEDED = "superseded"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutDecision(BaseDocument):
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    decision_title: str
+    decision_summary: Optional[str] = None
+    decision_reason: Optional[str] = None
+    decision_category: FeatureBundleRolloutDecisionCategory = FeatureBundleRolloutDecisionCategory.OPERATIONAL
+    decision_status: FeatureBundleRolloutDecisionStatus = FeatureBundleRolloutDecisionStatus.DRAFT
+    decision_owner: Optional[str] = None
+    decision_date: datetime = Field(default_factory=now_utc)
+    related_bundle_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    timeline_reference_ids: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    decision_register_metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    deployment_automation_disabled: bool = True
+    feature_activation_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_execution_disabled: bool = True
+    background_workers_disabled: bool = True
+    schedulers_disabled: bool = True
+    notification_sending_disabled: bool = True
+    email_sending_disabled: bool = True
+    webhook_execution_disabled: bool = True
+    publishing_disabled: bool = True
+    runtime_switching_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutDecisionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    decision_title: str
+    decision_summary: Optional[str] = None
+    decision_reason: Optional[str] = None
+    decision_category: FeatureBundleRolloutDecisionCategory = FeatureBundleRolloutDecisionCategory.OPERATIONAL
+    decision_status: FeatureBundleRolloutDecisionStatus = FeatureBundleRolloutDecisionStatus.DRAFT
+    decision_owner: Optional[str] = None
+    decision_date: Optional[datetime] = None
+    related_bundle_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    timeline_reference_ids: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutDecisionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    rollout_phase: Optional[str] = None
+    decision_title: Optional[str] = None
+    decision_summary: Optional[str] = None
+    decision_reason: Optional[str] = None
+    decision_category: Optional[FeatureBundleRolloutDecisionCategory] = None
+    decision_status: Optional[FeatureBundleRolloutDecisionStatus] = None
+    decision_owner: Optional[str] = None
+    decision_date: Optional[datetime] = None
+    related_bundle_ids: Optional[List[str]] = None
+    related_dependency_ids: Optional[List[str]] = None
+    related_risk_ids: Optional[List[str]] = None
+    related_issue_ids: Optional[List[str]] = None
+    timeline_reference_ids: Optional[List[str]] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

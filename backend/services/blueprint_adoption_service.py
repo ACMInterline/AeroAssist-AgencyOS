@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_9_feature_bundle_rollout_issue_log_foundation"
+PHASE_LABEL = "phase_40_10_feature_bundle_rollout_decision_register_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -134,6 +134,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutIssue, FeatureBundleRolloutIssueSeverity, FeatureBundleRolloutIssueStatus, FeatureBundleRolloutIssueService, /api/platform/feature-bundle-rollout-issues, /api/agencies/{agency_id}/feature-bundle-rollout-issues, /platform/feature-bundle-rollout-issues, /agency/rollout-issues",
         "status": "foundation adopted",
         "action": "Record informational rollout issue metadata with severity, status, owner, resolution notes, and review notes without executing rollouts, activating bundles, enforcing blocking, sending notifications, calling external providers, adding AI/provider execution, or automating actions.",
+    },
+    {
+        "category": "Feature Bundle Rollout Decision Register",
+        "concept": "Feature bundle rollout decision register metadata",
+        "supplementary_concept": "rollout decisions, review decisions, rollout reasons, decision owners, related bundle/risk/issue/dependency/timeline references",
+        "current_equivalent": "FeatureBundleRolloutDecision, FeatureBundleRolloutDecisionCategory, FeatureBundleRolloutDecisionStatus, FeatureBundleRolloutDecisionService, /api/platform/feature-bundle-rollout-decisions, /api/agencies/{agency_id}/feature-bundle-rollout-decisions, /platform/feature-bundle-rollout-decisions, /agency/rollout-decisions",
+        "status": "foundation adopted",
+        "action": "Record informational rollout decision metadata with reasons, owners, categories, statuses, and related rollout references without executing rollouts, automating deployments, activating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -458,6 +466,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-risks", "agencyos": "/agency/rollout-risks"},
         {"supplementary": "/admin/feature-bundle-rollout-issues", "agencyos": "/platform/feature-bundle-rollout-issues"},
         {"supplementary": "/agent/rollout-issues", "agencyos": "/agency/rollout-issues"},
+        {"supplementary": "/admin/feature-bundle-rollout-decisions", "agencyos": "/platform/feature-bundle-rollout-decisions"},
+        {"supplementary": "/agent/rollout-decisions", "agencyos": "/agency/rollout-decisions"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -611,6 +621,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureBundleRolloutIssue",
             "FeatureBundleRolloutIssueSeverity",
             "FeatureBundleRolloutIssueStatus",
+            "FeatureBundleRolloutDecision",
+            "FeatureBundleRolloutDecisionCategory",
+            "FeatureBundleRolloutDecisionStatus",
             "FeatureBundleRolloutReadiness",
             "FeatureBundleRolloutChecklistItem",
             "FeatureBundleRolloutPlan",

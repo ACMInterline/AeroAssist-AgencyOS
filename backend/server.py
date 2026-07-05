@@ -7,7 +7,7 @@ from config import assert_startup_safe, configure_logging, get_settings, validat
 from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
-from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
+from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -19,6 +19,7 @@ from services.agency_feature_flag_bundle_service import DEFAULT_FEATURE_FLAG_BUN
 from services.capability_catalog_service import DEFAULT_CAPABILITY_CATALOG
 from services.feature_bundle_rollout_approval_service import APPROVAL_STATUSES
 from services.feature_bundle_dependency_service import DEPENDENCY_TYPES
+from services.feature_bundle_rollout_decision_service import DECISION_CATEGORIES, DECISION_STATUSES
 from services.feature_bundle_rollout_issue_service import ISSUE_SEVERITIES, ISSUE_STATUSES
 from services.feature_bundle_rollout_plan_service import PLAN_STAGES
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES
@@ -36,7 +37,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 40.9 feature bundle rollout issue log foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 40.10 feature bundle rollout decision register foundation.",
 )
 
 app.add_middleware(
@@ -437,6 +438,16 @@ async def readiness() -> dict:
     feature_bundle_rollout_issue_severity_counts = {
         severity: len([item for item in feature_bundle_rollout_issue_records if item.get("severity") == severity])
         for severity in ISSUE_SEVERITIES
+    }
+    feature_bundle_rollout_decision_records = await database.collection("feature_bundle_rollout_decisions").find_many()
+    feature_bundle_rollout_decision_count = len(feature_bundle_rollout_decision_records)
+    feature_bundle_rollout_decision_status_counts = {
+        decision_status: len([item for item in feature_bundle_rollout_decision_records if item.get("decision_status") == decision_status])
+        for decision_status in DECISION_STATUSES
+    }
+    feature_bundle_rollout_decision_category_counts = {
+        category: len([item for item in feature_bundle_rollout_decision_records if item.get("decision_category") == category])
+        for category in DECISION_CATEGORIES
     }
     rollout_dashboard_view_count = await database.collection("rollout_dashboard_views").count()
     rollout_dashboard_snapshot_count = await database.collection("rollout_dashboard_snapshots").count()
@@ -1887,6 +1898,52 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 40.9 stores feature bundle rollout issue metadata only. It does not execute rollouts, activate bundles, enforce blocking, send notifications, call external providers, or add AI/provider execution.",
         },
+        "feature_bundle_rollout_decision_register_foundation": {
+            "feature_bundle_rollout_decisions_enabled": True,
+            "feature_bundle_rollout_decision_category_metadata_enabled": True,
+            "feature_bundle_rollout_decision_status_metadata_enabled": True,
+            "platform_decision_metadata_crud_enabled": True,
+            "agency_decision_read_only_enabled": True,
+            "decision_filter_by_rollout_enabled": True,
+            "decision_filter_by_category_enabled": True,
+            "decision_filter_by_owner_enabled": True,
+            "decision_filter_by_status_enabled": True,
+            "decision_related_bundle_references_enabled": True,
+            "decision_related_dependency_references_enabled": True,
+            "decision_related_risk_references_enabled": True,
+            "decision_related_issue_references_enabled": True,
+            "decision_timeline_references_enabled": True,
+            "metadata_only": True,
+            "decision_register_metadata_only": True,
+            "decision_records_informational_only": True,
+            "read_only_ui_enabled": True,
+            "rollout_execution_disabled": True,
+            "deployment_automation_disabled": True,
+            "feature_activation_disabled": True,
+            "feature_bundle_activation_disabled": True,
+            "entitlement_enforcement_disabled": True,
+            "billing_disabled": True,
+            "provider_integrations_disabled": True,
+            "provider_calls_disabled": True,
+            "provider_execution_disabled": True,
+            "external_api_calls_disabled": True,
+            "ai_execution_disabled": True,
+            "external_ai_disabled": True,
+            "background_workers_disabled": True,
+            "schedulers_disabled": True,
+            "notification_sending_disabled": True,
+            "notifications_disabled": True,
+            "email_sending_disabled": True,
+            "webhook_execution_disabled": True,
+            "publishing_disabled": True,
+            "runtime_switching_disabled": True,
+            "automation_disabled": True,
+            "decision_count": feature_bundle_rollout_decision_count,
+            "decision_status_counts": feature_bundle_rollout_decision_status_counts,
+            "decision_category_counts": feature_bundle_rollout_decision_category_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 40.10 stores feature bundle rollout decision register metadata only. It does not execute rollouts, automate deployments, activate features, enforce entitlements, bill, call providers or external APIs, use AI, run workers or schedulers, notify users, send email, execute webhooks, publish, or switch runtime behavior.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -2056,6 +2113,7 @@ app.include_router(platform_feature_bundle_rollout_timeline.router)
 app.include_router(platform_feature_bundle_dependencies.router)
 app.include_router(platform_feature_bundle_rollout_risks.router)
 app.include_router(platform_feature_bundle_rollout_issues.router)
+app.include_router(platform_feature_bundle_rollout_decisions.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -2108,6 +2166,7 @@ app.include_router(agency_feature_bundle_rollout_timeline.router)
 app.include_router(agency_feature_bundle_dependencies.router)
 app.include_router(agency_feature_bundle_rollout_risks.router)
 app.include_router(agency_feature_bundle_rollout_issues.router)
+app.include_router(agency_feature_bundle_rollout_decisions.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

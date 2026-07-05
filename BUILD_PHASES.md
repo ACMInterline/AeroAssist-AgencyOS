@@ -100,6 +100,7 @@ The repository currently contains:
 - Phase 40.7: Feature bundle rollout dependency foundation.
 - Phase 40.8: Feature bundle rollout risk register foundation.
 - Phase 40.9: Feature bundle rollout issue log foundation.
+- Phase 40.10: Feature bundle rollout decision register foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1660,6 +1661,22 @@ Implemented scope:
 Avoid adding:
 
 - Rollout execution, feature bundle activation, blocking enforcement, notifications, external provider calls, AI/provider execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.10: Feature Bundle Rollout Decision Register Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutDecision`, `FeatureBundleRolloutDecisionCategory`, and `FeatureBundleRolloutDecisionStatus` models.
+- Added `feature_bundle_rollout_decisions` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-decisions` for decision register metadata.
+- Added agency read-only APIs and `/agency/rollout-decisions` scoped through rollout plan agency visibility.
+- Added filters by rollout, category, owner, and status plus related bundle, dependency, risk, issue, and timeline references.
+- Added readiness flags under `feature_bundle_rollout_decision_register_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-decision-register-foundation.md`.
+
+Avoid adding:
+
+- Rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
