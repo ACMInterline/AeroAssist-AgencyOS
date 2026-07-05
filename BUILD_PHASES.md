@@ -95,6 +95,7 @@ The repository currently contains:
 - Phase 40.2: Feature bundle rollout plan foundation.
 - Phase 40.3: Agency capability rollout dashboard foundation.
 - Phase 40.4: Feature bundle rollout approval foundation.
+- Phase 40.5: Feature bundle rollout schedule foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1575,6 +1576,22 @@ Implemented scope:
 Avoid adding:
 
 - Actual feature enablement, permission enforcement, runtime gating, billing, Stripe, payment providers, authentication changes, deployment automation, cron jobs, webhooks, background workers, email, SMS, notifications, AI, OpenAI, scraping, publishing, rollout execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.5: Feature Bundle Rollout Schedule Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutSchedule` model and create/update payload models.
+- Added `feature_bundle_rollout_schedules` collection/index registration.
+- Added platform list/create/update/read APIs and `/platform/feature-bundle-rollout-schedule` for intended rollout timing metadata.
+- Added agency read-only APIs and `/agency/rollout-schedule` scoped to the selected agency.
+- Added schedule statuses `Planned`, `Ready`, `AwaitingApproval`, `Approved`, `Deferred`, `Cancelled`, and `CompletedMetadata`.
+- Added readiness flags under `feature_bundle_rollout_schedule_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-schedule-foundation.md`.
+
+Avoid adding:
+
+- Actual rollout execution, feature activation, entitlement behavior changes, permission changes, cron jobs, schedulers, workers, queues, timers, background execution, external API calls, AI functionality, billing logic, automatic publishing, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

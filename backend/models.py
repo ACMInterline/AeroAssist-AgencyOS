@@ -10863,6 +10863,86 @@ class FeatureBundleRolloutApprovalNoteCreate(BaseModel):
     agency_visible: bool = True
 
 
+class FeatureBundleRolloutScheduleStatus(str, Enum):
+    PLANNED = "Planned"
+    READY = "Ready"
+    AWAITING_APPROVAL = "AwaitingApproval"
+    APPROVED = "Approved"
+    DEFERRED = "Deferred"
+    CANCELLED = "Cancelled"
+    COMPLETED_METADATA = "CompletedMetadata"
+
+
+class FeatureBundleRolloutSchedule(BaseDocument):
+    schedule_id: str = Field(default_factory=new_id)
+    rollout_plan_id: str
+    rollout_name: str
+    bundle_id: str
+    agency_id: str
+    schedule_status: FeatureBundleRolloutScheduleStatus = FeatureBundleRolloutScheduleStatus.PLANNED
+    planned_start: Optional[datetime] = None
+    planned_finish: Optional[datetime] = None
+    scheduling_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    maintenance_window: Optional[str] = None
+    estimated_duration: Optional[str] = None
+    dependency_summary: Dict[str, Any] = Field(default_factory=dict)
+    checklist_summary: Dict[str, Any] = Field(default_factory=dict)
+    approval_summary: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    scheduling_metadata_only: bool = True
+    read_only_planning: bool = True
+    rollout_execution_disabled: bool = True
+    feature_activation_disabled: bool = True
+    entitlement_behavior_disabled: bool = True
+    permission_changes_disabled: bool = True
+    cron_jobs_disabled: bool = True
+    schedulers_disabled: bool = True
+    workers_disabled: bool = True
+    queues_disabled: bool = True
+    timers_disabled: bool = True
+    background_execution_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_execution_disabled: bool = True
+    billing_disabled: bool = True
+    publishing_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutScheduleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: str
+    rollout_name: Optional[str] = None
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    schedule_status: FeatureBundleRolloutScheduleStatus = FeatureBundleRolloutScheduleStatus.PLANNED
+    planned_start: Optional[datetime] = None
+    planned_finish: Optional[datetime] = None
+    scheduling_notes: Optional[str] = None
+    maintenance_window: Optional[str] = None
+    estimated_duration: Optional[str] = None
+    dependency_summary: Dict[str, Any] = Field(default_factory=dict)
+    checklist_summary: Dict[str, Any] = Field(default_factory=dict)
+    approval_summary: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutScheduleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_name: Optional[str] = None
+    schedule_status: Optional[FeatureBundleRolloutScheduleStatus] = None
+    planned_start: Optional[datetime] = None
+    planned_finish: Optional[datetime] = None
+    scheduling_notes: Optional[str] = None
+    maintenance_window: Optional[str] = None
+    estimated_duration: Optional[str] = None
+    dependency_summary: Optional[Dict[str, Any]] = None
+    checklist_summary: Optional[Dict[str, Any]] = None
+    approval_summary: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

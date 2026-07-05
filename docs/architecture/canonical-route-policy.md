@@ -33,6 +33,7 @@ Phase 40.1 adds read-only capability catalog APIs only under `/api/platform/capa
 Phase 40.2 adds feature bundle rollout plan APIs only under `/api/platform/feature-bundle-rollout-plans/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-plans/*`, plus frontend pages under `/platform/feature-bundle-rollout-plans` and `/agency/rollout-plans`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.3 adds read-only rollout dashboard APIs only under `/api/platform/rollout-dashboard/*` and `/api/agencies/{agency_id}/rollout-dashboard/*`, plus frontend pages under `/platform/rollout-dashboard` and `/agency/rollout-dashboard`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.4 adds feature bundle rollout approval APIs only under `/api/platform/feature-bundle-rollout-approvals/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-approvals/*`, plus frontend pages under `/platform/feature-bundle-rollout-approvals` and `/agency/rollout-approval`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
+Phase 40.5 adds feature bundle rollout schedule APIs only under `/api/platform/feature-bundle-rollout-schedule/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-schedule/*`, plus frontend pages under `/platform/feature-bundle-rollout-schedule` and `/agency/rollout-schedule`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, cron jobs, schedulers, workers, queues, timers, or rollout execution.
 
 ## Route Mapping
 
@@ -86,6 +87,8 @@ Phase 40.4 adds feature bundle rollout approval APIs only under `/api/platform/f
 | `/agent/rollout-plans` | `/agency/rollout-plans` |
 | `/admin/feature-bundle-rollout-approvals` | `/platform/feature-bundle-rollout-approvals` |
 | `/agent/rollout-approval` | `/agency/rollout-approval` |
+| `/admin/feature-bundle-rollout-schedule` | `/platform/feature-bundle-rollout-schedule` |
+| `/agent/rollout-schedule` | `/agency/rollout-schedule` |
 | `/admin/rollout-dashboard` | `/platform/rollout-dashboard` |
 | `/agent/rollout-dashboard` | `/agency/rollout-dashboard` |
 | `/admin/capabilities` | `/platform/capabilities` |

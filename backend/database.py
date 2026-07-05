@@ -382,6 +382,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_feature_bundle_rollout_plans",
     "feature_bundle_rollout_approvals",
     "feature_bundle_rollout_approval_notes",
+    "feature_bundle_rollout_schedules",
     "rollout_dashboard_views",
     "rollout_dashboard_snapshots",
     "offer_acceptances",
@@ -1717,6 +1718,15 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("approval_id", ASCENDING), ("created_at", ASCENDING)], "name": "feature_bundle_rollout_approval_notes_approval_created_lookup"},
             {"keys": [("rollout_plan_id", ASCENDING), ("created_at", ASCENDING)], "name": "feature_bundle_rollout_approval_notes_plan_created_lookup"},
             {"keys": [("agency_id", ASCENDING), ("created_at", ASCENDING)], "name": "feature_bundle_rollout_approval_notes_agency_created_lookup"},
+        ],
+        "feature_bundle_rollout_schedules": [
+            {"keys": [("id", ASCENDING)], "name": "feature_bundle_rollout_schedules_id_unique", "unique": True},
+            {"keys": [("schedule_id", ASCENDING)], "name": "feature_bundle_rollout_schedules_schedule_unique", "unique": True},
+            {"keys": [("rollout_plan_id", ASCENDING)], "name": "feature_bundle_rollout_schedules_plan_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("schedule_status", ASCENDING)], "name": "feature_bundle_rollout_schedules_agency_status_lookup"},
+            {"keys": [("bundle_id", ASCENDING), ("schedule_status", ASCENDING)], "name": "feature_bundle_rollout_schedules_bundle_status_lookup"},
+            {"keys": [("planned_start", ASCENDING)], "name": "feature_bundle_rollout_schedules_planned_start_lookup"},
+            {"keys": [("created_at", ASCENDING)], "name": "feature_bundle_rollout_schedules_created_lookup"},
         ],
         "rollout_dashboard_views": [
             {"keys": [("id", ASCENDING)], "name": "rollout_dashboard_views_id_unique", "unique": True},
