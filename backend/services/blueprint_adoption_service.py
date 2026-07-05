@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_6_feature_bundle_rollout_timeline_foundation"
+PHASE_LABEL = "phase_40_7_feature_bundle_dependency_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -110,6 +110,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AgencyFeatureBundleAssignment, AgencyFeatureBundleAssignmentHistory, AgencyFeatureBundleAssignmentService, /api/platform/feature-bundle-assignments, /api/platform/agencies/{agency_id}/bundle-assignments, /api/agencies/{agency_id}/feature-bundle-assignments, /platform/feature-bundle-assignments, /agency/assigned-bundles",
         "status": "foundation adopted",
         "action": "Record platform-owned agency bundle assignment metadata and immutable assignment history without activating features, evaluating entitlements, changing permissions, billing, licensing, executing feature flags, calling providers, running background workers or cron, calling external AI, or deploying anything.",
+    },
+    {
+        "category": "Feature Bundle Dependencies",
+        "concept": "Feature bundle dependency metadata",
+        "supplementary_concept": "bundle dependencies, capability dependencies, approval dependencies, plan dependencies, schedule dependencies, readiness checklist dependencies",
+        "current_equivalent": "FeatureBundleDependency, FeatureBundleDependencyReference, FeatureBundleDependencyType, FeatureBundleDependencyService, /api/platform/feature-bundle-dependencies, /api/agencies/{agency_id}/feature-bundle-dependencies, /platform/feature-bundle-dependencies, /agency/bundle-dependencies",
+        "status": "foundation adopted",
+        "action": "Record informational dependency metadata from bundles to bundles, capabilities, approvals, rollout plans, schedules, and readiness checklists without executing rollouts, scheduling background jobs, enforcing dependencies, blocking rollouts, activating bundles, modifying permissions, sending notifications, publishing, calling providers, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -428,6 +436,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/feature-bundles", "agencyos": "/agency/feature-bundles"},
         {"supplementary": "/admin/feature-bundle-assignments", "agencyos": "/platform/feature-bundle-assignments"},
         {"supplementary": "/agent/assigned-bundles", "agencyos": "/agency/assigned-bundles"},
+        {"supplementary": "/admin/feature-bundle-dependencies", "agencyos": "/platform/feature-bundle-dependencies"},
+        {"supplementary": "/agent/bundle-dependencies", "agencyos": "/agency/bundle-dependencies"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -571,6 +581,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "BundleReadiness",
             "AgencyFeatureBundleAssignment",
             "AgencyFeatureBundleAssignmentHistory",
+            "FeatureBundleDependency",
+            "FeatureBundleDependencyReference",
+            "FeatureBundleDependencyType",
             "FeatureBundleRolloutReadiness",
             "FeatureBundleRolloutChecklistItem",
             "FeatureBundleRolloutPlan",
@@ -626,6 +639,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Agency feature flag audit foundation built in Phase 39.8",
             "Feature flag bundles foundation built in Phase 39.9",
             "Feature bundle assignment foundation built in Phase 40.0",
+            "Feature bundle dependency foundation built in Phase 40.7",
             "Feature bundle rollout readiness foundation built in Phase 40.1",
             "Feature bundle rollout plan foundation built in Phase 40.2",
             "Rollout dashboard foundation built in Phase 40.3",

@@ -35,6 +35,7 @@ Phase 40.3 adds read-only rollout dashboard APIs only under `/api/platform/rollo
 Phase 40.4 adds feature bundle rollout approval APIs only under `/api/platform/feature-bundle-rollout-approvals/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-approvals/*`, plus frontend pages under `/platform/feature-bundle-rollout-approvals` and `/agency/rollout-approval`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.5 adds feature bundle rollout schedule APIs only under `/api/platform/feature-bundle-rollout-schedule/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-schedule/*`, plus frontend pages under `/platform/feature-bundle-rollout-schedule` and `/agency/rollout-schedule`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, cron jobs, schedulers, workers, queues, timers, or rollout execution.
 Phase 40.6 adds feature bundle rollout timeline APIs only under `/api/platform/feature-bundle-rollout-timeline/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-timeline/*`, plus frontend pages under `/platform/feature-bundle-rollout-timeline` and `/agency/rollout-timeline`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, background jobs, provider calls, publishing, notifications, subscription changes, automation, or rollout execution.
+Phase 40.7 adds feature bundle dependency APIs only under `/api/platform/feature-bundle-dependencies/*` and `/api/agencies/{agency_id}/feature-bundle-dependencies/*`, plus frontend pages under `/platform/feature-bundle-dependencies` and `/agency/bundle-dependencies`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, dependency enforcement, rollout blocking, background jobs, notifications, provider calls, publishing, automation, or rollout execution.
 
 ## Route Mapping
 
@@ -82,6 +83,8 @@ Phase 40.6 adds feature bundle rollout timeline APIs only under `/api/platform/f
 | `/agent/feature-bundles` | `/agency/feature-bundles` |
 | `/admin/feature-bundle-assignments` | `/platform/feature-bundle-assignments` |
 | `/agent/assigned-bundles` | `/agency/assigned-bundles` |
+| `/admin/feature-bundle-dependencies` | `/platform/feature-bundle-dependencies` |
+| `/agent/bundle-dependencies` | `/agency/bundle-dependencies` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

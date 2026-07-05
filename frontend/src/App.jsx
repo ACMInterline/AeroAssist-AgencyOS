@@ -2,6 +2,7 @@ import AgencyDashboardPage from "./pages/agency/AgencyDashboardPage"
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
 import BundleRolloutReadinessPage from "./pages/agency/BundleRolloutReadinessPage"
+import BundleDependenciesPage from "./pages/agency/BundleDependenciesPage"
 import CapabilitiesPage from "./pages/agency/CapabilitiesPage"
 import AgencyRolloutDashboardPage from "./pages/agency/RolloutDashboardPage"
 import RolloutApprovalPage from "./pages/agency/RolloutApprovalPage"
@@ -95,6 +96,7 @@ import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformCapabilityCatalogPage from "./pages/platform/CapabilityCatalogPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
+import PlatformFeatureBundleDependenciesPage from "./pages/platform/FeatureBundleDependenciesPage"
 import PlatformFeatureBundleAssignmentsPage from "./pages/platform/FeatureBundleAssignmentsPage"
 import PlatformFeatureBundleRolloutApprovalsPage from "./pages/platform/FeatureBundleRolloutApprovalsPage"
 import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
@@ -155,6 +157,7 @@ const routes = {
   "/platform/feature-flag-audit": PlatformFeatureFlagAuditPage,
   "/platform/feature-flag-bundles": PlatformFeatureFlagBundlesPage,
   "/platform/feature-bundle-assignments": PlatformFeatureBundleAssignmentsPage,
+  "/platform/feature-bundle-dependencies": PlatformFeatureBundleDependenciesPage,
   "/platform/feature-bundle-rollout-readiness": PlatformFeatureBundleRolloutReadinessPage,
   "/platform/feature-bundle-rollout-plans": PlatformFeatureBundleRolloutPlansPage,
   "/platform/feature-bundle-rollout-approvals": PlatformFeatureBundleRolloutApprovalsPage,
@@ -196,6 +199,7 @@ const routes = {
   "/agency/feature-readiness": FeatureReadinessPage,
   "/agency/feature-bundles": FeatureBundlesPage,
   "/agency/assigned-bundles": AssignedBundlesPage,
+  "/agency/bundle-dependencies": BundleDependenciesPage,
   "/agency/bundle-rollout-readiness": BundleRolloutReadinessPage,
   "/agency/rollout-plans": RolloutPlansPage,
   "/agency/rollout-approval": RolloutApprovalPage,

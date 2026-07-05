@@ -11018,6 +11018,86 @@ class FeatureBundleRolloutTimelineEntryCreate(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class FeatureBundleDependencyType(str, Enum):
+    BUNDLE = "bundle"
+    CAPABILITY = "capability"
+    APPROVAL = "approval"
+    ROLLOUT_PLAN = "rollout_plan"
+    SCHEDULE = "schedule"
+    READINESS_CHECKLIST = "readiness_checklist"
+    OTHER = "other"
+
+
+class FeatureBundleDependencyReference(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    reference_type: FeatureBundleDependencyType
+    reference_id: str
+    label: Optional[str] = None
+    bundle_id: Optional[str] = None
+    capability_key: Optional[str] = None
+    rollout_plan_id: Optional[str] = None
+    schedule_id: Optional[str] = None
+    approval_id: Optional[str] = None
+    readiness_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    dependency_enforcement_disabled: bool = True
+
+
+class FeatureBundleDependency(BaseDocument):
+    dependency_id: str = Field(default_factory=new_id)
+    agency_id: str
+    bundle_id: str
+    rollout_plan_id: Optional[str] = None
+    dependency_type: FeatureBundleDependencyType
+    depends_on: FeatureBundleDependencyReference
+    status: str = "informational"
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    dependency_metadata_only: bool = True
+    dependency_enforcement_disabled: bool = True
+    rollout_execution_disabled: bool = True
+    background_jobs_disabled: bool = True
+    rollout_blocking_disabled: bool = True
+    feature_bundle_activation_disabled: bool = True
+    permission_modification_disabled: bool = True
+    notification_sending_disabled: bool = True
+    publishing_disabled: bool = True
+    provider_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleDependencyCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    dependency_id: Optional[str] = None
+    agency_id: str
+    bundle_id: str
+    rollout_plan_id: Optional[str] = None
+    dependency_type: FeatureBundleDependencyType
+    depends_on: FeatureBundleDependencyReference
+    status: str = "informational"
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleDependencyUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    dependency_type: Optional[FeatureBundleDependencyType] = None
+    depends_on: Optional[FeatureBundleDependencyReference] = None
+    status: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
