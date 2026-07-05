@@ -19,7 +19,7 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/agent/*` | intentionally rejected | Duplicates `/agency/*` and would split agency workflow navigation. |
 | `/admin/*` | intentionally rejected | Duplicates `/platform/*` and would blur platform governance boundaries. |
 
-No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, Phase 37.8, Phase 37.9, Phase 38.0, Phase 38.1, Phase 38.2, Phase 39.0, Phase 39.1, Phase 39.2, Phase 39.3, Phase 39.4, Phase 39.5, Phase 39.6, Phase 39.7, Phase 39.8, Phase 39.9, Phase 40.0, Phase 40.1, or Phase 40.2. Documentation and API/UI mapping are preferred so future work remains explicit.
+No redirects or aliases are added in Phase 36.4.5, Phase 36.4.6, Phase 36.5, Phase 36.6, Phase 36.7, Phase 36.8, Phase 36.9, Phase 37.0, Phase 37.1, Phase 37.2, Phase 37.3, Phase 37.4, Phase 37.5, Phase 37.6, Phase 37.7, Phase 37.8, Phase 37.9, Phase 38.0, Phase 38.1, Phase 38.2, Phase 39.0, Phase 39.1, Phase 39.2, Phase 39.3, Phase 39.4, Phase 39.5, Phase 39.6, Phase 39.7, Phase 39.8, Phase 39.9, Phase 40.0, Phase 40.1, Phase 40.2, or Phase 40.3. Documentation and API/UI mapping are preferred so future work remains explicit.
 
 Phase 39.4 changes visible navigation wording and helper descriptions only. It keeps all route paths under the existing `/platform/*` and `/agency/*` roots.
 Phase 39.5 adds subscription APIs only under `/api/platform/saas-subscriptions/*` and `/api/agencies/{agency_id}/saas-subscriptions/*`, plus frontend pages under `/platform/saas-subscriptions` and `/agency/saas-subscription`.
@@ -31,6 +31,7 @@ Phase 40.0 adds feature bundle assignment APIs only under `/api/platform/feature
 Phase 40.1 adds feature bundle rollout readiness APIs only under `/api/platform/feature-bundle-rollout-readiness/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-readiness/*`, plus frontend pages under `/platform/feature-bundle-rollout-readiness` and `/agency/bundle-rollout-readiness`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.1 adds read-only capability catalog APIs only under `/api/platform/capabilities/*` and `/api/agencies/{agency_id}/capabilities/*`, plus frontend pages under `/platform/capabilities` and `/agency/capabilities`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 Phase 40.2 adds feature bundle rollout plan APIs only under `/api/platform/feature-bundle-rollout-plans/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-plans/*`, plus frontend pages under `/platform/feature-bundle-rollout-plans` and `/agency/rollout-plans`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
+Phase 40.3 adds read-only rollout dashboard APIs only under `/api/platform/rollout-dashboard/*` and `/api/agencies/{agency_id}/rollout-dashboard/*`, plus frontend pages under `/platform/rollout-dashboard` and `/agency/rollout-dashboard`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, or `/api/agent`.
 
 ## Route Mapping
 
@@ -82,6 +83,8 @@ Phase 40.2 adds feature bundle rollout plan APIs only under `/api/platform/featu
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |
 | `/agent/rollout-plans` | `/agency/rollout-plans` |
+| `/admin/rollout-dashboard` | `/platform/rollout-dashboard` |
+| `/agent/rollout-dashboard` | `/agency/rollout-dashboard` |
 | `/admin/capabilities` | `/platform/capabilities` |
 | `/agent/capabilities` | `/agency/capabilities` |
 | `/admin/airline-data-packs` | `/platform/airline-intelligence-data-packs` |

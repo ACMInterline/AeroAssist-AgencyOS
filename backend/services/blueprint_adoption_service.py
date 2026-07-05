@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_2_feature_bundle_rollout_plan_foundation"
+PHASE_LABEL = "phase_40_3_rollout_dashboard_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -126,6 +126,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutPlan, FeatureBundleRolloutPlanService, /api/platform/feature-bundle-rollout-plans, /api/agencies/{agency_id}/feature-bundle-rollout-plans, /platform/feature-bundle-rollout-plans, /agency/rollout-plans",
         "status": "foundation adopted",
         "action": "Record metadata-only rollout plan stages, target windows, owners, readiness references, assignment references, notes, and checklist summaries without activating features, enforcing access, blocking routes, publishing, sending, billing, calling providers, calling external APIs, using AI, scraping, or executing rollout logic.",
+    },
+    {
+        "category": "Rollout Dashboard",
+        "concept": "Unified read-only rollout metadata dashboard",
+        "supplementary_concept": "rollout dashboard, capability rollout status, readiness summary, plan summary, assigned bundle visibility",
+        "current_equivalent": "RolloutDashboardSummary, RolloutDashboardSection, RolloutDashboardCounts, RolloutDashboardSnapshot, RolloutDashboardFilters, RolloutDashboardService, /api/platform/rollout-dashboard, /api/agencies/{agency_id}/rollout-dashboard, /platform/rollout-dashboard, /agency/rollout-dashboard",
+        "status": "foundation adopted",
+        "action": "Aggregate existing capability catalog, feature flag, feature bundle, assigned bundle, rollout readiness, and rollout plan metadata into read-only Platform Console and Agency Workspace dashboard cards without editing, activation, enforcement, route blocking, billing, automation, scheduling, sending, publishing, provider execution, external API calls, AI execution, scraping, webhooks, or rollout execution.",
     },
     {
         "category": "Capability Catalog",
@@ -400,6 +408,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
         {"supplementary": "/agent/rollout-plans", "agencyos": "/agency/rollout-plans"},
+        {"supplementary": "/admin/rollout-dashboard", "agencyos": "/platform/rollout-dashboard"},
+        {"supplementary": "/agent/rollout-dashboard", "agencyos": "/agency/rollout-dashboard"},
         {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
         {"supplementary": "/agent/capabilities", "agencyos": "/agency/capabilities"},
         {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
@@ -531,6 +541,15 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "BundleReadiness",
             "AgencyFeatureBundleAssignment",
             "AgencyFeatureBundleAssignmentHistory",
+            "FeatureBundleRolloutReadiness",
+            "FeatureBundleRolloutChecklistItem",
+            "FeatureBundleRolloutPlan",
+            "RolloutDashboardSummary",
+            "RolloutDashboardSection",
+            "RolloutDashboardCounts",
+            "RolloutDashboardSnapshot",
+            "RolloutDashboardFilters",
+            "CapabilityCatalogEntry",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -571,6 +590,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Feature bundle assignment foundation built in Phase 40.0",
             "Feature bundle rollout readiness foundation built in Phase 40.1",
             "Feature bundle rollout plan foundation built in Phase 40.2",
+            "Rollout dashboard foundation built in Phase 40.3",
             "Capability catalog foundation built in Phase 40.1",
         ],
         "deferred": [

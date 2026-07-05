@@ -93,6 +93,7 @@ The repository currently contains:
 - Phase 40.1: Capability catalog foundation.
 - Phase 40.1: Feature bundle rollout readiness foundation.
 - Phase 40.2: Feature bundle rollout plan foundation.
+- Phase 40.3: Agency capability rollout dashboard foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1539,6 +1540,23 @@ Implemented scope:
 Avoid adding:
 
 - Feature activation, feature deactivation, rollout execution, runtime access enforcement, route blocking, permission changes, entitlement evaluation/enforcement, billing, payments, Stripe, licensing, provider/GDS execution, booking, reservation creation, PNR mutation, ticketing, EMD issuance, CMS/client portal publishing, scraping, external APIs, external AI or AI execution, background workers, cron jobs, email/SMS/notification sending, publishing, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.3: Agency Capability Rollout Dashboard Foundation
+
+Implemented scope:
+
+- Added read-only `RolloutDashboardSummary`, `RolloutDashboardSection`, `RolloutDashboardCounts`, `RolloutDashboardSnapshot`, and `RolloutDashboardFilters` metadata models.
+- Added `rollout_dashboard_views` and `rollout_dashboard_snapshots` collection/index registration.
+- Added platform read-only APIs and `/platform/rollout-dashboard` for unified rollout metadata visibility.
+- Added agency read-only APIs and `/agency/rollout-dashboard` scoped to the selected agency.
+- Added dashboard cards for Capability Catalog, Feature Flags, Feature Bundles, Assigned Bundles, Rollout Readiness, and Rollout Plans.
+- Added summary, filters, and snapshot response shapes.
+- Added readiness flags under `rollout_dashboard_foundation`.
+- Added `docs/architecture/rollout-dashboard-foundation.md`.
+
+Avoid adding:
+
+- Real entitlement enforcement, billing, payment processing, execution engines, provider execution, AI execution, publishing, rollout automation, background workers, schedulers, email/SMS sending, feature activation, permission enforcement, route blocking, webhook execution, scraping, external API calls, state transitions, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

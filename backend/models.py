@@ -10716,6 +10716,74 @@ class FeatureBundleRolloutPlanUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class RolloutDashboardCounts(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    total_count: int = 0
+    by_status: Dict[str, int] = Field(default_factory=dict)
+    by_stage: Dict[str, int] = Field(default_factory=dict)
+    warning_count: int = 0
+    blocker_count: int = 0
+    metadata_only: bool = True
+
+
+class RolloutDashboardSection(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    section_key: str
+    title: str
+    description: Optional[str] = None
+    count: int = 0
+    counts: RolloutDashboardCounts = Field(default_factory=RolloutDashboardCounts)
+    statuses: Dict[str, int] = Field(default_factory=dict)
+    route: Optional[str] = None
+    last_updated: Optional[datetime] = None
+    read_only: bool = True
+    metadata_only: bool = True
+
+
+class RolloutDashboardFilters(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    bundle_id: Optional[str] = None
+    feature_state: Optional[str] = None
+    readiness_status: Optional[str] = None
+    rollout_stage: Optional[str] = None
+    capability_category: Optional[str] = None
+    metadata_only: bool = True
+
+
+class RolloutDashboardSummary(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    sections: List[RolloutDashboardSection] = Field(default_factory=list)
+    counts: RolloutDashboardCounts = Field(default_factory=RolloutDashboardCounts)
+    filters: RolloutDashboardFilters = Field(default_factory=RolloutDashboardFilters)
+    generated_at: datetime = Field(default_factory=now_utc)
+    read_only: bool = True
+    metadata_only: bool = True
+
+
+class RolloutDashboardSnapshot(BaseDocument):
+    snapshot_id: str = Field(default_factory=new_id)
+    agency_id: Optional[str] = None
+    filters: RolloutDashboardFilters = Field(default_factory=RolloutDashboardFilters)
+    sections: List[RolloutDashboardSection] = Field(default_factory=list)
+    counts: RolloutDashboardCounts = Field(default_factory=RolloutDashboardCounts)
+    captured_at: datetime = Field(default_factory=now_utc)
+    captured_by: Optional[str] = None
+    source: str = "rollout_dashboard_metadata"
+    read_only: bool = True
+    metadata_only: bool = True
+    automation_disabled: bool = True
+    rollout_execution_disabled: bool = True
+    feature_activation_disabled: bool = True
+    billing_disabled: bool = True
+    provider_execution_disabled: bool = True
+
+
 class CapabilityCatalogEntry(BaseDocument):
     code: str
     name: str
