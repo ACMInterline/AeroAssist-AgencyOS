@@ -10,7 +10,7 @@ from models import AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_40_8_feature_bundle_rollout_risk_register_foundation"
+EXPECTED_PHASE = "phase_40_9_feature_bundle_rollout_issue_log_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

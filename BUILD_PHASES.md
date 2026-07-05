@@ -99,6 +99,7 @@ The repository currently contains:
 - Phase 40.6: Feature bundle rollout timeline foundation.
 - Phase 40.7: Feature bundle rollout dependency foundation.
 - Phase 40.8: Feature bundle rollout risk register foundation.
+- Phase 40.9: Feature bundle rollout issue log foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1643,6 +1644,22 @@ Implemented scope:
 Avoid adding:
 
 - Rollout execution, risk decision enforcement, rollout blocking, notifications, feature bundle activation, automation, external provider calls, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.9: Feature Bundle Rollout Issue Log Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutIssue`, `FeatureBundleRolloutIssueSeverity`, and `FeatureBundleRolloutIssueStatus` models.
+- Added `feature_bundle_rollout_issues` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-issues` for issue log metadata.
+- Added agency read-only APIs and `/agency/rollout-issues` scoped to the selected agency.
+- Added filters by agency, bundle, rollout plan, risk, dependency, approval, severity, and status.
+- Added readiness flags under `feature_bundle_rollout_issue_log_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-issue-log-foundation.md`.
+
+Avoid adding:
+
+- Rollout execution, feature bundle activation, blocking enforcement, notifications, external provider calls, AI/provider execution, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
