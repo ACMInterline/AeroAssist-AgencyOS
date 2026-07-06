@@ -39,6 +39,7 @@ Phase 40.7 adds feature bundle dependency APIs only under `/api/platform/feature
 Phase 40.8 adds feature bundle rollout risk APIs only under `/api/platform/feature-bundle-rollout-risks/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-risks/*`, plus frontend pages under `/platform/feature-bundle-rollout-risks` and `/agency/rollout-risks`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rollout execution, risk decision enforcement, blocking, notifications, bundle activation, automation, or provider calls.
 Phase 40.9 adds feature bundle rollout issue APIs only under `/api/platform/feature-bundle-rollout-issues/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-issues/*`, plus frontend pages under `/platform/feature-bundle-rollout-issues` and `/agency/rollout-issues`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rollout execution, bundle activation, blocking enforcement, notifications, provider calls, AI/provider execution, or automation.
 Phase 40.10 adds feature bundle rollout decision APIs only under `/api/platform/feature-bundle-rollout-decisions/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-decisions/*`, plus frontend pages under `/platform/feature-bundle-rollout-decisions` and `/agency/rollout-decisions`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, or automation.
+Phase 40.11 adds feature bundle rollout change request APIs only under `/api/platform/feature-bundle-rollout-change-requests/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-change-requests/*`, plus frontend pages under `/platform/feature-bundle-rollout-change-requests` and `/agency/rollout-change-requests`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, or automation.
 
 ## Route Mapping
 
@@ -94,6 +95,8 @@ Phase 40.10 adds feature bundle rollout decision APIs only under `/api/platform/
 | `/agent/rollout-issues` | `/agency/rollout-issues` |
 | `/admin/feature-bundle-rollout-decisions` | `/platform/feature-bundle-rollout-decisions` |
 | `/agent/rollout-decisions` | `/agency/rollout-decisions` |
+| `/admin/feature-bundle-rollout-change-requests` | `/platform/feature-bundle-rollout-change-requests` |
+| `/agent/rollout-change-requests` | `/agency/rollout-change-requests` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

@@ -11383,6 +11383,137 @@ class FeatureBundleRolloutDecisionUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutChangeRequestType(str, Enum):
+    SCOPE = "scope"
+    SCHEDULE = "schedule"
+    READINESS = "readiness"
+    APPROVAL = "approval"
+    DEPENDENCY = "dependency"
+    RISK = "risk"
+    ISSUE = "issue"
+    DECISION = "decision"
+    DOCUMENTATION = "documentation"
+    OPERATIONAL = "operational"
+
+
+class FeatureBundleRolloutChangeRequestPriority(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class FeatureBundleRolloutChangeRequestImpactLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class FeatureBundleRolloutChangeRequestStatus(str, Enum):
+    DRAFT = "draft"
+    REQUESTED = "requested"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    DEFERRED = "deferred"
+    SUPERSEDED = "superseded"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutChangeRequest(BaseDocument):
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    change_title: str
+    change_summary: Optional[str] = None
+    change_reason: Optional[str] = None
+    requested_by: Optional[str] = None
+    requested_date: datetime = Field(default_factory=now_utc)
+    change_type: FeatureBundleRolloutChangeRequestType = FeatureBundleRolloutChangeRequestType.OPERATIONAL
+    priority: FeatureBundleRolloutChangeRequestPriority = FeatureBundleRolloutChangeRequestPriority.MEDIUM
+    impact_level: FeatureBundleRolloutChangeRequestImpactLevel = FeatureBundleRolloutChangeRequestImpactLevel.MEDIUM
+    change_status: FeatureBundleRolloutChangeRequestStatus = FeatureBundleRolloutChangeRequestStatus.DRAFT
+    affected_bundle_ids: List[str] = Field(default_factory=list)
+    affected_feature_flag_ids: List[str] = Field(default_factory=list)
+    related_decision_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    review_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    change_request_metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    deployment_automation_disabled: bool = True
+    feature_activation_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_execution_disabled: bool = True
+    background_workers_disabled: bool = True
+    schedulers_disabled: bool = True
+    notification_sending_disabled: bool = True
+    email_sending_disabled: bool = True
+    webhook_execution_disabled: bool = True
+    publishing_disabled: bool = True
+    runtime_switching_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutChangeRequestCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    change_title: str
+    change_summary: Optional[str] = None
+    change_reason: Optional[str] = None
+    requested_by: Optional[str] = None
+    requested_date: Optional[datetime] = None
+    change_type: FeatureBundleRolloutChangeRequestType = FeatureBundleRolloutChangeRequestType.OPERATIONAL
+    priority: FeatureBundleRolloutChangeRequestPriority = FeatureBundleRolloutChangeRequestPriority.MEDIUM
+    impact_level: FeatureBundleRolloutChangeRequestImpactLevel = FeatureBundleRolloutChangeRequestImpactLevel.MEDIUM
+    change_status: FeatureBundleRolloutChangeRequestStatus = FeatureBundleRolloutChangeRequestStatus.DRAFT
+    affected_bundle_ids: List[str] = Field(default_factory=list)
+    affected_feature_flag_ids: List[str] = Field(default_factory=list)
+    related_decision_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    review_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutChangeRequestUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    rollout_phase: Optional[str] = None
+    change_title: Optional[str] = None
+    change_summary: Optional[str] = None
+    change_reason: Optional[str] = None
+    requested_by: Optional[str] = None
+    requested_date: Optional[datetime] = None
+    change_type: Optional[FeatureBundleRolloutChangeRequestType] = None
+    priority: Optional[FeatureBundleRolloutChangeRequestPriority] = None
+    impact_level: Optional[FeatureBundleRolloutChangeRequestImpactLevel] = None
+    change_status: Optional[FeatureBundleRolloutChangeRequestStatus] = None
+    affected_bundle_ids: Optional[List[str]] = None
+    affected_feature_flag_ids: Optional[List[str]] = None
+    related_decision_ids: Optional[List[str]] = None
+    related_issue_ids: Optional[List[str]] = None
+    related_risk_ids: Optional[List[str]] = None
+    related_dependency_ids: Optional[List[str]] = None
+    review_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

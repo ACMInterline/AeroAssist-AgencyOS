@@ -7,7 +7,7 @@ from models import CapabilityCatalogEntry
 from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleService
 
 
-PHASE_LABEL = "phase_40_10_feature_bundle_rollout_decision_register_foundation"
+PHASE_LABEL = "phase_40_11_feature_bundle_rollout_change_request_foundation"
 
 CAPABILITY_COLLECTION = "capability_catalog"
 

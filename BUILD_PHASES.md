@@ -101,6 +101,7 @@ The repository currently contains:
 - Phase 40.8: Feature bundle rollout risk register foundation.
 - Phase 40.9: Feature bundle rollout issue log foundation.
 - Phase 40.10: Feature bundle rollout decision register foundation.
+- Phase 40.11: Feature bundle rollout change request foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1673,6 +1674,22 @@ Implemented scope:
 - Added filters by rollout, category, owner, and status plus related bundle, dependency, risk, issue, and timeline references.
 - Added readiness flags under `feature_bundle_rollout_decision_register_foundation`.
 - Added `docs/architecture/feature-bundle-rollout-decision-register-foundation.md`.
+
+Avoid adding:
+
+- Rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.11: Feature Bundle Rollout Change Request Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutChangeRequest`, type, priority, impact, and status models.
+- Added `feature_bundle_rollout_change_requests` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-change-requests` for change request metadata.
+- Added agency read-only APIs and `/agency/rollout-change-requests` scoped through rollout plan agency visibility.
+- Added filters by rollout, status, priority, impact level, and change type plus affected bundle/feature flag and related decision/risk/issue/dependency references.
+- Added readiness flags under `feature_bundle_rollout_change_request_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-change-request-foundation.md`.
 
 Avoid adding:
 

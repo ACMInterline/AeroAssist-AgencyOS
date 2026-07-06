@@ -210,6 +210,7 @@ async def summary(
             "feature_bundle_rollout_risks": await db.collection("feature_bundle_rollout_risks").count(),
             "feature_bundle_rollout_issues": await db.collection("feature_bundle_rollout_issues").count(),
             "feature_bundle_rollout_decisions": await db.collection("feature_bundle_rollout_decisions").count(),
+            "feature_bundle_rollout_change_requests": await db.collection("feature_bundle_rollout_change_requests").count(),
             "rollout_dashboard_views": await db.collection("rollout_dashboard_views").count(),
             "rollout_dashboard_snapshots": await db.collection("rollout_dashboard_snapshots").count(),
             "capability_catalog": await db.collection("capability_catalog").count(),

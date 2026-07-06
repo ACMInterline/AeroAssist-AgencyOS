@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_10_feature_bundle_rollout_decision_register_foundation"
+PHASE_LABEL = "phase_40_11_feature_bundle_rollout_change_request_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -142,6 +142,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutDecision, FeatureBundleRolloutDecisionCategory, FeatureBundleRolloutDecisionStatus, FeatureBundleRolloutDecisionService, /api/platform/feature-bundle-rollout-decisions, /api/agencies/{agency_id}/feature-bundle-rollout-decisions, /platform/feature-bundle-rollout-decisions, /agency/rollout-decisions",
         "status": "foundation adopted",
         "action": "Record informational rollout decision metadata with reasons, owners, categories, statuses, and related rollout references without executing rollouts, automating deployments, activating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
+    },
+    {
+        "category": "Feature Bundle Rollout Change Requests",
+        "concept": "Feature bundle rollout change request metadata",
+        "supplementary_concept": "rollout change requests, requested rollout changes, affected bundles, affected feature flags, related decisions, risks, issues, and dependencies",
+        "current_equivalent": "FeatureBundleRolloutChangeRequest, FeatureBundleRolloutChangeRequestType, FeatureBundleRolloutChangeRequestPriority, FeatureBundleRolloutChangeRequestImpactLevel, FeatureBundleRolloutChangeRequestStatus, FeatureBundleRolloutChangeRequestService, /api/platform/feature-bundle-rollout-change-requests, /api/agencies/{agency_id}/feature-bundle-rollout-change-requests, /platform/feature-bundle-rollout-change-requests, /agency/rollout-change-requests",
+        "status": "foundation adopted",
+        "action": "Record informational rollout change request metadata with reasons, requesters, priorities, impact levels, statuses, affected records, and related rollout references without executing rollouts, automating deployments, activating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -468,6 +476,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-issues", "agencyos": "/agency/rollout-issues"},
         {"supplementary": "/admin/feature-bundle-rollout-decisions", "agencyos": "/platform/feature-bundle-rollout-decisions"},
         {"supplementary": "/agent/rollout-decisions", "agencyos": "/agency/rollout-decisions"},
+        {"supplementary": "/admin/feature-bundle-rollout-change-requests", "agencyos": "/platform/feature-bundle-rollout-change-requests"},
+        {"supplementary": "/agent/rollout-change-requests", "agencyos": "/agency/rollout-change-requests"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -624,6 +634,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "FeatureBundleRolloutDecision",
             "FeatureBundleRolloutDecisionCategory",
             "FeatureBundleRolloutDecisionStatus",
+            "FeatureBundleRolloutChangeRequest",
+            "FeatureBundleRolloutChangeRequestType",
+            "FeatureBundleRolloutChangeRequestPriority",
+            "FeatureBundleRolloutChangeRequestImpactLevel",
+            "FeatureBundleRolloutChangeRequestStatus",
             "FeatureBundleRolloutReadiness",
             "FeatureBundleRolloutChecklistItem",
             "FeatureBundleRolloutPlan",

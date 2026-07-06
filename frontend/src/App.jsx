@@ -6,6 +6,7 @@ import BundleDependenciesPage from "./pages/agency/BundleDependenciesPage"
 import CapabilitiesPage from "./pages/agency/CapabilitiesPage"
 import AgencyRolloutDashboardPage from "./pages/agency/RolloutDashboardPage"
 import RolloutApprovalPage from "./pages/agency/RolloutApprovalPage"
+import RolloutChangeRequestsPage from "./pages/agency/RolloutChangeRequestsPage"
 import RolloutDecisionsPage from "./pages/agency/RolloutDecisionsPage"
 import RolloutIssuesPage from "./pages/agency/RolloutIssuesPage"
 import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
@@ -102,6 +103,7 @@ import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemp
 import PlatformFeatureBundleDependenciesPage from "./pages/platform/FeatureBundleDependenciesPage"
 import PlatformFeatureBundleAssignmentsPage from "./pages/platform/FeatureBundleAssignmentsPage"
 import PlatformFeatureBundleRolloutApprovalsPage from "./pages/platform/FeatureBundleRolloutApprovalsPage"
+import PlatformFeatureBundleRolloutChangeRequestsPage from "./pages/platform/FeatureBundleRolloutChangeRequestsPage"
 import PlatformFeatureBundleRolloutDecisionsPage from "./pages/platform/FeatureBundleRolloutDecisionsPage"
 import PlatformFeatureBundleRolloutIssuesPage from "./pages/platform/FeatureBundleRolloutIssuesPage"
 import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
@@ -167,6 +169,7 @@ const routes = {
   "/platform/feature-bundle-rollout-readiness": PlatformFeatureBundleRolloutReadinessPage,
   "/platform/feature-bundle-rollout-plans": PlatformFeatureBundleRolloutPlansPage,
   "/platform/feature-bundle-rollout-approvals": PlatformFeatureBundleRolloutApprovalsPage,
+  "/platform/feature-bundle-rollout-change-requests": PlatformFeatureBundleRolloutChangeRequestsPage,
   "/platform/feature-bundle-rollout-decisions": PlatformFeatureBundleRolloutDecisionsPage,
   "/platform/feature-bundle-rollout-issues": PlatformFeatureBundleRolloutIssuesPage,
   "/platform/feature-bundle-rollout-risks": PlatformFeatureBundleRolloutRisksPage,
@@ -212,6 +215,7 @@ const routes = {
   "/agency/bundle-rollout-readiness": BundleRolloutReadinessPage,
   "/agency/rollout-plans": RolloutPlansPage,
   "/agency/rollout-approval": RolloutApprovalPage,
+  "/agency/rollout-change-requests": RolloutChangeRequestsPage,
   "/agency/rollout-decisions": RolloutDecisionsPage,
   "/agency/rollout-issues": RolloutIssuesPage,
   "/agency/rollout-risks": RolloutRisksPage,
