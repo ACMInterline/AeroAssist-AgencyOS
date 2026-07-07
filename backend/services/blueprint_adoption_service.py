@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
+PHASE_LABEL = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -158,6 +158,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutRollbackPlan, FeatureBundleRolloutRollbackTrigger, FeatureBundleRolloutRollbackScope, FeatureBundleRolloutRollbackStatus, FeatureBundleRolloutRollbackPriority, FeatureBundleRolloutRollbackPlanService, /api/platform/feature-bundle-rollout-rollback-plans, /api/agencies/{agency_id}/feature-bundle-rollout-rollback-plans, /platform/feature-bundle-rollout-rollback-plans, /agency/rollout-rollback-plans",
         "status": "foundation adopted",
         "action": "Record informational rollback plan metadata with triggers, scopes, priorities, statuses, affected records, related rollout references, rollback steps, and validation notes without executing rollbacks, automating deployments, activating or deactivating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
+    },
+    {
+        "category": "Feature Bundle Rollout Summary Packs",
+        "concept": "Feature bundle rollout summary evidence-pack metadata",
+        "supplementary_concept": "rollout summary packs, evidence packs, readiness references, approval references, schedule references, timeline references, dependency references, risk references, issue references, decision references, change request references, rollback plan references",
+        "current_equivalent": "FeatureBundleRolloutSummaryPack, FeatureBundleRolloutSummaryPackStatus, FeatureBundleRolloutSummaryPackAudience, FeatureBundleRolloutSummaryPackService, /api/platform/feature-bundle-rollout-summary-packs, /api/agencies/{agency_id}/feature-bundle-rollout-summary-packs, /platform/feature-bundle-rollout-summary-packs, /agency/rollout-summary-packs",
+        "status": "foundation adopted",
+        "action": "Record informational rollout summary evidence-pack metadata with covered bundles, rollout references, evidence notes, and compliance notes without executing rollouts, automating deployments, activating or deactivating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, generating PDFs, exporting files, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -488,6 +496,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-change-requests", "agencyos": "/agency/rollout-change-requests"},
         {"supplementary": "/admin/feature-bundle-rollout-rollback-plans", "agencyos": "/platform/feature-bundle-rollout-rollback-plans"},
         {"supplementary": "/agent/rollout-rollback-plans", "agencyos": "/agency/rollout-rollback-plans"},
+        {"supplementary": "/admin/feature-bundle-rollout-summary-packs", "agencyos": "/platform/feature-bundle-rollout-summary-packs"},
+        {"supplementary": "/agent/rollout-summary-packs", "agencyos": "/agency/rollout-summary-packs"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

@@ -11656,6 +11656,120 @@ class FeatureBundleRolloutRollbackPlanUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutSummaryPackStatus(str, Enum):
+    DRAFT = "draft"
+    ASSEMBLED = "assembled"
+    REVIEWING = "reviewing"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutSummaryPackAudience(str, Enum):
+    PLATFORM = "platform"
+    AGENCY = "agency"
+    OPERATIONS = "operations"
+    COMPLIANCE = "compliance"
+    EXECUTIVE = "executive"
+
+
+class FeatureBundleRolloutSummaryPack(BaseDocument):
+    rollout_plan_id: str
+    pack_title: str
+    pack_summary: Optional[str] = None
+    pack_status: FeatureBundleRolloutSummaryPackStatus = FeatureBundleRolloutSummaryPackStatus.DRAFT
+    generated_for_audience: FeatureBundleRolloutSummaryPackAudience = FeatureBundleRolloutSummaryPackAudience.PLATFORM
+    covered_bundle_ids: List[str] = Field(default_factory=list)
+    readiness_reference_ids: List[str] = Field(default_factory=list)
+    approval_reference_ids: List[str] = Field(default_factory=list)
+    schedule_reference_ids: List[str] = Field(default_factory=list)
+    timeline_reference_ids: List[str] = Field(default_factory=list)
+    dependency_reference_ids: List[str] = Field(default_factory=list)
+    risk_reference_ids: List[str] = Field(default_factory=list)
+    issue_reference_ids: List[str] = Field(default_factory=list)
+    decision_reference_ids: List[str] = Field(default_factory=list)
+    change_request_reference_ids: List[str] = Field(default_factory=list)
+    rollback_plan_reference_ids: List[str] = Field(default_factory=list)
+    evidence_notes: Optional[str] = None
+    compliance_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    summary_pack_metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    deployment_automation_disabled: bool = True
+    feature_activation_disabled: bool = True
+    feature_deactivation_disabled: bool = True
+    feature_bundle_activation_disabled: bool = True
+    feature_bundle_deactivation_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_execution_disabled: bool = True
+    background_workers_disabled: bool = True
+    schedulers_disabled: bool = True
+    notification_sending_disabled: bool = True
+    email_sending_disabled: bool = True
+    webhook_execution_disabled: bool = True
+    publishing_disabled: bool = True
+    runtime_switching_disabled: bool = True
+    pdf_generation_disabled: bool = True
+    file_export_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutSummaryPackCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    rollout_plan_id: str
+    pack_title: str
+    pack_summary: Optional[str] = None
+    pack_status: FeatureBundleRolloutSummaryPackStatus = FeatureBundleRolloutSummaryPackStatus.DRAFT
+    generated_for_audience: FeatureBundleRolloutSummaryPackAudience = FeatureBundleRolloutSummaryPackAudience.PLATFORM
+    covered_bundle_ids: List[str] = Field(default_factory=list)
+    readiness_reference_ids: List[str] = Field(default_factory=list)
+    approval_reference_ids: List[str] = Field(default_factory=list)
+    schedule_reference_ids: List[str] = Field(default_factory=list)
+    timeline_reference_ids: List[str] = Field(default_factory=list)
+    dependency_reference_ids: List[str] = Field(default_factory=list)
+    risk_reference_ids: List[str] = Field(default_factory=list)
+    issue_reference_ids: List[str] = Field(default_factory=list)
+    decision_reference_ids: List[str] = Field(default_factory=list)
+    change_request_reference_ids: List[str] = Field(default_factory=list)
+    rollback_plan_reference_ids: List[str] = Field(default_factory=list)
+    evidence_notes: Optional[str] = None
+    compliance_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutSummaryPackUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    pack_title: Optional[str] = None
+    pack_summary: Optional[str] = None
+    pack_status: Optional[FeatureBundleRolloutSummaryPackStatus] = None
+    generated_for_audience: Optional[FeatureBundleRolloutSummaryPackAudience] = None
+    covered_bundle_ids: Optional[List[str]] = None
+    readiness_reference_ids: Optional[List[str]] = None
+    approval_reference_ids: Optional[List[str]] = None
+    schedule_reference_ids: Optional[List[str]] = None
+    timeline_reference_ids: Optional[List[str]] = None
+    dependency_reference_ids: Optional[List[str]] = None
+    risk_reference_ids: Optional[List[str]] = None
+    issue_reference_ids: Optional[List[str]] = None
+    decision_reference_ids: Optional[List[str]] = None
+    change_request_reference_ids: Optional[List[str]] = None
+    rollback_plan_reference_ids: Optional[List[str]] = None
+    evidence_notes: Optional[str] = None
+    compliance_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

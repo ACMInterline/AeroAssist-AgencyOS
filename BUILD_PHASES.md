@@ -1713,6 +1713,23 @@ Avoid adding:
 
 - Actual rollback execution, deployment automation, feature activation/deactivation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 40.13: Feature Bundle Rollout Summary Pack Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutSummaryPack`, status, and audience models.
+- Added `feature_bundle_rollout_summary_packs` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-summary-packs` for summary evidence-pack metadata.
+- Added agency read-only APIs and `/agency/rollout-summary-packs` scoped through rollout plan agency visibility.
+- Added filters by rollout, status, audience, and bundle plus covered bundle/readiness/approval/schedule/timeline/dependency/risk/issue/decision/change request/rollback plan references.
+- Added evidence notes and compliance notes as metadata-only fields.
+- Added readiness flags under `feature_bundle_rollout_summary_pack_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-summary-pack-foundation.md`.
+
+Avoid adding:
+
+- Rollout execution, deployment automation, feature activation/deactivation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, PDF generation, file export, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

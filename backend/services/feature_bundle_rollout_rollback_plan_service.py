@@ -19,7 +19,7 @@ from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
+PHASE_LABEL = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
 
 ROLLBACK_PLAN_COLLECTION = "feature_bundle_rollout_rollback_plans"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
@@ -68,7 +68,7 @@ class FeatureBundleRolloutRollbackPlanService:
         rollback_plans = await self.db.collection(ROLLBACK_PLAN_COLLECTION).find_many(filters or None)
         if not include_archived:
             rollback_plans = [item for item in rollback_plans if not item.get("deleted_at")]
-        rollback_plans.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
+        rollback_plans.sort(key=lambda item: self._sort_text(item.get("updated_at") or item.get("created_at")), reverse=True)
         return [await self._platform_projection(item) for item in rollback_plans]
 
     async def list_agency_rollback_plans(
@@ -543,6 +543,11 @@ class FeatureBundleRolloutRollbackPlanService:
 
     def _now(self) -> datetime:
         return datetime.now(timezone.utc)
+
+    def _sort_text(self, value: Any) -> str:
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value or "")
 
     def safety_flags(self) -> dict[str, bool]:
         return {

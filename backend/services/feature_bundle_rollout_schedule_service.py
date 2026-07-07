@@ -14,7 +14,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
+PHASE_LABEL = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
 
 SCHEDULE_COLLECTION = "feature_bundle_rollout_schedules"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
@@ -41,7 +41,7 @@ class FeatureBundleRolloutScheduleService:
         if status:
             filters["schedule_status"] = status
         schedules = await self.db.collection(SCHEDULE_COLLECTION).find_many(filters or None)
-        schedules.sort(key=lambda item: (item.get("planned_start") or item.get("created_at") or "", item.get("rollout_name") or ""), reverse=True)
+        schedules.sort(key=lambda item: (self._sort_text(item.get("planned_start") or item.get("created_at")), item.get("rollout_name") or ""), reverse=True)
         return [await self._platform_projection(item) for item in schedules]
 
     async def list_agency_schedules(self, agency_id: str, *, status: str | None = None) -> list[dict[str, Any]]:
@@ -317,6 +317,11 @@ class FeatureBundleRolloutScheduleService:
 
     def _now(self) -> datetime:
         return datetime.now(timezone.utc)
+
+    def _sort_text(self, value: Any) -> str:
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value or "")
 
     def safety_flags(self) -> dict[str, bool]:
         return {

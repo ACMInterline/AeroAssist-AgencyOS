@@ -13,6 +13,7 @@ import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
 import RolloutRisksPage from "./pages/agency/RolloutRisksPage"
 import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
+import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
@@ -112,6 +113,7 @@ import PlatformFeatureBundleRolloutReadinessPage from "./pages/platform/FeatureB
 import PlatformFeatureBundleRolloutRisksPage from "./pages/platform/FeatureBundleRolloutRisksPage"
 import PlatformFeatureBundleRolloutRollbackPlansPage from "./pages/platform/FeatureBundleRolloutRollbackPlansPage"
 import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
+import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
@@ -177,6 +179,7 @@ const routes = {
   "/platform/feature-bundle-rollout-risks": PlatformFeatureBundleRolloutRisksPage,
   "/platform/feature-bundle-rollout-rollback-plans": PlatformFeatureBundleRolloutRollbackPlansPage,
   "/platform/feature-bundle-rollout-schedule": PlatformFeatureBundleRolloutSchedulePage,
+  "/platform/feature-bundle-rollout-summary-packs": PlatformFeatureBundleRolloutSummaryPacksPage,
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -224,6 +227,7 @@ const routes = {
   "/agency/rollout-risks": RolloutRisksPage,
   "/agency/rollout-rollback-plans": RolloutRollbackPlansPage,
   "/agency/rollout-schedule": RolloutSchedulePage,
+  "/agency/rollout-summary-packs": RolloutSummaryPacksPage,
   "/agency/rollout-timeline": RolloutTimelinePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
