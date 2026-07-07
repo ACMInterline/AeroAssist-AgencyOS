@@ -12055,6 +12055,169 @@ class TravelRequestWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class PassengerWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    INCOMPLETE = "incomplete"
+    REVIEW = "review"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
+class PassengerWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_reference: str
+    passenger_status: PassengerWorkspaceStatus = PassengerWorkspaceStatus.ACTIVE
+    title: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    citizenship: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_expiry: Optional[date] = None
+    passport_country: Optional[str] = None
+    identity_document_type: Optional[str] = None
+    loyalty_programs: List[Dict[str, Any]] = Field(default_factory=list)
+    frequent_flyer_numbers: List[Dict[str, Any]] = Field(default_factory=list)
+    known_traveler_numbers: List[str] = Field(default_factory=list)
+    emergency_contact: Dict[str, Any] = Field(default_factory=dict)
+    mobility_profile: Dict[str, Any] = Field(default_factory=dict)
+    medical_profile: Dict[str, Any] = Field(default_factory=dict)
+    dietary_profile: Dict[str, Any] = Field(default_factory=dict)
+    assistance_profile: Dict[str, Any] = Field(default_factory=dict)
+    baggage_profile: Dict[str, Any] = Field(default_factory=dict)
+    seating_preferences: Dict[str, Any] = Field(default_factory=dict)
+    language_preferences: List[str] = Field(default_factory=list)
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_offer_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    passenger_workspace_metadata_only: bool = True
+    booking_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    gds_live_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    payment_processing_disabled: bool = True
+    supplier_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    ai_automation_disabled: bool = True
+    email_disabled: bool = True
+    email_sending_disabled: bool = True
+    sms_disabled: bool = True
+    sms_sending_disabled: bool = True
+    background_workers_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automatic_profile_matching_disabled: bool = True
+    automatic_document_validation_disabled: bool = True
+    document_validation_disabled: bool = True
+    airline_communication_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class PassengerWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_reference: Optional[str] = None
+    passenger_status: PassengerWorkspaceStatus = PassengerWorkspaceStatus.ACTIVE
+    title: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    citizenship: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_expiry: Optional[date] = None
+    passport_country: Optional[str] = None
+    identity_document_type: Optional[str] = None
+    loyalty_programs: List[Dict[str, Any]] = Field(default_factory=list)
+    frequent_flyer_numbers: List[Dict[str, Any]] = Field(default_factory=list)
+    known_traveler_numbers: List[str] = Field(default_factory=list)
+    emergency_contact: Dict[str, Any] = Field(default_factory=dict)
+    mobility_profile: Dict[str, Any] = Field(default_factory=dict)
+    medical_profile: Dict[str, Any] = Field(default_factory=dict)
+    dietary_profile: Dict[str, Any] = Field(default_factory=dict)
+    assistance_profile: Dict[str, Any] = Field(default_factory=dict)
+    baggage_profile: Dict[str, Any] = Field(default_factory=dict)
+    seating_preferences: Dict[str, Any] = Field(default_factory=dict)
+    language_preferences: List[str] = Field(default_factory=list)
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_offer_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PassengerWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    passenger_reference: Optional[str] = None
+    passenger_status: Optional[PassengerWorkspaceStatus] = None
+    title: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    preferred_name: Optional[str] = None
+    gender: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    citizenship: Optional[str] = None
+    passport_number: Optional[str] = None
+    passport_expiry: Optional[date] = None
+    passport_country: Optional[str] = None
+    identity_document_type: Optional[str] = None
+    loyalty_programs: Optional[List[Dict[str, Any]]] = None
+    frequent_flyer_numbers: Optional[List[Dict[str, Any]]] = None
+    known_traveler_numbers: Optional[List[str]] = None
+    emergency_contact: Optional[Dict[str, Any]] = None
+    mobility_profile: Optional[Dict[str, Any]] = None
+    medical_profile: Optional[Dict[str, Any]] = None
+    dietary_profile: Optional[Dict[str, Any]] = None
+    assistance_profile: Optional[Dict[str, Any]] = None
+    baggage_profile: Optional[Dict[str, Any]] = None
+    seating_preferences: Optional[Dict[str, Any]] = None
+    language_preferences: Optional[List[str]] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    linked_request_ids: Optional[List[str]] = None
+    linked_trip_ids: Optional[List[str]] = None
+    linked_offer_ids: Optional[List[str]] = None
+    linked_booking_ids: Optional[List[str]] = None
+    linked_ticket_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -71,6 +71,7 @@ import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
 import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
+import PassengerWorkspacesPage from "./pages/agency/PassengerWorkspacesPage"
 import PassengersPage from "./pages/agency/PassengersPage"
 import PaymentsPage from "./pages/agency/PaymentsPage"
 import AgencyPortalActionsPage from "./pages/agency/PortalActionsPage"
@@ -118,6 +119,7 @@ import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBu
 import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
+import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
@@ -187,6 +189,7 @@ const routes = {
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/operational-travel-workspaces": PlatformOperationalTravelWorkspacesPage,
   "/platform/travel-request-workspaces": PlatformTravelRequestWorkspacesPage,
+  "/platform/passenger-workspaces": PlatformPassengerWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -237,6 +240,7 @@ const routes = {
   "/agency/rollout-timeline": RolloutTimelinePage,
   "/agency/travel-requests": TravelRequestsPage,
   "/agency/travel-workspaces": TravelWorkspacesPage,
+  "/agency/passenger-workspaces": PassengerWorkspacesPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

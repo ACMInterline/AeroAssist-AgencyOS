@@ -44,6 +44,7 @@ Phase 40.12 adds feature bundle rollout rollback plan APIs only under `/api/plat
 Phase 40.13 adds feature bundle rollout summary pack APIs only under `/api/platform/feature-bundle-rollout-summary-packs/*` and `/api/agencies/{agency_id}/feature-bundle-rollout-summary-packs/*`, plus frontend pages under `/platform/feature-bundle-rollout-summary-packs` and `/agency/rollout-summary-packs`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rollout execution, deployment automation, feature activation/deactivation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, PDF generation, file export, or automation.
 Phase 41.0 adds operational travel workspace APIs only under `/api/platform/operational-travel-workspaces/*` and `/api/agencies/{agency_id}/operational-travel-workspaces/*`, plus frontend pages under `/platform/operational-travel-workspaces` and `/agency/travel-workspaces`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, live GDS or NDC connectivity, payment processing, email or SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, or automation.
 Phase 41.1 adds travel request workspace APIs only under `/api/platform/travel-request-workspaces/*` and `/api/agencies/{agency_id}/travel-request-workspaces/*`, plus frontend pages under `/platform/travel-request-workspaces` and `/agency/travel-requests`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, live GDS or NDC connectivity, payment processing, email or SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, automatic conversion to trips, automatic offer creation, or automation.
+Phase 41.2 adds passenger workspace APIs only under `/api/platform/passenger-workspaces/*` and `/api/agencies/{agency_id}/passenger-workspaces/*`, plus frontend pages under `/platform/passenger-workspaces` and `/agency/passenger-workspaces`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, GDS connectivity, NDC connectivity, payment processing, supplier integrations, AI, email, SMS, background workers, external APIs, automatic profile matching, automatic document validation, airline communication, or automation.
 
 ## Route Mapping
 
@@ -109,6 +110,8 @@ Phase 41.1 adds travel request workspace APIs only under `/api/platform/travel-r
 | `/agent/travel-workspaces` | `/agency/travel-workspaces` |
 | `/admin/travel-request-workspaces` | `/platform/travel-request-workspaces` |
 | `/agent/travel-requests` | `/agency/travel-requests` |
+| `/admin/passenger-workspaces` | `/platform/passenger-workspaces` |
+| `/agent/passenger-workspaces` | `/agency/passenger-workspaces` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

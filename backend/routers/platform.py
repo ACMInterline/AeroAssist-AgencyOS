@@ -215,6 +215,7 @@ async def summary(
             "feature_bundle_rollout_summary_packs": await db.collection("feature_bundle_rollout_summary_packs").count(),
             "operational_travel_workspaces": await db.collection("operational_travel_workspaces").count(),
             "travel_request_workspaces": await db.collection("travel_request_workspaces").count(),
+            "passenger_workspaces": await db.collection("passenger_workspaces").count(),
             "rollout_dashboard_views": await db.collection("rollout_dashboard_views").count(),
             "rollout_dashboard_snapshots": await db.collection("rollout_dashboard_snapshots").count(),
             "capability_catalog": await db.collection("capability_catalog").count(),

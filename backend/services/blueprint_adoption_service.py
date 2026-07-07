@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_1_travel_request_workspace_foundation"
+PHASE_LABEL = "phase_41_2_passenger_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -182,6 +182,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "TravelRequestWorkspace, TravelRequestWorkspaceType, TravelRequestWorkspaceStatus, TravelRequestWorkspacePriority, TravelRequestWorkspaceService, /api/platform/travel-request-workspaces, /api/agencies/{agency_id}/travel-request-workspaces, /platform/travel-request-workspaces, /agency/travel-requests",
         "status": "foundation adopted",
         "action": "Record metadata-only agency travel request workspace records and read-only agency visibility without booking execution, ticket issuance, live GDS/NDC connectivity, payment processing, email/SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, automatic trip creation, automatic offer creation, or automation.",
+    },
+    {
+        "category": "Passenger Workspaces",
+        "concept": "Passenger workspace metadata",
+        "supplementary_concept": "agency passenger workspace, operational workspace link, passenger identity, travel documents, loyalty memberships, known traveler numbers, emergency contact, mobility, medical, dietary, assistance, baggage, seating, language, contact, linked requests, trips, offers, bookings, tickets, documents, internal notes",
+        "current_equivalent": "PassengerWorkspace, PassengerWorkspaceStatus, PassengerWorkspaceService, /api/platform/passenger-workspaces, /api/agencies/{agency_id}/passenger-workspaces, /platform/passenger-workspaces, /agency/passenger-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency passenger workspace records and read-only agency visibility without booking execution, ticket issuance, GDS/NDC connectivity, payment processing, supplier integrations, AI, email/SMS sending, background workers, external APIs, automatic profile matching, automatic document validation, airline communication, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -518,6 +526,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/travel-workspaces", "agencyos": "/agency/travel-workspaces"},
         {"supplementary": "/admin/travel-request-workspaces", "agencyos": "/platform/travel-request-workspaces"},
         {"supplementary": "/agent/travel-requests", "agencyos": "/agency/travel-requests"},
+        {"supplementary": "/admin/passenger-workspaces", "agencyos": "/platform/passenger-workspaces"},
+        {"supplementary": "/agent/passenger-workspaces", "agencyos": "/agency/passenger-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

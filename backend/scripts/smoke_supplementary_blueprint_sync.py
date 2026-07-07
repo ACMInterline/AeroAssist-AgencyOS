@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_41_1_travel_request_workspace_foundation"
+EXPECTED_PHASE = "phase_41_2_passenger_workspace_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -34,6 +34,7 @@ REQUIRED_CATEGORIES = {
     "Feature Bundle Rollout Summary Packs",
     "Operational Travel Workspaces",
     "Travel Request Workspaces",
+    "Passenger Workspaces",
     "Feature Bundle Rollout Readiness",
     "Feature Bundle Rollout Plans",
     "Feature Bundle Rollout Approvals",
