@@ -8,7 +8,7 @@ from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_operational_travel_workspaces, agency_passenger_workspaces, agency_travel_request_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_travel_request_workspaces
+from routers import agency_flight_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_travel_request_workspaces, platform_flight_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_travel_request_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -32,6 +32,7 @@ from services.feature_bundle_rollout_summary_pack_service import PACK_AUDIENCES,
 from services.feature_bundle_rollout_timeline_service import TIMELINE_EVENT_TYPES
 from services.operational_travel_workspace_service import WORKSPACE_PRIORITIES, WORKSPACE_STATUSES, WORKSPACE_TYPES
 from services.passenger_workspace_service import PASSENGER_STATUSES
+from services.flight_workspace_service import FLIGHT_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
@@ -44,7 +45,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.2 passenger workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 41.3 flight workspace foundation.",
 )
 
 app.add_middleware(
@@ -538,6 +539,16 @@ async def readiness() -> dict:
     }
     passenger_workspace_nationality_count = len({item.get("nationality") for item in passenger_workspace_records if item.get("nationality")})
     passenger_workspace_citizenship_count = len({item.get("citizenship") for item in passenger_workspace_records if item.get("citizenship")})
+    flight_workspace_records = await database.collection("flight_workspaces").find_many()
+    flight_workspace_count = len(flight_workspace_records)
+    flight_workspace_status_counts = {
+        flight_status: len([item for item in flight_workspace_records if item.get("flight_status") == flight_status])
+        for flight_status in FLIGHT_STATUSES
+    }
+    flight_workspace_airline_count = len({item.get("airline_code") for item in flight_workspace_records if item.get("airline_code")})
+    flight_workspace_departure_airport_count = len({item.get("departure_airport") for item in flight_workspace_records if item.get("departure_airport")})
+    flight_workspace_arrival_airport_count = len({item.get("arrival_airport") for item in flight_workspace_records if item.get("arrival_airport")})
+    flight_workspace_cabin_count = len({item.get("cabin_class") for item in flight_workspace_records if item.get("cabin_class")})
     rollout_dashboard_view_count = await database.collection("rollout_dashboard_views").count()
     rollout_dashboard_snapshot_count = await database.collection("rollout_dashboard_snapshots").count()
     capability_catalog_count = await database.collection("capability_catalog").count()
@@ -2359,6 +2370,78 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 41.2 stores passenger workspace metadata only. It does not execute bookings, issue tickets, connect to GDS or NDC, process payments, integrate suppliers, use AI, send email or SMS, run background workers, call external APIs, automatically match profiles, automatically validate documents, communicate with airlines, or automate passenger operations.",
         },
+        "flight_workspace_foundation": {
+            "flight_workspaces_enabled": True,
+            "flight_workspace_metadata_enabled": True,
+            "platform_flight_workspace_metadata_crud_enabled": True,
+            "agency_flight_workspace_read_only_enabled": True,
+            "flight_workspace_filter_by_status_enabled": True,
+            "flight_workspace_filter_by_airline_enabled": True,
+            "flight_workspace_filter_by_departure_airport_enabled": True,
+            "flight_workspace_filter_by_arrival_airport_enabled": True,
+            "flight_workspace_filter_by_departure_date_enabled": True,
+            "flight_workspace_filter_by_cabin_enabled": True,
+            "flight_workspace_filter_by_booking_class_enabled": True,
+            "flight_workspace_filter_by_operational_workspace_enabled": True,
+            "flight_reference_metadata_enabled": True,
+            "flight_type_metadata_enabled": True,
+            "travel_direction_metadata_enabled": True,
+            "airline_metadata_enabled": True,
+            "marketing_carrier_metadata_enabled": True,
+            "operating_carrier_metadata_enabled": True,
+            "flight_number_metadata_enabled": True,
+            "departure_airport_metadata_enabled": True,
+            "arrival_airport_metadata_enabled": True,
+            "terminal_metadata_enabled": True,
+            "schedule_metadata_enabled": True,
+            "aircraft_metadata_enabled": True,
+            "cabin_class_metadata_enabled": True,
+            "booking_class_metadata_enabled": True,
+            "fare_family_metadata_enabled": True,
+            "baggage_summary_metadata_enabled": True,
+            "connection_summary_metadata_enabled": True,
+            "stopover_summary_metadata_enabled": True,
+            "elapsed_travel_time_metadata_enabled": True,
+            "operating_days_metadata_enabled": True,
+            "passenger_link_metadata_enabled": True,
+            "linked_request_metadata_enabled": True,
+            "linked_trip_metadata_enabled": True,
+            "linked_offer_metadata_enabled": True,
+            "linked_booking_metadata_enabled": True,
+            "linked_ticket_metadata_enabled": True,
+            "linked_document_metadata_enabled": True,
+            "operational_notes_metadata_enabled": True,
+            "read_only_ui_enabled": True,
+            "metadata_only": True,
+            "flight_workspace_metadata_only": True,
+            "booking_execution_disabled": True,
+            "live_flight_search_disabled": True,
+            "flight_search_disabled": True,
+            "gds_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "airline_apis_disabled": True,
+            "airline_api_calls_disabled": True,
+            "payment_disabled": True,
+            "payment_processing_disabled": True,
+            "ticket_issuance_disabled": True,
+            "schedule_synchronization_disabled": True,
+            "external_api_calls_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_route_generation_disabled": True,
+            "flight_validation_disabled": True,
+            "airline_lookups_disabled": True,
+            "live_schedule_updates_disabled": True,
+            "automation_disabled": True,
+            "flight_workspace_count": flight_workspace_count,
+            "flight_workspace_status_counts": flight_workspace_status_counts,
+            "flight_workspace_airline_count": flight_workspace_airline_count,
+            "flight_workspace_departure_airport_count": flight_workspace_departure_airport_count,
+            "flight_workspace_arrival_airport_count": flight_workspace_arrival_airport_count,
+            "flight_workspace_cabin_count": flight_workspace_cabin_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 41.3 stores flight workspace metadata only. It does not execute bookings, search live flights, connect to GDS or NDC, call airline APIs, process payments, issue tickets, synchronize schedules, call external APIs, use AI, run background workers, automatically generate routes, validate flights, look up airlines, update live schedules, or automate flight operations.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -2535,6 +2618,7 @@ app.include_router(platform_feature_bundle_rollout_summary_packs.router)
 app.include_router(platform_operational_travel_workspaces.router)
 app.include_router(platform_travel_request_workspaces.router)
 app.include_router(platform_passenger_workspaces.router)
+app.include_router(platform_flight_workspaces.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -2594,6 +2678,7 @@ app.include_router(agency_feature_bundle_rollout_summary_packs.router)
 app.include_router(agency_operational_travel_workspaces.router)
 app.include_router(agency_travel_request_workspaces.router)
 app.include_router(agency_passenger_workspaces.router)
+app.include_router(agency_flight_workspaces.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

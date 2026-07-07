@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_2_passenger_workspace_foundation"
+PHASE_LABEL = "phase_41_3_flight_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -190,6 +190,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "PassengerWorkspace, PassengerWorkspaceStatus, PassengerWorkspaceService, /api/platform/passenger-workspaces, /api/agencies/{agency_id}/passenger-workspaces, /platform/passenger-workspaces, /agency/passenger-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency passenger workspace records and read-only agency visibility without booking execution, ticket issuance, GDS/NDC connectivity, payment processing, supplier integrations, AI, email/SMS sending, background workers, external APIs, automatic profile matching, automatic document validation, airline communication, or automation.",
+    },
+    {
+        "category": "Flight Workspaces",
+        "concept": "Flight workspace metadata",
+        "supplementary_concept": "agency flight workspace, operational workspace link, airline, carrier, flight number, airports, terminals, schedule, aircraft, cabin, booking class, fare family, baggage, connection, stopover, passengers, linked requests, trips, offers, bookings, tickets, documents, operational notes",
+        "current_equivalent": "FlightWorkspace, FlightWorkspaceStatus, FlightWorkspaceService, /api/platform/flight-workspaces, /api/agencies/{agency_id}/flight-workspaces, /platform/flight-workspaces, /agency/flight-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency flight workspace records and read-only agency visibility without booking execution, live flight search, GDS/NDC connectivity, airline APIs, payment, ticket issuance, schedule synchronization, external APIs, AI, background workers, automatic route generation, flight validation, airline lookups, live schedule updates, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -528,6 +536,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/travel-requests", "agencyos": "/agency/travel-requests"},
         {"supplementary": "/admin/passenger-workspaces", "agencyos": "/platform/passenger-workspaces"},
         {"supplementary": "/agent/passenger-workspaces", "agencyos": "/agency/passenger-workspaces"},
+        {"supplementary": "/admin/flight-workspaces", "agencyos": "/platform/flight-workspaces"},
+        {"supplementary": "/agent/flight-workspaces", "agencyos": "/agency/flight-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

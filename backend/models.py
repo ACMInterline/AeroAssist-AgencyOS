@@ -12218,6 +12218,162 @@ class PassengerWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FlightWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    SCHEDULE_REVIEW = "schedule_review"
+    READY = "ready"
+    FLOWN = "flown"
+    ARCHIVED = "archived"
+
+
+class FlightWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    flight_reference: str
+    flight_status: FlightWorkspaceStatus = FlightWorkspaceStatus.ACTIVE
+    flight_type: Optional[str] = None
+    travel_direction: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    flight_number: Optional[str] = None
+    operating_flight_number: Optional[str] = None
+    departure_airport: Optional[str] = None
+    arrival_airport: Optional[str] = None
+    departure_terminal: Optional[str] = None
+    arrival_terminal: Optional[str] = None
+    departure_datetime: Optional[datetime] = None
+    arrival_datetime: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_family: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    connection_summary: Optional[str] = None
+    stopover_summary: Optional[str] = None
+    elapsed_travel_time: Optional[str] = None
+    operating_days: List[str] = Field(default_factory=list)
+    passenger_ids: List[str] = Field(default_factory=list)
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_offer_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    flight_workspace_metadata_only: bool = True
+    booking_execution_disabled: bool = True
+    live_flight_search_disabled: bool = True
+    flight_search_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    payment_disabled: bool = True
+    payment_processing_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    schedule_synchronization_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_route_generation_disabled: bool = True
+    flight_validation_disabled: bool = True
+    airline_lookups_disabled: bool = True
+    live_schedule_updates_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FlightWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    flight_reference: Optional[str] = None
+    flight_status: FlightWorkspaceStatus = FlightWorkspaceStatus.ACTIVE
+    flight_type: Optional[str] = None
+    travel_direction: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    flight_number: Optional[str] = None
+    operating_flight_number: Optional[str] = None
+    departure_airport: Optional[str] = None
+    arrival_airport: Optional[str] = None
+    departure_terminal: Optional[str] = None
+    arrival_terminal: Optional[str] = None
+    departure_datetime: Optional[datetime] = None
+    arrival_datetime: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_family: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    connection_summary: Optional[str] = None
+    stopover_summary: Optional[str] = None
+    elapsed_travel_time: Optional[str] = None
+    operating_days: List[str] = Field(default_factory=list)
+    passenger_ids: List[str] = Field(default_factory=list)
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_offer_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FlightWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    flight_reference: Optional[str] = None
+    flight_status: Optional[FlightWorkspaceStatus] = None
+    flight_type: Optional[str] = None
+    travel_direction: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    flight_number: Optional[str] = None
+    operating_flight_number: Optional[str] = None
+    departure_airport: Optional[str] = None
+    arrival_airport: Optional[str] = None
+    departure_terminal: Optional[str] = None
+    arrival_terminal: Optional[str] = None
+    departure_datetime: Optional[datetime] = None
+    arrival_datetime: Optional[datetime] = None
+    aircraft_type: Optional[str] = None
+    cabin_class: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_family: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    connection_summary: Optional[str] = None
+    stopover_summary: Optional[str] = None
+    elapsed_travel_time: Optional[str] = None
+    operating_days: Optional[List[str]] = None
+    passenger_ids: Optional[List[str]] = None
+    linked_request_ids: Optional[List[str]] = None
+    linked_trip_ids: Optional[List[str]] = None
+    linked_offer_ids: Optional[List[str]] = None
+    linked_booking_ids: Optional[List[str]] = None
+    linked_ticket_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
