@@ -15,7 +15,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_40_11_feature_bundle_rollout_change_request_foundation"
+EXPECTED_PHASE = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 RISK_IMPACTS = {"low", "medium", "high", "critical"}
 RISK_LIKELIHOODS = {"rare", "unlikely", "possible", "likely", "almost_certain"}

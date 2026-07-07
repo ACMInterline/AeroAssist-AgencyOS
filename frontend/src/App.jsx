@@ -11,6 +11,7 @@ import RolloutDecisionsPage from "./pages/agency/RolloutDecisionsPage"
 import RolloutIssuesPage from "./pages/agency/RolloutIssuesPage"
 import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
 import RolloutRisksPage from "./pages/agency/RolloutRisksPage"
+import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
@@ -109,6 +110,7 @@ import PlatformFeatureBundleRolloutIssuesPage from "./pages/platform/FeatureBund
 import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
 import PlatformFeatureBundleRolloutReadinessPage from "./pages/platform/FeatureBundleRolloutReadinessPage"
 import PlatformFeatureBundleRolloutRisksPage from "./pages/platform/FeatureBundleRolloutRisksPage"
+import PlatformFeatureBundleRolloutRollbackPlansPage from "./pages/platform/FeatureBundleRolloutRollbackPlansPage"
 import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
@@ -173,6 +175,7 @@ const routes = {
   "/platform/feature-bundle-rollout-decisions": PlatformFeatureBundleRolloutDecisionsPage,
   "/platform/feature-bundle-rollout-issues": PlatformFeatureBundleRolloutIssuesPage,
   "/platform/feature-bundle-rollout-risks": PlatformFeatureBundleRolloutRisksPage,
+  "/platform/feature-bundle-rollout-rollback-plans": PlatformFeatureBundleRolloutRollbackPlansPage,
   "/platform/feature-bundle-rollout-schedule": PlatformFeatureBundleRolloutSchedulePage,
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
@@ -219,6 +222,7 @@ const routes = {
   "/agency/rollout-decisions": RolloutDecisionsPage,
   "/agency/rollout-issues": RolloutIssuesPage,
   "/agency/rollout-risks": RolloutRisksPage,
+  "/agency/rollout-rollback-plans": RolloutRollbackPlansPage,
   "/agency/rollout-schedule": RolloutSchedulePage,
   "/agency/rollout-timeline": RolloutTimelinePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,

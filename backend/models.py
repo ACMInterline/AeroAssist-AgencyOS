@@ -11514,6 +11514,148 @@ class FeatureBundleRolloutChangeRequestUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class FeatureBundleRolloutRollbackTrigger(str, Enum):
+    MANUAL_REVIEW = "manual_review"
+    ISSUE_DETECTED = "issue_detected"
+    RISK_THRESHOLD = "risk_threshold"
+    DEPENDENCY_UNREADY = "dependency_unready"
+    AGENCY_REQUEST = "agency_request"
+    SCHEDULE_CONFLICT = "schedule_conflict"
+    OPERATIONAL_CONCERN = "operational_concern"
+    DOCUMENTATION_GAP = "documentation_gap"
+    FUTURE_RUNTIME_SIGNAL = "future_runtime_signal"
+
+
+class FeatureBundleRolloutRollbackScope(str, Enum):
+    BUNDLE = "bundle"
+    FEATURE_FLAG = "feature_flag"
+    AGENCY = "agency"
+    DEPENDENCY = "dependency"
+    SCHEDULE = "schedule"
+    READINESS = "readiness"
+    APPROVAL = "approval"
+    OPERATIONAL = "operational"
+    DOCUMENTATION = "documentation"
+
+
+class FeatureBundleRolloutRollbackStatus(str, Enum):
+    DRAFT = "draft"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    READY = "ready"
+    DEFERRED = "deferred"
+    SUPERSEDED = "superseded"
+    ARCHIVED = "archived"
+
+
+class FeatureBundleRolloutRollbackPriority(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class FeatureBundleRolloutRollbackPlan(BaseDocument):
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    rollback_title: str
+    rollback_summary: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_trigger: FeatureBundleRolloutRollbackTrigger = FeatureBundleRolloutRollbackTrigger.MANUAL_REVIEW
+    rollback_scope: FeatureBundleRolloutRollbackScope = FeatureBundleRolloutRollbackScope.BUNDLE
+    rollback_status: FeatureBundleRolloutRollbackStatus = FeatureBundleRolloutRollbackStatus.DRAFT
+    rollback_owner: Optional[str] = None
+    rollback_priority: FeatureBundleRolloutRollbackPriority = FeatureBundleRolloutRollbackPriority.MEDIUM
+    affected_bundle_ids: List[str] = Field(default_factory=list)
+    affected_feature_flag_ids: List[str] = Field(default_factory=list)
+    related_change_request_ids: List[str] = Field(default_factory=list)
+    related_decision_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    rollback_steps: List[str] = Field(default_factory=list)
+    validation_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    rollback_plan_metadata_only: bool = True
+    rollout_execution_disabled: bool = True
+    rollback_execution_disabled: bool = True
+    deployment_automation_disabled: bool = True
+    feature_activation_disabled: bool = True
+    feature_deactivation_disabled: bool = True
+    feature_bundle_activation_disabled: bool = True
+    feature_bundle_deactivation_disabled: bool = True
+    entitlement_enforcement_disabled: bool = True
+    billing_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    ai_execution_disabled: bool = True
+    background_workers_disabled: bool = True
+    schedulers_disabled: bool = True
+    notification_sending_disabled: bool = True
+    email_sending_disabled: bool = True
+    webhook_execution_disabled: bool = True
+    publishing_disabled: bool = True
+    runtime_switching_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class FeatureBundleRolloutRollbackPlanCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    rollout_plan_id: str
+    rollout_phase: Optional[str] = None
+    rollback_title: str
+    rollback_summary: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_trigger: FeatureBundleRolloutRollbackTrigger = FeatureBundleRolloutRollbackTrigger.MANUAL_REVIEW
+    rollback_scope: FeatureBundleRolloutRollbackScope = FeatureBundleRolloutRollbackScope.BUNDLE
+    rollback_status: FeatureBundleRolloutRollbackStatus = FeatureBundleRolloutRollbackStatus.DRAFT
+    rollback_owner: Optional[str] = None
+    rollback_priority: FeatureBundleRolloutRollbackPriority = FeatureBundleRolloutRollbackPriority.MEDIUM
+    affected_bundle_ids: List[str] = Field(default_factory=list)
+    affected_feature_flag_ids: List[str] = Field(default_factory=list)
+    related_change_request_ids: List[str] = Field(default_factory=list)
+    related_decision_ids: List[str] = Field(default_factory=list)
+    related_issue_ids: List[str] = Field(default_factory=list)
+    related_risk_ids: List[str] = Field(default_factory=list)
+    related_dependency_ids: List[str] = Field(default_factory=list)
+    rollback_steps: List[str] = Field(default_factory=list)
+    validation_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FeatureBundleRolloutRollbackPlanUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    rollout_plan_id: Optional[str] = None
+    rollout_phase: Optional[str] = None
+    rollback_title: Optional[str] = None
+    rollback_summary: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_trigger: Optional[FeatureBundleRolloutRollbackTrigger] = None
+    rollback_scope: Optional[FeatureBundleRolloutRollbackScope] = None
+    rollback_status: Optional[FeatureBundleRolloutRollbackStatus] = None
+    rollback_owner: Optional[str] = None
+    rollback_priority: Optional[FeatureBundleRolloutRollbackPriority] = None
+    affected_bundle_ids: Optional[List[str]] = None
+    affected_feature_flag_ids: Optional[List[str]] = None
+    related_change_request_ids: Optional[List[str]] = None
+    related_decision_ids: Optional[List[str]] = None
+    related_issue_ids: Optional[List[str]] = None
+    related_risk_ids: Optional[List[str]] = None
+    related_dependency_ids: Optional[List[str]] = None
+    rollback_steps: Optional[List[str]] = None
+    validation_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -5,13 +5,14 @@ from typing import Any
 
 from database import Database
 from models import (
-    FeatureBundleRolloutChangeRequest,
-    FeatureBundleRolloutChangeRequestCreate,
-    FeatureBundleRolloutChangeRequestUpdate,
+    FeatureBundleRolloutRollbackPlan,
+    FeatureBundleRolloutRollbackPlanCreate,
+    FeatureBundleRolloutRollbackPlanUpdate,
     new_id,
 )
 from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleService
 from services.feature_bundle_dependency_service import DEPENDENCY_COLLECTION
+from services.feature_bundle_rollout_change_request_service import CHANGE_REQUEST_COLLECTION
 from services.feature_bundle_rollout_decision_service import DECISION_COLLECTION
 from services.feature_bundle_rollout_issue_service import ISSUE_COLLECTION
 from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
@@ -20,64 +21,74 @@ from services.offer_decision_export_delivery_service import actor_from_user, pay
 
 PHASE_LABEL = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
 
-CHANGE_REQUEST_COLLECTION = "feature_bundle_rollout_change_requests"
+ROLLBACK_PLAN_COLLECTION = "feature_bundle_rollout_rollback_plans"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
 FEATURE_FLAG_COLLECTION = "agency_feature_flags"
-CHANGE_REQUEST_TYPES = ["scope", "schedule", "readiness", "approval", "dependency", "risk", "issue", "decision", "documentation", "operational"]
-CHANGE_REQUEST_PRIORITIES = ["low", "medium", "high", "urgent"]
-CHANGE_REQUEST_IMPACT_LEVELS = ["low", "medium", "high", "critical"]
-CHANGE_REQUEST_STATUSES = ["draft", "requested", "under_review", "approved", "rejected", "deferred", "superseded", "archived"]
+ROLLBACK_TRIGGERS = [
+    "manual_review",
+    "issue_detected",
+    "risk_threshold",
+    "dependency_unready",
+    "agency_request",
+    "schedule_conflict",
+    "operational_concern",
+    "documentation_gap",
+    "future_runtime_signal",
+]
+ROLLBACK_SCOPES = ["bundle", "feature_flag", "agency", "dependency", "schedule", "readiness", "approval", "operational", "documentation"]
+ROLLBACK_STATUSES = ["draft", "under_review", "approved", "rejected", "ready", "deferred", "superseded", "archived"]
+ROLLBACK_PRIORITIES = ["low", "medium", "high", "urgent"]
 
 
-class FeatureBundleRolloutChangeRequestService:
+class FeatureBundleRolloutRollbackPlanService:
     def __init__(self, db: Database) -> None:
         self.db = db
 
-    async def list_platform_change_requests(
+    async def list_platform_rollback_plans(
         self,
         *,
         rollout_plan_id: str | None = None,
         status: str | None = None,
         priority: str | None = None,
-        impact_level: str | None = None,
-        change_type: str | None = None,
+        scope: str | None = None,
+        owner: str | None = None,
         include_archived: bool = False,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
         if rollout_plan_id:
             filters["rollout_plan_id"] = rollout_plan_id
         if status:
-            filters["change_status"] = status
+            filters["rollback_status"] = status
         if priority:
-            filters["priority"] = priority
-        if impact_level:
-            filters["impact_level"] = impact_level
-        if change_type:
-            filters["change_type"] = change_type
-        change_requests = await self.db.collection(CHANGE_REQUEST_COLLECTION).find_many(filters or None)
+            filters["rollback_priority"] = priority
+        if scope:
+            filters["rollback_scope"] = scope
+        if owner:
+            filters["rollback_owner"] = owner
+        rollback_plans = await self.db.collection(ROLLBACK_PLAN_COLLECTION).find_many(filters or None)
         if not include_archived:
-            change_requests = [item for item in change_requests if not item.get("deleted_at")]
-        change_requests.sort(key=lambda item: item.get("requested_date") or item.get("created_at") or "", reverse=True)
-        return [await self._platform_projection(item) for item in change_requests]
+            rollback_plans = [item for item in rollback_plans if not item.get("deleted_at")]
+        rollback_plans.sort(key=lambda item: item.get("updated_at") or item.get("created_at") or "", reverse=True)
+        return [await self._platform_projection(item) for item in rollback_plans]
 
-    async def list_agency_change_requests(
+    async def list_agency_rollback_plans(
         self,
         agency_id: str,
         *,
         rollout_plan_id: str | None = None,
         status: str | None = None,
         priority: str | None = None,
-        impact_level: str | None = None,
-        change_type: str | None = None,
+        scope: str | None = None,
+        owner: str | None = None,
     ) -> list[dict[str, Any]]:
-        change_requests = await self.list_platform_change_requests(
+        rollback_plans = await self.list_platform_rollback_plans(
             rollout_plan_id=rollout_plan_id,
             status=status,
             priority=priority,
-            impact_level=impact_level,
-            change_type=change_type,
+            scope=scope,
+            owner=owner,
         )
-        return [self._agency_projection(item, agency_id) for item in change_requests if item.get("agency_id") == agency_id]
+        return [self._agency_projection(item, agency_id) for item in rollback_plans if item.get("agency_id") == agency_id]
 
     async def platform_response(
         self,
@@ -85,27 +96,27 @@ class FeatureBundleRolloutChangeRequestService:
         rollout_plan_id: str | None = None,
         status: str | None = None,
         priority: str | None = None,
-        impact_level: str | None = None,
-        change_type: str | None = None,
+        scope: str | None = None,
+        owner: str | None = None,
         include_archived: bool = False,
     ) -> dict[str, Any]:
-        items = await self.list_platform_change_requests(
+        items = await self.list_platform_rollback_plans(
             rollout_plan_id=rollout_plan_id,
             status=status,
             priority=priority,
-            impact_level=impact_level,
-            change_type=change_type,
+            scope=scope,
+            owner=owner,
             include_archived=include_archived,
         )
         return {
             "phase": PHASE_LABEL,
             "items": items,
-            "change_request_count": len(items),
+            "rollback_plan_count": len(items),
             "summary": self.summarize_counts(items),
             "filters": self.filter_metadata(),
             "read_only": False,
             "metadata_only": True,
-            "notice": "Feature bundle rollout change requests are metadata only. They do not execute rollouts, automate deployments, activate features, enforce entitlements, bill, call providers or external APIs, use AI, run workers or schedulers, notify users, send email, execute webhooks, publish, switch runtime behavior, or trigger automation.",
+            "notice": "Feature bundle rollout rollback plans are metadata only. They do not execute rollbacks, automate deployments, activate or deactivate features, enforce entitlements, bill, call providers or external APIs, use AI, run workers or schedulers, notify users, send email, execute webhooks, publish, switch runtime behavior, or trigger automation.",
             **self.safety_flags(),
         }
 
@@ -116,231 +127,239 @@ class FeatureBundleRolloutChangeRequestService:
         rollout_plan_id: str | None = None,
         status: str | None = None,
         priority: str | None = None,
-        impact_level: str | None = None,
-        change_type: str | None = None,
+        scope: str | None = None,
+        owner: str | None = None,
     ) -> dict[str, Any]:
-        items = await self.list_agency_change_requests(
+        items = await self.list_agency_rollback_plans(
             agency_id,
             rollout_plan_id=rollout_plan_id,
             status=status,
             priority=priority,
-            impact_level=impact_level,
-            change_type=change_type,
+            scope=scope,
+            owner=owner,
         )
         return {
             "phase": PHASE_LABEL,
             "agency_id": agency_id,
             "items": items,
-            "change_request_count": len(items),
+            "rollback_plan_count": len(items),
             "summary": self.summarize_counts(items),
             "filters": self.filter_metadata(),
             "read_only": True,
             "metadata_only": True,
-            "notice": "Feature bundle rollout change request metadata is read-only for this agency. It does not execute rollouts, activate features, enforce access, bill, call providers or external APIs, use AI, notify users, send email, publish, switch runtime behavior, or automate actions.",
+            "notice": "Feature bundle rollout rollback plan metadata is read-only for this agency. It does not execute rollbacks, activate or deactivate features, enforce access, bill, call providers or external APIs, use AI, notify users, send email, publish, switch runtime behavior, or automate actions.",
             **self.safety_flags(),
         }
 
     async def platform_summary(self) -> dict[str, Any]:
-        items = await self.list_platform_change_requests(include_archived=True)
+        items = await self.list_platform_rollback_plans(include_archived=True)
         return {
             "phase": PHASE_LABEL,
             "summary": self.summarize_counts(items),
-            "change_request_count": len(items),
+            "rollback_plan_count": len(items),
             "metadata_only": True,
             **self.safety_flags(),
         }
 
     async def agency_summary(self, agency_id: str) -> dict[str, Any]:
-        items = await self.list_agency_change_requests(agency_id)
+        items = await self.list_agency_rollback_plans(agency_id)
         return {
             "phase": PHASE_LABEL,
             "agency_id": agency_id,
             "summary": self.summarize_counts(items),
-            "change_request_count": len(items),
+            "rollback_plan_count": len(items),
             "read_only": True,
             "metadata_only": True,
             **self.safety_flags(),
         }
 
-    async def get_platform_change_request(self, change_request_id: str) -> dict[str, Any]:
-        change_request = await self._require_change_request(change_request_id)
-        return await self._platform_projection(change_request)
+    async def get_platform_rollback_plan(self, rollback_plan_id: str) -> dict[str, Any]:
+        rollback_plan = await self._require_rollback_plan(rollback_plan_id)
+        return await self._platform_projection(rollback_plan)
 
-    async def get_agency_change_request(self, agency_id: str, change_request_id: str) -> dict[str, Any]:
-        projected = await self.get_platform_change_request(change_request_id)
+    async def get_agency_rollback_plan(self, agency_id: str, rollback_plan_id: str) -> dict[str, Any]:
+        projected = await self.get_platform_rollback_plan(rollback_plan_id)
         if projected.get("agency_id") != agency_id:
-            raise ValueError("Feature bundle rollout change request metadata was not found for this agency.")
+            raise ValueError("Feature bundle rollout rollback plan metadata was not found for this agency.")
         return self._agency_projection(projected, agency_id)
 
-    async def create_change_request(
+    async def create_rollback_plan(
         self,
-        payload: FeatureBundleRolloutChangeRequestCreate | dict[str, Any],
+        payload: FeatureBundleRolloutRollbackPlanCreate | dict[str, Any],
         user: dict | None = None,
     ) -> dict[str, Any]:
         data = payload_dict(payload)
-        self._validate_dimension("change_type", data.get("change_type") or "operational", CHANGE_REQUEST_TYPES)
-        self._validate_dimension("priority", data.get("priority") or "medium", CHANGE_REQUEST_PRIORITIES)
-        self._validate_dimension("impact_level", data.get("impact_level") or "medium", CHANGE_REQUEST_IMPACT_LEVELS)
-        self._validate_dimension("status", data.get("change_status") or "draft", CHANGE_REQUEST_STATUSES)
-        change_request = FeatureBundleRolloutChangeRequest(
+        self._validate_dimension("trigger", data.get("rollback_trigger") or "manual_review", ROLLBACK_TRIGGERS)
+        self._validate_dimension("scope", data.get("rollback_scope") or "bundle", ROLLBACK_SCOPES)
+        self._validate_dimension("status", data.get("rollback_status") or "draft", ROLLBACK_STATUSES)
+        self._validate_dimension("priority", data.get("rollback_priority") or "medium", ROLLBACK_PRIORITIES)
+        rollback_plan = FeatureBundleRolloutRollbackPlan(
             id=data.get("id") or new_id(),
             rollout_plan_id=data["rollout_plan_id"],
             rollout_phase=data.get("rollout_phase"),
-            change_title=data["change_title"],
-            change_summary=data.get("change_summary"),
-            change_reason=data.get("change_reason"),
-            requested_by=data.get("requested_by") or actor_from_user(user),
-            requested_date=data.get("requested_date") or self._now(),
-            change_type=data.get("change_type") or "operational",
-            priority=data.get("priority") or "medium",
-            impact_level=data.get("impact_level") or "medium",
-            change_status=data.get("change_status") or "draft",
+            rollback_title=data["rollback_title"],
+            rollback_summary=data.get("rollback_summary"),
+            rollback_reason=data.get("rollback_reason"),
+            rollback_trigger=data.get("rollback_trigger") or "manual_review",
+            rollback_scope=data.get("rollback_scope") or "bundle",
+            rollback_status=data.get("rollback_status") or "draft",
+            rollback_owner=data.get("rollback_owner") or actor_from_user(user),
+            rollback_priority=data.get("rollback_priority") or "medium",
             affected_bundle_ids=data.get("affected_bundle_ids") or [],
             affected_feature_flag_ids=data.get("affected_feature_flag_ids") or [],
+            related_change_request_ids=data.get("related_change_request_ids") or [],
             related_decision_ids=data.get("related_decision_ids") or [],
             related_issue_ids=data.get("related_issue_ids") or [],
             related_risk_ids=data.get("related_risk_ids") or [],
             related_dependency_ids=data.get("related_dependency_ids") or [],
-            review_notes=data.get("review_notes"),
+            rollback_steps=data.get("rollback_steps") or [],
+            validation_notes=data.get("validation_notes"),
             created_by=actor_from_user(user),
             updated_by=actor_from_user(user),
             metadata=data.get("metadata") or {},
         )
-        stored = await self.db.collection(CHANGE_REQUEST_COLLECTION).insert_one(change_request.model_dump(mode="json"))
+        stored = await self.db.collection(ROLLBACK_PLAN_COLLECTION).insert_one(rollback_plan.model_dump(mode="json"))
         return {
             "phase": PHASE_LABEL,
-            "change_request": await self._platform_projection(stored),
+            "rollback_plan": await self._platform_projection(stored),
             "metadata_only": True,
-            "notice": "Feature bundle rollout change request metadata was saved only. No rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integration, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switch, or automation was triggered.",
+            "notice": "Feature bundle rollout rollback plan metadata was saved only. No rollback execution, deployment automation, feature activation or deactivation, entitlement enforcement, billing, provider integration, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switch, or automation was triggered.",
             **self.safety_flags(),
         }
 
-    async def update_change_request(
+    async def update_rollback_plan(
         self,
-        change_request_id: str,
-        payload: FeatureBundleRolloutChangeRequestUpdate | dict[str, Any],
+        rollback_plan_id: str,
+        payload: FeatureBundleRolloutRollbackPlanUpdate | dict[str, Any],
         user: dict | None = None,
     ) -> dict[str, Any]:
-        existing = await self._require_change_request(change_request_id)
+        existing = await self._require_rollback_plan(rollback_plan_id)
         updates = {key: value for key, value in payload_dict(payload).items() if value is not None}
-        if "change_type" in updates:
-            self._validate_dimension("change_type", updates["change_type"], CHANGE_REQUEST_TYPES)
-        if "priority" in updates:
-            self._validate_dimension("priority", updates["priority"], CHANGE_REQUEST_PRIORITIES)
-        if "impact_level" in updates:
-            self._validate_dimension("impact_level", updates["impact_level"], CHANGE_REQUEST_IMPACT_LEVELS)
-        if "change_status" in updates:
-            self._validate_dimension("status", updates["change_status"], CHANGE_REQUEST_STATUSES)
+        if "rollback_trigger" in updates:
+            self._validate_dimension("trigger", updates["rollback_trigger"], ROLLBACK_TRIGGERS)
+        if "rollback_scope" in updates:
+            self._validate_dimension("scope", updates["rollback_scope"], ROLLBACK_SCOPES)
+        if "rollback_status" in updates:
+            self._validate_dimension("status", updates["rollback_status"], ROLLBACK_STATUSES)
+        if "rollback_priority" in updates:
+            self._validate_dimension("priority", updates["rollback_priority"], ROLLBACK_PRIORITIES)
         updates.update(
             {
                 "updated_at": self._now(),
                 "updated_by": actor_from_user(user),
                 "metadata_only": True,
-                "change_request_metadata_only": True,
+                "rollback_plan_metadata_only": True,
             }
         )
-        updated = await self.db.collection(CHANGE_REQUEST_COLLECTION).update_one({"id": existing["id"]}, updates)
+        updated = await self.db.collection(ROLLBACK_PLAN_COLLECTION).update_one({"id": existing["id"]}, updates)
         stored = updated or {**existing, **updates}
         return {
             "phase": PHASE_LABEL,
-            "change_request": await self._platform_projection(stored),
+            "rollback_plan": await self._platform_projection(stored),
             "metadata_only": True,
-            "notice": "Feature bundle rollout change request metadata was updated only. No rollout execution, deployment automation, activation, enforcement, billing, provider integration, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switching, or automation ran.",
+            "notice": "Feature bundle rollout rollback plan metadata was updated only. No rollback execution, deployment automation, activation, deactivation, enforcement, billing, provider integration, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switching, or automation ran.",
             **self.safety_flags(),
         }
 
-    async def delete_change_request(self, change_request_id: str, user: dict | None = None) -> dict[str, Any]:
-        existing = await self._require_change_request(change_request_id)
+    async def delete_rollback_plan(self, rollback_plan_id: str, user: dict | None = None) -> dict[str, Any]:
+        existing = await self._require_rollback_plan(rollback_plan_id)
         updates = {
-            "change_status": "archived",
+            "rollback_status": "archived",
             "deleted_at": self._now(),
             "deleted_by": actor_from_user(user),
             "updated_by": actor_from_user(user),
             "metadata_only": True,
-            "change_request_metadata_only": True,
-            "change_request_deleted_metadata_only": True,
+            "rollback_plan_metadata_only": True,
+            "rollback_plan_deleted_metadata_only": True,
         }
-        updated = await self.db.collection(CHANGE_REQUEST_COLLECTION).update_one({"id": existing["id"]}, updates)
+        updated = await self.db.collection(ROLLBACK_PLAN_COLLECTION).update_one({"id": existing["id"]}, updates)
         stored = updated or {**existing, **updates}
         return {
             "phase": PHASE_LABEL,
-            "change_request": await self._platform_projection(stored),
+            "rollback_plan": await self._platform_projection(stored),
             "deleted": True,
             "metadata_only": True,
-            "notice": "Feature bundle rollout change request metadata was archived only. No rollout, deployment, feature activation, entitlement enforcement, billing, provider call, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switch, or automation ran.",
+            "notice": "Feature bundle rollout rollback plan metadata was archived only. No rollback, deployment, feature activation or deactivation, entitlement enforcement, billing, provider call, AI, external API, worker, scheduler, notification, email, webhook, publishing, runtime switch, or automation ran.",
             **self.safety_flags(),
         }
 
     def summarize_counts(self, items: list[dict[str, Any]]) -> dict[str, Any]:
-        by_status = {status: 0 for status in CHANGE_REQUEST_STATUSES}
-        by_priority = {priority: 0 for priority in CHANGE_REQUEST_PRIORITIES}
-        by_impact_level = {impact: 0 for impact in CHANGE_REQUEST_IMPACT_LEVELS}
-        by_change_type = {change_type: 0 for change_type in CHANGE_REQUEST_TYPES}
+        by_status = {status: 0 for status in ROLLBACK_STATUSES}
+        by_priority = {priority: 0 for priority in ROLLBACK_PRIORITIES}
+        by_scope = {scope: 0 for scope in ROLLBACK_SCOPES}
+        by_trigger = {trigger: 0 for trigger in ROLLBACK_TRIGGERS}
         rollout_ids: set[str] = set()
         affected_bundle_ids: set[str] = set()
         affected_feature_flag_ids: set[str] = set()
+        related_change_request_ids: set[str] = set()
         related_decision_ids: set[str] = set()
         related_issue_ids: set[str] = set()
         related_risk_ids: set[str] = set()
         related_dependency_ids: set[str] = set()
+        rollback_step_count = 0
         for item in items:
-            status = item.get("change_status") or "draft"
-            priority = item.get("priority") or "medium"
-            impact_level = item.get("impact_level") or "medium"
-            change_type = item.get("change_type") or "operational"
+            status = item.get("rollback_status") or "draft"
+            priority = item.get("rollback_priority") or "medium"
+            scope = item.get("rollback_scope") or "bundle"
+            trigger = item.get("rollback_trigger") or "manual_review"
             by_status[status] = by_status.get(status, 0) + 1
             by_priority[priority] = by_priority.get(priority, 0) + 1
-            by_impact_level[impact_level] = by_impact_level.get(impact_level, 0) + 1
-            by_change_type[change_type] = by_change_type.get(change_type, 0) + 1
+            by_scope[scope] = by_scope.get(scope, 0) + 1
+            by_trigger[trigger] = by_trigger.get(trigger, 0) + 1
             if item.get("rollout_plan_id"):
                 rollout_ids.add(item["rollout_plan_id"])
             affected_bundle_ids.update(item.get("affected_bundle_ids") or [])
             affected_feature_flag_ids.update(item.get("affected_feature_flag_ids") or [])
+            related_change_request_ids.update(item.get("related_change_request_ids") or [])
             related_decision_ids.update(item.get("related_decision_ids") or [])
             related_issue_ids.update(item.get("related_issue_ids") or [])
             related_risk_ids.update(item.get("related_risk_ids") or [])
             related_dependency_ids.update(item.get("related_dependency_ids") or [])
+            rollback_step_count += len(item.get("rollback_steps") or [])
         return {
             "total_count": len(items),
             "by_status": by_status,
             "by_priority": by_priority,
-            "by_impact_level": by_impact_level,
-            "by_change_type": by_change_type,
+            "by_scope": by_scope,
+            "by_trigger": by_trigger,
             "rollout_count": len(rollout_ids),
             "affected_bundle_count": len(affected_bundle_ids),
             "affected_feature_flag_count": len(affected_feature_flag_ids),
+            "related_change_request_count": len(related_change_request_ids),
             "related_decision_count": len(related_decision_ids),
             "related_issue_count": len(related_issue_ids),
             "related_risk_count": len(related_risk_ids),
             "related_dependency_count": len(related_dependency_ids),
+            "rollback_step_count": rollback_step_count,
             "archived_count": by_status.get("archived", 0),
             "metadata_only": True,
-            "execution_disabled": True,
+            "rollback_execution_disabled": True,
+            "feature_deactivation_disabled": True,
             "automation_disabled": True,
         }
 
     def filter_metadata(self) -> dict[str, Any]:
         return {
-            "change_types": CHANGE_REQUEST_TYPES,
-            "priorities": CHANGE_REQUEST_PRIORITIES,
-            "impact_levels": CHANGE_REQUEST_IMPACT_LEVELS,
-            "statuses": CHANGE_REQUEST_STATUSES,
+            "triggers": ROLLBACK_TRIGGERS,
+            "scopes": ROLLBACK_SCOPES,
+            "statuses": ROLLBACK_STATUSES,
+            "priorities": ROLLBACK_PRIORITIES,
             "supports_rollout_filter": True,
             "supports_status_filter": True,
             "supports_priority_filter": True,
-            "supports_impact_level_filter": True,
-            "supports_change_type_filter": True,
+            "supports_scope_filter": True,
+            "supports_owner_filter": True,
             "metadata_only": True,
         }
 
-    async def _require_change_request(self, change_request_id: str) -> dict[str, Any]:
-        change_request = await self.db.collection(CHANGE_REQUEST_COLLECTION).find_one({"id": change_request_id})
-        if not change_request:
-            raise ValueError("Feature bundle rollout change request metadata was not found.")
-        return change_request
+    async def _require_rollback_plan(self, rollback_plan_id: str) -> dict[str, Any]:
+        rollback_plan = await self.db.collection(ROLLBACK_PLAN_COLLECTION).find_one({"id": rollback_plan_id})
+        if not rollback_plan:
+            raise ValueError("Feature bundle rollout rollback plan metadata was not found.")
+        return rollback_plan
 
-    async def _platform_projection(self, change_request: dict[str, Any]) -> dict[str, Any]:
-        projected = dict(change_request)
+    async def _platform_projection(self, rollback_plan: dict[str, Any]) -> dict[str, Any]:
+        projected = dict(rollback_plan)
         projected["plan"] = await self._plan_context(projected.get("rollout_plan_id"))
         projected["plan_name"] = projected["plan"].get("plan_name")
         projected["agency_id"] = projected["plan"].get("agency_id")
@@ -350,13 +369,14 @@ class FeatureBundleRolloutChangeRequestService:
         projected["bundle_key"] = projected["plan"].get("bundle_key")
         projected["affected_bundles"] = [await self._bundle_context(bundle_id) for bundle_id in projected.get("affected_bundle_ids") or []]
         projected["affected_feature_flags"] = [await self._feature_flag_context(feature_flag_id, projected.get("agency_id")) for feature_flag_id in projected.get("affected_feature_flag_ids") or []]
+        projected["related_change_requests"] = [await self._change_request_context(change_request_id) for change_request_id in projected.get("related_change_request_ids") or []]
         projected["related_decisions"] = [await self._decision_context(decision_id) for decision_id in projected.get("related_decision_ids") or []]
         projected["related_dependencies"] = [await self._dependency_context(dependency_id) for dependency_id in projected.get("related_dependency_ids") or []]
         projected["related_risks"] = [await self._risk_context(risk_id) for risk_id in projected.get("related_risk_ids") or []]
         projected["related_issues"] = [await self._issue_context(issue_id) for issue_id in projected.get("related_issue_ids") or []]
         projected["read_only"] = False
         projected["metadata_only"] = True
-        projected["change_request_metadata_only"] = True
+        projected["rollback_plan_metadata_only"] = True
         projected.update(self.safety_flags())
         return projected
 
@@ -438,6 +458,21 @@ class FeatureBundleRolloutChangeRequestService:
             "metadata_only": True,
         }
 
+    async def _change_request_context(self, change_request_id: str | None) -> dict[str, Any]:
+        if not change_request_id:
+            return {"change_request_id": None, "title": None, "metadata_only": True}
+        change_request = await self.db.collection(CHANGE_REQUEST_COLLECTION).find_one({"id": change_request_id})
+        if not change_request:
+            return {"change_request_id": change_request_id, "title": change_request_id, "metadata_only": True}
+        return {
+            "change_request_id": change_request.get("id"),
+            "title": change_request.get("change_title"),
+            "status": change_request.get("change_status"),
+            "type": change_request.get("change_type"),
+            "priority": change_request.get("priority"),
+            "metadata_only": True,
+        }
+
     async def _decision_context(self, decision_id: str | None) -> dict[str, Any]:
         if not decision_id:
             return {"decision_id": None, "title": None, "metadata_only": True}
@@ -504,7 +539,7 @@ class FeatureBundleRolloutChangeRequestService:
 
     def _validate_dimension(self, label: str, value: str, allowed: list[str]) -> None:
         if value not in allowed:
-            raise ValueError(f"Unsupported feature bundle rollout change request {label}.")
+            raise ValueError(f"Unsupported feature bundle rollout rollback plan {label}.")
 
     def _now(self) -> datetime:
         return datetime.now(timezone.utc)
@@ -512,11 +547,14 @@ class FeatureBundleRolloutChangeRequestService:
     def safety_flags(self) -> dict[str, bool]:
         return {
             "metadata_only": True,
-            "change_request_metadata_only": True,
+            "rollback_plan_metadata_only": True,
             "rollout_execution_disabled": True,
+            "rollback_execution_disabled": True,
             "deployment_automation_disabled": True,
             "feature_activation_disabled": True,
+            "feature_deactivation_disabled": True,
             "feature_bundle_activation_disabled": True,
+            "feature_bundle_deactivation_disabled": True,
             "entitlement_enforcement_disabled": True,
             "billing_disabled": True,
             "provider_integrations_disabled": True,

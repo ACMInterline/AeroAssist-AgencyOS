@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_40_11_feature_bundle_rollout_change_request_foundation"
+PHASE_LABEL = "phase_40_12_feature_bundle_rollout_rollback_plan_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -150,6 +150,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FeatureBundleRolloutChangeRequest, FeatureBundleRolloutChangeRequestType, FeatureBundleRolloutChangeRequestPriority, FeatureBundleRolloutChangeRequestImpactLevel, FeatureBundleRolloutChangeRequestStatus, FeatureBundleRolloutChangeRequestService, /api/platform/feature-bundle-rollout-change-requests, /api/agencies/{agency_id}/feature-bundle-rollout-change-requests, /platform/feature-bundle-rollout-change-requests, /agency/rollout-change-requests",
         "status": "foundation adopted",
         "action": "Record informational rollout change request metadata with reasons, requesters, priorities, impact levels, statuses, affected records, and related rollout references without executing rollouts, automating deployments, activating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
+    },
+    {
+        "category": "Feature Bundle Rollout Rollback Plans",
+        "concept": "Feature bundle rollout rollback plan metadata",
+        "supplementary_concept": "rollout rollback plans, rollback triggers, rollback scopes, affected bundles, affected feature flags, related change requests, decisions, risks, issues, and dependencies",
+        "current_equivalent": "FeatureBundleRolloutRollbackPlan, FeatureBundleRolloutRollbackTrigger, FeatureBundleRolloutRollbackScope, FeatureBundleRolloutRollbackStatus, FeatureBundleRolloutRollbackPriority, FeatureBundleRolloutRollbackPlanService, /api/platform/feature-bundle-rollout-rollback-plans, /api/agencies/{agency_id}/feature-bundle-rollout-rollback-plans, /platform/feature-bundle-rollout-rollback-plans, /agency/rollout-rollback-plans",
+        "status": "foundation adopted",
+        "action": "Record informational rollback plan metadata with triggers, scopes, priorities, statuses, affected records, related rollout references, rollback steps, and validation notes without executing rollbacks, automating deployments, activating or deactivating features, enforcing entitlements, billing, calling providers or external APIs, using AI, notifying users, publishing, switching runtime behavior, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -478,6 +486,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-decisions", "agencyos": "/agency/rollout-decisions"},
         {"supplementary": "/admin/feature-bundle-rollout-change-requests", "agencyos": "/platform/feature-bundle-rollout-change-requests"},
         {"supplementary": "/agent/rollout-change-requests", "agencyos": "/agency/rollout-change-requests"},
+        {"supplementary": "/admin/feature-bundle-rollout-rollback-plans", "agencyos": "/platform/feature-bundle-rollout-rollback-plans"},
+        {"supplementary": "/agent/rollout-rollback-plans", "agencyos": "/agency/rollout-rollback-plans"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

@@ -102,6 +102,7 @@ The repository currently contains:
 - Phase 40.9: Feature bundle rollout issue log foundation.
 - Phase 40.10: Feature bundle rollout decision register foundation.
 - Phase 40.11: Feature bundle rollout change request foundation.
+- Phase 40.12: Feature bundle rollout rollback plan foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1694,6 +1695,23 @@ Implemented scope:
 Avoid adding:
 
 - Rollout execution, deployment automation, feature activation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 40.12: Feature Bundle Rollout Rollback Plan Foundation
+
+Implemented scope:
+
+- Added metadata-only `FeatureBundleRolloutRollbackPlan`, trigger, scope, status, and priority models.
+- Added `feature_bundle_rollout_rollback_plans` collection/index registration.
+- Added platform create/update/delete/read/list APIs and `/platform/feature-bundle-rollout-rollback-plans` for rollback plan metadata.
+- Added agency read-only APIs and `/agency/rollout-rollback-plans` scoped through rollout plan agency visibility.
+- Added filters by rollout, status, priority, scope, and owner plus affected bundle/feature flag and related change request/decision/risk/issue/dependency references.
+- Added rollback steps and validation notes as metadata-only fields.
+- Added readiness flags under `feature_bundle_rollout_rollback_plan_foundation`.
+- Added `docs/architecture/feature-bundle-rollout-rollback-plan-foundation.md`.
+
+Avoid adding:
+
+- Actual rollback execution, deployment automation, feature activation/deactivation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
