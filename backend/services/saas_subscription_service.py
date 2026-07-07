@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
+PHASE_LABEL = "phase_41_0_operational_travel_workspace_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"

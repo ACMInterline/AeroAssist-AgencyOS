@@ -15,6 +15,7 @@ import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
+import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
 import AgencyAirlineIntelligenceConsumptionPage from "./pages/agency/AirlineIntelligenceConsumptionPage"
@@ -115,6 +116,7 @@ import PlatformFeatureBundleRolloutRollbackPlansPage from "./pages/platform/Feat
 import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
 import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
+import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
 import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
@@ -181,6 +183,7 @@ const routes = {
   "/platform/feature-bundle-rollout-schedule": PlatformFeatureBundleRolloutSchedulePage,
   "/platform/feature-bundle-rollout-summary-packs": PlatformFeatureBundleRolloutSummaryPacksPage,
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
+  "/platform/operational-travel-workspaces": PlatformOperationalTravelWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -229,6 +232,7 @@ const routes = {
   "/agency/rollout-schedule": RolloutSchedulePage,
   "/agency/rollout-summary-packs": RolloutSummaryPacksPage,
   "/agency/rollout-timeline": RolloutTimelinePage,
+  "/agency/travel-workspaces": TravelWorkspacesPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

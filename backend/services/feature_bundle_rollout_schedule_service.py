@@ -14,7 +14,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
+PHASE_LABEL = "phase_41_0_operational_travel_workspace_foundation"
 
 SCHEDULE_COLLECTION = "feature_bundle_rollout_schedules"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

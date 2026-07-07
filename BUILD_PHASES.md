@@ -1730,6 +1730,23 @@ Avoid adding:
 
 - Rollout execution, deployment automation, feature activation/deactivation, entitlement enforcement, billing, provider integrations, AI, external APIs, background workers, schedulers, notifications, email, webhooks, publishing, runtime switching, PDF generation, file export, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.0: Operational Travel Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `OperationalTravelWorkspace`, type, status, and priority models.
+- Added `operational_travel_workspaces` collection/index registration.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/operational-travel-workspaces`.
+- Added agency read-only APIs and `/agency/travel-workspaces`.
+- Added filters by agency, status, type, priority, assigned agent, and travel date.
+- Added client/passenger summaries, linked request/trip/offer/booking/ticket/document references, assigned team, assigned agent, travel dates, origin/destination summaries, service summary, and operational notes as metadata-only fields.
+- Added readiness flags under `operational_travel_workspace_foundation`.
+- Added `docs/architecture/operational-travel-workspace-foundation.md`.
+
+Avoid adding:
+
+- Booking execution, ticket issuance, live GDS or NDC connectivity, payment processing, email or SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:
