@@ -7,6 +7,7 @@ export const platformModuleGroups = [
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
       { label: "Operational Travel Workspaces", description: "Travel workspace metadata", href: "/platform/operational-travel-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
+      { label: "Travel Request Workspaces", description: "Request workspace metadata", href: "/platform/travel-request-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Subscriptions & Entitlements", description: "Plan and agency entitlement metadata", href: "/platform/saas-subscriptions", icon: "layers", badge: "No billing" },
       { label: "Feature Flags", description: "Agency feature visibility metadata", href: "/platform/feature-flags", icon: "layers", badge: "Metadata only" },
       { label: "Feature Flag Audit", description: "Read-only feature audit history", href: "/platform/feature-flag-audit", icon: "clipboard", badge: "Metadata only", metadata_only: true },
@@ -109,6 +110,7 @@ export const agencyModuleGroups = [
       { label: "Create request", description: "Start a staff request", href: "/agency/requests/new", icon: "plus", entitlementKey: "requests" },
       { label: "Intakes", description: "Public and portal queue", href: "/agency/request-intakes", icon: "inbox", entitlementKey: "request_intakes" },
       { label: "Travel Workspaces", description: "Operational travel workspace metadata", href: "/agency/travel-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
+      { label: "Travel Requests", description: "Request workspace metadata", href: "/agency/travel-requests", icon: "clipboard", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
       { label: "GDS Parser", description: "Parse review only", href: "/agency/gds-parser", icon: "database", badge: "No provider calls", entitlementKey: "gds_parser" },
     ],
   },

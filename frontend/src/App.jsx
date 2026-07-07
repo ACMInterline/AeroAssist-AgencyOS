@@ -15,6 +15,7 @@ import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
+import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
 import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
 import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
@@ -117,6 +118,7 @@ import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBu
 import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
+import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
 import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
@@ -184,6 +186,7 @@ const routes = {
   "/platform/feature-bundle-rollout-summary-packs": PlatformFeatureBundleRolloutSummaryPacksPage,
   "/platform/feature-bundle-rollout-timeline": PlatformFeatureBundleRolloutTimelinePage,
   "/platform/operational-travel-workspaces": PlatformOperationalTravelWorkspacesPage,
+  "/platform/travel-request-workspaces": PlatformTravelRequestWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -232,6 +235,7 @@ const routes = {
   "/agency/rollout-schedule": RolloutSchedulePage,
   "/agency/rollout-summary-packs": RolloutSummaryPacksPage,
   "/agency/rollout-timeline": RolloutTimelinePage,
+  "/agency/travel-requests": TravelRequestsPage,
   "/agency/travel-workspaces": TravelWorkspacesPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

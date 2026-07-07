@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_0_operational_travel_workspace_foundation"
+PHASE_LABEL = "phase_41_1_travel_request_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -174,6 +174,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalTravelWorkspace, OperationalTravelWorkspaceType, OperationalTravelWorkspaceStatus, OperationalTravelWorkspacePriority, OperationalTravelWorkspaceService, /api/platform/operational-travel-workspaces, /api/agencies/{agency_id}/operational-travel-workspaces, /platform/operational-travel-workspaces, /agency/travel-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency operational travel workspace records and read-only agency visibility without booking execution, ticket issuance, live GDS/NDC connectivity, payment processing, email/SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, or automation.",
+    },
+    {
+        "category": "Travel Request Workspaces",
+        "concept": "Travel request workspace metadata",
+        "supplementary_concept": "agency request workspace, operational workspace link, requester details, client/passenger summary, requested route, requested dates, service categories, passenger count, budget, deadline, linked trips, linked offers, linked documents, internal notes",
+        "current_equivalent": "TravelRequestWorkspace, TravelRequestWorkspaceType, TravelRequestWorkspaceStatus, TravelRequestWorkspacePriority, TravelRequestWorkspaceService, /api/platform/travel-request-workspaces, /api/agencies/{agency_id}/travel-request-workspaces, /platform/travel-request-workspaces, /agency/travel-requests",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency travel request workspace records and read-only agency visibility without booking execution, ticket issuance, live GDS/NDC connectivity, payment processing, email/SMS sending, AI automation, external APIs, supplier integrations, live airline calls, background workers, automatic trip creation, automatic offer creation, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -508,6 +516,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-summary-packs", "agencyos": "/agency/rollout-summary-packs"},
         {"supplementary": "/admin/operational-travel-workspaces", "agencyos": "/platform/operational-travel-workspaces"},
         {"supplementary": "/agent/travel-workspaces", "agencyos": "/agency/travel-workspaces"},
+        {"supplementary": "/admin/travel-request-workspaces", "agencyos": "/platform/travel-request-workspaces"},
+        {"supplementary": "/agent/travel-requests", "agencyos": "/agency/travel-requests"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

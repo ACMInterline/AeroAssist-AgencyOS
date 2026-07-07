@@ -8,7 +8,7 @@ from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_operational_travel_workspaces, platform_operational_travel_workspaces
+from routers import agency_operational_travel_workspaces, agency_travel_request_workspaces, platform_operational_travel_workspaces, platform_travel_request_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -31,6 +31,7 @@ from services.feature_bundle_rollout_schedule_service import SCHEDULE_STATUSES
 from services.feature_bundle_rollout_summary_pack_service import PACK_AUDIENCES, PACK_STATUSES
 from services.feature_bundle_rollout_timeline_service import TIMELINE_EVENT_TYPES
 from services.operational_travel_workspace_service import WORKSPACE_PRIORITIES, WORKSPACE_STATUSES, WORKSPACE_TYPES
+from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
 from services.secret_service import check_secret
@@ -42,7 +43,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.0 operational travel workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 41.1 travel request workspace foundation.",
 )
 
 app.add_middleware(
@@ -513,6 +514,20 @@ async def readiness() -> dict:
     operational_travel_workspace_priority_counts = {
         priority: len([item for item in operational_travel_workspace_records if item.get("priority") == priority])
         for priority in WORKSPACE_PRIORITIES
+    }
+    travel_request_workspace_records = await database.collection("travel_request_workspaces").find_many()
+    travel_request_workspace_count = len(travel_request_workspace_records)
+    travel_request_workspace_status_counts = {
+        request_status: len([item for item in travel_request_workspace_records if item.get("request_status") == request_status])
+        for request_status in REQUEST_STATUSES
+    }
+    travel_request_workspace_type_counts = {
+        request_type: len([item for item in travel_request_workspace_records if item.get("request_type") == request_type])
+        for request_type in REQUEST_TYPES
+    }
+    travel_request_workspace_priority_counts = {
+        priority: len([item for item in travel_request_workspace_records if item.get("request_priority") == priority])
+        for priority in REQUEST_PRIORITIES
     }
     rollout_dashboard_view_count = await database.collection("rollout_dashboard_views").count()
     rollout_dashboard_snapshot_count = await database.collection("rollout_dashboard_snapshots").count()
@@ -2224,6 +2239,57 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 41.0 stores operational travel workspace metadata only. It does not execute bookings, issue tickets, connect to live GDS or NDC, process payments, send email or SMS, run AI automation, call external APIs, integrate suppliers, call live airlines, run background workers, or automate travel operations.",
         },
+        "travel_request_workspace_foundation": {
+            "travel_request_workspaces_enabled": True,
+            "travel_request_workspace_metadata_enabled": True,
+            "platform_travel_request_workspace_metadata_crud_enabled": True,
+            "agency_travel_request_workspace_read_only_enabled": True,
+            "request_workspace_filter_by_agency_enabled": True,
+            "request_workspace_filter_by_status_enabled": True,
+            "request_workspace_filter_by_type_enabled": True,
+            "request_workspace_filter_by_priority_enabled": True,
+            "request_workspace_filter_by_assigned_agent_enabled": True,
+            "request_workspace_filter_by_departure_date_enabled": True,
+            "request_workspace_filter_by_operational_workspace_enabled": True,
+            "operational_workspace_link_metadata_enabled": True,
+            "requester_metadata_enabled": True,
+            "client_passenger_metadata_enabled": True,
+            "requested_route_metadata_enabled": True,
+            "requested_dates_metadata_enabled": True,
+            "passenger_summary_metadata_enabled": True,
+            "requested_services_metadata_enabled": True,
+            "special_service_notes_metadata_enabled": True,
+            "budget_notes_metadata_enabled": True,
+            "deadline_metadata_enabled": True,
+            "linked_trip_metadata_enabled": True,
+            "linked_offer_metadata_enabled": True,
+            "linked_document_metadata_enabled": True,
+            "internal_notes_metadata_enabled": True,
+            "read_only_ui_enabled": True,
+            "metadata_only": True,
+            "travel_request_workspace_metadata_only": True,
+            "booking_execution_disabled": True,
+            "ticket_issuance_disabled": True,
+            "gds_live_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "payment_processing_disabled": True,
+            "email_sending_disabled": True,
+            "sms_sending_disabled": True,
+            "ai_automation_disabled": True,
+            "external_api_calls_disabled": True,
+            "supplier_integrations_disabled": True,
+            "live_airline_calls_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_trip_creation_disabled": True,
+            "automatic_offer_creation_disabled": True,
+            "automation_disabled": True,
+            "request_workspace_count": travel_request_workspace_count,
+            "request_workspace_status_counts": travel_request_workspace_status_counts,
+            "request_workspace_type_counts": travel_request_workspace_type_counts,
+            "request_workspace_priority_counts": travel_request_workspace_priority_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 41.1 stores travel request workspace metadata inside operational workspaces. It does not execute bookings, issue tickets, connect to live GDS or NDC, process payments, send email or SMS, run AI automation, call external APIs, integrate suppliers, call live airlines, run background workers, automatically convert requests to trips, automatically create offers, or automate travel operations.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -2398,6 +2464,7 @@ app.include_router(platform_feature_bundle_rollout_change_requests.router)
 app.include_router(platform_feature_bundle_rollout_rollback_plans.router)
 app.include_router(platform_feature_bundle_rollout_summary_packs.router)
 app.include_router(platform_operational_travel_workspaces.router)
+app.include_router(platform_travel_request_workspaces.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -2455,6 +2522,7 @@ app.include_router(agency_feature_bundle_rollout_change_requests.router)
 app.include_router(agency_feature_bundle_rollout_rollback_plans.router)
 app.include_router(agency_feature_bundle_rollout_summary_packs.router)
 app.include_router(agency_operational_travel_workspaces.router)
+app.include_router(agency_travel_request_workspaces.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)
