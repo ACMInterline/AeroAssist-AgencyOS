@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_9_ssr_osi_operational_workspace_foundation"
+PHASE_LABEL = "phase_42_0_document_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -254,6 +254,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "SsrOsiWorkspace, SsrOsiWorkspaceCreate, SsrOsiWorkspaceUpdate, SsrOsiNeedCategory, SsrOsiReadinessStatus, SsrOsiApprovalStatus, SsrOsiWorkspaceService, /api/platform/ssr-osi-workspaces, /api/agencies/{agency_id}/ssr-osi-workspaces, /platform/ssr-osi-workspaces, /agency/passenger-services",
         "status": "foundation adopted",
         "action": "Record metadata-only passenger service operation workspaces from Passenger Need to Operational Service Requirement to Operational Fulfilment, and prepare the future AOIE input path without live SSR/OSI transmission, GDS/NDC connectivity, airline APIs, AI recommendation, automatic airline approval, automatic EMD issuance, provider integrations, external APIs, workers, or automation.",
+    },
+    {
+        "category": "Document Workspaces",
+        "concept": "Operational document workspace metadata",
+        "supplementary_concept": "passenger documents, travel requirements, service documents, MEDIF, approvals, booking/ticket/EMD/SSR/OSI links, package/render/share references, storage references, visibility, verification, validity, operational intelligence links",
+        "current_equivalent": "DocumentWorkspace, DocumentWorkspaceCreate, DocumentWorkspaceUpdate, DocumentWorkspaceStatus, DocumentWorkspaceType, DocumentWorkspaceService, /api/platform/document-workspaces, /api/agencies/{agency_id}/document-workspaces, /platform/document-workspaces, /agency/document-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only operational document workspaces that link passenger, request, trip, booking, ticket, EMD, SSR / OSI, package, render job, share record, storage reference, and operational intelligence metadata without live delivery, e-signature, public share links, automatic PDF generation, payment or invoice generation, external storage integrations, background workers, AI document generation, or duplication of the Phase 36.5 render/package/share foundation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -622,7 +630,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/rollout-dashboard", "agencyos": "/agency/rollout-dashboard"},
         {"supplementary": "/admin/capabilities", "agencyos": "/platform/capabilities"},
         {"supplementary": "/agent/capabilities", "agencyos": "/agency/capabilities"},
-        {"supplementary": "/documents", "agencyos": "/agency/documents and /platform/document-templates"},
+        {"supplementary": "/admin/document-workspaces", "agencyos": "/platform/document-workspaces"},
+        {"supplementary": "/agent/document-workspaces", "agencyos": "/agency/document-workspaces"},
+        {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
         {"supplementary": "/bookings", "agencyos": "/agency/booking-workspaces"},
@@ -639,9 +649,9 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "AOIE now has an architecture foundation. The next intelligence phase should create governed airline knowledge acquisition metadata without scraping, crawling, AI generation, provider calls, or execution.",
     },
     {
-        "phase": "Phase 41.9",
-        "title": "SSR / OSI Operational Workspace Foundation",
-        "reason": "Chapter 41 operational workspaces remain intact and should continue with SSR/OSI workspace metadata that AOIE can later feed without live transmission or provider execution.",
+        "phase": "Phase 42.0",
+        "title": "Document Workspace Foundation",
+        "reason": "Chapter 42 should add operational document workspace metadata that links passenger-service documents to passenger, request, trip, booking, ticket, EMD, SSR/OSI, and AOIE records without delivery or generation.",
     },
     {
         "phase": "Phase 37.8",
@@ -801,6 +811,11 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "SsrOsiReadinessStatus",
             "SsrOsiApprovalStatus",
             "SsrOsiOperationalStatus",
+            "DocumentWorkspace",
+            "DocumentWorkspaceCreate",
+            "DocumentWorkspaceUpdate",
+            "DocumentWorkspaceStatus",
+            "DocumentWorkspaceType",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -857,6 +872,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Ticket workspace foundation built in Phase 41.7",
             "EMD workspace foundation built in Phase 41.8",
             "SSR / OSI operational workspace foundation built in Phase 41.9",
+            "Document workspace foundation built in Phase 42.0",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
         ],
         "deferred": [
@@ -877,7 +893,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
         ],
         "next_immediate_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
         "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-        "next_operational_phase": "Phase 41.9 - SSR / OSI Operational Workspace Foundation",
+        "next_operational_phase": "Phase 42.0 - Document Workspace Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
             "Travel request workspaces",
@@ -889,6 +905,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Ticket workspaces",
             "EMD workspaces",
             "SSR / OSI operational workspaces",
+            "Document workspaces",
         ],
         "chapter_50_intelligence_track": [
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",

@@ -13588,6 +13588,224 @@ class SsrOsiWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class DocumentWorkspaceStatus(str, Enum):
+    DRAFT_METADATA = "draft_metadata"
+    REQUIRED = "required"
+    REQUESTED = "requested"
+    RECEIVED = "received"
+    UNDER_REVIEW = "under_review"
+    VERIFIED = "verified"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+    WAIVED = "waived"
+    NOT_REQUIRED = "not_required"
+    ARCHIVED = "archived"
+
+
+class DocumentWorkspaceType(str, Enum):
+    ITINERARY = "itinerary"
+    BOOKING_CONFIRMATION = "booking_confirmation"
+    TICKET_RECEIPT = "ticket_receipt"
+    EMD_RECEIPT = "emd_receipt"
+    INVOICE = "invoice"
+    VOUCHER = "voucher"
+    MEDIF = "medif"
+    MEDICAL_CERTIFICATE = "medical_certificate"
+    VETERINARY_CERTIFICATE = "veterinary_certificate"
+    PET_PASSPORT = "pet_passport"
+    BATTERY_DECLARATION = "battery_declaration"
+    MOBILITY_AID_FORM = "mobility_aid_form"
+    UNACCOMPANIED_MINOR_FORM = "unaccompanied_minor_form"
+    CONSENT_FORM = "consent_form"
+    VISA_DOCUMENT = "visa_document"
+    PASSPORT_COPY = "passport_copy"
+    ASSISTANCE_CONFIRMATION = "assistance_confirmation"
+    AIRLINE_APPROVAL = "airline_approval"
+    AIRPORT_HANDLING_CONFIRMATION = "airport_handling_confirmation"
+    SERVICE_INSTRUCTION = "service_instruction"
+    OTHER = "other"
+
+
+class DocumentWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    operational_intelligence_record_ids: List[str] = Field(default_factory=list)
+    document_reference: str
+    document_status: DocumentWorkspaceStatus = DocumentWorkspaceStatus.DRAFT_METADATA
+    document_type: DocumentWorkspaceType = DocumentWorkspaceType.OTHER
+    document_category: Optional[str] = None
+    document_title: Optional[str] = None
+    document_description: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    related_service_requirement: Optional[str] = None
+    related_ssr_code: Optional[str] = None
+    related_emd_number: Optional[str] = None
+    related_ticket_number: Optional[str] = None
+    required_for_travel: bool = False
+    required_by_airline: bool = False
+    required_by_airport: bool = False
+    required_by_authority: bool = False
+    requirement_deadline: Optional[date] = None
+    received_status: Optional[str] = None
+    verification_status: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    issuing_authority: Optional[str] = None
+    language: Optional[str] = None
+    file_name: Optional[str] = None
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    storage_reference: Optional[str] = None
+    document_package_ids: List[str] = Field(default_factory=list)
+    render_job_ids: List[str] = Field(default_factory=list)
+    share_record_ids: List[str] = Field(default_factory=list)
+    customer_visible: bool = False
+    airline_visible: bool = False
+    internal_only: bool = True
+    missing_reason: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    operational_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    document_workspace_metadata_only: bool = True
+    live_document_delivery_disabled: bool = True
+    e_signature_disabled: bool = True
+    public_share_links_disabled: bool = True
+    automatic_pdf_generation_disabled: bool = True
+    payment_invoice_generation_disabled: bool = True
+    external_storage_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    ai_document_generation_disabled: bool = True
+    automation_disabled: bool = True
+    phase_36_5_document_foundation_not_duplicated: bool = True
+
+
+class DocumentWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    operational_intelligence_record_ids: List[str] = Field(default_factory=list)
+    document_reference: Optional[str] = None
+    document_status: DocumentWorkspaceStatus = DocumentWorkspaceStatus.DRAFT_METADATA
+    document_type: DocumentWorkspaceType = DocumentWorkspaceType.OTHER
+    document_category: Optional[str] = None
+    document_title: Optional[str] = None
+    document_description: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    related_service_requirement: Optional[str] = None
+    related_ssr_code: Optional[str] = None
+    related_emd_number: Optional[str] = None
+    related_ticket_number: Optional[str] = None
+    required_for_travel: bool = False
+    required_by_airline: bool = False
+    required_by_airport: bool = False
+    required_by_authority: bool = False
+    requirement_deadline: Optional[date] = None
+    received_status: Optional[str] = None
+    verification_status: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    issuing_authority: Optional[str] = None
+    language: Optional[str] = None
+    file_name: Optional[str] = None
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    storage_reference: Optional[str] = None
+    document_package_ids: List[str] = Field(default_factory=list)
+    render_job_ids: List[str] = Field(default_factory=list)
+    share_record_ids: List[str] = Field(default_factory=list)
+    customer_visible: bool = False
+    airline_visible: bool = False
+    internal_only: bool = True
+    missing_reason: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    operational_intelligence_record_ids: Optional[List[str]] = None
+    document_reference: Optional[str] = None
+    document_status: Optional[DocumentWorkspaceStatus] = None
+    document_type: Optional[DocumentWorkspaceType] = None
+    document_category: Optional[str] = None
+    document_title: Optional[str] = None
+    document_description: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    related_service_requirement: Optional[str] = None
+    related_ssr_code: Optional[str] = None
+    related_emd_number: Optional[str] = None
+    related_ticket_number: Optional[str] = None
+    required_for_travel: Optional[bool] = None
+    required_by_airline: Optional[bool] = None
+    required_by_airport: Optional[bool] = None
+    required_by_authority: Optional[bool] = None
+    requirement_deadline: Optional[date] = None
+    received_status: Optional[str] = None
+    verification_status: Optional[str] = None
+    validity_start_date: Optional[date] = None
+    validity_end_date: Optional[date] = None
+    issuing_authority: Optional[str] = None
+    language: Optional[str] = None
+    file_name: Optional[str] = None
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    storage_reference: Optional[str] = None
+    document_package_ids: Optional[List[str]] = None
+    render_job_ids: Optional[List[str]] = None
+    share_record_ids: Optional[List[str]] = None
+    customer_visible: Optional[bool] = None
+    airline_visible: Optional[bool] = None
+    internal_only: Optional[bool] = None
+    missing_reason: Optional[str] = None
+    rejection_reason: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

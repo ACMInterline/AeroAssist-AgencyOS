@@ -16,6 +16,7 @@ export const platformModuleGroups = [
       { label: "Ticket Workspaces", description: "Ticket workspace metadata", href: "/platform/ticket-workspaces", icon: "files", badge: "Metadata only", metadata_only: true },
       { label: "EMD Workspaces", description: "EMD workspace metadata", href: "/platform/emd-workspaces", icon: "files", badge: "Metadata only", metadata_only: true },
       { label: "SSR / OSI Operations", description: "Passenger service operation metadata", href: "/platform/ssr-osi-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
+      { label: "Document Workspaces", description: "Operational document workspace metadata", href: "/platform/document-workspaces", icon: "files", badge: "Metadata only", metadata_only: true },
       { label: "Subscriptions & Entitlements", description: "Plan and agency entitlement metadata", href: "/platform/saas-subscriptions", icon: "layers", badge: "No billing" },
       { label: "Feature Flags", description: "Agency feature visibility metadata", href: "/platform/feature-flags", icon: "layers", badge: "Metadata only" },
       { label: "Feature Flag Audit", description: "Read-only feature audit history", href: "/platform/feature-flag-audit", icon: "clipboard", badge: "Metadata only", metadata_only: true },
@@ -193,6 +194,7 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "No automatic sending",
     items: [
+      { label: "Document Workspaces", description: "Operational document metadata", href: "/agency/document-workspaces", icon: "files", badge: "Read-only", entitlementKey: "documents", metadata_only: true },
       { label: "Documents", description: "Rendered files", href: "/agency/documents", icon: "files", badge: "Manual only", entitlementKey: "documents" },
       { label: "Decision Packs", description: "Offer evidence", href: "/agency/offer-decision-packs", icon: "rows", badge: "Human review", entitlementKey: "offer_decision_evidence" },
       { label: "Decision Explanations", description: "Timeline audit", href: "/agency/offer-decision-explanations", icon: "rows", badge: "Metadata only", entitlementKey: "offer_decision_evidence" },

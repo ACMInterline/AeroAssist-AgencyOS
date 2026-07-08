@@ -1897,6 +1897,23 @@ Avoid adding:
 
 - Live SSR transmission, live OSI transmission, GDS connectivity, NDC connectivity, airline APIs, AI recommendation, automatic airline approval, automatic EMD issuance, background workers, provider integrations, external API calls, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 42.0: Document Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `DocumentWorkspace`, `DocumentWorkspaceCreate`, `DocumentWorkspaceUpdate`, `DocumentWorkspaceStatus`, and `DocumentWorkspaceType` models with passenger/request/trip/booking/ticket/EMD/SSR-OSI links, operational intelligence references, document reference, status, type, category, title, description, passenger, booking, PNR, related service, ticket, EMD, SSR, travel/airline/airport/authority requirement flags, deadline, received and verification statuses, validity, issuing authority, file/storage metadata, package/render/share references, visibility flags, missing/rejection reasons, and operational notes.
+- Registered the additive `document_workspaces` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/document-workspaces`.
+- Added agency read-only metadata APIs at `/api/agencies/{agency_id}/document-workspaces` and UI at `/agency/document-workspaces`.
+- Added filters by document type, document status, passenger, booking reference, related service, required-for-travel, verification status, and deadline.
+- Added readiness flags under `document_workspace_foundation`.
+- Clarified that Phase 42.0 is the operational document workspace layer and does not duplicate the Phase 36.5 document render/package/share foundation.
+- Added `docs/architecture/document-workspace-foundation.md`.
+
+Avoid adding:
+
+- Live document delivery, e-signature, public share links, automatic PDF generation, payment/invoice generation, external storage integrations, background workers, AI document generation, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 50.0: Airline Operational Intelligence Engine Architecture Foundation
 
 Implemented scope:
@@ -1906,7 +1923,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 41.9 SSR / OSI Operational Workspace Foundation.
+- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.0 Document Workspace Foundation.
 
 Avoid adding:
 

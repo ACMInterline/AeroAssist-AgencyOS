@@ -9,7 +9,7 @@ from routers import platform
 from routers import agency_airline_operational_intelligence, platform_airline_operational_intelligence
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -38,6 +38,7 @@ from services.trip_workspace_service import TRIP_STATUSES
 from services.offer_workspace_service import OFFER_STATUSES
 from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
 from services.emd_workspace_service import EMD_DOCUMENT_STATUSES, EMD_WORKSPACE_STATUSES
+from services.document_workspace_service import DOCUMENT_WORKSPACE_STATUSES, DOCUMENT_WORKSPACE_TYPES
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
@@ -53,7 +54,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.9 SSR / OSI operational workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 42.0 document workspace foundation.",
 )
 
 app.add_middleware(
@@ -353,6 +354,36 @@ async def readiness() -> dict:
     ssr_osi_communication_count = sum(len(item.get("communication_ids") or []) for item in ssr_osi_workspace_records)
     ssr_osi_flight_workspace_count = sum(len(item.get("flight_workspace_ids") or []) for item in ssr_osi_workspace_records)
     ssr_osi_linked_document_count = sum(len(item.get("linked_document_ids") or []) for item in ssr_osi_workspace_records)
+    document_workspace_records = await database.collection("document_workspaces").find_many()
+    document_workspace_count = len(document_workspace_records)
+    document_workspace_status_counts = {
+        status: len([item for item in document_workspace_records if item.get("document_status") == status])
+        for status in DOCUMENT_WORKSPACE_STATUSES
+    }
+    document_workspace_type_counts = {
+        document_type: len([item for item in document_workspace_records if item.get("document_type") == document_type])
+        for document_type in DOCUMENT_WORKSPACE_TYPES
+    }
+    document_workspace_verification_status_count = len({item.get("verification_status") for item in document_workspace_records if item.get("verification_status")})
+    document_workspace_required_for_travel_count = len([item for item in document_workspace_records if item.get("required_for_travel")])
+    document_workspace_required_by_airline_count = len([item for item in document_workspace_records if item.get("required_by_airline")])
+    document_workspace_required_by_airport_count = len([item for item in document_workspace_records if item.get("required_by_airport")])
+    document_workspace_required_by_authority_count = len([item for item in document_workspace_records if item.get("required_by_authority")])
+    document_workspace_customer_visible_count = len([item for item in document_workspace_records if item.get("customer_visible")])
+    document_workspace_airline_visible_count = len([item for item in document_workspace_records if item.get("airline_visible")])
+    document_workspace_internal_only_count = len([item for item in document_workspace_records if item.get("internal_only")])
+    document_workspace_passenger_workspace_count = len({item.get("passenger_workspace_id") for item in document_workspace_records if item.get("passenger_workspace_id")})
+    document_workspace_travel_request_workspace_count = len({item.get("travel_request_workspace_id") for item in document_workspace_records if item.get("travel_request_workspace_id")})
+    document_workspace_trip_workspace_count = len({item.get("trip_workspace_id") for item in document_workspace_records if item.get("trip_workspace_id")})
+    document_workspace_booking_workspace_count = len({item.get("booking_workspace_id") for item in document_workspace_records if item.get("booking_workspace_id")})
+    document_workspace_ticket_workspace_count = len({item.get("ticket_workspace_id") for item in document_workspace_records if item.get("ticket_workspace_id")})
+    document_workspace_emd_workspace_count = len({item.get("emd_workspace_id") for item in document_workspace_records if item.get("emd_workspace_id")})
+    document_workspace_ssr_osi_workspace_count = len({item.get("ssr_osi_workspace_id") for item in document_workspace_records if item.get("ssr_osi_workspace_id")})
+    document_workspace_operational_intelligence_record_count = sum(len(item.get("operational_intelligence_record_ids") or []) for item in document_workspace_records)
+    document_workspace_package_count = sum(len(item.get("document_package_ids") or []) for item in document_workspace_records)
+    document_workspace_render_job_count = sum(len(item.get("render_job_ids") or []) for item in document_workspace_records)
+    document_workspace_share_record_count = sum(len(item.get("share_record_ids") or []) for item in document_workspace_records)
+    document_workspace_storage_reference_count = len({item.get("storage_reference") for item in document_workspace_records if item.get("storage_reference")})
     booking_import_draft_count = await database.collection("booking_import_drafts").count()
     trip_change_operation_count = await database.collection("trip_change_operations").count()
     ticket_record_count = await database.collection("ticket_records").count()
@@ -3099,6 +3130,74 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 41.9 stores SSR / OSI operational workspace metadata only. It turns passenger needs into operational service requirement records for future AOIE consumption without live SSR/OSI transmission, GDS/NDC connectivity, airline APIs, AI recommendations, automatic airline approval, automatic EMD issuance, background workers, provider integrations, external API calls, or automation.",
         },
+        "document_workspace_foundation": {
+            "document_workspaces_enabled": True,
+            "document_workspace_metadata_enabled": True,
+            "platform_document_workspace_metadata_crud_enabled": True,
+            "agency_document_workspace_read_only_enabled": True,
+            "platform_document_workspaces_ui_enabled": True,
+            "agency_documents_workspace_ui_enabled": True,
+            "filter_by_document_type_enabled": True,
+            "filter_by_document_status_enabled": True,
+            "filter_by_passenger_enabled": True,
+            "filter_by_booking_reference_enabled": True,
+            "filter_by_related_service_enabled": True,
+            "filter_by_required_for_travel_enabled": True,
+            "filter_by_verification_status_enabled": True,
+            "filter_by_deadline_enabled": True,
+            "operational_document_workspace_layer_enabled": True,
+            "passenger_workspace_link_enabled": True,
+            "travel_request_workspace_link_enabled": True,
+            "trip_workspace_link_enabled": True,
+            "booking_workspace_link_enabled": True,
+            "ticket_workspace_link_enabled": True,
+            "emd_workspace_link_enabled": True,
+            "ssr_osi_workspace_link_enabled": True,
+            "operational_intelligence_record_link_enabled": True,
+            "phase_36_5_document_foundation_not_duplicated": True,
+            "document_requirement_metadata_enabled": True,
+            "document_verification_metadata_enabled": True,
+            "document_validity_metadata_enabled": True,
+            "document_storage_reference_metadata_enabled": True,
+            "document_package_reference_metadata_enabled": True,
+            "document_visibility_metadata_enabled": True,
+            "metadata_only": True,
+            "document_workspace_metadata_only": True,
+            "live_document_delivery_disabled": True,
+            "e_signature_disabled": True,
+            "public_share_links_disabled": True,
+            "automatic_pdf_generation_disabled": True,
+            "payment_invoice_generation_disabled": True,
+            "external_storage_integrations_disabled": True,
+            "background_workers_disabled": True,
+            "ai_document_generation_disabled": True,
+            "automation_disabled": True,
+            "document_workspace_count": document_workspace_count,
+            "document_workspace_status_counts": document_workspace_status_counts,
+            "document_workspace_type_counts": document_workspace_type_counts,
+            "document_workspace_verification_status_count": document_workspace_verification_status_count,
+            "document_workspace_required_for_travel_count": document_workspace_required_for_travel_count,
+            "document_workspace_required_by_airline_count": document_workspace_required_by_airline_count,
+            "document_workspace_required_by_airport_count": document_workspace_required_by_airport_count,
+            "document_workspace_required_by_authority_count": document_workspace_required_by_authority_count,
+            "document_workspace_customer_visible_count": document_workspace_customer_visible_count,
+            "document_workspace_airline_visible_count": document_workspace_airline_visible_count,
+            "document_workspace_internal_only_count": document_workspace_internal_only_count,
+            "document_workspace_passenger_workspace_count": document_workspace_passenger_workspace_count,
+            "document_workspace_travel_request_workspace_count": document_workspace_travel_request_workspace_count,
+            "document_workspace_trip_workspace_count": document_workspace_trip_workspace_count,
+            "document_workspace_booking_workspace_count": document_workspace_booking_workspace_count,
+            "document_workspace_ticket_workspace_count": document_workspace_ticket_workspace_count,
+            "document_workspace_emd_workspace_count": document_workspace_emd_workspace_count,
+            "document_workspace_ssr_osi_workspace_count": document_workspace_ssr_osi_workspace_count,
+            "document_workspace_operational_intelligence_record_count": document_workspace_operational_intelligence_record_count,
+            "document_workspace_package_count": document_workspace_package_count,
+            "document_workspace_render_job_count": document_workspace_render_job_count,
+            "document_workspace_share_record_count": document_workspace_share_record_count,
+            "document_workspace_storage_reference_count": document_workspace_storage_reference_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 42.0 stores operational document workspace metadata only. It links documents to passenger, request, trip, booking, ticket, EMD, SSR / OSI, and operational intelligence records without live delivery, e-signature, public share links, automatic PDF generation, payment or invoice generation, external storage integrations, background workers, AI document generation, or duplication of the Phase 36.5 render/package/share foundation.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -3283,6 +3382,7 @@ app.include_router(platform_booking_workspaces.router)
 app.include_router(platform_ticket_workspaces.router)
 app.include_router(platform_emd_workspaces.router)
 app.include_router(platform_ssr_osi_workspaces.router)
+app.include_router(platform_document_workspaces.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -3349,6 +3449,7 @@ app.include_router(agency_offer_workspaces.router)
 app.include_router(agency_ticket_workspaces.router)
 app.include_router(agency_emd_workspaces.router)
 app.include_router(agency_ssr_osi_workspaces.router)
+app.include_router(agency_document_workspaces.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

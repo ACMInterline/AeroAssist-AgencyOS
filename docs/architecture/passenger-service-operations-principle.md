@@ -30,6 +30,12 @@ Passenger Need -> SSR / OSI Workspace -> Airline Knowledge -> Capability Matrix 
 
 The workspace records passenger service requirements, SSR/OSI handling metadata, approvals, documents, EMD references, readiness, and fulfilment references. It remains metadata-only and does not transmit SSR/OSI messages, call airlines, automate approvals, issue EMDs, or run AOIE reasoning.
 
+Phase 42.0 adds the Document Workspace as the operational document layer attached to passenger service operations:
+
+Passenger Need -> SSR / OSI Workspace -> Document Workspace -> Airline Knowledge -> Operational Feasibility -> Fulfilment Evidence
+
+The document workspace records required, requested, received, verified, rejected, waived, archived, and other document metadata linked to passenger, travel request, trip, booking, ticket, EMD, SSR / OSI, Phase 36.5 package/render/share, and operational intelligence records. It remains metadata-only and does not deliver documents, implement e-signature, create public links, generate PDFs automatically, generate payments or invoices, integrate external storage, run background workers, or generate documents with AI. It does not duplicate the older Phase 36.5 document render/package/share foundation.
+
 ## Governance Boundary
 
 Future AOIE phases should consume reviewed and versioned metadata from existing foundations. They should not create parallel ticket, EMD, booking, offer, service taxonomy, service mechanics, or pricing architectures.
