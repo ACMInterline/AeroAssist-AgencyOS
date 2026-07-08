@@ -9,7 +9,7 @@ from routers import platform
 from routers import agency_airline_operational_intelligence, platform_airline_operational_intelligence
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -40,6 +40,7 @@ from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
 from services.emd_workspace_service import EMD_DOCUMENT_STATUSES, EMD_WORKSPACE_STATUSES
 from services.document_workspace_service import DOCUMENT_WORKSPACE_STATUSES, DOCUMENT_WORKSPACE_TYPES
 from services.timeline_workspace_service import COMMUNICATION_TYPES, TIMELINE_EVENT_TYPES
+from services.passenger_service_workflow_service import READINESS_STATES, WORKFLOW_STAGES
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
@@ -55,7 +56,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 42.1 operational timeline workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 42.2 passenger service workflow engine foundation.",
 )
 
 app.add_middleware(
@@ -412,6 +413,33 @@ async def readiness() -> dict:
     operational_timeline_internal_only_count = len([item for item in operational_timeline_records if item.get("internal_only")])
     operational_timeline_passenger_visible_count = len([item for item in operational_timeline_records if item.get("passenger_visible")])
     operational_timeline_airline_visible_count = len([item for item in operational_timeline_records if item.get("airline_visible")])
+    passenger_service_workflow_records = await database.collection("passenger_service_workflows").find_many()
+    passenger_service_workflow_count = len(passenger_service_workflow_records)
+    passenger_service_workflow_stage_counts = {
+        stage: len([item for item in passenger_service_workflow_records if item.get("current_stage") == stage])
+        for stage in WORKFLOW_STAGES
+    }
+    passenger_service_workflow_readiness_counts = {
+        readiness: len([item for item in passenger_service_workflow_records if item.get("readiness_status") == readiness])
+        for readiness in READINESS_STATES
+    }
+    passenger_service_workflow_status_count = len({item.get("workflow_status") for item in passenger_service_workflow_records if item.get("workflow_status")})
+    passenger_service_workflow_type_count = len({item.get("workflow_type") for item in passenger_service_workflow_records if item.get("workflow_type")})
+    passenger_service_workflow_priority_count = len({item.get("workflow_priority") for item in passenger_service_workflow_records if item.get("workflow_priority")})
+    passenger_service_workflow_airline_count = len({item.get("related_airline") for item in passenger_service_workflow_records if item.get("related_airline")})
+    passenger_service_workflow_assigned_agent_count = len({item.get("responsible_agent") for item in passenger_service_workflow_records if item.get("responsible_agent")})
+    passenger_service_workflow_passenger_workspace_count = len({item.get("passenger_workspace_id") for item in passenger_service_workflow_records if item.get("passenger_workspace_id")})
+    passenger_service_workflow_travel_request_workspace_count = len({item.get("travel_request_workspace_id") for item in passenger_service_workflow_records if item.get("travel_request_workspace_id")})
+    passenger_service_workflow_trip_workspace_count = len({item.get("trip_workspace_id") for item in passenger_service_workflow_records if item.get("trip_workspace_id")})
+    passenger_service_workflow_booking_workspace_count = len({item.get("booking_workspace_id") for item in passenger_service_workflow_records if item.get("booking_workspace_id")})
+    passenger_service_workflow_ticket_workspace_count = len({item.get("ticket_workspace_id") for item in passenger_service_workflow_records if item.get("ticket_workspace_id")})
+    passenger_service_workflow_emd_workspace_count = len({item.get("emd_workspace_id") for item in passenger_service_workflow_records if item.get("emd_workspace_id")})
+    passenger_service_workflow_ssr_osi_workspace_count = len({item.get("ssr_osi_workspace_id") for item in passenger_service_workflow_records if item.get("ssr_osi_workspace_id")})
+    passenger_service_workflow_document_workspace_count = len({item.get("document_workspace_id") for item in passenger_service_workflow_records if item.get("document_workspace_id")})
+    passenger_service_workflow_timeline_workspace_count = len({item.get("timeline_workspace_id") for item in passenger_service_workflow_records if item.get("timeline_workspace_id")})
+    passenger_service_workflow_blocking_requirement_count = sum(len(item.get("blocking_requirements") or []) for item in passenger_service_workflow_records)
+    passenger_service_workflow_completed_requirement_count = sum(len(item.get("completed_requirements") or []) for item in passenger_service_workflow_records)
+    passenger_service_workflow_recommendation_pack_count = len({item.get("recommendation_pack_reference") for item in passenger_service_workflow_records if item.get("recommendation_pack_reference")})
     booking_import_draft_count = await database.collection("booking_import_drafts").count()
     trip_change_operation_count = await database.collection("trip_change_operations").count()
     ticket_record_count = await database.collection("ticket_records").count()
@@ -1745,7 +1773,7 @@ async def readiness() -> dict:
             "chapter_41_operational_workspaces_preserved": True,
             "feeds_chapter_41_42_operational_workspaces": True,
             "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-            "next_operational_phase": "Phase 41.9 - SSR / OSI Operational Workspace Foundation",
+            "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
             "ai_generation_disabled": True,
             "ai_execution_disabled": True,
             "airline_scraping_disabled": True,
@@ -3293,6 +3321,72 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 42.1 stores operational timeline and communication metadata only. It links timeline entries to passenger, request, trip, booking, ticket, EMD, SSR / OSI, and document workspaces without email, SMS, WhatsApp, Teams, Slack, live airline messaging, live customer messaging, AI summarization, background workers, provider integrations, or automation.",
         },
+        "passenger_service_workflow_engine_foundation": {
+            "passenger_service_workflows_enabled": True,
+            "workflow_engine_metadata_enabled": True,
+            "platform_passenger_service_workflow_metadata_crud_enabled": True,
+            "agency_passenger_service_workflow_read_only_enabled": True,
+            "platform_passenger_service_workflows_ui_enabled": True,
+            "agency_workflow_engine_ui_enabled": True,
+            "workflow_stage_definitions_enabled": True,
+            "workflow_readiness_state_definitions_enabled": True,
+            "filter_by_workflow_stage_enabled": True,
+            "filter_by_readiness_enabled": True,
+            "filter_by_passenger_enabled": True,
+            "filter_by_airline_enabled": True,
+            "filter_by_priority_enabled": True,
+            "filter_by_assigned_agent_enabled": True,
+            "passenger_workspace_link_enabled": True,
+            "travel_request_workspace_link_enabled": True,
+            "trip_workspace_link_enabled": True,
+            "booking_workspace_link_enabled": True,
+            "ticket_workspace_link_enabled": True,
+            "emd_workspace_link_enabled": True,
+            "ssr_osi_workspace_link_enabled": True,
+            "document_workspace_link_enabled": True,
+            "timeline_workspace_link_enabled": True,
+            "future_aoie_reference_metadata_enabled": True,
+            "blocking_requirements_metadata_enabled": True,
+            "completed_requirements_metadata_enabled": True,
+            "responsible_team_metadata_enabled": True,
+            "responsible_agent_metadata_enabled": True,
+            "metadata_only": True,
+            "workflow_engine_metadata_only": True,
+            "automatic_workflow_execution_disabled": True,
+            "ai_decision_making_disabled": True,
+            "background_workers_disabled": True,
+            "airline_apis_disabled": True,
+            "gds_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "automatic_approvals_disabled": True,
+            "automatic_ticketing_disabled": True,
+            "automatic_emd_issuance_disabled": True,
+            "automatic_messaging_disabled": True,
+            "provider_integrations_disabled": True,
+            "automation_disabled": True,
+            "passenger_service_workflow_count": passenger_service_workflow_count,
+            "passenger_service_workflow_stage_counts": passenger_service_workflow_stage_counts,
+            "passenger_service_workflow_readiness_counts": passenger_service_workflow_readiness_counts,
+            "passenger_service_workflow_status_count": passenger_service_workflow_status_count,
+            "passenger_service_workflow_type_count": passenger_service_workflow_type_count,
+            "passenger_service_workflow_priority_count": passenger_service_workflow_priority_count,
+            "passenger_service_workflow_airline_count": passenger_service_workflow_airline_count,
+            "passenger_service_workflow_assigned_agent_count": passenger_service_workflow_assigned_agent_count,
+            "passenger_service_workflow_passenger_workspace_count": passenger_service_workflow_passenger_workspace_count,
+            "passenger_service_workflow_travel_request_workspace_count": passenger_service_workflow_travel_request_workspace_count,
+            "passenger_service_workflow_trip_workspace_count": passenger_service_workflow_trip_workspace_count,
+            "passenger_service_workflow_booking_workspace_count": passenger_service_workflow_booking_workspace_count,
+            "passenger_service_workflow_ticket_workspace_count": passenger_service_workflow_ticket_workspace_count,
+            "passenger_service_workflow_emd_workspace_count": passenger_service_workflow_emd_workspace_count,
+            "passenger_service_workflow_ssr_osi_workspace_count": passenger_service_workflow_ssr_osi_workspace_count,
+            "passenger_service_workflow_document_workspace_count": passenger_service_workflow_document_workspace_count,
+            "passenger_service_workflow_timeline_workspace_count": passenger_service_workflow_timeline_workspace_count,
+            "passenger_service_workflow_blocking_requirement_count": passenger_service_workflow_blocking_requirement_count,
+            "passenger_service_workflow_completed_requirement_count": passenger_service_workflow_completed_requirement_count,
+            "passenger_service_workflow_recommendation_pack_count": passenger_service_workflow_recommendation_pack_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 42.2 stores Passenger Service Workflow Engine metadata only. It coordinates passenger, request, trip, booking, ticket, EMD, SSR / OSI, document, timeline, and future AOIE references without automatic workflow execution, AI decision making, background workers, airline APIs, GDS/NDC connectivity, automatic approvals, ticketing, EMD issuance, messaging, provider integrations, or automation.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -3479,6 +3573,7 @@ app.include_router(platform_emd_workspaces.router)
 app.include_router(platform_ssr_osi_workspaces.router)
 app.include_router(platform_document_workspaces.router)
 app.include_router(platform_operational_timelines.router)
+app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -3547,6 +3642,7 @@ app.include_router(agency_emd_workspaces.router)
 app.include_router(agency_ssr_osi_workspaces.router)
 app.include_router(agency_document_workspaces.router)
 app.include_router(agency_operational_timelines.router)
+app.include_router(agency_passenger_service_workflows.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

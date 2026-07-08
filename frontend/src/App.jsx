@@ -16,6 +16,7 @@ import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
 import TimelinePage from "./pages/agency/TimelinePage"
+import WorkflowEnginePage from "./pages/agency/WorkflowEnginePage"
 import FlightWorkspacesPage from "./pages/agency/FlightWorkspacesPage"
 import TripWorkspacesPage from "./pages/agency/TripWorkspacesPage"
 import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
@@ -135,6 +136,7 @@ import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPag
 import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
 import PlatformOperationalTimelinesPage from "./pages/platform/OperationalTimelinesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
+import PlatformPassengerServiceWorkflowsPage from "./pages/platform/PassengerServiceWorkflowsPage"
 import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
 import PlatformSsrOsiWorkspacesPage from "./pages/platform/SsrOsiWorkspacesPage"
 import PlatformTicketWorkspacesPage from "./pages/platform/TicketWorkspacesPage"
@@ -219,6 +221,7 @@ const routes = {
   "/platform/ssr-osi-workspaces": PlatformSsrOsiWorkspacesPage,
   "/platform/document-workspaces": PlatformDocumentWorkspacesPage,
   "/platform/operational-timelines": PlatformOperationalTimelinesPage,
+  "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -280,6 +283,7 @@ const routes = {
   "/agency/passenger-services": PassengerServicesPage,
   "/agency/document-workspaces": DocumentWorkspacesPage,
   "/agency/timeline": TimelinePage,
+  "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
+PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

@@ -13950,6 +13950,127 @@ class OperationalTimelineUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class PassengerServiceWorkflow(BaseDocument):
+    agency_id: str
+    workflow_reference: str
+    workflow_status: str = "draft_metadata"
+    workflow_type: Optional[str] = None
+    workflow_version: str = "1.0"
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    timeline_workspace_id: Optional[str] = None
+    current_stage: Optional[str] = None
+    next_stage: Optional[str] = None
+    previous_stage: Optional[str] = None
+    readiness_status: Optional[str] = None
+    blocking_requirements: List[str] = Field(default_factory=list)
+    completed_requirements: List[str] = Field(default_factory=list)
+    responsible_team: Optional[str] = None
+    responsible_agent: Optional[str] = None
+    related_airline: Optional[str] = None
+    workflow_priority: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
+    recommendation_pack_reference: Optional[str] = None
+    operational_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    workflow_engine_metadata_only: bool = True
+    automatic_workflow_execution_disabled: bool = True
+    ai_decision_making_disabled: bool = True
+    background_workers_disabled: bool = True
+    airline_apis_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    automatic_approvals_disabled: bool = True
+    automatic_ticketing_disabled: bool = True
+    automatic_emd_issuance_disabled: bool = True
+    automatic_messaging_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class PassengerServiceWorkflowCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    workflow_reference: Optional[str] = None
+    workflow_status: str = "draft_metadata"
+    workflow_type: Optional[str] = None
+    workflow_version: str = "1.0"
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    timeline_workspace_id: Optional[str] = None
+    current_stage: Optional[str] = None
+    next_stage: Optional[str] = None
+    previous_stage: Optional[str] = None
+    readiness_status: Optional[str] = None
+    blocking_requirements: List[str] = Field(default_factory=list)
+    completed_requirements: List[str] = Field(default_factory=list)
+    responsible_team: Optional[str] = None
+    responsible_agent: Optional[str] = None
+    related_airline: Optional[str] = None
+    workflow_priority: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
+    recommendation_pack_reference: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PassengerServiceWorkflowUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    workflow_reference: Optional[str] = None
+    workflow_status: Optional[str] = None
+    workflow_type: Optional[str] = None
+    workflow_version: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    timeline_workspace_id: Optional[str] = None
+    current_stage: Optional[str] = None
+    next_stage: Optional[str] = None
+    previous_stage: Optional[str] = None
+    readiness_status: Optional[str] = None
+    blocking_requirements: Optional[List[str]] = None
+    completed_requirements: Optional[List[str]] = None
+    responsible_team: Optional[str] = None
+    responsible_agent: Optional[str] = None
+    related_airline: Optional[str] = None
+    workflow_priority: Optional[str] = None
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
+    recommendation_pack_reference: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

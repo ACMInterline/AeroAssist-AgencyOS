@@ -16,7 +16,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
+PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
 SSR_OSI_WORKSPACE_COLLECTION = "ssr_osi_workspaces"
 
 SSR_OSI_OPERATIONAL_STATUSES = [item.value for item in SsrOsiOperationalStatus]

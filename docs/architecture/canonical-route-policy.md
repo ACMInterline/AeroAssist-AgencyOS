@@ -55,6 +55,7 @@ Phase 50.0 adds AOIE architecture APIs only under `/api/platform/airline-operati
 Phase 41.9 adds SSR / OSI operational workspace APIs only under `/api/platform/ssr-osi-workspaces/*` and `/api/agencies/{agency_id}/ssr-osi-workspaces/*`, plus frontend pages under `/platform/ssr-osi-workspaces` and `/agency/passenger-services`. It records passenger service operation metadata only and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live SSR transmission, live OSI transmission, GDS connectivity, NDC connectivity, airline APIs, AI recommendation, automatic airline approval, automatic EMD issuance, background workers, provider integrations, external API calls, or automation.
 Phase 42.0 adds document workspace APIs only under `/api/platform/document-workspaces/*` and `/api/agencies/{agency_id}/document-workspaces/*`, plus frontend pages under `/platform/document-workspaces` and `/agency/document-workspaces`. It records operational document workspace metadata only, does not duplicate the Phase 36.5 render/package/share foundation, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live document delivery, e-signature, public share links, automatic PDF generation, payment or invoice generation, external storage integrations, background workers, AI document generation, external API calls, or automation.
 Phase 42.1 adds operational timeline APIs only under `/api/platform/operational-timelines/*` and `/api/agencies/{agency_id}/operational-timelines/*`, plus frontend pages under `/platform/operational-timelines` and `/agency/timeline`. It records operational history and communication-summary metadata only and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, email sending, SMS sending, WhatsApp, Teams, Slack, live airline messaging, live customer messaging, AI summarization, background workers, provider integrations, external API calls, or automation.
+Phase 42.2 adds passenger service workflow APIs only under `/api/platform/passenger-service-workflows/*` and `/api/agencies/{agency_id}/passenger-service-workflows/*`, plus frontend pages under `/platform/passenger-service-workflows` and `/agency/workflow-engine`. It records workflow coordination metadata only and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, automatic workflow execution, AI decision making, background workers, airline APIs, GDS/NDC connectivity, automatic approvals, ticketing, EMD issuance, messaging, provider integrations, external API calls, or automation.
 
 ## Route Mapping
 
@@ -140,6 +141,8 @@ Phase 42.1 adds operational timeline APIs only under `/api/platform/operational-
 | `/agent/document-workspaces` | `/agency/document-workspaces` |
 | `/admin/operational-timelines` | `/platform/operational-timelines` |
 | `/agent/timeline` | `/agency/timeline` |
+| `/admin/passenger-service-workflows` | `/platform/passenger-service-workflows` |
+| `/agent/workflow-engine` | `/agency/workflow-engine` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

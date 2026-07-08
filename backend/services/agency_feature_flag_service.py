@@ -17,7 +17,7 @@ from services.offer_decision_export_delivery_service import actor_from_user, enu
 from services.agency_feature_flag_audit_service import AgencyFeatureFlagAuditService
 
 
-PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
+PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
 
 FLAG_COLLECTION = "agency_feature_flags"
 REVIEW_COLLECTION = "agency_feature_flag_reviews"

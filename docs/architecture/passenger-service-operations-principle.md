@@ -20,6 +20,8 @@ The Operational Platform answers what is happening:
 - tickets
 - EMDs
 - documents
+- timelines
+- workflow engine records
 - future SSR/OSI workspaces
 
 The Airline Operational Intelligence Engine answers what is possible, allowed, priced, risky, and recommended for the case. Phase 50.0 only documents this architecture. It does not execute AI, scrape airline websites, search itineraries, call providers, book, ticket, issue EMDs, or automate recommendations.
@@ -41,6 +43,12 @@ Phase 42.1 adds the Operational Timeline Workspace as the chronological history 
 Passenger Need -> Operational Workspace -> Timeline Entry -> Review Evidence -> Fulfilment Evidence
 
 Timeline entries record event metadata, communication summaries, approval history, reminders, attachments, visibility flags, and operational notes linked to passenger, request, trip, booking, ticket, EMD, SSR / OSI, and document workspaces. They remain metadata-only and do not send email, send SMS, use WhatsApp, Teams, or Slack, send live airline or customer messages, summarize with AI, run background workers, call providers, or automate actions.
+
+Phase 42.2 adds the Passenger Service Workflow Engine as the coordination layer over the operational workspaces:
+
+Passenger -> Service Requirement -> Operational Workspaces -> Timeline -> Future AOIE -> Operational Execution
+
+Workflow records track current, previous, and next stage metadata, readiness state, blocking and completed requirements, responsible team and agent, linked passenger/request/trip/booking/ticket/EMD/SSR-OSI/document/timeline workspaces, and future AOIE recommendation-pack references. They remain metadata-only and do not execute workflows, make AI decisions, start background workers, call airline APIs, connect to GDS/NDC, approve services automatically, issue tickets, issue EMDs, send messages, or automate actions.
 
 ## Governance Boundary
 

@@ -6,7 +6,7 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
+PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 
@@ -192,7 +192,7 @@ class AirlineOperationalIntelligenceService:
             "excluded_scope_count": len(EXCLUDED_SCOPE),
             "passenger_service_operations_principle": PASSENGER_SERVICE_OPERATIONS_PRINCIPLE,
             "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-            "next_operational_phase": "Phase 42.1 - Operational Timeline Workspace Foundation",
+            "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         }
 
     def sections_from_architecture(self, architecture: dict[str, Any]) -> list[dict[str, Any]]:

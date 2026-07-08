@@ -1930,6 +1930,23 @@ Avoid adding:
 
 - Email sending, SMS sending, WhatsApp, Teams, Slack, live airline messaging, live customer messaging, AI summarization, background workers, provider integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 42.2: Passenger Service Workflow Engine Foundation
+
+Implemented scope:
+
+- Added metadata-only `PassengerServiceWorkflow`, `PassengerServiceWorkflowCreate`, and `PassengerServiceWorkflowUpdate` models with agency ownership, workflow reference/status/type/version, passenger/request/trip/booking/ticket/EMD/SSR-OSI/document/timeline workspace links, current/previous/next stage metadata, readiness state, blocking and completed requirements, responsible team/agent, airline and priority filter metadata, timeline dates, future AOIE recommendation-pack reference, and operational notes.
+- Registered the additive `passenger_service_workflows` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/passenger-service-workflows` and UI at `/platform/passenger-service-workflows`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/passenger-service-workflows` and UI at `/agency/workflow-engine`.
+- Added filters by workflow stage, readiness, passenger, airline, priority, and assigned agent.
+- Added workflow stage definitions, readiness states, linked-workspace counters, and readiness flags under `passenger_service_workflow_engine_foundation`.
+- Documented the orchestration chain: Passenger -> Service Requirement -> Operational Workspaces -> Timeline -> Future AOIE -> Operational Execution.
+- Added `docs/architecture/passenger-service-workflow-engine-foundation.md`.
+
+Avoid adding:
+
+- Automatic workflow execution, AI decision making, background workers, airline APIs, GDS connectivity, NDC connectivity, automatic approvals, automatic ticketing, automatic EMD issuance, automatic messaging, provider integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 50.0: Airline Operational Intelligence Engine Architecture Foundation
 
 Implemented scope:
@@ -1939,7 +1956,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.1 Operational Timeline Workspace Foundation.
+- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 

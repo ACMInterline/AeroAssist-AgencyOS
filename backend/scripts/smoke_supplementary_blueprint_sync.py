@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_42_1_operational_timeline_workspace_foundation"
+EXPECTED_PHASE = "phase_42_2_passenger_service_workflow_engine_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -44,6 +44,7 @@ REQUIRED_CATEGORIES = {
     "EMD Workspaces",
     "Document Workspaces",
     "Operational Timelines",
+    "Passenger Service Workflows",
     "Feature Bundle Rollout Readiness",
     "Feature Bundle Rollout Plans",
     "Feature Bundle Rollout Approvals",
@@ -156,8 +157,8 @@ def main() -> int:
         raise AssertionError("Gap summary did not identify Phase 50.1 Airline Knowledge Acquisition Workspace as next.")
     if "Phase 50.1" not in gaps.get("next_intelligence_phase", ""):
         raise AssertionError("Gap summary did not identify Phase 50.1 as the next intelligence phase.")
-    if "Phase 42.1" not in gaps.get("next_operational_phase", ""):
-        raise AssertionError("Gap summary did not preserve Phase 42.1 as the next operational phase.")
+    if "Phase 42.2" not in gaps.get("next_operational_phase", ""):
+        raise AssertionError("Gap summary did not preserve Phase 42.2 as the next operational phase.")
     if not any("Tickets + EMD Foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Tickets + EMD Foundation as already built.")
     if not any("Document foundation" in item for item in gaps.get("already_built", [])):
@@ -170,6 +171,8 @@ def main() -> int:
         raise AssertionError("Gap summary did not recognize Phase 42.0 Document workspace foundation as already built.")
     if not any("Operational timeline workspace foundation built in Phase 42.1" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Phase 42.1 Operational timeline workspace foundation as already built.")
+    if not any("Passenger service workflow engine foundation built in Phase 42.2" in item for item in gaps.get("already_built", [])):
+        raise AssertionError("Gap summary did not recognize Phase 42.2 Passenger service workflow engine foundation as already built.")
     if not any("Airline Operational Intelligence Engine architecture foundation built in Phase 50.0" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Phase 50.0 AOIE foundation as already built.")
     if not any("Phase 50.9" in item for item in gaps.get("chapter_50_intelligence_track", [])):

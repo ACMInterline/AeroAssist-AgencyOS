@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
+PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -270,6 +270,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalTimeline, OperationalTimelineCreate, OperationalTimelineUpdate, OperationalTimelineService, /api/platform/operational-timelines, /api/agencies/{agency_id}/operational-timelines, /platform/operational-timelines, /agency/timeline",
         "status": "foundation adopted",
         "action": "Record metadata-only chronological operational history and communication summaries across passenger, request, trip, booking, ticket, EMD, SSR / OSI, and document workspaces without sending email, sending SMS, using WhatsApp, Teams, or Slack, sending live airline or customer messages, summarizing with AI, running background workers, integrating providers, calling external APIs, or automating actions.",
+    },
+    {
+        "category": "Passenger Service Workflows",
+        "concept": "Passenger service workflow engine metadata",
+        "supplementary_concept": "passenger service case, workflow stages, readiness states, blocking requirements, completed requirements, responsible team, responsible agent, linked operational workspaces, future AOIE recommendation reference",
+        "current_equivalent": "PassengerServiceWorkflow, PassengerServiceWorkflowCreate, PassengerServiceWorkflowUpdate, PassengerServiceWorkflowService, /api/platform/passenger-service-workflows, /api/agencies/{agency_id}/passenger-service-workflows, /platform/passenger-service-workflows, /agency/workflow-engine",
+        "status": "foundation adopted",
+        "action": "Coordinate passenger service case metadata across passenger, request, trip, booking, ticket, EMD, SSR / OSI, document, timeline, and future AOIE references without automatic workflow execution, AI decision making, background workers, airline APIs, GDS/NDC connectivity, automatic approvals, automatic ticketing, automatic EMD issuance, automatic messaging, provider integrations, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -642,6 +650,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/document-workspaces", "agencyos": "/agency/document-workspaces"},
         {"supplementary": "/admin/operational-timelines", "agencyos": "/platform/operational-timelines"},
         {"supplementary": "/agent/timeline", "agencyos": "/agency/timeline"},
+        {"supplementary": "/admin/passenger-service-workflows", "agencyos": "/platform/passenger-service-workflows"},
+        {"supplementary": "/agent/workflow-engine", "agencyos": "/agency/workflow-engine"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -659,9 +669,9 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "AOIE now has an architecture foundation. The next intelligence phase should create governed airline knowledge acquisition metadata without scraping, crawling, AI generation, provider calls, or execution.",
     },
     {
-        "phase": "Phase 42.1",
-        "title": "Operational Timeline Workspace Foundation",
-        "reason": "Chapter 42 should add chronological operational history and communication-summary metadata across passenger, request, trip, booking, ticket, EMD, SSR/OSI, and document workspaces without messaging, AI summaries, workers, providers, or automation.",
+        "phase": "Phase 42.2",
+        "title": "Passenger Service Workflow Engine Foundation",
+        "reason": "Chapter 42 should add passenger service workflow coordination metadata across passenger, request, trip, booking, ticket, EMD, SSR/OSI, document, timeline, and future AOIE references without workflow execution, AI decisions, workers, approvals, ticketing, EMD issuance, messaging, providers, or automation.",
     },
     {
         "phase": "Phase 37.8",
@@ -826,6 +836,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "DocumentWorkspaceUpdate",
             "DocumentWorkspaceStatus",
             "DocumentWorkspaceType",
+            "OperationalTimeline",
+            "OperationalTimelineCreate",
+            "OperationalTimelineUpdate",
+            "PassengerServiceWorkflow",
+            "PassengerServiceWorkflowCreate",
+            "PassengerServiceWorkflowUpdate",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -884,6 +900,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "SSR / OSI operational workspace foundation built in Phase 41.9",
             "Document workspace foundation built in Phase 42.0",
             "Operational timeline workspace foundation built in Phase 42.1",
+            "Passenger service workflow engine foundation built in Phase 42.2",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
         ],
         "deferred": [
@@ -904,7 +921,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
         ],
         "next_immediate_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
         "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-        "next_operational_phase": "Phase 42.1 - Operational Timeline Workspace Foundation",
+        "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
             "Travel request workspaces",
@@ -918,6 +935,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "SSR / OSI operational workspaces",
             "Document workspaces",
             "Operational timelines",
+            "Passenger service workflows",
         ],
         "chapter_50_intelligence_track": [
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",

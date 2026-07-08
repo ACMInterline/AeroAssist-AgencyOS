@@ -9,7 +9,7 @@ from models import DocumentWorkspace, DocumentWorkspaceCreate, DocumentWorkspace
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_42_1_operational_timeline_workspace_foundation"
+EXPECTED_PHASE = "phase_42_2_passenger_service_workflow_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 DOCUMENT_STATUSES = {
     "draft_metadata",
@@ -274,14 +274,14 @@ def verify_blueprint_adoption() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if not any("Document workspace foundation built in Phase 42.0" in item for item in gaps.get("already_built", [])):
         raise AssertionError(f"Blueprint gaps missing Document Workspace foundation marker: {gaps}")
-    if "Phase 42.1" not in gaps.get("next_operational_phase", ""):
-        raise AssertionError(f"Blueprint gaps missing Phase 42.1 operational marker: {gaps}")
+    if "Phase 42.2" not in gaps.get("next_operational_phase", ""):
+        raise AssertionError(f"Blueprint gaps missing Phase 42.2 operational marker: {gaps}")
     chapter_41 = gaps.get("chapter_41_operational_workspaces") or []
     if "Document workspaces" not in chapter_41:
         raise AssertionError(f"Chapter 41/42 operational map missing Document workspaces: {gaps}")
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not any(item.get("phase") == "Phase 42.1" for item in next_phases.get("items", [])):
-        raise AssertionError(f"Next recommendations missing Phase 42.1: {next_phases}")
+    if not any(item.get("phase") == "Phase 42.2" for item in next_phases.get("items", [])):
+        raise AssertionError(f"Next recommendations missing Phase 42.2: {next_phases}")
 
 
 def verify_readiness() -> None:
