@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_41_7_ticket_workspace_foundation"
+EXPECTED_PHASE = "phase_41_8_emd_workspace_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -40,6 +40,7 @@ REQUIRED_CATEGORIES = {
     "Offer Workspaces",
     "Booking Workspaces",
     "Ticket Workspaces",
+    "EMD Workspaces",
     "Feature Bundle Rollout Readiness",
     "Feature Bundle Rollout Plans",
     "Feature Bundle Rollout Approvals",
@@ -148,18 +149,20 @@ def main() -> int:
         raise AssertionError("Route policy should not add /agent or /admin aliases in this phase.")
 
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
-    if "Phase 37" not in gaps.get("next_immediate_phase", ""):
-        raise AssertionError("Gap summary did not identify Phase 37 provider provenance as next.")
+    if "Phase 41.8" not in gaps.get("next_immediate_phase", ""):
+        raise AssertionError("Gap summary did not identify Phase 41.8 EMD Workspace Foundation as next.")
     if not any("Tickets + EMD Foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Tickets + EMD Foundation as already built.")
     if not any("Document foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize Document Foundation as already built.")
     if not any("GDS parser foundation" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Gap summary did not recognize GDS Parser Foundation as already built.")
+    if not any("EMD workspace foundation built in Phase 41.8" in item for item in gaps.get("already_built", [])):
+        raise AssertionError("Gap summary did not recognize Phase 41.8 EMD workspace foundation as already built.")
 
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 37":
-        raise AssertionError("Next phase recommendations did not start with Phase 37.")
+    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 41.8":
+        raise AssertionError("Next phase recommendations did not start with Phase 41.8.")
 
     summary = get("/api/platform/summary", OWNER_HEADERS)
     for collection_name in ["ai_trace_events", "adm_risk_events", "gds_parse_samples", "gds_parser_runs", "gds_parse_training_samples", "airline_brand_assets"]:

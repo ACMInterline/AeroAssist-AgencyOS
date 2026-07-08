@@ -42,6 +42,7 @@ import DocumentStoragePage from "./pages/agency/DocumentStoragePage"
 import DocumentTemplatesPage from "./pages/agency/DocumentTemplatesPage"
 import DocumentsPage from "./pages/agency/DocumentsPage"
 import EmdDetailPage from "./pages/agency/EmdDetailPage"
+import EmdWorkspaceMetadataPage from "./pages/agency/EmdWorkspaceMetadataPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
@@ -129,6 +130,7 @@ import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
 import PlatformTicketWorkspacesPage from "./pages/platform/TicketWorkspacesPage"
+import PlatformEmdWorkspacesPage from "./pages/platform/EmdWorkspacesPage"
 import PlatformTripWorkspacesPage from "./pages/platform/TripWorkspacesPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
@@ -205,6 +207,7 @@ const routes = {
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
   "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
   "/platform/ticket-workspaces": PlatformTicketWorkspacesPage,
+  "/platform/emd-workspaces": PlatformEmdWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -261,6 +264,7 @@ const routes = {
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
   "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
   "/agency/ticket-workspaces": TicketWorkspaceMetadataPage,
+  "/agency/emd-workspaces": EmdWorkspaceMetadataPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

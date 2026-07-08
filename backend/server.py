@@ -8,7 +8,7 @@ from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -36,6 +36,7 @@ from services.flight_workspace_service import FLIGHT_STATUSES
 from services.trip_workspace_service import TRIP_STATUSES
 from services.offer_workspace_service import OFFER_STATUSES
 from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
+from services.emd_workspace_service import EMD_DOCUMENT_STATUSES, EMD_WORKSPACE_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
@@ -49,7 +50,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.7 ticket workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 41.8 EMD workspace foundation.",
 )
 
 app.add_middleware(
@@ -265,6 +266,51 @@ async def readiness() -> dict:
     ticket_workspace_exchange_reference_count = sum(len(item.get("exchange_reference_ids") or []) for item in ticket_workspace_records)
     ticket_workspace_refund_reference_count = sum(len(item.get("refund_reference_ids") or []) for item in ticket_workspace_records)
     ticket_workspace_void_reference_count = sum(len(item.get("void_reference_ids") or []) for item in ticket_workspace_records)
+    emd_workspace_records = await database.collection("emd_workspaces").find_many()
+    emd_workspace_count = len(emd_workspace_records)
+    emd_workspace_status_counts = {
+        emd_status: len(
+            [
+                item
+                for item in emd_workspace_records
+                if (item.get("emd_status") or "draft") == emd_status
+            ]
+        )
+        for emd_status in EMD_WORKSPACE_STATUSES
+    }
+    emd_document_status_counts = {
+        emd_status: len(
+            [
+                item
+                for item in emd_workspace_records
+                if (item.get("emd_document_status") or "draft_metadata") == emd_status
+            ]
+        )
+        for emd_status in EMD_DOCUMENT_STATUSES
+    }
+    emd_workspace_validating_carrier_count = len({item.get("validating_carrier") for item in emd_workspace_records if item.get("validating_carrier")})
+    emd_workspace_currency_count = len({item.get("currency") for item in emd_workspace_records if item.get("currency")})
+    emd_workspace_passenger_count = len({item.get("passenger_id") for item in emd_workspace_records if item.get("passenger_id")})
+    emd_workspace_rfic_count = len({item.get("rfic") for item in emd_workspace_records if item.get("rfic")})
+    emd_workspace_rfisc_count = len({item.get("rfisc") for item in emd_workspace_records if item.get("rfisc")})
+    emd_workspace_service_category_count = len({item.get("service_category") for item in emd_workspace_records if item.get("service_category")})
+    emd_workspace_booking_reference_count = len({item.get("booking_reference") for item in emd_workspace_records if item.get("booking_reference")})
+    emd_workspace_operational_workspace_count = len({item.get("operational_workspace_id") for item in emd_workspace_records if item.get("operational_workspace_id")})
+    emd_workspace_trip_workspace_count = len({item.get("trip_workspace_id") for item in emd_workspace_records if item.get("trip_workspace_id")})
+    emd_workspace_offer_workspace_count = len({item.get("offer_workspace_id") for item in emd_workspace_records if item.get("offer_workspace_id")})
+    emd_workspace_booking_workspace_count = len({item.get("booking_workspace_id") for item in emd_workspace_records if item.get("booking_workspace_id")})
+    emd_workspace_ticket_workspace_count = len({item.get("ticket_workspace_id") for item in emd_workspace_records if item.get("ticket_workspace_id")})
+    emd_workspace_coupon_detail_count = sum(len(item.get("emd_coupon_details") or []) for item in emd_workspace_records)
+    emd_workspace_tax_breakdown_count = sum(len(item.get("tax_breakdown") or []) for item in emd_workspace_records)
+    emd_workspace_associated_ticket_coupon_count = sum(len(item.get("associated_ticket_coupon_numbers") or []) for item in emd_workspace_records)
+    emd_workspace_associated_flight_workspace_count = sum(len(item.get("associated_flight_workspace_ids") or []) for item in emd_workspace_records)
+    emd_workspace_ssr_count = sum(len(item.get("ssr_ids") or []) for item in emd_workspace_records)
+    emd_workspace_osi_count = sum(len(item.get("osi_ids") or []) for item in emd_workspace_records)
+    emd_workspace_ancillary_service_count = sum(len(item.get("ancillary_service_ids") or []) for item in emd_workspace_records)
+    emd_workspace_exchange_reference_count = sum(len(item.get("exchange_reference_ids") or []) for item in emd_workspace_records)
+    emd_workspace_refund_reference_count = sum(len(item.get("refund_reference_ids") or []) for item in emd_workspace_records)
+    emd_workspace_void_reference_count = sum(len(item.get("void_reference_ids") or []) for item in emd_workspace_records)
+    emd_workspace_linked_document_count = sum(len(item.get("linked_document_ids") or []) for item in emd_workspace_records)
     booking_import_draft_count = await database.collection("booking_import_drafts").count()
     trip_change_operation_count = await database.collection("trip_change_operations").count()
     ticket_record_count = await database.collection("ticket_records").count()
@@ -2804,6 +2850,102 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 41.7 stores ticket workspace metadata only. It does not issue, reissue, void, refund, exchange, process payments, connect to GDS or NDC, call airline APIs, calculate fares, validate coupons, run background workers, call external integrations, or automate ticket operations.",
         },
+        "emd_workspace_foundation": {
+            "emd_workspaces_enabled": True,
+            "emd_workspace_metadata_enabled": True,
+            "platform_emd_workspace_metadata_crud_enabled": True,
+            "agency_emd_workspace_read_only_enabled": True,
+            "emd_workspace_filter_by_status_enabled": True,
+            "emd_workspace_filter_by_type_enabled": True,
+            "emd_workspace_filter_by_a_or_s_enabled": True,
+            "emd_workspace_filter_by_validating_carrier_enabled": True,
+            "emd_workspace_filter_by_passenger_enabled": True,
+            "emd_workspace_filter_by_rfic_enabled": True,
+            "emd_workspace_filter_by_rfisc_enabled": True,
+            "emd_workspace_filter_by_service_category_enabled": True,
+            "emd_workspace_filter_by_issue_date_enabled": True,
+            "emd_reference_metadata_enabled": True,
+            "emd_status_metadata_enabled": True,
+            "emd_document_status_metadata_enabled": True,
+            "emd_type_metadata_enabled": True,
+            "emd_number_metadata_enabled": True,
+            "emd_form_type_metadata_enabled": True,
+            "emd_a_or_s_metadata_enabled": True,
+            "validating_carrier_metadata_enabled": True,
+            "issuing_metadata_enabled": True,
+            "passenger_metadata_enabled": True,
+            "booking_reference_metadata_enabled": True,
+            "airline_pnr_metadata_enabled": True,
+            "gds_record_locator_metadata_enabled": True,
+            "associated_ticket_metadata_enabled": True,
+            "associated_ticket_coupon_metadata_enabled": True,
+            "associated_flight_metadata_enabled": True,
+            "ssr_link_metadata_enabled": True,
+            "osi_link_metadata_enabled": True,
+            "ancillary_service_link_metadata_enabled": True,
+            "rfic_metadata_enabled": True,
+            "rfisc_metadata_enabled": True,
+            "service_metadata_enabled": True,
+            "emd_coupon_status_summary_metadata_enabled": True,
+            "emd_coupon_details_metadata_enabled": True,
+            "amount_metadata_enabled": True,
+            "tax_breakdown_metadata_enabled": True,
+            "payment_metadata_enabled": True,
+            "exchange_reference_metadata_enabled": True,
+            "refund_reference_metadata_enabled": True,
+            "void_reference_metadata_enabled": True,
+            "document_link_metadata_enabled": True,
+            "lifecycle_notes_metadata_enabled": True,
+            "operational_notes_metadata_enabled": True,
+            "read_only_ui_enabled": True,
+            "metadata_only": True,
+            "emd_workspace_metadata_only": True,
+            "emd_issuance_disabled": True,
+            "emd_exchange_disabled": True,
+            "emd_refund_disabled": True,
+            "emd_voiding_disabled": True,
+            "live_gds_ndc_connectivity_disabled": True,
+            "gds_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "airline_apis_disabled": True,
+            "airline_api_calls_disabled": True,
+            "payment_processing_disabled": True,
+            "rfic_rfisc_validation_engine_disabled": True,
+            "ssr_osi_transmission_disabled": True,
+            "background_workers_disabled": True,
+            "external_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "parallel_duplicate_emd_architecture_disabled": True,
+            "automation_disabled": True,
+            "emd_workspace_count": emd_workspace_count,
+            "emd_workspace_status_counts": emd_workspace_status_counts,
+            "emd_document_status_counts": emd_document_status_counts,
+            "emd_workspace_validating_carrier_count": emd_workspace_validating_carrier_count,
+            "emd_workspace_currency_count": emd_workspace_currency_count,
+            "emd_workspace_passenger_count": emd_workspace_passenger_count,
+            "emd_workspace_rfic_count": emd_workspace_rfic_count,
+            "emd_workspace_rfisc_count": emd_workspace_rfisc_count,
+            "emd_workspace_service_category_count": emd_workspace_service_category_count,
+            "emd_workspace_booking_reference_count": emd_workspace_booking_reference_count,
+            "emd_workspace_operational_workspace_count": emd_workspace_operational_workspace_count,
+            "emd_workspace_trip_workspace_count": emd_workspace_trip_workspace_count,
+            "emd_workspace_offer_workspace_count": emd_workspace_offer_workspace_count,
+            "emd_workspace_booking_workspace_count": emd_workspace_booking_workspace_count,
+            "emd_workspace_ticket_workspace_count": emd_workspace_ticket_workspace_count,
+            "emd_workspace_coupon_detail_count": emd_workspace_coupon_detail_count,
+            "emd_workspace_tax_breakdown_count": emd_workspace_tax_breakdown_count,
+            "emd_workspace_associated_ticket_coupon_count": emd_workspace_associated_ticket_coupon_count,
+            "emd_workspace_associated_flight_workspace_count": emd_workspace_associated_flight_workspace_count,
+            "emd_workspace_ssr_count": emd_workspace_ssr_count,
+            "emd_workspace_osi_count": emd_workspace_osi_count,
+            "emd_workspace_ancillary_service_count": emd_workspace_ancillary_service_count,
+            "emd_workspace_exchange_reference_count": emd_workspace_exchange_reference_count,
+            "emd_workspace_refund_reference_count": emd_workspace_refund_reference_count,
+            "emd_workspace_void_reference_count": emd_workspace_void_reference_count,
+            "emd_workspace_linked_document_count": emd_workspace_linked_document_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 41.8 stores EMD workspace metadata only and links operational EMD records to the earlier ticket/EMD mirror, service mechanics, and ancillary pricing foundations. It does not issue, exchange, refund, void, validate RFIC/RFISC, transmit SSR/OSI, process payments, connect to GDS or NDC, call airline APIs, run background workers, create duplicate EMD architecture, call external integrations, or automate EMD operations.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -2985,6 +3127,7 @@ app.include_router(platform_trip_workspaces.router)
 app.include_router(platform_offer_workspaces.router)
 app.include_router(platform_booking_workspaces.router)
 app.include_router(platform_ticket_workspaces.router)
+app.include_router(platform_emd_workspaces.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -3048,6 +3191,7 @@ app.include_router(agency_flight_workspaces.router)
 app.include_router(agency_trip_workspaces.router)
 app.include_router(agency_offer_workspaces.router)
 app.include_router(agency_ticket_workspaces.router)
+app.include_router(agency_emd_workspaces.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

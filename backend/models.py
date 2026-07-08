@@ -13058,6 +13058,260 @@ class TicketWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class EmdWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEW = "review"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
+class EmdWorkspaceDocumentStatus(str, Enum):
+    DRAFT_METADATA = "draft_metadata"
+    ISSUED = "issued"
+    VOIDED = "voided"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+
+
+class EmdWorkspaceCouponStatus(str, Enum):
+    OPEN_FOR_USE = "open_for_use"
+    AIRPORT_CONTROL = "airport_control"
+    CHECKED_IN = "checked_in"
+    FLOWN = "flown"
+    USED = "used"
+    CLOSED = "closed"
+    SUSPENDED = "suspended"
+    VOID = "void"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    UNKNOWN = "unknown"
+
+
+class EmdWorkspaceCouponDetail(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    coupon_number: Optional[str] = None
+    coupon_status: EmdWorkspaceCouponStatus = EmdWorkspaceCouponStatus.UNKNOWN
+    associated_ticket_number: Optional[str] = None
+    associated_ticket_coupon_number: Optional[str] = None
+    flight_workspace_id: Optional[str] = None
+    segment_reference: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_description: Optional[str] = None
+    service_date: Optional[date] = None
+    not_valid_before: Optional[date] = None
+    not_valid_after: Optional[date] = None
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    remarks: Optional[str] = None
+    metadata_only: bool = True
+
+
+class EmdWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_reference: str
+    emd_status: EmdWorkspaceStatus = EmdWorkspaceStatus.DRAFT
+    emd_document_status: EmdWorkspaceDocumentStatus = EmdWorkspaceDocumentStatus.DRAFT_METADATA
+    emd_type: Optional[str] = None
+    emd_number: Optional[str] = None
+    emd_form_type: Optional[str] = None
+    emd_a_or_s: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    associated_ticket_number: Optional[str] = None
+    associated_ticket_coupon_numbers: List[str] = Field(default_factory=list)
+    associated_flight_workspace_ids: List[str] = Field(default_factory=list)
+    ssr_ids: List[str] = Field(default_factory=list)
+    osi_ids: List[str] = Field(default_factory=list)
+    ancillary_service_ids: List[str] = Field(default_factory=list)
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_reason: Optional[str] = None
+    service_description: Optional[str] = None
+    service_category: Optional[str] = None
+    service_status: Optional[str] = None
+    service_quantity: Optional[float] = None
+    service_route_scope: Optional[str] = None
+    service_segment_scope: Optional[str] = None
+    emd_coupon_status_summary: Optional[str] = None
+    emd_coupon_details: List[EmdWorkspaceCouponDetail] = Field(default_factory=list)
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    tax_breakdown: List[Dict[str, Any]] = Field(default_factory=list)
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    exchange_reference_ids: List[str] = Field(default_factory=list)
+    refund_reference_ids: List[str] = Field(default_factory=list)
+    void_reference_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    emd_workspace_metadata_only: bool = True
+    emd_issuance_disabled: bool = True
+    emd_exchange_disabled: bool = True
+    emd_refund_disabled: bool = True
+    emd_voiding_disabled: bool = True
+    live_gds_ndc_connectivity_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    payment_processing_disabled: bool = True
+    rfic_rfisc_validation_engine_disabled: bool = True
+    ssr_osi_transmission_disabled: bool = True
+    background_workers_disabled: bool = True
+    external_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    parallel_duplicate_emd_architecture_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class EmdWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_reference: Optional[str] = None
+    emd_status: EmdWorkspaceStatus = EmdWorkspaceStatus.DRAFT
+    emd_document_status: EmdWorkspaceDocumentStatus = EmdWorkspaceDocumentStatus.DRAFT_METADATA
+    emd_type: Optional[str] = None
+    emd_number: Optional[str] = None
+    emd_form_type: Optional[str] = None
+    emd_a_or_s: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    associated_ticket_number: Optional[str] = None
+    associated_ticket_coupon_numbers: List[str] = Field(default_factory=list)
+    associated_flight_workspace_ids: List[str] = Field(default_factory=list)
+    ssr_ids: List[str] = Field(default_factory=list)
+    osi_ids: List[str] = Field(default_factory=list)
+    ancillary_service_ids: List[str] = Field(default_factory=list)
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_reason: Optional[str] = None
+    service_description: Optional[str] = None
+    service_category: Optional[str] = None
+    service_status: Optional[str] = None
+    service_quantity: Optional[float] = None
+    service_route_scope: Optional[str] = None
+    service_segment_scope: Optional[str] = None
+    emd_coupon_status_summary: Optional[str] = None
+    emd_coupon_details: List[EmdWorkspaceCouponDetail] = Field(default_factory=list)
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    tax_breakdown: List[Dict[str, Any]] = Field(default_factory=list)
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    exchange_reference_ids: List[str] = Field(default_factory=list)
+    refund_reference_ids: List[str] = Field(default_factory=list)
+    void_reference_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class EmdWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_reference: Optional[str] = None
+    emd_status: Optional[EmdWorkspaceStatus] = None
+    emd_document_status: Optional[EmdWorkspaceDocumentStatus] = None
+    emd_type: Optional[str] = None
+    emd_number: Optional[str] = None
+    emd_form_type: Optional[str] = None
+    emd_a_or_s: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    associated_ticket_number: Optional[str] = None
+    associated_ticket_coupon_numbers: Optional[List[str]] = None
+    associated_flight_workspace_ids: Optional[List[str]] = None
+    ssr_ids: Optional[List[str]] = None
+    osi_ids: Optional[List[str]] = None
+    ancillary_service_ids: Optional[List[str]] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    service_reason: Optional[str] = None
+    service_description: Optional[str] = None
+    service_category: Optional[str] = None
+    service_status: Optional[str] = None
+    service_quantity: Optional[float] = None
+    service_route_scope: Optional[str] = None
+    service_segment_scope: Optional[str] = None
+    emd_coupon_status_summary: Optional[str] = None
+    emd_coupon_details: Optional[List[EmdWorkspaceCouponDetail]] = None
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    tax_breakdown: Optional[List[Dict[str, Any]]] = None
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    exchange_reference_ids: Optional[List[str]] = None
+    refund_reference_ids: Optional[List[str]] = None
+    void_reference_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_7_ticket_workspace_foundation"
+PHASE_LABEL = "phase_41_8_emd_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -232,6 +232,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "action": "Record metadata-only agency ticket workspace records and read-only agency visibility without ticket issuance, ticket reissue, voiding, refunds, exchanges, payment processing, GDS/NDC connectivity, airline APIs, fare calculation, fare recalculation, automated ticket validation, coupon validation, background workers, external integrations, external APIs, or automation.",
     },
     {
+        "category": "EMD Workspaces",
+        "concept": "EMD workspace metadata",
+        "supplementary_concept": "agency EMD workspace, operational workspace link, trip workspace link, offer workspace link, booking workspace link, ticket workspace link, EMD reference, EMD status, EMD document status, EMD number, EMD-A/EMD-S, validating carrier, passenger, booking reference, airline PNR, GDS locator, associated ticket, associated ticket coupons, associated flights, SSR/OSI links, ancillary service links, RFIC/RFISC, service reason, service category, coupon status summary, coupon details, amounts, tax breakdown, payment references, exchange/refund/void references, documents, lifecycle notes, operational notes",
+        "current_equivalent": "EmdWorkspace, EmdWorkspaceCreate, EmdWorkspaceUpdate, EmdWorkspaceStatus, EmdWorkspaceDocumentStatus, EmdWorkspaceCouponStatus, EmdWorkspaceCouponDetail, EmdWorkspaceService, /api/platform/emd-workspaces, /api/agencies/{agency_id}/emd-workspaces, /platform/emd-workspaces, /agency/emd-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency EMD workspace records and read-only agency visibility while linking to the existing Phase 36.4 ticket/EMD mirror foundation, Phase 36.9 service mechanics, and Phase 37.0 ancillary pricing metadata without issuing, exchanging, refunding, voiding, validating RFIC/RFISC, transmitting SSR/OSI, processing payments, connecting to providers, or creating parallel duplicate EMD architecture.",
+    },
+    {
         "category": "Feature Bundle Rollout Readiness",
         "concept": "Assigned bundle readiness review metadata",
         "supplementary_concept": "rollout checklist, readiness status, warning and blocker summaries, agency read-only readiness visibility",
@@ -307,9 +315,9 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "category": "Tickets/EMDs",
         "concept": "Ticket and EMD mirrors",
         "supplementary_concept": "tickets, ticket coupons, EMDs, EMD coupons",
-        "current_equivalent": "ticket_records, ticket_coupons, emd_records, emd_coupons, ticket_emd_timeline_events",
+        "current_equivalent": "ticket_records, ticket_coupons, emd_records, emd_coupons, ticket_emd_timeline_events, ticket_workspaces, emd_workspaces",
         "status": "built",
-        "action": "Recognize Phase 36.4 Tickets + EMD Foundation; do not create duplicate ticket or EMD models.",
+        "action": "Recognize Phase 36.4 Tickets + EMD Foundation and the Phase 41 ticket/EMD workspace operational metadata layer; do not create duplicate ticket or EMD execution architectures.",
     },
     {
         "category": "Documents",
@@ -578,6 +586,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/booking-workspaces", "agencyos": "/agency/booking-workspaces"},
         {"supplementary": "/admin/ticket-workspaces", "agencyos": "/platform/ticket-workspaces"},
         {"supplementary": "/agent/ticket-workspaces", "agencyos": "/agency/ticket-workspaces"},
+        {"supplementary": "/admin/emd-workspaces", "agencyos": "/platform/emd-workspaces"},
+        {"supplementary": "/agent/emd-workspaces", "agencyos": "/agency/emd-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -604,9 +614,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 37",
-        "title": "Provider Import And Issuance Provenance",
-        "reason": "Document and governed parser foundations are now in place; the next gap is provider import provenance and reconciliation around booking, ticket, and EMD mirrors.",
+        "phase": "Phase 41.8",
+        "title": "EMD Workspace Foundation",
+        "reason": "Chapter 41 operational workspaces now need EMD workspace metadata that links to the existing ticket/EMD mirror, service mechanics, and ancillary pricing foundations without issuing, exchanging, refunding, voiding, provider execution, validation engines, or duplicate EMD architecture.",
     },
     {
         "phase": "Phase 39.10",
@@ -756,6 +766,13 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "RolloutDashboardSnapshot",
             "RolloutDashboardFilters",
             "CapabilityCatalogEntry",
+            "EmdWorkspace",
+            "EmdWorkspaceCreate",
+            "EmdWorkspaceUpdate",
+            "EmdWorkspaceStatus",
+            "EmdWorkspaceDocumentStatus",
+            "EmdWorkspaceCouponStatus",
+            "EmdWorkspaceCouponDetail",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -802,6 +819,15 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Feature bundle rollout schedule foundation built in Phase 40.5",
             "Feature bundle rollout timeline foundation built in Phase 40.6",
             "Capability catalog foundation built in Phase 40.1",
+            "Operational travel workspace foundation built in Phase 41.0",
+            "Travel request workspace foundation built in Phase 41.1",
+            "Passenger workspace foundation built in Phase 41.2",
+            "Flight workspace foundation built in Phase 41.3",
+            "Trip workspace foundation built in Phase 41.4",
+            "Offer workspace foundation built in Phase 41.5",
+            "Booking workspace foundation built in Phase 41.6",
+            "Ticket workspace foundation built in Phase 41.7",
+            "EMD workspace foundation built in Phase 41.8",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -819,7 +845,19 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 37 - Provider Import And Issuance Provenance",
+        "next_immediate_phase": "Phase 41.8 - EMD Workspace Foundation",
+        "chapter_41_operational_workspaces": [
+            "Operational travel workspaces",
+            "Travel request workspaces",
+            "Passenger workspaces",
+            "Flight workspaces",
+            "Trip workspaces",
+            "Offer workspaces",
+            "Booking workspaces",
+            "Ticket workspaces",
+            "EMD workspaces",
+        ],
+        "chapter_41_not_duplicate_ticket_emd_foundations": "Chapter 41 ticket and EMD workspaces are operational metadata views linked to Phase 36.4 mirrors, not parallel issuance architectures.",
         "gap_count": 6,
         "rejected_route_count": len(ROUTE_POLICY["rejected_routes"]),
     }

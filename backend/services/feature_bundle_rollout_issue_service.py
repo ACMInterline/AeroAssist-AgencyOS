@@ -16,7 +16,7 @@ from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_41_7_ticket_workspace_foundation"
+PHASE_LABEL = "phase_41_8_emd_workspace_foundation"
 
 ISSUE_COLLECTION = "feature_bundle_rollout_issues"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

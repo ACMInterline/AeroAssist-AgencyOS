@@ -1864,6 +1864,22 @@ Avoid adding:
 
 - Ticket issuance, ticket reissue, voiding, refunds, exchanges, payment processing, GDS connectivity, NDC connectivity, airline APIs, fare calculation, fare recalculation, automated ticket validation, coupon validation, background workers, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.8: EMD Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `EmdWorkspace`, `EmdWorkspaceCreate`, `EmdWorkspaceUpdate`, `EmdWorkspaceStatus`, `EmdWorkspaceDocumentStatus`, `EmdWorkspaceCouponStatus`, and `EmdWorkspaceCouponDetail` models with EMD references, workspace status, whole-document status, EMD number, EMD-A/EMD-S metadata, validating carrier, issuing metadata, passenger, booking reference, airline PNR, GDS locator, associated ticket/coupon and flight links, SSR/OSI links, ancillary service links, RFIC/RFISC metadata, service metadata, coupon details, fare/tax/payment metadata, exchange/refund/void references, documents, lifecycle notes, and operational notes.
+- Registered the additive `emd_workspaces` collection and lookup indexes without destructive migrations or duplicate EMD architecture.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/emd-workspaces`.
+- Added agency read-only metadata APIs at `/api/agencies/{agency_id}/emd-workspaces` and UI at `/agency/emd-workspaces`.
+- Added filters by agency, EMD status, EMD type, EMD-A/EMD-S, validating carrier, passenger, RFIC, RFISC, service category, and issue date.
+- Added readiness flags under `emd_workspace_foundation`.
+- Added `docs/architecture/emd-workspace-foundation.md`.
+
+Avoid adding:
+
+- EMD issuance, EMD exchange, EMD refund, EMD voiding, live GDS/NDC connectivity, airline APIs, payment processing, RFIC/RFISC validation engines, SSR/OSI transmission, background workers, external integrations, automation, parallel duplicate EMD architecture, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:
