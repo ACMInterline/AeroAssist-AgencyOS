@@ -74,9 +74,9 @@ Matrix records can describe capability by:
 
 ## Future Consumers
 
-Future Phase 50.6 consumes the matrix for metadata-only operational rule evaluation.
+Phase 50.6 consumes the matrix for metadata-only Operational Knowledge Evaluation records.
 
-Future Phase 50.7 consumes rule evaluation outputs for passenger service feasibility.
+Future Phase 50.7 consumes Operational Evaluation Results for passenger service feasibility.
 
 Neither future relationship changes Phase 50.5 into an execution engine. The matrix remains an operational inventory.
 

@@ -15684,6 +15684,243 @@ class AirlineCapabilityMatrixUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalKnowledgeEvaluation(BaseDocument):
+    agency_id: Optional[str] = None
+    evaluation_reference: str
+    evaluation_status: str = "draft"
+    evaluation_type: Optional[str] = None
+    evaluation_version: Optional[str] = None
+    created_by: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_constraint_ids: List[str] = Field(default_factory=list)
+    acquisition_ids: List[str] = Field(default_factory=list)
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    evaluated_service_domains: List[str] = Field(default_factory=list)
+    evaluated_service_families: List[str] = Field(default_factory=list)
+    evaluated_ssrs: List[str] = Field(default_factory=list)
+    evaluated_osis: List[str] = Field(default_factory=list)
+    evaluated_emd_requirements: List[str] = Field(default_factory=list)
+    evaluation_completed: bool = False
+    evaluation_confidence: Optional[str] = None
+    evaluation_reasoning_available: bool = True
+    capability_result: Optional[str] = None
+    capability_reason: Optional[str] = None
+    capability_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_result: Optional[str] = None
+    policy_reason: Optional[str] = None
+    policy_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_result: Optional[str] = None
+    pricing_reason: Optional[str] = None
+    pricing_reference: Optional[str] = None
+    constraint_result: Optional[str] = None
+    constraint_reason: Optional[str] = None
+    triggered_constraints: List[str] = Field(default_factory=list)
+    blocking_constraints: List[str] = Field(default_factory=list)
+    warning_constraints: List[str] = Field(default_factory=list)
+    operational_procedure_result: Optional[str] = None
+    operational_procedure_reason: Optional[str] = None
+    operational_result: Optional[str] = None
+    operational_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
+    required_ssrs: List[str] = Field(default_factory=list)
+    required_osis: List[str] = Field(default_factory=list)
+    required_emds: List[str] = Field(default_factory=list)
+    required_documents: List[str] = Field(default_factory=list)
+    required_medif: bool = False
+    required_manual_review: bool = False
+    required_airline_approval: bool = False
+    required_station_notification: bool = False
+    required_crew_notification: bool = False
+    evaluation_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluated_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    structured_explanation: Dict[str, Any] = Field(default_factory=dict)
+    operational_risk: Optional[str] = None
+    operational_risk_reason: Optional[str] = None
+    feasibility_ready: bool = False
+    recommendation_ready: bool = False
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_knowledge_evaluation_foundation: bool = True
+    deterministic_evaluation: bool = True
+    explainable_evaluation: bool = True
+    evidence_required: bool = True
+    no_ai_reasoning: bool = True
+    no_llm_prompts: bool = True
+    flight_search_disabled: bool = True
+    itinerary_recommendation_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    parser_execution_disabled: bool = True
+    pricing_optimisation_disabled: bool = True
+    background_workers_disabled: bool = True
+    feasibility_determination_disabled: bool = True
+    recommendation_engine_disabled: bool = True
+
+
+class OperationalKnowledgeEvaluationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    evaluation_reference: Optional[str] = None
+    evaluation_status: str = "draft"
+    evaluation_type: Optional[str] = None
+    evaluation_version: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_constraint_ids: List[str] = Field(default_factory=list)
+    acquisition_ids: List[str] = Field(default_factory=list)
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    evaluated_service_domains: List[str] = Field(default_factory=list)
+    evaluated_service_families: List[str] = Field(default_factory=list)
+    evaluated_ssrs: List[str] = Field(default_factory=list)
+    evaluated_osis: List[str] = Field(default_factory=list)
+    evaluated_emd_requirements: List[str] = Field(default_factory=list)
+    evaluation_completed: bool = False
+    evaluation_confidence: Optional[str] = None
+    evaluation_reasoning_available: bool = True
+    capability_result: Optional[str] = None
+    capability_reason: Optional[str] = None
+    capability_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    policy_result: Optional[str] = None
+    policy_reason: Optional[str] = None
+    policy_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_result: Optional[str] = None
+    pricing_reason: Optional[str] = None
+    pricing_reference: Optional[str] = None
+    constraint_result: Optional[str] = None
+    constraint_reason: Optional[str] = None
+    triggered_constraints: List[str] = Field(default_factory=list)
+    blocking_constraints: List[str] = Field(default_factory=list)
+    warning_constraints: List[str] = Field(default_factory=list)
+    operational_procedure_result: Optional[str] = None
+    operational_procedure_reason: Optional[str] = None
+    operational_result: Optional[str] = None
+    operational_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
+    required_ssrs: List[str] = Field(default_factory=list)
+    required_osis: List[str] = Field(default_factory=list)
+    required_emds: List[str] = Field(default_factory=list)
+    required_documents: List[str] = Field(default_factory=list)
+    required_medif: bool = False
+    required_manual_review: bool = False
+    required_airline_approval: bool = False
+    required_station_notification: bool = False
+    required_crew_notification: bool = False
+    evaluation_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluated_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    structured_explanation: Dict[str, Any] = Field(default_factory=dict)
+    operational_risk: Optional[str] = None
+    operational_risk_reason: Optional[str] = None
+    feasibility_ready: bool = False
+    recommendation_ready: bool = False
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalKnowledgeEvaluationUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    evaluation_reference: Optional[str] = None
+    evaluation_status: Optional[str] = None
+    evaluation_type: Optional[str] = None
+    evaluation_version: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    knowledge_version_ids: Optional[List[str]] = None
+    capability_matrix_ids: Optional[List[str]] = None
+    operational_constraint_ids: Optional[List[str]] = None
+    acquisition_ids: Optional[List[str]] = None
+    evidence_reference_ids: Optional[List[str]] = None
+    evaluated_service_domains: Optional[List[str]] = None
+    evaluated_service_families: Optional[List[str]] = None
+    evaluated_ssrs: Optional[List[str]] = None
+    evaluated_osis: Optional[List[str]] = None
+    evaluated_emd_requirements: Optional[List[str]] = None
+    evaluation_completed: Optional[bool] = None
+    evaluation_confidence: Optional[str] = None
+    evaluation_reasoning_available: Optional[bool] = None
+    capability_result: Optional[str] = None
+    capability_reason: Optional[str] = None
+    capability_evidence: Optional[List[Dict[str, Any]]] = None
+    policy_result: Optional[str] = None
+    policy_reason: Optional[str] = None
+    policy_evidence: Optional[List[Dict[str, Any]]] = None
+    pricing_result: Optional[str] = None
+    pricing_reason: Optional[str] = None
+    pricing_reference: Optional[str] = None
+    constraint_result: Optional[str] = None
+    constraint_reason: Optional[str] = None
+    triggered_constraints: Optional[List[str]] = None
+    blocking_constraints: Optional[List[str]] = None
+    warning_constraints: Optional[List[str]] = None
+    operational_procedure_result: Optional[str] = None
+    operational_procedure_reason: Optional[str] = None
+    operational_result: Optional[str] = None
+    operational_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
+    required_ssrs: Optional[List[str]] = None
+    required_osis: Optional[List[str]] = None
+    required_emds: Optional[List[str]] = None
+    required_documents: Optional[List[str]] = None
+    required_medif: Optional[bool] = None
+    required_manual_review: Optional[bool] = None
+    required_airline_approval: Optional[bool] = None
+    required_station_notification: Optional[bool] = None
+    required_crew_notification: Optional[bool] = None
+    evaluation_steps: Optional[List[Dict[str, Any]]] = None
+    evaluated_objects: Optional[List[Dict[str, Any]]] = None
+    evidence_trace: Optional[List[Dict[str, Any]]] = None
+    structured_explanation: Optional[Dict[str, Any]] = None
+    operational_risk: Optional[str] = None
+    operational_risk_reason: Optional[str] = None
+    feasibility_ready: Optional[bool] = None
+    recommendation_ready: Optional[bool] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -83,7 +83,7 @@ Phase 50.1 feeds Phase 50.2, Phase 50.3, and future metadata foundations:
 - 50.3 Airline Operational Knowledge Normalisation
 - 50.4 Airline Operational Knowledge Governance & Version Control
 - 50.5 Airline Operational Capability Matrix
-- 50.6 Operational Rule Evaluation Engine
+- 50.6 Operational Knowledge Evaluation Engine
 - 50.7 Passenger Service Feasibility Engine
 - 50.8 Airline & Itinerary Recommendation Engine
 - 50.9 Offer Builder Intelligence Integration

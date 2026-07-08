@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgeAcquisition, AirlineKnowledgeAcquisitionCreate, AirlineKnowledgeAcquisitionUpdate, new_id
 
 
-PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
+PHASE_LABEL = "phase_50_6_operational_knowledge_evaluation_engine_foundation"
 AIRLINE_KNOWLEDGE_ACQUISITION_COLLECTION = "airline_knowledge_acquisitions"
 
 ACQUISITION_STATUSES = [
@@ -53,7 +53,7 @@ FUTURE_AOIE_FEEDS = [
     "50.3 Airline Operational Knowledge Normalisation",
     "50.4 Knowledge Governance & Version Control",
     "50.5 Airline Operational Capability Matrix",
-    "50.6 Operational Rule Evaluation Engine",
+    "50.6 Operational Knowledge Evaluation Engine",
     "50.7 Passenger Service Feasibility Engine",
     "50.8 Airline & Itinerary Recommendation Engine",
     "50.9 Offer Builder Intelligence Integration",

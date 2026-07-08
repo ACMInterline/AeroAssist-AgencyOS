@@ -18,7 +18,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
+PHASE_LABEL = "phase_50_6_operational_knowledge_evaluation_engine_foundation"
 
 APPROVAL_COLLECTION = "feature_bundle_rollout_approvals"
 NOTE_COLLECTION = "feature_bundle_rollout_approval_notes"

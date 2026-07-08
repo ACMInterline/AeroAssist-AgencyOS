@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, new_id
 
 
-PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
+PHASE_LABEL = "phase_50_6_operational_knowledge_evaluation_engine_foundation"
 OPERATIONAL_CONSTRAINT_COLLECTION = "operational_constraints"
 
 CONSTRAINT_STATUSES = [

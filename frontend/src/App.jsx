@@ -32,6 +32,7 @@ import CapabilityMatrixPage from "./pages/agency/CapabilityMatrixPage"
 import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
 import KnowledgeGovernancePage from "./pages/agency/KnowledgeGovernancePage"
 import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPage"
+import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
@@ -114,6 +115,7 @@ import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAc
 import AirlineKnowledgeGovernancePage from "./pages/platform/AirlineKnowledgeGovernancePage"
 import AirlineKnowledgeNormalisationPage from "./pages/platform/AirlineKnowledgeNormalisationPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
+import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
@@ -248,6 +250,7 @@ const routes = {
   "/platform/airline-knowledge-governance": AirlineKnowledgeGovernancePage,
   "/platform/airline-knowledge-releases": AirlineKnowledgeGovernancePage,
   "/platform/airline-capability-matrix": AirlineCapabilityMatrixPage,
+  "/platform/operational-evaluations": PlatformOperationalEvaluationsPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -318,6 +321,7 @@ const routes = {
   "/agency/knowledge-normalisation": KnowledgeNormalisationPage,
   "/agency/knowledge-governance": KnowledgeGovernancePage,
   "/agency/capability-matrix": CapabilityMatrixPage,
+  "/agency/operational-evaluations": OperationalEvaluationsPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

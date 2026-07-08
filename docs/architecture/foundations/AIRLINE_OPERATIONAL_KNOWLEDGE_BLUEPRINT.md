@@ -16,6 +16,8 @@ Phase 50.4 implements the metadata-only governance and version-control layer for
 
 Phase 50.5 implements the metadata-only Airline Operational Capability Matrix. It records what airlines can operationally deliver by airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare context, restrictions, risk, confidence, evidence, and governance references. It does not evaluate passenger cases, score feasibility, rank airlines, calculate pricing, call providers, or automate decisions.
 
+Phase 50.6 implements the metadata-only Operational Knowledge Evaluation Engine. It records deterministic, explainable Operational Evaluation Results for what operationally applies to a passenger operational requirement. Evaluation is not recommendation. Evaluation does not determine passenger feasibility. It only consumes Knowledge Acquisition, Knowledge Normalisation, Operational Constraints, Knowledge Governance, and Capability Matrix metadata.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -24,7 +26,7 @@ Phase 50.5 implements the metadata-only Airline Operational Capability Matrix. I
 - 50.3 Knowledge Normalisation
 - 50.4 Knowledge Governance & Version Control
 - 50.5 Airline Operational Capability Matrix
-- 50.6 Operational Rule Evaluation Engine
+- 50.6 Operational Knowledge Evaluation Engine
 - 50.7 Passenger Service Feasibility Engine
 - 50.8 Airline & Itinerary Recommendation Engine
 - 50.9 Offer Builder Intelligence Integration

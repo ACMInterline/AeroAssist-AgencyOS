@@ -1998,7 +1998,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.6 Operational Rule Evaluation Engine Foundation after Phase 50.5 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
+- Set next intelligence phase to Phase 50.6 Operational Knowledge Evaluation Engine Foundation after Phase 50.5 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 
@@ -2015,7 +2015,7 @@ Implemented scope:
 - Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
 - Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
 - Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
-- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, Phase 50.5 Airline Operational Capability Matrix, and future AOIE phases: 50.6 Operational Rule Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
+- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, Phase 50.5 Airline Operational Capability Matrix, and future AOIE phases: 50.6 Operational Knowledge Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
 - Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
 - Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
 
@@ -2088,6 +2088,24 @@ Implemented scope:
 Avoid adding:
 
 - Live rule evaluation, passenger feasibility scoring, airline recommendation ranking, AI reasoning, parser execution, pricing calculation, provider integrations, background workers, automatic publication, scraping, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 50.6: Operational Knowledge Evaluation Engine Foundation
+
+Implemented scope:
+
+- Added metadata-only `OperationalKnowledgeEvaluation`, `OperationalKnowledgeEvaluationCreate`, and `OperationalKnowledgeEvaluationUpdate` models for deterministic, evidence-backed operational evaluation records.
+- Registered the additive `operational_knowledge_evaluations` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/operational-evaluations` and UI at `/platform/operational-evaluations`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/operational-evaluations` and UI at `/agency/operational-evaluations`.
+- Added metadata sections for Evaluation Overview, Passenger Context, Trip Context, Airline Context, Knowledge Sources, Evaluation Scope, Capability Evaluation, Policy Evaluation, Pricing Evaluation, Constraint Evaluation, Procedure Evaluation, Required Operational Actions, Evidence Trace, Operational Risk, Lifecycle, and Notes.
+- Added filters by agency, evaluation status/type, airline, passenger, travel request, trip, booking, service domain/family, SSR, capability/policy/pricing/constraint/operational result, risk, confidence, and completion status.
+- Added readiness flags under `operational_knowledge_evaluation_engine_foundation`.
+- Added `docs/architecture/operational-knowledge-evaluation-engine-foundation.md`.
+- Clarified that evaluation determines what operationally applies. Evaluation is not recommendation, does not determine passenger feasibility, and exists as the Phase 50.7 input.
+
+Avoid adding:
+
+- AI reasoning, LLM prompts, flight search, itinerary recommendation, passenger feasibility scoring, booking, ticketing, provider integrations, parser execution, pricing optimisation, background workers, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

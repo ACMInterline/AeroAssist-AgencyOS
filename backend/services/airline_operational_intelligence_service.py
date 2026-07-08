@@ -6,7 +6,7 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
+PHASE_LABEL = "phase_50_6_operational_knowledge_evaluation_engine_foundation"
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 
@@ -40,7 +40,7 @@ FUTURE_AOIE_PHASES = [
     "50.3 Airline Operational Knowledge Normalisation Foundation",
     "50.4 Airline Operational Knowledge Governance & Version Control Foundation",
     "50.5 Airline Operational Capability Matrix Foundation",
-    "50.6 Operational Rule Evaluation Engine Foundation",
+    "50.6 Operational Knowledge Evaluation Engine Foundation",
     "50.7 Passenger Service Feasibility Engine Foundation",
     "50.8 Airline & Itinerary Recommendation Engine Foundation",
     "50.9 Offer Builder Intelligence Integration Foundation",
@@ -192,7 +192,7 @@ class AirlineOperationalIntelligenceService:
             "future_aoie_phase_count": len(FUTURE_AOIE_PHASES),
             "excluded_scope_count": len(EXCLUDED_SCOPE),
             "passenger_service_operations_principle": PASSENGER_SERVICE_OPERATIONS_PRINCIPLE,
-            "next_intelligence_phase": "Phase 50.6 - Operational Rule Evaluation Engine Foundation",
+            "next_intelligence_phase": "Phase 50.7 - Passenger Service Feasibility Engine Foundation",
             "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         }
 
@@ -204,6 +204,7 @@ class AirlineOperationalIntelligenceService:
             {"key": "knowledge_normalisation", "label": "Knowledge Normalisation", "body": architecture.get("knowledge_normalisation_scope")},
             {"key": "versioning_and_human_approval", "label": "Versioning and Human Approval", "body": f"{architecture.get('knowledge_versioning_scope')} {architecture.get('knowledge_approval_scope')}"},
             {"key": "airline_capability_matrix", "label": "Airline Capability Matrix", "body": "Phase 50.5 records metadata for what airlines can operationally deliver across canonical services, mechanics, conditions, aircraft, cabins, stations, routes, and operational constraints. Future phases consume it without replacing it."},
+            {"key": "operational_knowledge_evaluations", "label": "Operational Knowledge Evaluations", "body": "Phase 50.6 records deterministic, explainable evaluation metadata for what operational knowledge applies to passenger operational requirements. It references evidence and does not determine feasibility, recommend airlines, use AI, search flights, book, ticket, call providers, execute parsers, optimise pricing, or run workers."},
             {"key": "passenger_service_feasibility", "label": "Passenger Service Feasibility", "body": architecture.get("operational_feasibility_scope")},
             {"key": "airline_itinerary_recommendation", "label": "Airline-Itinerary Recommendation", "body": architecture.get("airline_recommendation_scope")},
             {"key": "total_journey_cost_comparison", "label": "Total Journey Cost Comparison", "body": "Future AOIE phases will compare airfare, ancillary fees, penalties, service quality, operational risk, documents, and deadlines as metadata for human review."},
