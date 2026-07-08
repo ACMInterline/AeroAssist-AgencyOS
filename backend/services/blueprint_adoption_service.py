@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_6_booking_workspace_foundation"
+PHASE_LABEL = "phase_41_7_ticket_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -222,6 +222,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "BookingWorkspace, BookingWorkspaceMetadataCreate, BookingWorkspaceMetadataUpdate, BookingWorkspaceService, /api/platform/booking-workspaces, /api/agencies/{agency_id}/booking-workspaces, /platform/booking-workspaces, /agency/booking-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency booking workspace records and read-only agency visibility without live booking creation, ticket issuance, GDS/NDC connectivity, airline APIs, payment processing, fare calculation, AI, background workers, automatic booking confirmation, automatic ticket generation, external integrations, external APIs, or automation.",
+    },
+    {
+        "category": "Ticket Workspaces",
+        "concept": "Ticket workspace metadata",
+        "supplementary_concept": "agency ticket workspace, operational workspace link, trip workspace link, offer workspace link, booking workspace link, ticket reference, workspace status, ticket document status, ticket number, validating carrier, issuing metadata, passenger, booking reference, airline PNR, GDS locator, flights, fare summary, fare calculation line, NUC total, ROE, equivalent fare paid, form of payment, tax breakdown, pricing units, fare components, coupon status summary, coupon details with coupon-level fare basis, exchange references, refund references, void references, baggage, endorsements, restrictions, EMDs, documents, lifecycle notes, operational notes",
+        "current_equivalent": "TicketWorkspace, TicketWorkspaceCreate, TicketWorkspaceUpdate, TicketWorkspaceStatus, TicketDocumentStatus, TicketWorkspaceCouponStatus, TicketWorkspacePricingUnit, TicketWorkspaceFareComponent, TicketWorkspaceService, /api/platform/ticket-workspaces, /api/agencies/{agency_id}/ticket-workspaces, /platform/ticket-workspaces, /agency/ticket-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency ticket workspace records and read-only agency visibility without ticket issuance, ticket reissue, voiding, refunds, exchanges, payment processing, GDS/NDC connectivity, airline APIs, fare calculation, fare recalculation, automated ticket validation, coupon validation, background workers, external integrations, external APIs, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -568,6 +576,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-workspaces", "agencyos": "/agency/offer-workspaces"},
         {"supplementary": "/admin/booking-workspaces", "agencyos": "/platform/booking-workspaces"},
         {"supplementary": "/agent/booking-workspaces", "agencyos": "/agency/booking-workspaces"},
+        {"supplementary": "/admin/ticket-workspaces", "agencyos": "/platform/ticket-workspaces"},
+        {"supplementary": "/agent/ticket-workspaces", "agencyos": "/agency/ticket-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

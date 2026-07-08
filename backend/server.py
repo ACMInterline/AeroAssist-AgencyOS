@@ -8,7 +8,7 @@ from database import database
 from routers import platform
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
@@ -36,6 +36,7 @@ from services.flight_workspace_service import FLIGHT_STATUSES
 from services.trip_workspace_service import TRIP_STATUSES
 from services.offer_workspace_service import OFFER_STATUSES
 from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
+from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
@@ -48,7 +49,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.6 booking workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 41.7 ticket workspace foundation.",
 )
 
 app.add_middleware(
@@ -227,6 +228,43 @@ async def readiness() -> dict:
     booking_workspace_operational_workspace_count = len({item.get("operational_workspace_id") for item in booking_workspace_records if item.get("operational_workspace_id")})
     booking_workspace_trip_workspace_count = len({item.get("trip_workspace_id") or item.get("trip_id") for item in booking_workspace_records if item.get("trip_workspace_id") or item.get("trip_id")})
     booking_workspace_offer_workspace_count = len({item.get("offer_workspace_id") for item in booking_workspace_records if item.get("offer_workspace_id")})
+    ticket_workspace_records = await database.collection("ticket_workspaces").find_many()
+    ticket_workspace_count = len(ticket_workspace_records)
+    ticket_workspace_status_counts = {
+        ticket_status: len(
+            [
+                item
+                for item in ticket_workspace_records
+                if (item.get("ticket_status") or "draft") == ticket_status
+            ]
+        )
+        for ticket_status in TICKET_WORKSPACE_STATUSES
+    }
+    ticket_document_status_counts = {
+        ticket_status: len(
+            [
+                item
+                for item in ticket_workspace_records
+                if (item.get("ticket_document_status") or "draft_metadata") == ticket_status
+            ]
+        )
+        for ticket_status in TICKET_DOCUMENT_STATUSES
+    }
+    ticket_workspace_validating_carrier_count = len({item.get("validating_carrier") for item in ticket_workspace_records if item.get("validating_carrier")})
+    ticket_workspace_currency_count = len({item.get("currency") for item in ticket_workspace_records if item.get("currency")})
+    ticket_workspace_passenger_count = len({item.get("passenger_id") for item in ticket_workspace_records if item.get("passenger_id")})
+    ticket_workspace_booking_reference_count = len({item.get("booking_reference") for item in ticket_workspace_records if item.get("booking_reference")})
+    ticket_workspace_operational_workspace_count = len({item.get("operational_workspace_id") for item in ticket_workspace_records if item.get("operational_workspace_id")})
+    ticket_workspace_trip_workspace_count = len({item.get("trip_workspace_id") for item in ticket_workspace_records if item.get("trip_workspace_id")})
+    ticket_workspace_offer_workspace_count = len({item.get("offer_workspace_id") for item in ticket_workspace_records if item.get("offer_workspace_id")})
+    ticket_workspace_booking_workspace_count = len({item.get("booking_workspace_id") for item in ticket_workspace_records if item.get("booking_workspace_id")})
+    ticket_workspace_coupon_detail_count = sum(len(item.get("coupon_details") or []) for item in ticket_workspace_records)
+    ticket_workspace_pricing_unit_count = sum(len(item.get("pricing_units") or []) for item in ticket_workspace_records)
+    ticket_workspace_fare_component_count = sum(len(item.get("fare_components") or []) for item in ticket_workspace_records)
+    ticket_workspace_tax_breakdown_count = sum(len(item.get("tax_breakdown") or []) for item in ticket_workspace_records)
+    ticket_workspace_exchange_reference_count = sum(len(item.get("exchange_reference_ids") or []) for item in ticket_workspace_records)
+    ticket_workspace_refund_reference_count = sum(len(item.get("refund_reference_ids") or []) for item in ticket_workspace_records)
+    ticket_workspace_void_reference_count = sum(len(item.get("void_reference_ids") or []) for item in ticket_workspace_records)
     booking_import_draft_count = await database.collection("booking_import_drafts").count()
     trip_change_operation_count = await database.collection("trip_change_operations").count()
     ticket_record_count = await database.collection("ticket_records").count()
@@ -2665,6 +2703,107 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 41.6 stores booking workspace metadata only. It does not create live bookings, issue tickets, connect to GDS or NDC, call airline APIs, process payments, calculate fares, use AI, run background workers, confirm bookings automatically, generate tickets automatically, call external integrations, or automate booking operations.",
         },
+        "ticket_workspace_foundation": {
+            "ticket_workspaces_enabled": True,
+            "ticket_workspace_metadata_enabled": True,
+            "platform_ticket_workspace_metadata_crud_enabled": True,
+            "agency_ticket_workspace_read_only_enabled": True,
+            "ticket_workspace_filter_by_status_enabled": True,
+            "ticket_workspace_filter_by_document_status_enabled": True,
+            "ticket_workspace_filter_by_validating_carrier_enabled": True,
+            "ticket_workspace_filter_by_issue_date_enabled": True,
+            "ticket_workspace_filter_by_passenger_enabled": True,
+            "ticket_workspace_filter_by_booking_reference_enabled": True,
+            "ticket_workspace_filter_by_currency_enabled": True,
+            "ticket_reference_metadata_enabled": True,
+            "ticket_status_metadata_enabled": True,
+            "ticket_document_status_metadata_enabled": True,
+            "ticket_type_metadata_enabled": True,
+            "ticket_number_metadata_enabled": True,
+            "validating_carrier_metadata_enabled": True,
+            "issuing_agent_metadata_enabled": True,
+            "issuing_office_metadata_enabled": True,
+            "issue_date_metadata_enabled": True,
+            "passenger_metadata_enabled": True,
+            "flight_summary_metadata_enabled": True,
+            "booking_reference_metadata_enabled": True,
+            "airline_pnr_metadata_enabled": True,
+            "gds_record_locator_metadata_enabled": True,
+            "fare_basis_metadata_enabled": True,
+            "fare_amount_metadata_enabled": True,
+            "taxes_amount_metadata_enabled": True,
+            "total_amount_metadata_enabled": True,
+            "fare_calculation_line_metadata_enabled": True,
+            "fare_calculation_currency_metadata_enabled": True,
+            "fare_calculation_nuc_total_metadata_enabled": True,
+            "fare_calculation_roe_metadata_enabled": True,
+            "equivalent_fare_metadata_enabled": True,
+            "form_of_payment_metadata_enabled": True,
+            "payment_reference_metadata_enabled": True,
+            "payment_restrictions_metadata_enabled": True,
+            "commission_summary_metadata_enabled": True,
+            "tax_breakdown_metadata_enabled": True,
+            "fare_construction_notes_metadata_enabled": True,
+            "pricing_units_metadata_enabled": True,
+            "fare_components_metadata_enabled": True,
+            "coupon_summary_metadata_enabled": True,
+            "coupon_status_summary_metadata_enabled": True,
+            "coupon_details_metadata_enabled": True,
+            "baggage_summary_metadata_enabled": True,
+            "endorsement_summary_metadata_enabled": True,
+            "restrictions_summary_metadata_enabled": True,
+            "exchange_reference_metadata_enabled": True,
+            "refund_reference_metadata_enabled": True,
+            "void_reference_metadata_enabled": True,
+            "emd_link_metadata_enabled": True,
+            "document_link_metadata_enabled": True,
+            "lifecycle_notes_metadata_enabled": True,
+            "operational_notes_metadata_enabled": True,
+            "read_only_ui_enabled": True,
+            "metadata_only": True,
+            "ticket_workspace_metadata_only": True,
+            "ticket_issuance_disabled": True,
+            "ticket_reissue_disabled": True,
+            "voiding_disabled": True,
+            "void_workflow_disabled": True,
+            "refunds_disabled": True,
+            "refund_workflow_disabled": True,
+            "exchanges_disabled": True,
+            "exchange_workflow_disabled": True,
+            "payment_processing_disabled": True,
+            "gds_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "airline_apis_disabled": True,
+            "airline_api_calls_disabled": True,
+            "fare_calculation_disabled": True,
+            "fare_recalculation_disabled": True,
+            "automated_ticket_validation_disabled": True,
+            "coupon_validation_disabled": True,
+            "background_workers_disabled": True,
+            "external_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "automation_disabled": True,
+            "ticket_workspace_count": ticket_workspace_count,
+            "ticket_workspace_status_counts": ticket_workspace_status_counts,
+            "ticket_document_status_counts": ticket_document_status_counts,
+            "ticket_workspace_validating_carrier_count": ticket_workspace_validating_carrier_count,
+            "ticket_workspace_currency_count": ticket_workspace_currency_count,
+            "ticket_workspace_passenger_count": ticket_workspace_passenger_count,
+            "ticket_workspace_booking_reference_count": ticket_workspace_booking_reference_count,
+            "ticket_workspace_operational_workspace_count": ticket_workspace_operational_workspace_count,
+            "ticket_workspace_trip_workspace_count": ticket_workspace_trip_workspace_count,
+            "ticket_workspace_offer_workspace_count": ticket_workspace_offer_workspace_count,
+            "ticket_workspace_booking_workspace_count": ticket_workspace_booking_workspace_count,
+            "ticket_workspace_coupon_detail_count": ticket_workspace_coupon_detail_count,
+            "ticket_workspace_pricing_unit_count": ticket_workspace_pricing_unit_count,
+            "ticket_workspace_fare_component_count": ticket_workspace_fare_component_count,
+            "ticket_workspace_tax_breakdown_count": ticket_workspace_tax_breakdown_count,
+            "ticket_workspace_exchange_reference_count": ticket_workspace_exchange_reference_count,
+            "ticket_workspace_refund_reference_count": ticket_workspace_refund_reference_count,
+            "ticket_workspace_void_reference_count": ticket_workspace_void_reference_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 41.7 stores ticket workspace metadata only. It does not issue, reissue, void, refund, exchange, process payments, connect to GDS or NDC, call airline APIs, calculate fares, validate coupons, run background workers, call external integrations, or automate ticket operations.",
+        },
         "rollout_dashboard_foundation": {
             "rollout_dashboard_enabled": True,
             "platform_rollout_dashboard_enabled": True,
@@ -2845,6 +2984,7 @@ app.include_router(platform_flight_workspaces.router)
 app.include_router(platform_trip_workspaces.router)
 app.include_router(platform_offer_workspaces.router)
 app.include_router(platform_booking_workspaces.router)
+app.include_router(platform_ticket_workspaces.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
 app.include_router(platform_service_catalogue.router)
@@ -2907,6 +3047,7 @@ app.include_router(agency_passenger_workspaces.router)
 app.include_router(agency_flight_workspaces.router)
 app.include_router(agency_trip_workspaces.router)
 app.include_router(agency_offer_workspaces.router)
+app.include_router(agency_ticket_workspaces.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
 app.include_router(agency_service_taxonomy.router)

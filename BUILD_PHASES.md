@@ -1848,6 +1848,22 @@ Avoid adding:
 
 - Live booking creation, ticket issuance, GDS connectivity, NDC connectivity, airline APIs, payment processing, fare calculation, AI, background workers, automatic booking confirmation, automatic ticket generation, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.7: Ticket Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `TicketWorkspace`, `TicketWorkspaceCreate`, `TicketWorkspaceUpdate`, `TicketWorkspaceStatus`, `TicketDocumentStatus`, `TicketWorkspaceCouponStatus`, `TicketWorkspaceCouponDetail`, `TicketWorkspacePricingUnit`, and `TicketWorkspaceFareComponent` models with ticket references, workspace status/type, whole-ticket document status, ticket number, validating carrier, issuing metadata, issue date, passenger, flight links, booking reference, airline PNR, GDS locator, fare basis summaries, fare calculation line/NUC/ROE metadata, equivalent fare paid metadata, form of payment, payment restrictions, commission summary, tax breakdown, pricing units, fare components, coupon status summary, coupon detail metadata with coupon-level fare basis, baggage, endorsement, restriction, exchange/refund/void reference ids, EMD/document links, lifecycle notes, and operational notes.
+- Registered the additive `ticket_workspaces` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/ticket-workspaces`.
+- Added agency read-only metadata APIs at `/api/agencies/{agency_id}/ticket-workspaces` and UI at `/agency/ticket-workspaces`.
+- Added filters by agency, ticket workspace status, ticket document status, validating carrier, issue date, passenger, booking reference, and currency.
+- Added readiness flags under `ticket_workspace_foundation`.
+- Added `docs/architecture/ticket-workspace-foundation.md`.
+
+Avoid adding:
+
+- Ticket issuance, ticket reissue, voiding, refunds, exchanges, payment processing, GDS connectivity, NDC connectivity, airline APIs, fare calculation, fare recalculation, automated ticket validation, coupon validation, background workers, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

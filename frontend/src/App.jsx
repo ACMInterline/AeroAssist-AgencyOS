@@ -89,6 +89,7 @@ import TripCreatePage from "./pages/agency/TripCreatePage"
 import TripDetailPage from "./pages/agency/TripDetailPage"
 import TripsPage from "./pages/agency/TripsPage"
 import TicketDetailPage from "./pages/agency/TicketDetailPage"
+import TicketWorkspaceMetadataPage from "./pages/agency/TicketWorkspaceMetadataPage"
 import TicketsEmdsPage from "./pages/agency/TicketsEmdsPage"
 import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
 import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
@@ -127,6 +128,7 @@ import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPag
 import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
+import PlatformTicketWorkspacesPage from "./pages/platform/TicketWorkspacesPage"
 import PlatformTripWorkspacesPage from "./pages/platform/TripWorkspacesPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
@@ -202,6 +204,7 @@ const routes = {
   "/platform/trip-workspaces": PlatformTripWorkspacesPage,
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
   "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
+  "/platform/ticket-workspaces": PlatformTicketWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -257,6 +260,7 @@ const routes = {
   "/agency/trip-workspaces": TripWorkspacesPage,
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
   "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
+  "/agency/ticket-workspaces": TicketWorkspaceMetadataPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

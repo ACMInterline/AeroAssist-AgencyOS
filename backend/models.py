@@ -12776,6 +12776,288 @@ class OfferWorkspaceV2Update(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class TicketWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEW = "review"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
+class TicketDocumentStatus(str, Enum):
+    DRAFT_METADATA = "draft_metadata"
+    ISSUED = "issued"
+    VOIDED = "voided"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
+
+
+class TicketWorkspaceCouponStatus(str, Enum):
+    OPEN_FOR_USE = "open_for_use"
+    AIRPORT_CONTROL = "airport_control"
+    CHECKED_IN = "checked_in"
+    FLOWN = "flown"
+    CLOSED = "closed"
+    SUSPENDED = "suspended"
+    VOID = "void"
+    EXCHANGED = "exchanged"
+    REFUNDED = "refunded"
+    UNKNOWN = "unknown"
+
+
+class TicketWorkspaceCouponDetail(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    coupon_number: Optional[str] = None
+    flight_workspace_id: Optional[str] = None
+    segment_reference: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    fare_basis: Optional[str] = None
+    fare_component_reference: Optional[str] = None
+    pricing_unit_reference: Optional[str] = None
+    coupon_status: TicketWorkspaceCouponStatus = TicketWorkspaceCouponStatus.UNKNOWN
+    not_valid_before: Optional[date] = None
+    not_valid_after: Optional[date] = None
+    baggage_summary: Optional[str] = None
+    remarks: Optional[str] = None
+    metadata_only: bool = True
+
+
+class TicketWorkspacePricingUnit(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_unit_reference: Optional[str] = None
+    pricing_unit_type: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    fare_component_references: List[str] = Field(default_factory=list)
+    nuc_amount: Optional[float] = None
+    currency: Optional[str] = None
+    notes: Optional[str] = None
+    metadata_only: bool = True
+
+
+class TicketWorkspaceFareComponent(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    fare_component_reference: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    carrier: Optional[str] = None
+    fare_basis: Optional[str] = None
+    booking_class: Optional[str] = None
+    nuc_amount: Optional[float] = None
+    mileage_or_routing_note: Optional[str] = None
+    rule_reference: Optional[str] = None
+    notes: Optional[str] = None
+    metadata_only: bool = True
+
+
+class TicketWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_reference: str
+    ticket_status: TicketWorkspaceStatus = TicketWorkspaceStatus.DRAFT
+    ticket_document_status: TicketDocumentStatus = TicketDocumentStatus.DRAFT_METADATA
+    ticket_type: Optional[str] = None
+    ticket_number: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    fare_basis_summary: Optional[str] = None
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    fare_calculation_line: Optional[str] = None
+    fare_calculation_currency: Optional[str] = None
+    fare_calculation_nuc_total: Optional[float] = None
+    fare_calculation_roe: Optional[float] = None
+    equivalent_fare_paid: Optional[float] = None
+    equivalent_fare_currency: Optional[str] = None
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    commission_summary: Optional[str] = None
+    tax_breakdown: List[Dict[str, Any]] = Field(default_factory=list)
+    fare_construction_notes: Optional[str] = None
+    pricing_units: List[TicketWorkspacePricingUnit] = Field(default_factory=list)
+    fare_components: List[TicketWorkspaceFareComponent] = Field(default_factory=list)
+    coupon_summary: Optional[str] = None
+    coupon_status_summary: Optional[str] = None
+    coupon_details: List[TicketWorkspaceCouponDetail] = Field(default_factory=list)
+    baggage_summary: Optional[str] = None
+    endorsement_summary: Optional[str] = None
+    restrictions_summary: Optional[str] = None
+    exchange_reference_ids: List[str] = Field(default_factory=list)
+    refund_reference_ids: List[str] = Field(default_factory=list)
+    void_reference_ids: List[str] = Field(default_factory=list)
+    linked_emd_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    ticket_workspace_metadata_only: bool = True
+    ticket_issuance_disabled: bool = True
+    ticket_reissue_disabled: bool = True
+    voiding_disabled: bool = True
+    void_workflow_disabled: bool = True
+    refunds_disabled: bool = True
+    refund_workflow_disabled: bool = True
+    exchanges_disabled: bool = True
+    exchange_workflow_disabled: bool = True
+    payment_processing_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    fare_calculation_disabled: bool = True
+    fare_recalculation_disabled: bool = True
+    automated_ticket_validation_disabled: bool = True
+    coupon_validation_disabled: bool = True
+    background_workers_disabled: bool = True
+    external_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class TicketWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_reference: Optional[str] = None
+    ticket_status: TicketWorkspaceStatus = TicketWorkspaceStatus.DRAFT
+    ticket_document_status: TicketDocumentStatus = TicketDocumentStatus.DRAFT_METADATA
+    ticket_type: Optional[str] = None
+    ticket_number: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    fare_basis_summary: Optional[str] = None
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    fare_calculation_line: Optional[str] = None
+    fare_calculation_currency: Optional[str] = None
+    fare_calculation_nuc_total: Optional[float] = None
+    fare_calculation_roe: Optional[float] = None
+    equivalent_fare_paid: Optional[float] = None
+    equivalent_fare_currency: Optional[str] = None
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    commission_summary: Optional[str] = None
+    tax_breakdown: List[Dict[str, Any]] = Field(default_factory=list)
+    fare_construction_notes: Optional[str] = None
+    pricing_units: List[TicketWorkspacePricingUnit] = Field(default_factory=list)
+    fare_components: List[TicketWorkspaceFareComponent] = Field(default_factory=list)
+    coupon_summary: Optional[str] = None
+    coupon_status_summary: Optional[str] = None
+    coupon_details: List[TicketWorkspaceCouponDetail] = Field(default_factory=list)
+    baggage_summary: Optional[str] = None
+    endorsement_summary: Optional[str] = None
+    restrictions_summary: Optional[str] = None
+    exchange_reference_ids: List[str] = Field(default_factory=list)
+    refund_reference_ids: List[str] = Field(default_factory=list)
+    void_reference_ids: List[str] = Field(default_factory=list)
+    linked_emd_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class TicketWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_reference: Optional[str] = None
+    ticket_status: Optional[TicketWorkspaceStatus] = None
+    ticket_document_status: Optional[TicketDocumentStatus] = None
+    ticket_type: Optional[str] = None
+    ticket_number: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    issuing_agent: Optional[str] = None
+    issuing_office: Optional[str] = None
+    issue_date: Optional[date] = None
+    passenger_id: Optional[str] = None
+    passenger_name: Optional[str] = None
+    flight_workspace_ids: Optional[List[str]] = None
+    booking_reference: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    fare_basis_summary: Optional[str] = None
+    fare_amount: Optional[float] = None
+    taxes_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    currency: Optional[str] = None
+    fare_calculation_line: Optional[str] = None
+    fare_calculation_currency: Optional[str] = None
+    fare_calculation_nuc_total: Optional[float] = None
+    fare_calculation_roe: Optional[float] = None
+    equivalent_fare_paid: Optional[float] = None
+    equivalent_fare_currency: Optional[str] = None
+    form_of_payment: Optional[str] = None
+    payment_reference: Optional[str] = None
+    payment_restrictions: Optional[str] = None
+    commission_summary: Optional[str] = None
+    tax_breakdown: Optional[List[Dict[str, Any]]] = None
+    fare_construction_notes: Optional[str] = None
+    pricing_units: Optional[List[TicketWorkspacePricingUnit]] = None
+    fare_components: Optional[List[TicketWorkspaceFareComponent]] = None
+    coupon_summary: Optional[str] = None
+    coupon_status_summary: Optional[str] = None
+    coupon_details: Optional[List[TicketWorkspaceCouponDetail]] = None
+    baggage_summary: Optional[str] = None
+    endorsement_summary: Optional[str] = None
+    restrictions_summary: Optional[str] = None
+    exchange_reference_ids: Optional[List[str]] = None
+    refund_reference_ids: Optional[List[str]] = None
+    void_reference_ids: Optional[List[str]] = None
+    linked_emd_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    lifecycle_notes: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

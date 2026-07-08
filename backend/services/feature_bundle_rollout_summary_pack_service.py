@@ -24,7 +24,7 @@ from services.feature_bundle_rollout_timeline_service import TIMELINE_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_41_6_booking_workspace_foundation"
+PHASE_LABEL = "phase_41_7_ticket_workspace_foundation"
 
 SUMMARY_PACK_COLLECTION = "feature_bundle_rollout_summary_packs"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
