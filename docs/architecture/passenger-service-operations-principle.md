@@ -24,6 +24,12 @@ The Operational Platform answers what is happening:
 
 The Airline Operational Intelligence Engine answers what is possible, allowed, priced, risky, and recommended for the case. Phase 50.0 only documents this architecture. It does not execute AI, scrape airline websites, search itineraries, call providers, book, ticket, issue EMDs, or automate recommendations.
 
+Phase 41.9 adds the SSR / OSI Operational Workspace as the primary operational input between Passenger Need and Airline Capability:
+
+Passenger Need -> SSR / OSI Workspace -> Airline Knowledge -> Capability Matrix -> Operational Feasibility -> Offer Builder
+
+The workspace records passenger service requirements, SSR/OSI handling metadata, approvals, documents, EMD references, readiness, and fulfilment references. It remains metadata-only and does not transmit SSR/OSI messages, call airlines, automate approvals, issue EMDs, or run AOIE reasoning.
+
 ## Governance Boundary
 
 Future AOIE phases should consume reviewed and versioned metadata from existing foundations. They should not create parallel ticket, EMD, booking, offer, service taxonomy, service mechanics, or pricing architectures.

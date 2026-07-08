@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
+PHASE_LABEL = "phase_41_9_ssr_osi_operational_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -246,6 +246,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "EmdWorkspace, EmdWorkspaceCreate, EmdWorkspaceUpdate, EmdWorkspaceStatus, EmdWorkspaceDocumentStatus, EmdWorkspaceCouponStatus, EmdWorkspaceCouponDetail, EmdWorkspaceService, /api/platform/emd-workspaces, /api/agencies/{agency_id}/emd-workspaces, /platform/emd-workspaces, /agency/emd-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency EMD workspace records and read-only agency visibility while linking to the existing Phase 36.4 ticket/EMD mirror foundation, Phase 36.9 service mechanics, and Phase 37.0 ancillary pricing metadata without issuing, exchanging, refunding, voiding, validating RFIC/RFISC, transmitting SSR/OSI, processing payments, connecting to providers, or creating parallel duplicate EMD architecture.",
+    },
+    {
+        "category": "SSR / OSI Operational Workspaces",
+        "concept": "Passenger service operation metadata",
+        "supplementary_concept": "passenger need, operational service requirement, SSR code/status, OSI text/status, airline handling, airport handling, approvals, EMD/RFIC/RFISC references, documents, MEDIF, tasks, timeline, communications, missing requirements, readiness, operational fulfilment",
+        "current_equivalent": "SsrOsiWorkspace, SsrOsiWorkspaceCreate, SsrOsiWorkspaceUpdate, SsrOsiNeedCategory, SsrOsiReadinessStatus, SsrOsiApprovalStatus, SsrOsiWorkspaceService, /api/platform/ssr-osi-workspaces, /api/agencies/{agency_id}/ssr-osi-workspaces, /platform/ssr-osi-workspaces, /agency/passenger-services",
+        "status": "foundation adopted",
+        "action": "Record metadata-only passenger service operation workspaces from Passenger Need to Operational Service Requirement to Operational Fulfilment, and prepare the future AOIE input path without live SSR/OSI transmission, GDS/NDC connectivity, airline APIs, AI recommendation, automatic airline approval, automatic EMD issuance, provider integrations, external APIs, workers, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -598,6 +606,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/ticket-workspaces", "agencyos": "/agency/ticket-workspaces"},
         {"supplementary": "/admin/emd-workspaces", "agencyos": "/platform/emd-workspaces"},
         {"supplementary": "/agent/emd-workspaces", "agencyos": "/agency/emd-workspaces"},
+        {"supplementary": "/admin/ssr-osi-operations", "agencyos": "/platform/ssr-osi-workspaces"},
+        {"supplementary": "/agent/passenger-services", "agencyos": "/agency/passenger-services"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
@@ -784,6 +794,13 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "EmdWorkspaceDocumentStatus",
             "EmdWorkspaceCouponStatus",
             "EmdWorkspaceCouponDetail",
+            "SsrOsiWorkspace",
+            "SsrOsiWorkspaceCreate",
+            "SsrOsiWorkspaceUpdate",
+            "SsrOsiNeedCategory",
+            "SsrOsiReadinessStatus",
+            "SsrOsiApprovalStatus",
+            "SsrOsiOperationalStatus",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -839,6 +856,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Booking workspace foundation built in Phase 41.6",
             "Ticket workspace foundation built in Phase 41.7",
             "EMD workspace foundation built in Phase 41.8",
+            "SSR / OSI operational workspace foundation built in Phase 41.9",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
         ],
         "deferred": [
@@ -870,6 +888,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Booking workspaces",
             "Ticket workspaces",
             "EMD workspaces",
+            "SSR / OSI operational workspaces",
         ],
         "chapter_50_intelligence_track": [
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",

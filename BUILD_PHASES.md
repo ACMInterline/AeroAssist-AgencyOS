@@ -1880,6 +1880,23 @@ Avoid adding:
 
 - EMD issuance, EMD exchange, EMD refund, EMD voiding, live GDS/NDC connectivity, airline APIs, payment processing, RFIC/RFISC validation engines, SSR/OSI transmission, background workers, external integrations, automation, parallel duplicate EMD architecture, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.9: SSR / OSI Operational Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `SsrOsiWorkspace`, `SsrOsiWorkspaceCreate`, `SsrOsiWorkspaceUpdate`, `SsrOsiNeedCategory`, `SsrOsiReadinessStatus`, `SsrOsiApprovalStatus`, and `SsrOsiOperationalStatus` models with passenger need, service classification, SSR/OSI handling, airline handling, airport handling, approval metadata, EMD/RFIC/RFISC references, documents, MEDIF, tasks, timelines, communications, readiness, missing requirements, unresolved items, relationships, and notes.
+- Registered the additive `ssr_osi_workspaces` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/ssr-osi-workspaces`.
+- Added agency read-only metadata APIs at `/api/agencies/{agency_id}/ssr-osi-workspaces` and UI at `/agency/passenger-services`.
+- Added filters by need category, airline, approval status, readiness, passenger, priority, RFIC, and RFISC.
+- Added readiness flags under `ssr_osi_operational_workspace_foundation`.
+- Documented SSR / OSI workspaces as the operational input path for future AOIE: Passenger Need -> SSR / OSI Workspace -> Airline Knowledge -> Capability Matrix -> Operational Feasibility -> Offer Builder.
+- Added `docs/architecture/ssr-osi-operational-workspace-foundation.md`.
+
+Avoid adding:
+
+- Live SSR transmission, live OSI transmission, GDS connectivity, NDC connectivity, airline APIs, AI recommendation, automatic airline approval, automatic EMD issuance, background workers, provider integrations, external API calls, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 50.0: Airline Operational Intelligence Engine Architecture Foundation
 
 Implemented scope:

@@ -13312,6 +13312,282 @@ class EmdWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class SsrOsiNeedCategory(str, Enum):
+    MOBILITY = "mobility"
+    MEDICAL = "medical"
+    VISUAL_IMPAIRMENT = "visual_impairment"
+    HEARING_IMPAIRMENT = "hearing_impairment"
+    COGNITIVE = "cognitive"
+    UNACCOMPANIED_MINOR = "unaccompanied_minor"
+    INFANT = "infant"
+    PET = "pet"
+    ASSISTANCE_ANIMAL = "assistance_animal"
+    SPORTS_EQUIPMENT = "sports_equipment"
+    MUSICAL_INSTRUMENT = "musical_instrument"
+    OVERSIZED_BAGGAGE = "oversized_baggage"
+    DANGEROUS_GOODS = "dangerous_goods"
+    RELIGIOUS = "religious"
+    DIETARY = "dietary"
+    SEATING = "seating"
+    SECURITY = "security"
+    IMMIGRATION = "immigration"
+    DOCUMENTATION = "documentation"
+    VIP = "vip"
+    DISRUPTION = "disruption"
+    OTHER = "other"
+
+
+class SsrOsiReadinessStatus(str, Enum):
+    READY = "ready"
+    PENDING = "pending"
+    AWAITING_AIRLINE = "awaiting_airline"
+    AWAITING_DOCUMENTS = "awaiting_documents"
+    AWAITING_PAYMENT = "awaiting_payment"
+    AWAITING_EMD = "awaiting_emd"
+    AWAITING_MEDIF = "awaiting_medif"
+    AWAITING_CUSTOMER = "awaiting_customer"
+    BLOCKED = "blocked"
+
+
+class SsrOsiApprovalStatus(str, Enum):
+    NOT_REQUIRED = "not_required"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+
+
+class SsrOsiOperationalStatus(str, Enum):
+    DRAFT = "draft"
+    REVIEW = "review"
+    READY = "ready"
+    ARCHIVED = "archived"
+
+
+class SsrOsiWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    workspace_reference: str
+    operational_status: SsrOsiOperationalStatus = SsrOsiOperationalStatus.DRAFT
+    operational_priority: Optional[str] = None
+    need_category: SsrOsiNeedCategory = SsrOsiNeedCategory.OTHER
+    need_subcategory: Optional[str] = None
+    need_description: Optional[str] = None
+    passenger_statement: Optional[str] = None
+    service_family: Optional[str] = None
+    service_type: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    operational_category: Optional[str] = None
+    medical_category: Optional[str] = None
+    mobility_category: Optional[str] = None
+    ssr_code: Optional[str] = None
+    ssr_description: Optional[str] = None
+    ssr_status: Optional[str] = None
+    ssr_confirmation_status: Optional[str] = None
+    osi_required: bool = False
+    osi_text: Optional[str] = None
+    osi_status: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    approval_required: bool = False
+    approval_status: SsrOsiApprovalStatus = SsrOsiApprovalStatus.NOT_REQUIRED
+    approval_reference: Optional[str] = None
+    approval_deadline: Optional[date] = None
+    departure_station: Optional[str] = None
+    connection_station: Optional[str] = None
+    arrival_station: Optional[str] = None
+    handling_company: Optional[str] = None
+    station_status: Optional[str] = None
+    emd_required: bool = False
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    document_requirements: List[str] = Field(default_factory=list)
+    medif_required: bool = False
+    medif_workspace_id: Optional[str] = None
+    medical_certificate_required: bool = False
+    veterinary_documents_required: bool = False
+    customs_documents_required: bool = False
+    visa_documents_required: bool = False
+    task_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    readiness_status: SsrOsiReadinessStatus = SsrOsiReadinessStatus.PENDING
+    missing_requirements: List[str] = Field(default_factory=list)
+    unresolved_items: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    agent_notes: Optional[str] = None
+    passenger_notes: Optional[str] = None
+    airline_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    ssr_osi_workspace_metadata_only: bool = True
+    live_ssr_transmission_disabled: bool = True
+    live_osi_transmission_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    ai_recommendation_disabled: bool = True
+    automatic_airline_approval_disabled: bool = True
+    automatic_emd_issuance_disabled: bool = True
+    background_workers_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class SsrOsiWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    workspace_reference: Optional[str] = None
+    operational_status: SsrOsiOperationalStatus = SsrOsiOperationalStatus.DRAFT
+    operational_priority: Optional[str] = None
+    need_category: SsrOsiNeedCategory = SsrOsiNeedCategory.OTHER
+    need_subcategory: Optional[str] = None
+    need_description: Optional[str] = None
+    passenger_statement: Optional[str] = None
+    service_family: Optional[str] = None
+    service_type: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    operational_category: Optional[str] = None
+    medical_category: Optional[str] = None
+    mobility_category: Optional[str] = None
+    ssr_code: Optional[str] = None
+    ssr_description: Optional[str] = None
+    ssr_status: Optional[str] = None
+    ssr_confirmation_status: Optional[str] = None
+    osi_required: bool = False
+    osi_text: Optional[str] = None
+    osi_status: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    approval_required: bool = False
+    approval_status: SsrOsiApprovalStatus = SsrOsiApprovalStatus.NOT_REQUIRED
+    approval_reference: Optional[str] = None
+    approval_deadline: Optional[date] = None
+    departure_station: Optional[str] = None
+    connection_station: Optional[str] = None
+    arrival_station: Optional[str] = None
+    handling_company: Optional[str] = None
+    station_status: Optional[str] = None
+    emd_required: bool = False
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    document_requirements: List[str] = Field(default_factory=list)
+    medif_required: bool = False
+    medif_workspace_id: Optional[str] = None
+    medical_certificate_required: bool = False
+    veterinary_documents_required: bool = False
+    customs_documents_required: bool = False
+    visa_documents_required: bool = False
+    task_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    readiness_status: SsrOsiReadinessStatus = SsrOsiReadinessStatus.PENDING
+    missing_requirements: List[str] = Field(default_factory=list)
+    unresolved_items: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    agent_notes: Optional[str] = None
+    passenger_notes: Optional[str] = None
+    airline_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class SsrOsiWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    workspace_reference: Optional[str] = None
+    operational_status: Optional[SsrOsiOperationalStatus] = None
+    operational_priority: Optional[str] = None
+    need_category: Optional[SsrOsiNeedCategory] = None
+    need_subcategory: Optional[str] = None
+    need_description: Optional[str] = None
+    passenger_statement: Optional[str] = None
+    service_family: Optional[str] = None
+    service_type: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    operational_category: Optional[str] = None
+    medical_category: Optional[str] = None
+    mobility_category: Optional[str] = None
+    ssr_code: Optional[str] = None
+    ssr_description: Optional[str] = None
+    ssr_status: Optional[str] = None
+    ssr_confirmation_status: Optional[str] = None
+    osi_required: Optional[bool] = None
+    osi_text: Optional[str] = None
+    osi_status: Optional[str] = None
+    airline_code: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    approval_required: Optional[bool] = None
+    approval_status: Optional[SsrOsiApprovalStatus] = None
+    approval_reference: Optional[str] = None
+    approval_deadline: Optional[date] = None
+    departure_station: Optional[str] = None
+    connection_station: Optional[str] = None
+    arrival_station: Optional[str] = None
+    handling_company: Optional[str] = None
+    station_status: Optional[str] = None
+    emd_required: Optional[bool] = None
+    emd_workspace_ids: Optional[List[str]] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    document_requirements: Optional[List[str]] = None
+    medif_required: Optional[bool] = None
+    medif_workspace_id: Optional[str] = None
+    medical_certificate_required: Optional[bool] = None
+    veterinary_documents_required: Optional[bool] = None
+    customs_documents_required: Optional[bool] = None
+    visa_documents_required: Optional[bool] = None
+    task_ids: Optional[List[str]] = None
+    timeline_ids: Optional[List[str]] = None
+    communication_ids: Optional[List[str]] = None
+    readiness_status: Optional[SsrOsiReadinessStatus] = None
+    missing_requirements: Optional[List[str]] = None
+    unresolved_items: Optional[List[str]] = None
+    flight_workspace_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    agent_notes: Optional[str] = None
+    passenger_notes: Optional[str] = None
+    airline_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
