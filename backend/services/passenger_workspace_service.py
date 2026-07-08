@@ -8,7 +8,7 @@ from models import PassengerWorkspace, PassengerWorkspaceCreate, PassengerWorksp
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 
 PASSENGER_WORKSPACE_COLLECTION = "passenger_workspaces"
 PASSENGER_STATUSES = ["draft", "active", "incomplete", "review", "ready", "archived"]

@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgeNormalisation, AirlineKnowledgeNormalisationCreate, AirlineKnowledgeNormalisationUpdate, new_id
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 AIRLINE_KNOWLEDGE_NORMALISATION_COLLECTION = "airline_knowledge_normalisations"
 
 NORMALISATION_STATUSES = [

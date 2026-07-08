@@ -44,6 +44,8 @@ Phase 50.3 does not implement AI parsing, live evaluation, recommendation engine
 
 Phase 50.4 Airline Operational Knowledge Governance & Version Control versions normalisation-linked Evidence, Policy, Pricing, Capability, Operational Constraints, and Operational Procedures as governed knowledge assets. It also records release grouping, comparison, rollback, superseded, archived, and historical lookup metadata without automatic publication or live evaluation.
 
+Phase 50.5 Airline Operational Capability Matrix consumes canonical normalisation metadata so airline capability records can compare services, aircraft, cabins, stations, routes, countries, seasons, animal transport, EXST, medical/accessibility, and operational requirement dimensions consistently. The matrix does not evaluate passenger cases or recommend airlines.
+
 ## Relationship To Phase 50.1 And 50.2
 
 Phase 50.1 captures trusted airline operational knowledge metadata.

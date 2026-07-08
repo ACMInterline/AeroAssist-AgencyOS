@@ -80,4 +80,6 @@ Phase 50.3 Airline Operational Knowledge Normalisation creates canonical vocabul
 
 Phase 50.4 Airline Operational Knowledge Governance & Version Control versions operational constraints as governed knowledge assets and links them to releases, comparison metadata, rollback metadata, superseded metadata, and historical audit metadata. Governance does not execute constraints.
 
+Phase 50.5 Airline Operational Capability Matrix links governed operational constraints to capability inventory records. It records whether a capability is available, unavailable, conditional, restricted, or manually reviewed under stated operational conditions, but it does not execute constraints or evaluate passenger cases.
+
 Phase 50.2 does not implement live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or external API calls.

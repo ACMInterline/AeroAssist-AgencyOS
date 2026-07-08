@@ -28,6 +28,10 @@ Commercial charge, fee, fare, tax, EMD, refundability, exchangeability, or cost 
 
 The ability of an airline, aircraft, cabin, airport, station, supplier, or operational process to support a passenger service requirement. Capability is not the same as policy.
 
+## Capability Matrix
+
+A metadata-only operational inventory of what airlines can deliver under stated airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare, restriction, risk, confidence, evidence, and governance conditions. It does not evaluate passenger feasibility or recommend airlines.
+
 ## Operational Constraint
 
 A structured condition that affects eligibility, handling, approval, documentation, timing, aircraft/cabin applicability, route applicability, pricing, or fulfilment.

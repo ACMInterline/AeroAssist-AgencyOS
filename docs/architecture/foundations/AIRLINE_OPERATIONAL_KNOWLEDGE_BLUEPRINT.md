@@ -14,6 +14,8 @@ The chapter turns reviewed airline evidence into normalized, governed, comparabl
 
 Phase 50.4 implements the metadata-only governance and version-control layer for this blueprint. It governs Evidence, Policy, Pricing, Capability, Operational Constraints, Operational Procedures, Knowledge Releases, and Historical Versions without executing rule evaluation, recommendations, pricing, provider integrations, or automatic publication.
 
+Phase 50.5 implements the metadata-only Airline Operational Capability Matrix. It records what airlines can operationally deliver by airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare context, restrictions, risk, confidence, evidence, and governance references. It does not evaluate passenger cases, score feasibility, rank airlines, calculate pricing, call providers, or automate decisions.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation

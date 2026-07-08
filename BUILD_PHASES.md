@@ -144,6 +144,7 @@ The repository currently contains:
 - Phase 50.2: Operational constraint engine foundation.
 - Phase 50.3: Airline operational knowledge normalisation foundation.
 - Phase 50.4: Airline operational knowledge governance and version control foundation.
+- Phase 50.5: Airline operational capability matrix foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1997,7 +1998,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.5 Airline Operational Capability Matrix Foundation after Phase 50.4 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
+- Set next intelligence phase to Phase 50.6 Operational Rule Evaluation Engine Foundation after Phase 50.5 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 
@@ -2014,7 +2015,7 @@ Implemented scope:
 - Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
 - Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
 - Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
-- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, and future AOIE phases: 50.5 Airline Operational Capability Matrix, 50.6 Operational Rule Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
+- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, Phase 50.5 Airline Operational Capability Matrix, and future AOIE phases: 50.6 Operational Rule Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
 - Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
 - Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
 
@@ -2070,6 +2071,23 @@ Implemented scope:
 Avoid adding:
 
 - Live rule evaluation, AI reasoning, parser execution, recommendation engines, pricing calculation, provider integrations, background workers, automatic publication, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 50.5: Airline Operational Capability Matrix Foundation
+
+Implemented scope:
+
+- Added metadata-only `AirlineCapabilityMatrixRecord`, `AirlineCapabilityMatrixCreate`, and `AirlineCapabilityMatrixUpdate` models for the Airline Operational Capability Matrix.
+- Registered the additive `airline_capability_matrix` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-capability-matrix` and UI at `/platform/airline-capability-matrix`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/airline-capability-matrix` and UI at `/agency/capability-matrix`.
+- Added metadata sections for Capability Overview, Airline, Service, Knowledge Governance Links, Aircraft / Cabin Capability, Airport / Station Capability, Route / Country / Season Capability, Interline / Codeshare Capability, Animal Transport Capability, Extra Seat / EXST Capability, Medical / Accessibility Capability, Operational Requirements, Risk / Confidence, Lifecycle, and Notes.
+- Added filters by airline, service domain/family, SSR, RFIC, RFISC, aircraft family, cabin, airport, route, country, season, capability status, operational risk, confidence level, and effective date.
+- Added readiness flags under `airline_operational_capability_matrix_foundation`.
+- Added `docs/architecture/airline-operational-capability-matrix-foundation.md`.
+
+Avoid adding:
+
+- Live rule evaluation, passenger feasibility scoring, airline recommendation ranking, AI reasoning, parser execution, pricing calculation, provider integrations, background workers, automatic publication, scraping, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

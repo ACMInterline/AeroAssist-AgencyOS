@@ -26,7 +26,7 @@ from services.airline_knowledge_governance_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_50_4_airline_operational_knowledge_governance_foundation"
+EXPECTED_PHASE = "phase_50_5_airline_operational_capability_matrix_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-knowledge-governance"
 
@@ -405,11 +405,11 @@ def verify_blueprint_adoption() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if not any("Airline operational knowledge governance and version control foundation built in Phase 50.4" in item for item in gaps.get("already_built", [])):
         raise AssertionError(f"Blueprint gaps missing Phase 50.4 built marker: {gaps}")
-    if "Phase 50.5" not in gaps.get("next_intelligence_phase", ""):
-        raise AssertionError(f"Gap summary missing Phase 50.5 next intelligence phase: {gaps}")
+    if "Phase 50.6" not in gaps.get("next_intelligence_phase", ""):
+        raise AssertionError(f"Gap summary missing Phase 50.6 next intelligence phase: {gaps}")
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.5":
-        raise AssertionError(f"Next recommendations did not start with Phase 50.5: {next_phases}")
+    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.6":
+        raise AssertionError(f"Next recommendations did not start with Phase 50.6: {next_phases}")
 
 
 def assert_version_shape(item: dict, agency_view: bool = False) -> None:

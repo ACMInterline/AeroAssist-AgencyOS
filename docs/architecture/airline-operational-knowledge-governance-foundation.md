@@ -63,3 +63,7 @@ Release metadata does not publish operational knowledge automatically. `publishe
 ## Explicitly Excluded
 
 Phase 50.4 does not implement live rule evaluation, AI reasoning, parser execution, recommendation engines, pricing calculation, provider integrations, background workers, automatic publication, scraping, external API calls, booking, ticketing, EMD issuance, payment, messaging, or automation.
+
+## Phase 50.5 Consumer
+
+Phase 50.5 Airline Operational Capability Matrix consumes governed versions and releases as evidence-backed capability inventory references. Governance records remain lifecycle metadata; the matrix records what airlines can operationally deliver. Neither phase evaluates passenger feasibility, ranks airlines, calculates pricing, calls providers, or automates publication.

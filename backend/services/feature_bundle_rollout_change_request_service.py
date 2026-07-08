@@ -18,7 +18,7 @@ from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 
 CHANGE_REQUEST_COLLECTION = "feature_bundle_rollout_change_requests"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

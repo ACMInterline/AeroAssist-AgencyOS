@@ -52,6 +52,8 @@ Phase 50.3 adds the `airline_knowledge_normalisations` collection. Knowledge Nor
 
 Phase 50.4 adds the `airline_knowledge_versions` and `airline_knowledge_releases` collections. Knowledge Governance versions Evidence, Policy, Pricing, Capability, Operational Constraints, and Operational Procedures independently, groups releases, preserves historical lookup, and records comparison, rollback, superseded, and archived metadata. It does not publish automatically or evaluate rules.
 
+Phase 50.5 adds the `airline_capability_matrix` collection. The Airline Operational Capability Matrix records what airlines can operationally deliver by airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare context, restrictions, confidence, evidence, and governance references. Capability is distinct from Policy and Pricing. It does not evaluate passenger cases, score feasibility, rank airlines, reason with AI, execute parsers, calculate pricing, call providers, run workers, scrape, or publish automatically.
+
 Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, and Evidence.
 
 ## Routes
@@ -89,3 +91,4 @@ Phase 50.2 does not implement live rule execution, AI reasoning, recommendation 
 Phase 50.3 does not implement live evaluation, AI parsing, recommendation engines, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, external API calls, or automation.
 
 Phase 50.4 does not implement live rule evaluation, AI reasoning, parser execution, recommendation engines, pricing calculation, provider integrations, background workers, automatic publication, external API calls, or automation.
+Phase 50.5 does not implement live rule evaluation, passenger feasibility scoring, airline recommendation ranking, AI reasoning, parser execution, pricing calculation, provider integrations, background workers, scraping, automatic publication, external API calls, or automation. Future Phase 50.6 consumes the matrix for metadata-only operational rule evaluation, and future Phase 50.7 consumes evaluation outputs for passenger service feasibility.

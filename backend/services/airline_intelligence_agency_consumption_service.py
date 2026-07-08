@@ -25,7 +25,7 @@ from services.airline_intelligence_knowledge_version_service import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 
 CONSUMPTION_PROFILE_COLLECTION = "airline_intelligence_agency_consumption_profiles"
 ASSIGNMENT_VIEW_COLLECTION = "airline_intelligence_agency_knowledge_assignment_views"

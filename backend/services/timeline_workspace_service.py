@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalTimeline, OperationalTimelineCreate, OperationalTimelineUpdate, new_id
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 OPERATIONAL_TIMELINE_COLLECTION = "operational_timelines"
 
 TIMELINE_EVENT_TYPES = [

@@ -17,7 +17,7 @@ from services.offer_decision_export_delivery_service import actor_from_user, enu
 from services.agency_feature_flag_audit_service import AgencyFeatureFlagAuditService
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 
 FLAG_COLLECTION = "agency_feature_flags"
 REVIEW_COLLECTION = "agency_feature_flag_reviews"

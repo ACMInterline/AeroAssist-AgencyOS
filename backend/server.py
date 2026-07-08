@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints
+from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -44,7 +44,8 @@ from services.passenger_service_workflow_service import READINESS_STATES, WORKFL
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES, APPROVAL_STATUSES as ACQUISITION_APPROVAL_STATUSES, KNOWLEDGE_GRAPH_PILLARS, REVIEW_STATUSES as ACQUISITION_REVIEW_STATUSES, SOURCE_TYPES as ACQUISITION_SOURCE_TYPES
 from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
-from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, PHASE_LABEL, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
+from services.airline_capability_matrix_service import CAPABILITY_OUTCOMES as MATRIX_CAPABILITY_OUTCOMES, CAPABILITY_REVIEW_STATUSES as MATRIX_REVIEW_STATUSES, CAPABILITY_STATUSES as MATRIX_CAPABILITY_STATUSES, CAPABILITY_STATUS_VALUES as MATRIX_CAPABILITY_STATUS_VALUES, CONFIDENCE_LEVELS as MATRIX_CONFIDENCE_LEVELS, OPERATIONAL_RISK_LEVELS as MATRIX_RISK_LEVELS, OPERATIONAL_VALIDITY_STATUSES as MATRIX_VALIDITY_STATUSES, PHASE_LABEL
+from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
@@ -60,7 +61,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.4 airline operational knowledge governance foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.5 airline operational capability matrix foundation.",
 )
 
 app.add_middleware(
@@ -870,6 +871,99 @@ async def readiness() -> dict:
     )
     airline_knowledge_release_recommendation_ready_count = len(
         [item for item in airline_knowledge_release_records if item.get("recommendation_ready")]
+    )
+    airline_capability_matrix_records = await database.collection("airline_capability_matrix").find_many()
+    airline_capability_matrix_count = len(airline_capability_matrix_records)
+    airline_capability_matrix_status_counts = {
+        status: len([item for item in airline_capability_matrix_records if item.get("capability_status") == status])
+        for status in MATRIX_CAPABILITY_STATUSES
+    }
+    airline_capability_matrix_status_value_counts = {
+        status: len([item for item in airline_capability_matrix_records if item.get("capability_status_value") == status])
+        for status in MATRIX_CAPABILITY_STATUS_VALUES
+    }
+    airline_capability_matrix_outcome_counts = {
+        outcome: len([item for item in airline_capability_matrix_records if item.get("capability_outcome") == outcome])
+        for outcome in MATRIX_CAPABILITY_OUTCOMES
+    }
+    airline_capability_matrix_review_status_counts = {
+        status: len([item for item in airline_capability_matrix_records if item.get("capability_review_status") == status])
+        for status in MATRIX_REVIEW_STATUSES
+    }
+    airline_capability_matrix_validity_status_counts = {
+        status: len([item for item in airline_capability_matrix_records if item.get("operational_validity_status") == status])
+        for status in MATRIX_VALIDITY_STATUSES
+    }
+    airline_capability_matrix_risk_counts = {
+        risk: len([item for item in airline_capability_matrix_records if item.get("operational_risk_level") == risk])
+        for risk in MATRIX_RISK_LEVELS
+    }
+    airline_capability_matrix_confidence_counts = {
+        confidence: len([item for item in airline_capability_matrix_records if item.get("capability_confidence") == confidence])
+        for confidence in MATRIX_CONFIDENCE_LEVELS
+    }
+    airline_capability_matrix_airline_count = len(
+        {item.get("airline_code") for item in airline_capability_matrix_records if item.get("airline_code")}
+    )
+    airline_capability_matrix_service_domain_count = len(
+        {item.get("service_domain") for item in airline_capability_matrix_records if item.get("service_domain")}
+    )
+    airline_capability_matrix_governance_link_count = sum(
+        len(item.get("knowledge_version_ids") or [])
+        + len(item.get("knowledge_release_ids") or [])
+        + len(item.get("acquisition_ids") or [])
+        + len(item.get("normalisation_ids") or [])
+        + len(item.get("constraint_ids") or [])
+        + len(item.get("evidence_reference_ids") or [])
+        for item in airline_capability_matrix_records
+    )
+    airline_capability_matrix_aircraft_cabin_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("aircraft_family") or item.get("aircraft_subtype") or item.get("cabin_family") or item.get("cabin_name")
+        ]
+    )
+    airline_capability_matrix_airport_station_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("airport_applicability") or item.get("station_applicability")
+        ]
+    )
+    airline_capability_matrix_route_country_season_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("route_applicability")
+            or item.get("origin_country_applicability")
+            or item.get("destination_country_applicability")
+            or item.get("seasonal_applicability")
+        ]
+    )
+    airline_capability_matrix_animal_transport_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("animal_transport_applicable") or item.get("petc_capability") or item.get("avih_capability")
+        ]
+    )
+    airline_capability_matrix_extra_seat_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("extra_seat_applicable") or item.get("extra_seat_available")
+        ]
+    )
+    airline_capability_matrix_medical_accessibility_count = len(
+        [
+            item
+            for item in airline_capability_matrix_records
+            if item.get("wheelchair_capability") or item.get("medif_capability") or item.get("oxygen_capability")
+        ]
+    )
+    airline_capability_matrix_manual_review_required_count = len(
+        [item for item in airline_capability_matrix_records if item.get("manual_review_required")]
     )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
@@ -2311,6 +2405,67 @@ async def readiness() -> dict:
             "airline_knowledge_release_recommendation_ready_count": airline_knowledge_release_recommendation_ready_count,
             "readiness_required": False,
             "diagnostic": "Phase 50.4 creates metadata-only governance and version-control records for Airline Operational Knowledge. It governs independent Evidence, Policy, Pricing, Capability, Operational Constraint, and Operational Procedure versions plus grouped releases, comparison metadata, rollback metadata, superseded records, and historical lookup metadata without live rule evaluation, AI reasoning, parser execution, recommendations, pricing calculation, provider integrations, background workers, or automatic publication.",
+        },
+        "airline_operational_capability_matrix_foundation": {
+            "airline_operational_capability_matrix_enabled": True,
+            "airline_capability_matrix_collection_enabled": True,
+            "platform_airline_capability_matrix_metadata_crud_enabled": True,
+            "agency_airline_capability_matrix_read_only_enabled": True,
+            "platform_airline_capability_matrix_ui_enabled": True,
+            "agency_capability_matrix_ui_enabled": True,
+            "capability_is_distinct_from_policy": True,
+            "knowledge_governance_links_enabled": True,
+            "airline_service_capability_metadata_enabled": True,
+            "aircraft_cabin_capability_metadata_enabled": True,
+            "airport_station_capability_metadata_enabled": True,
+            "route_country_season_capability_metadata_enabled": True,
+            "interline_codeshare_capability_metadata_enabled": True,
+            "animal_transport_capability_metadata_enabled": True,
+            "extra_seat_capability_metadata_enabled": True,
+            "medical_accessibility_capability_metadata_enabled": True,
+            "operational_requirements_metadata_enabled": True,
+            "risk_confidence_metadata_enabled": True,
+            "lifecycle_metadata_enabled": True,
+            "future_50_6_rule_evaluation_consumer_only": True,
+            "future_50_7_feasibility_consumer_only": True,
+            "capability_statuses": MATRIX_CAPABILITY_STATUSES,
+            "capability_status_values": MATRIX_CAPABILITY_STATUS_VALUES,
+            "capability_outcomes": MATRIX_CAPABILITY_OUTCOMES,
+            "capability_review_statuses": MATRIX_REVIEW_STATUSES,
+            "operational_validity_statuses": MATRIX_VALIDITY_STATUSES,
+            "confidence_levels": MATRIX_CONFIDENCE_LEVELS,
+            "operational_risk_levels": MATRIX_RISK_LEVELS,
+            "metadata_only": True,
+            "live_rule_evaluation_disabled": True,
+            "passenger_feasibility_scoring_disabled": True,
+            "airline_recommendation_ranking_disabled": True,
+            "ai_reasoning_disabled": True,
+            "parser_execution_disabled": True,
+            "pricing_calculation_disabled": True,
+            "provider_integrations_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_publication_disabled": True,
+            "scraping_disabled": True,
+            "airline_capability_matrix_count": airline_capability_matrix_count,
+            "airline_capability_matrix_status_counts": airline_capability_matrix_status_counts,
+            "airline_capability_matrix_status_value_counts": airline_capability_matrix_status_value_counts,
+            "airline_capability_matrix_outcome_counts": airline_capability_matrix_outcome_counts,
+            "airline_capability_matrix_review_status_counts": airline_capability_matrix_review_status_counts,
+            "airline_capability_matrix_validity_status_counts": airline_capability_matrix_validity_status_counts,
+            "airline_capability_matrix_risk_counts": airline_capability_matrix_risk_counts,
+            "airline_capability_matrix_confidence_counts": airline_capability_matrix_confidence_counts,
+            "airline_capability_matrix_airline_count": airline_capability_matrix_airline_count,
+            "airline_capability_matrix_service_domain_count": airline_capability_matrix_service_domain_count,
+            "airline_capability_matrix_governance_link_count": airline_capability_matrix_governance_link_count,
+            "airline_capability_matrix_aircraft_cabin_count": airline_capability_matrix_aircraft_cabin_count,
+            "airline_capability_matrix_airport_station_count": airline_capability_matrix_airport_station_count,
+            "airline_capability_matrix_route_country_season_count": airline_capability_matrix_route_country_season_count,
+            "airline_capability_matrix_animal_transport_count": airline_capability_matrix_animal_transport_count,
+            "airline_capability_matrix_extra_seat_count": airline_capability_matrix_extra_seat_count,
+            "airline_capability_matrix_medical_accessibility_count": airline_capability_matrix_medical_accessibility_count,
+            "airline_capability_matrix_manual_review_required_count": airline_capability_matrix_manual_review_required_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.5 creates the metadata-only Airline Operational Capability Matrix. It records what airlines can operationally deliver by airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare context, operational restriction, confidence, evidence, and governance references. It does not evaluate passenger cases, score feasibility, rank or recommend airlines, reason with AI, execute parsers, calculate pricing, call providers, run workers, scrape, or automatically publish. Future Phase 50.6 consumes the matrix for rule evaluation metadata, and future Phase 50.7 consumes evaluation outputs for passenger service feasibility.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -4064,6 +4219,7 @@ app.include_router(platform_airline_knowledge_acquisition.router)
 app.include_router(platform_operational_constraints.router)
 app.include_router(platform_airline_knowledge_normalisation.router)
 app.include_router(platform_airline_knowledge_governance.router)
+app.include_router(platform_airline_capability_matrix.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -4138,6 +4294,7 @@ app.include_router(agency_airline_knowledge_acquisition.router)
 app.include_router(agency_operational_constraints.router)
 app.include_router(agency_airline_knowledge_normalisation.router)
 app.include_router(agency_airline_knowledge_governance.router)
+app.include_router(agency_airline_capability_matrix.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

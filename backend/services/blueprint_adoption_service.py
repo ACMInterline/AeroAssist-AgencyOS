@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
+PHASE_LABEL = "phase_50_5_airline_operational_capability_matrix_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -94,6 +94,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineKnowledgeVersion, AirlineKnowledgeRelease, AirlineKnowledgeGovernanceService, airline_knowledge_versions, airline_knowledge_releases, /api/platform/airline-knowledge-governance, /api/agencies/{agency_id}/airline-knowledge-governance, /platform/airline-knowledge-governance, /agency/knowledge-governance",
         "status": "foundation adopted",
         "action": "Govern Airline Operational Knowledge as metadata-only operational assets with independent Evidence, Policy, Pricing, Capability, Operational Constraint, and Operational Procedure versions plus releases, comparison, rollback, superseded, archived, and historical lookup metadata without live rule evaluation, AI reasoning, parser execution, recommendations, pricing calculation, provider integrations, background workers, or automatic publication.",
+    },
+    {
+        "category": "Airline Capability Matrix",
+        "concept": "Airline operational capability inventory",
+        "supplementary_concept": "airline, service, aircraft, cabin, airport, route, country, season, interline/codeshare context, operational restrictions, confidence, evidence, and governance references",
+        "current_equivalent": "AirlineCapabilityMatrixRecord, AirlineCapabilityMatrixCreate, AirlineCapabilityMatrixUpdate, AirlineCapabilityMatrixService, airline_capability_matrix, /api/platform/airline-capability-matrix, /api/agencies/{agency_id}/airline-capability-matrix, /platform/airline-capability-matrix, /agency/capability-matrix",
+        "status": "foundation adopted",
+        "action": "Store metadata-only operational capability inventory for what airlines can deliver. Capability remains distinct from policy, and this foundation does not evaluate passenger cases, score feasibility, rank airlines, reason with AI, execute parsers, calculate pricing, call providers, run workers, scrape, or automatically publish.",
     },
     {
         "category": "Platform / Agency UX",
@@ -693,6 +701,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/airline-knowledge-governance", "agencyos": "/platform/airline-knowledge-governance"},
         {"supplementary": "/admin/airline-knowledge-releases", "agencyos": "/platform/airline-knowledge-releases"},
         {"supplementary": "/agent/knowledge-governance", "agencyos": "/agency/knowledge-governance"},
+        {"supplementary": "/admin/airline-capability-matrix", "agencyos": "/platform/airline-capability-matrix"},
+        {"supplementary": "/agent/capability-matrix", "agencyos": "/agency/capability-matrix"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -705,9 +715,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.5",
-        "title": "Airline Operational Capability Matrix Foundation",
-        "reason": "Airline operational knowledge governance now versions evidence, policy, pricing, capability, constraints, procedures, and releases. The next intelligence phase should add capability matrix metadata without evaluation, recommendations, pricing execution, provider calls, or automation.",
+        "phase": "Phase 50.6",
+        "title": "Operational Rule Evaluation Engine Foundation",
+        "reason": "The Airline Operational Capability Matrix now records what airlines can deliver. The next intelligence phase should add metadata-only operational rule evaluation records without passenger feasibility scoring, airline ranking, AI reasoning, pricing calculation, provider calls, workers, or automation.",
     },
     {
         "phase": "Phase 42.2",
@@ -950,6 +960,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Operational constraint engine foundation built in Phase 50.2",
             "Airline operational knowledge normalisation foundation built in Phase 50.3",
             "Airline operational knowledge governance and version control foundation built in Phase 50.4",
+            "Airline operational capability matrix foundation built in Phase 50.5",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -967,8 +978,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.5 - Airline Operational Capability Matrix Foundation",
-        "next_intelligence_phase": "Phase 50.5 - Airline Operational Capability Matrix Foundation",
+        "next_immediate_phase": "Phase 50.6 - Operational Rule Evaluation Engine Foundation",
+        "next_intelligence_phase": "Phase 50.6 - Operational Rule Evaluation Engine Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
