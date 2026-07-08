@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_knowledge_acquisition, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_operational_intelligence, platform_operational_constraints
+from routers import agency_airline_knowledge_acquisition, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -43,7 +43,8 @@ from services.timeline_workspace_service import COMMUNICATION_TYPES, TIMELINE_EV
 from services.passenger_service_workflow_service import READINESS_STATES, WORKFLOW_STAGES
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES, APPROVAL_STATUSES as ACQUISITION_APPROVAL_STATUSES, KNOWLEDGE_GRAPH_PILLARS, REVIEW_STATUSES as ACQUISITION_REVIEW_STATUSES, SOURCE_TYPES as ACQUISITION_SOURCE_TYPES
-from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, PHASE_LABEL, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
+from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
+from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, PHASE_LABEL, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
@@ -58,7 +59,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.2 operational constraint engine foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.3 airline knowledge normalisation foundation.",
 )
 
 app.add_middleware(
@@ -699,6 +700,89 @@ async def readiness() -> dict:
         for item in operational_constraint_records
     )
     operational_constraint_evaluation_ready_count = len([item for item in operational_constraint_records if item.get("evaluation_ready")])
+    airline_knowledge_normalisation_records = await database.collection("airline_knowledge_normalisations").find_many()
+    airline_knowledge_normalisation_count = len(airline_knowledge_normalisation_records)
+    airline_knowledge_normalisation_status_counts = {
+        status: len([item for item in airline_knowledge_normalisation_records if item.get("normalisation_status") == status])
+        for status in NORMALISATION_STATUSES
+    }
+    airline_knowledge_normalisation_type_counts = {
+        normalisation_type: len([item for item in airline_knowledge_normalisation_records if item.get("normalisation_type") == normalisation_type])
+        for normalisation_type in NORMALISATION_TYPES
+    }
+    airline_knowledge_normalisation_review_status_counts = {
+        status: len([item for item in airline_knowledge_normalisation_records if item.get("review_status") == status])
+        for status in NORMALISATION_REVIEW_STATUSES
+    }
+    airline_knowledge_normalisation_approval_status_counts = {
+        status: len([item for item in airline_knowledge_normalisation_records if item.get("approval_status") == status])
+        for status in NORMALISATION_APPROVAL_STATUSES
+    }
+    airline_knowledge_normalisation_hierarchy_count = len(
+        [
+            item
+            for item in airline_knowledge_normalisation_records
+            if item.get("hierarchy_path") or item.get("parent_canonical_id")
+        ]
+    )
+    airline_knowledge_normalisation_alias_count = sum(
+        len(item.get("aliases") or [])
+        + len(item.get("abbreviations") or [])
+        + len(item.get("airline_specific_terms") or [])
+        + len(item.get("gds_terms") or [])
+        + len(item.get("commercial_terms") or [])
+        + len(item.get("operational_terms") or [])
+        for item in airline_knowledge_normalisation_records
+    )
+    airline_knowledge_normalisation_applicability_count = sum(
+        len(item.get("airline_codes") or [])
+        + len(item.get("country_codes") or [])
+        + len(item.get("airport_codes") or [])
+        + len(item.get("aircraft_types") or [])
+        + len(item.get("cabin_codes") or [])
+        + len(item.get("service_codes") or [])
+        + len(item.get("ssr_codes") or [])
+        + len(item.get("rfic_codes") or [])
+        + len(item.get("rfisc_codes") or [])
+        for item in airline_knowledge_normalisation_records
+    )
+    airline_knowledge_normalisation_animal_taxonomy_count = len(
+        [
+            item
+            for item in airline_knowledge_normalisation_records
+            if item.get("species") or item.get("breed") or item.get("animal_notes")
+        ]
+    )
+    airline_knowledge_normalisation_aircraft_cabin_taxonomy_count = len(
+        [
+            item
+            for item in airline_knowledge_normalisation_records
+            if item.get("aircraft_family") or item.get("cabin_family") or item.get("cabin_name")
+        ]
+    )
+    airline_knowledge_normalisation_service_taxonomy_count = len(
+        [
+            item
+            for item in airline_knowledge_normalisation_records
+            if item.get("service_domain") or item.get("service_family") or item.get("related_ssr_code")
+        ]
+    )
+    airline_knowledge_normalisation_unit_count = len(
+        [
+            item
+            for item in airline_knowledge_normalisation_records
+            if item.get("unit_type") or item.get("canonical_unit")
+        ]
+    )
+    airline_knowledge_normalisation_knowledge_link_count = sum(
+        len(item.get("acquisition_ids") or [])
+        + len(item.get("constraint_ids") or [])
+        + len(item.get("evidence_reference_ids") or [])
+        + len(item.get("policy_reference_ids") or [])
+        + len(item.get("pricing_reference_ids") or [])
+        + len(item.get("capability_reference_ids") or [])
+        for item in airline_knowledge_normalisation_records
+    )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
     agency_subscription_assignment_count = await database.collection("agency_subscription_assignments").count()
@@ -1864,7 +1948,7 @@ async def readiness() -> dict:
             "chapter_50_intelligence_track_enabled": True,
             "chapter_41_operational_workspaces_preserved": True,
             "feeds_chapter_41_42_operational_workspaces": True,
-            "next_intelligence_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+            "next_intelligence_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
             "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
             "ai_generation_disabled": True,
             "ai_execution_disabled": True,
@@ -2024,6 +2108,61 @@ async def readiness() -> dict:
             "operational_constraint_evaluation_ready_count": operational_constraint_evaluation_ready_count,
             "readiness_required": False,
             "diagnostic": "Phase 50.2 defines the formal AOIE operational constraint language as metadata only. It stores condition groups, supported operators, outcomes, applicability, priority, governance, future evaluation notes, and operational links without live rule execution, AI reasoning, recommendations, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or evaluation endpoints.",
+        },
+        "airline_knowledge_normalisation_foundation": {
+            "airline_knowledge_normalisation_enabled": True,
+            "airline_knowledge_normalisations_collection_enabled": True,
+            "canonical_operational_vocabulary_enabled": True,
+            "taxonomy_hierarchy_metadata_enabled": True,
+            "aliases_terms_metadata_enabled": True,
+            "applicability_metadata_enabled": True,
+            "animal_taxonomy_metadata_enabled": True,
+            "aircraft_cabin_taxonomy_metadata_enabled": True,
+            "service_taxonomy_metadata_enabled": True,
+            "unit_normalisation_metadata_enabled": True,
+            "knowledge_links_metadata_enabled": True,
+            "governance_metadata_enabled": True,
+            "platform_airline_knowledge_normalisation_metadata_crud_enabled": True,
+            "agency_airline_knowledge_normalisation_read_only_enabled": True,
+            "platform_airline_knowledge_normalisation_ui_enabled": True,
+            "agency_knowledge_normalisation_ui_enabled": True,
+            "filter_by_agency_enabled": True,
+            "filter_by_normalisation_status_enabled": True,
+            "filter_by_normalisation_type_enabled": True,
+            "filter_by_canonical_code_enabled": True,
+            "filter_by_taxonomy_enabled": True,
+            "filter_by_airline_enabled": True,
+            "filter_by_ssr_code_enabled": True,
+            "filter_by_rfic_enabled": True,
+            "filter_by_rfisc_enabled": True,
+            "filter_by_review_status_enabled": True,
+            "filter_by_approval_status_enabled": True,
+            "normalisation_statuses": NORMALISATION_STATUSES,
+            "normalisation_types": NORMALISATION_TYPES,
+            "metadata_only": True,
+            "live_evaluation_disabled": True,
+            "ai_parsing_disabled": True,
+            "recommendation_engine_disabled": True,
+            "feasibility_scoring_disabled": True,
+            "pricing_calculation_disabled": True,
+            "scraping_disabled": True,
+            "background_workers_disabled": True,
+            "provider_integrations_disabled": True,
+            "airline_knowledge_normalisation_count": airline_knowledge_normalisation_count,
+            "airline_knowledge_normalisation_status_counts": airline_knowledge_normalisation_status_counts,
+            "airline_knowledge_normalisation_type_counts": airline_knowledge_normalisation_type_counts,
+            "airline_knowledge_normalisation_review_status_counts": airline_knowledge_normalisation_review_status_counts,
+            "airline_knowledge_normalisation_approval_status_counts": airline_knowledge_normalisation_approval_status_counts,
+            "airline_knowledge_normalisation_hierarchy_count": airline_knowledge_normalisation_hierarchy_count,
+            "airline_knowledge_normalisation_alias_count": airline_knowledge_normalisation_alias_count,
+            "airline_knowledge_normalisation_applicability_count": airline_knowledge_normalisation_applicability_count,
+            "airline_knowledge_normalisation_animal_taxonomy_count": airline_knowledge_normalisation_animal_taxonomy_count,
+            "airline_knowledge_normalisation_aircraft_cabin_taxonomy_count": airline_knowledge_normalisation_aircraft_cabin_taxonomy_count,
+            "airline_knowledge_normalisation_service_taxonomy_count": airline_knowledge_normalisation_service_taxonomy_count,
+            "airline_knowledge_normalisation_unit_count": airline_knowledge_normalisation_unit_count,
+            "airline_knowledge_normalisation_knowledge_link_count": airline_knowledge_normalisation_knowledge_link_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.3 creates the metadata-only normalisation layer for the Airline Operational Knowledge Graph. It maps messy operational terms into canonical vocabulary and taxonomy metadata so future AOIE phases can compare airlines consistently without live evaluation, AI parsing, recommendations, feasibility scoring, pricing calculation, scraping, background workers, or provider integrations.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -3775,6 +3914,7 @@ app.include_router(platform_airline_intelligence_agency_consumption.router)
 app.include_router(platform_airline_operational_intelligence.router)
 app.include_router(platform_airline_knowledge_acquisition.router)
 app.include_router(platform_operational_constraints.router)
+app.include_router(platform_airline_knowledge_normalisation.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -3847,6 +3987,7 @@ app.include_router(agency_airline_intelligence_agency_consumption.router)
 app.include_router(agency_airline_operational_intelligence.router)
 app.include_router(agency_airline_knowledge_acquisition.router)
 app.include_router(agency_operational_constraints.router)
+app.include_router(agency_airline_knowledge_normalisation.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

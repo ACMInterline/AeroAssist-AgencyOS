@@ -12,7 +12,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 
 READINESS_COLLECTION = "agency_feature_bundle_rollout_readiness"
 ASSIGNMENT_COLLECTION = "agency_feature_bundle_assignments"

@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 TICKET_WORKSPACE_COLLECTION = "ticket_workspaces"
 TICKET_WORKSPACE_STATUSES = [
     TicketWorkspaceStatus.DRAFT.value,

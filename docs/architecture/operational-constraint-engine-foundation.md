@@ -76,4 +76,6 @@ The UI displays Constraint Overview, Knowledge Link, Conditions, Outcomes, Appli
 
 Operational Constraints are the future reasoning language of AOIE. Future feasibility and recommendation phases may evaluate constraints only in explicitly authorized later phases.
 
+Phase 50.3 Airline Operational Knowledge Normalisation creates canonical vocabulary and taxonomy metadata for the terms used by constraints. Normalisation does not evaluate rules; it helps future AOIE compare airlines consistently.
+
 Phase 50.2 does not implement live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or external API calls.

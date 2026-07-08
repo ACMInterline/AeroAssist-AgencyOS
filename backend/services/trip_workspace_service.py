@@ -8,7 +8,7 @@ from models import TripWorkspace, TripWorkspaceCreate, TripWorkspaceUpdate, new_
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 
 TRIP_WORKSPACE_COLLECTION = "trip_workspaces"
 TRIP_STATUSES = ["draft", "planning", "active", "ready", "traveling", "completed", "archived"]

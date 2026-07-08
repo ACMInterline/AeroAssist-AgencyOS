@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -78,6 +78,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, OperationalConstraintEngineService, operational_constraints, /api/platform/operational-constraints, /api/agencies/{agency_id}/operational-constraints, /platform/operational-constraints, /agency/operational-constraints",
         "status": "foundation adopted",
         "action": "Store metadata-only operational constraints as the future AOIE reasoning language across policy, pricing, capability, and procedure knowledge without live rule execution, AI reasoning, recommendations, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or evaluation endpoints.",
+    },
+    {
+        "category": "Airline Knowledge Normalisation",
+        "concept": "Canonical operational vocabulary and taxonomy foundation",
+        "supplementary_concept": "canonical codes, taxonomy hierarchy, aliases, airline terms, GDS terms, commercial terms, operational terms, applicability, animal taxonomy, aircraft/cabin taxonomy, service taxonomy, unit normalisation, knowledge links",
+        "current_equivalent": "AirlineKnowledgeNormalisation, AirlineKnowledgeNormalisationCreate, AirlineKnowledgeNormalisationUpdate, AirlineKnowledgeNormalisationService, airline_knowledge_normalisations, /api/platform/airline-knowledge-normalisation, /api/agencies/{agency_id}/airline-knowledge-normalisation, /platform/airline-knowledge-normalisation, /agency/knowledge-normalisation",
+        "status": "foundation adopted",
+        "action": "Store metadata-only canonical operational vocabulary for AOIE so future phases can compare airline knowledge consistently without live evaluation, AI parsing, recommendations, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, or automation.",
     },
     {
         "category": "Platform / Agency UX",
@@ -672,6 +680,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
         {"supplementary": "/agent/operational-constraints", "agencyos": "/agency/operational-constraints"},
+        {"supplementary": "/admin/airline-knowledge-normalisation", "agencyos": "/platform/airline-knowledge-normalisation"},
+        {"supplementary": "/agent/knowledge-normalisation", "agencyos": "/agency/knowledge-normalisation"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -684,9 +694,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.3",
-        "title": "Airline Service Rule Normalisation Foundation",
-        "reason": "Operational constraints now define the formal AOIE metadata language. The next intelligence phase should add normalisation metadata without AI execution, live evaluation, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
+        "phase": "Phase 50.4",
+        "title": "Airline Knowledge Version Review Foundation",
+        "reason": "Operational knowledge normalisation now defines canonical vocabulary metadata. The next intelligence phase should add governed version review metadata without AI execution, live evaluation, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
     },
     {
         "phase": "Phase 42.2",
@@ -927,6 +937,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
             "Airline knowledge acquisition workspace foundation built in Phase 50.1",
             "Operational constraint engine foundation built in Phase 50.2",
+            "Airline operational knowledge normalisation foundation built in Phase 50.3",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -944,8 +955,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
-        "next_intelligence_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+        "next_immediate_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
+        "next_intelligence_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
@@ -966,7 +977,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",
             "Phase 50.1 - Airline Knowledge Acquisition Workspace",
             "Phase 50.2 - Operational Constraint Engine Foundation",
-            "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+            "Phase 50.3 - Airline Operational Knowledge Normalisation Foundation",
             "Phase 50.4 - Airline Knowledge Version Review Foundation",
             "Phase 50.5 - Airline Capability Matrix Foundation",
             "Phase 50.6 - Passenger Service Feasibility Assessment Foundation",

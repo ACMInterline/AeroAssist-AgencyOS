@@ -6,7 +6,7 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 
@@ -37,7 +37,7 @@ FUTURE_AOIE_PHASES = [
     "50.0 Airline Operational Intelligence Engine Architecture Foundation",
     "50.1 Airline Knowledge Acquisition Workspace",
     "50.2 Operational Constraint Engine Foundation",
-    "50.3 Airline Service Rule Normalisation Foundation",
+    "50.3 Airline Operational Knowledge Normalisation Foundation",
     "50.4 Airline Knowledge Version Review Foundation",
     "50.5 Airline Capability Matrix Foundation",
     "50.6 Passenger Service Feasibility Assessment Foundation",
@@ -192,7 +192,7 @@ class AirlineOperationalIntelligenceService:
             "future_aoie_phase_count": len(FUTURE_AOIE_PHASES),
             "excluded_scope_count": len(EXCLUDED_SCOPE),
             "passenger_service_operations_principle": PASSENGER_SERVICE_OPERATIONS_PRINCIPLE,
-            "next_intelligence_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+            "next_intelligence_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
             "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         }
 

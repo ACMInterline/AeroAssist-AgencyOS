@@ -17,7 +17,7 @@ from services.feature_bundle_rollout_plan_service import PLAN_STAGES, FeatureBun
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES, FeatureBundleRolloutReadinessService
 
 
-PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
+PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
 
 VIEW_COLLECTION = "rollout_dashboard_views"
 SNAPSHOT_COLLECTION = "rollout_dashboard_snapshots"

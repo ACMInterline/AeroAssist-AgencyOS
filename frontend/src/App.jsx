@@ -29,6 +29,7 @@ import AirlineIntelligenceReviewCoveragePage from "./pages/agency/AirlineIntelli
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
+import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
@@ -107,6 +108,7 @@ import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligenceDataPacksPage"
 import AirlineIntelligenceDataPackReviewsPage from "./pages/platform/AirlineIntelligenceDataPackReviewsPage"
 import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAcquisitionPage"
+import AirlineKnowledgeNormalisationPage from "./pages/platform/AirlineKnowledgeNormalisationPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
@@ -238,6 +240,7 @@ const routes = {
   "/platform/airline-operational-intelligence": AirlineOperationalIntelligencePage,
   "/platform/airline-knowledge-acquisition": AirlineKnowledgeAcquisitionPage,
   "/platform/operational-constraints": PlatformOperationalConstraintsPage,
+  "/platform/airline-knowledge-normalisation": AirlineKnowledgeNormalisationPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -305,6 +308,7 @@ const routes = {
   "/agency/operational-intelligence": OperationalIntelligencePage,
   "/agency/knowledge-acquisition": KnowledgeAcquisitionPage,
   "/agency/operational-constraints": AgencyOperationalConstraintsPage,
+  "/agency/knowledge-normalisation": KnowledgeNormalisationPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
