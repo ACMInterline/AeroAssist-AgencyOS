@@ -1798,6 +1798,23 @@ Avoid adding:
 
 - Booking execution, live flight search, GDS connectivity, NDC connectivity, airline APIs, payment, ticket issuance, schedule synchronization, external APIs, AI, background workers, automatic route generation, flight validation, airline lookups, live schedule updates, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.4: Trip Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `TripWorkspace` and status models.
+- Added `trip_workspaces` collection/index registration.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/trip-workspaces`.
+- Added agency read-only APIs and `/agency/trip-workspaces`.
+- Added filters by agency, status, departure country, destination country, departure date, assigned agent, priority, and assigned operational workspace.
+- Added trip reference, journey type, service type, client, passenger summary, flight summary, linked request/offer/booking/ticket/EMD/document references, route, travel dates, itinerary summary, baggage summary, service summary, assigned agent/team, and operational note metadata fields.
+- Added readiness flags under `trip_workspace_foundation`.
+- Added `docs/architecture/trip-workspace-foundation.md`.
+
+Avoid adding:
+
+- Booking execution, ticket issuance, GDS connectivity, NDC connectivity, airline APIs, payment processing, invoicing, AI, background workers, automatic trip generation, automatic itinerary generation, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

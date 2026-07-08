@@ -217,6 +217,7 @@ async def summary(
             "travel_request_workspaces": await db.collection("travel_request_workspaces").count(),
             "passenger_workspaces": await db.collection("passenger_workspaces").count(),
             "flight_workspaces": await db.collection("flight_workspaces").count(),
+            "trip_workspaces": await db.collection("trip_workspaces").count(),
             "rollout_dashboard_views": await db.collection("rollout_dashboard_views").count(),
             "rollout_dashboard_snapshots": await db.collection("rollout_dashboard_snapshots").count(),
             "capability_catalog": await db.collection("capability_catalog").count(),

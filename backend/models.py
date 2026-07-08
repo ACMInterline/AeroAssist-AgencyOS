@@ -12374,6 +12374,151 @@ class FlightWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class TripWorkspaceStatus(str, Enum):
+    DRAFT = "draft"
+    PLANNING = "planning"
+    ACTIVE = "active"
+    READY = "ready"
+    TRAVELING = "traveling"
+    COMPLETED = "completed"
+    ARCHIVED = "archived"
+
+
+class TripWorkspace(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_reference: str
+    trip_status: TripWorkspaceStatus = TripWorkspaceStatus.ACTIVE
+    journey_type: Optional[str] = None
+    service_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    travel_request_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    departure_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    departure_city: Optional[str] = None
+    destination_city: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    travel_duration: Optional[str] = None
+    passenger_count: Optional[int] = None
+    itinerary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_priority: Optional[str] = None
+    assigned_agent: Optional[str] = None
+    assigned_team: List[str] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    trip_workspace_metadata_only: bool = True
+    booking_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    payment_processing_disabled: bool = True
+    invoicing_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_trip_generation_disabled: bool = True
+    automatic_itinerary_generation_disabled: bool = True
+    itinerary_generation_disabled: bool = True
+    external_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class TripWorkspaceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_reference: Optional[str] = None
+    trip_status: TripWorkspaceStatus = TripWorkspaceStatus.ACTIVE
+    journey_type: Optional[str] = None
+    service_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    travel_request_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    departure_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    departure_city: Optional[str] = None
+    destination_city: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    travel_duration: Optional[str] = None
+    passenger_count: Optional[int] = None
+    itinerary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_priority: Optional[str] = None
+    assigned_agent: Optional[str] = None
+    assigned_team: List[str] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class TripWorkspaceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    trip_reference: Optional[str] = None
+    trip_status: Optional[TripWorkspaceStatus] = None
+    journey_type: Optional[str] = None
+    service_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: Optional[List[str]] = None
+    flight_workspace_ids: Optional[List[str]] = None
+    travel_request_ids: Optional[List[str]] = None
+    offer_ids: Optional[List[str]] = None
+    booking_ids: Optional[List[str]] = None
+    ticket_ids: Optional[List[str]] = None
+    emd_ids: Optional[List[str]] = None
+    document_ids: Optional[List[str]] = None
+    departure_country: Optional[str] = None
+    destination_country: Optional[str] = None
+    departure_city: Optional[str] = None
+    destination_city: Optional[str] = None
+    origin_airport: Optional[str] = None
+    destination_airport: Optional[str] = None
+    departure_date: Optional[date] = None
+    return_date: Optional[date] = None
+    travel_duration: Optional[str] = None
+    passenger_count: Optional[int] = None
+    itinerary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    service_summary: Optional[str] = None
+    operational_priority: Optional[str] = None
+    assigned_agent: Optional[str] = None
+    assigned_team: Optional[List[str]] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

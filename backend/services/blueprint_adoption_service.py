@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_3_flight_workspace_foundation"
+PHASE_LABEL = "phase_41_4_trip_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -198,6 +198,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "FlightWorkspace, FlightWorkspaceStatus, FlightWorkspaceService, /api/platform/flight-workspaces, /api/agencies/{agency_id}/flight-workspaces, /platform/flight-workspaces, /agency/flight-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency flight workspace records and read-only agency visibility without booking execution, live flight search, GDS/NDC connectivity, airline APIs, payment, ticket issuance, schedule synchronization, external APIs, AI, background workers, automatic route generation, flight validation, airline lookups, live schedule updates, or automation.",
+    },
+    {
+        "category": "Trip Workspaces",
+        "concept": "Trip workspace metadata",
+        "supplementary_concept": "agency trip workspace, operational workspace link, journey type, service type, client, passenger summary, flight summary, linked requests, offers, bookings, tickets, EMDs, documents, route, dates, itinerary summary, baggage summary, service summary, assigned team, operational notes",
+        "current_equivalent": "TripWorkspace, TripWorkspaceStatus, TripWorkspaceService, /api/platform/trip-workspaces, /api/agencies/{agency_id}/trip-workspaces, /platform/trip-workspaces, /agency/trip-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency trip workspace records and read-only agency visibility without booking execution, ticket issuance, GDS/NDC connectivity, airline APIs, payment processing, invoicing, AI, background workers, automatic trip generation, automatic itinerary generation, external integrations, external APIs, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -538,6 +546,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/passenger-workspaces", "agencyos": "/agency/passenger-workspaces"},
         {"supplementary": "/admin/flight-workspaces", "agencyos": "/platform/flight-workspaces"},
         {"supplementary": "/agent/flight-workspaces", "agencyos": "/agency/flight-workspaces"},
+        {"supplementary": "/admin/trip-workspaces", "agencyos": "/platform/trip-workspaces"},
+        {"supplementary": "/agent/trip-workspaces", "agencyos": "/agency/trip-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},
