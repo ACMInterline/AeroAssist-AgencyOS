@@ -67,6 +67,7 @@ async def summary(
             "offer_routes": await db.collection("offer_route_alternatives").count(),
             "offer_fare_options": await db.collection("offer_fare_options").count(),
             "offer_workspaces": await db.collection("offer_workspaces").count(),
+            "offer_workspaces_v2": await db.collection("offer_workspaces_v2").count(),
             "offer_options": await db.collection("offer_options").count(),
             "offer_builder_segments": await db.collection("offer_builder_segments").count(),
             "offer_fare_bundles": await db.collection("offer_fare_bundles").count(),

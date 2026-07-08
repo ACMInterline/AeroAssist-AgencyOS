@@ -12519,6 +12519,156 @@ class TripWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OfferWorkspaceV2Status(str, Enum):
+    DRAFT = "draft"
+    PREPARING = "preparing"
+    REVIEW = "review"
+    READY = "ready"
+    SHARED = "shared"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    ARCHIVED = "archived"
+
+
+class OfferWorkspaceV2(BaseDocument):
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_reference: str
+    offer_status: OfferWorkspaceV2Status = OfferWorkspaceV2Status.DRAFT
+    offer_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    offer_title: str
+    offer_summary: Optional[str] = None
+    destination_summary: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    pricing_summary: Optional[str] = None
+    currency: Optional[str] = None
+    total_price: Optional[float] = None
+    taxes_summary: Optional[str] = None
+    fees_summary: Optional[str] = None
+    ancillary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    seat_summary: Optional[str] = None
+    meal_summary: Optional[str] = None
+    hotel_summary: Optional[str] = None
+    transfer_summary: Optional[str] = None
+    insurance_summary: Optional[str] = None
+    validity_date: Optional[date] = None
+    assigned_agent: Optional[str] = None
+    agent_notes: Optional[str] = None
+    customer_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    offer_workspace_metadata_only: bool = True
+    booking_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    payment_processing_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    fare_calculation_engines_disabled: bool = True
+    fare_calculation_disabled: bool = True
+    live_pricing_disabled: bool = True
+    ai_itinerary_generation_disabled: bool = True
+    supplier_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automatic_booking_conversion_disabled: bool = True
+    background_workers_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class OfferWorkspaceV2Create(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_reference: Optional[str] = None
+    offer_status: OfferWorkspaceV2Status = OfferWorkspaceV2Status.DRAFT
+    offer_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    offer_title: str
+    offer_summary: Optional[str] = None
+    destination_summary: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    pricing_summary: Optional[str] = None
+    currency: Optional[str] = None
+    total_price: Optional[float] = None
+    taxes_summary: Optional[str] = None
+    fees_summary: Optional[str] = None
+    ancillary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    seat_summary: Optional[str] = None
+    meal_summary: Optional[str] = None
+    hotel_summary: Optional[str] = None
+    transfer_summary: Optional[str] = None
+    insurance_summary: Optional[str] = None
+    validity_date: Optional[date] = None
+    assigned_agent: Optional[str] = None
+    agent_notes: Optional[str] = None
+    customer_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_document_ids: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferWorkspaceV2Update(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_reference: Optional[str] = None
+    offer_status: Optional[OfferWorkspaceV2Status] = None
+    offer_type: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_ids: Optional[List[str]] = None
+    flight_workspace_ids: Optional[List[str]] = None
+    offer_title: Optional[str] = None
+    offer_summary: Optional[str] = None
+    destination_summary: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    pricing_summary: Optional[str] = None
+    currency: Optional[str] = None
+    total_price: Optional[float] = None
+    taxes_summary: Optional[str] = None
+    fees_summary: Optional[str] = None
+    ancillary_summary: Optional[str] = None
+    baggage_summary: Optional[str] = None
+    seat_summary: Optional[str] = None
+    meal_summary: Optional[str] = None
+    hotel_summary: Optional[str] = None
+    transfer_summary: Optional[str] = None
+    insurance_summary: Optional[str] = None
+    validity_date: Optional[date] = None
+    assigned_agent: Optional[str] = None
+    agent_notes: Optional[str] = None
+    customer_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    linked_booking_ids: Optional[List[str]] = None
+    linked_ticket_ids: Optional[List[str]] = None
+    linked_document_ids: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

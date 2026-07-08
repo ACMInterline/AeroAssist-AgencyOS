@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_4_trip_workspace_foundation"
+PHASE_LABEL = "phase_41_5_offer_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -206,6 +206,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "TripWorkspace, TripWorkspaceStatus, TripWorkspaceService, /api/platform/trip-workspaces, /api/agencies/{agency_id}/trip-workspaces, /platform/trip-workspaces, /agency/trip-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency trip workspace records and read-only agency visibility without booking execution, ticket issuance, GDS/NDC connectivity, airline APIs, payment processing, invoicing, AI, background workers, automatic trip generation, automatic itinerary generation, external integrations, external APIs, or automation.",
+    },
+    {
+        "category": "Offer Workspaces",
+        "concept": "Offer workspace metadata",
+        "supplementary_concept": "agency offer workspace, operational workspace link, trip workspace link, offer reference, status, type, client, passenger summary, flight summary, itinerary summary, pricing summary, services, validity, linked bookings, tickets, documents, notes",
+        "current_equivalent": "OfferWorkspaceV2, OfferWorkspaceV2Status, OfferWorkspaceService, /api/platform/offer-workspaces, /api/agencies/{agency_id}/offer-workspaces-v2, /platform/offer-workspaces, /agency/offer-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency offer workspace records and read-only agency visibility without booking execution, ticket issuance, payment processing, GDS/NDC connectivity, airline APIs, fare calculation engines, live pricing, AI itinerary generation, supplier integrations, external APIs, automatic booking conversion, background workers, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -548,6 +556,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/flight-workspaces", "agencyos": "/agency/flight-workspaces"},
         {"supplementary": "/admin/trip-workspaces", "agencyos": "/platform/trip-workspaces"},
         {"supplementary": "/agent/trip-workspaces", "agencyos": "/agency/trip-workspaces"},
+        {"supplementary": "/admin/offer-workspaces", "agencyos": "/platform/offer-workspaces"},
+        {"supplementary": "/agent/offer-workspaces", "agencyos": "/agency/offer-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

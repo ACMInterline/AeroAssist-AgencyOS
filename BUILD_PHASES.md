@@ -1815,6 +1815,23 @@ Avoid adding:
 
 - Booking execution, ticket issuance, GDS connectivity, NDC connectivity, airline APIs, payment processing, invoicing, AI, background workers, automatic trip generation, automatic itinerary generation, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.5: Offer Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `OfferWorkspaceV2` and status models.
+- Added `offer_workspaces_v2` collection/index registration.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/offer-workspaces`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/offer-workspaces-v2` and UI at `/agency/offer-workspaces`.
+- Added filters by agency, status, validity, client, destination, price range, assigned agent, and assigned trip workspace.
+- Added offer reference, status, type, client, passenger summary, flight summary, trip summary, pricing summary, taxes, fees, ancillary, baggage, seat, meal, hotel, transfer, insurance, validity, linked booking/ticket/document, agent note, customer note, and internal note metadata fields.
+- Added readiness flags under `offer_workspace_foundation`.
+- Added `docs/architecture/offer-workspace-foundation.md`.
+
+Avoid adding:
+
+- Booking execution, ticket issuance, payment processing, GDS connectivity, NDC connectivity, airline APIs, fare calculation engines, AI itinerary generation, supplier integrations, external APIs, automatic booking conversion, background workers, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

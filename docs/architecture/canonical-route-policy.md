@@ -47,6 +47,7 @@ Phase 41.1 adds travel request workspace APIs only under `/api/platform/travel-r
 Phase 41.2 adds passenger workspace APIs only under `/api/platform/passenger-workspaces/*` and `/api/agencies/{agency_id}/passenger-workspaces/*`, plus frontend pages under `/platform/passenger-workspaces` and `/agency/passenger-workspaces`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, GDS connectivity, NDC connectivity, payment processing, supplier integrations, AI, email, SMS, background workers, external APIs, automatic profile matching, automatic document validation, airline communication, or automation.
 Phase 41.3 adds flight workspace APIs only under `/api/platform/flight-workspaces/*` and `/api/agencies/{agency_id}/flight-workspaces/*`, plus frontend pages under `/platform/flight-workspaces` and `/agency/flight-workspaces`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, live flight search, GDS connectivity, NDC connectivity, airline APIs, payment, ticket issuance, schedule synchronization, external APIs, AI, background workers, automatic route generation, flight validation, airline lookups, live schedule updates, or automation.
 Phase 41.4 adds trip workspace APIs only under `/api/platform/trip-workspaces/*` and `/api/agencies/{agency_id}/trip-workspaces/*`, plus frontend pages under `/platform/trip-workspaces` and `/agency/trip-workspaces`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, GDS connectivity, NDC connectivity, airline APIs, payment processing, invoicing, AI, background workers, automatic trip generation, automatic itinerary generation, external integrations, external APIs, or automation.
+Phase 41.5 adds offer workspace APIs only under `/api/platform/offer-workspaces/*` and `/api/agencies/{agency_id}/offer-workspaces-v2/*`, plus frontend pages under `/platform/offer-workspaces` and `/agency/offer-workspaces`. The v2 agency API path avoids colliding with the existing offer-builder workspace APIs under `/api/agencies/{agency_id}/offer-workspaces/*`. It does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, booking execution, ticket issuance, payment processing, GDS connectivity, NDC connectivity, airline APIs, fare calculation engines, live pricing, AI itinerary generation, supplier integrations, external APIs, automatic booking conversion, background workers, or automation.
 
 ## Route Mapping
 
@@ -118,6 +119,8 @@ Phase 41.4 adds trip workspace APIs only under `/api/platform/trip-workspaces/*`
 | `/agent/flight-workspaces` | `/agency/flight-workspaces` |
 | `/admin/trip-workspaces` | `/platform/trip-workspaces` |
 | `/agent/trip-workspaces` | `/agency/trip-workspaces` |
+| `/admin/offer-workspaces` | `/platform/offer-workspaces` |
+| `/agent/offer-workspaces` | `/agency/offer-workspaces` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |
