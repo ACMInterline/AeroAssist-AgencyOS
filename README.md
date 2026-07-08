@@ -4,6 +4,28 @@ Multi-tenant SaaS foundation for micro and small travel agencies.
 
 This repository currently contains the Phase 0 architecture specifications through Phase 42.2 passenger service workflow engine foundation plus Phase 50.3 Airline Operational Knowledge Normalisation foundation, including CRM, requests, trips, reference/service catalogue governance, rules/services, offer builder, offer acceptance/booking readiness, booking/ticket/EMD mirrors, standalone/import/change/exchange workflows, document foundation, governed GDS parser foundation, governed airline policy source/extraction/review foundations, canonical special/ancillary service taxonomy mapping, separate SSR/OSI communication plus EMD/RFIC/RFISC payment mechanics mapping, policy-based ancillary pricing/exception metadata, metadata-only airline comparison/service advisory views, offer-linked policy advisor context, human-reviewed offer decision packs, decision explanation timelines, metadata-only review export snapshots, internal render preview metadata, manual release readiness, manual delivery handoff metadata, manual delivery outcome tracking, metadata-only export audit reviews, metadata-only export governance records, metadata-only compliance evidence records, governed airline intelligence data packs with staged items, validation issues, import runs, review notes, and coverage snapshots, metadata-only data pack review checklists, field mappings, conflict records, promotion-readiness records, review snapshots, governed airline intelligence knowledge versions with release-channel metadata, comparisons, rollback plans, and immutable version snapshots, agency consumption profiles, assignment views, usage readiness, notes, and snapshots for safe-use visibility, plain-language Platform Console and Agency Workspace navigation groups, metadata-only SaaS subscription plans, entitlements, assignments, readiness rows, review notes, immutable snapshots, read-only entitlement visibility badges for agency navigation and platform review, agency-specific feature visibility metadata independent of subscription plans, read-only feature flag audit/readiness metadata, reusable feature flag bundle metadata, metadata-only agency feature bundle assignment history, metadata-only capability catalog visibility, assigned-bundle rollout readiness checklists, metadata-only feature bundle rollout plan records, the read-only rollout dashboard, metadata-only rollout approval records, metadata-only rollout schedule records, metadata-only rollout timeline entries, metadata-only feature bundle dependency records, metadata-only feature bundle rollout risk register records, metadata-only feature bundle rollout issue log records, metadata-only feature bundle rollout decision register records, metadata-only feature bundle rollout change request records, metadata-only feature bundle rollout rollback plan records, and metadata-only feature bundle rollout summary evidence-pack records, plus metadata-only operational travel workspace, travel request workspace, passenger workspace, flight workspace, trip workspace, offer workspace, booking workspace, ticket workspace, EMD workspace, SSR / OSI operational workspace, document workspace records, operational timeline records, passenger service workflow records, architecture-only AOIE metadata, metadata-only airline operational knowledge graph records, metadata-only operational constraint language records, and metadata-only airline operational knowledge normalisation records.
 
+## Foundational Architecture Documents
+
+Permanent AeroAssist architecture foundations live under `docs/architecture/foundations/`:
+
+- [Passenger Service Operations Manifesto](docs/architecture/foundations/PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md)
+- [Airline Operational Knowledge Blueprint](docs/architecture/foundations/AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md)
+- [AeroAssist Engineering Principles](docs/architecture/foundations/AEROASSIST_ENGINEERING_PRINCIPLES.md)
+- [Passenger Service Ontology](docs/architecture/foundations/PASSENGER_SERVICE_ONTOLOGY.md)
+- [Airline Operational Knowledge Ontology](docs/architecture/foundations/AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md)
+- [Glossary](docs/architecture/foundations/GLOSSARY.md)
+
+## Future Codex Guidance
+
+Before implementing future phases, Codex should read and follow:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
 ## Project Structure
 
 - `backend/` FastAPI API, Pydantic models, tenant/auth helpers, seed service, persistence wrappers, smoke scripts, Dockerfile, and implemented Phase 1-30 foundations.

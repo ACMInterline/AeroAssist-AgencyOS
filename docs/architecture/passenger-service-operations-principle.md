@@ -8,6 +8,21 @@ Passenger -> Need -> Service Requirement -> Airline Capability -> Operational Fe
 
 This principle keeps the product centered on the passenger service case rather than on a supplier, booking engine, or generic CRM object.
 
+## Foundational Architecture Documents
+
+The permanent foundation documents under `docs/architecture/foundations/` define the passenger-service philosophy, Chapter 50 knowledge architecture, engineering rules, ontologies, and glossary that future phases must preserve.
+
+## Future Codex Guidance
+
+Before implementing future phases, Codex should read and follow:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
 ## Operational Platform And AOIE
 
 The Operational Platform answers what is happening:

@@ -23,6 +23,21 @@ Phase 50.1 records Airline Knowledge Acquisition evidence metadata and Airline O
 Phase 50.2 records Operational Constraint Engine metadata as the formal AOIE constraint language without live rule execution, AI reasoning, recommendations, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, external APIs, evaluation endpoints, or automation.
 Phase 50.3 records Airline Operational Knowledge Normalisation metadata as canonical vocabulary and taxonomy for AOIE without live evaluation, AI parsing, recommendations, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, external APIs, or automation.
 
+## Foundational Architecture Documents
+
+Future supplementary blueprint adoption must follow the permanent AeroAssist foundation documents in `docs/architecture/foundations/`: Passenger Service Operations Manifesto, Airline Operational Knowledge Blueprint, AeroAssist Engineering Principles, Passenger Service Ontology, Airline Operational Knowledge Ontology, and Glossary.
+
+## Future Codex Guidance
+
+Before implementing future phases, Codex should read and follow:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
 | Supplementary concept | Current AgencyOS equivalent | Status | Action |
 |---|---|---|---|
 | `users`, `roles`, `user_roles`, `permissions`, `role_permissions` | `platform_users`, `auth_identities`, `auth_sessions`, `agency_staff_memberships`, invitations, platform/agency role helpers | built differently | Do not duplicate RBAC; current platform and agency role model remains canonical. |

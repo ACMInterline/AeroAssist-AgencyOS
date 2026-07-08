@@ -6,6 +6,21 @@ AgencyOS remains on the current FastAPI, Mongo-compatible repository layer, Reac
 
 AgencyOS already surpasses the blueprint in production deployment readiness, backup automation, agency branding/theme controls, CMS/public website publishing, logo/media handling, app shell/sidebar polish, request intake, and structured operational request building.
 
+## Foundational Architecture Documents
+
+Future blueprint alignment must preserve the permanent AeroAssist foundation documents in `docs/architecture/foundations/`: Passenger Service Operations Manifesto, Airline Operational Knowledge Blueprint, AeroAssist Engineering Principles, Passenger Service Ontology, Airline Operational Knowledge Ontology, and Glossary.
+
+## Future Codex Guidance
+
+Before implementing future phases, Codex should read and follow:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
 | Blueprint area | Current AgencyOS status | Existing files/models/routes | Gap | Recommended phase | Risk level | Notes |
 |---|---|---|---|---|---|---|
 | CRM clients | Implemented foundation | `ClientProfile`, `ClientPassengerRelationship`, `backend/routers/clients.py` | Needs richer account roles and segmentation later | Phase 34+ | Low | Payer/requester must remain separate from beneficiaries. |

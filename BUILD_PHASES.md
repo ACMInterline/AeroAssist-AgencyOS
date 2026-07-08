@@ -4,6 +4,28 @@ This file describes the AeroAssist AgencyOS roadmap numbering used by the reposi
 
 Production readiness still requires persistence hardening, migrations, tenant isolation tests, production authentication, invitation/session flows, formal permission enforcement, operational monitoring, and deployment/security review.
 
+## Foundational Architecture Documents
+
+Permanent AeroAssist architecture foundations live under `docs/architecture/foundations/`:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
+## Future Codex Guidance
+
+Before implementing future phases, Codex should read and follow:
+
+- `PASSENGER_SERVICE_OPERATIONS_MANIFESTO.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_BLUEPRINT.md`
+- `AEROASSIST_ENGINEERING_PRINCIPLES.md`
+- `PASSENGER_SERVICE_ONTOLOGY.md`
+- `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
+- `GLOSSARY.md`
+
 ## Current Implementation State
 
 The repository currently contains:
