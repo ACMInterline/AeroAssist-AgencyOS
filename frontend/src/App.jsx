@@ -15,6 +15,7 @@ import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
 import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
 import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
 import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
+import TimelinePage from "./pages/agency/TimelinePage"
 import FlightWorkspacesPage from "./pages/agency/FlightWorkspacesPage"
 import TripWorkspacesPage from "./pages/agency/TripWorkspacesPage"
 import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
@@ -132,6 +133,7 @@ import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBu
 import PlatformFlightWorkspacesPage from "./pages/platform/FlightWorkspacesPage"
 import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPage"
 import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
+import PlatformOperationalTimelinesPage from "./pages/platform/OperationalTimelinesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
 import PlatformSsrOsiWorkspacesPage from "./pages/platform/SsrOsiWorkspacesPage"
@@ -216,6 +218,7 @@ const routes = {
   "/platform/emd-workspaces": PlatformEmdWorkspacesPage,
   "/platform/ssr-osi-workspaces": PlatformSsrOsiWorkspacesPage,
   "/platform/document-workspaces": PlatformDocumentWorkspacesPage,
+  "/platform/operational-timelines": PlatformOperationalTimelinesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -276,6 +279,7 @@ const routes = {
   "/agency/emd-workspaces": EmdWorkspaceMetadataPage,
   "/agency/passenger-services": PassengerServicesPage,
   "/agency/document-workspaces": DocumentWorkspacesPage,
+  "/agency/timeline": TimelinePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,

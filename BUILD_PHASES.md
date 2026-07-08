@@ -1914,6 +1914,22 @@ Avoid adding:
 
 - Live document delivery, e-signature, public share links, automatic PDF generation, payment/invoice generation, external storage integrations, background workers, AI document generation, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 42.1: Operational Timeline Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `OperationalTimeline`, `OperationalTimelineCreate`, and `OperationalTimelineUpdate` models with agency ownership, timeline reference, creator metadata, passenger/request/trip/booking/ticket/EMD/SSR-OSI/document workspace links, event metadata, operational stage/result, airline/airport context, communication summary fields, approval metadata, due/completed dates, reminder metadata, visibility flags, attachment references, and operational notes.
+- Registered the additive `operational_timelines` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/operational-timelines` and UI at `/platform/operational-timelines`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/operational-timelines` and UI at `/agency/timeline`.
+- Added filters by passenger, booking, ticket, EMD, SSR / OSI, airline, communication type, event type, priority, status, and date.
+- Added chronological ordering and readiness flags under `operational_timeline_workspace_foundation`.
+- Added `docs/architecture/operational-timeline-workspace-foundation.md`.
+
+Avoid adding:
+
+- Email sending, SMS sending, WhatsApp, Teams, Slack, live airline messaging, live customer messaging, AI summarization, background workers, provider integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 50.0: Airline Operational Intelligence Engine Architecture Foundation
 
 Implemented scope:
@@ -1923,7 +1939,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.0 Document Workspace Foundation.
+- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.1 Operational Timeline Workspace Foundation.
 
 Avoid adding:
 

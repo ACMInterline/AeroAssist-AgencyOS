@@ -36,6 +36,12 @@ Passenger Need -> SSR / OSI Workspace -> Document Workspace -> Airline Knowledge
 
 The document workspace records required, requested, received, verified, rejected, waived, archived, and other document metadata linked to passenger, travel request, trip, booking, ticket, EMD, SSR / OSI, Phase 36.5 package/render/share, and operational intelligence records. It remains metadata-only and does not deliver documents, implement e-signature, create public links, generate PDFs automatically, generate payments or invoices, integrate external storage, run background workers, or generate documents with AI. It does not duplicate the older Phase 36.5 document render/package/share foundation.
 
+Phase 42.1 adds the Operational Timeline Workspace as the chronological history layer attached to every operational object:
+
+Passenger Need -> Operational Workspace -> Timeline Entry -> Review Evidence -> Fulfilment Evidence
+
+Timeline entries record event metadata, communication summaries, approval history, reminders, attachments, visibility flags, and operational notes linked to passenger, request, trip, booking, ticket, EMD, SSR / OSI, and document workspaces. They remain metadata-only and do not send email, send SMS, use WhatsApp, Teams, or Slack, send live airline or customer messages, summarize with AI, run background workers, call providers, or automate actions.
+
 ## Governance Boundary
 
 Future AOIE phases should consume reviewed and versioned metadata from existing foundations. They should not create parallel ticket, EMD, booking, offer, service taxonomy, service mechanics, or pricing architectures.

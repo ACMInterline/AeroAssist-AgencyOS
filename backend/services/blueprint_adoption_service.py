@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_42_0_document_workspace_foundation"
+PHASE_LABEL = "phase_42_1_operational_timeline_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -262,6 +262,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "DocumentWorkspace, DocumentWorkspaceCreate, DocumentWorkspaceUpdate, DocumentWorkspaceStatus, DocumentWorkspaceType, DocumentWorkspaceService, /api/platform/document-workspaces, /api/agencies/{agency_id}/document-workspaces, /platform/document-workspaces, /agency/document-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only operational document workspaces that link passenger, request, trip, booking, ticket, EMD, SSR / OSI, package, render job, share record, storage reference, and operational intelligence metadata without live delivery, e-signature, public share links, automatic PDF generation, payment or invoice generation, external storage integrations, background workers, AI document generation, or duplication of the Phase 36.5 render/package/share foundation.",
+    },
+    {
+        "category": "Operational Timelines",
+        "concept": "Operational history and communication-summary metadata",
+        "supplementary_concept": "timeline entry, event type, event category, event source, event status, priority, operational stage, communication type, direction, channel, sender, recipient, summary, approval status, due date, completed date, reminders, visibility, attachments, operational notes",
+        "current_equivalent": "OperationalTimeline, OperationalTimelineCreate, OperationalTimelineUpdate, OperationalTimelineService, /api/platform/operational-timelines, /api/agencies/{agency_id}/operational-timelines, /platform/operational-timelines, /agency/timeline",
+        "status": "foundation adopted",
+        "action": "Record metadata-only chronological operational history and communication summaries across passenger, request, trip, booking, ticket, EMD, SSR / OSI, and document workspaces without sending email, sending SMS, using WhatsApp, Teams, or Slack, sending live airline or customer messages, summarizing with AI, running background workers, integrating providers, calling external APIs, or automating actions.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -632,6 +640,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/capabilities", "agencyos": "/agency/capabilities"},
         {"supplementary": "/admin/document-workspaces", "agencyos": "/platform/document-workspaces"},
         {"supplementary": "/agent/document-workspaces", "agencyos": "/agency/document-workspaces"},
+        {"supplementary": "/admin/operational-timelines", "agencyos": "/platform/operational-timelines"},
+        {"supplementary": "/agent/timeline", "agencyos": "/agency/timeline"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -649,9 +659,9 @@ NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
         "reason": "AOIE now has an architecture foundation. The next intelligence phase should create governed airline knowledge acquisition metadata without scraping, crawling, AI generation, provider calls, or execution.",
     },
     {
-        "phase": "Phase 42.0",
-        "title": "Document Workspace Foundation",
-        "reason": "Chapter 42 should add operational document workspace metadata that links passenger-service documents to passenger, request, trip, booking, ticket, EMD, SSR/OSI, and AOIE records without delivery or generation.",
+        "phase": "Phase 42.1",
+        "title": "Operational Timeline Workspace Foundation",
+        "reason": "Chapter 42 should add chronological operational history and communication-summary metadata across passenger, request, trip, booking, ticket, EMD, SSR/OSI, and document workspaces without messaging, AI summaries, workers, providers, or automation.",
     },
     {
         "phase": "Phase 37.8",
@@ -873,6 +883,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "EMD workspace foundation built in Phase 41.8",
             "SSR / OSI operational workspace foundation built in Phase 41.9",
             "Document workspace foundation built in Phase 42.0",
+            "Operational timeline workspace foundation built in Phase 42.1",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
         ],
         "deferred": [
@@ -893,7 +904,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
         ],
         "next_immediate_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
         "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-        "next_operational_phase": "Phase 42.0 - Document Workspace Foundation",
+        "next_operational_phase": "Phase 42.1 - Operational Timeline Workspace Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
             "Travel request workspaces",
@@ -906,6 +917,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "EMD workspaces",
             "SSR / OSI operational workspaces",
             "Document workspaces",
+            "Operational timelines",
         ],
         "chapter_50_intelligence_track": [
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",

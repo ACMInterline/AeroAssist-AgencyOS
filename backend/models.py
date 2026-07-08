@@ -13806,6 +13806,150 @@ class DocumentWorkspaceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalTimeline(BaseDocument):
+    agency_id: str
+    timeline_reference: str
+    created_by: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    event_type: str = "other"
+    event_category: Optional[str] = None
+    event_source: Optional[str] = None
+    event_status: Optional[str] = None
+    event_priority: Optional[str] = None
+    operational_stage: Optional[str] = None
+    operational_result: Optional[str] = None
+    related_airline: Optional[str] = None
+    related_airport: Optional[str] = None
+    communication_type: Optional[str] = None
+    communication_direction: Optional[str] = None
+    communication_channel: Optional[str] = None
+    sender: Optional[str] = None
+    recipient: Optional[str] = None
+    subject: Optional[str] = None
+    summary: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    approval_reference: Optional[str] = None
+    approval_status: Optional[str] = None
+    due_date: Optional[date] = None
+    completed_date: Optional[date] = None
+    reminder_required: bool = False
+    internal_only: bool = True
+    passenger_visible: bool = False
+    airline_visible: bool = False
+    operational_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    timeline_workspace_metadata_only: bool = True
+    email_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    whatsapp_disabled: bool = True
+    teams_disabled: bool = True
+    slack_disabled: bool = True
+    live_airline_messaging_disabled: bool = True
+    live_customer_messaging_disabled: bool = True
+    ai_summarization_disabled: bool = True
+    background_workers_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class OperationalTimelineCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    timeline_reference: Optional[str] = None
+    created_by: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    event_type: str = "other"
+    event_category: Optional[str] = None
+    event_source: Optional[str] = None
+    event_status: Optional[str] = None
+    event_priority: Optional[str] = None
+    operational_stage: Optional[str] = None
+    operational_result: Optional[str] = None
+    related_airline: Optional[str] = None
+    related_airport: Optional[str] = None
+    communication_type: Optional[str] = None
+    communication_direction: Optional[str] = None
+    communication_channel: Optional[str] = None
+    sender: Optional[str] = None
+    recipient: Optional[str] = None
+    subject: Optional[str] = None
+    summary: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    approval_reference: Optional[str] = None
+    approval_status: Optional[str] = None
+    due_date: Optional[date] = None
+    completed_date: Optional[date] = None
+    reminder_required: bool = False
+    internal_only: bool = True
+    passenger_visible: bool = False
+    airline_visible: bool = False
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalTimelineUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    timeline_reference: Optional[str] = None
+    created_by: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    event_type: Optional[str] = None
+    event_category: Optional[str] = None
+    event_source: Optional[str] = None
+    event_status: Optional[str] = None
+    event_priority: Optional[str] = None
+    operational_stage: Optional[str] = None
+    operational_result: Optional[str] = None
+    related_airline: Optional[str] = None
+    related_airport: Optional[str] = None
+    communication_type: Optional[str] = None
+    communication_direction: Optional[str] = None
+    communication_channel: Optional[str] = None
+    sender: Optional[str] = None
+    recipient: Optional[str] = None
+    subject: Optional[str] = None
+    summary: Optional[str] = None
+    attachment_ids: Optional[List[str]] = None
+    approval_reference: Optional[str] = None
+    approval_status: Optional[str] = None
+    due_date: Optional[date] = None
+    completed_date: Optional[date] = None
+    reminder_required: Optional[bool] = None
+    internal_only: Optional[bool] = None
+    passenger_visible: Optional[bool] = None
+    airline_visible: Optional[bool] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

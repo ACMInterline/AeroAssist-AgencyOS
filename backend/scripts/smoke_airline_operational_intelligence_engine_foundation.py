@@ -14,7 +14,7 @@ from services.airline_operational_intelligence_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_42_0_document_workspace_foundation"
+EXPECTED_PHASE = "phase_42_1_operational_timeline_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-operational-intelligence"
 
@@ -245,7 +245,7 @@ def verify_blueprint_recommendations() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if "Phase 50.1" not in gaps.get("next_intelligence_phase", ""):
         raise AssertionError(f"Gap summary missing next intelligence phase: {gaps}")
-    if "Phase 42.0" not in gaps.get("next_operational_phase", ""):
+    if "Phase 42.1" not in gaps.get("next_operational_phase", ""):
         raise AssertionError(f"Gap summary missing next operational phase: {gaps}")
     if not any("EMD workspace foundation built in Phase 41.8" in item for item in gaps.get("already_built", [])):
         raise AssertionError("Chapter 41 EMD workspace foundation was not preserved.")
@@ -254,8 +254,8 @@ def verify_blueprint_recommendations() -> None:
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
     if next_phases["items"][0].get("phase") != "Phase 50.1":
         raise AssertionError(f"Next recommendations did not start with Phase 50.1: {next_phases}")
-    if not any(item.get("phase") == "Phase 42.0" for item in next_phases.get("items", [])):
-        raise AssertionError(f"Next recommendations did not preserve Phase 42.0: {next_phases}")
+    if not any(item.get("phase") == "Phase 42.1" for item in next_phases.get("items", [])):
+        raise AssertionError(f"Next recommendations did not preserve Phase 42.1: {next_phases}")
 
 
 def main() -> int:
