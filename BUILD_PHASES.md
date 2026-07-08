@@ -1972,7 +1972,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.2 Airline Policy Text Parser Foundation and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
+- Set next intelligence phase to Phase 50.3 Airline Service Rule Normalisation Foundation after Phase 50.2 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 
@@ -1989,13 +1989,29 @@ Implemented scope:
 - Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
 - Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
 - Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
-- Linked acquisition evidence and operational knowledge graph metadata to future AOIE phases: 50.2 Policy Text Parser, 50.3 Service Rule Normalisation, 50.4 Knowledge Version Review, 50.5 Capability Matrix, 50.6 Passenger Service Feasibility, 50.7 Airline-Itinerary Recommendation, and 50.8 Total Journey Cost Comparison.
+- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine and future AOIE phases: 50.3 Service Rule Normalisation, 50.4 Knowledge Version Review, 50.5 Capability Matrix, 50.6 Passenger Service Feasibility, 50.7 Airline-Itinerary Recommendation, and 50.8 Total Journey Cost Comparison.
 - Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
 - Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
 
 Avoid adding:
 
 - AI parsing, automatic extraction, web scraping, web crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 50.2: Operational Constraint Engine Foundation
+
+Implemented scope:
+
+- Added metadata-only `OperationalConstraint`, `OperationalConstraintCreate`, `OperationalConstraintUpdate`, `OperationalConstraintCondition`, and `OperationalConstraintConditionGroup` models for the formal AOIE constraint language.
+- Registered the additive `operational_constraints` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/operational-constraints` and UI at `/platform/operational-constraints`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/operational-constraints` and UI at `/agency/operational-constraints`.
+- Added metadata sections for Constraint Overview, Knowledge Link, Conditions, Outcomes, Applicability, Priority / Precedence, Governance, Future Evaluation, and Operational Links.
+- Added readiness flags under `operational_constraint_engine_foundation`.
+- Added `docs/architecture/operational-constraint-engine-foundation.md`.
+
+Avoid adding:
+
+- Live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, evaluation endpoints, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

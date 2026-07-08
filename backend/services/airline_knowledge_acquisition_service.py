@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgeAcquisition, AirlineKnowledgeAcquisitionCreate, AirlineKnowledgeAcquisitionUpdate, new_id
 
 
-PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
+PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
 AIRLINE_KNOWLEDGE_ACQUISITION_COLLECTION = "airline_knowledge_acquisitions"
 
 ACQUISITION_STATUSES = [
@@ -49,7 +49,7 @@ APPROVAL_STATUSES = [
 ]
 
 FUTURE_AOIE_FEEDS = [
-    "50.2 Policy Text Parser",
+    "50.2 Operational Constraint Engine",
     "50.3 Service Rule Normalisation",
     "50.4 Knowledge Version Review",
     "50.5 Capability Matrix",

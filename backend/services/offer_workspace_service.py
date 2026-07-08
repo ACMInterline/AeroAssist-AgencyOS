@@ -8,7 +8,7 @@ from models import OfferWorkspaceV2, OfferWorkspaceV2Create, OfferWorkspaceV2Upd
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
+PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
 
 OFFER_WORKSPACE_COLLECTION = "offer_workspaces_v2"
 OFFER_STATUSES = ["draft", "preparing", "review", "ready", "shared", "accepted", "declined", "expired", "archived"]

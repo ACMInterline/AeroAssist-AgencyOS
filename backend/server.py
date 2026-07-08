@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_knowledge_acquisition, agency_airline_operational_intelligence, platform_airline_knowledge_acquisition, platform_airline_operational_intelligence
+from routers import agency_airline_knowledge_acquisition, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_operational_intelligence, platform_operational_constraints
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -43,11 +43,12 @@ from services.timeline_workspace_service import COMMUNICATION_TYPES, TIMELINE_EV
 from services.passenger_service_workflow_service import READINESS_STATES, WORKFLOW_STAGES
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES, APPROVAL_STATUSES as ACQUISITION_APPROVAL_STATUSES, KNOWLEDGE_GRAPH_PILLARS, REVIEW_STATUSES as ACQUISITION_REVIEW_STATUSES, SOURCE_TYPES as ACQUISITION_SOURCE_TYPES
+from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, PHASE_LABEL, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
-from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG, PHASE_LABEL
+from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
 
@@ -57,7 +58,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.1 airline knowledge acquisition workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.2 operational constraint engine foundation.",
 )
 
 app.add_middleware(
@@ -664,6 +665,40 @@ async def readiness() -> dict:
     airline_knowledge_acquisition_extra_seat_count = sum(len(item.get("extra_seat") or []) for item in airline_knowledge_acquisition_records)
     airline_knowledge_acquisition_cabin_capability_count = sum(len(item.get("cabin_capabilities") or []) for item in airline_knowledge_acquisition_records)
     airline_knowledge_acquisition_operational_procedure_count = sum(len(item.get("operational_procedures") or []) for item in airline_knowledge_acquisition_records)
+    operational_constraint_records = await database.collection("operational_constraints").find_many()
+    operational_constraint_count = len(operational_constraint_records)
+    operational_constraint_status_counts = {
+        status: len([item for item in operational_constraint_records if item.get("constraint_status") == status])
+        for status in OPERATIONAL_CONSTRAINT_STATUSES
+    }
+    operational_constraint_outcome_type_counts = {
+        outcome_type: len([item for item in operational_constraint_records if item.get("outcome_type") == outcome_type])
+        for outcome_type in OPERATIONAL_CONSTRAINT_OUTCOME_TYPES
+    }
+    operational_constraint_review_status_counts = {
+        status: len([item for item in operational_constraint_records if item.get("review_status") == status])
+        for status in OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
+    }
+    operational_constraint_approval_status_counts = {
+        status: len([item for item in operational_constraint_records if item.get("approval_status") == status])
+        for status in OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES
+    }
+    operational_constraint_condition_count = sum(
+        len(item.get("conditions") or [])
+        + sum(len(group.get("conditions") or []) for group in (item.get("condition_groups") or []) if isinstance(group, dict))
+        for item in operational_constraint_records
+    )
+    operational_constraint_condition_group_count = sum(len(item.get("condition_groups") or []) for item in operational_constraint_records)
+    operational_constraint_evidence_link_count = sum(len(item.get("evidence_reference_ids") or []) for item in operational_constraint_records)
+    operational_constraint_operational_link_count = sum(
+        len(item.get("ssr_osi_workspace_ids") or [])
+        + len(item.get("emd_workspace_ids") or [])
+        + len(item.get("document_workspace_ids") or [])
+        + len(item.get("workflow_ids") or [])
+        + len(item.get("timeline_ids") or [])
+        for item in operational_constraint_records
+    )
+    operational_constraint_evaluation_ready_count = len([item for item in operational_constraint_records if item.get("evaluation_ready")])
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
     agency_subscription_assignment_count = await database.collection("agency_subscription_assignments").count()
@@ -1829,7 +1864,7 @@ async def readiness() -> dict:
             "chapter_50_intelligence_track_enabled": True,
             "chapter_41_operational_workspaces_preserved": True,
             "feeds_chapter_41_42_operational_workspaces": True,
-            "next_intelligence_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
+            "next_intelligence_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
             "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
             "ai_generation_disabled": True,
             "ai_execution_disabled": True,
@@ -1935,6 +1970,60 @@ async def readiness() -> dict:
             "airline_knowledge_acquisition_operational_procedure_count": airline_knowledge_acquisition_operational_procedure_count,
             "readiness_required": False,
             "diagnostic": "Phase 50.1 stores Airline Operational Knowledge Graph metadata across evidence, policy, pricing, capability, and operational constraints/procedures. It does not parse with AI, automatically extract, scrape, crawl, automate airline websites, call providers or live airline APIs, recommend, decide feasibility, calculate pricing, or run background workers.",
+        },
+        "operational_constraint_engine_foundation": {
+            "operational_constraint_engine_enabled": True,
+            "operational_constraints_collection_enabled": True,
+            "constraint_language_foundation_enabled": True,
+            "condition_groups_metadata_enabled": True,
+            "conditions_metadata_enabled": True,
+            "supported_condition_operators": CONDITION_OPERATORS,
+            "outcome_metadata_enabled": True,
+            "applicability_metadata_enabled": True,
+            "priority_precedence_metadata_enabled": True,
+            "governance_metadata_enabled": True,
+            "future_evaluation_metadata_enabled": True,
+            "operational_links_metadata_enabled": True,
+            "platform_operational_constraints_metadata_crud_enabled": True,
+            "agency_operational_constraints_read_only_enabled": True,
+            "platform_operational_constraints_ui_enabled": True,
+            "agency_operational_constraints_ui_enabled": True,
+            "filter_by_agency_enabled": True,
+            "filter_by_acquisition_enabled": True,
+            "filter_by_airline_enabled": True,
+            "filter_by_service_domain_enabled": True,
+            "filter_by_service_family_enabled": True,
+            "filter_by_ssr_code_enabled": True,
+            "filter_by_rfic_enabled": True,
+            "filter_by_rfisc_enabled": True,
+            "filter_by_constraint_status_enabled": True,
+            "filter_by_outcome_type_enabled": True,
+            "filter_by_review_status_enabled": True,
+            "filter_by_approval_status_enabled": True,
+            "filter_by_evaluation_ready_enabled": True,
+            "metadata_only": True,
+            "live_rule_execution_disabled": True,
+            "ai_reasoning_disabled": True,
+            "recommendation_engine_disabled": True,
+            "feasibility_scoring_disabled": True,
+            "pricing_calculation_disabled": True,
+            "parser_execution_disabled": True,
+            "scraping_disabled": True,
+            "background_workers_disabled": True,
+            "provider_integrations_disabled": True,
+            "evaluation_endpoint_disabled": True,
+            "operational_constraint_count": operational_constraint_count,
+            "operational_constraint_status_counts": operational_constraint_status_counts,
+            "operational_constraint_outcome_type_counts": operational_constraint_outcome_type_counts,
+            "operational_constraint_review_status_counts": operational_constraint_review_status_counts,
+            "operational_constraint_approval_status_counts": operational_constraint_approval_status_counts,
+            "operational_constraint_condition_count": operational_constraint_condition_count,
+            "operational_constraint_condition_group_count": operational_constraint_condition_group_count,
+            "operational_constraint_evidence_link_count": operational_constraint_evidence_link_count,
+            "operational_constraint_operational_link_count": operational_constraint_operational_link_count,
+            "operational_constraint_evaluation_ready_count": operational_constraint_evaluation_ready_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.2 defines the formal AOIE operational constraint language as metadata only. It stores condition groups, supported operators, outcomes, applicability, priority, governance, future evaluation notes, and operational links without live rule execution, AI reasoning, recommendations, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or evaluation endpoints.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -3685,6 +3774,7 @@ app.include_router(platform_airline_intelligence_knowledge_versions.router)
 app.include_router(platform_airline_intelligence_agency_consumption.router)
 app.include_router(platform_airline_operational_intelligence.router)
 app.include_router(platform_airline_knowledge_acquisition.router)
+app.include_router(platform_operational_constraints.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -3756,6 +3846,7 @@ app.include_router(agency_airline_intelligence_knowledge_versions.router)
 app.include_router(agency_airline_intelligence_agency_consumption.router)
 app.include_router(agency_airline_operational_intelligence.router)
 app.include_router(agency_airline_knowledge_acquisition.router)
+app.include_router(agency_operational_constraints.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

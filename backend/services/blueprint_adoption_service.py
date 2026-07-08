@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
+PHASE_LABEL = "phase_50_2_operational_constraint_engine_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -70,6 +70,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineKnowledgeAcquisition, AirlineKnowledgeAcquisitionCreate, AirlineKnowledgeAcquisitionUpdate, AirlineKnowledgeAcquisitionService, airline_knowledge_acquisitions, /api/platform/airline-knowledge-acquisition, /api/agencies/{agency_id}/airline-knowledge-acquisition, /platform/airline-knowledge-acquisition, /agency/knowledge-acquisition",
         "status": "foundation adopted",
         "action": "Record manually entered trusted airline source evidence and Airline Operational Knowledge Graph metadata with independent evidence, policy, pricing, capability, operational constraints/procedures, animal transport, extra-seat, and cabin capability pillars without AI parsing, automatic extraction, scraping, crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, or automation.",
+    },
+    {
+        "category": "Operational Constraint Engine",
+        "concept": "Formal AOIE operational constraint language",
+        "supplementary_concept": "condition groups, supported operators, outcomes, applicability, priority, precedence, governance, future evaluation notes",
+        "current_equivalent": "OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, OperationalConstraintEngineService, operational_constraints, /api/platform/operational-constraints, /api/agencies/{agency_id}/operational-constraints, /platform/operational-constraints, /agency/operational-constraints",
+        "status": "foundation adopted",
+        "action": "Store metadata-only operational constraints as the future AOIE reasoning language across policy, pricing, capability, and procedure knowledge without live rule execution, AI reasoning, recommendations, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or evaluation endpoints.",
     },
     {
         "category": "Platform / Agency UX",
@@ -662,6 +670,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/workflow-engine", "agencyos": "/agency/workflow-engine"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
+        {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
+        {"supplementary": "/agent/operational-constraints", "agencyos": "/agency/operational-constraints"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -674,9 +684,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.2",
-        "title": "Airline Policy Text Parser Foundation",
-        "reason": "Airline Knowledge Acquisition now stores governed source evidence. The next intelligence phase should add parser metadata without AI execution, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
+        "phase": "Phase 50.3",
+        "title": "Airline Service Rule Normalisation Foundation",
+        "reason": "Operational constraints now define the formal AOIE metadata language. The next intelligence phase should add normalisation metadata without AI execution, live evaluation, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
     },
     {
         "phase": "Phase 42.2",
@@ -916,6 +926,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Passenger service workflow engine foundation built in Phase 42.2",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
             "Airline knowledge acquisition workspace foundation built in Phase 50.1",
+            "Operational constraint engine foundation built in Phase 50.2",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -933,8 +944,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
-        "next_intelligence_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
+        "next_immediate_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+        "next_intelligence_phase": "Phase 50.3 - Airline Service Rule Normalisation Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
@@ -954,7 +965,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
         "chapter_50_intelligence_track": [
             "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",
             "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-            "Phase 50.2 - Airline Policy Text Parser Foundation",
+            "Phase 50.2 - Operational Constraint Engine Foundation",
             "Phase 50.3 - Airline Service Rule Normalisation Foundation",
             "Phase 50.4 - Airline Knowledge Version Review Foundation",
             "Phase 50.5 - Airline Capability Matrix Foundation",

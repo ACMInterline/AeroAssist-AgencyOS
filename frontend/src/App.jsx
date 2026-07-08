@@ -32,6 +32,7 @@ import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
+import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstraintsPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -107,6 +108,7 @@ import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligen
 import AirlineIntelligenceDataPackReviewsPage from "./pages/platform/AirlineIntelligenceDataPackReviewsPage"
 import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAcquisitionPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
+import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -235,6 +237,7 @@ const routes = {
   "/platform/airline-intelligence-agency-consumption": PlatformAirlineIntelligenceAgencyConsumptionPage,
   "/platform/airline-operational-intelligence": AirlineOperationalIntelligencePage,
   "/platform/airline-knowledge-acquisition": AirlineKnowledgeAcquisitionPage,
+  "/platform/operational-constraints": PlatformOperationalConstraintsPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -301,6 +304,7 @@ const routes = {
   "/agency/airline-intelligence-consumption": AgencyAirlineIntelligenceConsumptionPage,
   "/agency/operational-intelligence": OperationalIntelligencePage,
   "/agency/knowledge-acquisition": KnowledgeAcquisitionPage,
+  "/agency/operational-constraints": AgencyOperationalConstraintsPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

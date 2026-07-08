@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
+EXPECTED_PHASE = "phase_50_2_operational_constraint_engine_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -153,10 +153,10 @@ def main() -> int:
         raise AssertionError("Route policy should not add /agent or /admin aliases in this phase.")
 
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
-    if "Phase 50.2" not in gaps.get("next_immediate_phase", ""):
-        raise AssertionError("Gap summary did not identify Phase 50.2 Airline Policy Text Parser Foundation as next.")
-    if "Phase 50.2" not in gaps.get("next_intelligence_phase", ""):
-        raise AssertionError("Gap summary did not identify Phase 50.2 as the next intelligence phase.")
+    if "Phase 50.3" not in gaps.get("next_immediate_phase", ""):
+        raise AssertionError("Gap summary did not identify Phase 50.3 Service Rule Normalisation Foundation as next.")
+    if "Phase 50.3" not in gaps.get("next_intelligence_phase", ""):
+        raise AssertionError("Gap summary did not identify Phase 50.3 as the next intelligence phase.")
     if "Phase 42.2" not in gaps.get("next_operational_phase", ""):
         raise AssertionError("Gap summary did not preserve Phase 42.2 as the next operational phase.")
     if not any("Tickets + EMD Foundation" in item for item in gaps.get("already_built", [])):
@@ -181,8 +181,8 @@ def main() -> int:
         raise AssertionError("Gap summary did not expose the Chapter 50 AOIE roadmap.")
 
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.2":
-        raise AssertionError("Next phase recommendations did not start with Phase 50.2.")
+    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.3":
+        raise AssertionError("Next phase recommendations did not start with Phase 50.3.")
 
     summary = get("/api/platform/summary", OWNER_HEADERS)
     for collection_name in ["ai_trace_events", "adm_risk_events", "gds_parse_samples", "gds_parser_runs", "gds_parse_training_samples", "airline_brand_assets"]:

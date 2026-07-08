@@ -14487,6 +14487,221 @@ class AirlineKnowledgeAcquisitionUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalConstraintCondition(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    condition_field: Optional[str] = None
+    condition_operator: Optional[str] = None
+    condition_value: Optional[Any] = None
+    condition_value_type: Optional[str] = None
+    condition_unit: Optional[str] = None
+    condition_scope: Optional[str] = None
+    condition_notes: Optional[str] = None
+
+
+class OperationalConstraintConditionGroup(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    group_reference: Optional[str] = None
+    group_name: Optional[str] = None
+    group_logic: str = "all"
+    conditions: List[OperationalConstraintCondition] = Field(default_factory=list)
+    group_notes: Optional[str] = None
+
+
+class OperationalConstraint(BaseDocument):
+    agency_id: Optional[str] = None
+    constraint_reference: str
+    constraint_status: str = "draft"
+    constraint_version: str = "1.0"
+    constraint_name: Optional[str] = None
+    constraint_description: Optional[str] = None
+    created_by: Optional[str] = None
+    acquisition_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    condition_logic: str = "all"
+    condition_groups: List[OperationalConstraintConditionGroup] = Field(default_factory=list)
+    conditions: List[OperationalConstraintCondition] = Field(default_factory=list)
+    outcome_type: Optional[str] = None
+    outcome_value: Optional[Any] = None
+    outcome_severity: Optional[str] = None
+    outcome_reason: Optional[str] = None
+    outcome_notes: Optional[str] = None
+    airline_applicability: List[str] = Field(default_factory=list)
+    route_applicability: List[str] = Field(default_factory=list)
+    origin_country_applicability: List[str] = Field(default_factory=list)
+    destination_country_applicability: List[str] = Field(default_factory=list)
+    airport_applicability: List[str] = Field(default_factory=list)
+    aircraft_applicability: List[str] = Field(default_factory=list)
+    cabin_applicability: List[str] = Field(default_factory=list)
+    passenger_type_applicability: List[str] = Field(default_factory=list)
+    species_applicability: List[str] = Field(default_factory=list)
+    breed_applicability: List[str] = Field(default_factory=list)
+    seasonal_applicability: List[str] = Field(default_factory=list)
+    date_range_applicability: Optional[str] = None
+    constraint_priority: Optional[str] = None
+    conflict_resolution_hint: Optional[str] = None
+    precedence_group: Optional[str] = None
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    review_status: str = "not_started"
+    approval_status: str = "not_requested"
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    evaluation_ready: bool = False
+    evaluation_notes: Optional[str] = None
+    future_engine_compatibility: Optional[str] = None
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    workflow_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    constraint_language_foundation: bool = True
+    live_rule_execution_disabled: bool = True
+    ai_reasoning_disabled: bool = True
+    recommendation_engine_disabled: bool = True
+    feasibility_scoring_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    parser_execution_disabled: bool = True
+    scraping_disabled: bool = True
+    background_workers_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    evaluation_endpoint_disabled: bool = True
+
+
+class OperationalConstraintCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    constraint_reference: Optional[str] = None
+    constraint_status: str = "draft"
+    constraint_version: str = "1.0"
+    constraint_name: Optional[str] = None
+    constraint_description: Optional[str] = None
+    created_by: Optional[str] = None
+    acquisition_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    condition_logic: str = "all"
+    condition_groups: List[OperationalConstraintConditionGroup] = Field(default_factory=list)
+    conditions: List[OperationalConstraintCondition] = Field(default_factory=list)
+    outcome_type: Optional[str] = None
+    outcome_value: Optional[Any] = None
+    outcome_severity: Optional[str] = None
+    outcome_reason: Optional[str] = None
+    outcome_notes: Optional[str] = None
+    airline_applicability: List[str] = Field(default_factory=list)
+    route_applicability: List[str] = Field(default_factory=list)
+    origin_country_applicability: List[str] = Field(default_factory=list)
+    destination_country_applicability: List[str] = Field(default_factory=list)
+    airport_applicability: List[str] = Field(default_factory=list)
+    aircraft_applicability: List[str] = Field(default_factory=list)
+    cabin_applicability: List[str] = Field(default_factory=list)
+    passenger_type_applicability: List[str] = Field(default_factory=list)
+    species_applicability: List[str] = Field(default_factory=list)
+    breed_applicability: List[str] = Field(default_factory=list)
+    seasonal_applicability: List[str] = Field(default_factory=list)
+    date_range_applicability: Optional[str] = None
+    constraint_priority: Optional[str] = None
+    conflict_resolution_hint: Optional[str] = None
+    precedence_group: Optional[str] = None
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    review_status: str = "not_started"
+    approval_status: str = "not_requested"
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    evaluation_ready: bool = False
+    evaluation_notes: Optional[str] = None
+    future_engine_compatibility: Optional[str] = None
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    workflow_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalConstraintUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    constraint_reference: Optional[str] = None
+    constraint_status: Optional[str] = None
+    constraint_version: Optional[str] = None
+    constraint_name: Optional[str] = None
+    constraint_description: Optional[str] = None
+    acquisition_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    condition_logic: Optional[str] = None
+    condition_groups: Optional[List[OperationalConstraintConditionGroup]] = None
+    conditions: Optional[List[OperationalConstraintCondition]] = None
+    outcome_type: Optional[str] = None
+    outcome_value: Optional[Any] = None
+    outcome_severity: Optional[str] = None
+    outcome_reason: Optional[str] = None
+    outcome_notes: Optional[str] = None
+    airline_applicability: Optional[List[str]] = None
+    route_applicability: Optional[List[str]] = None
+    origin_country_applicability: Optional[List[str]] = None
+    destination_country_applicability: Optional[List[str]] = None
+    airport_applicability: Optional[List[str]] = None
+    aircraft_applicability: Optional[List[str]] = None
+    cabin_applicability: Optional[List[str]] = None
+    passenger_type_applicability: Optional[List[str]] = None
+    species_applicability: Optional[List[str]] = None
+    breed_applicability: Optional[List[str]] = None
+    seasonal_applicability: Optional[List[str]] = None
+    date_range_applicability: Optional[str] = None
+    constraint_priority: Optional[str] = None
+    conflict_resolution_hint: Optional[str] = None
+    precedence_group: Optional[str] = None
+    evidence_reference_ids: Optional[List[str]] = None
+    review_status: Optional[str] = None
+    approval_status: Optional[str] = None
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    evaluation_ready: Optional[bool] = None
+    evaluation_notes: Optional[str] = None
+    future_engine_compatibility: Optional[str] = None
+    ssr_osi_workspace_ids: Optional[List[str]] = None
+    emd_workspace_ids: Optional[List[str]] = None
+    document_workspace_ids: Optional[List[str]] = None
+    workflow_ids: Optional[List[str]] = None
+    timeline_ids: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -77,9 +77,9 @@ The UI shows acquisition records in collapsible metadata sections: Evidence, Pol
 
 ## AOIE Linkage
 
-Phase 50.1 feeds future metadata foundations:
+Phase 50.1 feeds Phase 50.2 and future metadata foundations:
 
-- 50.2 Policy Text Parser
+- 50.2 Operational Constraint Engine
 - 50.3 Service Rule Normalisation
 - 50.4 Knowledge Version Review
 - 50.5 Capability Matrix
@@ -87,7 +87,7 @@ Phase 50.1 feeds future metadata foundations:
 - 50.7 Airline-Itinerary Recommendation
 - 50.8 Total Journey Cost Comparison
 
-Knowledge Acquisition stores Airline Operational Knowledge. Future AOIE phases should reason over the Operational Knowledge Graph, operational constraints, capabilities, policies, pricing, and evidence. Future AOIE should not reason over raw text alone.
+Knowledge Acquisition stores Airline Operational Knowledge. Phase 50.2 stores the formal metadata-only Operational Constraint Engine language derived from that knowledge. Future AOIE phases should reason over the Operational Knowledge Graph, operational constraints, capabilities, policies, pricing, and evidence. Future AOIE should not reason over raw text alone.
 
 Knowledge Acquisition does not decide operational feasibility.
 
