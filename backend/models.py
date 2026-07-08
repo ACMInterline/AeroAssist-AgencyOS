@@ -14071,6 +14071,422 @@ class PassengerServiceWorkflowUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class AirlineOperationalKnowledgeEvidence(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    official_source: Optional[str] = None
+    source_title: Optional[str] = None
+    source_type: Optional[str] = None
+    source_url: Optional[str] = None
+    publication_date: Optional[date] = None
+    effective_date: Optional[date] = None
+    retrieved_date: Optional[date] = None
+    original_text: Optional[str] = None
+    original_pdf_reference: Optional[str] = None
+    original_email_reference: Optional[str] = None
+    original_bulletin_reference: Optional[str] = None
+    source_confidence: Optional[str] = None
+    human_reviewer: Optional[str] = None
+    version: Optional[str] = None
+    source_hash: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+class AirlineOperationalKnowledgePolicy(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    service_allowed: Optional[str] = None
+    approval_required: Optional[str] = None
+    document_requirements: List[str] = Field(default_factory=list)
+    ssr_required: Optional[str] = None
+    ssr_codes: List[str] = Field(default_factory=list)
+    osi_required: Optional[str] = None
+    osi_notes: Optional[str] = None
+    emd_required: Optional[str] = None
+    medif_required: Optional[str] = None
+    advance_notice: Optional[str] = None
+    policy_notes: Optional[str] = None
+    policy_references: List[str] = Field(default_factory=list)
+
+
+class AirlineOperationalKnowledgePricingComponent(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    component_reference: Optional[str] = None
+    component_type: Optional[str] = None
+    currency: Optional[str] = None
+    amount: Optional[float] = None
+    basis: Optional[str] = None
+    taxes: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AirlineOperationalKnowledgePricing(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pricing_model: Optional[str] = None
+    fee_basis: Optional[str] = None
+    currency: Optional[str] = None
+    amount: Optional[float] = None
+    route_fee_rules: List[str] = Field(default_factory=list)
+    cabin_fee_rules: List[str] = Field(default_factory=list)
+    passenger_type_fee_rules: List[str] = Field(default_factory=list)
+    weight_based_rules: List[str] = Field(default_factory=list)
+    dimension_based_rules: List[str] = Field(default_factory=list)
+    fare_based_rules: List[str] = Field(default_factory=list)
+    percentage_rules: List[str] = Field(default_factory=list)
+    manual_quote_required: Optional[str] = None
+    tax_rules: List[str] = Field(default_factory=list)
+    refundability: Optional[str] = None
+    exchangeability: Optional[str] = None
+    pricing_notes: Optional[str] = None
+    extra_seat_pricing_schema: Optional[str] = None
+    pricing_components: List[AirlineOperationalKnowledgePricingComponent] = Field(default_factory=list)
+
+
+class AirlineOperationalKnowledgeCapability(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    capability_type: Optional[str] = None
+    aircraft: Optional[str] = None
+    aircraft_family: Optional[str] = None
+    aircraft_subtype: Optional[str] = None
+    cabin: Optional[str] = None
+    seat_map: Optional[str] = None
+    adjacent_seats: Optional[str] = None
+    fixed_armrests: Optional[str] = None
+    movable_armrests: Optional[str] = None
+    bulkhead: Optional[str] = None
+    exit_rows: Optional[str] = None
+    accessible_lavatory: Optional[str] = None
+    onboard_wheelchair: Optional[str] = None
+    under_seat_dimensions: Optional[str] = None
+    cabin_temperature_limit: Optional[str] = None
+    cargo_capability: Optional[str] = None
+    airport_capability: Optional[str] = None
+    ground_handling_capability: Optional[str] = None
+    crew_capability: Optional[str] = None
+    connection_capability: Optional[str] = None
+    interline_capability: Optional[str] = None
+    codeshare_capability: Optional[str] = None
+    capability_notes: Optional[str] = None
+
+
+class AirlineOperationalKnowledgeOperationalConstraint(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    condition: Optional[str] = None
+    operator: Optional[str] = None
+    value: Optional[str] = None
+    outcome: Optional[str] = None
+    reason: Optional[str] = None
+    notes: Optional[str] = None
+    condition_group: Optional[str] = None
+    applies_to: Optional[str] = None
+    source_reference: Optional[str] = None
+
+
+class AirlineOperationalKnowledgeAnimalTransport(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    species: Optional[str] = None
+    breed: Optional[str] = None
+    brachycephalic: Optional[str] = None
+    dangerous_breed: Optional[str] = None
+    service_animal: Optional[str] = None
+    emotional_support: Optional[str] = None
+    import_restrictions: List[str] = Field(default_factory=list)
+    export_restrictions: List[str] = Field(default_factory=list)
+    destination_restrictions: List[str] = Field(default_factory=list)
+    seasonal_embargo: Optional[str] = None
+    temperature_embargo: Optional[str] = None
+    airport_restrictions: List[str] = Field(default_factory=list)
+    aircraft_restrictions: List[str] = Field(default_factory=list)
+    cabin_restrictions: List[str] = Field(default_factory=list)
+    maximum_quantity: Optional[str] = None
+    carrier_dimensions: Optional[str] = None
+    carrier_weight: Optional[str] = None
+    adjacent_seat_policy: Optional[str] = None
+    purchased_exst_policy: Optional[str] = None
+    operational_handling_notes: Optional[str] = None
+    constraints: List[AirlineOperationalKnowledgeOperationalConstraint] = Field(default_factory=list)
+
+
+class AirlineOperationalKnowledgeExtraSeat(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    extra_seat_type: Optional[str] = None
+    adjacent_seat: Optional[str] = None
+    fixed_armrests: Optional[str] = None
+    business_cabin: Optional[str] = None
+    premium_economy: Optional[str] = None
+    aircraft_exceptions: List[str] = Field(default_factory=list)
+    refund_if_aircraft_not_full: Optional[str] = None
+    refund_if_airline_accommodates_without_exst: Optional[str] = None
+    route_restrictions: List[str] = Field(default_factory=list)
+    policy: AirlineOperationalKnowledgePolicy = Field(default_factory=AirlineOperationalKnowledgePolicy)
+    pricing: AirlineOperationalKnowledgePricing = Field(default_factory=AirlineOperationalKnowledgePricing)
+    capability: AirlineOperationalKnowledgeCapability = Field(default_factory=AirlineOperationalKnowledgeCapability)
+    operational_constraints: List[AirlineOperationalKnowledgeOperationalConstraint] = Field(default_factory=list)
+    refund_conditions: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+
+
+class AirlineOperationalKnowledgeCabinCapability(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    cabin: Optional[str] = None
+    seat_configuration: Optional[str] = None
+    seat_map: Optional[str] = None
+    armrests: Optional[str] = None
+    adjacent_seats: Optional[str] = None
+    bassinet: Optional[str] = None
+    wheelchair: Optional[str] = None
+    lavatory: Optional[str] = None
+    petc: Optional[str] = None
+    cbbg: Optional[str] = None
+    exst: Optional[str] = None
+    medical_equipment: Optional[str] = None
+    crew_handling: Optional[str] = None
+    cabin_notes: Optional[str] = None
+    constraints: List[AirlineOperationalKnowledgeOperationalConstraint] = Field(default_factory=list)
+
+
+class AirlineKnowledgeAcquisition(BaseDocument):
+    agency_id: Optional[str] = None
+    acquisition_reference: str
+    acquisition_status: str = "draft"
+    acquisition_type: Optional[str] = None
+    acquisition_version: str = "1.0"
+    created_by: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    source_title: Optional[str] = None
+    source_type: str = "other"
+    source_url: Optional[str] = None
+    source_publication_date: Optional[date] = None
+    source_effective_date: Optional[date] = None
+    source_retrieved_date: Optional[date] = None
+    source_language: Optional[str] = None
+    source_country: Optional[str] = None
+    source_region: Optional[str] = None
+    source_confidence: Optional[str] = None
+    official_source_flag: bool = False
+    raw_source_text: Optional[str] = None
+    source_excerpt: Optional[str] = None
+    source_notes: Optional[str] = None
+    source_hash: Optional[str] = None
+    source_attachment_ids: List[str] = Field(default_factory=list)
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    osi_relevance: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    review_status: str = "not_started"
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approval_status: str = "not_requested"
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    previous_acquisition_id: Optional[str] = None
+    supersedes_acquisition_ids: List[str] = Field(default_factory=list)
+    change_summary: Optional[str] = None
+    detected_change_type: Optional[str] = None
+    parser_run_ids: List[str] = Field(default_factory=list)
+    normalized_rule_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_feasibility_relevance: Optional[str] = None
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    ticket_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    knowledge_graph_pillars: List[str] = Field(default_factory=lambda: ["evidence", "policy", "pricing", "capability", "operational_constraints"])
+    evidence: AirlineOperationalKnowledgeEvidence = Field(default_factory=AirlineOperationalKnowledgeEvidence)
+    policy: AirlineOperationalKnowledgePolicy = Field(default_factory=AirlineOperationalKnowledgePolicy)
+    pricing: AirlineOperationalKnowledgePricing = Field(default_factory=AirlineOperationalKnowledgePricing)
+    capabilities: List[AirlineOperationalKnowledgeCapability] = Field(default_factory=list)
+    operational_constraints: List[AirlineOperationalKnowledgeOperationalConstraint] = Field(default_factory=list)
+    animal_transport: AirlineOperationalKnowledgeAnimalTransport = Field(default_factory=AirlineOperationalKnowledgeAnimalTransport)
+    extra_seat: List[AirlineOperationalKnowledgeExtraSeat] = Field(default_factory=list)
+    cabin_capabilities: List[AirlineOperationalKnowledgeCabinCapability] = Field(default_factory=list)
+    operational_procedures: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    evidence_intake_only: bool = True
+    operational_knowledge_graph_foundation: bool = True
+    policy_pricing_capability_constraints_separated: bool = True
+    ai_parsing_disabled: bool = True
+    automatic_extraction_disabled: bool = True
+    web_scraping_disabled: bool = True
+    web_crawling_disabled: bool = True
+    airline_website_automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    live_airline_apis_disabled: bool = True
+    recommendation_engine_disabled: bool = True
+    feasibility_engine_disabled: bool = True
+    pricing_calculation_engine_disabled: bool = True
+    background_workers_disabled: bool = True
+    parser_execution_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class AirlineKnowledgeAcquisitionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    acquisition_reference: Optional[str] = None
+    acquisition_status: str = "draft"
+    acquisition_type: Optional[str] = None
+    acquisition_version: str = "1.0"
+    created_by: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    source_title: Optional[str] = None
+    source_type: str = "other"
+    source_url: Optional[str] = None
+    source_publication_date: Optional[date] = None
+    source_effective_date: Optional[date] = None
+    source_retrieved_date: Optional[date] = None
+    source_language: Optional[str] = None
+    source_country: Optional[str] = None
+    source_region: Optional[str] = None
+    source_confidence: Optional[str] = None
+    official_source_flag: bool = False
+    raw_source_text: Optional[str] = None
+    source_excerpt: Optional[str] = None
+    source_notes: Optional[str] = None
+    source_hash: Optional[str] = None
+    source_attachment_ids: List[str] = Field(default_factory=list)
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    osi_relevance: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    review_status: str = "not_started"
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approval_status: str = "not_requested"
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    previous_acquisition_id: Optional[str] = None
+    supersedes_acquisition_ids: List[str] = Field(default_factory=list)
+    change_summary: Optional[str] = None
+    detected_change_type: Optional[str] = None
+    parser_run_ids: List[str] = Field(default_factory=list)
+    normalized_rule_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_feasibility_relevance: Optional[str] = None
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    ticket_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    knowledge_graph_pillars: List[str] = Field(default_factory=lambda: ["evidence", "policy", "pricing", "capability", "operational_constraints"])
+    evidence: AirlineOperationalKnowledgeEvidence = Field(default_factory=AirlineOperationalKnowledgeEvidence)
+    policy: AirlineOperationalKnowledgePolicy = Field(default_factory=AirlineOperationalKnowledgePolicy)
+    pricing: AirlineOperationalKnowledgePricing = Field(default_factory=AirlineOperationalKnowledgePricing)
+    capabilities: List[AirlineOperationalKnowledgeCapability] = Field(default_factory=list)
+    operational_constraints: List[AirlineOperationalKnowledgeOperationalConstraint] = Field(default_factory=list)
+    animal_transport: AirlineOperationalKnowledgeAnimalTransport = Field(default_factory=AirlineOperationalKnowledgeAnimalTransport)
+    extra_seat: List[AirlineOperationalKnowledgeExtraSeat] = Field(default_factory=list)
+    cabin_capabilities: List[AirlineOperationalKnowledgeCabinCapability] = Field(default_factory=list)
+    operational_procedures: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineKnowledgeAcquisitionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    acquisition_reference: Optional[str] = None
+    acquisition_status: Optional[str] = None
+    acquisition_type: Optional[str] = None
+    acquisition_version: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    source_title: Optional[str] = None
+    source_type: Optional[str] = None
+    source_url: Optional[str] = None
+    source_publication_date: Optional[date] = None
+    source_effective_date: Optional[date] = None
+    source_retrieved_date: Optional[date] = None
+    source_language: Optional[str] = None
+    source_country: Optional[str] = None
+    source_region: Optional[str] = None
+    source_confidence: Optional[str] = None
+    official_source_flag: Optional[bool] = None
+    raw_source_text: Optional[str] = None
+    source_excerpt: Optional[str] = None
+    source_notes: Optional[str] = None
+    source_hash: Optional[str] = None
+    source_attachment_ids: Optional[List[str]] = None
+    service_domain: Optional[str] = None
+    service_family: Optional[str] = None
+    service_variant: Optional[str] = None
+    ssr_code: Optional[str] = None
+    osi_relevance: Optional[str] = None
+    rfic: Optional[str] = None
+    rfisc: Optional[str] = None
+    ancillary_category: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    review_status: Optional[str] = None
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approval_status: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    previous_acquisition_id: Optional[str] = None
+    supersedes_acquisition_ids: Optional[List[str]] = None
+    change_summary: Optional[str] = None
+    detected_change_type: Optional[str] = None
+    parser_run_ids: Optional[List[str]] = None
+    normalized_rule_ids: Optional[List[str]] = None
+    knowledge_version_ids: Optional[List[str]] = None
+    capability_matrix_ids: Optional[List[str]] = None
+    operational_feasibility_relevance: Optional[str] = None
+    ssr_osi_workspace_ids: Optional[List[str]] = None
+    emd_workspace_ids: Optional[List[str]] = None
+    ticket_workspace_ids: Optional[List[str]] = None
+    document_workspace_ids: Optional[List[str]] = None
+    knowledge_graph_pillars: Optional[List[str]] = None
+    evidence: Optional[AirlineOperationalKnowledgeEvidence] = None
+    policy: Optional[AirlineOperationalKnowledgePolicy] = None
+    pricing: Optional[AirlineOperationalKnowledgePricing] = None
+    capabilities: Optional[List[AirlineOperationalKnowledgeCapability]] = None
+    operational_constraints: Optional[List[AirlineOperationalKnowledgeOperationalConstraint]] = None
+    animal_transport: Optional[AirlineOperationalKnowledgeAnimalTransport] = None
+    extra_seat: Optional[List[AirlineOperationalKnowledgeExtraSeat]] = None
+    cabin_capabilities: Optional[List[AirlineOperationalKnowledgeCabinCapability]] = None
+    operational_procedures: Optional[List[Dict[str, Any]]] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

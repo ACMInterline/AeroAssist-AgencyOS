@@ -28,6 +28,7 @@ import AgencyAirlineIntelligenceKnowledgeVersionsPage from "./pages/agency/Airli
 import AirlineIntelligenceReviewCoveragePage from "./pages/agency/AirlineIntelligenceReviewCoveragePage"
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
+import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
@@ -104,6 +105,7 @@ import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligenceDataPacksPage"
 import AirlineIntelligenceDataPackReviewsPage from "./pages/platform/AirlineIntelligenceDataPackReviewsPage"
+import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAcquisitionPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
@@ -232,6 +234,7 @@ const routes = {
   "/platform/airline-intelligence-knowledge-versions": PlatformAirlineIntelligenceKnowledgeVersionsPage,
   "/platform/airline-intelligence-agency-consumption": PlatformAirlineIntelligenceAgencyConsumptionPage,
   "/platform/airline-operational-intelligence": AirlineOperationalIntelligencePage,
+  "/platform/airline-knowledge-acquisition": AirlineKnowledgeAcquisitionPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -297,6 +300,7 @@ const routes = {
   "/agency/airline-intelligence-knowledge-versions": AgencyAirlineIntelligenceKnowledgeVersionsPage,
   "/agency/airline-intelligence-consumption": AgencyAirlineIntelligenceConsumptionPage,
   "/agency/operational-intelligence": OperationalIntelligencePage,
+  "/agency/knowledge-acquisition": KnowledgeAcquisitionPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

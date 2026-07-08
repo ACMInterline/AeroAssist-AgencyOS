@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
+PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,

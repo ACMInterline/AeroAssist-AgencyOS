@@ -6,7 +6,7 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
+PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 
@@ -90,8 +90,9 @@ class AirlineOperationalIntelligenceService:
                 "and workspace metadata into future decision-support views. It does not duplicate those foundations."
             ),
             knowledge_acquisition_scope=(
-                "Future acquisition workspaces will stage human-provided airline knowledge, source references, and "
-                "review metadata without scraping, crawling, provider calls, or AI generation."
+                "Phase 50.1 acquisition workspaces stage human-provided airline knowledge, source references, raw "
+                "source text, review metadata, approval metadata, and version links without scraping, crawling, "
+                "provider calls, parser execution, automatic extraction, or AI generation."
             ),
             knowledge_normalisation_scope=(
                 "Future normalisation phases will map airline text and service conditions into canonical service, "
@@ -191,7 +192,7 @@ class AirlineOperationalIntelligenceService:
             "future_aoie_phase_count": len(FUTURE_AOIE_PHASES),
             "excluded_scope_count": len(EXCLUDED_SCOPE),
             "passenger_service_operations_principle": PASSENGER_SERVICE_OPERATIONS_PRINCIPLE,
-            "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+            "next_intelligence_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
             "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         }
 

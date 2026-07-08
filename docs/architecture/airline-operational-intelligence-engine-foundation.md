@@ -2,7 +2,7 @@
 
 Phase 50.0 creates the Airline Operational Intelligence Engine architecture foundation, abbreviated AOIE.
 
-AOIE is architecture and governance metadata only. It defines how future intelligence phases should coordinate existing airline policy, airline data pack, knowledge version, agency consumption, service taxonomy, service mechanics, ancillary pricing, policy comparison, offer advisor, passenger workspace, booking workspace, offer workspace, ticket workspace, EMD workspace, and future SSR/OSI workspace foundations.
+AOIE is architecture and governance metadata only. It defines how future intelligence phases should coordinate existing airline policy, airline data pack, knowledge version, agency consumption, airline knowledge acquisition, service taxonomy, service mechanics, ancillary pricing, policy comparison, offer advisor, passenger workspace, booking workspace, offer workspace, ticket workspace, EMD workspace, and future SSR/OSI workspace foundations.
 
 AOIE does not duplicate those foundations. It is the future decision-support layer that will answer what is possible, allowed, priced, risky, and recommended for a passenger service case.
 
@@ -22,6 +22,10 @@ AgencyOS is a Passenger Service Operations System. Operational workspaces record
 
 The service seeds one deterministic architecture record for `phase_50_0_airline_operational_intelligence_engine_architecture_foundation`.
 
+Phase 50.1 adds the `airline_knowledge_acquisitions` evidence intake collection. Knowledge Acquisition stores manually entered official-source evidence and the first structured Airline Operational Knowledge Graph pillars: Evidence, Policy, Pricing, Capability, and Operational Constraints & Procedures. It also supports animal transport, extra-seat, and cabin capability metadata. It feeds future parser, normalisation, version review, capability, feasibility, recommendation, and cost-comparison metadata. It does not decide operational feasibility.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Capabilities, Policies, Pricing, and Evidence.
+
 ## Routes
 
 - `GET /api/platform/airline-operational-intelligence`
@@ -36,7 +40,7 @@ All routes are read-only visualization routes.
 ## Future AOIE Roadmap
 
 - 50.0 Airline Operational Intelligence Engine Architecture Foundation
-- 50.1 Airline Knowledge Acquisition Workspace
+- 50.1 Airline Knowledge Acquisition Workspace - implemented as manual source evidence intake
 - 50.2 Airline Policy Text Parser Foundation
 - 50.3 Airline Service Rule Normalisation Foundation
 - 50.4 Airline Knowledge Version Review Foundation
@@ -49,3 +53,5 @@ All routes are read-only visualization routes.
 ## Explicitly Excluded
 
 Phase 50.0 does not implement AI generation, airline scraping, automatic web crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking execution, ticket issuance, EMD issuance, recommendation automation, background workers, external API calls, or automation.
+
+Phase 50.1 does not implement AI parsing, automatic extraction, scraping, crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, external API calls, or automation.

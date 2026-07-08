@@ -24,7 +24,7 @@ The Operational Platform answers what is happening:
 - workflow engine records
 - future SSR/OSI workspaces
 
-The Airline Operational Intelligence Engine answers what is possible, allowed, priced, risky, and recommended for the case. Phase 50.0 only documents this architecture. It does not execute AI, scrape airline websites, search itineraries, call providers, book, ticket, issue EMDs, or automate recommendations.
+The Airline Operational Intelligence Engine answers what is possible, allowed, priced, risky, and recommended for the case. Phase 50.0 only documents this architecture. Phase 50.1 adds the Airline Knowledge Acquisition Workspace as manual official-source evidence intake and the Airline Operational Knowledge Graph foundation for future AOIE phases. It stores source evidence, policy, pricing, capability, and operational constraint/procedure metadata and does not decide operational feasibility. These foundations do not execute AI, scrape airline websites, search itineraries, call providers, book, ticket, issue EMDs, or automate recommendations.
 
 Phase 41.9 adds the SSR / OSI Operational Workspace as the primary operational input between Passenger Need and Airline Capability:
 

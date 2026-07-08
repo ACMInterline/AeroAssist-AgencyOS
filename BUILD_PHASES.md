@@ -103,6 +103,22 @@ The repository currently contains:
 - Phase 40.10: Feature bundle rollout decision register foundation.
 - Phase 40.11: Feature bundle rollout change request foundation.
 - Phase 40.12: Feature bundle rollout rollback plan foundation.
+- Phase 40.13: Feature bundle rollout summary pack foundation.
+- Phase 41.0: Operational travel workspace foundation.
+- Phase 41.1: Travel request workspace foundation.
+- Phase 41.2: Passenger workspace foundation.
+- Phase 41.3: Flight workspace foundation.
+- Phase 41.4: Trip workspace foundation.
+- Phase 41.5: Offer workspace foundation.
+- Phase 41.6: Booking workspace foundation.
+- Phase 41.7: Ticket workspace foundation.
+- Phase 41.8: EMD workspace foundation.
+- Phase 41.9: SSR / OSI operational workspace foundation.
+- Phase 42.0: Document workspace foundation.
+- Phase 42.1: Operational timeline workspace foundation.
+- Phase 42.2: Passenger service workflow engine foundation.
+- Phase 50.0: Airline Operational Intelligence Engine architecture foundation.
+- Phase 50.1: Airline knowledge acquisition workspace foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1956,11 +1972,30 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
+- Set next intelligence phase to Phase 50.2 Airline Policy Text Parser Foundation and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 
 - AI generation, airline scraping, automatic web crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking execution, ticket issuance, EMD issuance, recommendation automation, background workers, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
+### Phase 50.1: Airline Knowledge Acquisition Workspace Foundation
+
+Implemented scope:
+
+- Added metadata-only `AirlineKnowledgeAcquisition`, `AirlineKnowledgeAcquisitionCreate`, and `AirlineKnowledgeAcquisitionUpdate` models for manually entered trusted airline policy/source evidence.
+- Refined those models into the Airline Operational Knowledge Graph foundation with independent Evidence, Policy, Pricing, Capability, and Operational Constraints & Procedures pillars.
+- Added structured animal transport, extra-seat, and cabin capability metadata so capability, policy, pricing, and constraints stay separate.
+- Registered the additive `airline_knowledge_acquisitions` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
+- Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
+- Linked acquisition evidence and operational knowledge graph metadata to future AOIE phases: 50.2 Policy Text Parser, 50.3 Service Rule Normalisation, 50.4 Knowledge Version Review, 50.5 Capability Matrix, 50.6 Passenger Service Feasibility, 50.7 Airline-Itinerary Recommendation, and 50.8 Total Journey Cost Comparison.
+- Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
+- Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
+
+Avoid adding:
+
+- AI parsing, automatic extraction, web scraping, web crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

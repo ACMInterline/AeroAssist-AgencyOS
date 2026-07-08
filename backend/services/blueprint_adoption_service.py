@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_42_2_passenger_service_workflow_engine_foundation"
+PHASE_LABEL = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -62,6 +62,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineOperationalIntelligenceArchitecture, AirlineOperationalIntelligenceService, airline_operational_intelligence_architecture, /api/platform/airline-operational-intelligence, /api/agencies/{agency_id}/airline-operational-intelligence, /platform/airline-operational-intelligence, /agency/operational-intelligence",
         "status": "foundation adopted",
         "action": "Define AOIE as the architecture-only intelligence track that coordinates airline policy ingestion, data packs, knowledge versions, agency consumption, taxonomy, mechanics, pricing, comparison, offer advisor, passenger, booking, offer, ticket, EMD, and future SSR/OSI workspace foundations without duplicating them or implementing AI generation, scraping, crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking, ticketing, EMD issuance, recommendation automation, background workers, or external API calls.",
+    },
+    {
+        "category": "Airline Knowledge Acquisition",
+        "concept": "Manual airline operational knowledge graph intake",
+        "supplementary_concept": "official airline source, human copy/paste, acquisition record, source evidence, policy, pricing, capability, operational constraints, review status, future parser, future normalized knowledge, future AOIE decision support",
+        "current_equivalent": "AirlineKnowledgeAcquisition, AirlineKnowledgeAcquisitionCreate, AirlineKnowledgeAcquisitionUpdate, AirlineKnowledgeAcquisitionService, airline_knowledge_acquisitions, /api/platform/airline-knowledge-acquisition, /api/agencies/{agency_id}/airline-knowledge-acquisition, /platform/airline-knowledge-acquisition, /agency/knowledge-acquisition",
+        "status": "foundation adopted",
+        "action": "Record manually entered trusted airline source evidence and Airline Operational Knowledge Graph metadata with independent evidence, policy, pricing, capability, operational constraints/procedures, animal transport, extra-seat, and cabin capability pillars without AI parsing, automatic extraction, scraping, crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, or automation.",
     },
     {
         "category": "Platform / Agency UX",
@@ -652,6 +660,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/timeline", "agencyos": "/agency/timeline"},
         {"supplementary": "/admin/passenger-service-workflows", "agencyos": "/platform/passenger-service-workflows"},
         {"supplementary": "/agent/workflow-engine", "agencyos": "/agency/workflow-engine"},
+        {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
+        {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -664,9 +674,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.1",
-        "title": "Airline Knowledge Acquisition Workspace",
-        "reason": "AOIE now has an architecture foundation. The next intelligence phase should create governed airline knowledge acquisition metadata without scraping, crawling, AI generation, provider calls, or execution.",
+        "phase": "Phase 50.2",
+        "title": "Airline Policy Text Parser Foundation",
+        "reason": "Airline Knowledge Acquisition now stores governed source evidence. The next intelligence phase should add parser metadata without AI execution, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
     },
     {
         "phase": "Phase 42.2",
@@ -764,6 +774,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineIntelligenceAgencyConsumptionNote",
             "AirlineIntelligenceAgencyConsumptionSnapshot",
             "AirlineOperationalIntelligenceArchitecture",
+            "AirlineKnowledgeAcquisition",
+            "AirlineKnowledgeAcquisitionCreate",
+            "AirlineKnowledgeAcquisitionUpdate",
             "SaaSSubscriptionPlan",
             "SaaSPlanEntitlement",
             "AgencySubscriptionAssignment",
@@ -902,6 +915,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Operational timeline workspace foundation built in Phase 42.1",
             "Passenger service workflow engine foundation built in Phase 42.2",
             "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
+            "Airline knowledge acquisition workspace foundation built in Phase 50.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -919,8 +933,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
-        "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+        "next_immediate_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
+        "next_intelligence_phase": "Phase 50.2 - Airline Policy Text Parser Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",

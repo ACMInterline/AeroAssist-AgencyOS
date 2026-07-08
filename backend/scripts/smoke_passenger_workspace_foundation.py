@@ -9,7 +9,7 @@ from models import PassengerWorkspace, PassengerWorkspaceCreate, PassengerWorksp
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_42_2_passenger_service_workflow_engine_foundation"
+EXPECTED_PHASE = "phase_50_1_airline_knowledge_acquisition_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PASSENGER_STATUSES = {"draft", "active", "incomplete", "review", "ready", "archived"}
 
