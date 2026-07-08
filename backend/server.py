@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
+from routers import agency_airline_operational_intelligence, platform_airline_operational_intelligence
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_travel_workspaces, agency_passenger_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_travel_workspaces, platform_passenger_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -37,6 +38,7 @@ from services.trip_workspace_service import TRIP_STATUSES
 from services.offer_workspace_service import OFFER_STATUSES
 from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
 from services.emd_workspace_service import EMD_DOCUMENT_STATUSES, EMD_WORKSPACE_STATUSES
+from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
 from services.rollout_dashboard_service import DASHBOARD_SECTIONS
@@ -50,7 +52,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 41.8 EMD workspace foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.0 Airline Operational Intelligence Engine architecture foundation.",
 )
 
 app.add_middleware(
@@ -475,6 +477,9 @@ async def readiness() -> dict:
     airline_intelligence_agency_consumption_note_count = await database.collection("airline_intelligence_agency_consumption_notes").count()
     airline_intelligence_agency_consumption_snapshot_count = await database.collection("airline_intelligence_agency_consumption_snapshots").count()
     airline_intelligence_agency_visible_profile_count = await database.collection("airline_intelligence_agency_consumption_profiles").count({"status": "visible", "visible_to_agency": True})
+    airline_operational_intelligence_service = AirlineOperationalIntelligenceService(database)
+    airline_operational_intelligence_architecture_record = await airline_operational_intelligence_service.ensure_architecture_record()
+    airline_operational_intelligence_architecture_count = await database.collection("airline_operational_intelligence_architecture").count()
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
     agency_subscription_assignment_count = await database.collection("agency_subscription_assignments").count()
@@ -1621,6 +1626,48 @@ async def readiness() -> dict:
             "agency_visible_profile_count": airline_intelligence_agency_visible_profile_count,
             "readiness_required": False,
             "diagnostic": "Phase 39.3 exposes platform-governed airline intelligence knowledge versions to agencies through metadata-only consumption profiles, assignment views, usage readiness, notes, and snapshots. It does not publish CMS/client portal content, recommend airlines, execute providers, book, mutate PNRs, ticket, issue EMDs, charge, invoice, settle, scrape, call external APIs, call external AI, or send automatically.",
+        },
+        "airline_operational_intelligence_engine_architecture_foundation": {
+            "airline_operational_intelligence_engine_enabled": True,
+            "aoie_architecture_foundation_enabled": True,
+            "passenger_service_operations_principle_enabled": True,
+            "architecture_record_seeded": bool(airline_operational_intelligence_architecture_record),
+            "architecture_collection_registered": True,
+            "platform_airline_operational_intelligence_ui_enabled": True,
+            "agency_operational_intelligence_ui_enabled": True,
+            "platform_airline_operational_intelligence_api_enabled": True,
+            "agency_airline_operational_intelligence_api_enabled": True,
+            "metadata_only": True,
+            "architecture_only": True,
+            "read_only_visualization_enabled": True,
+            "coordinates_existing_foundations": True,
+            "duplicates_existing_foundations": False,
+            "chapter_50_intelligence_track_enabled": True,
+            "chapter_41_operational_workspaces_preserved": True,
+            "feeds_chapter_41_42_operational_workspaces": True,
+            "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+            "next_operational_phase": "Phase 41.9 - SSR / OSI Operational Workspace Foundation",
+            "ai_generation_disabled": True,
+            "ai_execution_disabled": True,
+            "airline_scraping_disabled": True,
+            "automatic_web_crawling_disabled": True,
+            "live_airline_apis_disabled": True,
+            "provider_integrations_disabled": True,
+            "pricing_engine_execution_disabled": True,
+            "itinerary_search_disabled": True,
+            "booking_execution_disabled": True,
+            "ticket_issuance_disabled": True,
+            "emd_issuance_disabled": True,
+            "recommendation_automation_disabled": True,
+            "background_workers_disabled": True,
+            "automation_disabled": True,
+            "external_api_calls_disabled": True,
+            "architecture_record_count": airline_operational_intelligence_architecture_count,
+            "linked_existing_foundation_count": len(airline_operational_intelligence_architecture_record.get("linked_existing_foundations") or []),
+            "future_aoie_phase_count": len(airline_operational_intelligence_architecture_record.get("linked_future_phases") or []),
+            "excluded_scope_count": len(airline_operational_intelligence_architecture_record.get("excluded_scope") or []),
+            "readiness_required": False,
+            "diagnostic": "Phase 50.0 defines AOIE as an architecture and governance layer only. It coordinates existing airline policy, data pack, knowledge version, agency consumption, taxonomy, service mechanics, pricing, comparison, offer advisor, passenger, booking, offer, ticket, EMD, and future SSR/OSI workspace foundations without AI generation, scraping, crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking execution, ticket issuance, EMD issuance, recommendation automation, background workers, or external API calls.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -3102,6 +3149,7 @@ app.include_router(platform_airline_intelligence_data_packs.router)
 app.include_router(platform_airline_intelligence_data_pack_reviews.router)
 app.include_router(platform_airline_intelligence_knowledge_versions.router)
 app.include_router(platform_airline_intelligence_agency_consumption.router)
+app.include_router(platform_airline_operational_intelligence.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -3167,6 +3215,7 @@ app.include_router(agency_airline_intelligence_data_packs.router)
 app.include_router(agency_airline_intelligence_data_pack_reviews.router)
 app.include_router(agency_airline_intelligence_knowledge_versions.router)
 app.include_router(agency_airline_intelligence_agency_consumption.router)
+app.include_router(agency_airline_operational_intelligence.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

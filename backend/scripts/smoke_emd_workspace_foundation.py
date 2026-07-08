@@ -23,7 +23,7 @@ from smoke_booking_workspace_foundation import (
 from smoke_ticket_workspace_foundation import create_booking_workspace
 
 
-EXPECTED_PHASE = "phase_41_8_emd_workspace_foundation"
+EXPECTED_PHASE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EMD_STATUSES = {"draft", "review", "ready", "archived"}
 EMD_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}
@@ -803,10 +803,12 @@ def assert_emd_shape(emd: dict, agency_view: bool = False) -> None:
 
 def verify_blueprint_gap_summary() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
-    if "Phase 41.8" not in gaps.get("next_immediate_phase", ""):
-        raise AssertionError(f"Blueprint gap summary did not identify Phase 41.8: {gaps}")
     if not any("EMD workspace foundation built in Phase 41.8" in item for item in gaps.get("already_built", [])):
         raise AssertionError(f"Blueprint gap summary did not recognize EMD workspace foundation: {gaps}")
+    if "Phase 50.1" not in gaps.get("next_intelligence_phase", ""):
+        raise AssertionError(f"Blueprint gap summary did not preserve next intelligence phase: {gaps}")
+    if "Phase 41.9" not in gaps.get("next_operational_phase", ""):
+        raise AssertionError(f"Blueprint gap summary did not preserve next operational phase: {gaps}")
     adoption = get("/api/platform/blueprint/adoption-map", OWNER_HEADERS)
     if not any(item.get("category") == "EMD Workspaces" for item in adoption.get("items") or []):
         raise AssertionError(f"Blueprint adoption map missing EMD Workspaces: {adoption}")

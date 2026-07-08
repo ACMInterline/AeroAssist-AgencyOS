@@ -28,6 +28,7 @@ import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
+import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -99,6 +100,7 @@ import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
 import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
 import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligenceDataPacksPage"
 import AirlineIntelligenceDataPackReviewsPage from "./pages/platform/AirlineIntelligenceDataPackReviewsPage"
+import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -217,6 +219,7 @@ const routes = {
   "/platform/airline-intelligence-data-pack-reviews": AirlineIntelligenceDataPackReviewsPage,
   "/platform/airline-intelligence-knowledge-versions": PlatformAirlineIntelligenceKnowledgeVersionsPage,
   "/platform/airline-intelligence-agency-consumption": PlatformAirlineIntelligenceAgencyConsumptionPage,
+  "/platform/airline-operational-intelligence": AirlineOperationalIntelligencePage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -277,6 +280,7 @@ const routes = {
   "/agency/airline-intelligence-review-coverage": AirlineIntelligenceReviewCoveragePage,
   "/agency/airline-intelligence-knowledge-versions": AgencyAirlineIntelligenceKnowledgeVersionsPage,
   "/agency/airline-intelligence-consumption": AgencyAirlineIntelligenceConsumptionPage,
+  "/agency/operational-intelligence": OperationalIntelligencePage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

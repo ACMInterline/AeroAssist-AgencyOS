@@ -16922,3 +16922,46 @@ class DemoLoginRequest(BaseModel):
 
 class ApiMessage(BaseModel):
     message: str
+
+
+class AirlineOperationalIntelligenceArchitectureStatus(str, Enum):
+    FOUNDATION = "foundation"
+    REVIEW = "review"
+    ARCHIVED = "archived"
+
+
+class AirlineOperationalIntelligenceArchitecture(BaseDocument):
+    architecture_reference: str
+    architecture_status: AirlineOperationalIntelligenceArchitectureStatus = AirlineOperationalIntelligenceArchitectureStatus.FOUNDATION
+    architecture_version: str
+    principle: str
+    purpose: str
+    operational_platform_scope: str
+    intelligence_engine_scope: str
+    knowledge_acquisition_scope: str
+    knowledge_normalisation_scope: str
+    knowledge_versioning_scope: str
+    knowledge_approval_scope: str
+    operational_feasibility_scope: str
+    airline_recommendation_scope: str
+    offer_optimisation_scope: str
+    excluded_scope: List[str] = Field(default_factory=list)
+    linked_existing_foundations: List[str] = Field(default_factory=list)
+    linked_future_phases: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata_only: bool = True
+    architecture_only: bool = True
+    ai_generation_disabled: bool = True
+    airline_scraping_disabled: bool = True
+    automatic_web_crawling_disabled: bool = True
+    live_airline_apis_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    pricing_engine_execution_disabled: bool = True
+    itinerary_search_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    recommendation_automation_disabled: bool = True
+    background_workers_disabled: bool = True
+    automation_disabled: bool = True
+    external_api_calls_disabled: bool = True

@@ -9,7 +9,7 @@ from models import BundleReadiness, FeatureFlagBundle, FeatureFlagBundleMember, 
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_41_8_emd_workspace_foundation"
+EXPECTED_PHASE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

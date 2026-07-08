@@ -1880,6 +1880,21 @@ Avoid adding:
 
 - EMD issuance, EMD exchange, EMD refund, EMD voiding, live GDS/NDC connectivity, airline APIs, payment processing, RFIC/RFISC validation engines, SSR/OSI transmission, background workers, external integrations, automation, parallel duplicate EMD architecture, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 50.0: Airline Operational Intelligence Engine Architecture Foundation
+
+Implemented scope:
+
+- Added architecture-only `AirlineOperationalIntelligenceArchitecture` metadata and the `airline_operational_intelligence_architecture` collection with additive index registration.
+- Added `AirlineOperationalIntelligenceService` with a deterministic seed record for `phase_50_0_airline_operational_intelligence_engine_architecture_foundation`.
+- Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
+- Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
+- Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
+- Set next intelligence phase to Phase 50.1 Airline Knowledge Acquisition Workspace and next operational phase to Phase 41.9 SSR / OSI Operational Workspace Foundation.
+
+Avoid adding:
+
+- AI generation, airline scraping, automatic web crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking execution, ticket issuance, EMD issuance, recommendation automation, background workers, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

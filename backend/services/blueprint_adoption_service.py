@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_8_emd_workspace_foundation"
+PHASE_LABEL = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -54,6 +54,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_intelligence_agency_consumption_profiles, airline_intelligence_agency_knowledge_assignment_views, airline_intelligence_agency_usage_readiness, airline_intelligence_agency_consumption_notes, airline_intelligence_agency_consumption_snapshots",
         "status": "foundation adopted",
         "action": "Expose platform-governed airline intelligence knowledge versions to agency CRM, CMS, client portal, and offer builder work areas through read-only metadata and plain-language safe-use summaries without publishing, recommendations, provider execution, booking, PNR mutation, ticketing, EMD issuance, payments, invoices, settlement, scraping, external APIs, or external AI.",
+    },
+    {
+        "category": "Airline Operational Intelligence Engine",
+        "concept": "AOIE architecture and governance foundation",
+        "supplementary_concept": "passenger service operations principle, knowledge acquisition, normalisation, version review, capability matrix, feasibility assessment, airline-itinerary recommendation, total journey cost comparison, offer builder integration",
+        "current_equivalent": "AirlineOperationalIntelligenceArchitecture, AirlineOperationalIntelligenceService, airline_operational_intelligence_architecture, /api/platform/airline-operational-intelligence, /api/agencies/{agency_id}/airline-operational-intelligence, /platform/airline-operational-intelligence, /agency/operational-intelligence",
+        "status": "foundation adopted",
+        "action": "Define AOIE as the architecture-only intelligence track that coordinates airline policy ingestion, data packs, knowledge versions, agency consumption, taxonomy, mechanics, pricing, comparison, offer advisor, passenger, booking, offer, ticket, EMD, and future SSR/OSI workspace foundations without duplicating them or implementing AI generation, scraping, crawling, live airline APIs, provider integrations, pricing engine execution, itinerary search, booking, ticketing, EMD issuance, recommendation automation, background workers, or external API calls.",
     },
     {
         "category": "Platform / Agency UX",
@@ -523,6 +531,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/airline-review-coverage", "agencyos": "/agency/airline-intelligence-review-coverage"},
         {"supplementary": "/agent/airline-knowledge-versions", "agencyos": "/agency/airline-intelligence-knowledge-versions"},
         {"supplementary": "/agent/airline-intelligence-usage", "agencyos": "/agency/airline-intelligence-consumption"},
+        {"supplementary": "/admin/airline-operational-intelligence", "agencyos": "/platform/airline-operational-intelligence"},
+        {"supplementary": "/agent/operational-intelligence", "agencyos": "/agency/operational-intelligence"},
         {"supplementary": "/admin/exception-rules", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/special-services", "agencyos": "/platform/rules-services"},
         {"supplementary": "/admin/ancillary-pricing", "agencyos": "/platform/ancillary-pricing"},
@@ -614,14 +624,14 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 41.8",
-        "title": "EMD Workspace Foundation",
-        "reason": "Chapter 41 operational workspaces now need EMD workspace metadata that links to the existing ticket/EMD mirror, service mechanics, and ancillary pricing foundations without issuing, exchanging, refunding, voiding, provider execution, validation engines, or duplicate EMD architecture.",
+        "phase": "Phase 50.1",
+        "title": "Airline Knowledge Acquisition Workspace",
+        "reason": "AOIE now has an architecture foundation. The next intelligence phase should create governed airline knowledge acquisition metadata without scraping, crawling, AI generation, provider calls, or execution.",
     },
     {
-        "phase": "Phase 39.10",
-        "title": "Airline Intelligence Promotion Governance Hardening",
-        "reason": "Airline intelligence agency consumption is now visible as metadata; any future operational promotion still needs explicit migration governance.",
+        "phase": "Phase 41.9",
+        "title": "SSR / OSI Operational Workspace Foundation",
+        "reason": "Chapter 41 operational workspaces remain intact and should continue with SSR/OSI workspace metadata that AOIE can later feed without live transmission or provider execution.",
     },
     {
         "phase": "Phase 37.8",
@@ -713,6 +723,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "AirlineIntelligenceAgencyUsageReadiness",
             "AirlineIntelligenceAgencyConsumptionNote",
             "AirlineIntelligenceAgencyConsumptionSnapshot",
+            "AirlineOperationalIntelligenceArchitecture",
             "SaaSSubscriptionPlan",
             "SaaSPlanEntitlement",
             "AgencySubscriptionAssignment",
@@ -828,6 +839,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Booking workspace foundation built in Phase 41.6",
             "Ticket workspace foundation built in Phase 41.7",
             "EMD workspace foundation built in Phase 41.8",
+            "Airline Operational Intelligence Engine architecture foundation built in Phase 50.0",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -845,7 +857,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 41.8 - EMD Workspace Foundation",
+        "next_immediate_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+        "next_intelligence_phase": "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+        "next_operational_phase": "Phase 41.9 - SSR / OSI Operational Workspace Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
             "Travel request workspaces",
@@ -857,6 +871,19 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Ticket workspaces",
             "EMD workspaces",
         ],
+        "chapter_50_intelligence_track": [
+            "Phase 50.0 - Airline Operational Intelligence Engine Architecture Foundation",
+            "Phase 50.1 - Airline Knowledge Acquisition Workspace",
+            "Phase 50.2 - Airline Policy Text Parser Foundation",
+            "Phase 50.3 - Airline Service Rule Normalisation Foundation",
+            "Phase 50.4 - Airline Knowledge Version Review Foundation",
+            "Phase 50.5 - Airline Capability Matrix Foundation",
+            "Phase 50.6 - Passenger Service Feasibility Assessment Foundation",
+            "Phase 50.7 - Airline-Itinerary Recommendation Foundation",
+            "Phase 50.8 - Total Journey Cost Comparison Foundation",
+            "Phase 50.9 - Offer Builder AOIE Integration Foundation",
+        ],
+        "chapter_50_feeds_chapter_41_42": "AOIE is the intelligence track that feeds Chapter 41/42 operational workspaces; it does not replace operational workspace foundations.",
         "chapter_41_not_duplicate_ticket_emd_foundations": "Chapter 41 ticket and EMD workspaces are operational metadata views linked to Phase 36.4 mirrors, not parallel issuance architectures.",
         "gap_count": 6,
         "rejected_route_count": len(ROUTE_POLICY["rejected_routes"]),

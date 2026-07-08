@@ -743,6 +743,13 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("linked_document_ids", ASCENDING)], "name": "emd_workspaces_document_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "emd_workspaces_created_lookup"},
         ],
+        "airline_operational_intelligence_architecture": [
+            {"keys": [("id", ASCENDING)], "name": "airline_operational_intelligence_architecture_id_unique", "unique": True},
+            {"keys": [("architecture_reference", ASCENDING)], "name": "airline_operational_intelligence_architecture_reference_unique", "unique": True},
+            {"keys": [("architecture_status", ASCENDING)], "name": "airline_operational_intelligence_architecture_status_lookup"},
+            {"keys": [("architecture_version", ASCENDING)], "name": "airline_operational_intelligence_architecture_version_lookup"},
+            {"keys": [("created_at", ASCENDING)], "name": "airline_operational_intelligence_architecture_created_lookup"},
+        ],
         "booking_records": [
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("booking_workspace_id", ASCENDING)],

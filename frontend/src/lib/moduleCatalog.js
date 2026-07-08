@@ -46,6 +46,7 @@ export const platformModuleGroups = [
     safety: "No provider execution",
     items: [
       { label: "Airlines / Knowledge", description: "Global airline records", href: "/platform/airlines", icon: "plane", badge: "Platform only" },
+      { label: "Airline Operational Intelligence", description: "AOIE architecture map", href: "/platform/airline-operational-intelligence", icon: "layers", badge: "Architecture only", metadata_only: true },
       { label: "Airline Data Packs", description: "Staged airline intelligence", href: "/platform/airline-intelligence-data-packs", icon: "file", badge: "Metadata only" },
       { label: "Data Pack Reviews", description: "Checklist and conflict review", href: "/platform/airline-intelligence-data-pack-reviews", icon: "git", badge: "Metadata only" },
       { label: "Knowledge Versions", description: "Release-channel metadata", href: "/platform/airline-intelligence-knowledge-versions", icon: "layers", badge: "Metadata only" },
@@ -170,6 +171,7 @@ export const agencyModuleGroups = [
     audience: "Agency read-only",
     safety: "Metadata only",
     items: [
+      { label: "Operational Intelligence", description: "AOIE architecture map", href: "/agency/operational-intelligence", icon: "layers", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
       { label: "Policy Library", description: "Airline rules", href: "/agency/airline-policy-library", icon: "database", badge: "Agency read-only", entitlementKey: "airline_intelligence" },
       { label: "Airline Coverage", description: "Data readiness", href: "/agency/airline-intelligence-coverage", icon: "plane", badge: "Agency read-only", entitlementKey: "airline_coverage" },
       { label: "Review Coverage", description: "Safe-use status", href: "/agency/airline-intelligence-review-coverage", icon: "clipboard", badge: "Agency read-only", entitlementKey: "airline_coverage" },
