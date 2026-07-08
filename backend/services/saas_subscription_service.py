@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
+PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"

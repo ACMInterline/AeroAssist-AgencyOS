@@ -141,6 +141,9 @@ The repository currently contains:
 - Phase 42.2: Passenger service workflow engine foundation.
 - Phase 50.0: Airline Operational Intelligence Engine architecture foundation.
 - Phase 50.1: Airline knowledge acquisition workspace foundation.
+- Phase 50.2: Operational constraint engine foundation.
+- Phase 50.3: Airline operational knowledge normalisation foundation.
+- Phase 50.4: Airline operational knowledge governance and version control foundation.
 
 Phase 35 navigation hotfix:
 
@@ -1994,7 +1997,7 @@ Implemented scope:
 - Added read-only platform APIs under `/api/platform/airline-operational-intelligence` and agency APIs under `/api/agencies/{agency_id}/airline-operational-intelligence`.
 - Added Platform Console `/platform/airline-operational-intelligence` and Agency Workspace `/agency/operational-intelligence` pages.
 - Documented AOIE as the Chapter 50 intelligence track that feeds Chapter 41/42 operational workspaces without replacing them.
-- Set next intelligence phase to Phase 50.4 Airline Knowledge Version Review Foundation after Phase 50.3 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
+- Set next intelligence phase to Phase 50.5 Airline Operational Capability Matrix Foundation after Phase 50.4 and next operational phase to Phase 42.2 Passenger Service Workflow Engine Foundation.
 
 Avoid adding:
 
@@ -2011,7 +2014,7 @@ Implemented scope:
 - Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
 - Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
 - Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
-- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, and future AOIE phases: 50.4 Knowledge Version Review, 50.5 Capability Matrix, 50.6 Passenger Service Feasibility, 50.7 Airline-Itinerary Recommendation, and 50.8 Total Journey Cost Comparison.
+- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, and future AOIE phases: 50.5 Airline Operational Capability Matrix, 50.6 Operational Rule Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
 - Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
 - Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
 
@@ -2050,6 +2053,23 @@ Implemented scope:
 Avoid adding:
 
 - Live evaluation, AI parsing, recommendation engines, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, external API calls, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 50.4: Airline Operational Knowledge Governance & Version Control Foundation
+
+Implemented scope:
+
+- Added metadata-only `AirlineKnowledgeVersion`, `AirlineKnowledgeVersionCreate`, and `AirlineKnowledgeVersionUpdate` models for independent Evidence, Policy, Pricing, Capability, Operational Constraint, and Operational Procedure version metadata.
+- Added metadata-only `AirlineKnowledgeRelease`, `AirlineKnowledgeReleaseCreate`, and `AirlineKnowledgeReleaseUpdate` models for grouped knowledge release metadata.
+- Registered additive `airline_knowledge_versions` and `airline_knowledge_releases` collections and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-governance` and UI routes at `/platform/airline-knowledge-governance` and `/platform/airline-knowledge-releases`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-governance` and UI at `/agency/knowledge-governance`.
+- Added lifecycle, review queue, approval queue, publication queue, historical version, version comparison, superseded knowledge, archived knowledge, rollback, and release metadata.
+- Added readiness flags under `airline_operational_knowledge_governance_foundation`.
+- Added `docs/architecture/airline-operational-knowledge-governance-foundation.md`.
+
+Avoid adding:
+
+- Live rule evaluation, AI reasoning, parser execution, recommendation engines, pricing calculation, provider integrations, background workers, automatic publication, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

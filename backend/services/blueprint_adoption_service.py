@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
+PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -86,6 +86,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineKnowledgeNormalisation, AirlineKnowledgeNormalisationCreate, AirlineKnowledgeNormalisationUpdate, AirlineKnowledgeNormalisationService, airline_knowledge_normalisations, /api/platform/airline-knowledge-normalisation, /api/agencies/{agency_id}/airline-knowledge-normalisation, /platform/airline-knowledge-normalisation, /agency/knowledge-normalisation",
         "status": "foundation adopted",
         "action": "Store metadata-only canonical operational vocabulary for AOIE so future phases can compare airline knowledge consistently without live evaluation, AI parsing, recommendations, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, or automation.",
+    },
+    {
+        "category": "Airline Knowledge Governance",
+        "concept": "Airline operational knowledge governance and version control",
+        "supplementary_concept": "knowledge lifecycle, independent policy/pricing/capability/constraint/procedure versions, releases, comparison metadata, rollback metadata, superseded records, historical audit",
+        "current_equivalent": "AirlineKnowledgeVersion, AirlineKnowledgeRelease, AirlineKnowledgeGovernanceService, airline_knowledge_versions, airline_knowledge_releases, /api/platform/airline-knowledge-governance, /api/agencies/{agency_id}/airline-knowledge-governance, /platform/airline-knowledge-governance, /agency/knowledge-governance",
+        "status": "foundation adopted",
+        "action": "Govern Airline Operational Knowledge as metadata-only operational assets with independent Evidence, Policy, Pricing, Capability, Operational Constraint, and Operational Procedure versions plus releases, comparison, rollback, superseded, archived, and historical lookup metadata without live rule evaluation, AI reasoning, parser execution, recommendations, pricing calculation, provider integrations, background workers, or automatic publication.",
     },
     {
         "category": "Platform / Agency UX",
@@ -682,6 +690,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/operational-constraints", "agencyos": "/agency/operational-constraints"},
         {"supplementary": "/admin/airline-knowledge-normalisation", "agencyos": "/platform/airline-knowledge-normalisation"},
         {"supplementary": "/agent/knowledge-normalisation", "agencyos": "/agency/knowledge-normalisation"},
+        {"supplementary": "/admin/airline-knowledge-governance", "agencyos": "/platform/airline-knowledge-governance"},
+        {"supplementary": "/admin/airline-knowledge-releases", "agencyos": "/platform/airline-knowledge-releases"},
+        {"supplementary": "/agent/knowledge-governance", "agencyos": "/agency/knowledge-governance"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -694,9 +705,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.4",
-        "title": "Airline Knowledge Version Review Foundation",
-        "reason": "Operational knowledge normalisation now defines canonical vocabulary metadata. The next intelligence phase should add governed version review metadata without AI execution, live evaluation, scraping, crawling, provider calls, automatic extraction, or operational decisions.",
+        "phase": "Phase 50.5",
+        "title": "Airline Operational Capability Matrix Foundation",
+        "reason": "Airline operational knowledge governance now versions evidence, policy, pricing, capability, constraints, procedures, and releases. The next intelligence phase should add capability matrix metadata without evaluation, recommendations, pricing execution, provider calls, or automation.",
     },
     {
         "phase": "Phase 42.2",
@@ -938,6 +949,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline knowledge acquisition workspace foundation built in Phase 50.1",
             "Operational constraint engine foundation built in Phase 50.2",
             "Airline operational knowledge normalisation foundation built in Phase 50.3",
+            "Airline operational knowledge governance and version control foundation built in Phase 50.4",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -955,8 +967,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
-        "next_intelligence_phase": "Phase 50.4 - Airline Knowledge Version Review Foundation",
+        "next_immediate_phase": "Phase 50.5 - Airline Operational Capability Matrix Foundation",
+        "next_intelligence_phase": "Phase 50.5 - Airline Operational Capability Matrix Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
@@ -978,12 +990,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Phase 50.1 - Airline Knowledge Acquisition Workspace",
             "Phase 50.2 - Operational Constraint Engine Foundation",
             "Phase 50.3 - Airline Operational Knowledge Normalisation Foundation",
-            "Phase 50.4 - Airline Knowledge Version Review Foundation",
-            "Phase 50.5 - Airline Capability Matrix Foundation",
-            "Phase 50.6 - Passenger Service Feasibility Assessment Foundation",
-            "Phase 50.7 - Airline-Itinerary Recommendation Foundation",
-            "Phase 50.8 - Total Journey Cost Comparison Foundation",
-            "Phase 50.9 - Offer Builder AOIE Integration Foundation",
+            "Phase 50.4 - Airline Operational Knowledge Governance & Version Control Foundation",
+            "Phase 50.5 - Airline Operational Capability Matrix Foundation",
+            "Phase 50.6 - Operational Rule Evaluation Engine Foundation",
+            "Phase 50.7 - Passenger Service Feasibility Engine Foundation",
+            "Phase 50.8 - Airline & Itinerary Recommendation Engine Foundation",
+            "Phase 50.9 - Offer Builder Intelligence Integration Foundation",
         ],
         "chapter_50_feeds_chapter_41_42": "AOIE is the intelligence track that feeds Chapter 41/42 operational workspaces; it does not replace operational workspace foundations.",
         "chapter_41_not_duplicate_ticket_emd_foundations": "Chapter 41 ticket and EMD workspaces are operational metadata views linked to Phase 36.4 mirrors, not parallel issuance architectures.",

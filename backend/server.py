@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_knowledge_acquisition, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints
+from routers import agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -44,7 +44,8 @@ from services.passenger_service_workflow_service import READINESS_STATES, WORKFL
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES, APPROVAL_STATUSES as ACQUISITION_APPROVAL_STATUSES, KNOWLEDGE_GRAPH_PILLARS, REVIEW_STATUSES as ACQUISITION_REVIEW_STATUSES, SOURCE_TYPES as ACQUISITION_SOURCE_TYPES
 from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
-from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, PHASE_LABEL, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
+from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, PHASE_LABEL, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
+from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
 from services.ticket_workspace_service import TICKET_DOCUMENT_STATUSES, TICKET_WORKSPACE_STATUSES
 from services.travel_request_workspace_service import REQUEST_PRIORITIES, REQUEST_STATUSES, REQUEST_TYPES
@@ -59,7 +60,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.3 airline knowledge normalisation foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.4 airline operational knowledge governance foundation.",
 )
 
 app.add_middleware(
@@ -782,6 +783,93 @@ async def readiness() -> dict:
         + len(item.get("pricing_reference_ids") or [])
         + len(item.get("capability_reference_ids") or [])
         for item in airline_knowledge_normalisation_records
+    )
+    airline_knowledge_version_records = await database.collection("airline_knowledge_versions").find_many()
+    airline_knowledge_release_records = await database.collection("airline_knowledge_releases").find_many()
+    airline_knowledge_version_count = len(airline_knowledge_version_records)
+    airline_knowledge_release_count = len(airline_knowledge_release_records)
+    airline_knowledge_version_lifecycle_counts = {
+        status: len([item for item in airline_knowledge_version_records if item.get("lifecycle_status") == status])
+        for status in KNOWLEDGE_LIFECYCLE_STATUSES
+    }
+    airline_knowledge_version_review_counts = {
+        status: len([item for item in airline_knowledge_version_records if item.get("review_status") == status])
+        for status in GOVERNANCE_REVIEW_STATUSES
+    }
+    airline_knowledge_version_approval_counts = {
+        status: len([item for item in airline_knowledge_version_records if item.get("approval_status") == status])
+        for status in GOVERNANCE_APPROVAL_STATUSES
+    }
+    airline_knowledge_release_status_counts = {
+        status: len([item for item in airline_knowledge_release_records if item.get("release_status") == status])
+        for status in GOVERNANCE_RELEASE_STATUSES
+    }
+    airline_knowledge_version_scope_counts = {
+        scope: len([item for item in airline_knowledge_version_records if scope in (item.get("knowledge_scope") or [])])
+        for scope in KNOWLEDGE_SCOPES
+    }
+    airline_knowledge_version_change_type_counts = {
+        change_type: len([item for item in airline_knowledge_version_records if item.get("change_type") == change_type])
+        for change_type in GOVERNANCE_CHANGE_TYPES
+    }
+    airline_knowledge_review_queue_count = len(
+        [
+            item
+            for item in airline_knowledge_version_records
+            if item.get("lifecycle_status") == "under_review" or item.get("review_status") == "under_review"
+        ]
+    )
+    airline_knowledge_approval_queue_count = len(
+        [item for item in airline_knowledge_version_records if item.get("approval_status") == "pending"]
+    )
+    airline_knowledge_publication_queue_count = len(
+        [item for item in airline_knowledge_version_records if item.get("lifecycle_status") == "approved"]
+    )
+    airline_knowledge_historical_version_count = len(
+        [
+            item
+            for item in airline_knowledge_version_records
+            if item.get("lifecycle_status") == "historical_audit" or item.get("historical_lookup_tags")
+        ]
+    )
+    airline_knowledge_superseded_version_count = len(
+        [
+            item
+            for item in airline_knowledge_version_records
+            if item.get("lifecycle_status") == "superseded" or item.get("supersedes_version_ids")
+        ]
+    )
+    airline_knowledge_archived_version_count = len(
+        [item for item in airline_knowledge_version_records if item.get("lifecycle_status") == "archived"]
+    )
+    airline_knowledge_comparison_metadata_count = len(
+        [
+            item
+            for item in airline_knowledge_version_records
+            if item.get("comparison_base_version_id")
+            or item.get("comparison_target_version_id")
+            or item.get("added_objects")
+            or item.get("modified_objects")
+            or item.get("removed_objects")
+            or item.get("changed_effective_dates")
+            or item.get("changed_pricing")
+            or item.get("changed_capability")
+            or item.get("changed_operational_constraints")
+            or item.get("changed_procedures")
+        ]
+    )
+    airline_knowledge_rollback_metadata_count = len(
+        [
+            item
+            for item in airline_knowledge_version_records
+            if item.get("rollback_from_version_id") or item.get("rollback_to_version_id")
+        ]
+    )
+    airline_knowledge_release_evaluation_ready_count = len(
+        [item for item in airline_knowledge_release_records if item.get("evaluation_ready")]
+    )
+    airline_knowledge_release_recommendation_ready_count = len(
+        [item for item in airline_knowledge_release_records if item.get("recommendation_ready")]
     )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
@@ -2163,6 +2251,66 @@ async def readiness() -> dict:
             "airline_knowledge_normalisation_knowledge_link_count": airline_knowledge_normalisation_knowledge_link_count,
             "readiness_required": False,
             "diagnostic": "Phase 50.3 creates the metadata-only normalisation layer for the Airline Operational Knowledge Graph. It maps messy operational terms into canonical vocabulary and taxonomy metadata so future AOIE phases can compare airlines consistently without live evaluation, AI parsing, recommendations, feasibility scoring, pricing calculation, scraping, background workers, or provider integrations.",
+        },
+        "airline_operational_knowledge_governance_foundation": {
+            "airline_operational_knowledge_governance_enabled": True,
+            "airline_knowledge_versions_collection_enabled": True,
+            "airline_knowledge_releases_collection_enabled": True,
+            "knowledge_lifecycle_metadata_enabled": True,
+            "independent_knowledge_versioning_enabled": True,
+            "evidence_versioning_enabled": True,
+            "policy_versioning_enabled": True,
+            "pricing_versioning_enabled": True,
+            "capability_versioning_enabled": True,
+            "operational_constraint_versioning_enabled": True,
+            "operational_procedure_versioning_enabled": True,
+            "knowledge_release_metadata_enabled": True,
+            "version_comparison_metadata_enabled": True,
+            "rollback_metadata_enabled": True,
+            "superseded_metadata_enabled": True,
+            "historical_lookup_metadata_enabled": True,
+            "review_queue_metadata_enabled": True,
+            "approval_queue_metadata_enabled": True,
+            "publication_queue_metadata_enabled": True,
+            "platform_airline_knowledge_governance_metadata_crud_enabled": True,
+            "agency_airline_knowledge_governance_read_only_enabled": True,
+            "platform_airline_knowledge_governance_ui_enabled": True,
+            "agency_knowledge_governance_ui_enabled": True,
+            "knowledge_lifecycle_statuses": KNOWLEDGE_LIFECYCLE_STATUSES,
+            "knowledge_release_statuses": GOVERNANCE_RELEASE_STATUSES,
+            "knowledge_review_statuses": GOVERNANCE_REVIEW_STATUSES,
+            "knowledge_approval_statuses": GOVERNANCE_APPROVAL_STATUSES,
+            "knowledge_scopes": KNOWLEDGE_SCOPES,
+            "knowledge_change_types": GOVERNANCE_CHANGE_TYPES,
+            "metadata_only": True,
+            "live_rule_evaluation_disabled": True,
+            "ai_reasoning_disabled": True,
+            "parser_execution_disabled": True,
+            "recommendation_engine_disabled": True,
+            "pricing_calculation_disabled": True,
+            "provider_integrations_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_publication_disabled": True,
+            "airline_knowledge_version_count": airline_knowledge_version_count,
+            "airline_knowledge_release_count": airline_knowledge_release_count,
+            "airline_knowledge_version_lifecycle_counts": airline_knowledge_version_lifecycle_counts,
+            "airline_knowledge_version_review_counts": airline_knowledge_version_review_counts,
+            "airline_knowledge_version_approval_counts": airline_knowledge_version_approval_counts,
+            "airline_knowledge_release_status_counts": airline_knowledge_release_status_counts,
+            "airline_knowledge_version_scope_counts": airline_knowledge_version_scope_counts,
+            "airline_knowledge_version_change_type_counts": airline_knowledge_version_change_type_counts,
+            "airline_knowledge_review_queue_count": airline_knowledge_review_queue_count,
+            "airline_knowledge_approval_queue_count": airline_knowledge_approval_queue_count,
+            "airline_knowledge_publication_queue_count": airline_knowledge_publication_queue_count,
+            "airline_knowledge_historical_version_count": airline_knowledge_historical_version_count,
+            "airline_knowledge_superseded_version_count": airline_knowledge_superseded_version_count,
+            "airline_knowledge_archived_version_count": airline_knowledge_archived_version_count,
+            "airline_knowledge_comparison_metadata_count": airline_knowledge_comparison_metadata_count,
+            "airline_knowledge_rollback_metadata_count": airline_knowledge_rollback_metadata_count,
+            "airline_knowledge_release_evaluation_ready_count": airline_knowledge_release_evaluation_ready_count,
+            "airline_knowledge_release_recommendation_ready_count": airline_knowledge_release_recommendation_ready_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.4 creates metadata-only governance and version-control records for Airline Operational Knowledge. It governs independent Evidence, Policy, Pricing, Capability, Operational Constraint, and Operational Procedure versions plus grouped releases, comparison metadata, rollback metadata, superseded records, and historical lookup metadata without live rule evaluation, AI reasoning, parser execution, recommendations, pricing calculation, provider integrations, background workers, or automatic publication.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -3915,6 +4063,7 @@ app.include_router(platform_airline_operational_intelligence.router)
 app.include_router(platform_airline_knowledge_acquisition.router)
 app.include_router(platform_operational_constraints.router)
 app.include_router(platform_airline_knowledge_normalisation.router)
+app.include_router(platform_airline_knowledge_governance.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -3988,6 +4137,7 @@ app.include_router(agency_airline_operational_intelligence.router)
 app.include_router(agency_airline_knowledge_acquisition.router)
 app.include_router(agency_operational_constraints.router)
 app.include_router(agency_airline_knowledge_normalisation.router)
+app.include_router(agency_airline_knowledge_governance.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

@@ -8,7 +8,7 @@ from models import FlightWorkspace, FlightWorkspaceCreate, FlightWorkspaceUpdate
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_3_airline_knowledge_normalisation_foundation"
+PHASE_LABEL = "phase_50_4_airline_operational_knowledge_governance_foundation"
 
 FLIGHT_WORKSPACE_COLLECTION = "flight_workspaces"
 FLIGHT_STATUSES = ["draft", "active", "schedule_review", "ready", "flown", "archived"]

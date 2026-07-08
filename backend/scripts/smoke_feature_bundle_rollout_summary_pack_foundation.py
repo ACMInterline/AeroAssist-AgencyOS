@@ -21,7 +21,7 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_50_3_airline_knowledge_normalisation_foundation"
+EXPECTED_PHASE = "phase_50_4_airline_operational_knowledge_governance_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}

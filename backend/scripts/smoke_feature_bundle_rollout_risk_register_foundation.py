@@ -15,7 +15,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_50_3_airline_knowledge_normalisation_foundation"
+EXPECTED_PHASE = "phase_50_4_airline_operational_knowledge_governance_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 RISK_IMPACTS = {"low", "medium", "high", "critical"}
 RISK_LIKELIHOODS = {"rare", "unlikely", "possible", "likely", "almost_certain"}

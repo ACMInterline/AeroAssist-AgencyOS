@@ -81,13 +81,14 @@ Phase 50.1 feeds Phase 50.2, Phase 50.3, and future metadata foundations:
 
 - 50.2 Operational Constraint Engine
 - 50.3 Airline Operational Knowledge Normalisation
-- 50.4 Knowledge Version Review
-- 50.5 Capability Matrix
-- 50.6 Passenger Service Feasibility
-- 50.7 Airline-Itinerary Recommendation
-- 50.8 Total Journey Cost Comparison
+- 50.4 Airline Operational Knowledge Governance & Version Control
+- 50.5 Airline Operational Capability Matrix
+- 50.6 Operational Rule Evaluation Engine
+- 50.7 Passenger Service Feasibility Engine
+- 50.8 Airline & Itinerary Recommendation Engine
+- 50.9 Offer Builder Intelligence Integration
 
-Knowledge Acquisition stores Airline Operational Knowledge. Phase 50.2 stores the formal metadata-only Operational Constraint Engine language derived from that knowledge. Phase 50.3 stores canonical operational vocabulary and taxonomy metadata so future AOIE can compare airlines consistently. Future AOIE phases should reason over the Operational Knowledge Graph, operational constraints, knowledge normalisations, capabilities, policies, pricing, and evidence. Future AOIE should not reason over raw text alone.
+Knowledge Acquisition stores Airline Operational Knowledge. Phase 50.2 stores the formal metadata-only Operational Constraint Engine language derived from that knowledge. Phase 50.3 stores canonical operational vocabulary and taxonomy metadata so future AOIE can compare airlines consistently. Phase 50.4 versions acquisition evidence and derived policy, pricing, capability, constraint, and procedure metadata independently without live evaluation, AI reasoning, parser execution, recommendations, pricing calculation, provider calls, workers, or automatic publication. Future AOIE phases should reason over the Operational Knowledge Graph, operational constraints, knowledge normalisations, governed versions/releases, capabilities, policies, pricing, and evidence. Future AOIE should not reason over raw text alone.
 
 Knowledge Acquisition does not decide operational feasibility.
 

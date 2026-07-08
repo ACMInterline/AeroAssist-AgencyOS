@@ -14945,6 +14945,310 @@ class AirlineKnowledgeNormalisationUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class AirlineKnowledgeVersion(BaseDocument):
+    agency_id: Optional[str] = None
+    knowledge_version_reference: str
+    version_number: Optional[int] = None
+    version_label: Optional[str] = None
+    semantic_version: Optional[str] = None
+    lifecycle_status: str = "draft"
+    draft_created_at: Optional[datetime] = None
+    submitted_for_review_at: Optional[datetime] = None
+    reviewed_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    superseded_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    author: Optional[str] = None
+    reviewer: Optional[str] = None
+    approver: Optional[str] = None
+    publisher: Optional[str] = None
+    review_status: str = "not_started"
+    review_notes: Optional[str] = None
+    requested_changes: List[str] = Field(default_factory=list)
+    rejection_reason: Optional[str] = None
+    approval_status: str = "not_requested"
+    approval_notes: Optional[str] = None
+    publication_channel: Optional[str] = None
+    publication_scope: Optional[str] = None
+    publication_notes: Optional[str] = None
+    knowledge_scope: List[str] = Field(default_factory=list)
+    evidence_ids: List[str] = Field(default_factory=list)
+    policy_ids: List[str] = Field(default_factory=list)
+    pricing_ids: List[str] = Field(default_factory=list)
+    capability_ids: List[str] = Field(default_factory=list)
+    constraint_ids: List[str] = Field(default_factory=list)
+    procedure_ids: List[str] = Field(default_factory=list)
+    previous_version_id: Optional[str] = None
+    supersedes_version_ids: List[str] = Field(default_factory=list)
+    replaced_by_version_id: Optional[str] = None
+    change_type: Optional[str] = None
+    change_description: Optional[str] = None
+    change_reason: Optional[str] = None
+    added_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    modified_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    removed_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    comparison_base_version_id: Optional[str] = None
+    comparison_target_version_id: Optional[str] = None
+    changed_effective_dates: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_pricing: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_capability: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_operational_constraints: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_procedures: List[Dict[str, Any]] = Field(default_factory=list)
+    rollback_from_version_id: Optional[str] = None
+    rollback_to_version_id: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_notes: Optional[str] = None
+    historical_lookup_tags: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    governance_foundation: bool = True
+    version_control_foundation: bool = True
+    live_rule_evaluation_disabled: bool = True
+    ai_reasoning_disabled: bool = True
+    parser_execution_disabled: bool = True
+    recommendation_engine_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_publication_disabled: bool = True
+
+
+class AirlineKnowledgeVersionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    knowledge_version_reference: Optional[str] = None
+    version_number: Optional[int] = None
+    version_label: Optional[str] = None
+    semantic_version: Optional[str] = None
+    lifecycle_status: str = "draft"
+    draft_created_at: Optional[datetime] = None
+    submitted_for_review_at: Optional[datetime] = None
+    reviewed_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    superseded_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    author: Optional[str] = None
+    reviewer: Optional[str] = None
+    approver: Optional[str] = None
+    publisher: Optional[str] = None
+    review_status: str = "not_started"
+    review_notes: Optional[str] = None
+    requested_changes: List[str] = Field(default_factory=list)
+    rejection_reason: Optional[str] = None
+    approval_status: str = "not_requested"
+    approval_notes: Optional[str] = None
+    publication_channel: Optional[str] = None
+    publication_scope: Optional[str] = None
+    publication_notes: Optional[str] = None
+    knowledge_scope: List[str] = Field(default_factory=list)
+    evidence_ids: List[str] = Field(default_factory=list)
+    policy_ids: List[str] = Field(default_factory=list)
+    pricing_ids: List[str] = Field(default_factory=list)
+    capability_ids: List[str] = Field(default_factory=list)
+    constraint_ids: List[str] = Field(default_factory=list)
+    procedure_ids: List[str] = Field(default_factory=list)
+    previous_version_id: Optional[str] = None
+    supersedes_version_ids: List[str] = Field(default_factory=list)
+    replaced_by_version_id: Optional[str] = None
+    change_type: Optional[str] = None
+    change_description: Optional[str] = None
+    change_reason: Optional[str] = None
+    added_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    modified_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    removed_objects: List[Dict[str, Any]] = Field(default_factory=list)
+    comparison_base_version_id: Optional[str] = None
+    comparison_target_version_id: Optional[str] = None
+    changed_effective_dates: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_pricing: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_capability: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_operational_constraints: List[Dict[str, Any]] = Field(default_factory=list)
+    changed_procedures: List[Dict[str, Any]] = Field(default_factory=list)
+    rollback_from_version_id: Optional[str] = None
+    rollback_to_version_id: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_notes: Optional[str] = None
+    historical_lookup_tags: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineKnowledgeVersionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    knowledge_version_reference: Optional[str] = None
+    version_number: Optional[int] = None
+    version_label: Optional[str] = None
+    semantic_version: Optional[str] = None
+    lifecycle_status: Optional[str] = None
+    draft_created_at: Optional[datetime] = None
+    submitted_for_review_at: Optional[datetime] = None
+    reviewed_at: Optional[datetime] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    superseded_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    author: Optional[str] = None
+    reviewer: Optional[str] = None
+    approver: Optional[str] = None
+    publisher: Optional[str] = None
+    review_status: Optional[str] = None
+    review_notes: Optional[str] = None
+    requested_changes: Optional[List[str]] = None
+    rejection_reason: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_notes: Optional[str] = None
+    publication_channel: Optional[str] = None
+    publication_scope: Optional[str] = None
+    publication_notes: Optional[str] = None
+    knowledge_scope: Optional[List[str]] = None
+    evidence_ids: Optional[List[str]] = None
+    policy_ids: Optional[List[str]] = None
+    pricing_ids: Optional[List[str]] = None
+    capability_ids: Optional[List[str]] = None
+    constraint_ids: Optional[List[str]] = None
+    procedure_ids: Optional[List[str]] = None
+    previous_version_id: Optional[str] = None
+    supersedes_version_ids: Optional[List[str]] = None
+    replaced_by_version_id: Optional[str] = None
+    change_type: Optional[str] = None
+    change_description: Optional[str] = None
+    change_reason: Optional[str] = None
+    added_objects: Optional[List[Dict[str, Any]]] = None
+    modified_objects: Optional[List[Dict[str, Any]]] = None
+    removed_objects: Optional[List[Dict[str, Any]]] = None
+    comparison_base_version_id: Optional[str] = None
+    comparison_target_version_id: Optional[str] = None
+    changed_effective_dates: Optional[List[Dict[str, Any]]] = None
+    changed_pricing: Optional[List[Dict[str, Any]]] = None
+    changed_capability: Optional[List[Dict[str, Any]]] = None
+    changed_operational_constraints: Optional[List[Dict[str, Any]]] = None
+    changed_procedures: Optional[List[Dict[str, Any]]] = None
+    rollback_from_version_id: Optional[str] = None
+    rollback_to_version_id: Optional[str] = None
+    rollback_reason: Optional[str] = None
+    rollback_notes: Optional[str] = None
+    historical_lookup_tags: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class AirlineKnowledgeRelease(BaseDocument):
+    agency_id: Optional[str] = None
+    release_reference: str
+    release_name: Optional[str] = None
+    release_description: Optional[str] = None
+    release_status: str = "draft"
+    release_version: Optional[str] = None
+    release_notes: Optional[str] = None
+    included_version_ids: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=now_utc)
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    countries: List[str] = Field(default_factory=list)
+    service_domains: List[str] = Field(default_factory=list)
+    release_author: Optional[str] = None
+    release_reviewer: Optional[str] = None
+    release_approver: Optional[str] = None
+    evaluation_ready: bool = False
+    recommendation_ready: bool = False
+    rollback_release_id: Optional[str] = None
+    superseded_release_ids: List[str] = Field(default_factory=list)
+    replaced_by_release_id: Optional[str] = None
+    historical_lookup_tags: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    governance_foundation: bool = True
+    version_control_foundation: bool = True
+    live_rule_evaluation_disabled: bool = True
+    ai_reasoning_disabled: bool = True
+    parser_execution_disabled: bool = True
+    recommendation_engine_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_publication_disabled: bool = True
+
+
+class AirlineKnowledgeReleaseCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    release_reference: Optional[str] = None
+    release_name: Optional[str] = None
+    release_description: Optional[str] = None
+    release_status: str = "draft"
+    release_version: Optional[str] = None
+    release_notes: Optional[str] = None
+    included_version_ids: List[str] = Field(default_factory=list)
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    countries: List[str] = Field(default_factory=list)
+    service_domains: List[str] = Field(default_factory=list)
+    release_author: Optional[str] = None
+    release_reviewer: Optional[str] = None
+    release_approver: Optional[str] = None
+    evaluation_ready: bool = False
+    recommendation_ready: bool = False
+    rollback_release_id: Optional[str] = None
+    superseded_release_ids: List[str] = Field(default_factory=list)
+    replaced_by_release_id: Optional[str] = None
+    historical_lookup_tags: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineKnowledgeReleaseUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    release_reference: Optional[str] = None
+    release_name: Optional[str] = None
+    release_description: Optional[str] = None
+    release_status: Optional[str] = None
+    release_version: Optional[str] = None
+    release_notes: Optional[str] = None
+    included_version_ids: Optional[List[str]] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    airline_codes: Optional[List[str]] = None
+    countries: Optional[List[str]] = None
+    service_domains: Optional[List[str]] = None
+    release_author: Optional[str] = None
+    release_reviewer: Optional[str] = None
+    release_approver: Optional[str] = None
+    evaluation_ready: Optional[bool] = None
+    recommendation_ready: Optional[bool] = None
+    rollback_release_id: Optional[str] = None
+    superseded_release_ids: Optional[List[str]] = None
+    replaced_by_release_id: Optional[str] = None
+    historical_lookup_tags: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

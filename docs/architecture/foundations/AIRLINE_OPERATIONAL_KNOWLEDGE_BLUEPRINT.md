@@ -12,6 +12,8 @@ Which airlines and itinerary options can safely, correctly, and practically fulf
 
 The chapter turns reviewed airline evidence into normalized, governed, comparable operational knowledge. It keeps policy, pricing, capability, constraints, and procedures separate so future recommendations can explain why an option is suitable, uncertain, risky, or unsuitable.
 
+Phase 50.4 implements the metadata-only governance and version-control layer for this blueprint. It governs Evidence, Policy, Pricing, Capability, Operational Constraints, Operational Procedures, Knowledge Releases, and Historical Versions without executing rule evaluation, recommendations, pricing, provider integrations, or automatic publication.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation

@@ -50,7 +50,9 @@ Phase 50.2 adds the `operational_constraints` collection. Operational Constraint
 
 Phase 50.3 adds the `airline_knowledge_normalisations` collection. Knowledge Normalisation creates canonical operational vocabulary and taxonomy metadata so future AOIE phases can compare airlines consistently. It does not evaluate rules.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Capabilities, Policies, Pricing, and Evidence.
+Phase 50.4 adds the `airline_knowledge_versions` and `airline_knowledge_releases` collections. Knowledge Governance versions Evidence, Policy, Pricing, Capability, Operational Constraints, and Operational Procedures independently, groups releases, preserves historical lookup, and records comparison, rollback, superseded, and archived metadata. It does not publish automatically or evaluate rules.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, and Evidence.
 
 ## Routes
 
@@ -69,12 +71,12 @@ All routes are read-only visualization routes.
 - 50.1 Airline Knowledge Acquisition Workspace - implemented as manual source evidence intake
 - 50.2 Operational Constraint Engine Foundation - implemented as metadata-only constraint language
 - 50.3 Airline Operational Knowledge Normalisation Foundation - implemented as metadata-only canonical vocabulary
-- 50.4 Airline Knowledge Version Review Foundation
-- 50.5 Airline Capability Matrix Foundation
-- 50.6 Passenger Service Feasibility Assessment Foundation
-- 50.7 Airline-Itinerary Recommendation Foundation
-- 50.8 Total Journey Cost Comparison Foundation
-- 50.9 Offer Builder AOIE Integration Foundation
+- 50.4 Airline Operational Knowledge Governance & Version Control Foundation - implemented as metadata-only lifecycle governance
+- 50.5 Airline Operational Capability Matrix Foundation
+- 50.6 Operational Rule Evaluation Engine Foundation
+- 50.7 Passenger Service Feasibility Engine Foundation
+- 50.8 Airline & Itinerary Recommendation Engine Foundation
+- 50.9 Offer Builder Intelligence Integration Foundation
 
 ## Explicitly Excluded
 
@@ -85,3 +87,5 @@ Phase 50.1 does not implement AI parsing, automatic extraction, scraping, crawli
 Phase 50.2 does not implement live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, external API calls, evaluation endpoints, or automation.
 
 Phase 50.3 does not implement live evaluation, AI parsing, recommendation engines, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, external API calls, or automation.
+
+Phase 50.4 does not implement live rule evaluation, AI reasoning, parser execution, recommendation engines, pricing calculation, provider integrations, background workers, automatic publication, external API calls, or automation.

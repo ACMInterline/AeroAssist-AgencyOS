@@ -78,4 +78,6 @@ Operational Constraints are the future reasoning language of AOIE. Future feasib
 
 Phase 50.3 Airline Operational Knowledge Normalisation creates canonical vocabulary and taxonomy metadata for the terms used by constraints. Normalisation does not evaluate rules; it helps future AOIE compare airlines consistently.
 
+Phase 50.4 Airline Operational Knowledge Governance & Version Control versions operational constraints as governed knowledge assets and links them to releases, comparison metadata, rollback metadata, superseded metadata, and historical audit metadata. Governance does not execute constraints.
+
 Phase 50.2 does not implement live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or external API calls.

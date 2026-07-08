@@ -42,6 +42,8 @@ Future AOIE uses it to compare airlines consistently.
 
 Phase 50.3 does not implement AI parsing, live evaluation, recommendation engines, feasibility scoring, pricing calculation, scraping, background workers, provider integrations, external API calls, or automation.
 
+Phase 50.4 Airline Operational Knowledge Governance & Version Control versions normalisation-linked Evidence, Policy, Pricing, Capability, Operational Constraints, and Operational Procedures as governed knowledge assets. It also records release grouping, comparison, rollback, superseded, archived, and historical lookup metadata without automatic publication or live evaluation.
+
 ## Relationship To Phase 50.1 And 50.2
 
 Phase 50.1 captures trusted airline operational knowledge metadata.

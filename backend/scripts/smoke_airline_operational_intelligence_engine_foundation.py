@@ -14,7 +14,7 @@ from services.airline_operational_intelligence_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_50_3_airline_knowledge_normalisation_foundation"
+EXPECTED_PHASE = "phase_50_4_airline_operational_knowledge_governance_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-operational-intelligence"
 
@@ -243,7 +243,7 @@ def verify_blueprint_recommendations() -> None:
     if not any(item.get("category") == "Airline Operational Intelligence Engine" for item in adoption.get("items") or []):
         raise AssertionError("Blueprint adoption map missing AOIE category.")
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
-    if "Phase 50.4" not in gaps.get("next_intelligence_phase", ""):
+    if "Phase 50.5" not in gaps.get("next_intelligence_phase", ""):
         raise AssertionError(f"Gap summary missing next intelligence phase: {gaps}")
     if "Phase 42.2" not in gaps.get("next_operational_phase", ""):
         raise AssertionError(f"Gap summary missing next operational phase: {gaps}")
@@ -252,8 +252,8 @@ def verify_blueprint_recommendations() -> None:
     if not any("Phase 50.9" in item for item in gaps.get("chapter_50_intelligence_track", [])):
         raise AssertionError("Chapter 50 AOIE roadmap is missing.")
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if next_phases["items"][0].get("phase") != "Phase 50.4":
-        raise AssertionError(f"Next recommendations did not start with Phase 50.4: {next_phases}")
+    if next_phases["items"][0].get("phase") != "Phase 50.5":
+        raise AssertionError(f"Next recommendations did not start with Phase 50.5: {next_phases}")
     if not any(item.get("phase") == "Phase 42.2" for item in next_phases.get("items", [])):
         raise AssertionError(f"Next recommendations did not preserve Phase 42.2: {next_phases}")
 
