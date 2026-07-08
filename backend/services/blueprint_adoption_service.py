@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_41_5_offer_workspace_foundation"
+PHASE_LABEL = "phase_41_6_booking_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -214,6 +214,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OfferWorkspaceV2, OfferWorkspaceV2Status, OfferWorkspaceService, /api/platform/offer-workspaces, /api/agencies/{agency_id}/offer-workspaces-v2, /platform/offer-workspaces, /agency/offer-workspaces",
         "status": "foundation adopted",
         "action": "Record metadata-only agency offer workspace records and read-only agency visibility without booking execution, ticket issuance, payment processing, GDS/NDC connectivity, airline APIs, fare calculation engines, live pricing, AI itinerary generation, supplier integrations, external APIs, automatic booking conversion, background workers, or automation.",
+    },
+    {
+        "category": "Booking Workspaces",
+        "concept": "Booking workspace metadata",
+        "supplementary_concept": "agency booking workspace, operational workspace link, trip workspace link, offer workspace link, booking reference, booking status, booking owner, airline PNR, GDS locator, supplier reference, passengers, flights, tickets, EMDs, SSR, OSI, documents, timeline, communications, payment summary, operational notes",
+        "current_equivalent": "BookingWorkspace, BookingWorkspaceMetadataCreate, BookingWorkspaceMetadataUpdate, BookingWorkspaceService, /api/platform/booking-workspaces, /api/agencies/{agency_id}/booking-workspaces, /platform/booking-workspaces, /agency/booking-workspaces",
+        "status": "foundation adopted",
+        "action": "Record metadata-only agency booking workspace records and read-only agency visibility without live booking creation, ticket issuance, GDS/NDC connectivity, airline APIs, payment processing, fare calculation, AI, background workers, automatic booking confirmation, automatic ticket generation, external integrations, external APIs, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -558,6 +566,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/trip-workspaces", "agencyos": "/agency/trip-workspaces"},
         {"supplementary": "/admin/offer-workspaces", "agencyos": "/platform/offer-workspaces"},
         {"supplementary": "/agent/offer-workspaces", "agencyos": "/agency/offer-workspaces"},
+        {"supplementary": "/admin/booking-workspaces", "agencyos": "/platform/booking-workspaces"},
+        {"supplementary": "/agent/booking-workspaces", "agencyos": "/agency/booking-workspaces"},
         {"supplementary": "/admin/feature-bundle-rollout-readiness", "agencyos": "/platform/feature-bundle-rollout-readiness"},
         {"supplementary": "/agent/bundle-rollout-readiness", "agencyos": "/agency/bundle-rollout-readiness"},
         {"supplementary": "/admin/feature-bundle-rollout-plans", "agencyos": "/platform/feature-bundle-rollout-plans"},

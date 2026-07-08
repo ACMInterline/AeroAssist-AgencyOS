@@ -14,7 +14,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_41_5_offer_workspace_foundation"
+EXPECTED_PHASE = "phase_41_6_booking_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EVENT_TYPES = {
     "plan_created",

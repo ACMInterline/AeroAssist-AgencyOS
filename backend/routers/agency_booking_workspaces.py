@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from auth import get_current_user
@@ -8,7 +10,7 @@ from models import (
     BookingWorkspaceStatusUpdate,
     ManualBookingWorkspaceCreate,
 )
-from services.booking_workspace_service import BookingWorkspaceError, BookingWorkspaceService
+from services.booking_workspace_service import PHASE_LABEL, BookingWorkspaceError, BookingWorkspaceService
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 
@@ -44,17 +46,40 @@ async def list_booking_workspaces(
     status_filter: str | None = Query(default=None, alias="status"),
     provider_target: str | None = None,
     trip_id: str | None = None,
+    booking_owner: str | None = Query(default=None),
+    airline: str | None = Query(default=None),
+    supplier: str | None = Query(default=None),
+    booking_date: date | None = Query(default=None),
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
     await require_read(db, agency_id, user)
     service = BookingWorkspaceService(db)
-    return await service.list_booking_workspaces(
+    if provider_target or trip_id:
+        return await service.list_booking_workspaces(
+            agency_id,
+            status_filter=status_filter,
+            provider_target=provider_target,
+            trip_id=trip_id,
+        )
+    return await service.agency_metadata_response(
         agency_id,
-        status_filter=status_filter,
-        provider_target=provider_target,
-        trip_id=trip_id,
+        booking_status=status_filter,
+        booking_owner=booking_owner,
+        airline=airline,
+        supplier=supplier,
+        booking_date=booking_date,
     )
+
+
+@router.get("/booking-workspaces/summary")
+async def summarize_booking_workspaces(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    return await BookingWorkspaceService(db).agency_metadata_summary(agency_id)
 
 
 @router.get("/booking-readiness-packages")
@@ -110,10 +135,24 @@ async def get_booking_workspace(
 ) -> dict:
     await require_read(db, agency_id, user)
     service = BookingWorkspaceService(db)
-    result = await service.get_booking_workspace(agency_id, booking_workspace_id)
-    if not result:
+    try:
+        workspace = await service.get_agency_metadata_workspace(agency_id, booking_workspace_id)
+    except BookingWorkspaceError:
         raise not_found("Booking workspace not found.")
-    return result
+    return {
+        "phase": PHASE_LABEL,
+        "agency_id": agency_id,
+        "booking_workspace": workspace,
+        "booking_record": workspace.get("booking_record"),
+        "timeline": workspace.get("timeline") or [],
+        "warnings": [],
+        "readiness_summary": None,
+        "accepted_offer_summary": None,
+        "trip_summary": workspace.get("trip_workspace"),
+        "read_only": True,
+        "metadata_only": True,
+        **service.safety_flags(),
+    }
 
 
 @router.post("/booking-workspaces/{booking_workspace_id}/status")

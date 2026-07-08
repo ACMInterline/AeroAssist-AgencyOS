@@ -6,7 +6,7 @@ from database import Database
 from models import AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness, now_utc
 
 
-PHASE_LABEL = "phase_41_5_offer_workspace_foundation"
+PHASE_LABEL = "phase_41_6_booking_workspace_foundation"
 
 AUDIT_COLLECTION = "agency_feature_flag_audits"
 READINESS_COLLECTION = "agency_feature_flag_readiness"

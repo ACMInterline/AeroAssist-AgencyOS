@@ -1832,6 +1832,22 @@ Avoid adding:
 
 - Booking execution, ticket issuance, payment processing, GDS connectivity, NDC connectivity, airline APIs, fare calculation engines, AI itinerary generation, supplier integrations, external APIs, automatic booking conversion, background workers, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
 
+### Phase 41.6: Booking Workspace Foundation
+
+Implemented scope:
+
+- Extended the metadata-only `BookingWorkspace` model with booking reference, status, owner, airline PNR, GDS locator, supplier, linked passenger/flight/ticket/EMD/SSR/OSI/document/timeline/communication, payment summary, booking summary, and operational note fields.
+- Extended `booking_workspaces` collection/index registration without destructively changing existing booking mirror data.
+- Added platform metadata create/update/archive/read/list APIs and `/platform/booking-workspaces`.
+- Added agency read-only metadata APIs at `/api/agencies/{agency_id}/booking-workspaces` and UI at `/agency/booking-workspaces`.
+- Added filters by agency, booking status, booking owner, airline, supplier, and booking date.
+- Added readiness flags under `booking_workspace_foundation`.
+- Added `docs/architecture/booking-workspace-foundation.md`.
+
+Avoid adding:
+
+- Live booking creation, ticket issuance, GDS connectivity, NDC connectivity, airline APIs, payment processing, fare calculation, AI, background workers, automatic booking confirmation, automatic ticket generation, external integrations, automation, `/agent` or `/admin` routes, Supabase/Next/Horizons/Base44/Fusion code, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

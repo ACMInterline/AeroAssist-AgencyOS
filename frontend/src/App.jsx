@@ -32,6 +32,7 @@ import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
 import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPage"
+import BookingWorkspaceMetadataPage from "./pages/agency/BookingWorkspaceMetadataPage"
 import BookingWorkspacesPage from "./pages/agency/BookingWorkspacesPage"
 import BookingsPage from "./pages/agency/BookingsPage"
 import ClientDetailPage from "./pages/agency/ClientDetailPage"
@@ -122,6 +123,7 @@ import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBu
 import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
 import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
 import PlatformFlightWorkspacesPage from "./pages/platform/FlightWorkspacesPage"
+import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPage"
 import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
@@ -199,6 +201,7 @@ const routes = {
   "/platform/flight-workspaces": PlatformFlightWorkspacesPage,
   "/platform/trip-workspaces": PlatformTripWorkspacesPage,
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
+  "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
   "/platform/agencies": PlatformAgenciesPage,
@@ -253,6 +256,7 @@ const routes = {
   "/agency/flight-workspaces": FlightWorkspacesPage,
   "/agency/trip-workspaces": TripWorkspacesPage,
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
+  "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,
   "/agency/settings": AgencySettingsPage,
@@ -520,7 +524,7 @@ export default function App() {
   }
 
   if (window.location.pathname === "/agency/booking-workspaces") {
-    return <BookingWorkspacesPage />
+    return <BookingWorkspaceMetadataPage />
   }
 
   if (window.location.pathname === "/agency/booking-imports") {

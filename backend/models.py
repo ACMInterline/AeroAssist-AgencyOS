@@ -3170,9 +3170,12 @@ class BookingReadinessPackage(BaseDocument):
 
 class BookingWorkspace(BaseDocument):
     agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
     source_context: BookingSourceContext = BookingSourceContext.OFFER_READINESS
     client_id: Optional[str] = None
     passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
     trip_id: Optional[str] = None
     request_id: Optional[str] = None
     offer_workspace_id: Optional[str] = None
@@ -3183,9 +3186,29 @@ class BookingWorkspace(BaseDocument):
     trip_change_operation_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     workspace_number: str
+    booking_reference: Optional[str] = None
     title: str
     status: BookingWorkspaceStatus = BookingWorkspaceStatus.DRAFT
+    booking_status: Optional[str] = None
+    booking_type: Optional[str] = None
+    booking_source: Optional[str] = None
+    booking_owner: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    booking_created_date: Optional[date] = None
+    booking_deadline: Optional[date] = None
     provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    ssr_ids: List[str] = Field(default_factory=list)
+    osi_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    payment_summary: Optional[str] = None
+    booking_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
     source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     passengers_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
     segments_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
@@ -3200,6 +3223,90 @@ class BookingWorkspace(BaseDocument):
     osi_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
     created_by_user_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    booking_workspace_metadata_only: bool = True
+    booking_execution_disabled: bool = True
+    live_booking_creation_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    gds_connectivity_disabled: bool = True
+    ndc_connectivity_disabled: bool = True
+    airline_apis_disabled: bool = True
+    airline_api_calls_disabled: bool = True
+    payment_processing_disabled: bool = True
+    fare_calculation_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_booking_confirmation_disabled: bool = True
+    automatic_ticket_generation_disabled: bool = True
+    external_integrations_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class BookingWorkspaceMetadataCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: str
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_reference: Optional[str] = None
+    booking_status: BookingWorkspaceStatus = BookingWorkspaceStatus.DRAFT
+    booking_type: Optional[str] = None
+    booking_source: Optional[str] = None
+    booking_owner: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    booking_created_date: Optional[date] = None
+    booking_deadline: Optional[date] = None
+    passenger_ids: List[str] = Field(default_factory=list)
+    flight_workspace_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    ssr_ids: List[str] = Field(default_factory=list)
+    osi_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    timeline_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    payment_summary: Optional[str] = None
+    booking_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class BookingWorkspaceMetadataUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    booking_reference: Optional[str] = None
+    booking_status: Optional[BookingWorkspaceStatus] = None
+    booking_type: Optional[str] = None
+    booking_source: Optional[str] = None
+    booking_owner: Optional[str] = None
+    airline_pnr: Optional[str] = None
+    gds_record_locator: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    booking_created_date: Optional[date] = None
+    booking_deadline: Optional[date] = None
+    passenger_ids: Optional[List[str]] = None
+    flight_workspace_ids: Optional[List[str]] = None
+    ticket_ids: Optional[List[str]] = None
+    emd_ids: Optional[List[str]] = None
+    ssr_ids: Optional[List[str]] = None
+    osi_ids: Optional[List[str]] = None
+    document_ids: Optional[List[str]] = None
+    timeline_ids: Optional[List[str]] = None
+    communication_ids: Optional[List[str]] = None
+    payment_summary: Optional[str] = None
+    booking_summary: Optional[str] = None
+    operational_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class BookingRecord(BaseDocument):

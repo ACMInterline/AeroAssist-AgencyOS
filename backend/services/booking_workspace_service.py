@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from database import Database
@@ -15,13 +15,25 @@ from models import (
     BookingSourceContext,
     BookingTimelineEvent,
     BookingWorkspace,
+    BookingWorkspaceMetadataCreate,
+    BookingWorkspaceMetadataUpdate,
     BookingWorkspaceStatus,
     ManualBookingWorkspaceCreate,
     TripTimelineEvent,
+    new_id,
 )
 
 
-PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
+PHASE_LABEL = "phase_41_6_booking_workspace_foundation"
+BOOKING_WORKSPACE_COLLECTION = "booking_workspaces"
+BOOKING_WORKSPACE_STATUSES = [
+    BookingWorkspaceStatus.DRAFT.value,
+    BookingWorkspaceStatus.READY_TO_BOOK.value,
+    BookingWorkspaceStatus.BOOKING_IN_PROGRESS.value,
+    BookingWorkspaceStatus.BOOKED.value,
+    BookingWorkspaceStatus.BLOCKED.value,
+    BookingWorkspaceStatus.CANCELLED.value,
+]
 ACTIVE_WORKSPACE_STATUSES = {
     BookingWorkspaceStatus.DRAFT.value,
     BookingWorkspaceStatus.READY_TO_BOOK.value,
@@ -125,6 +137,277 @@ def _summary_from_booking_workspace(workspace: dict[str, Any] | None) -> dict[st
 class BookingWorkspaceService:
     def __init__(self, db: Database) -> None:
         self.db = db
+
+    async def list_platform_metadata_workspaces(
+        self,
+        *,
+        agency_id: str | None = None,
+        booking_status: str | None = None,
+        booking_owner: str | None = None,
+        airline: str | None = None,
+        supplier: str | None = None,
+        booking_date: date | str | None = None,
+        include_archived: bool = False,
+    ) -> list[dict[str, Any]]:
+        filters: dict[str, Any] = {}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        if booking_status:
+            filters["booking_status"] = booking_status
+        if booking_owner:
+            filters["booking_owner"] = booking_owner
+        if supplier:
+            filters["supplier_reference"] = supplier
+        workspaces = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).find_many(filters or None)
+        if booking_status:
+            workspaces = [
+                item
+                for item in workspaces
+                if (item.get("booking_status") or item.get("status") or BookingWorkspaceStatus.DRAFT.value) == booking_status
+            ]
+        if not include_archived:
+            workspaces = [
+                item
+                for item in workspaces
+                if not item.get("deleted_at")
+                and (item.get("booking_status") or item.get("status")) != BookingWorkspaceStatus.CANCELLED.value
+            ]
+        if airline:
+            workspaces = [item for item in workspaces if self._airline_matches(item, airline)]
+        if booking_date:
+            target = self._parse_date(booking_date)
+            workspaces = [item for item in workspaces if self._date_matches(item.get("booking_created_date"), target)]
+        workspaces.sort(key=lambda item: self._sort_text(item.get("updated_at") or item.get("created_at")), reverse=True)
+        return [await self._platform_metadata_projection(item) for item in workspaces]
+
+    async def list_agency_metadata_workspaces(
+        self,
+        agency_id: str,
+        *,
+        booking_status: str | None = None,
+        booking_owner: str | None = None,
+        airline: str | None = None,
+        supplier: str | None = None,
+        booking_date: date | str | None = None,
+    ) -> list[dict[str, Any]]:
+        items = await self.list_platform_metadata_workspaces(
+            agency_id=agency_id,
+            booking_status=booking_status,
+            booking_owner=booking_owner,
+            airline=airline,
+            supplier=supplier,
+            booking_date=booking_date,
+        )
+        return [self._agency_metadata_projection(item) for item in items if item.get("agency_id") == agency_id]
+
+    async def platform_metadata_response(
+        self,
+        *,
+        agency_id: str | None = None,
+        booking_status: str | None = None,
+        booking_owner: str | None = None,
+        airline: str | None = None,
+        supplier: str | None = None,
+        booking_date: date | str | None = None,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        items = await self.list_platform_metadata_workspaces(
+            agency_id=agency_id,
+            booking_status=booking_status,
+            booking_owner=booking_owner,
+            airline=airline,
+            supplier=supplier,
+            booking_date=booking_date,
+            include_archived=include_archived,
+        )
+        return {
+            "phase": PHASE_LABEL,
+            "items": items,
+            "booking_workspace_count": len(items),
+            "summary": self.summarize_metadata_counts(items),
+            "filters": self.filter_metadata(),
+            "read_only": False,
+            "metadata_only": True,
+            "notice": "Booking workspaces are metadata only. They do not create live bookings, issue tickets, connect to GDS or NDC, call airline APIs, process payments, calculate fares, use AI, run workers, automatically confirm bookings, automatically generate tickets, or integrate external providers.",
+            **self.safety_flags(),
+        }
+
+    async def agency_metadata_response(
+        self,
+        agency_id: str,
+        *,
+        booking_status: str | None = None,
+        booking_owner: str | None = None,
+        airline: str | None = None,
+        supplier: str | None = None,
+        booking_date: date | str | None = None,
+    ) -> dict[str, Any]:
+        items = await self.list_agency_metadata_workspaces(
+            agency_id,
+            booking_status=booking_status,
+            booking_owner=booking_owner,
+            airline=airline,
+            supplier=supplier,
+            booking_date=booking_date,
+        )
+        return {
+            "phase": PHASE_LABEL,
+            "agency_id": agency_id,
+            "items": items,
+            "booking_workspace_count": len(items),
+            "summary": self.summarize_metadata_counts(items),
+            "filters": self.filter_metadata(),
+            "read_only": True,
+            "metadata_only": True,
+            "notice": "Booking workspace metadata is read-only for this agency. It does not create live bookings, issue tickets, connect to GDS or NDC, call airline APIs, process payments, calculate fares, use AI, run workers, automatically confirm bookings, automatically generate tickets, or integrate external providers.",
+            **self.safety_flags(),
+        }
+
+    async def platform_metadata_summary(self) -> dict[str, Any]:
+        items = await self.list_platform_metadata_workspaces(include_archived=True)
+        return {
+            "phase": PHASE_LABEL,
+            "summary": self.summarize_metadata_counts(items),
+            "booking_workspace_count": len(items),
+            "metadata_only": True,
+            **self.safety_flags(),
+        }
+
+    async def agency_metadata_summary(self, agency_id: str) -> dict[str, Any]:
+        items = await self.list_agency_metadata_workspaces(agency_id)
+        return {
+            "phase": PHASE_LABEL,
+            "agency_id": agency_id,
+            "summary": self.summarize_metadata_counts(items),
+            "booking_workspace_count": len(items),
+            "read_only": True,
+            "metadata_only": True,
+            **self.safety_flags(),
+        }
+
+    async def get_platform_metadata_workspace(self, booking_workspace_id: str) -> dict[str, Any]:
+        workspace = await self._require_metadata_workspace(booking_workspace_id)
+        return await self._platform_metadata_projection(workspace)
+
+    async def get_agency_metadata_workspace(self, agency_id: str, booking_workspace_id: str) -> dict[str, Any]:
+        workspace = await self.get_platform_metadata_workspace(booking_workspace_id)
+        if workspace.get("agency_id") != agency_id:
+            raise BookingWorkspaceError("Booking workspace metadata was not found for this agency.")
+        return self._agency_metadata_projection(workspace)
+
+    async def create_metadata_booking_workspace(
+        self,
+        payload: BookingWorkspaceMetadataCreate | dict[str, Any],
+        user: dict | None = None,
+    ) -> dict[str, Any]:
+        data = self._payload_dict(payload)
+        status = data.get("booking_status") or BookingWorkspaceStatus.DRAFT.value
+        self._validate_metadata_status(status)
+        reference = data.get("booking_reference") or self._booking_reference()
+        workspace = BookingWorkspace(
+            id=data.get("id") or new_id(),
+            agency_id=data["agency_id"],
+            operational_workspace_id=data.get("operational_workspace_id"),
+            trip_workspace_id=data.get("trip_workspace_id"),
+            offer_workspace_id=data.get("offer_workspace_id"),
+            source_context=BookingSourceContext.STANDALONE_MANUAL,
+            passenger_ids=data.get("passenger_ids") or [],
+            flight_workspace_ids=data.get("flight_workspace_ids") or [],
+            workspace_number=reference,
+            booking_reference=reference,
+            title=self._booking_display_name(data, reference),
+            status=status,
+            booking_status=status,
+            booking_type=data.get("booking_type"),
+            booking_source=data.get("booking_source"),
+            booking_owner=data.get("booking_owner"),
+            airline_pnr=data.get("airline_pnr"),
+            gds_record_locator=data.get("gds_record_locator"),
+            supplier_reference=data.get("supplier_reference"),
+            booking_created_date=data.get("booking_created_date"),
+            booking_deadline=data.get("booking_deadline"),
+            provider_target=BookingProviderTarget.MANUAL,
+            ticket_ids=data.get("ticket_ids") or [],
+            emd_ids=data.get("emd_ids") or [],
+            ssr_ids=data.get("ssr_ids") or [],
+            osi_ids=data.get("osi_ids") or [],
+            document_ids=data.get("document_ids") or [],
+            timeline_ids=data.get("timeline_ids") or [],
+            communication_ids=data.get("communication_ids") or [],
+            payment_summary=data.get("payment_summary"),
+            booking_summary=data.get("booking_summary"),
+            operational_notes=data.get("operational_notes"),
+            internal_notes=data.get("operational_notes"),
+            created_by_user_id=(user or {}).get("id"),
+            metadata=data.get("metadata") or {},
+        )
+        stored = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).insert_one(workspace.model_dump(mode="json"))
+        return {
+            "phase": PHASE_LABEL,
+            "booking_workspace": await self._platform_metadata_projection(stored),
+            "metadata_only": True,
+            "notice": "Booking workspace metadata was saved only. No live booking, ticketing, GDS/NDC, airline API, payment, fare calculation, AI, worker, automatic confirmation, automatic ticket generation, provider, or external integration action ran.",
+            **self.safety_flags(),
+        }
+
+    async def update_metadata_booking_workspace(
+        self,
+        booking_workspace_id: str,
+        payload: BookingWorkspaceMetadataUpdate | dict[str, Any],
+        user: dict | None = None,
+    ) -> dict[str, Any]:
+        existing = await self._require_metadata_workspace(booking_workspace_id)
+        updates = {key: value for key, value in self._payload_dict(payload).items() if value is not None}
+        if "booking_status" in updates:
+            self._validate_metadata_status(updates["booking_status"])
+            updates["status"] = updates["booking_status"]
+        if "booking_reference" in updates:
+            updates["workspace_number"] = updates["booking_reference"]
+        if "operational_notes" in updates:
+            updates["internal_notes"] = updates["operational_notes"]
+        updates.update(
+            {
+                "updated_at": self._now(),
+                "metadata_only": True,
+                "booking_workspace_metadata_only": True,
+                "updated_by_user_id": (user or {}).get("id"),
+            }
+        )
+        updated = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).update_one({"id": existing["id"]}, updates)
+        stored = updated or {**existing, **updates}
+        return {
+            "phase": PHASE_LABEL,
+            "booking_workspace": await self._platform_metadata_projection(stored),
+            "metadata_only": True,
+            "notice": "Booking workspace metadata was updated only. No live booking, ticketing, GDS/NDC, airline API, payment, fare calculation, AI, worker, automatic confirmation, automatic ticket generation, provider, or external integration action ran.",
+            **self.safety_flags(),
+        }
+
+    async def delete_metadata_booking_workspace(
+        self,
+        booking_workspace_id: str,
+        user: dict | None = None,
+    ) -> dict[str, Any]:
+        existing = await self._require_metadata_workspace(booking_workspace_id)
+        updates = {
+            "status": BookingWorkspaceStatus.CANCELLED.value,
+            "booking_status": BookingWorkspaceStatus.CANCELLED.value,
+            "deleted_at": self._now(),
+            "updated_by_user_id": (user or {}).get("id"),
+            "metadata_only": True,
+            "booking_workspace_metadata_only": True,
+            "booking_workspace_archived_metadata_only": True,
+        }
+        updated = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).update_one({"id": existing["id"]}, updates)
+        stored = updated or {**existing, **updates}
+        return {
+            "phase": PHASE_LABEL,
+            "booking_workspace": await self._platform_metadata_projection(stored),
+            "deleted": True,
+            "metadata_only": True,
+            "notice": "Booking workspace metadata was archived only. No live booking, ticketing, GDS/NDC, airline API, payment, fare calculation, AI, worker, automatic confirmation, automatic ticket generation, provider, or external integration action ran.",
+            **self.safety_flags(),
+        }
 
     async def create_booking_workspace_from_readiness(
         self,
@@ -664,6 +947,402 @@ class BookingWorkspaceService:
             payload_json={"provider_execution_disabled": True},
         )
         return await self.get_booking_workspace(agency_id, updated_workspace["id"])
+
+    def summarize_metadata_counts(self, items: list[dict[str, Any]]) -> dict[str, Any]:
+        by_status = {status: 0 for status in BOOKING_WORKSPACE_STATUSES}
+        by_type: dict[str, int] = {}
+        by_source: dict[str, int] = {}
+        by_supplier: dict[str, int] = {}
+        agency_ids: set[str] = set()
+        owners: set[str] = set()
+        airlines: set[str] = set()
+        operational_workspace_ids: set[str] = set()
+        trip_workspace_ids: set[str] = set()
+        offer_workspace_ids: set[str] = set()
+        linked_counts = {
+            "passenger_count": 0,
+            "flight_workspace_count": 0,
+            "ticket_count": 0,
+            "emd_count": 0,
+            "ssr_count": 0,
+            "osi_count": 0,
+            "document_count": 0,
+            "timeline_count": 0,
+            "communication_count": 0,
+        }
+        for item in items:
+            status = item.get("booking_status") or item.get("status") or BookingWorkspaceStatus.DRAFT.value
+            by_status[status] = by_status.get(status, 0) + 1
+            self._count_value(by_type, item.get("booking_type"))
+            self._count_value(by_source, item.get("booking_source"))
+            self._count_value(by_supplier, item.get("supplier_reference"))
+            if item.get("agency_id"):
+                agency_ids.add(item["agency_id"])
+            if item.get("booking_owner"):
+                owners.add(item["booking_owner"])
+            if item.get("airline_pnr"):
+                airlines.add(item["airline_pnr"])
+            if item.get("operational_workspace_id"):
+                operational_workspace_ids.add(item["operational_workspace_id"])
+            if item.get("trip_workspace_id") or item.get("trip_id"):
+                trip_workspace_ids.add(item.get("trip_workspace_id") or item.get("trip_id"))
+            if item.get("offer_workspace_id"):
+                offer_workspace_ids.add(item["offer_workspace_id"])
+            linked_counts["passenger_count"] += self._list_count(item.get("passenger_ids"))
+            linked_counts["flight_workspace_count"] += self._list_count(item.get("flight_workspace_ids"))
+            linked_counts["ticket_count"] += self._list_count(item.get("ticket_ids"))
+            linked_counts["emd_count"] += self._list_count(item.get("emd_ids"))
+            linked_counts["ssr_count"] += self._list_count(item.get("ssr_ids") or item.get("ssr_json"))
+            linked_counts["osi_count"] += self._list_count(item.get("osi_ids") or item.get("osi_json"))
+            linked_counts["document_count"] += self._list_count(item.get("document_ids") or item.get("required_documents_json"))
+            linked_counts["timeline_count"] += self._list_count(item.get("timeline_ids"))
+            linked_counts["communication_count"] += self._list_count(item.get("communication_ids"))
+        return {
+            "total_count": len(items),
+            "by_status": by_status,
+            "by_type": by_type,
+            "by_source": by_source,
+            "by_supplier": by_supplier,
+            "agency_count": len(agency_ids),
+            "booking_owner_count": len(owners),
+            "airline_count": len(airlines),
+            "operational_workspace_count": len(operational_workspace_ids),
+            "trip_workspace_count": len(trip_workspace_ids),
+            "offer_workspace_count": len(offer_workspace_ids),
+            **linked_counts,
+            "metadata_only": True,
+            **self.safety_flags(),
+        }
+
+    def filter_metadata(self) -> dict[str, Any]:
+        return {
+            "statuses": BOOKING_WORKSPACE_STATUSES,
+            "supports_booking_status_filter": True,
+            "supports_booking_owner_filter": True,
+            "supports_airline_filter": True,
+            "supports_supplier_filter": True,
+            "supports_booking_date_filter": True,
+            "metadata_only": True,
+            **self.safety_flags(),
+        }
+
+    async def _platform_metadata_projection(self, workspace: dict[str, Any]) -> dict[str, Any]:
+        projected = dict(workspace)
+        projected["booking_reference"] = projected.get("booking_reference") or projected.get("workspace_number") or projected.get("id")
+        projected["booking_status"] = projected.get("booking_status") or projected.get("status") or BookingWorkspaceStatus.DRAFT.value
+        projected["booking_display_name"] = self._booking_display_name(projected, projected["booking_reference"])
+        projected["agency"] = await self._agency_context(projected.get("agency_id"))
+        projected["agency_name"] = projected["agency"].get("agency_name")
+        projected["operational_workspace"] = await self._operational_workspace_context(projected.get("operational_workspace_id"))
+        projected["trip_workspace"] = await self._trip_workspace_context(
+            projected.get("agency_id"),
+            projected.get("trip_workspace_id") or projected.get("trip_id"),
+        )
+        projected["offer_workspace"] = await self._offer_workspace_context(projected.get("agency_id"), projected.get("offer_workspace_id"))
+        projected["passengers"] = [
+            await self._passenger_context(projected.get("agency_id"), passenger_id)
+            for passenger_id in projected.get("passenger_ids") or []
+        ]
+        projected["flight_workspaces"] = [
+            await self._flight_workspace_context(projected.get("agency_id"), flight_workspace_id)
+            for flight_workspace_id in projected.get("flight_workspace_ids") or []
+        ]
+        projected["tickets"] = [
+            await self._ticket_context(projected.get("agency_id"), ticket_id)
+            for ticket_id in projected.get("ticket_ids") or []
+        ]
+        projected["emds"] = [
+            await self._emd_context(projected.get("agency_id"), emd_id)
+            for emd_id in projected.get("emd_ids") or []
+        ]
+        projected["ssrs"] = [
+            await self._generic_reference_context("ssr_id", ssr_id)
+            for ssr_id in projected.get("ssr_ids") or []
+        ]
+        projected["osis"] = [
+            await self._generic_reference_context("osi_id", osi_id)
+            for osi_id in projected.get("osi_ids") or []
+        ]
+        projected["documents"] = [
+            await self._document_context(projected.get("agency_id"), document_id)
+            for document_id in projected.get("document_ids") or []
+        ]
+        projected["timeline"] = await self._timeline_context(projected)
+        projected["communications"] = [
+            await self._generic_reference_context("communication_id", communication_id)
+            for communication_id in projected.get("communication_ids") or []
+        ]
+        record = None
+        if projected.get("booking_record_id"):
+            record = await self.db.collection("booking_records").find_one(
+                {"agency_id": projected.get("agency_id"), "id": projected.get("booking_record_id")}
+            )
+        record = record or await self.db.collection("booking_records").find_one(
+            {"agency_id": projected.get("agency_id"), "booking_workspace_id": projected.get("id")}
+        )
+        projected["booking_record"] = record
+        projected["trip_summary"] = projected["trip_workspace"]
+        projected["warning_count"] = len(projected.get("warnings_json") or [])
+        projected["policy_violation_count"] = len(projected.get("policy_violations_json") or [])
+        projected["read_only"] = False
+        projected["metadata_only"] = True
+        projected["booking_workspace_metadata_only"] = True
+        projected.update(self.safety_flags())
+        return projected
+
+    def _agency_metadata_projection(self, item: dict[str, Any]) -> dict[str, Any]:
+        projected = dict(item)
+        projected["read_only"] = True
+        projected["metadata_only"] = True
+        projected["booking_workspace_metadata_only"] = True
+        projected.update(self.safety_flags())
+        return projected
+
+    async def _require_metadata_workspace(self, booking_workspace_id: str) -> dict[str, Any]:
+        workspace = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).find_one({"id": booking_workspace_id})
+        if not workspace:
+            workspace = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).find_one({"booking_reference": booking_workspace_id})
+        if not workspace:
+            workspace = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).find_one({"workspace_number": booking_workspace_id})
+        if not workspace:
+            raise BookingWorkspaceError("Booking workspace metadata was not found.")
+        return workspace
+
+    async def _agency_context(self, agency_id: str | None) -> dict[str, Any]:
+        if not agency_id:
+            return {"agency_id": None, "agency_name": None, "agency_slug": None, "metadata_only": True}
+        agency = await self.db.collection("agencies").find_one({"id": agency_id})
+        if not agency:
+            return {"agency_id": agency_id, "agency_name": agency_id, "agency_slug": None, "metadata_only": True}
+        return {
+            "agency_id": agency.get("id"),
+            "agency_name": agency.get("name"),
+            "agency_slug": agency.get("slug"),
+            "metadata_only": True,
+        }
+
+    async def _operational_workspace_context(self, workspace_id: str | None) -> dict[str, Any]:
+        if not workspace_id:
+            return {"operational_workspace_id": None, "workspace_reference": None, "workspace_title": None, "metadata_only": True}
+        workspace = await self.db.collection("operational_travel_workspaces").find_one({"id": workspace_id})
+        if not workspace:
+            workspace = await self.db.collection("operational_travel_workspaces").find_one({"workspace_reference": workspace_id})
+        if not workspace:
+            return {"operational_workspace_id": workspace_id, "workspace_reference": workspace_id, "workspace_title": workspace_id, "metadata_only": True}
+        return {
+            "operational_workspace_id": workspace.get("id"),
+            "workspace_reference": workspace.get("workspace_reference"),
+            "workspace_title": workspace.get("workspace_title"),
+            "workspace_type": workspace.get("workspace_type"),
+            "workspace_status": workspace.get("workspace_status"),
+            "metadata_only": True,
+        }
+
+    async def _trip_workspace_context(self, agency_id: str | None, trip_workspace_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("trip_workspaces", agency_id, trip_workspace_id, ["trip_reference"])
+        if not item:
+            item = await self._lookup_agency_record("trip_dossiers", agency_id, trip_workspace_id, ["trip_reference"])
+        return self._compact_context("trip_workspace_id", trip_workspace_id, item, ["trip_reference", "trip_status", "trip_title", "destination_city"], "trip_status")
+
+    async def _offer_workspace_context(self, agency_id: str | None, offer_workspace_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("offer_workspaces_v2", agency_id, offer_workspace_id, ["offer_reference"])
+        if not item:
+            item = await self._lookup_agency_record("offer_workspaces", agency_id, offer_workspace_id, ["workspace_reference", "offer_reference"])
+        return self._compact_context("offer_workspace_id", offer_workspace_id, item, ["offer_reference", "offer_title", "title"], "offer_status")
+
+    async def _passenger_context(self, agency_id: str | None, passenger_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("passenger_workspaces", agency_id, passenger_id, ["passenger_reference"])
+        if not item:
+            item = await self._lookup_agency_record("passengers", agency_id, passenger_id, ["passenger_reference"])
+        return self._compact_context("passenger_id", passenger_id, item, ["passenger_reference", "preferred_name", "first_name", "last_name"], "passenger_status")
+
+    async def _flight_workspace_context(self, agency_id: str | None, flight_workspace_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("flight_workspaces", agency_id, flight_workspace_id, ["flight_reference"])
+        return self._compact_context("flight_workspace_id", flight_workspace_id, item, ["flight_reference", "flight_number", "airline_code"], "flight_status")
+
+    async def _ticket_context(self, agency_id: str | None, ticket_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("ticket_records", agency_id, ticket_id, ["ticket_number", "document_number"])
+        if not item:
+            item = await self._lookup_agency_record("tickets", agency_id, ticket_id, ["ticket_number", "document_number"])
+        return self._compact_context("ticket_id", ticket_id, item, ["ticket_number", "document_number", "title"], "status")
+
+    async def _emd_context(self, agency_id: str | None, emd_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("emd_records", agency_id, emd_id, ["emd_number", "document_number"])
+        if not item:
+            item = await self._lookup_agency_record("emds", agency_id, emd_id, ["emd_number", "document_number"])
+        return self._compact_context("emd_id", emd_id, item, ["emd_number", "document_number", "title"], "status")
+
+    async def _document_context(self, agency_id: str | None, document_id: str | None) -> dict[str, Any]:
+        item = await self._lookup_agency_record("rendered_documents", agency_id, document_id, ["document_reference"])
+        if not item:
+            item = await self._lookup_agency_record("document_packages", agency_id, document_id, ["package_reference"])
+        return self._compact_context("document_id", document_id, item, ["title", "document_title", "filename", "package_title"], "status")
+
+    async def _timeline_context(self, workspace: dict[str, Any]) -> list[dict[str, Any]]:
+        if workspace.get("timeline_ids"):
+            return [
+                await self._generic_reference_context("timeline_id", timeline_id)
+                for timeline_id in workspace.get("timeline_ids") or []
+            ]
+        events = await self.db.collection("booking_timeline_events").find_many(
+            {"agency_id": workspace.get("agency_id"), "booking_workspace_id": workspace.get("id")}
+        )
+        events.sort(key=lambda item: self._sort_text(item.get("created_at")), reverse=True)
+        return [
+            {
+                "timeline_id": event.get("id"),
+                "label": event.get("title") or event.get("event_type"),
+                "status": event.get("event_type"),
+                "created_at": event.get("created_at"),
+                "metadata_only": True,
+            }
+            for event in events
+        ]
+
+    async def _generic_reference_context(self, id_key: str, reference_id: str | None) -> dict[str, Any]:
+        return {id_key: reference_id, "label": reference_id, "status": None, "metadata_only": True}
+
+    async def _lookup_agency_record(
+        self,
+        collection: str,
+        agency_id: str | None,
+        record_id: str | None,
+        alternate_keys: list[str] | None = None,
+    ) -> dict[str, Any] | None:
+        if not record_id:
+            return None
+        filters = {"id": record_id}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        item = await self.db.collection(collection).find_one(filters)
+        if item:
+            return item
+        for key in alternate_keys or []:
+            alt_filters = {key: record_id}
+            if agency_id:
+                alt_filters["agency_id"] = agency_id
+            item = await self.db.collection(collection).find_one(alt_filters)
+            if item:
+                return item
+        return None
+
+    def _compact_context(
+        self,
+        id_key: str,
+        fallback_id: str | None,
+        item: dict[str, Any] | None,
+        label_keys: list[str],
+        status_key: str,
+    ) -> dict[str, Any]:
+        if not fallback_id:
+            return {id_key: None, "label": None, "status": None, "metadata_only": True}
+        if not item:
+            return {id_key: fallback_id, "label": fallback_id, "status": None, "metadata_only": True}
+        return {
+            id_key: item.get("id") or fallback_id,
+            "label": self._label_from_item(item, label_keys) or fallback_id,
+            "status": item.get(status_key),
+            "metadata_only": True,
+        }
+
+    def _label_from_item(self, item: dict[str, Any], keys: list[str]) -> str | None:
+        for key in keys:
+            if item.get(key):
+                if key in {"first_name", "last_name"}:
+                    name = " ".join(str(item.get(part) or "").strip() for part in ["first_name", "last_name"]).strip()
+                    return name or str(item[key])
+                return str(item[key])
+        return None
+
+    def _booking_display_name(self, item: dict[str, Any], fallback_reference: str | None = None) -> str:
+        if item.get("booking_summary"):
+            return str(item["booking_summary"])
+        if item.get("title"):
+            return str(item["title"])
+        return item.get("booking_reference") or fallback_reference or item.get("id") or "Booking workspace"
+
+    def _airline_matches(self, item: dict[str, Any], airline: str) -> bool:
+        needle = airline.strip().lower()
+        haystack = " ".join(
+            str(item.get(key) or "")
+            for key in [
+                "airline_pnr",
+                "booking_summary",
+                "supplier_reference",
+                "source_snapshot_json",
+                "segments_snapshot_json",
+            ]
+        ).lower()
+        return needle in haystack
+
+    def _date_matches(self, value: date | str | None, target: date) -> bool:
+        if not value:
+            return False
+        if isinstance(value, date):
+            return value == target
+        if isinstance(value, str):
+            return value[:10] == target.isoformat()
+        return False
+
+    def _parse_date(self, value: date | str | None) -> date:
+        if isinstance(value, date):
+            return value
+        if isinstance(value, str):
+            return date.fromisoformat(value[:10])
+        raise ValueError("A booking date filter requires an ISO date.")
+
+    def _count_value(self, target: dict[str, int], value: Any) -> None:
+        if value:
+            target[str(value)] = target.get(str(value), 0) + 1
+
+    def _list_count(self, value: Any) -> int:
+        if not value:
+            return 0
+        if isinstance(value, list):
+            return len(value)
+        return 1
+
+    def _validate_metadata_status(self, value: str) -> None:
+        if value not in BOOKING_WORKSPACE_STATUSES:
+            raise BookingWorkspaceError("Unsupported booking workspace status.")
+
+    def _booking_reference(self) -> str:
+        return f"BKGW-{new_id()[:8].upper()}"
+
+    def _payload_dict(self, payload: Any) -> dict[str, Any]:
+        if hasattr(payload, "model_dump"):
+            return payload.model_dump(mode="json", exclude_unset=True, exclude_none=True)
+        return {key: value for key, value in dict(payload).items() if value is not None}
+
+    def _now(self) -> datetime:
+        return datetime.now(timezone.utc)
+
+    def _sort_text(self, value: Any) -> str:
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+        return str(value or "")
+
+    def safety_flags(self) -> dict[str, bool]:
+        return {
+            "metadata_only": True,
+            "booking_workspace_metadata_only": True,
+            "booking_execution_disabled": True,
+            "live_booking_creation_disabled": True,
+            "ticket_issuance_disabled": True,
+            "gds_connectivity_disabled": True,
+            "ndc_connectivity_disabled": True,
+            "airline_apis_disabled": True,
+            "airline_api_calls_disabled": True,
+            "payment_processing_disabled": True,
+            "fare_calculation_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_booking_confirmation_disabled": True,
+            "automatic_ticket_generation_disabled": True,
+            "external_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "automation_disabled": True,
+        }
 
     async def _existing_active_workspace(
         self,
