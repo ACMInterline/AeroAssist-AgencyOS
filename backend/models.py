@@ -21112,6 +21112,74 @@ class ReferenceDomainMetadataUpdate(BaseModel):
     metadata_schema_json: Optional[Dict[str, Any]] = None
 
 
+class ReferenceDataDomain(BaseDocument):
+    agency_id: Optional[str] = None
+    domain_reference: str
+    domain_code: str
+    domain_label: str
+    domain_description: Optional[str] = None
+    records: List[Dict[str, Any]] = Field(default_factory=list)
+    aliases: List[Dict[str, Any]] = Field(default_factory=list)
+    normalization_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    validation_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    import_template_reference: Optional[str] = None
+    governance_status: str = "draft"
+    review_status: str = "needs_review"
+    active: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    reference_data_engine_foundation: bool = True
+    airline_operational_knowledge_production_ready: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    live_evaluation_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    background_workers_disabled: bool = True
+    old_admin_routes_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class ReferenceDataDomainCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    domain_reference: Optional[str] = None
+    domain_code: str
+    domain_label: Optional[str] = None
+    domain_description: Optional[str] = None
+    records: List[Dict[str, Any]] = Field(default_factory=list)
+    aliases: List[Dict[str, Any]] = Field(default_factory=list)
+    normalization_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    validation_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    import_template_reference: Optional[str] = None
+    governance_status: str = "draft"
+    review_status: str = "needs_review"
+    active: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ReferenceDataDomainUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    domain_reference: Optional[str] = None
+    domain_code: Optional[str] = None
+    domain_label: Optional[str] = None
+    domain_description: Optional[str] = None
+    records: Optional[List[Dict[str, Any]]] = None
+    aliases: Optional[List[Dict[str, Any]]] = None
+    normalization_rules: Optional[List[Dict[str, Any]]] = None
+    validation_rules: Optional[List[Dict[str, Any]]] = None
+    import_template_reference: Optional[str] = None
+    governance_status: Optional[str] = None
+    review_status: Optional[str] = None
+    active: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class PlatformReferenceRecordCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

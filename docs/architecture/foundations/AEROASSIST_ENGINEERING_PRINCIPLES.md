@@ -17,6 +17,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Operational Intelligence Cases consolidate the Chapter 50 pipeline; they do not add new intelligence, execute bookings, issue tickets or EMDs, call providers, generate AI output, or send client messages.
 - Service Parameter Taxonomies define measurable reusable fields; they do not evaluate rules, calculate prices, execute recommendations, or merge Policy, Pricing, Capability, Constraints, and Procedures.
 - Request Segment Service Scopes preserve segment-first passenger + segment + service intake metadata; they do not evaluate policy, calculate pricing, convert trips automatically, search, book, ticket, issue EMDs, call providers, generate AI output, or send client messages.
+- Reference Data Domains provide governed values, aliases, normalization rules, and validation rules; they do not call providers, generate AI, evaluate live rules, calculate prices, run workers, or restore old `/admin` routes.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.
@@ -44,3 +45,7 @@ AeroAssist can structure knowledge, display evidence, explain uncertainty, and p
 ## Request Segment Service Scopes
 
 Phase 51.2 adds Request Segment Service Scopes as metadata-only intake precision records. They keep requests segment-first by joining passenger, segment, service, pet, special item, readiness, conversion, knowledge-link, and decision-trace metadata. Requests remain intake, trips remain operational dossiers, and human authority remains final.
+
+## Reference Data Domains
+
+Phase 52.1 adds Reference Data Domains as metadata-only operational vocabulary records for airline knowledge production. They prepare scenario testing and real airline data population while keeping human governance final.

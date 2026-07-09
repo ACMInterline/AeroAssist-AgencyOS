@@ -30,6 +30,8 @@ Phase 51.2 implements metadata-only Request Intake Segment-Service Precision. It
 
 Phase 51.3 implements metadata-only Client & Passenger Master Workspace Consolidation. It makes Client the commercial owner and Passenger the reusable operational identity, supports many-to-many metadata, and makes passenger service history reusable across requests, trips, booking mirrors, ticket mirrors, EMD mirrors, documents, operational evaluations, feasibility, and recommendations. It adds no new AOIE intelligence and does not implement CRM sales pipelines, marketing automation, provider integrations, AI/LLM generation, booking, ticketing, payment gateways, workers, or automatic sending.
 
+Phase 52.1 implements metadata-only Reference Data Engine Foundation. It adds governed reference domains for airline operational knowledge production, scenario testing, and future real airline data population. It does not add new intelligence, provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or operational automation. Human authority remains final.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -46,6 +48,7 @@ Phase 51.3 implements metadata-only Client & Passenger Master Workspace Consolid
 - 51.1 Service Parameter Taxonomy Integration
 - 51.2 Request Intake Segment-Service Precision
 - 51.3 Client & Passenger Master Workspace Consolidation
+- 52.1 Reference Data Engine Foundation
 
 ## Five Pillars
 
@@ -81,6 +84,12 @@ Phase 51.1 adds Service Parameter Taxonomies as reusable measurable field defini
 
 Parameter taxonomies do not create new intelligence, evaluate rules, calculate prices, or merge Policy, Pricing, Capability, Constraints, and Procedures. They make future structured knowledge entry and human-reviewed evaluation inputs more consistent.
 
+## Reference Data Engine
+
+Phase 52.1 adds governed reference domains for airlines, airports, countries, cities, currencies, aircraft, cabins, seats, passenger types, service codes, SSR/OSI, RFIC/RFISC, pets, documents, vaccinations, mobility, medical equipment, routes, flights, fare bundles, pricing metadata, temperature zones, seasonal restrictions, and travel purposes.
+
+Reference Data Domains provide records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. They prepare scenario testing and real airline data population, but they do not evaluate policies, calculate prices, call providers, generate AI output, or automate operational decisions.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -99,6 +108,7 @@ A decision pack should include:
 - Service Parameter Taxonomy metadata from Phase 51.1 when available.
 - Request Segment Service Scope metadata from Phase 51.2 when available.
 - Passenger Master reusable service history and known operational profile metadata from Phase 51.3 when available.
+- Reference Data Domain records and normalization metadata from Phase 52.1 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

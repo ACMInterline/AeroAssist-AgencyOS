@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_request_segment_services, agency_service_parameter_taxonomies, platform_client_passenger_master, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_request_segment_services, platform_service_parameter_taxonomies
+from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, platform_client_passenger_master, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -53,7 +53,8 @@ from services.intelligent_offer_builder_service import INTELLIGENT_OFFER_CLIENT_
 from services.operational_intelligence_case_service import OPERATIONAL_INTELLIGENCE_CASE_STATUSES, OPERATIONAL_INTELLIGENCE_OVERALL_STATUSES, PIPELINE_LINK_FIELDS, PIPELINE_READY_FIELDS
 from services.service_parameter_taxonomy_service import AMOUNT_TYPES, APPROVAL_STATUS_OPTIONS, EVALUATION_STATUS_OPTIONS, KNOWLEDGE_GRAPH_LINK_FIELDS as TAXONOMY_KNOWLEDGE_GRAPH_LINK_FIELDS, PASSENGER_ASSISTANCE_PARAMETER_FIELDS, PETS_ANIMALS_PARAMETER_FIELDS, PRICING_CATEGORIES, PRICING_FARE_BUNDLES, PRICING_FLIGHT_TYPES, PRICING_PARAMETER_FIELDS, PRICING_ROUTE_TYPES, PRICING_UNITS, PRICING_WAY_VALUES, RESTRICTION_STATUS_OPTIONS, ROUTE_AIRCRAFT_CABIN_PARAMETER_FIELDS, SERVICE_PARAMETER_TAXONOMY_STATUSES, SPECIAL_ITEM_PARAMETER_FIELDS, SUPPORT_STATUS_OPTIONS, TAXONOMY_APPROVAL_STATUSES, TAXONOMY_REVIEW_STATUSES
 from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FIELDS as REQUEST_SEGMENT_SERVICE_KNOWLEDGE_LINK_FIELDS, OPERATIONAL_FLAG_FIELDS as REQUEST_SEGMENT_SERVICE_OPERATIONAL_FLAG_FIELDS, REQUEST_SEGMENT_SERVICE_READINESS_STATUSES, REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES, REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES
-from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES, PHASE_LABEL
+from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
+from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, PHASE_LABEL, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -70,7 +71,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 51.3 client and passenger master workspace consolidation foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 52.1 reference data engine foundation.",
 )
 
 app.add_middleware(
@@ -1239,6 +1240,34 @@ async def readiness() -> dict:
         + len(item.get("knowledge_trace") or [])
         + len(item.get("operational_trace") or [])
         for item in operational_intelligence_case_records
+    )
+    reference_data_domain_records = await database.collection(REFERENCE_DATA_DOMAINS_COLLECTION).find_many()
+    reference_data_domain_count = len(reference_data_domain_records)
+    reference_data_domain_active_count = len(
+        [item for item in reference_data_domain_records if item.get("active", True) and not item.get("archived")]
+    )
+    reference_data_domain_governance_status_counts = {
+        status: len([item for item in reference_data_domain_records if item.get("governance_status") == status])
+        for status in REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES
+    }
+    reference_data_domain_review_status_counts = {
+        status: len([item for item in reference_data_domain_records if item.get("review_status") == status])
+        for status in REFERENCE_DATA_ENGINE_REVIEW_STATUSES
+    }
+    reference_data_engine_record_count = sum(len(item.get("records") or []) for item in reference_data_domain_records)
+    reference_data_engine_alias_count = sum(len(item.get("aliases") or []) for item in reference_data_domain_records)
+    reference_data_engine_normalization_rule_count = sum(
+        len(item.get("normalization_rules") or []) for item in reference_data_domain_records
+    )
+    reference_data_engine_validation_rule_count = sum(
+        len(item.get("validation_rules") or []) for item in reference_data_domain_records
+    )
+    reference_data_supported_domain_coverage_count = len(
+        {
+            item.get("domain_code")
+            for item in reference_data_domain_records
+            if item.get("domain_code") in SUPPORTED_REFERENCE_DOMAIN_CODES
+        }
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
     service_parameter_taxonomy_count = len(service_parameter_taxonomy_records)
@@ -3192,6 +3221,46 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 51.0 creates metadata-only Operational Intelligence Case records. Cases consolidate the completed Chapter 50 pipeline from passenger requirement through offer-intelligence package, prepare scenario testing and real airline data population, and add no new intelligence or execution. Human authority remains final.",
         },
+        "reference_data_engine_foundation": {
+            "reference_data_engine_enabled": True,
+            "reference_data_domains_collection_enabled": True,
+            "platform_reference_data_engine_metadata_crud_enabled": True,
+            "agency_reference_data_metadata_crud_enabled": True,
+            "platform_reference_data_engine_ui_enabled": True,
+            "agency_reference_data_ui_enabled": True,
+            "airline_operational_knowledge_production_ready": True,
+            "supported_reference_domains_enabled": True,
+            "domain_records_metadata_enabled": True,
+            "alias_metadata_enabled": True,
+            "normalization_rules_metadata_enabled": True,
+            "validation_rules_metadata_enabled": True,
+            "import_template_reference_metadata_enabled": True,
+            "governance_metadata_enabled": True,
+            "review_metadata_enabled": True,
+            "human_authority_final": True,
+            "supported_domain_codes": SUPPORTED_REFERENCE_DOMAIN_CODES,
+            "governance_statuses": REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES,
+            "review_statuses": REFERENCE_DATA_ENGINE_REVIEW_STATUSES,
+            "metadata_only": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "live_evaluation_disabled": True,
+            "pricing_calculation_disabled": True,
+            "background_workers_disabled": True,
+            "old_admin_routes_disabled": True,
+            "reference_data_domain_count": reference_data_domain_count,
+            "reference_data_domain_active_count": reference_data_domain_active_count,
+            "reference_data_domain_governance_status_counts": reference_data_domain_governance_status_counts,
+            "reference_data_domain_review_status_counts": reference_data_domain_review_status_counts,
+            "reference_data_engine_record_count": reference_data_engine_record_count,
+            "reference_data_engine_alias_count": reference_data_engine_alias_count,
+            "reference_data_engine_normalization_rule_count": reference_data_engine_normalization_rule_count,
+            "reference_data_engine_validation_rule_count": reference_data_engine_validation_rule_count,
+            "reference_data_engine_supported_domain_count": len(SUPPORTED_REFERENCE_DOMAIN_CODES),
+            "reference_data_supported_domain_coverage_count": reference_data_supported_domain_coverage_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 52.1 creates a metadata-only Reference Data Engine for airline operational knowledge production. It stores supported domain records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. It does not add provider integrations, AI, live evaluation, pricing calculation, background workers, or old /admin routes. Human authority remains final.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5139,6 +5208,7 @@ app.include_router(platform_passenger_service_feasibility.router)
 app.include_router(platform_airline_recommendations.router)
 app.include_router(platform_intelligent_offer_builder.router)
 app.include_router(platform_operational_intelligence_cases.router)
+app.include_router(platform_reference_data_engine.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -5222,6 +5292,7 @@ app.include_router(agency_passenger_service_feasibility.router)
 app.include_router(agency_airline_recommendations.router)
 app.include_router(agency_intelligent_offer_builder.router)
 app.include_router(agency_operational_intelligence_cases.router)
+app.include_router(agency_reference_data_engine.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

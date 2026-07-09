@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
+PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -142,6 +142,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalIntelligenceCase, OperationalIntelligenceCaseCreate, OperationalIntelligenceCaseUpdate, OperationalIntelligenceCaseService, operational_intelligence_cases, /api/platform/operational-intelligence-cases, /api/agencies/{agency_id}/intelligence-cases, /platform/operational-intelligence-cases, /agency/intelligence-cases",
         "status": "foundation adopted",
         "action": "Consolidate the completed Chapter 50 metadata pipeline into an end-to-end case view from passenger requirement through offer-intelligence package. Phase 51.0 adds no new intelligence and prepares scenario testing plus real airline data population without AI/LLM generation, live search, booking, ticketing, EMD issuance, provider calls, parser execution, workers, automatic sending, or replacing human authority.",
+    },
+    {
+        "category": "Reference Data Engine",
+        "concept": "Reference domain engine for airline operational knowledge production",
+        "supplementary_concept": "airlines, airports, countries, cities, currencies, aircraft, cabin, passenger, service, SSR/OSI, RFIC/RFISC, pet, document, mobility, medical, route, pricing, temperature, seasonal, and travel-purpose reference domains",
+        "current_equivalent": "ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate, ReferenceDataEngineService, reference_data_domains, /api/platform/reference-data-engine, /api/agencies/{agency_id}/reference-data-engine, /platform/reference-data-engine, /agency/reference-data-engine",
+        "status": "foundation adopted",
+        "action": "Create metadata-only reference domains for airline operational knowledge production with records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. Phase 52.1 does not add provider integrations, AI, live evaluation, pricing calculation, background workers, old /admin routes, or automatic authority over humans.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -777,6 +785,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-intelligence", "agencyos": "/agency/offer-intelligence"},
         {"supplementary": "/admin/operational-intelligence-cases", "agencyos": "/platform/operational-intelligence-cases"},
         {"supplementary": "/agent/intelligence-cases", "agencyos": "/agency/intelligence-cases"},
+        {"supplementary": "/admin/reference-data-engine", "agencyos": "/platform/reference-data-engine"},
+        {"supplementary": "/agent/reference-data-engine", "agencyos": "/agency/reference-data-engine"},
+        {"supplementary": "/agent/reference-data", "agencyos": "/agency/reference-data-engine"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -981,6 +992,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "OperationalIntelligenceCase",
             "OperationalIntelligenceCaseCreate",
             "OperationalIntelligenceCaseUpdate",
+            "ReferenceDataDomain",
+            "ReferenceDataDomainCreate",
+            "ReferenceDataDomainUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1060,6 +1074,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Service parameter taxonomy integration foundation built in Phase 51.1",
             "Request intake segment-service precision foundation built in Phase 51.2",
             "Client passenger master workspace foundation built in Phase 51.3",
+            "Reference data engine foundation built in Phase 52.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

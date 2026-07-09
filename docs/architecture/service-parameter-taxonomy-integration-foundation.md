@@ -53,3 +53,9 @@ Human authority remains final.
 ## Phase 51.2 Relationship
 
 Phase 51.2 adds `request_segment_service_scopes` as segment-first intake metadata that may reference Service Parameter Taxonomies through `service_parameter_taxonomy_ids`. The scope records passenger + segment + service context, including pet and special item metadata, but it does not evaluate the taxonomy, calculate pricing, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically.
+
+## Reference Data Engine Alignment
+
+Phase 52.1 adds `reference_data_domains` as governed domain metadata that Service Parameter Taxonomies may reference for allowed values, aliases, normalization rules, validation rules, and import-template references.
+
+Reference Data Domains are not parameter taxonomies and do not evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate operational decisions. Human authority remains final for both taxonomy governance and reference-domain governance.

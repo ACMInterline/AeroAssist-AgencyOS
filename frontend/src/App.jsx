@@ -36,6 +36,7 @@ import IntelligenceCasesPage from "./pages/agency/IntelligenceCasesPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
 import RecommendationsPage from "./pages/agency/RecommendationsPage"
 import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPage"
+import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -129,6 +130,7 @@ import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEval
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
+import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
@@ -270,6 +272,7 @@ const routes = {
   "/platform/passenger-service-feasibility": PlatformPassengerServiceFeasibilityPage,
   "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
+  "/platform/reference-data-engine": PlatformReferenceDataEnginePage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -349,6 +352,7 @@ const routes = {
   "/agency/service-feasibility": ServiceFeasibilityPage,
   "/agency/recommendations": RecommendationsPage,
   "/agency/intelligence-cases": IntelligenceCasesPage,
+  "/agency/reference-data-engine": AgencyReferenceDataEnginePage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

@@ -64,6 +64,10 @@ A Phase 50.9 metadata package that prepares approved recommendations, feasibilit
 
 A Phase 51.0 metadata case that consolidates the completed Chapter 50 pipeline from passenger requirement through offer-intelligence package. It preserves pipeline links, readiness, decision summaries, required actions, traces, and notes for scenario testing and real airline data population. It adds no new intelligence and does not execute bookings, issue tickets or EMDs, call providers, generate AI/LLM output, or send client messages.
 
+## Reference Data Engine
+
+A Phase 52.1 metadata-only foundation that stores governed reference domains for airline operational knowledge production. Domains contain records, aliases, normalization rules, validation rules, import-template references, governance status, review status, and active state. It prepares scenario testing and real airline data population without provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or automation. Human authority remains final.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

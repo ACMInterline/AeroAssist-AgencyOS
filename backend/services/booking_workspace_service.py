@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
+PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
 BOOKING_WORKSPACE_COLLECTION = "booking_workspaces"
 BOOKING_WORKSPACE_STATUSES = [
     BookingWorkspaceStatus.DRAFT.value,

@@ -68,7 +68,9 @@ Phase 51.1 adds the `service_parameter_taxonomies` collection. Service Parameter
 
 Phase 51.2 adds the `request_segment_service_scopes` collection. Request Intake Segment-Service Precision preserves passenger + segment + service scope metadata before AOIE evaluation. Pets and special items remain segment-scoped, requests remain intake, trips remain operational dossiers, and the foundation does not evaluate policy, calculate pricing, search, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
+Phase 52.1 adds the `reference_data_domains` collection. Reference Data Engine Foundation supplies governed domain metadata for airline operational knowledge production, including records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. It prepares scenario testing and real airline data population without provider integrations, AI, live evaluation, pricing calculation, background workers, old `/admin` routes, or automation.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
 
 ## Routes
 
@@ -96,6 +98,7 @@ All routes are read-only visualization routes.
 - 51.0 Operational Intelligence Pipeline Consolidation Foundation - implemented as metadata-only case consolidation
 - 51.1 Service Parameter Taxonomy Integration Foundation - implemented as metadata-only measurable parameter definitions
 - 51.2 Request Intake Segment-Service Precision Foundation - implemented as metadata-only segment-first passenger + segment + service scopes
+- 52.1 Reference Data Engine Foundation - implemented as metadata-only governed reference domains for airline operational knowledge production
 
 ## Explicitly Excluded
 
@@ -123,3 +126,5 @@ Phase 51.0 does not implement new intelligence, live flight search, booking, tic
 Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate prices, execute recommendations, call providers, generate AI or LLM output, run background workers, create duplicate passenger/client/trip/offer/booking/ticket/EMD/SSR/OSI/document models, or combine Policy, Pricing, Capability, Constraints, and Procedures. It only defines reusable measurable parameters for structured knowledge entry and future human-reviewed evaluation inputs.
 
 Phase 51.2 does not evaluate policy, calculate pricing, search flights, book, ticket, issue EMDs, call providers, generate AI or LLM output, run background workers, send automatically, convert trips automatically, or replace request/trip boundaries. It only preserves segment-first passenger + segment + service intake metadata.
+
+Phase 52.1 does not implement provider integrations, AI, live evaluation, pricing calculation, background workers, old `/admin` routes, automatic promotion, or operational automation. It only stores governed reference domain metadata, and human authority remains final.
