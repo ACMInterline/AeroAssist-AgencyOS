@@ -38,6 +38,10 @@ Phase 52.2 adds `knowledge_import_templates` as reusable metadata schemas for fu
 
 Phase 52.3 adds `visual_policy_editor_cards` as structured airline service policy-card metadata. Visual Policy Editor cards may use Reference Data Engine domains for controlled values in future data population workflows, but Phase 52.3 does not execute policies, evaluate rules, calculate pricing, call providers, use AI/LLM generation, run background workers, create old `/admin` routes, or replace human authority.
 
+## Pricing Formula Builder Relationship
+
+Phase 52.4 adds `pricing_formula_builders` as no-code pricing formula metadata. Pricing Formula Builder records may use Reference Data Engine domains for controlled currencies, fare bundles, pricing units, route types, flight types, pricing categories, and formula component vocabulary, but Phase 52.4 does not calculate live prices, integrate payments, call providers, use AI, run workers, automatically send to clients, or replace human authority.
+
 It does not implement provider integrations, AI/LLM behavior, live rule evaluation, pricing calculation, booking, ticketing, background workers, old `/admin` routes, automatic promotion, or automatic client sending.
 
 Human authority remains final for domain governance, review, imports, operational use, and future production population.

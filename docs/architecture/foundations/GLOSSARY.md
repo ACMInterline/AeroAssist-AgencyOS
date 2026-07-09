@@ -76,6 +76,10 @@ A Phase 52.2 metadata-only foundation that stores reusable schemas for airline k
 
 A Phase 52.3 metadata-only foundation that stores structured airline service policy cards. Cards contain airline, policy family, service family, service codes, status, effective dates, support status, limits, restrictions, required documents, approval requirements, warnings, client messages, internal notes, evidence links, knowledge governance links, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, use AI/LLM generation, call providers, run background workers, add old `/admin` routes, or replace human authority.
 
+## Pricing Formula Builder
+
+A Phase 52.4 metadata-only foundation that stores no-code airline ancillary and service pricing formula records. Records contain pricing unit, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, refund/exchange condition references, evidence links, governance links, service parameter taxonomy links, and visual policy editor links. It does not calculate live prices, integrate payments, call providers, use AI/LLM generation, run background workers, send automatically to clients, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

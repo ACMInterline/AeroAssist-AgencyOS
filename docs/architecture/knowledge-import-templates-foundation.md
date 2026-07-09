@@ -44,7 +44,10 @@ Knowledge Import Templates support:
 - Reference Data Engine domain population
 - Service Parameter Taxonomy population
 - Visual Policy Editor card preparation
+- Pricing Formula Builder preparation
 - Airline knowledge acquisition and governance review
 - Scenario testing and future real airline data population
 
 These relationships are links and schemas only. They do not execute parsing, transformation, validation, promotion, or provider integrations.
+
+Phase 52.4 adds `pricing_formula_builders` for no-code pricing formula metadata. Knowledge Import Templates can describe future pricing-table population schemas that target pricing formula records, but they do not parse files, execute imports, calculate prices, call providers, integrate payments, use AI, run workers, or send automatically to clients.

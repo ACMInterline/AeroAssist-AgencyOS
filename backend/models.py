@@ -21255,6 +21255,121 @@ class KnowledgeImportTemplateUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class PricingFormulaBuilder(BaseDocument):
+    agency_id: Optional[str] = None
+    formula_reference: str
+    formula_name: str
+    formula_status: str = "draft"
+    airline: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    pricing_unit: str = "passenger"
+    way: str = "one_way"
+    route_type: str = "international"
+    flight_type: str = "mediumhaul"
+    fare_bundle: str = "unknown"
+    pricing_category: str
+    amount_type: str
+    currency: Optional[str] = None
+    base_amount: Optional[float] = None
+    amount_range: Dict[str, Any] = Field(default_factory=dict)
+    formula_components: List[Dict[str, Any]] = Field(default_factory=list)
+    multipliers: List[Dict[str, Any]] = Field(default_factory=list)
+    applicability: Dict[str, Any] = Field(default_factory=dict)
+    manual_confirmation_required: bool = True
+    client_visibility: str = "internal_only"
+    refund_exchange_condition_references: List[str] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    governance_links: List[str] = Field(default_factory=list)
+    service_parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    visual_policy_editor_links: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    client_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    pricing_formula_builder_foundation: bool = True
+    live_price_calculation_disabled: bool = True
+    payment_integrations_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_client_sending_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PricingFormulaBuilderCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    formula_reference: Optional[str] = None
+    formula_name: str
+    formula_status: str = "draft"
+    airline: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    pricing_unit: str = "passenger"
+    way: str = "one_way"
+    route_type: str = "international"
+    flight_type: str = "mediumhaul"
+    fare_bundle: str = "unknown"
+    pricing_category: str
+    amount_type: str
+    currency: Optional[str] = None
+    base_amount: Optional[float] = None
+    amount_range: Dict[str, Any] = Field(default_factory=dict)
+    formula_components: List[Dict[str, Any]] = Field(default_factory=list)
+    multipliers: List[Dict[str, Any]] = Field(default_factory=list)
+    applicability: Dict[str, Any] = Field(default_factory=dict)
+    manual_confirmation_required: bool = True
+    client_visibility: str = "internal_only"
+    refund_exchange_condition_references: List[str] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    governance_links: List[str] = Field(default_factory=list)
+    service_parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    visual_policy_editor_links: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    client_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PricingFormulaBuilderUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    formula_reference: Optional[str] = None
+    formula_name: Optional[str] = None
+    formula_status: Optional[str] = None
+    airline: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: Optional[List[str]] = None
+    pricing_unit: Optional[str] = None
+    way: Optional[str] = None
+    route_type: Optional[str] = None
+    flight_type: Optional[str] = None
+    fare_bundle: Optional[str] = None
+    pricing_category: Optional[str] = None
+    amount_type: Optional[str] = None
+    currency: Optional[str] = None
+    base_amount: Optional[float] = None
+    amount_range: Optional[Dict[str, Any]] = None
+    formula_components: Optional[List[Dict[str, Any]]] = None
+    multipliers: Optional[List[Dict[str, Any]]] = None
+    applicability: Optional[Dict[str, Any]] = None
+    manual_confirmation_required: Optional[bool] = None
+    client_visibility: Optional[str] = None
+    refund_exchange_condition_references: Optional[List[str]] = None
+    evidence_links: Optional[List[Dict[str, Any]]] = None
+    governance_links: Optional[List[str]] = None
+    service_parameter_taxonomy_links: Optional[List[str]] = None
+    visual_policy_editor_links: Optional[List[str]] = None
+    internal_notes: Optional[str] = None
+    client_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

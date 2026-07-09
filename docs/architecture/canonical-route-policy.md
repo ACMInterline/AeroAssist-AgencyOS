@@ -75,6 +75,8 @@ Phase 52.2 adds knowledge import template APIs only under `/api/platform/knowled
 
 Phase 52.3 adds visual policy editor APIs only under `/api/platform/visual-policy-editor/*` and `/api/agencies/{agency_id}/policy-editor/*`, plus frontend pages under `/platform/visual-policy-editor` and `/agency/policy-editor`. It records metadata-only airline service policy cards and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, policy execution, rule evaluation, pricing calculation, provider integrations, AI/LLM generation, background workers, or automation.
 
+Phase 52.4 adds pricing formula builder APIs only under `/api/platform/pricing-formula-builder/*` and `/api/agencies/{agency_id}/pricing-formula-builder/*`, plus frontend pages under `/platform/pricing-formula-builder` and `/agency/pricing-formula-builder`. It records metadata-only pricing formula metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live price calculation, payment integrations, provider integrations, AI/LLM generation, background workers, automatic client sending, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

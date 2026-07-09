@@ -36,6 +36,8 @@ Phase 52.2 implements metadata-only Knowledge Import Templates Foundation. It ad
 
 Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds structured airline service policy cards with no-code sections for overview, support status, limits, route/aircraft/cabin/date/weather restrictions, documents, approvals, warnings, evidence, governance, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, call providers, use AI/LLM generation, run background workers, create old `/admin` routes, or replace human authority.
 
+Phase 52.4 implements metadata-only Pricing Formula Builder Foundation. It adds no-code airline ancillary and service pricing formula records with pricing units, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references. It does not calculate live prices, integrate payments, call providers, use AI/LLM generation, run background workers, send automatically to clients, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -55,6 +57,7 @@ Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds str
 - 52.1 Reference Data Engine Foundation
 - 52.2 Knowledge Import Templates Foundation
 - 52.3 Visual Policy Editor Foundation
+- 52.4 Pricing Formula Builder Foundation
 
 ## Five Pillars
 
@@ -108,6 +111,12 @@ Cards are a human-reviewed editing and traceability surface. They are not policy
 
 Reference Data Domains provide records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. They prepare scenario testing and real airline data population, but they do not evaluate policies, calculate prices, call providers, generate AI output, or automate operational decisions.
 
+## Pricing Formula Builder
+
+Phase 52.4 adds `pricing_formula_builders` for metadata-only airline ancillary and service pricing formula production. Records store airline, service family, service codes, pricing unit, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, refund/exchange condition references, evidence links, governance links, service parameter taxonomy links, and visual policy editor links.
+
+Pricing Formula Builder is a human-reviewed pricing metadata surface. It is not live price calculation, payment processing, provider integration, AI generation, worker automation, automatic client sending, or final operational authority.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -129,6 +138,7 @@ A decision pack should include:
 - Reference Data Domain records and normalization metadata from Phase 52.1 when available.
 - Knowledge Import Template records from Phase 52.2 when available.
 - Visual Policy Editor card metadata from Phase 52.3 when available.
+- Pricing Formula Builder metadata from Phase 52.4 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

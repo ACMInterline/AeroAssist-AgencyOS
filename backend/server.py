@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
+from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_operational_intelligence_cases, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_operational_intelligence_cases, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -56,7 +56,8 @@ from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FI
 from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
 from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
 from services.knowledge_import_template_service import FOUNDATION_PHASE_LABEL as KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL, IMPORT_SCOPES as KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES, KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION, TEMPLATE_TYPES as KNOWLEDGE_IMPORT_TEMPLATE_TYPES
-from services.visual_policy_editor_service import PHASE_LABEL, POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
+from services.pricing_formula_builder_service import CLIENT_VISIBILITY_OPTIONS as PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS, FORMULA_STATUSES as PRICING_FORMULA_STATUSES, PHASE_LABEL, PRICING_FORMULA_BUILDERS_COLLECTION
+from services.visual_policy_editor_service import POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -73,7 +74,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 52.3 visual policy editor foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 52.4 pricing formula builder foundation.",
 )
 
 app.add_middleware(
@@ -1334,6 +1335,51 @@ async def readiness() -> dict:
             item.get("policy_family")
             for item in visual_policy_editor_card_records
             if item.get("policy_family") in POLICY_FAMILIES
+        }
+    )
+    pricing_formula_builder_records = await database.collection(PRICING_FORMULA_BUILDERS_COLLECTION).find_many()
+    pricing_formula_builder_count = len(pricing_formula_builder_records)
+    pricing_formula_builder_active_count = len(
+        [item for item in pricing_formula_builder_records if not item.get("archived") and item.get("formula_status") != "archived"]
+    )
+    pricing_formula_builder_status_counts = {
+        status: len([item for item in pricing_formula_builder_records if item.get("formula_status") == status])
+        for status in PRICING_FORMULA_STATUSES
+    }
+    pricing_formula_builder_amount_type_counts = {
+        amount_type: len([item for item in pricing_formula_builder_records if item.get("amount_type") == amount_type])
+        for amount_type in AMOUNT_TYPES
+    }
+    pricing_formula_builder_category_counts = {
+        category: len([item for item in pricing_formula_builder_records if item.get("pricing_category") == category])
+        for category in PRICING_CATEGORIES
+    }
+    pricing_formula_builder_client_visibility_counts = {
+        visibility: len([item for item in pricing_formula_builder_records if item.get("client_visibility") == visibility])
+        for visibility in PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS
+    }
+    pricing_formula_builder_service_code_count = sum(len(item.get("service_codes") or []) for item in pricing_formula_builder_records)
+    pricing_formula_builder_component_count = sum(len(item.get("formula_components") or []) for item in pricing_formula_builder_records)
+    pricing_formula_builder_multiplier_count = sum(len(item.get("multipliers") or []) for item in pricing_formula_builder_records)
+    pricing_formula_builder_refund_exchange_reference_count = sum(
+        len(item.get("refund_exchange_condition_references") or []) for item in pricing_formula_builder_records
+    )
+    pricing_formula_builder_evidence_link_count = sum(len(item.get("evidence_links") or []) for item in pricing_formula_builder_records)
+    pricing_formula_builder_governance_link_count = sum(len(item.get("governance_links") or []) for item in pricing_formula_builder_records)
+    pricing_formula_builder_taxonomy_link_count = sum(
+        len(item.get("service_parameter_taxonomy_links") or []) for item in pricing_formula_builder_records
+    )
+    pricing_formula_builder_visual_policy_link_count = sum(
+        len(item.get("visual_policy_editor_links") or []) for item in pricing_formula_builder_records
+    )
+    pricing_formula_builder_manual_confirmation_required_count = len(
+        [item for item in pricing_formula_builder_records if item.get("manual_confirmation_required") is True]
+    )
+    pricing_formula_builder_category_coverage_count = len(
+        {
+            item.get("pricing_category")
+            for item in pricing_formula_builder_records
+            if item.get("pricing_category") in PRICING_CATEGORIES
         }
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
@@ -3412,6 +3458,65 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.3 creates a metadata-only Visual Policy Editor for airline service policy cards. It stores no-code sections for support status, limits, restrictions, documents, approvals, warnings, evidence, governance, and taxonomy links without policy execution, rule evaluation, pricing calculation, provider integrations, AI, workers, or legacy admin routes. Human authority remains final.",
         },
+        "pricing_formula_builder_foundation": {
+            "pricing_formula_builder_enabled": True,
+            "pricing_formula_builders_collection_enabled": True,
+            "platform_pricing_formula_builder_metadata_crud_enabled": True,
+            "agency_pricing_formula_builder_metadata_crud_enabled": True,
+            "platform_pricing_formula_builder_ui_enabled": True,
+            "agency_pricing_formula_builder_ui_enabled": True,
+            "pricing_units_metadata_enabled": True,
+            "way_metadata_enabled": True,
+            "route_type_metadata_enabled": True,
+            "flight_type_metadata_enabled": True,
+            "fare_bundle_metadata_enabled": True,
+            "pricing_category_metadata_enabled": True,
+            "amount_type_metadata_enabled": True,
+            "currency_metadata_enabled": True,
+            "base_amount_metadata_enabled": True,
+            "formula_components_metadata_enabled": True,
+            "multipliers_metadata_enabled": True,
+            "applicability_metadata_enabled": True,
+            "manual_confirmation_metadata_enabled": True,
+            "client_visibility_metadata_enabled": True,
+            "refund_exchange_condition_reference_metadata_enabled": True,
+            "pricing_units": PRICING_UNITS,
+            "way_values": PRICING_WAY_VALUES,
+            "route_types": PRICING_ROUTE_TYPES,
+            "flight_types": PRICING_FLIGHT_TYPES,
+            "fare_bundles": PRICING_FARE_BUNDLES,
+            "pricing_categories": PRICING_CATEGORIES,
+            "amount_types": AMOUNT_TYPES,
+            "formula_statuses": PRICING_FORMULA_STATUSES,
+            "client_visibility_options": PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS,
+            "metadata_only": True,
+            "live_price_calculation_disabled": True,
+            "payment_integrations_disabled": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_client_sending_disabled": True,
+            "human_authority_final": True,
+            "pricing_formula_builder_count": pricing_formula_builder_count,
+            "pricing_formula_builder_active_count": pricing_formula_builder_active_count,
+            "pricing_formula_builder_status_counts": pricing_formula_builder_status_counts,
+            "pricing_formula_builder_amount_type_counts": pricing_formula_builder_amount_type_counts,
+            "pricing_formula_builder_category_counts": pricing_formula_builder_category_counts,
+            "pricing_formula_builder_client_visibility_counts": pricing_formula_builder_client_visibility_counts,
+            "pricing_formula_builder_service_code_count": pricing_formula_builder_service_code_count,
+            "pricing_formula_builder_component_count": pricing_formula_builder_component_count,
+            "pricing_formula_builder_multiplier_count": pricing_formula_builder_multiplier_count,
+            "pricing_formula_builder_refund_exchange_reference_count": pricing_formula_builder_refund_exchange_reference_count,
+            "pricing_formula_builder_evidence_link_count": pricing_formula_builder_evidence_link_count,
+            "pricing_formula_builder_governance_link_count": pricing_formula_builder_governance_link_count,
+            "pricing_formula_builder_taxonomy_link_count": pricing_formula_builder_taxonomy_link_count,
+            "pricing_formula_builder_visual_policy_link_count": pricing_formula_builder_visual_policy_link_count,
+            "pricing_formula_builder_manual_confirmation_required_count": pricing_formula_builder_manual_confirmation_required_count,
+            "pricing_formula_builder_supported_category_count": len(PRICING_CATEGORIES),
+            "pricing_formula_builder_category_coverage_count": pricing_formula_builder_category_coverage_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 52.4 creates metadata-only Pricing Formula Builder records for airline ancillary and service pricing. It stores pricing unit, way, route type, flight type, fare bundle, category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references without live price calculation, payment integrations, provider integrations, AI, workers, or automatic client sending. Human authority remains final.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5362,6 +5467,7 @@ app.include_router(platform_operational_intelligence_cases.router)
 app.include_router(platform_reference_data_engine.router)
 app.include_router(platform_knowledge_import_templates.router)
 app.include_router(platform_visual_policy_editor.router)
+app.include_router(platform_pricing_formula_builder.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -5448,6 +5554,7 @@ app.include_router(agency_operational_intelligence_cases.router)
 app.include_router(agency_reference_data_engine.router)
 app.include_router(agency_knowledge_import_templates.router)
 app.include_router(agency_visual_policy_editor.router)
+app.include_router(agency_pricing_formula_builder.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

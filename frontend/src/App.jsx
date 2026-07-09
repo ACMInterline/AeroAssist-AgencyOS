@@ -39,6 +39,7 @@ import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPag
 import ImportTemplatesPage from "./pages/agency/ImportTemplatesPage"
 import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
 import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
+import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilderPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -136,6 +137,7 @@ import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImpo
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
+import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBuilderPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -279,6 +281,7 @@ const routes = {
   "/platform/reference-data-engine": PlatformReferenceDataEnginePage,
   "/platform/knowledge-import-templates": PlatformKnowledgeImportTemplatesPage,
   "/platform/visual-policy-editor": PlatformVisualPolicyEditorPage,
+  "/platform/pricing-formula-builder": PlatformPricingFormulaBuilderPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -361,6 +364,7 @@ const routes = {
   "/agency/reference-data-engine": AgencyReferenceDataEnginePage,
   "/agency/import-templates": ImportTemplatesPage,
   "/agency/policy-editor": PolicyEditorPage,
+  "/agency/pricing-formula-builder": AgencyPricingFormulaBuilderPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

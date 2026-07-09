@@ -62,6 +62,10 @@ Phase 52.1 adds `reference_data_domains` as governed domain metadata that Servic
 
 Phase 52.2 adds `knowledge_import_templates` as reusable schemas for future Service Parameter Taxonomy population. Templates may describe required columns, mapping rules, validation metadata, sample rows, accepted file types, review requirements, and governance links, but they do not parse files, execute imports, scrape, call providers, use AI/LLM output, run workers, or automatically promote taxonomy records.
 
+## Pricing Formula Builder Alignment
+
+Phase 52.4 adds `pricing_formula_builders` as no-code pricing formula metadata that can reference Service Parameter Taxonomy pricing parameters. Taxonomy remains the reusable parameter vocabulary; Pricing Formula Builder stores formula metadata. Neither layer calculates live prices, integrates payments, calls providers, uses AI, runs workers, sends automatically to clients, or replaces human review.
+
 ## Visual Policy Editor Alignment
 
 Phase 52.3 adds `visual_policy_editor_cards` as no-code airline service policy-card metadata. Cards may reference Service Parameter Taxonomies through `service_parameter_taxonomy_links`, but they do not execute policy logic, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run workers, or replace human review.

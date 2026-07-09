@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_4_pricing_formula_builder_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -166,6 +166,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate, VisualPolicyEditorService, visual_policy_editor_cards, /api/platform/visual-policy-editor, /api/agencies/{agency_id}/policy-editor, /platform/visual-policy-editor, /agency/policy-editor",
         "status": "foundation adopted",
         "action": "Create metadata-only visual policy editor cards for airline service policy production. Phase 52.3 does not execute policies, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run background workers, create old /admin routes, or override human authority.",
+    },
+    {
+        "category": "Pricing Formula Builder",
+        "concept": "No-code airline ancillary and service pricing formula metadata",
+        "supplementary_concept": "pricing units, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, refund and exchange condition references",
+        "current_equivalent": "PricingFormulaBuilder, PricingFormulaBuilderCreate, PricingFormulaBuilderUpdate, PricingFormulaBuilderService, pricing_formula_builders, /api/platform/pricing-formula-builder, /api/agencies/{agency_id}/pricing-formula-builder, /platform/pricing-formula-builder, /agency/pricing-formula-builder",
+        "status": "foundation adopted",
+        "action": "Create metadata-only pricing formula builder records for airline ancillary and service pricing. Phase 52.4 does not calculate live prices, call providers, integrate payments, generate AI/LLM output, run background workers, send automatically to clients, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -810,6 +818,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/visual-policy-editor", "agencyos": "/platform/visual-policy-editor"},
         {"supplementary": "/agent/policy-editor", "agencyos": "/agency/policy-editor"},
         {"supplementary": "/agent/visual-policy-editor", "agencyos": "/agency/policy-editor"},
+        {"supplementary": "/admin/pricing-formula-builder", "agencyos": "/platform/pricing-formula-builder"},
+        {"supplementary": "/agent/pricing-formula-builder", "agencyos": "/agency/pricing-formula-builder"},
+        {"supplementary": "/agent/pricing-formulas", "agencyos": "/agency/pricing-formula-builder"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -1023,6 +1034,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "VisualPolicyEditorCard",
             "VisualPolicyEditorCardCreate",
             "VisualPolicyEditorCardUpdate",
+            "PricingFormulaBuilder",
+            "PricingFormulaBuilderCreate",
+            "PricingFormulaBuilderUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1105,6 +1119,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Reference data engine foundation built in Phase 52.1",
             "Knowledge import templates foundation built in Phase 52.2",
             "Visual policy editor foundation built in Phase 52.3",
+            "Pricing formula builder foundation built in Phase 52.4",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

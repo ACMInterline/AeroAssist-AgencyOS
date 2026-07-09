@@ -51,3 +51,5 @@ Phase 51.2 adds Request Segment Service Scopes as metadata-only intake precision
 Phase 52.1 adds Reference Data Domains as metadata-only operational vocabulary records for airline knowledge production. They prepare scenario testing and real airline data population while keeping human governance final.
 
 Phase 52.2 adds Knowledge Import Templates as metadata-only schemas for airline knowledge population. They define columns, mappings, validation metadata, samples, accepted file types, review requirements, and governance links, but they must not parse files, scrape, run AI, call providers, launch workers, or automatically import/promote data.
+
+Phase 52.4 adds Pricing Formula Builder as metadata-only no-code formula records for airline ancillary and service pricing. They define pricing units, route/flight/fare context, amount types, currencies, base amounts, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references, but they must not calculate live prices, integrate payments, call providers, run AI, launch workers, or send automatically to clients.

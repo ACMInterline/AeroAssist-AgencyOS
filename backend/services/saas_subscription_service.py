@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_4_pricing_formula_builder_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -59,6 +59,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "reference_data_engine", "label": "Reference Data", "href": "/agency/reference-data-engine", "aliases": ["reference_data_engine", "reference_data", "aoie_reference_domains", "airline_intelligence"]},
     {"key": "knowledge_import_templates", "label": "Import Templates", "href": "/agency/import-templates", "aliases": ["knowledge_import_templates", "import_templates", "airline_knowledge_population", "airline_intelligence"]},
     {"key": "visual_policy_editor", "label": "Policy Editor", "href": "/agency/policy-editor", "aliases": ["visual_policy_editor", "policy_editor", "airline_policy_cards", "airline_intelligence"]},
+    {"key": "pricing_formula_builder", "label": "Pricing Formula Builder", "href": "/agency/pricing-formula-builder", "aliases": ["pricing_formula_builder", "pricing_formulas", "ancillary_pricing", "airline_intelligence"]},
     {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
     {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
     {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},

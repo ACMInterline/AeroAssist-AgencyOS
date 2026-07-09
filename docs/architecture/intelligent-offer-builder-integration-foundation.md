@@ -56,6 +56,10 @@ Phase 51.1 adds `service_parameter_taxonomies` so offer-intelligence packages ca
 
 Phase 51.2 adds `request_segment_service_scopes` upstream of offer intelligence. These scopes preserve the original passenger + segment + service intake context, including pets and special items as segment-scoped metadata, so future offer-intelligence packages can trace back to precise request requirements. This does not add policy evaluation, pricing calculation, offer mutation, search, booking, ticketing, EMD issuance, provider execution, AI/LLM generation, workers, automatic sending, or automatic trip conversion.
 
+## Phase 52.4 Pricing Formula Builder
+
+Phase 52.4 adds `pricing_formula_builders` as metadata-only pricing formula references that future offer-intelligence packages may cite in pricing/cost reference sections. This does not generate prices, calculate live fares, integrate payments, call providers, use AI/LLM generation, run workers, send automatically to clients, or replace human authority.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.
