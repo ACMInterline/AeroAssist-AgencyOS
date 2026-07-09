@@ -36,6 +36,7 @@ import IntelligenceCasesPage from "./pages/agency/IntelligenceCasesPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
 import RecommendationsPage from "./pages/agency/RecommendationsPage"
 import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPage"
+import ImportTemplatesPage from "./pages/agency/ImportTemplatesPage"
 import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
 import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
@@ -131,6 +132,7 @@ import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEval
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
+import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
@@ -275,6 +277,7 @@ const routes = {
   "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
   "/platform/reference-data-engine": PlatformReferenceDataEnginePage,
+  "/platform/knowledge-import-templates": PlatformKnowledgeImportTemplatesPage,
   "/platform/visual-policy-editor": PlatformVisualPolicyEditorPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
@@ -356,6 +359,7 @@ const routes = {
   "/agency/recommendations": RecommendationsPage,
   "/agency/intelligence-cases": IntelligenceCasesPage,
   "/agency/reference-data-engine": AgencyReferenceDataEnginePage,
+  "/agency/import-templates": ImportTemplatesPage,
   "/agency/policy-editor": PolicyEditorPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,

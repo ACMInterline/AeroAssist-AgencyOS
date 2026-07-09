@@ -70,6 +70,8 @@ Phase 51.2 adds the `request_segment_service_scopes` collection. Request Intake 
 
 Phase 52.1 adds the `reference_data_domains` collection. Reference Data Engine Foundation supplies governed domain metadata for airline operational knowledge production, including records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. It prepares scenario testing and real airline data population without provider integrations, AI, live evaluation, pricing calculation, background workers, old `/admin` routes, or automation.
 
+Phase 52.2 adds the `knowledge_import_templates` collection. Knowledge Import Templates Foundation supplies reusable schemas for airline manual, operational bulletin, policy update, capability table, pricing table, service parameter table, reference data table, evidence pack, and exception rule pack population. It does not parse files, scrape, call providers, use AI, run background workers, or automatically import data.
+
 Phase 52.3 adds the `visual_policy_editor_cards` collection. Visual Policy Editor Foundation supplies no-code airline service policy-card metadata for support status, limits, route/aircraft/cabin/date/weather restrictions, documents, approvals, warnings, evidence, governance, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, call providers, use AI, run workers, add old `/admin` routes, or override human authority.
 
 Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
@@ -101,6 +103,7 @@ All routes are read-only visualization routes.
 - 51.1 Service Parameter Taxonomy Integration Foundation - implemented as metadata-only measurable parameter definitions
 - 51.2 Request Intake Segment-Service Precision Foundation - implemented as metadata-only segment-first passenger + segment + service scopes
 - 52.1 Reference Data Engine Foundation - implemented as metadata-only governed reference domains for airline operational knowledge production
+- 52.2 Knowledge Import Templates Foundation - implemented as metadata-only reusable schemas for future airline knowledge population
 - 52.3 Visual Policy Editor Foundation - implemented as metadata-only no-code airline service policy cards for human-reviewed operational policy production
 
 ## Explicitly Excluded
@@ -131,5 +134,7 @@ Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate
 Phase 51.2 does not evaluate policy, calculate pricing, search flights, book, ticket, issue EMDs, call providers, generate AI or LLM output, run background workers, send automatically, convert trips automatically, or replace request/trip boundaries. It only preserves segment-first passenger + segment + service intake metadata.
 
 Phase 52.1 does not implement provider integrations, AI, live evaluation, pricing calculation, background workers, old `/admin` routes, automatic promotion, or operational automation. It only stores governed reference domain metadata, and human authority remains final.
+
+Phase 52.2 does not implement parsing execution, scraping, AI, provider integrations, background workers, automatic import, automatic promotion, or operational automation. It only stores reusable import-template metadata, and human authority remains final.
 
 Phase 52.3 does not implement policy execution, rule evaluation, pricing calculation, provider integrations, AI, background workers, old `/admin` routes, automatic policy publishing, or operational automation. It only stores structured policy-card metadata, and human authority remains final.

@@ -58,6 +58,10 @@ Phase 51.2 adds `request_segment_service_scopes` as segment-first intake metadat
 
 Phase 52.1 adds `reference_data_domains` as governed domain metadata that Service Parameter Taxonomies may reference for allowed values, aliases, normalization rules, validation rules, and import-template references.
 
+## Knowledge Import Templates Alignment
+
+Phase 52.2 adds `knowledge_import_templates` as reusable schemas for future Service Parameter Taxonomy population. Templates may describe required columns, mapping rules, validation metadata, sample rows, accepted file types, review requirements, and governance links, but they do not parse files, execute imports, scrape, call providers, use AI/LLM output, run workers, or automatically promote taxonomy records.
+
 ## Visual Policy Editor Alignment
 
 Phase 52.3 adds `visual_policy_editor_cards` as no-code airline service policy-card metadata. Cards may reference Service Parameter Taxonomies through `service_parameter_taxonomy_links`, but they do not execute policy logic, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run workers, or replace human review.

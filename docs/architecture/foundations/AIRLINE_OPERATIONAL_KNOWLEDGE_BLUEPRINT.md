@@ -32,6 +32,8 @@ Phase 51.3 implements metadata-only Client & Passenger Master Workspace Consolid
 
 Phase 52.1 implements metadata-only Reference Data Engine Foundation. It adds governed reference domains for airline operational knowledge production, scenario testing, and future real airline data population. It does not add new intelligence, provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or operational automation. Human authority remains final.
 
+Phase 52.2 implements metadata-only Knowledge Import Templates Foundation. It adds reusable airline knowledge population schemas for manual airline sources, operational bulletins, policy updates, capability/pricing/service parameter/reference tables, evidence packs, and exception rule packs. It does not parse files, scrape, use AI/LLM generation, call providers, run background workers, automatically import data, or replace human review.
+
 Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds structured airline service policy cards with no-code sections for overview, support status, limits, route/aircraft/cabin/date/weather restrictions, documents, approvals, warnings, evidence, governance, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, call providers, use AI/LLM generation, run background workers, create old `/admin` routes, or replace human authority.
 
 ## Chapter 50 Phase Map
@@ -51,6 +53,7 @@ Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds str
 - 51.2 Request Intake Segment-Service Precision
 - 51.3 Client & Passenger Master Workspace Consolidation
 - 52.1 Reference Data Engine Foundation
+- 52.2 Knowledge Import Templates Foundation
 - 52.3 Visual Policy Editor Foundation
 
 ## Five Pillars
@@ -91,6 +94,12 @@ Parameter taxonomies do not create new intelligence, evaluate rules, calculate p
 
 Phase 52.1 adds governed reference domains for airlines, airports, countries, cities, currencies, aircraft, cabins, seats, passenger types, service codes, SSR/OSI, RFIC/RFISC, pets, documents, vaccinations, mobility, medical equipment, routes, flights, fare bundles, pricing metadata, temperature zones, seasonal restrictions, and travel purposes.
 
+## Knowledge Import Templates
+
+Phase 52.2 adds `knowledge_import_templates` for reusable metadata-only airline knowledge population schemas. Templates store template type, version, target knowledge domain, target collections, required columns, optional columns, validation rules, mapping rules, sample rows, accepted file types, import scope, review requirement, and governance links.
+
+Templates prepare human-reviewed data population and scenario testing. They are not parsers, scrapers, import executors, AI generators, provider integrations, background workers, or final operational authority.
+
 ## Visual Policy Editor
 
 Phase 52.3 adds `visual_policy_editor_cards` for metadata-only airline service policy-card production. Cards store airline, policy family, service family, service codes, status, effective dates, support status, limits, restrictions, required documents, approvals, warnings, client messages, internal notes, evidence links, knowledge governance links, and service parameter taxonomy links.
@@ -118,6 +127,7 @@ A decision pack should include:
 - Request Segment Service Scope metadata from Phase 51.2 when available.
 - Passenger Master reusable service history and known operational profile metadata from Phase 51.3 when available.
 - Reference Data Domain records and normalization metadata from Phase 52.1 when available.
+- Knowledge Import Template records from Phase 52.2 when available.
 - Visual Policy Editor card metadata from Phase 52.3 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.

@@ -21180,6 +21180,81 @@ class ReferenceDataDomainUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class KnowledgeImportTemplate(BaseDocument):
+    agency_id: Optional[str] = None
+    template_reference: str
+    template_name: str
+    template_type: str
+    template_version: str = "1.0"
+    target_knowledge_domain: str
+    target_collections: List[str] = Field(default_factory=list)
+    required_columns: List[Dict[str, Any]] = Field(default_factory=list)
+    optional_columns: List[Dict[str, Any]] = Field(default_factory=list)
+    validation_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    mapping_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    sample_rows: List[Dict[str, Any]] = Field(default_factory=list)
+    accepted_file_types: List[str] = Field(default_factory=list)
+    import_scope: str = "platform_governed"
+    review_required: bool = True
+    governance_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    knowledge_import_templates_foundation: bool = True
+    parsing_execution_disabled: bool = True
+    scraping_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class KnowledgeImportTemplateCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    template_reference: Optional[str] = None
+    template_name: str
+    template_type: str
+    template_version: str = "1.0"
+    target_knowledge_domain: str
+    target_collections: List[str] = Field(default_factory=list)
+    required_columns: List[Dict[str, Any]] = Field(default_factory=list)
+    optional_columns: List[Dict[str, Any]] = Field(default_factory=list)
+    validation_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    mapping_rules: List[Dict[str, Any]] = Field(default_factory=list)
+    sample_rows: List[Dict[str, Any]] = Field(default_factory=list)
+    accepted_file_types: List[str] = Field(default_factory=list)
+    import_scope: str = "platform_governed"
+    review_required: bool = True
+    governance_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class KnowledgeImportTemplateUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    template_reference: Optional[str] = None
+    template_name: Optional[str] = None
+    template_type: Optional[str] = None
+    template_version: Optional[str] = None
+    target_knowledge_domain: Optional[str] = None
+    target_collections: Optional[List[str]] = None
+    required_columns: Optional[List[Dict[str, Any]]] = None
+    optional_columns: Optional[List[Dict[str, Any]]] = None
+    validation_rules: Optional[List[Dict[str, Any]]] = None
+    mapping_rules: Optional[List[Dict[str, Any]]] = None
+    sample_rows: Optional[List[Dict[str, Any]]] = None
+    accepted_file_types: Optional[List[str]] = None
+    import_scope: Optional[str] = None
+    review_required: Optional[bool] = None
+    governance_links: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

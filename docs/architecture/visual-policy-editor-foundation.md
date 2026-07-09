@@ -31,5 +31,6 @@ Visual Policy Editor cards can reference:
 - knowledge governance/version/release metadata
 - service parameter taxonomy records
 - reference data domains for future controlled values
+- knowledge import template records for future structured data population
 
 These links are stored as metadata only. The editor prepares the system for scenario testing, real airline data population, and future governed production workflows without introducing executable policy logic.

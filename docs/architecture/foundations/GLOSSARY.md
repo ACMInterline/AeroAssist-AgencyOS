@@ -68,6 +68,10 @@ A Phase 51.0 metadata case that consolidates the completed Chapter 50 pipeline f
 
 A Phase 52.1 metadata-only foundation that stores governed reference domains for airline operational knowledge production. Domains contain records, aliases, normalization rules, validation rules, import-template references, governance status, review status, and active state. It prepares scenario testing and real airline data population without provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or automation. Human authority remains final.
 
+## Knowledge Import Templates
+
+A Phase 52.2 metadata-only foundation that stores reusable schemas for airline knowledge population. Templates contain template type, version, target knowledge domain, target collections, required columns, optional columns, validation rules, mapping rules, sample rows, accepted file types, import scope, review requirements, and governance links. It does not parse files, scrape, use AI/LLM generation, call providers, run background workers, automatically import data, or replace human review.
+
 ## Visual Policy Editor
 
 A Phase 52.3 metadata-only foundation that stores structured airline service policy cards. Cards contain airline, policy family, service family, service codes, status, effective dates, support status, limits, restrictions, required documents, approval requirements, warnings, client messages, internal notes, evidence links, knowledge governance links, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, use AI/LLM generation, call providers, run background workers, add old `/admin` routes, or replace human authority.

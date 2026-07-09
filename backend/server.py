@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
+from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -55,6 +55,7 @@ from services.service_parameter_taxonomy_service import AMOUNT_TYPES, APPROVAL_S
 from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FIELDS as REQUEST_SEGMENT_SERVICE_KNOWLEDGE_LINK_FIELDS, OPERATIONAL_FLAG_FIELDS as REQUEST_SEGMENT_SERVICE_OPERATIONAL_FLAG_FIELDS, REQUEST_SEGMENT_SERVICE_READINESS_STATUSES, REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES, REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES
 from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
 from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
+from services.knowledge_import_template_service import FOUNDATION_PHASE_LABEL as KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL, IMPORT_SCOPES as KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES, KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION, TEMPLATE_TYPES as KNOWLEDGE_IMPORT_TEMPLATE_TYPES
 from services.visual_policy_editor_service import PHASE_LABEL, POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
@@ -1268,6 +1269,43 @@ async def readiness() -> dict:
             item.get("domain_code")
             for item in reference_data_domain_records
             if item.get("domain_code") in SUPPORTED_REFERENCE_DOMAIN_CODES
+        }
+    )
+    knowledge_import_template_records = await database.collection(KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION).find_many()
+    knowledge_import_template_count = len(knowledge_import_template_records)
+    knowledge_import_template_active_count = len([item for item in knowledge_import_template_records if not item.get("archived")])
+    knowledge_import_template_type_counts = {
+        template_type: len([item for item in knowledge_import_template_records if item.get("template_type") == template_type])
+        for template_type in KNOWLEDGE_IMPORT_TEMPLATE_TYPES
+    }
+    knowledge_import_template_import_scope_counts = {
+        import_scope: len([item for item in knowledge_import_template_records if item.get("import_scope") == import_scope])
+        for import_scope in KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES
+    }
+    knowledge_import_template_required_column_count = sum(
+        len(item.get("required_columns") or []) for item in knowledge_import_template_records
+    )
+    knowledge_import_template_optional_column_count = sum(
+        len(item.get("optional_columns") or []) for item in knowledge_import_template_records
+    )
+    knowledge_import_template_validation_rule_count = sum(
+        len(item.get("validation_rules") or []) for item in knowledge_import_template_records
+    )
+    knowledge_import_template_mapping_rule_count = sum(
+        len(item.get("mapping_rules") or []) for item in knowledge_import_template_records
+    )
+    knowledge_import_template_sample_row_count = sum(len(item.get("sample_rows") or []) for item in knowledge_import_template_records)
+    knowledge_import_template_governance_link_count = sum(
+        len(item.get("governance_links") or []) for item in knowledge_import_template_records
+    )
+    knowledge_import_template_review_required_count = len(
+        [item for item in knowledge_import_template_records if item.get("review_required") is True]
+    )
+    knowledge_import_template_type_coverage_count = len(
+        {
+            item.get("template_type")
+            for item in knowledge_import_template_records
+            if item.get("template_type") in KNOWLEDGE_IMPORT_TEMPLATE_TYPES
         }
     )
     visual_policy_editor_card_records = await database.collection(VISUAL_POLICY_EDITOR_CARDS_COLLECTION).find_many()
@@ -3290,6 +3328,47 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.1 creates a metadata-only Reference Data Engine for airline operational knowledge production. It stores supported domain records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. It does not add provider integrations, AI, live evaluation, pricing calculation, background workers, or old /admin routes. Human authority remains final.",
         },
+        "knowledge_import_templates_foundation": {
+            "foundation_phase": KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL,
+            "knowledge_import_templates_enabled": True,
+            "knowledge_import_templates_collection_enabled": True,
+            "platform_knowledge_import_templates_metadata_crud_enabled": True,
+            "agency_import_templates_metadata_crud_enabled": True,
+            "platform_knowledge_import_templates_ui_enabled": True,
+            "agency_import_templates_ui_enabled": True,
+            "template_types": KNOWLEDGE_IMPORT_TEMPLATE_TYPES,
+            "import_scopes": KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES,
+            "required_columns_metadata_enabled": True,
+            "optional_columns_metadata_enabled": True,
+            "validation_rules_metadata_enabled": True,
+            "mapping_rules_metadata_enabled": True,
+            "sample_rows_metadata_enabled": True,
+            "accepted_file_types_metadata_enabled": True,
+            "governance_links_metadata_enabled": True,
+            "review_required_metadata_enabled": True,
+            "metadata_only": True,
+            "parsing_execution_disabled": True,
+            "scraping_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "provider_integrations_disabled": True,
+            "human_authority_final": True,
+            "knowledge_import_template_count": knowledge_import_template_count,
+            "knowledge_import_template_active_count": knowledge_import_template_active_count,
+            "knowledge_import_template_type_counts": knowledge_import_template_type_counts,
+            "knowledge_import_template_import_scope_counts": knowledge_import_template_import_scope_counts,
+            "knowledge_import_template_required_column_count": knowledge_import_template_required_column_count,
+            "knowledge_import_template_optional_column_count": knowledge_import_template_optional_column_count,
+            "knowledge_import_template_validation_rule_count": knowledge_import_template_validation_rule_count,
+            "knowledge_import_template_mapping_rule_count": knowledge_import_template_mapping_rule_count,
+            "knowledge_import_template_sample_row_count": knowledge_import_template_sample_row_count,
+            "knowledge_import_template_governance_link_count": knowledge_import_template_governance_link_count,
+            "knowledge_import_template_review_required_count": knowledge_import_template_review_required_count,
+            "knowledge_import_template_supported_type_count": len(KNOWLEDGE_IMPORT_TEMPLATE_TYPES),
+            "knowledge_import_template_type_coverage_count": knowledge_import_template_type_coverage_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 52.2 creates metadata-only Knowledge Import Templates for future airline knowledge population. It stores reusable column, validation, mapping, sample-row, accepted-file-type, scope, review, and governance metadata without parsing execution, scraping, AI, background workers, or provider integrations. Human authority remains final.",
+        },
         "visual_policy_editor_foundation": {
             "visual_policy_editor_enabled": True,
             "visual_policy_editor_cards_collection_enabled": True,
@@ -5281,6 +5360,7 @@ app.include_router(platform_airline_recommendations.router)
 app.include_router(platform_intelligent_offer_builder.router)
 app.include_router(platform_operational_intelligence_cases.router)
 app.include_router(platform_reference_data_engine.router)
+app.include_router(platform_knowledge_import_templates.router)
 app.include_router(platform_visual_policy_editor.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
@@ -5366,6 +5446,7 @@ app.include_router(agency_airline_recommendations.router)
 app.include_router(agency_intelligent_offer_builder.router)
 app.include_router(agency_operational_intelligence_cases.router)
 app.include_router(agency_reference_data_engine.router)
+app.include_router(agency_knowledge_import_templates.router)
 app.include_router(agency_visual_policy_editor.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)

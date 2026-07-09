@@ -2260,6 +2260,10 @@ Phase 51.3 adds the metadata-only Client & Passenger Master Workspace Consolidat
 
 Phase 52.1 adds the metadata-only Reference Data Engine Foundation. It registers `reference_data_domains`, platform and agency reference data engine routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage for governed reference domains used in airline operational knowledge production. It prepares scenario testing and real airline data population without adding provider integrations, AI/LLM generation, live evaluation, pricing calculation, booking, ticketing, background workers, old `/admin` routes, or automatic authority over humans.
 
+## Implemented Phase 52.2
+
+Phase 52.2 adds the metadata-only Knowledge Import Templates Foundation. It registers `knowledge_import_templates`, platform and agency import-template routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage for reusable airline knowledge population schemas. It stores template types, target domains, target collections, required/optional columns, validation rules, mapping rules, sample rows, accepted file types, import scope, review requirements, and governance links without parsing execution, scraping, AI/LLM generation, provider integrations, background workers, automatic imports, or replacing human authority.
+
 ## Implemented Phase 52.3
 
 Phase 52.3 adds the metadata-only Visual Policy Editor Foundation. It registers `visual_policy_editor_cards`, platform Visual Policy Editor routes, agency Policy Editor routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage for structured airline service policy-card metadata. It provides no-code sections for overview, support status, limits, route/aircraft/cabin/date/weather restrictions, documents, approvals, warnings, evidence, governance, and service parameter taxonomy links without executing policies, evaluating rules, calculating pricing, using AI/LLM generation, calling providers, running background workers, creating old `/admin` routes, or replacing human authority.

@@ -49,3 +49,5 @@ Phase 51.2 adds Request Segment Service Scopes as metadata-only intake precision
 ## Reference Data Domains
 
 Phase 52.1 adds Reference Data Domains as metadata-only operational vocabulary records for airline knowledge production. They prepare scenario testing and real airline data population while keeping human governance final.
+
+Phase 52.2 adds Knowledge Import Templates as metadata-only schemas for airline knowledge population. They define columns, mappings, validation metadata, samples, accepted file types, review requirements, and governance links, but they must not parse files, scrape, run AI, call providers, launch workers, or automatically import/promote data.

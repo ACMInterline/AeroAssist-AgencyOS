@@ -30,6 +30,10 @@ The service also returns metadata-only boundary flags showing that provider inte
 
 Phase 52.1 does not add new intelligence. It supplies governed reference domains that later airline operational knowledge population and scenario testing can reuse.
 
+## Knowledge Import Template Relationship
+
+Phase 52.2 adds `knowledge_import_templates` as reusable metadata schemas for future reference data and airline knowledge population. Reference Data Engine domains may point to import-template references, but templates do not parse files, scrape, use AI, call providers, run workers, automatically import data, or replace human review.
+
 ## Visual Policy Editor Relationship
 
 Phase 52.3 adds `visual_policy_editor_cards` as structured airline service policy-card metadata. Visual Policy Editor cards may use Reference Data Engine domains for controlled values in future data population workflows, but Phase 52.3 does not execute policies, evaluate rules, calculate pricing, call providers, use AI/LLM generation, run background workers, create old `/admin` routes, or replace human authority.
