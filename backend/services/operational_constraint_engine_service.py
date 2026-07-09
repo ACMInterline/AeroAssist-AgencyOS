@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, new_id
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 OPERATIONAL_CONSTRAINT_COLLECTION = "operational_constraints"
 
 CONSTRAINT_STATUSES = [

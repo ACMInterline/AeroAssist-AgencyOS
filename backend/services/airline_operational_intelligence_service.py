@@ -6,7 +6,7 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 

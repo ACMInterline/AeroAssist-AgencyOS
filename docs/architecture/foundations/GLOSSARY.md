@@ -68,6 +68,10 @@ A Phase 51.0 metadata case that consolidates the completed Chapter 50 pipeline f
 
 A Phase 52.1 metadata-only foundation that stores governed reference domains for airline operational knowledge production. Domains contain records, aliases, normalization rules, validation rules, import-template references, governance status, review status, and active state. It prepares scenario testing and real airline data population without provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or automation. Human authority remains final.
 
+## Visual Policy Editor
+
+A Phase 52.3 metadata-only foundation that stores structured airline service policy cards. Cards contain airline, policy family, service family, service codes, status, effective dates, support status, limits, restrictions, required documents, approval requirements, warnings, client messages, internal notes, evidence links, knowledge governance links, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, use AI/LLM generation, call providers, run background workers, add old `/admin` routes, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

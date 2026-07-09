@@ -37,6 +37,7 @@ import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPag
 import RecommendationsPage from "./pages/agency/RecommendationsPage"
 import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPage"
 import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
+import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -132,6 +133,7 @@ import PlatformOperationalConstraintsPage from "./pages/platform/OperationalCons
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
+import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -273,6 +275,7 @@ const routes = {
   "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
   "/platform/reference-data-engine": PlatformReferenceDataEnginePage,
+  "/platform/visual-policy-editor": PlatformVisualPolicyEditorPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -353,6 +356,7 @@ const routes = {
   "/agency/recommendations": RecommendationsPage,
   "/agency/intelligence-cases": IntelligenceCasesPage,
   "/agency/reference-data-engine": AgencyReferenceDataEnginePage,
+  "/agency/policy-editor": PolicyEditorPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

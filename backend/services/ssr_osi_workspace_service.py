@@ -16,7 +16,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 SSR_OSI_WORKSPACE_COLLECTION = "ssr_osi_workspaces"
 
 SSR_OSI_OPERATIONAL_STATUSES = [item.value for item in SsrOsiOperationalStatus]

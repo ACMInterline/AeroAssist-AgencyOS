@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -150,6 +150,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate, ReferenceDataEngineService, reference_data_domains, /api/platform/reference-data-engine, /api/agencies/{agency_id}/reference-data-engine, /platform/reference-data-engine, /agency/reference-data-engine",
         "status": "foundation adopted",
         "action": "Create metadata-only reference domains for airline operational knowledge production with records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. Phase 52.1 does not add provider integrations, AI, live evaluation, pricing calculation, background workers, old /admin routes, or automatic authority over humans.",
+    },
+    {
+        "category": "Visual Policy Editor",
+        "concept": "No-code airline service policy card metadata",
+        "supplementary_concept": "policy card, airline, policy family, service family, service codes, support status, limits, route/aircraft/cabin/date/weather restrictions, required documents, approvals, warnings, evidence, governance, taxonomy links",
+        "current_equivalent": "VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate, VisualPolicyEditorService, visual_policy_editor_cards, /api/platform/visual-policy-editor, /api/agencies/{agency_id}/policy-editor, /platform/visual-policy-editor, /agency/policy-editor",
+        "status": "foundation adopted",
+        "action": "Create metadata-only visual policy editor cards for airline service policy production. Phase 52.3 does not execute policies, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run background workers, create old /admin routes, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -788,6 +796,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/reference-data-engine", "agencyos": "/platform/reference-data-engine"},
         {"supplementary": "/agent/reference-data-engine", "agencyos": "/agency/reference-data-engine"},
         {"supplementary": "/agent/reference-data", "agencyos": "/agency/reference-data-engine"},
+        {"supplementary": "/admin/visual-policy-editor", "agencyos": "/platform/visual-policy-editor"},
+        {"supplementary": "/agent/policy-editor", "agencyos": "/agency/policy-editor"},
+        {"supplementary": "/agent/visual-policy-editor", "agencyos": "/agency/policy-editor"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -995,6 +1006,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "ReferenceDataDomain",
             "ReferenceDataDomainCreate",
             "ReferenceDataDomainUpdate",
+            "VisualPolicyEditorCard",
+            "VisualPolicyEditorCardCreate",
+            "VisualPolicyEditorCardUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1075,6 +1089,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Request intake segment-service precision foundation built in Phase 51.2",
             "Client passenger master workspace foundation built in Phase 51.3",
             "Reference data engine foundation built in Phase 52.1",
+            "Visual policy editor foundation built in Phase 52.3",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgeAcquisition, AirlineKnowledgeAcquisitionCreate, AirlineKnowledgeAcquisitionUpdate, new_id
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 AIRLINE_KNOWLEDGE_ACQUISITION_COLLECTION = "airline_knowledge_acquisitions"
 
 ACQUISITION_STATUSES = [

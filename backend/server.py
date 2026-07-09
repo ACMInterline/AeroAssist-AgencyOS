@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, platform_client_passenger_master, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies
+from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -54,7 +54,8 @@ from services.operational_intelligence_case_service import OPERATIONAL_INTELLIGE
 from services.service_parameter_taxonomy_service import AMOUNT_TYPES, APPROVAL_STATUS_OPTIONS, EVALUATION_STATUS_OPTIONS, KNOWLEDGE_GRAPH_LINK_FIELDS as TAXONOMY_KNOWLEDGE_GRAPH_LINK_FIELDS, PASSENGER_ASSISTANCE_PARAMETER_FIELDS, PETS_ANIMALS_PARAMETER_FIELDS, PRICING_CATEGORIES, PRICING_FARE_BUNDLES, PRICING_FLIGHT_TYPES, PRICING_PARAMETER_FIELDS, PRICING_ROUTE_TYPES, PRICING_UNITS, PRICING_WAY_VALUES, RESTRICTION_STATUS_OPTIONS, ROUTE_AIRCRAFT_CABIN_PARAMETER_FIELDS, SERVICE_PARAMETER_TAXONOMY_STATUSES, SPECIAL_ITEM_PARAMETER_FIELDS, SUPPORT_STATUS_OPTIONS, TAXONOMY_APPROVAL_STATUSES, TAXONOMY_REVIEW_STATUSES
 from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FIELDS as REQUEST_SEGMENT_SERVICE_KNOWLEDGE_LINK_FIELDS, OPERATIONAL_FLAG_FIELDS as REQUEST_SEGMENT_SERVICE_OPERATIONAL_FLAG_FIELDS, REQUEST_SEGMENT_SERVICE_READINESS_STATUSES, REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES, REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES
 from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
-from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, PHASE_LABEL, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
+from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
+from services.visual_policy_editor_service import PHASE_LABEL, POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -71,7 +72,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 52.1 reference data engine foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 52.3 visual policy editor foundation.",
 )
 
 app.add_middleware(
@@ -1267,6 +1268,34 @@ async def readiness() -> dict:
             item.get("domain_code")
             for item in reference_data_domain_records
             if item.get("domain_code") in SUPPORTED_REFERENCE_DOMAIN_CODES
+        }
+    )
+    visual_policy_editor_card_records = await database.collection(VISUAL_POLICY_EDITOR_CARDS_COLLECTION).find_many()
+    visual_policy_editor_card_count = len(visual_policy_editor_card_records)
+    visual_policy_editor_active_card_count = len(
+        [item for item in visual_policy_editor_card_records if not item.get("archived") and item.get("status") != "archived"]
+    )
+    visual_policy_editor_status_counts = {
+        status: len([item for item in visual_policy_editor_card_records if item.get("status") == status])
+        for status in POLICY_CARD_STATUSES
+    }
+    visual_policy_editor_support_status_counts = {
+        status: len([item for item in visual_policy_editor_card_records if item.get("support_status") == status])
+        for status in VISUAL_POLICY_SUPPORT_STATUSES
+    }
+    visual_policy_editor_service_code_count = sum(len(item.get("service_codes") or []) for item in visual_policy_editor_card_records)
+    visual_policy_editor_evidence_link_count = sum(len(item.get("evidence_links") or []) for item in visual_policy_editor_card_records)
+    visual_policy_editor_governance_link_count = sum(
+        len(item.get("knowledge_governance_links") or []) for item in visual_policy_editor_card_records
+    )
+    visual_policy_editor_taxonomy_link_count = sum(
+        len(item.get("service_parameter_taxonomy_links") or []) for item in visual_policy_editor_card_records
+    )
+    visual_policy_editor_family_coverage_count = len(
+        {
+            item.get("policy_family")
+            for item in visual_policy_editor_card_records
+            if item.get("policy_family") in POLICY_FAMILIES
         }
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
@@ -3261,6 +3290,49 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.1 creates a metadata-only Reference Data Engine for airline operational knowledge production. It stores supported domain records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. It does not add provider integrations, AI, live evaluation, pricing calculation, background workers, or old /admin routes. Human authority remains final.",
         },
+        "visual_policy_editor_foundation": {
+            "visual_policy_editor_enabled": True,
+            "visual_policy_editor_cards_collection_enabled": True,
+            "platform_visual_policy_editor_metadata_crud_enabled": True,
+            "agency_policy_editor_metadata_crud_enabled": True,
+            "platform_visual_policy_editor_ui_enabled": True,
+            "agency_policy_editor_ui_enabled": True,
+            "no_code_policy_sections_enabled": True,
+            "overview_section_enabled": True,
+            "support_status_section_enabled": True,
+            "limits_section_enabled": True,
+            "restrictions_section_enabled": True,
+            "documents_section_enabled": True,
+            "approvals_section_enabled": True,
+            "warnings_section_enabled": True,
+            "evidence_section_enabled": True,
+            "governance_section_enabled": True,
+            "service_parameter_taxonomy_link_section_enabled": True,
+            "policy_families": POLICY_FAMILIES,
+            "policy_card_statuses": POLICY_CARD_STATUSES,
+            "support_statuses": VISUAL_POLICY_SUPPORT_STATUSES,
+            "metadata_only": True,
+            "policy_execution_disabled": True,
+            "rule_evaluation_disabled": True,
+            "pricing_calculation_disabled": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "old_admin_routes_disabled": True,
+            "human_authority_final": True,
+            "visual_policy_editor_card_count": visual_policy_editor_card_count,
+            "visual_policy_editor_active_card_count": visual_policy_editor_active_card_count,
+            "visual_policy_editor_status_counts": visual_policy_editor_status_counts,
+            "visual_policy_editor_support_status_counts": visual_policy_editor_support_status_counts,
+            "visual_policy_editor_service_code_count": visual_policy_editor_service_code_count,
+            "visual_policy_editor_evidence_link_count": visual_policy_editor_evidence_link_count,
+            "visual_policy_editor_governance_link_count": visual_policy_editor_governance_link_count,
+            "visual_policy_editor_taxonomy_link_count": visual_policy_editor_taxonomy_link_count,
+            "visual_policy_editor_supported_family_count": len(POLICY_FAMILIES),
+            "visual_policy_editor_family_coverage_count": visual_policy_editor_family_coverage_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 52.3 creates a metadata-only Visual Policy Editor for airline service policy cards. It stores no-code sections for support status, limits, restrictions, documents, approvals, warnings, evidence, governance, and taxonomy links without policy execution, rule evaluation, pricing calculation, provider integrations, AI, workers, or legacy admin routes. Human authority remains final.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5209,6 +5281,7 @@ app.include_router(platform_airline_recommendations.router)
 app.include_router(platform_intelligent_offer_builder.router)
 app.include_router(platform_operational_intelligence_cases.router)
 app.include_router(platform_reference_data_engine.router)
+app.include_router(platform_visual_policy_editor.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -5293,6 +5366,7 @@ app.include_router(agency_airline_recommendations.router)
 app.include_router(agency_intelligent_offer_builder.router)
 app.include_router(agency_operational_intelligence_cases.router)
 app.include_router(agency_reference_data_engine.router)
+app.include_router(agency_visual_policy_editor.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

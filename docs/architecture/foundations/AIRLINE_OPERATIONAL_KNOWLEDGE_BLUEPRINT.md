@@ -32,6 +32,8 @@ Phase 51.3 implements metadata-only Client & Passenger Master Workspace Consolid
 
 Phase 52.1 implements metadata-only Reference Data Engine Foundation. It adds governed reference domains for airline operational knowledge production, scenario testing, and future real airline data population. It does not add new intelligence, provider integrations, AI/LLM generation, live evaluation, pricing calculation, background workers, old `/admin` routes, or operational automation. Human authority remains final.
 
+Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds structured airline service policy cards with no-code sections for overview, support status, limits, route/aircraft/cabin/date/weather restrictions, documents, approvals, warnings, evidence, governance, and service parameter taxonomy links. It does not execute policies, evaluate rules, calculate pricing, call providers, use AI/LLM generation, run background workers, create old `/admin` routes, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -49,6 +51,7 @@ Phase 52.1 implements metadata-only Reference Data Engine Foundation. It adds go
 - 51.2 Request Intake Segment-Service Precision
 - 51.3 Client & Passenger Master Workspace Consolidation
 - 52.1 Reference Data Engine Foundation
+- 52.3 Visual Policy Editor Foundation
 
 ## Five Pillars
 
@@ -88,6 +91,12 @@ Parameter taxonomies do not create new intelligence, evaluate rules, calculate p
 
 Phase 52.1 adds governed reference domains for airlines, airports, countries, cities, currencies, aircraft, cabins, seats, passenger types, service codes, SSR/OSI, RFIC/RFISC, pets, documents, vaccinations, mobility, medical equipment, routes, flights, fare bundles, pricing metadata, temperature zones, seasonal restrictions, and travel purposes.
 
+## Visual Policy Editor
+
+Phase 52.3 adds `visual_policy_editor_cards` for metadata-only airline service policy-card production. Cards store airline, policy family, service family, service codes, status, effective dates, support status, limits, restrictions, required documents, approvals, warnings, client messages, internal notes, evidence links, knowledge governance links, and service parameter taxonomy links.
+
+Cards are a human-reviewed editing and traceability surface. They are not policy execution, rule evaluation, pricing calculation, provider integration, AI generation, worker automation, or final operational authority.
+
 Reference Data Domains provide records, aliases, normalization rules, validation rules, import-template references, governance status, and review status. They prepare scenario testing and real airline data population, but they do not evaluate policies, calculate prices, call providers, generate AI output, or automate operational decisions.
 
 ## Decision Pack Concept
@@ -109,6 +118,7 @@ A decision pack should include:
 - Request Segment Service Scope metadata from Phase 51.2 when available.
 - Passenger Master reusable service history and known operational profile metadata from Phase 51.3 when available.
 - Reference Data Domain records and normalization metadata from Phase 52.1 when available.
+- Visual Policy Editor card metadata from Phase 52.3 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

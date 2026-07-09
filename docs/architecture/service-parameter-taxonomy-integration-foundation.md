@@ -58,4 +58,8 @@ Phase 51.2 adds `request_segment_service_scopes` as segment-first intake metadat
 
 Phase 52.1 adds `reference_data_domains` as governed domain metadata that Service Parameter Taxonomies may reference for allowed values, aliases, normalization rules, validation rules, and import-template references.
 
+## Visual Policy Editor Alignment
+
+Phase 52.3 adds `visual_policy_editor_cards` as no-code airline service policy-card metadata. Cards may reference Service Parameter Taxonomies through `service_parameter_taxonomy_links`, but they do not execute policy logic, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run workers, or replace human review.
+
 Reference Data Domains are not parameter taxonomies and do not evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate operational decisions. Human authority remains final for both taxonomy governance and reference-domain governance.

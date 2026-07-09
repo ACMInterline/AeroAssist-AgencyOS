@@ -21,7 +21,7 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_52_1_reference_data_engine_foundation"
+EXPECTED_PHASE = "phase_52_3_visual_policy_editor_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}

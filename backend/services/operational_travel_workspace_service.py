@@ -13,7 +13,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 
 WORKSPACE_COLLECTION = "operational_travel_workspaces"
 WORKSPACE_TYPES = ["general", "request", "trip", "offer", "booking", "ticketing", "documents", "disruption", "service_case"]

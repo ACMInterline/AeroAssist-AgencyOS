@@ -9,7 +9,7 @@ from models import DocumentWorkspace, DocumentWorkspaceCreate, DocumentWorkspace
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_52_1_reference_data_engine_foundation"
+EXPECTED_PHASE = "phase_52_3_visual_policy_editor_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 DOCUMENT_STATUSES = {
     "draft_metadata",

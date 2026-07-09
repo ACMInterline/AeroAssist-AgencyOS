@@ -21180,6 +21180,95 @@ class ReferenceDataDomainUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class VisualPolicyEditorCard(BaseDocument):
+    agency_id: Optional[str] = None
+    card_reference: str
+    airline: str
+    policy_family: str
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    status: str = "draft"
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    support_status: str = "unknown"
+    limits: Dict[str, Any] = Field(default_factory=dict)
+    restrictions: Dict[str, Any] = Field(default_factory=dict)
+    required_documents: List[Dict[str, Any]] = Field(default_factory=list)
+    approval_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    client_messages: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    knowledge_governance_links: List[str] = Field(default_factory=list)
+    service_parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    visual_policy_editor_foundation: bool = True
+    policy_execution_disabled: bool = True
+    rule_evaluation_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    old_admin_routes_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class VisualPolicyEditorCardCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    card_reference: Optional[str] = None
+    airline: str
+    policy_family: str
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    status: str = "draft"
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    support_status: str = "unknown"
+    limits: Dict[str, Any] = Field(default_factory=dict)
+    restrictions: Dict[str, Any] = Field(default_factory=dict)
+    required_documents: List[Dict[str, Any]] = Field(default_factory=list)
+    approval_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    client_messages: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    knowledge_governance_links: List[str] = Field(default_factory=list)
+    service_parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class VisualPolicyEditorCardUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    card_reference: Optional[str] = None
+    airline: Optional[str] = None
+    policy_family: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: Optional[List[str]] = None
+    status: Optional[str] = None
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    support_status: Optional[str] = None
+    limits: Optional[Dict[str, Any]] = None
+    restrictions: Optional[Dict[str, Any]] = None
+    required_documents: Optional[List[Dict[str, Any]]] = None
+    approval_requirements: Optional[List[Dict[str, Any]]] = None
+    warnings: Optional[List[Dict[str, Any]]] = None
+    client_messages: Optional[List[Dict[str, Any]]] = None
+    internal_notes: Optional[str] = None
+    evidence_links: Optional[List[Dict[str, Any]]] = None
+    knowledge_governance_links: Optional[List[str]] = None
+    service_parameter_taxonomy_links: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class PlatformReferenceRecordCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 

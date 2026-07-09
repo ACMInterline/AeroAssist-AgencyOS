@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 
 CLIENT_MASTER_RECORDS_COLLECTION = "client_master_records"
 PASSENGER_MASTER_RECORDS_COLLECTION = "passenger_master_records"

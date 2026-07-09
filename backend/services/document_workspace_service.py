@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_1_reference_data_engine_foundation"
+PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]
