@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
+PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -142,6 +142,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalIntelligenceCase, OperationalIntelligenceCaseCreate, OperationalIntelligenceCaseUpdate, OperationalIntelligenceCaseService, operational_intelligence_cases, /api/platform/operational-intelligence-cases, /api/agencies/{agency_id}/intelligence-cases, /platform/operational-intelligence-cases, /agency/intelligence-cases",
         "status": "foundation adopted",
         "action": "Consolidate the completed Chapter 50 metadata pipeline into an end-to-end case view from passenger requirement through offer-intelligence package. Phase 51.0 adds no new intelligence and prepares scenario testing plus real airline data population without AI/LLM generation, live search, booking, ticketing, EMD issuance, provider calls, parser execution, workers, automatic sending, or replacing human authority.",
+    },
+    {
+        "category": "Service Parameter Taxonomies",
+        "concept": "Reusable measurable service parameter taxonomy layer",
+        "supplementary_concept": "service parameters, support vocabulary, evaluation vocabulary, passenger assistance parameters, pet parameters, special item parameters, route and aircraft parameters, pricing parameter metadata, knowledge graph links",
+        "current_equivalent": "ServiceParameterTaxonomy, ServiceParameterTaxonomyCreate, ServiceParameterTaxonomyUpdate, ServiceParameterTaxonomyService, service_parameter_taxonomies, /api/platform/service-parameter-taxonomies, /api/agencies/{agency_id}/service-parameter-taxonomies, /platform/service-parameter-taxonomies, /agency/service-parameter-taxonomies",
+        "status": "foundation adopted",
+        "action": "Integrate measurable service-policy parameters into the current Chapter 50/51 architecture as reusable metadata for acquisition, constraints, capability, evaluation, feasibility, recommendation, offer intelligence, and operational intelligence cases. Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or merge policy, pricing, capability, constraints, and procedures.",
     },
     {
         "category": "Platform / Agency UX",
@@ -753,6 +761,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/offer-intelligence", "agencyos": "/agency/offer-intelligence"},
         {"supplementary": "/admin/operational-intelligence-cases", "agencyos": "/platform/operational-intelligence-cases"},
         {"supplementary": "/agent/intelligence-cases", "agencyos": "/agency/intelligence-cases"},
+        {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
+        {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -946,6 +956,12 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "PassengerServiceWorkflow",
             "PassengerServiceWorkflowCreate",
             "PassengerServiceWorkflowUpdate",
+            "OperationalIntelligenceCase",
+            "OperationalIntelligenceCaseCreate",
+            "OperationalIntelligenceCaseUpdate",
+            "ServiceParameterTaxonomy",
+            "ServiceParameterTaxonomyCreate",
+            "ServiceParameterTaxonomyUpdate",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -1016,6 +1032,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline recommendation engine foundation built in Phase 50.8",
             "Intelligent offer builder integration foundation built in Phase 50.9",
             "Operational intelligence pipeline consolidation foundation built in Phase 51.0",
+            "Service parameter taxonomy integration foundation built in Phase 51.1",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

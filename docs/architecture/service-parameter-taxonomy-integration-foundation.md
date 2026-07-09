@@ -1,0 +1,51 @@
+# Phase 51.1 - Service Parameter Taxonomy Integration Foundation
+
+Phase 51.1 adds the metadata-only `service_parameter_taxonomies` collection and the `ServiceParameterTaxonomy` model family.
+
+The purpose is to define measurable service-policy parameters that can be reused across the current Chapter 50/51 architecture:
+
+- knowledge acquisition
+- operational constraints
+- knowledge normalisation and governance
+- capability matrix records
+- operational evaluations
+- passenger service feasibility records
+- airline recommendations
+- intelligent offer packages
+- operational intelligence cases
+
+## Core Boundary
+
+Service Parameter Taxonomies define fields that other operational objects may use. They do not merge Policy, Pricing, Capability, Constraints, or Procedures.
+
+Policy remains separate from Capability. Pricing remains separate from Capability and Policy. Constraints remain the metadata language for future applicability, and Procedures remain operational handling guidance.
+
+Phase 51.1 does not copy a legacy standalone policy engine. It does not introduce an old standalone `airline_policies` collection, an old `policy_evaluations` collection, PocketBase logic, `airlinePolicyEngine.js`, or `pricingEngine.js`. It does not evaluate rules, calculate prices, run recommendations, call providers, use AI/LLM logic, run background workers, book, ticket, issue EMDs, or automatically send anything.
+
+## Canonical Objects
+
+- `ServiceParameterTaxonomy`
+- `ServiceParameterTaxonomyCreate`
+- `ServiceParameterTaxonomyUpdate`
+- `ServiceParameterTaxonomyService`
+- `service_parameter_taxonomies`
+- `/api/platform/service-parameter-taxonomies`
+- `/api/agencies/{agency_id}/service-parameter-taxonomies`
+- `/platform/service-parameter-taxonomies`
+- `/agency/service-parameter-taxonomies`
+
+## Parameter Domains
+
+The taxonomy records organize measurable metadata for:
+
+- passenger assistance, including WCHR, WCHS, WCHC, WCOB, MAAS, MEDA, MEDIF, STCR, OXYG, POC, UMNR, YP, EXST, and CBBG
+- pets and animals, including PETC, AVIH, SVAN, and ESAN
+- special items and baggage, including SPEQ, BIKE, SKI, GOLF, SURF, DIVE, MUSI, FRAGILE, VALUABLE, CBBG, EXST, WEAP, and special baggage
+- route, aircraft, airport, country, cabin, seat, and aircraft-family metadata
+- pricing parameter metadata such as unit, way, route type, flight type, fare bundle, amount type, basis, formula components, applicability, refund conditions, and exchange conditions
+
+## Operational Use
+
+Taxonomies prepare the system for structured knowledge entry, future scenario testing, and real airline data population. They provide consistent measurable fields for human-reviewed records without making operational decisions.
+
+Human authority remains final.

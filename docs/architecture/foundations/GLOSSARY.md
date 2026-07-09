@@ -107,3 +107,7 @@ Medical Information Form. A medical clearance document or process used by airlin
 ## AOIE
 
 Airline Operational Intelligence Engine. The Chapter 50 advisory architecture that connects passenger service requirements to structured airline operational knowledge.
+
+## Service Parameter Taxonomy
+
+A metadata-only reusable vocabulary of measurable service fields, such as species, breed, weight, container dimensions, mobility level, wheelchair type, battery type, route type, aircraft type, cabin, pricing unit, amount type, and refund condition. It supports structured knowledge entry and future human-reviewed evaluation inputs without evaluating rules, calculating prices, calling providers, using AI/LLM logic, or automating decisions.

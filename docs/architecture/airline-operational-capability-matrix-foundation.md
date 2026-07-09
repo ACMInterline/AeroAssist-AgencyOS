@@ -80,6 +80,8 @@ Phase 50.7 consumes Operational Evaluation Results for advisory, non-Boolean pas
 
 Neither future relationship changes Phase 50.5 into an execution engine. The matrix remains an operational inventory.
 
+Phase 51.1 adds Service Parameter Taxonomies as reusable measurable field definitions that capability records may reference. Capability remains separate from Policy, Pricing, Constraints, and Procedures, and taxonomies do not evaluate passenger cases or calculate prices.
+
 ## Explicit Exclusions
 
 Phase 50.5 does not implement live rule evaluation, passenger feasibility scoring, airline recommendation ranking, AI reasoning, parser execution, pricing calculation, provider integrations, background workers, automatic publication, scraping, external API calls, booking, ticketing, EMD issuance, payment, messaging, or automation.

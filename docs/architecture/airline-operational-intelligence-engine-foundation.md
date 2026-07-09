@@ -90,6 +90,7 @@ All routes are read-only visualization routes.
 - 50.8 Airline & Itinerary Recommendation Engine Foundation - implemented as metadata-only advisory recommendation
 - 50.9 Offer Builder Intelligence Integration Foundation
 - 51.0 Operational Intelligence Pipeline Consolidation Foundation - implemented as metadata-only case consolidation
+- 51.1 Service Parameter Taxonomy Integration Foundation - implemented as metadata-only measurable parameter definitions
 
 ## Explicitly Excluded
 
@@ -113,3 +114,5 @@ Phase 50.8 does not implement live GDS search, NDC search, flight booking, ticke
 Phase 50.9 does not implement live GDS search, NDC search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, price generation, background workers, automatic client sending, external API calls, or automation.
 
 Phase 51.0 does not implement new intelligence, live flight search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, background workers, automatic client sending, external API calls, scenario execution automation, real airline data ingestion automation, or operational automation.
+
+Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate prices, execute recommendations, call providers, generate AI or LLM output, run background workers, create duplicate passenger/client/trip/offer/booking/ticket/EMD/SSR/OSI/document models, or combine Policy, Pricing, Capability, Constraints, and Procedures. It only defines reusable measurable parameters for structured knowledge entry and future human-reviewed evaluation inputs.

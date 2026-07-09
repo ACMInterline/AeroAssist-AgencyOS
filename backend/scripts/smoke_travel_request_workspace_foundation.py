@@ -15,7 +15,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
+EXPECTED_PHASE = "phase_51_1_service_parameter_taxonomy_integration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 REQUEST_TYPES = {"general", "flight", "hotel", "package", "multi_city", "group", "corporate", "leisure", "disruption", "service"}
 REQUEST_STATUSES = {"draft", "new", "triage", "open", "researching", "waiting", "quoted", "completed", "archived"}

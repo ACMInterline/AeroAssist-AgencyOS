@@ -150,6 +150,7 @@ The repository currently contains:
 - Phase 50.8: Airline and itinerary recommendation engine foundation.
 - Phase 50.9: Intelligent offer builder integration foundation.
 - Phase 51.0: Operational intelligence pipeline consolidation foundation.
+- Phase 51.1: Service parameter taxonomy integration foundation.
 
 Phase 35 navigation hotfix:
 

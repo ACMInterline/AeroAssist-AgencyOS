@@ -16866,6 +16866,380 @@ class OperationalIntelligenceCaseUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class ServiceParameterTaxonomy(BaseDocument):
+    agency_id: Optional[str] = None
+    taxonomy_reference: str
+    taxonomy_status: str = "draft"
+    taxonomy_version: Optional[str] = None
+    taxonomy_name: str
+    taxonomy_description: Optional[str] = None
+    created_by: Optional[str] = None
+    policy_family: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    beneficiary_type: Optional[str] = None
+    parameter_domain: Optional[str] = None
+    parameter_group: Optional[str] = None
+    parameter_scope: Optional[str] = None
+    support_status_options: List[str] = Field(default_factory=list)
+    evaluation_status_options: List[str] = Field(default_factory=list)
+    restriction_status_options: List[str] = Field(default_factory=list)
+    approval_status_options: List[str] = Field(default_factory=list)
+    wheelchair_mobility_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    mobility_level_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    wheelchair_device_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    battery_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    device_weight_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    airport_assistance_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    onboard_assistance_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    medical_support_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    medif_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fit_to_fly_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    stretcher_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    oxygen_poc_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    battery_duration_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    umnr_age_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    umnr_route_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    guardian_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    extra_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    passenger_of_size_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cbbg_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    adjacent_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cabin_restriction_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    extra_seat_refund_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    petc_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    avih_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    svan_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    esan_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    species_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    breed_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    breed_risk_flag_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_age_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_weight_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    container_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    container_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pet_under_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pet_on_adjacent_extra_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_purpose_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    temperature_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    seasonal_restriction_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_document_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    sports_equipment_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    musical_instrument_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fragile_valuable_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    restricted_equipment_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    special_baggage_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    item_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    item_weight_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    packaging_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    declared_value_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    permit_document_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    route_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    flight_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    airport_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    country_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    aircraft_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    aircraft_family_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cabin_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    seat_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fixed_armrest_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    under_seat_space_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    accessible_lavatory_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_units: List[str] = Field(default_factory=list)
+    pricing_way_values: List[str] = Field(default_factory=list)
+    pricing_route_types: List[str] = Field(default_factory=list)
+    pricing_flight_types: List[str] = Field(default_factory=list)
+    pricing_fare_bundles: List[str] = Field(default_factory=list)
+    pricing_categories: List[str] = Field(default_factory=list)
+    amount_types: List[str] = Field(default_factory=list)
+    pricing_basis_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_formula_components: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_applicability_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    refund_condition_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    exchange_condition_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    required_reference_collections: List[str] = Field(default_factory=list)
+    required_reference_values: List[Dict[str, Any]] = Field(default_factory=list)
+    missing_reference_notes: Optional[str] = None
+    acquisition_ids: List[str] = Field(default_factory=list)
+    normalisation_ids: List[str] = Field(default_factory=list)
+    constraint_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    intelligent_offer_package_ids: List[str] = Field(default_factory=list)
+    operational_intelligence_case_ids: List[str] = Field(default_factory=list)
+    review_status: Optional[str] = None
+    approval_status: Optional[str] = None
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    service_parameter_taxonomy_integration_foundation: bool = True
+    measurable_service_parameters_enabled: bool = True
+    current_architecture_integrated: bool = True
+    parameter_taxonomies_reusable: bool = True
+    policy_pricing_capability_constraints_procedures_separate: bool = True
+    standalone_policy_engine_disabled: bool = True
+    legacy_pricing_engine_disabled: bool = True
+    pocketbase_logic_disabled: bool = True
+    duplicate_operational_models_disabled: bool = True
+    live_rule_evaluation_disabled: bool = True
+    live_pricing_calculation_disabled: bool = True
+    recommendation_execution_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    no_ai_generation: bool = True
+    no_llm_generation: bool = True
+    background_workers_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class ServiceParameterTaxonomyCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    taxonomy_reference: Optional[str] = None
+    taxonomy_status: str = "draft"
+    taxonomy_version: Optional[str] = None
+    taxonomy_name: str
+    taxonomy_description: Optional[str] = None
+    created_by: Optional[str] = None
+    policy_family: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    beneficiary_type: Optional[str] = None
+    parameter_domain: Optional[str] = None
+    parameter_group: Optional[str] = None
+    parameter_scope: Optional[str] = None
+    support_status_options: List[str] = Field(default_factory=list)
+    evaluation_status_options: List[str] = Field(default_factory=list)
+    restriction_status_options: List[str] = Field(default_factory=list)
+    approval_status_options: List[str] = Field(default_factory=list)
+    wheelchair_mobility_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    mobility_level_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    wheelchair_device_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    battery_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    device_weight_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    airport_assistance_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    onboard_assistance_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    medical_support_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    medif_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fit_to_fly_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    stretcher_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    oxygen_poc_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    battery_duration_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    umnr_age_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    umnr_route_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    guardian_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    extra_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    passenger_of_size_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cbbg_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    adjacent_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cabin_restriction_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    extra_seat_refund_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    petc_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    avih_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    svan_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    esan_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    species_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    breed_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    breed_risk_flag_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_age_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_weight_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    container_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    container_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pet_under_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pet_on_adjacent_extra_seat_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_purpose_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    temperature_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    seasonal_restriction_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    animal_document_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    sports_equipment_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    musical_instrument_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fragile_valuable_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    restricted_equipment_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    special_baggage_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    item_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    item_weight_dimension_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    packaging_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    declared_value_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    permit_document_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    route_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    flight_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    airport_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    country_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    aircraft_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    aircraft_family_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    cabin_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    seat_type_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    fixed_armrest_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    under_seat_space_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    accessible_lavatory_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_units: List[str] = Field(default_factory=list)
+    pricing_way_values: List[str] = Field(default_factory=list)
+    pricing_route_types: List[str] = Field(default_factory=list)
+    pricing_flight_types: List[str] = Field(default_factory=list)
+    pricing_fare_bundles: List[str] = Field(default_factory=list)
+    pricing_categories: List[str] = Field(default_factory=list)
+    amount_types: List[str] = Field(default_factory=list)
+    pricing_basis_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_formula_components: List[Dict[str, Any]] = Field(default_factory=list)
+    pricing_applicability_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    refund_condition_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    exchange_condition_parameters: List[Dict[str, Any]] = Field(default_factory=list)
+    required_reference_collections: List[str] = Field(default_factory=list)
+    required_reference_values: List[Dict[str, Any]] = Field(default_factory=list)
+    missing_reference_notes: Optional[str] = None
+    acquisition_ids: List[str] = Field(default_factory=list)
+    normalisation_ids: List[str] = Field(default_factory=list)
+    constraint_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    intelligent_offer_package_ids: List[str] = Field(default_factory=list)
+    operational_intelligence_case_ids: List[str] = Field(default_factory=list)
+    review_status: Optional[str] = None
+    approval_status: Optional[str] = None
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ServiceParameterTaxonomyUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    taxonomy_reference: Optional[str] = None
+    taxonomy_status: Optional[str] = None
+    taxonomy_version: Optional[str] = None
+    taxonomy_name: Optional[str] = None
+    taxonomy_description: Optional[str] = None
+    created_by: Optional[str] = None
+    policy_family: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: Optional[List[str]] = None
+    beneficiary_type: Optional[str] = None
+    parameter_domain: Optional[str] = None
+    parameter_group: Optional[str] = None
+    parameter_scope: Optional[str] = None
+    support_status_options: Optional[List[str]] = None
+    evaluation_status_options: Optional[List[str]] = None
+    restriction_status_options: Optional[List[str]] = None
+    approval_status_options: Optional[List[str]] = None
+    wheelchair_mobility_parameters: Optional[List[Dict[str, Any]]] = None
+    mobility_level_parameters: Optional[List[Dict[str, Any]]] = None
+    wheelchair_device_parameters: Optional[List[Dict[str, Any]]] = None
+    battery_type_parameters: Optional[List[Dict[str, Any]]] = None
+    device_weight_dimension_parameters: Optional[List[Dict[str, Any]]] = None
+    airport_assistance_parameters: Optional[List[Dict[str, Any]]] = None
+    onboard_assistance_parameters: Optional[List[Dict[str, Any]]] = None
+    medical_support_parameters: Optional[List[Dict[str, Any]]] = None
+    medif_parameters: Optional[List[Dict[str, Any]]] = None
+    fit_to_fly_parameters: Optional[List[Dict[str, Any]]] = None
+    stretcher_parameters: Optional[List[Dict[str, Any]]] = None
+    oxygen_poc_parameters: Optional[List[Dict[str, Any]]] = None
+    battery_duration_parameters: Optional[List[Dict[str, Any]]] = None
+    umnr_age_parameters: Optional[List[Dict[str, Any]]] = None
+    umnr_route_parameters: Optional[List[Dict[str, Any]]] = None
+    guardian_parameters: Optional[List[Dict[str, Any]]] = None
+    extra_seat_parameters: Optional[List[Dict[str, Any]]] = None
+    passenger_of_size_parameters: Optional[List[Dict[str, Any]]] = None
+    cbbg_parameters: Optional[List[Dict[str, Any]]] = None
+    adjacent_seat_parameters: Optional[List[Dict[str, Any]]] = None
+    cabin_restriction_parameters: Optional[List[Dict[str, Any]]] = None
+    extra_seat_refund_parameters: Optional[List[Dict[str, Any]]] = None
+    petc_parameters: Optional[List[Dict[str, Any]]] = None
+    avih_parameters: Optional[List[Dict[str, Any]]] = None
+    svan_parameters: Optional[List[Dict[str, Any]]] = None
+    esan_parameters: Optional[List[Dict[str, Any]]] = None
+    species_parameters: Optional[List[Dict[str, Any]]] = None
+    breed_parameters: Optional[List[Dict[str, Any]]] = None
+    breed_risk_flag_parameters: Optional[List[Dict[str, Any]]] = None
+    animal_age_parameters: Optional[List[Dict[str, Any]]] = None
+    animal_weight_parameters: Optional[List[Dict[str, Any]]] = None
+    container_dimension_parameters: Optional[List[Dict[str, Any]]] = None
+    container_type_parameters: Optional[List[Dict[str, Any]]] = None
+    pet_under_seat_parameters: Optional[List[Dict[str, Any]]] = None
+    pet_on_adjacent_extra_seat_parameters: Optional[List[Dict[str, Any]]] = None
+    animal_purpose_parameters: Optional[List[Dict[str, Any]]] = None
+    temperature_parameters: Optional[List[Dict[str, Any]]] = None
+    seasonal_restriction_parameters: Optional[List[Dict[str, Any]]] = None
+    animal_document_parameters: Optional[List[Dict[str, Any]]] = None
+    sports_equipment_parameters: Optional[List[Dict[str, Any]]] = None
+    musical_instrument_parameters: Optional[List[Dict[str, Any]]] = None
+    fragile_valuable_parameters: Optional[List[Dict[str, Any]]] = None
+    restricted_equipment_parameters: Optional[List[Dict[str, Any]]] = None
+    special_baggage_parameters: Optional[List[Dict[str, Any]]] = None
+    item_type_parameters: Optional[List[Dict[str, Any]]] = None
+    item_weight_dimension_parameters: Optional[List[Dict[str, Any]]] = None
+    packaging_parameters: Optional[List[Dict[str, Any]]] = None
+    declared_value_parameters: Optional[List[Dict[str, Any]]] = None
+    permit_document_parameters: Optional[List[Dict[str, Any]]] = None
+    route_type_parameters: Optional[List[Dict[str, Any]]] = None
+    flight_type_parameters: Optional[List[Dict[str, Any]]] = None
+    airport_parameters: Optional[List[Dict[str, Any]]] = None
+    country_parameters: Optional[List[Dict[str, Any]]] = None
+    aircraft_type_parameters: Optional[List[Dict[str, Any]]] = None
+    aircraft_family_parameters: Optional[List[Dict[str, Any]]] = None
+    cabin_parameters: Optional[List[Dict[str, Any]]] = None
+    seat_type_parameters: Optional[List[Dict[str, Any]]] = None
+    fixed_armrest_parameters: Optional[List[Dict[str, Any]]] = None
+    under_seat_space_parameters: Optional[List[Dict[str, Any]]] = None
+    accessible_lavatory_parameters: Optional[List[Dict[str, Any]]] = None
+    pricing_units: Optional[List[str]] = None
+    pricing_way_values: Optional[List[str]] = None
+    pricing_route_types: Optional[List[str]] = None
+    pricing_flight_types: Optional[List[str]] = None
+    pricing_fare_bundles: Optional[List[str]] = None
+    pricing_categories: Optional[List[str]] = None
+    amount_types: Optional[List[str]] = None
+    pricing_basis_parameters: Optional[List[Dict[str, Any]]] = None
+    pricing_formula_components: Optional[List[Dict[str, Any]]] = None
+    pricing_applicability_parameters: Optional[List[Dict[str, Any]]] = None
+    refund_condition_parameters: Optional[List[Dict[str, Any]]] = None
+    exchange_condition_parameters: Optional[List[Dict[str, Any]]] = None
+    required_reference_collections: Optional[List[str]] = None
+    required_reference_values: Optional[List[Dict[str, Any]]] = None
+    missing_reference_notes: Optional[str] = None
+    acquisition_ids: Optional[List[str]] = None
+    normalisation_ids: Optional[List[str]] = None
+    constraint_ids: Optional[List[str]] = None
+    knowledge_version_ids: Optional[List[str]] = None
+    capability_matrix_ids: Optional[List[str]] = None
+    operational_evaluation_ids: Optional[List[str]] = None
+    feasibility_ids: Optional[List[str]] = None
+    recommendation_ids: Optional[List[str]] = None
+    intelligent_offer_package_ids: Optional[List[str]] = None
+    operational_intelligence_case_ids: Optional[List[str]] = None
+    review_status: Optional[str] = None
+    approval_status: Optional[str] = None
+    reviewer: Optional[str] = None
+    review_notes: Optional[str] = None
+    approved_by: Optional[str] = None
+    approved_at: Optional[datetime] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
+PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
 AIRLINE_CAPABILITY_MATRIX_COLLECTION = "airline_capability_matrix"
 
 CAPABILITY_STATUSES = ["draft", "under_review", "approved", "active", "superseded", "archived"]

@@ -7,7 +7,7 @@ from models import CapabilityCatalogEntry
 from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleService
 
 
-PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
+PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
 
 CAPABILITY_COLLECTION = "capability_catalog"
 

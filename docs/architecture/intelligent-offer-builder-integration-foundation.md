@@ -48,6 +48,10 @@ Phase 51.0 adds `operational_intelligence_cases` as the downstream case view tha
 
 This does not add new intelligence to Offer Builder. It prepares the system for scenario testing and real airline data population by making the full metadata chain inspectable. Human authority remains final.
 
+## Phase 51.1 Parameter Taxonomies
+
+Phase 51.1 adds `service_parameter_taxonomies` so offer-intelligence packages can reference reusable measurable service parameters through their upstream recommendation, feasibility, evaluation, capability, constraint, and knowledge links. It does not calculate prices, evaluate rules, generate recommendations, or mutate offers.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

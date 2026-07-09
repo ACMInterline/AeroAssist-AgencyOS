@@ -82,4 +82,6 @@ Phase 50.4 Airline Operational Knowledge Governance & Version Control versions o
 
 Phase 50.5 Airline Operational Capability Matrix links governed operational constraints to capability inventory records. It records whether a capability is available, unavailable, conditional, restricted, or manually reviewed under stated operational conditions, but it does not execute constraints or evaluate passenger cases.
 
+Phase 51.1 Service Parameter Taxonomies define reusable measurable fields that constraints may reference, such as species, dimensions, battery type, route type, aircraft type, cabin, amount type, and refund conditions. Taxonomies do not execute conditions, evaluate rules, calculate prices, or replace constraint governance.
+
 Phase 50.2 does not implement live rule execution, AI reasoning, recommendation engines, feasibility scoring, pricing calculation, parser execution, scraping, background workers, provider integrations, or external API calls.

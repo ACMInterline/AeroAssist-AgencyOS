@@ -66,6 +66,7 @@ Phase 50.7 adds passenger service feasibility APIs only under `/api/platform/pas
 Phase 50.8 adds airline recommendation APIs only under `/api/platform/airline-recommendations/*` and `/api/agencies/{agency_id}/airline-recommendations/*`, plus frontend pages under `/platform/airline-recommendations` and `/agency/recommendations`. It records advisory airline and itinerary recommendation metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation.
 Phase 50.9 adds intelligent offer builder integration APIs only under `/api/platform/intelligent-offer-builder/*` and `/api/agencies/{agency_id}/offer-intelligence/*`, plus frontend pages under `/platform/intelligent-offer-builder` and `/agency/offer-intelligence`. It records offer-intelligence package metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live GDS search, NDC search, booking, ticketing, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, automatic client sending, external API calls, or automation.
 Phase 51.0 adds operational intelligence case APIs only under `/api/platform/operational-intelligence-cases/*` and `/api/agencies/{agency_id}/intelligence-cases/*`, plus frontend pages under `/platform/operational-intelligence-cases` and `/agency/intelligence-cases`. It records Chapter 50 pipeline consolidation metadata only, adds no new intelligence, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live flight search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, background workers, automatic client sending, external API calls, or automation.
+Phase 51.1 adds service parameter taxonomy APIs only under `/api/platform/service-parameter-taxonomies/*` and `/api/agencies/{agency_id}/service-parameter-taxonomies/*`, plus frontend pages under `/platform/service-parameter-taxonomies` and `/agency/service-parameter-taxonomies`. It records reusable measurable service parameter metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live rule evaluation, live pricing calculation, recommendation execution, provider integrations, AI or LLM generation, background workers, duplicate operational models, or automation.
 
 ## Route Mapping
 
@@ -196,6 +197,8 @@ Phase 51.0 adds operational intelligence case APIs only under `/api/platform/ope
 | `/agent/offer-intelligence` | `/agency/offer-intelligence` |
 | `/admin/operational-intelligence-cases` | `/platform/operational-intelligence-cases` |
 | `/agent/intelligence-cases` | `/agency/intelligence-cases` |
+| `/admin/service-parameter-taxonomies` | `/platform/service-parameter-taxonomies` |
+| `/agent/service-parameter-taxonomies` | `/agency/service-parameter-taxonomies` |
 | `/documents` | `/agency/documents` and `/platform/document-templates` |
 | `/tickets` | `/agency/tickets-emds` |
 | `/bookings` | `/agency/booking-workspaces` |

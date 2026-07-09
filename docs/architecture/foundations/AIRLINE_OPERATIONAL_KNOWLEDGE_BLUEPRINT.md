@@ -68,6 +68,12 @@ Airline -> Evidence -> Policy -> Pricing -> Capability -> Constraint -> Procedur
 
 This ontology prevents policy text, price notes, capability claims, and procedures from being merged into one ambiguous record.
 
+## Service Parameter Taxonomies
+
+Phase 51.1 adds Service Parameter Taxonomies as reusable measurable field definitions for the existing ontology. PETC can use species, breed, weight, container dimensions, temperature, route, aircraft, and documents. EXST can use reason, adjacent seat, cabin restrictions, fixed armrests, refund conditions, and pricing basis. WCHC can use mobility level, wheelchair type, battery type, device dimensions, onboard aisle chair, and airport assistance.
+
+Parameter taxonomies do not create new intelligence, evaluate rules, calculate prices, or merge Policy, Pricing, Capability, Constraints, and Procedures. They make future structured knowledge entry and human-reviewed evaluation inputs more consistent.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -83,6 +89,7 @@ A decision pack should include:
 - Recommendation rationale from Phase 50.8 Airline Recommendation metadata when available.
 - Offer-intelligence package traces from Phase 50.9 Intelligent Offer Builder Integration when available.
 - Operational Intelligence Case trace metadata from Phase 51.0 when available.
+- Service Parameter Taxonomy metadata from Phase 51.1 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

@@ -15,6 +15,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Airline Recommendation is advisory preference metadata; it is not booking, search, price generation, or final authority.
 - Offer Intelligence Packages consume approved intelligence; they do not invent recommendations, feasibility, evidence, bookings, prices, or client messages.
 - Operational Intelligence Cases consolidate the Chapter 50 pipeline; they do not add new intelligence, execute bookings, issue tickets or EMDs, call providers, generate AI output, or send client messages.
+- Service Parameter Taxonomies define measurable reusable fields; they do not evaluate rules, calculate prices, execute recommendations, or merge Policy, Pricing, Capability, Constraints, and Procedures.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.

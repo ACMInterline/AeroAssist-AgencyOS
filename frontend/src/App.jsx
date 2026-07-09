@@ -36,6 +36,7 @@ import IntelligenceCasesPage from "./pages/agency/IntelligenceCasesPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
 import RecommendationsPage from "./pages/agency/RecommendationsPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
+import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
@@ -124,6 +125,7 @@ import PlatformOperationalIntelligenceCasesPage from "./pages/platform/Operation
 import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
+import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -262,6 +264,7 @@ const routes = {
   "/platform/passenger-service-feasibility": PlatformPassengerServiceFeasibilityPage,
   "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
+  "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -337,6 +340,7 @@ const routes = {
   "/agency/service-feasibility": ServiceFeasibilityPage,
   "/agency/recommendations": RecommendationsPage,
   "/agency/intelligence-cases": IntelligenceCasesPage,
+  "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
