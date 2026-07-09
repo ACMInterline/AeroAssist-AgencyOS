@@ -64,7 +64,11 @@ Phase 50.9 adds the `intelligent_offer_builder_packages` collection. Intelligent
 
 Phase 51.0 adds the `operational_intelligence_cases` collection. Operational Intelligence Pipeline Consolidation connects the completed Chapter 50 metadata pipeline from passenger requirement to offer-intelligence package. It adds no new intelligence, prepares scenario testing and real airline data population, and keeps human authority final.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, and Operational Intelligence Cases.
+Phase 51.1 adds the `service_parameter_taxonomies` collection. Service Parameter Taxonomy Integration defines reusable measurable fields for structured knowledge entry and future human-reviewed evaluation inputs without evaluating rules, calculating prices, or merging Policy, Pricing, Capability, Constraints, and Procedures.
+
+Phase 51.2 adds the `request_segment_service_scopes` collection. Request Intake Segment-Service Precision preserves passenger + segment + service scope metadata before AOIE evaluation. Pets and special items remain segment-scoped, requests remain intake, trips remain operational dossiers, and the foundation does not evaluate policy, calculate pricing, search, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
 
 ## Routes
 
@@ -91,6 +95,7 @@ All routes are read-only visualization routes.
 - 50.9 Offer Builder Intelligence Integration Foundation
 - 51.0 Operational Intelligence Pipeline Consolidation Foundation - implemented as metadata-only case consolidation
 - 51.1 Service Parameter Taxonomy Integration Foundation - implemented as metadata-only measurable parameter definitions
+- 51.2 Request Intake Segment-Service Precision Foundation - implemented as metadata-only segment-first passenger + segment + service scopes
 
 ## Explicitly Excluded
 
@@ -116,3 +121,5 @@ Phase 50.9 does not implement live GDS search, NDC search, booking, ticketing, E
 Phase 51.0 does not implement new intelligence, live flight search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, background workers, automatic client sending, external API calls, scenario execution automation, real airline data ingestion automation, or operational automation.
 
 Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate prices, execute recommendations, call providers, generate AI or LLM output, run background workers, create duplicate passenger/client/trip/offer/booking/ticket/EMD/SSR/OSI/document models, or combine Policy, Pricing, Capability, Constraints, and Procedures. It only defines reusable measurable parameters for structured knowledge entry and future human-reviewed evaluation inputs.
+
+Phase 51.2 does not evaluate policy, calculate pricing, search flights, book, ticket, issue EMDs, call providers, generate AI or LLM output, run background workers, send automatically, convert trips automatically, or replace request/trip boundaries. It only preserves segment-first passenger + segment + service intake metadata.

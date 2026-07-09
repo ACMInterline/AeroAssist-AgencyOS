@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_service_parameter_taxonomies, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_service_parameter_taxonomies
+from routers import agency_intelligent_offer_builder, agency_operational_intelligence_cases, agency_request_segment_services, agency_service_parameter_taxonomies, platform_intelligent_offer_builder, platform_operational_intelligence_cases, platform_request_segment_services, platform_service_parameter_taxonomies
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -51,7 +51,8 @@ from services.passenger_service_feasibility_service import FEASIBILITY_CONFIDENC
 from services.airline_recommendation_engine_service import AIRLINE_RECOMMENDATION_LEVELS, AIRLINE_RECOMMENDATION_STATUSES, RECOMMENDATION_STATUS_VALUES
 from services.intelligent_offer_builder_service import INTELLIGENT_OFFER_CLIENT_VISIBILITY_STATUSES, INTELLIGENT_OFFER_PACKAGE_STATUSES, INTELLIGENT_OFFER_READINESS_STATUSES
 from services.operational_intelligence_case_service import OPERATIONAL_INTELLIGENCE_CASE_STATUSES, OPERATIONAL_INTELLIGENCE_OVERALL_STATUSES, PIPELINE_LINK_FIELDS, PIPELINE_READY_FIELDS
-from services.service_parameter_taxonomy_service import AMOUNT_TYPES, APPROVAL_STATUS_OPTIONS, EVALUATION_STATUS_OPTIONS, KNOWLEDGE_GRAPH_LINK_FIELDS as TAXONOMY_KNOWLEDGE_GRAPH_LINK_FIELDS, PASSENGER_ASSISTANCE_PARAMETER_FIELDS, PETS_ANIMALS_PARAMETER_FIELDS, PHASE_LABEL, PRICING_CATEGORIES, PRICING_FARE_BUNDLES, PRICING_FLIGHT_TYPES, PRICING_PARAMETER_FIELDS, PRICING_ROUTE_TYPES, PRICING_UNITS, PRICING_WAY_VALUES, RESTRICTION_STATUS_OPTIONS, ROUTE_AIRCRAFT_CABIN_PARAMETER_FIELDS, SERVICE_PARAMETER_TAXONOMY_STATUSES, SPECIAL_ITEM_PARAMETER_FIELDS, SUPPORT_STATUS_OPTIONS, TAXONOMY_APPROVAL_STATUSES, TAXONOMY_REVIEW_STATUSES
+from services.service_parameter_taxonomy_service import AMOUNT_TYPES, APPROVAL_STATUS_OPTIONS, EVALUATION_STATUS_OPTIONS, KNOWLEDGE_GRAPH_LINK_FIELDS as TAXONOMY_KNOWLEDGE_GRAPH_LINK_FIELDS, PASSENGER_ASSISTANCE_PARAMETER_FIELDS, PETS_ANIMALS_PARAMETER_FIELDS, PRICING_CATEGORIES, PRICING_FARE_BUNDLES, PRICING_FLIGHT_TYPES, PRICING_PARAMETER_FIELDS, PRICING_ROUTE_TYPES, PRICING_UNITS, PRICING_WAY_VALUES, RESTRICTION_STATUS_OPTIONS, ROUTE_AIRCRAFT_CABIN_PARAMETER_FIELDS, SERVICE_PARAMETER_TAXONOMY_STATUSES, SPECIAL_ITEM_PARAMETER_FIELDS, SUPPORT_STATUS_OPTIONS, TAXONOMY_APPROVAL_STATUSES, TAXONOMY_REVIEW_STATUSES
+from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FIELDS as REQUEST_SEGMENT_SERVICE_KNOWLEDGE_LINK_FIELDS, OPERATIONAL_FLAG_FIELDS as REQUEST_SEGMENT_SERVICE_OPERATIONAL_FLAG_FIELDS, PHASE_LABEL, REQUEST_SEGMENT_SERVICE_READINESS_STATUSES, REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES, REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -68,7 +69,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 51.1 service parameter taxonomy integration foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 51.2 request intake segment-service precision foundation.",
 )
 
 app.add_middleware(
@@ -1282,6 +1283,52 @@ async def readiness() -> dict:
     service_parameter_taxonomy_knowledge_graph_link_count = sum(
         sum(len(item.get(field) or []) for field in TAXONOMY_KNOWLEDGE_GRAPH_LINK_FIELDS)
         for item in service_parameter_taxonomy_records
+    )
+    request_segment_service_scope_records = await database.collection("request_segment_service_scopes").find_many()
+    request_segment_service_scope_count = len(request_segment_service_scope_records)
+    request_segment_service_scope_status_counts = {
+        status: len([item for item in request_segment_service_scope_records if item.get("scope_status") == status])
+        for status in REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES
+    }
+    request_segment_service_readiness_status_counts = {
+        status: len([item for item in request_segment_service_scope_records if item.get("readiness_status") == status])
+        for status in REQUEST_SEGMENT_SERVICE_READINESS_STATUSES
+    }
+    request_segment_service_requested_status_counts = {
+        status: len([item for item in request_segment_service_scope_records if item.get("requested_status") == status])
+        for status in REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES
+    }
+    request_segment_service_operational_flag_counts = {
+        field: len([item for item in request_segment_service_scope_records if item.get(field)])
+        for field in REQUEST_SEGMENT_SERVICE_OPERATIONAL_FLAG_FIELDS
+    }
+    request_segment_service_knowledge_link_counts = {
+        field: sum(len(item.get(field) or []) for item in request_segment_service_scope_records)
+        for field in REQUEST_SEGMENT_SERVICE_KNOWLEDGE_LINK_FIELDS
+    }
+    request_segment_service_pet_scope_count = len(
+        [item for item in request_segment_service_scope_records if item.get("pet_reference") or item.get("pet_id")]
+    )
+    request_segment_service_special_item_scope_count = len(
+        [item for item in request_segment_service_scope_records if item.get("special_item_reference") or item.get("special_item_id")]
+    )
+    request_segment_service_converted_to_trip_count = len(
+        [item for item in request_segment_service_scope_records if item.get("converted_to_trip")]
+    )
+    request_segment_service_missing_field_count = sum(
+        len(item.get("missing_fields") or []) for item in request_segment_service_scope_records
+    )
+    request_segment_service_missing_document_count = sum(
+        len(item.get("missing_documents") or []) for item in request_segment_service_scope_records
+    )
+    request_segment_service_readiness_warning_count = sum(
+        len(item.get("readiness_warnings") or []) for item in request_segment_service_scope_records
+    )
+    request_segment_service_readiness_blocker_count = sum(
+        len(item.get("readiness_blockers") or []) for item in request_segment_service_scope_records
+    )
+    request_segment_service_decision_trace_count = sum(
+        len(item.get("decision_trace") or []) for item in request_segment_service_scope_records
     )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
@@ -3154,6 +3201,68 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 51.1 integrates metadata-only Service Parameter Taxonomies for measurable fields reused across acquisition, constraints, capability, evaluation, feasibility, recommendation, offer intelligence, and operational intelligence cases. It does not copy legacy policy-card execution, evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate recommendations. Human authority remains final.",
         },
+        "request_segment_service_precision_foundation": {
+            "request_segment_service_precision_enabled": True,
+            "request_segment_service_scopes_collection_enabled": True,
+            "platform_request_segment_services_metadata_crud_enabled": True,
+            "agency_request_segment_services_metadata_crud_enabled": True,
+            "platform_request_segment_services_ui_enabled": True,
+            "agency_request_segment_services_ui_enabled": True,
+            "segment_first_intake_enabled": True,
+            "service_scope_requires_passenger_segment_service_context": True,
+            "passenger_segment_service_scope_enabled": True,
+            "pets_segment_scoped": True,
+            "special_items_segment_scoped": True,
+            "request_remains_intake": True,
+            "trip_remains_operational_dossier": True,
+            "never_use_travel_request_id_as_trip_id": True,
+            "trip_conversion_metadata_only": True,
+            "service_parameter_taxonomy_links_enabled": True,
+            "operational_constraint_links_enabled": True,
+            "capability_matrix_links_enabled": True,
+            "operational_evaluation_links_enabled": True,
+            "feasibility_links_enabled": True,
+            "recommendation_links_enabled": True,
+            "operational_flags_metadata_enabled": True,
+            "readiness_metadata_enabled": True,
+            "conversion_metadata_enabled": True,
+            "request_snapshot_metadata_enabled": True,
+            "decision_trace_metadata_enabled": True,
+            "scope_statuses": REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES,
+            "readiness_statuses": REQUEST_SEGMENT_SERVICE_READINESS_STATUSES,
+            "requested_statuses": REQUEST_SEGMENT_SERVICE_REQUESTED_STATUSES,
+            "metadata_only": True,
+            "policy_evaluation_disabled": True,
+            "pricing_calculation_disabled": True,
+            "live_policy_review_disabled": True,
+            "live_pricing_review_disabled": True,
+            "booking_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "provider_integrations_disabled": True,
+            "no_ai_generation": True,
+            "no_llm_generation": True,
+            "background_workers_disabled": True,
+            "automatic_trip_conversion_disabled": True,
+            "automatic_client_sending_disabled": True,
+            "human_authority_final": True,
+            "request_segment_service_scope_count": request_segment_service_scope_count,
+            "request_segment_service_scope_status_counts": request_segment_service_scope_status_counts,
+            "request_segment_service_readiness_status_counts": request_segment_service_readiness_status_counts,
+            "request_segment_service_requested_status_counts": request_segment_service_requested_status_counts,
+            "request_segment_service_operational_flag_counts": request_segment_service_operational_flag_counts,
+            "request_segment_service_knowledge_link_counts": request_segment_service_knowledge_link_counts,
+            "request_segment_service_pet_scope_count": request_segment_service_pet_scope_count,
+            "request_segment_service_special_item_scope_count": request_segment_service_special_item_scope_count,
+            "request_segment_service_converted_to_trip_count": request_segment_service_converted_to_trip_count,
+            "request_segment_service_missing_field_count": request_segment_service_missing_field_count,
+            "request_segment_service_missing_document_count": request_segment_service_missing_document_count,
+            "request_segment_service_readiness_warning_count": request_segment_service_readiness_warning_count,
+            "request_segment_service_readiness_blocker_count": request_segment_service_readiness_blocker_count,
+            "request_segment_service_decision_trace_count": request_segment_service_decision_trace_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 51.2 creates metadata-only Request Segment Service Scope records. It makes request intake segment-first by preserving passenger + segment + service precision, keeps pets and special items segment-scoped, leaves the request as intake and the trip as the operational dossier, and performs no policy evaluation, pricing calculation, booking, ticketing, provider integration, AI/LLM generation, background work, or automatic client sending. Human authority remains final.",
+        },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
             "agency_workspace_labels_enabled": True,
@@ -4913,6 +5022,7 @@ app.include_router(platform_airline_recommendations.router)
 app.include_router(platform_intelligent_offer_builder.router)
 app.include_router(platform_operational_intelligence_cases.router)
 app.include_router(platform_service_parameter_taxonomies.router)
+app.include_router(platform_request_segment_services.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -4994,6 +5104,7 @@ app.include_router(agency_airline_recommendations.router)
 app.include_router(agency_intelligent_offer_builder.router)
 app.include_router(agency_operational_intelligence_cases.router)
 app.include_router(agency_service_parameter_taxonomies.router)
+app.include_router(agency_request_segment_services.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

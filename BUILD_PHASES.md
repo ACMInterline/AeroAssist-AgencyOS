@@ -2247,3 +2247,7 @@ Avoid adding:
 - Document generation can drift into a full template-builder product.
 - Payments can drift into accounting or payment processing if tracking boundaries are not explicit.
 - Refunds and exchanges are operationally complex and should not be mixed into unrelated hardening work.
+
+## Implemented Phase 51.2
+
+Phase 51.2 adds the metadata-only Request Intake Segment-Service Precision Foundation. It registers `request_segment_service_scopes`, platform and agency request segment service routes, read-only UI pages, module catalog entries, architecture documentation, and smoke coverage for segment-first passenger + segment + service intake metadata. It does not evaluate policy, calculate pricing, search, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically.

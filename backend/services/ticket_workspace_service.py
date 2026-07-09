@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
 TICKET_WORKSPACE_COLLECTION = "ticket_workspaces"
 TICKET_WORKSPACE_STATUSES = [
     TicketWorkspaceStatus.DRAFT.value,

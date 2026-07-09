@@ -49,3 +49,7 @@ The taxonomy records organize measurable metadata for:
 Taxonomies prepare the system for structured knowledge entry, future scenario testing, and real airline data population. They provide consistent measurable fields for human-reviewed records without making operational decisions.
 
 Human authority remains final.
+
+## Phase 51.2 Relationship
+
+Phase 51.2 adds `request_segment_service_scopes` as segment-first intake metadata that may reference Service Parameter Taxonomies through `service_parameter_taxonomy_ids`. The scope records passenger + segment + service context, including pet and special item metadata, but it does not evaluate the taxonomy, calculate pricing, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically.

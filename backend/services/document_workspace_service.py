@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

@@ -16,6 +16,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Offer Intelligence Packages consume approved intelligence; they do not invent recommendations, feasibility, evidence, bookings, prices, or client messages.
 - Operational Intelligence Cases consolidate the Chapter 50 pipeline; they do not add new intelligence, execute bookings, issue tickets or EMDs, call providers, generate AI output, or send client messages.
 - Service Parameter Taxonomies define measurable reusable fields; they do not evaluate rules, calculate prices, execute recommendations, or merge Policy, Pricing, Capability, Constraints, and Procedures.
+- Request Segment Service Scopes preserve segment-first passenger + segment + service intake metadata; they do not evaluate policy, calculate pricing, convert trips automatically, search, book, ticket, issue EMDs, call providers, generate AI output, or send client messages.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.
@@ -39,3 +40,7 @@ When a future phase needs new metadata, it should first ask:
 ## Advisory Boundary
 
 AeroAssist can structure knowledge, display evidence, explain uncertainty, and prepare human-reviewed decision support. It must not silently cross into execution, enforcement, billing, provider integration, AI automation, scraping, scheduling, or route blocking unless a future phase explicitly authorizes that behavior.
+
+## Request Segment Service Scopes
+
+Phase 51.2 adds Request Segment Service Scopes as metadata-only intake precision records. They keep requests segment-first by joining passenger, segment, service, pet, special item, readiness, conversion, knowledge-link, and decision-trace metadata. Requests remain intake, trips remain operational dossiers, and human authority remains final.

@@ -22,7 +22,7 @@ from smoke_booking_workspace_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+EXPECTED_PHASE = "phase_51_2_request_segment_service_precision_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 TICKET_STATUSES = {"draft", "review", "ready", "archived"}
 TICKET_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}

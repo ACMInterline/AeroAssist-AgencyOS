@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineRecommendation, AirlineRecommendationCreate, AirlineRecommendationUpdate, new_id
 
 
-PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
 AIRLINE_RECOMMENDATION_COLLECTION = "airline_recommendations"
 
 AIRLINE_RECOMMENDATION_STATUSES = ["draft", "in_review", "ready", "archived"]

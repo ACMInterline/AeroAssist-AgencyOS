@@ -26,6 +26,8 @@ Phase 50.9 implements metadata-only Intelligent Offer Builder Integration. It co
 
 Phase 51.0 implements metadata-only Operational Intelligence Pipeline Consolidation. It adds Operational Intelligence Cases that connect the completed Chapter 50 pipeline from passenger requirement to offer-intelligence package. It adds no new intelligence, prepares scenario testing and real airline data population, and keeps human authority final.
 
+Phase 51.2 implements metadata-only Request Intake Segment-Service Precision. It adds Request Segment Service Scopes that preserve segment-first passenger + segment + service metadata before operational intelligence uses it. Pets and special items remain segment-scoped, requests remain intake, trips remain operational dossiers, and no policy evaluation, pricing calculation, provider execution, AI generation, worker, automatic sending, or automatic trip conversion is added.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -39,6 +41,7 @@ Phase 51.0 implements metadata-only Operational Intelligence Pipeline Consolidat
 - 50.8 Airline & Itinerary Recommendation Engine
 - 50.9 Offer Builder Intelligence Integration
 - 51.0 Operational Intelligence Pipeline Consolidation
+- 51.2 Request Intake Segment-Service Precision
 
 ## Five Pillars
 
@@ -90,6 +93,7 @@ A decision pack should include:
 - Offer-intelligence package traces from Phase 50.9 Intelligent Offer Builder Integration when available.
 - Operational Intelligence Case trace metadata from Phase 51.0 when available.
 - Service Parameter Taxonomy metadata from Phase 51.1 when available.
+- Request Segment Service Scope metadata from Phase 51.2 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

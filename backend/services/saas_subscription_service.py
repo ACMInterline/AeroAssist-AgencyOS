@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -53,6 +53,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "airline_coverage", "label": "Airline Coverage", "href": "/agency/airline-intelligence-coverage", "aliases": ["airline_coverage", "data_pack_coverage", "airline_intelligence"]},
     {"key": "knowledge_versions", "label": "Knowledge Versions", "href": "/agency/airline-intelligence-knowledge-versions", "aliases": ["knowledge_versions", "airline_intelligence"]},
     {"key": "airline_intelligence_consumption", "label": "Airline Intelligence Usage", "href": "/agency/airline-intelligence-consumption", "aliases": ["airline_intelligence_consumption", "usage_readiness", "airline_intelligence"]},
+    {"key": "request_segment_services", "label": "Request Segment Services", "href": "/agency/request-segment-services", "aliases": ["request_segment_services", "segment_first_intake", "airline_intelligence"]},
     {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
     {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
     {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},

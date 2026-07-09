@@ -1768,6 +1768,277 @@ class RequestSpecialItemSegment(BaseDocument):
     notes: Optional[str] = None
 
 
+class RequestSegmentServiceScope(BaseDocument):
+    agency_id: Optional[str] = None
+    scope_reference: str
+    scope_status: str = "draft"
+    scope_version: Optional[str] = None
+    created_by: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    request_reference: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: Optional[str] = None
+    client_id: Optional[str] = None
+    contact_summary: Optional[str] = None
+    request_passenger_reference: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_link_mode: Optional[str] = None
+    passenger_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    beneficiary_type: Optional[str] = None
+    request_segment_reference: Optional[str] = None
+    segment_order: Optional[int] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    preferred_airline: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    segment_scope_type: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_catalogue_reference: Optional[str] = None
+    selected_service_key: Optional[str] = None
+    service_details: Dict[str, Any] = Field(default_factory=dict)
+    requested_status: Optional[str] = None
+    pet_reference: Optional[str] = None
+    pet_id: Optional[str] = None
+    pet_transport_mode: Optional[str] = None
+    species: Optional[str] = None
+    breed: Optional[str] = None
+    snub_nosed_flag: bool = False
+    pet_weight_kg: Optional[float] = None
+    container_dimensions: Dict[str, Any] = Field(default_factory=dict)
+    pet_document_status: Optional[str] = None
+    special_item_reference: Optional[str] = None
+    special_item_id: Optional[str] = None
+    item_category: Optional[str] = None
+    transport_location: Optional[str] = None
+    item_weight_kg: Optional[float] = None
+    item_dimensions: Dict[str, Any] = Field(default_factory=dict)
+    battery_type: Optional[str] = None
+    documentation_status: Optional[str] = None
+    requires_airline_policy_review: bool = False
+    requires_medical_review: bool = False
+    requires_document_followup: bool = False
+    requires_airline_approval: bool = False
+    requires_manual_review: bool = False
+    requires_pricing_review: bool = False
+    service_parameter_taxonomy_ids: List[str] = Field(default_factory=list)
+    operational_constraint_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    readiness_status: Optional[str] = None
+    missing_fields: List[str] = Field(default_factory=list)
+    missing_documents: List[str] = Field(default_factory=list)
+    readiness_warnings: List[str] = Field(default_factory=list)
+    readiness_blockers: List[str] = Field(default_factory=list)
+    linked_trip_id: Optional[str] = None
+    converted_to_trip: bool = False
+    converted_at: Optional[datetime] = None
+    trip_segment_ids: List[str] = Field(default_factory=list)
+    carried_forward_to_trip: bool = False
+    request_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    decision_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    request_segment_service_precision_foundation: bool = True
+    request_intake_segment_first: bool = True
+    passenger_segment_service_scope: bool = True
+    pets_segment_scoped: bool = True
+    special_items_segment_scoped: bool = True
+    request_remains_intake: bool = True
+    trip_remains_operational_dossier: bool = True
+    never_use_travel_request_id_as_trip_id: bool = True
+    trip_conversion_metadata_only: bool = True
+    policy_evaluation_disabled: bool = True
+    pricing_calculation_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    no_ai_generation: bool = True
+    no_llm_generation: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class RequestSegmentServiceScopeCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope_reference: Optional[str] = None
+    scope_status: str = "draft"
+    scope_version: Optional[str] = None
+    created_by: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    request_reference: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: Optional[str] = None
+    client_id: Optional[str] = None
+    contact_summary: Optional[str] = None
+    request_passenger_reference: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_link_mode: Optional[str] = None
+    passenger_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    beneficiary_type: Optional[str] = None
+    request_segment_reference: Optional[str] = None
+    segment_order: Optional[int] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    preferred_airline: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    segment_scope_type: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_catalogue_reference: Optional[str] = None
+    selected_service_key: Optional[str] = None
+    service_details: Dict[str, Any] = Field(default_factory=dict)
+    requested_status: Optional[str] = None
+    pet_reference: Optional[str] = None
+    pet_id: Optional[str] = None
+    pet_transport_mode: Optional[str] = None
+    species: Optional[str] = None
+    breed: Optional[str] = None
+    snub_nosed_flag: bool = False
+    pet_weight_kg: Optional[float] = None
+    container_dimensions: Dict[str, Any] = Field(default_factory=dict)
+    pet_document_status: Optional[str] = None
+    special_item_reference: Optional[str] = None
+    special_item_id: Optional[str] = None
+    item_category: Optional[str] = None
+    transport_location: Optional[str] = None
+    item_weight_kg: Optional[float] = None
+    item_dimensions: Dict[str, Any] = Field(default_factory=dict)
+    battery_type: Optional[str] = None
+    documentation_status: Optional[str] = None
+    requires_airline_policy_review: bool = False
+    requires_medical_review: bool = False
+    requires_document_followup: bool = False
+    requires_airline_approval: bool = False
+    requires_manual_review: bool = False
+    requires_pricing_review: bool = False
+    service_parameter_taxonomy_ids: List[str] = Field(default_factory=list)
+    operational_constraint_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    readiness_status: Optional[str] = None
+    missing_fields: List[str] = Field(default_factory=list)
+    missing_documents: List[str] = Field(default_factory=list)
+    readiness_warnings: List[str] = Field(default_factory=list)
+    readiness_blockers: List[str] = Field(default_factory=list)
+    linked_trip_id: Optional[str] = None
+    converted_to_trip: bool = False
+    converted_at: Optional[datetime] = None
+    trip_segment_ids: List[str] = Field(default_factory=list)
+    carried_forward_to_trip: bool = False
+    request_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    decision_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    operational_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class RequestSegmentServiceScopeUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scope_reference: Optional[str] = None
+    scope_status: Optional[str] = None
+    scope_version: Optional[str] = None
+    created_by: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    request_reference: Optional[str] = None
+    source_entry_path: Optional[str] = None
+    submission_channel: Optional[str] = None
+    client_id: Optional[str] = None
+    contact_summary: Optional[str] = None
+    request_passenger_reference: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    passenger_link_mode: Optional[str] = None
+    passenger_snapshot: Optional[Dict[str, Any]] = None
+    beneficiary_type: Optional[str] = None
+    request_segment_reference: Optional[str] = None
+    segment_order: Optional[int] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    departure_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    preferred_airline: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    segment_scope_type: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_catalogue_reference: Optional[str] = None
+    selected_service_key: Optional[str] = None
+    service_details: Optional[Dict[str, Any]] = None
+    requested_status: Optional[str] = None
+    pet_reference: Optional[str] = None
+    pet_id: Optional[str] = None
+    pet_transport_mode: Optional[str] = None
+    species: Optional[str] = None
+    breed: Optional[str] = None
+    snub_nosed_flag: Optional[bool] = None
+    pet_weight_kg: Optional[float] = None
+    container_dimensions: Optional[Dict[str, Any]] = None
+    pet_document_status: Optional[str] = None
+    special_item_reference: Optional[str] = None
+    special_item_id: Optional[str] = None
+    item_category: Optional[str] = None
+    transport_location: Optional[str] = None
+    item_weight_kg: Optional[float] = None
+    item_dimensions: Optional[Dict[str, Any]] = None
+    battery_type: Optional[str] = None
+    documentation_status: Optional[str] = None
+    requires_airline_policy_review: Optional[bool] = None
+    requires_medical_review: Optional[bool] = None
+    requires_document_followup: Optional[bool] = None
+    requires_airline_approval: Optional[bool] = None
+    requires_manual_review: Optional[bool] = None
+    requires_pricing_review: Optional[bool] = None
+    service_parameter_taxonomy_ids: Optional[List[str]] = None
+    operational_constraint_ids: Optional[List[str]] = None
+    capability_matrix_ids: Optional[List[str]] = None
+    operational_evaluation_ids: Optional[List[str]] = None
+    feasibility_ids: Optional[List[str]] = None
+    recommendation_ids: Optional[List[str]] = None
+    readiness_status: Optional[str] = None
+    missing_fields: Optional[List[str]] = None
+    missing_documents: Optional[List[str]] = None
+    readiness_warnings: Optional[List[str]] = None
+    readiness_blockers: Optional[List[str]] = None
+    linked_trip_id: Optional[str] = None
+    converted_to_trip: Optional[bool] = None
+    converted_at: Optional[datetime] = None
+    trip_segment_ids: Optional[List[str]] = None
+    carried_forward_to_trip: Optional[bool] = None
+    request_snapshot: Optional[Dict[str, Any]] = None
+    decision_trace: Optional[List[Dict[str, Any]]] = None
+    operational_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
 class RequestPassenger(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None

@@ -35,6 +35,7 @@ import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPag
 import IntelligenceCasesPage from "./pages/agency/IntelligenceCasesPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
 import RecommendationsPage from "./pages/agency/RecommendationsPage"
+import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -125,6 +126,7 @@ import PlatformOperationalIntelligenceCasesPage from "./pages/platform/Operation
 import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
+import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
@@ -265,6 +267,7 @@ const routes = {
   "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
+  "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -341,6 +344,7 @@ const routes = {
   "/agency/recommendations": RecommendationsPage,
   "/agency/intelligence-cases": IntelligenceCasesPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
+  "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_51_1_service_parameter_taxonomy_integration_foundation"
+PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -150,6 +150,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "ServiceParameterTaxonomy, ServiceParameterTaxonomyCreate, ServiceParameterTaxonomyUpdate, ServiceParameterTaxonomyService, service_parameter_taxonomies, /api/platform/service-parameter-taxonomies, /api/agencies/{agency_id}/service-parameter-taxonomies, /platform/service-parameter-taxonomies, /agency/service-parameter-taxonomies",
         "status": "foundation adopted",
         "action": "Integrate measurable service-policy parameters into the current Chapter 50/51 architecture as reusable metadata for acquisition, constraints, capability, evaluation, feasibility, recommendation, offer intelligence, and operational intelligence cases. Phase 51.1 does not copy legacy policy-card execution, evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or merge policy, pricing, capability, constraints, and procedures.",
+    },
+    {
+        "category": "Request Segment Services",
+        "concept": "Request intake segment-service precision scope layer",
+        "supplementary_concept": "request segment service scope, passenger + segment + service metadata, pet segment metadata, special item segment metadata, readiness, conversion trace",
+        "current_equivalent": "RequestSegmentServiceScope, RequestSegmentServiceScopeCreate, RequestSegmentServiceScopeUpdate, RequestSegmentServicePrecisionService, request_segment_service_scopes, /api/platform/request-segment-services, /api/agencies/{agency_id}/request-segment-services, /platform/request-segment-services, /agency/request-segment-services",
+        "status": "foundation adopted",
+        "action": "Preserve segment-first request intake precision by storing metadata-only passenger + segment + service scope records. Pets and special items remain segment-scoped, request records remain intake, trip records remain operational dossiers, and Phase 51.2 does not evaluate policy, calculate pricing, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, convert trips automatically, or override human authority.",
     },
     {
         "category": "Platform / Agency UX",
@@ -763,6 +771,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/intelligence-cases", "agencyos": "/agency/intelligence-cases"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
+        {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
+        {"supplementary": "/agent/request-segment-services", "agencyos": "/agency/request-segment-services"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -962,6 +972,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
+            "RequestSegmentServiceScope",
+            "RequestSegmentServiceScopeCreate",
+            "RequestSegmentServiceScopeUpdate",
         ],
         "already_built": [
             "Rules & Services foundation",
@@ -1033,6 +1046,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Intelligent offer builder integration foundation built in Phase 50.9",
             "Operational intelligence pipeline consolidation foundation built in Phase 51.0",
             "Service parameter taxonomy integration foundation built in Phase 51.1",
+            "Request intake segment-service precision foundation built in Phase 51.2",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -63,6 +63,10 @@ Operational Intelligence Cases are advisory metadata. Human authority remains fi
 
 Phase 51.1 adds `service_parameter_taxonomies` as a reusable parameter vocabulary that Operational Intelligence Cases may reference through upstream knowledge, constraints, capability, evaluation, feasibility, recommendation, and offer-intelligence metadata. Phase 51.1 does not add new case intelligence, run evaluations, calculate prices, or automate operational decisions.
 
+## Phase 51.2 Relationship
+
+Phase 51.2 adds `request_segment_service_scopes` upstream of case consolidation. These scopes preserve segment-first passenger + segment + service intake metadata so future scenario testing can start from precise request requirements. They do not add new intelligence, evaluate policy, calculate pricing, search, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, send automatically, or convert trips automatically. Human authority remains final.
+
 ## Explicit Exclusions
 
 Phase 51.0 does not implement live flight search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, pricing generation, scraping, external API calls, route aliases, or automation.

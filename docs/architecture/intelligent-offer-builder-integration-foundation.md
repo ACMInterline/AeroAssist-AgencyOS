@@ -52,6 +52,10 @@ This does not add new intelligence to Offer Builder. It prepares the system for 
 
 Phase 51.1 adds `service_parameter_taxonomies` so offer-intelligence packages can reference reusable measurable service parameters through their upstream recommendation, feasibility, evaluation, capability, constraint, and knowledge links. It does not calculate prices, evaluate rules, generate recommendations, or mutate offers.
 
+## Phase 51.2 Request Segment Services
+
+Phase 51.2 adds `request_segment_service_scopes` upstream of offer intelligence. These scopes preserve the original passenger + segment + service intake context, including pets and special items as segment-scoped metadata, so future offer-intelligence packages can trace back to precise request requirements. This does not add policy evaluation, pricing calculation, offer mutation, search, booking, ticketing, EMD issuance, provider execution, AI/LLM generation, workers, automatic sending, or automatic trip conversion.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

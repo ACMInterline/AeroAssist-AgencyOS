@@ -65,6 +65,12 @@ Passenger -> Service Requirement -> Operational Workspaces -> Timeline -> Future
 
 Workflow records track current, previous, and next stage metadata, readiness state, blocking and completed requirements, responsible team and agent, linked passenger/request/trip/booking/ticket/EMD/SSR-OSI/document/timeline workspaces, and future AOIE recommendation-pack references. They remain metadata-only and do not execute workflows, make AI decisions, start background workers, call airline APIs, connect to GDS/NDC, approve services automatically, issue tickets, issue EMDs, send messages, or automate actions.
 
+Phase 51.2 adds segment-first intake precision:
+
+Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence
+
+Request Segment Service Scopes preserve passenger + segment + service metadata at intake time. Pets and special items are segment-scoped, not loose request notes. The request remains intake; the trip remains the operational dossier. This layer prepares clean operational intelligence inputs but does not evaluate policy, calculate pricing, search flights, book, ticket, issue EMDs, call providers, run AI/LLM generation, run background workers, send client messages, or convert trips automatically.
+
 ## Governance Boundary
 
 Future AOIE phases should consume reviewed and versioned metadata from existing foundations. They should not create parallel ticket, EMD, booking, offer, service taxonomy, service mechanics, or pricing architectures.
