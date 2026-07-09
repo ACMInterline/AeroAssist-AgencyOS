@@ -14,6 +14,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Passenger Service Feasibility is non-Boolean advisory metadata; it is not recommendation.
 - Airline Recommendation is advisory preference metadata; it is not booking, search, price generation, or final authority.
 - Offer Intelligence Packages consume approved intelligence; they do not invent recommendations, feasibility, evidence, bookings, prices, or client messages.
+- Operational Intelligence Cases consolidate the Chapter 50 pipeline; they do not add new intelligence, execute bookings, issue tickets or EMDs, call providers, generate AI output, or send client messages.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
+PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -134,6 +134,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "IntelligentOfferBuilderPackage, IntelligentOfferBuilderPackageCreate, IntelligentOfferBuilderPackageUpdate, IntelligentOfferBuilderService, intelligent_offer_builder_packages, /api/platform/intelligent-offer-builder, /api/agencies/{agency_id}/offer-intelligence, /platform/intelligent-offer-builder, /agency/offer-intelligence",
         "status": "foundation adopted",
         "action": "Prepare metadata-only offer-intelligence packages that consume approved operational intelligence. The Offer Builder presents decision support and does not invent intelligence, search flights, book, ticket, issue EMDs, call providers, execute parsers, generate AI/LLM output, run workers, send offers automatically, or override human authority.",
+    },
+    {
+        "category": "Operational Intelligence Cases",
+        "concept": "Chapter 50 operational intelligence pipeline case consolidation",
+        "supplementary_concept": "operational intelligence case, passenger requirement, pipeline links, pipeline readiness, decision summary, trace metadata, offer-intelligence package link",
+        "current_equivalent": "OperationalIntelligenceCase, OperationalIntelligenceCaseCreate, OperationalIntelligenceCaseUpdate, OperationalIntelligenceCaseService, operational_intelligence_cases, /api/platform/operational-intelligence-cases, /api/agencies/{agency_id}/intelligence-cases, /platform/operational-intelligence-cases, /agency/intelligence-cases",
+        "status": "foundation adopted",
+        "action": "Consolidate the completed Chapter 50 metadata pipeline into an end-to-end case view from passenger requirement through offer-intelligence package. Phase 51.0 adds no new intelligence and prepares scenario testing plus real airline data population without AI/LLM generation, live search, booking, ticketing, EMD issuance, provider calls, parser execution, workers, automatic sending, or replacing human authority.",
     },
     {
         "category": "Platform / Agency UX",
@@ -743,6 +751,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/recommendations", "agencyos": "/agency/recommendations"},
         {"supplementary": "/admin/intelligent-offer-builder", "agencyos": "/platform/intelligent-offer-builder"},
         {"supplementary": "/agent/offer-intelligence", "agencyos": "/agency/offer-intelligence"},
+        {"supplementary": "/admin/operational-intelligence-cases", "agencyos": "/platform/operational-intelligence-cases"},
+        {"supplementary": "/agent/intelligence-cases", "agencyos": "/agency/intelligence-cases"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -1005,6 +1015,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Passenger service feasibility engine foundation built in Phase 50.7",
             "Airline recommendation engine foundation built in Phase 50.8",
             "Intelligent offer builder integration foundation built in Phase 50.9",
+            "Operational intelligence pipeline consolidation foundation built in Phase 51.0",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

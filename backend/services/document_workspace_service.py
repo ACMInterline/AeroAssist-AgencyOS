@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
+PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

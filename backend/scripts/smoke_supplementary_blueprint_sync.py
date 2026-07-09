@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_50_9_intelligent_offer_builder_integration_foundation"
+EXPECTED_PHASE = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",

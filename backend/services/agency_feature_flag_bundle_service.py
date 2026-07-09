@@ -6,7 +6,7 @@ from database import Database
 from models import BundleReadiness, FeatureFlagBundle, FeatureFlagBundleMember, FeatureFlagBundleReview, FeatureFlagBundleSummary
 
 
-PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
+PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 
 BUNDLE_COLLECTION = "agency_feature_flag_bundles"
 BUNDLE_REVIEW_COLLECTION = "agency_feature_flag_bundle_reviews"

@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
+PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

@@ -18,7 +18,7 @@ from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
+PHASE_LABEL = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 
 CHANGE_REQUEST_COLLECTION = "feature_bundle_rollout_change_requests"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

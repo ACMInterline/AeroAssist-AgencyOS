@@ -60,6 +60,10 @@ An advisory output that suggests airline or itinerary options based on reviewed 
 
 A Phase 50.9 metadata package that prepares approved recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, evidence references, required actions, explanations, decision pack metadata, and lifecycle state for human-reviewed offer presentation. It does not create bookings, tickets, EMDs, prices, provider searches, AI/LLM output, or automatic client messages.
 
+## Operational Intelligence Case
+
+A Phase 51.0 metadata case that consolidates the completed Chapter 50 pipeline from passenger requirement through offer-intelligence package. It preserves pipeline links, readiness, decision summaries, required actions, traces, and notes for scenario testing and real airline data population. It adds no new intelligence and does not execute bookings, issue tickets or EMDs, call providers, generate AI/LLM output, or send client messages.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

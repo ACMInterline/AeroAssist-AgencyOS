@@ -62,7 +62,9 @@ Phase 50.8 adds the `airline_recommendations` collection. The Airline & Itinerar
 
 Phase 50.9 adds the `intelligent_offer_builder_packages` collection. Intelligent Offer Builder Integration consumes recommendations, feasibility, operational evaluations, capability matrix records, knowledge versions, and evidence references to prepare explainable offer-intelligence metadata. Offer Builder should not invent intelligence and does not send, search, book, ticket, issue EMDs, call providers, execute parsers, generate AI/LLM output, run workers, or override human authority.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, and Airline Recommendation records.
+Phase 51.0 adds the `operational_intelligence_cases` collection. Operational Intelligence Pipeline Consolidation connects the completed Chapter 50 metadata pipeline from passenger requirement to offer-intelligence package. It adds no new intelligence, prepares scenario testing and real airline data population, and keeps human authority final.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, and Operational Intelligence Cases.
 
 ## Routes
 
@@ -87,6 +89,7 @@ All routes are read-only visualization routes.
 - 50.7 Passenger Service Feasibility Engine Foundation - implemented as metadata-only advisory feasibility
 - 50.8 Airline & Itinerary Recommendation Engine Foundation - implemented as metadata-only advisory recommendation
 - 50.9 Offer Builder Intelligence Integration Foundation
+- 51.0 Operational Intelligence Pipeline Consolidation Foundation - implemented as metadata-only case consolidation
 
 ## Explicitly Excluded
 
@@ -108,3 +111,5 @@ Phase 50.7 does not implement airline recommendation ranking, flight search, boo
 Phase 50.8 does not implement live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation.
 
 Phase 50.9 does not implement live GDS search, NDC search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, price generation, background workers, automatic client sending, external API calls, or automation.
+
+Phase 51.0 does not implement new intelligence, live flight search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, background workers, automatic client sending, external API calls, scenario execution automation, real airline data ingestion automation, or operational automation.

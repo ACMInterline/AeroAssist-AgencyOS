@@ -42,6 +42,12 @@ Offer-intelligence packages store package overview, passenger context, trip/requ
 
 These records preserve references to recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, and evidence references. They do not recompute or generate intelligence.
 
+## Phase 51.0 Consolidation
+
+Phase 51.0 adds `operational_intelligence_cases` as the downstream case view that consolidates the completed Chapter 50 pipeline from passenger requirement to offer-intelligence package.
+
+This does not add new intelligence to Offer Builder. It prepares the system for scenario testing and real airline data population by making the full metadata chain inspectable. Human authority remains final.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

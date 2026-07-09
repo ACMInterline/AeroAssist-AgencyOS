@@ -24,6 +24,8 @@ Phase 50.8 implements the metadata-only Airline & Itinerary Recommendation Engin
 
 Phase 50.9 implements metadata-only Intelligent Offer Builder Integration. It consumes approved recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, and evidence references to prepare offer-intelligence packages. Offer Builder should not invent intelligence and must not book, ticket, issue EMDs, search providers, generate AI/LLM content, execute parsers, run workers, send offers automatically, or replace human authority.
 
+Phase 51.0 implements metadata-only Operational Intelligence Pipeline Consolidation. It adds Operational Intelligence Cases that connect the completed Chapter 50 pipeline from passenger requirement to offer-intelligence package. It adds no new intelligence, prepares scenario testing and real airline data population, and keeps human authority final.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -36,6 +38,7 @@ Phase 50.9 implements metadata-only Intelligent Offer Builder Integration. It co
 - 50.7 Passenger Service Feasibility Engine
 - 50.8 Airline & Itinerary Recommendation Engine
 - 50.9 Offer Builder Intelligence Integration
+- 51.0 Operational Intelligence Pipeline Consolidation
 
 ## Five Pillars
 
@@ -79,6 +82,7 @@ A decision pack should include:
 - Human review notes.
 - Recommendation rationale from Phase 50.8 Airline Recommendation metadata when available.
 - Offer-intelligence package traces from Phase 50.9 Intelligent Offer Builder Integration when available.
+- Operational Intelligence Case trace metadata from Phase 51.0 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

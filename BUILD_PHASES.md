@@ -145,6 +145,11 @@ The repository currently contains:
 - Phase 50.3: Airline operational knowledge normalisation foundation.
 - Phase 50.4: Airline operational knowledge governance and version control foundation.
 - Phase 50.5: Airline operational capability matrix foundation.
+- Phase 50.6: Operational knowledge evaluation engine foundation.
+- Phase 50.7: Passenger service feasibility engine foundation.
+- Phase 50.8: Airline and itinerary recommendation engine foundation.
+- Phase 50.9: Intelligent offer builder integration foundation.
+- Phase 51.0: Operational intelligence pipeline consolidation foundation.
 
 Phase 35 navigation hotfix:
 
