@@ -1079,7 +1079,7 @@ Before implementing future phases, Codex should read and follow:
 - Filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
 - Metadata collection `airline_knowledge_acquisitions` with additive index registration only.
 - Architecture note: `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
-- Phase 50.1 feeds Phase 50.2 Operational Constraint Engine metadata, Phase 50.3 Airline Operational Knowledge Normalisation metadata, Phase 50.4 Airline Operational Knowledge Governance metadata, Phase 50.5 Airline Operational Capability Matrix metadata, and future 50.6 Operational Knowledge Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration metadata. It stores Airline Operational Knowledge and does not decide operational feasibility. Future AOIE should reason over the Operational Knowledge Graph, operational constraints, canonical vocabulary, governed versions/releases, capabilities, policies, pricing, and evidence, not raw text alone.
+- Phase 50.1 feeds Phase 50.2 Operational Constraint Engine metadata, Phase 50.3 Airline Operational Knowledge Normalisation metadata, Phase 50.4 Airline Operational Knowledge Governance metadata, Phase 50.5 Airline Operational Capability Matrix metadata, Phase 50.6 Operational Knowledge Evaluation metadata, Phase 50.7 Passenger Service Feasibility metadata, and future 50.8 Airline & Itinerary Recommendation Engine and 50.9 Offer Builder Intelligence Integration metadata. It stores Airline Operational Knowledge and does not decide operational feasibility. Future AOIE should reason over the Operational Knowledge Graph, operational constraints, canonical vocabulary, governed versions/releases, capabilities, policies, pricing, evidence, evaluation results, and feasibility records, not raw text alone.
 - Phase 50.1 does not run AI parsing, automatic extraction, web scraping, web crawling, airline website automation, provider integrations, live airline APIs, recommendation engines, feasibility engines, pricing calculation engines, background workers, parser execution, external API calls, or automation.
 
 ## Phase 50.2 Includes
@@ -1123,7 +1123,7 @@ Before implementing future phases, Codex should read and follow:
 - Filters by airline, service domain/family, SSR, RFIC, RFISC, aircraft family, cabin, airport, route, country, season, capability status, operational risk, confidence level, and effective date.
 - Metadata collection `airline_capability_matrix` with additive index registration only.
 - Architecture note: `docs/architecture/airline-operational-capability-matrix-foundation.md`.
-- Phase 50.5 does not evaluate passenger cases, score feasibility, rank airlines, reason with AI, execute parsers, calculate pricing, call providers, run background workers, scrape, publish automatically, or automate decisions. Phase 50.6 consumes the matrix for operational knowledge evaluation metadata, and future Phase 50.7 consumes evaluation outputs for passenger service feasibility.
+- Phase 50.5 does not evaluate passenger cases, score feasibility, rank airlines, reason with AI, execute parsers, calculate pricing, call providers, run background workers, scrape, publish automatically, or automate decisions. Phase 50.6 consumes the matrix for operational knowledge evaluation metadata, and Phase 50.7 consumes evaluation outputs for passenger service feasibility.
 
 ## Phase 50.6 Includes
 
@@ -1134,6 +1134,16 @@ Before implementing future phases, Codex should read and follow:
 - Metadata collection `operational_knowledge_evaluations` with additive index registration only.
 - Architecture note: `docs/architecture/operational-knowledge-evaluation-engine-foundation.md`.
 - Evaluation is not recommendation. Evaluation determines what operationally applies from evidence-backed knowledge acquisition, normalisation, operational constraints, governance, and capability matrix metadata. Phase 50.6 does not determine passenger feasibility, rank airlines, generate itineraries, use AI or LLM prompts, search flights, book, ticket, execute parsers, optimise pricing, call providers, run background workers, or automate decisions.
+
+## Phase 50.7 Includes
+
+- Metadata-only Passenger Service Feasibility records that consume Operational Knowledge Evaluation Results from Phase 50.6.
+- Platform UI `/platform/passenger-service-feasibility` and APIs under `/api/platform/passenger-service-feasibility` for metadata create/update/archive/list/detail views.
+- Agency UI `/agency/service-feasibility` and read-only APIs under `/api/agencies/{agency_id}/passenger-service-feasibility`.
+- Feasibility metadata for passenger context, trip / itinerary context, airline context, evaluation links, feasibility outcomes, satisfied/conditional/unsatisfied/unknown requirements, required actions, operational risk, evidence/evaluation/decision trace, confidence, lifecycle, and notes.
+- Metadata collection `passenger_service_feasibilities` with additive index registration only.
+- Architecture note: `docs/architecture/passenger-service-feasibility-engine-foundation.md`.
+- Feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation comes later in Phase 50.8. Phase 50.7 does not rank airlines, search flights, book, ticket, call providers, use AI or LLM prompts, execute parsers, optimise pricing, run background workers, or automate decisions.
 
 ## Intentionally Not Included Yet
 

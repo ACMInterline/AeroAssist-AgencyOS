@@ -18,6 +18,8 @@ Phase 50.5 implements the metadata-only Airline Operational Capability Matrix. I
 
 Phase 50.6 implements the metadata-only Operational Knowledge Evaluation Engine. It records deterministic, explainable Operational Evaluation Results for what operationally applies to a passenger operational requirement. Evaluation is not recommendation. Evaluation does not determine passenger feasibility. It only consumes Knowledge Acquisition, Knowledge Normalisation, Operational Constraints, Knowledge Governance, and Capability Matrix metadata.
 
+Phase 50.7 implements the metadata-only Passenger Service Feasibility Engine. It consumes Operational Evaluation Results and records advisory, explainable, evidence-linked, non-Boolean feasibility outcomes for passenger service requirements under evaluated airline, itinerary, and service conditions. Feasibility is not recommendation, does not rank airlines or itineraries, and human authority remains final.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation

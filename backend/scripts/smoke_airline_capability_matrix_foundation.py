@@ -21,7 +21,7 @@ from services.airline_capability_matrix_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_50_6_operational_knowledge_evaluation_engine_foundation"
+EXPECTED_PHASE = "phase_50_7_passenger_service_feasibility_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-capability-matrix"
 
@@ -294,7 +294,7 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/pages/agency/CapabilityMatrixPage.jsx", "Read-only metadata inventory"),
         (ROOT / "docs/architecture/airline-operational-capability-matrix-foundation.md", "Capability is different from Policy"),
         (ROOT / "docs/architecture/airline-operational-capability-matrix-foundation.md", "Phase 50.6 consumes the matrix"),
-        (ROOT / "docs/architecture/airline-operational-capability-matrix-foundation.md", "Future Phase 50.7"),
+        (ROOT / "docs/architecture/airline-operational-capability-matrix-foundation.md", "Phase 50.7 consumes Operational Evaluation Results"),
         (ROOT / "docs/architecture/current-model-inventory.md", "airline_capability_matrix"),
         (ROOT / "docs/architecture/canonical-route-policy.md", "/api/platform/airline-capability-matrix"),
         (ROOT / "docs/architecture/canonical-route-policy.md", "/api/agencies/{agency_id}/airline-capability-matrix"),
@@ -459,12 +459,12 @@ def verify_blueprint_adoption() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if "Airline operational capability matrix foundation built in Phase 50.5" not in gaps.get("already_built", []):
         raise AssertionError(f"Gap summary missing Phase 50.5 capability matrix marker: {gaps}")
-    if "Phase 50.7" not in gaps.get("next_intelligence_phase", ""):
-        raise AssertionError(f"Gap summary missing Phase 50.7 next intelligence phase: {gaps}")
+    if "Phase 50.8" not in gaps.get("next_intelligence_phase", ""):
+        raise AssertionError(f"Gap summary missing Phase 50.8 next intelligence phase: {gaps}")
 
     next_phases = get("/api/platform/blueprint/next-phases", OWNER_HEADERS)
-    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.7":
-        raise AssertionError(f"Next recommendations did not start with Phase 50.7: {next_phases}")
+    if not next_phases.get("items") or next_phases["items"][0].get("phase") != "Phase 50.8":
+        raise AssertionError(f"Next recommendations did not start with Phase 50.8: {next_phases}")
 
 
 def assert_created_record(record: dict, reference: str, agency_id: str) -> None:

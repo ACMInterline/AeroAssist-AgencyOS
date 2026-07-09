@@ -33,6 +33,7 @@ import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
 import KnowledgeGovernancePage from "./pages/agency/KnowledgeGovernancePage"
 import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
+import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
@@ -116,6 +117,7 @@ import AirlineKnowledgeGovernancePage from "./pages/platform/AirlineKnowledgeGov
 import AirlineKnowledgeNormalisationPage from "./pages/platform/AirlineKnowledgeNormalisationPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
 import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
+import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
@@ -251,6 +253,7 @@ const routes = {
   "/platform/airline-knowledge-releases": AirlineKnowledgeGovernancePage,
   "/platform/airline-capability-matrix": AirlineCapabilityMatrixPage,
   "/platform/operational-evaluations": PlatformOperationalEvaluationsPage,
+  "/platform/passenger-service-feasibility": PlatformPassengerServiceFeasibilityPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -322,6 +325,7 @@ const routes = {
   "/agency/knowledge-governance": KnowledgeGovernancePage,
   "/agency/capability-matrix": CapabilityMatrixPage,
   "/agency/operational-evaluations": OperationalEvaluationsPage,
+  "/agency/service-feasibility": ServiceFeasibilityPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

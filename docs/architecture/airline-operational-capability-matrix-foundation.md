@@ -14,7 +14,7 @@ It does not answer:
 
 `Is this passenger case feasible?`
 
-Passenger feasibility belongs to a later AOIE phase. Phase 50.5 only creates the operational inventory that future evaluation can consume.
+Passenger feasibility belongs to Phase 50.7. Phase 50.5 only creates the operational inventory that Phase 50.6 evaluation and Phase 50.7 feasibility can consume.
 
 ## Capability Is Not Policy
 
@@ -76,7 +76,7 @@ Matrix records can describe capability by:
 
 Phase 50.6 consumes the matrix for metadata-only Operational Knowledge Evaluation records.
 
-Future Phase 50.7 consumes Operational Evaluation Results for passenger service feasibility.
+Phase 50.7 consumes Operational Evaluation Results for advisory, non-Boolean passenger service feasibility.
 
 Neither future relationship changes Phase 50.5 into an execution engine. The matrix remains an operational inventory.
 

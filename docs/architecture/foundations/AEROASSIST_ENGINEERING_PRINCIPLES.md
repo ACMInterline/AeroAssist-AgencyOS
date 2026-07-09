@@ -10,6 +10,8 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Capability is not Policy.
 - Pricing is not Capability.
 - The Capability Matrix records operational inventory; it does not evaluate passenger feasibility.
+- Operational Evaluation Results determine what applies; they do not decide feasibility.
+- Passenger Service Feasibility is non-Boolean advisory metadata; it is not recommendation.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.

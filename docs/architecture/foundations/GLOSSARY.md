@@ -48,6 +48,10 @@ A future human-reviewed advisory package that explains evidence, applicability, 
 
 An advisory assessment of whether a passenger service profile can be fulfilled under known evidence, policy, pricing, capability, constraints, and procedures.
 
+## Passenger Service Feasibility
+
+A Phase 50.7 advisory, evidence-linked record that consumes Operational Evaluation Results and stores a non-Boolean outcome such as fully feasible, conditionally feasible, operational review required, operationally blocked, or unknown. It is not an airline recommendation, ranking, booking action, or final authority.
+
 ## Recommendation
 
 A future advisory output that suggests airline or itinerary options based on reviewed evidence and structured operational knowledge. A recommendation is not an execution action.

@@ -2015,7 +2015,7 @@ Implemented scope:
 - Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-knowledge-acquisition` and UI at `/platform/airline-knowledge-acquisition`.
 - Added agency read-only APIs under `/api/agencies/{agency_id}/airline-knowledge-acquisition` and UI at `/agency/knowledge-acquisition`.
 - Added filters by airline, service domain, service family, SSR code, RFIC, RFISC, source type, review status, approval status, effective date, and official source flag.
-- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, Phase 50.5 Airline Operational Capability Matrix, and future AOIE phases: 50.6 Operational Knowledge Evaluation Engine, 50.7 Passenger Service Feasibility Engine, 50.8 Airline & Itinerary Recommendation Engine, and 50.9 Offer Builder Intelligence Integration.
+- Linked acquisition evidence and operational knowledge graph metadata to Phase 50.2 Operational Constraint Engine, Phase 50.3 Airline Operational Knowledge Normalisation, Phase 50.4 Airline Operational Knowledge Governance, Phase 50.5 Airline Operational Capability Matrix, Phase 50.6 Operational Knowledge Evaluation Engine, Phase 50.7 Passenger Service Feasibility Engine, and future AOIE phases: 50.8 Airline & Itinerary Recommendation Engine and 50.9 Offer Builder Intelligence Integration.
 - Added readiness flags under `airline_knowledge_acquisition_workspace_foundation`.
 - Added `docs/architecture/airline-knowledge-acquisition-workspace-foundation.md`.
 
@@ -2106,6 +2106,24 @@ Implemented scope:
 Avoid adding:
 
 - AI reasoning, LLM prompts, flight search, itinerary recommendation, passenger feasibility scoring, booking, ticketing, provider integrations, parser execution, pricing optimisation, background workers, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 50.7: Passenger Service Feasibility Engine Foundation
+
+Implemented scope:
+
+- Added metadata-only `PassengerServiceFeasibility`, `PassengerServiceFeasibilityCreate`, and `PassengerServiceFeasibilityUpdate` models for advisory passenger service feasibility records.
+- Registered the additive `passenger_service_feasibilities` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/passenger-service-feasibility` and UI at `/platform/passenger-service-feasibility`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/passenger-service-feasibility` and UI at `/agency/service-feasibility`.
+- Added metadata sections for Feasibility Overview, Passenger Context, Trip / Itinerary Context, Airline Context, Evaluation Links, Feasibility Result, Satisfied / Conditional / Unsatisfied / Unknown Requirements, Required Actions, Operational Risk, Evidence Trace, Confidence, Lifecycle, and Notes.
+- Added filters by airline, feasibility outcome, confidence level, operational risk, passenger need category, SSR code, travel date, cabin, destination, and recommendation readiness.
+- Added readiness flags under `passenger_service_feasibility_engine_foundation`.
+- Added `docs/architecture/passenger-service-feasibility-engine-foundation.md`.
+- Clarified that feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation remains future Phase 50.8.
+
+Avoid adding:
+
+- Airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI/LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 
