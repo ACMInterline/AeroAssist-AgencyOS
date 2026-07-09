@@ -74,4 +74,8 @@ Phase 52.3 adds `visual_policy_editor_cards` as no-code airline service policy-c
 
 Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metadata that can reference Service Parameter Taxonomies through `parameter_taxonomy_links`. Taxonomy remains the reusable measurable parameter vocabulary; Operational Rule Composer stores condition and outcome metadata. Neither layer executes rules, evaluates live cases, calculates prices, calls providers, uses AI, runs workers, makes automatic decisions, or replaces human review.
 
+## Knowledge Quality Assurance Alignment
+
+Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA reviews. Knowledge QA can flag incomplete service parameters or requested changes against Service Parameter Taxonomies, but it does not auto-approve, publish, execute rules, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human review.
+
 Reference Data Domains are not parameter taxonomies and do not evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate operational decisions. Human authority remains final for both taxonomy governance and reference-domain governance.

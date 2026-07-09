@@ -84,6 +84,10 @@ A Phase 52.4 metadata-only foundation that stores no-code airline ancillary and 
 
 A Phase 52.5 metadata-only foundation that stores no-code compound airline passenger service restriction and outcome records. Records contain rule family, service family, service codes, applies-to metadata, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence links, governance links, service parameter taxonomy links, effective dates, and lifecycle status. It does not execute rules, evaluate live cases, calculate pricing, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+## Knowledge Quality Assurance
+
+A Phase 52.6 metadata-only foundation that stores airline knowledge QA review records. Records contain target metadata, airline/service scope, QA status, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links. It does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

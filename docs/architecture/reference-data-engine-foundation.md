@@ -46,6 +46,10 @@ Phase 52.4 adds `pricing_formula_builders` as no-code pricing formula metadata. 
 
 Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metadata. Operational Rule Composer records may use Reference Data Engine domains for controlled airlines, airports, countries, route types, flight types, cabins, service codes, service families, passenger types, pet/container/document/vaccination metadata, mobility levels, wheelchair devices, batteries, medical equipment, temperature zones, and seasonal restrictions. Phase 52.5 does not execute rules, evaluate live cases, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human authority.
 
+## Knowledge Quality Assurance Relationship
+
+Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA reviews. Knowledge QA may flag unsupported reference values, stale review, missing evidence, or operational validation pending for Reference Data Engine domains, but it does not auto-approve, publish, execute rules, call providers, use AI, run workers, or replace human authority.
+
 It does not implement provider integrations, AI/LLM behavior, live rule evaluation, pricing calculation, booking, ticketing, background workers, old `/admin` routes, automatic promotion, or automatic client sending.
 
 Human authority remains final for domain governance, review, imports, operational use, and future production population.

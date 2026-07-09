@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_5_operational_rule_composer_foundation"
+PHASE_LABEL = "phase_52_6_knowledge_quality_assurance_foundation"
 
 CLIENT_MASTER_RECORDS_COLLECTION = "client_master_records"
 PASSENGER_MASTER_RECORDS_COLLECTION = "passenger_master_records"

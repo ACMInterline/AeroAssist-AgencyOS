@@ -64,6 +64,10 @@ Phase 52.4 adds `pricing_formula_builders` as metadata-only pricing formula refe
 
 Phase 52.5 adds `operational_rule_composer_rules` as metadata-only compound rule references that future offer-intelligence packages may cite in required-action, risk, confidence, and evidence trace sections. This does not execute rules, evaluate live passenger cases, generate prices, call providers, use AI/LLM generation, run workers, make automatic decisions, send automatically to clients, or replace human authority.
 
+## Phase 52.6 Knowledge Quality Assurance
+
+Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA review references that future offer-intelligence packages may cite in readiness, evidence trace, risk, and unresolved issue sections. This does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run workers, send automatically to clients, or replace human authority.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

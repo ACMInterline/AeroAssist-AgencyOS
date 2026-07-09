@@ -79,6 +79,8 @@ Phase 52.4 adds pricing formula builder APIs only under `/api/platform/pricing-f
 
 Phase 52.5 adds operational rule composer APIs only under `/api/platform/operational-rule-composer/*` and `/api/agencies/{agency_id}/rule-composer/*`, plus frontend pages under `/platform/operational-rule-composer` and `/agency/rule-composer`. It records metadata-only compound rule metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rule execution, live rule evaluation, pricing calculation, provider integrations, AI/LLM generation, background workers, automatic decisions, or automation.
 
+Phase 52.6 adds knowledge quality assurance APIs only under `/api/platform/knowledge-quality-assurance/*` and `/api/agencies/{agency_id}/knowledge-quality-assurance/*`, plus frontend pages under `/platform/knowledge-quality-assurance` and `/agency/knowledge-quality-assurance`. It records metadata-only QA review metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, auto-approval, publishing, rule execution, AI/LLM generation, provider integrations, background workers, automatic decisions, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

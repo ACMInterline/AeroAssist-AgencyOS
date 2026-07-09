@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_5_operational_rule_composer_foundation"
+PHASE_LABEL = "phase_52_6_knowledge_quality_assurance_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -182,6 +182,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate, OperationalRuleComposerService, operational_rule_composer_rules, /api/platform/operational-rule-composer, /api/agencies/{agency_id}/rule-composer, /platform/operational-rule-composer, /agency/rule-composer",
         "status": "foundation adopted",
         "action": "Create metadata-only operational compound rule composer records for airline passenger service restrictions and outcomes. Phase 52.5 does not execute rules, evaluate passenger cases, call providers, generate AI/LLM output, run background workers, automate decisions, or override human authority.",
+    },
+    {
+        "category": "Knowledge Quality Assurance",
+        "concept": "Metadata-only airline knowledge QA review layer",
+        "supplementary_concept": "missing evidence, missing effective dates, missing pricing applicability, conflicting support status, incomplete service parameters, missing documents, unsupported reference values, stale review, low confidence, operational validation pending, duplicate policy card, conflicting rule, incomplete pricing formula",
+        "current_equivalent": "KnowledgeQualityAssuranceReview, KnowledgeQualityAssuranceReviewCreate, KnowledgeQualityAssuranceReviewUpdate, KnowledgeQualityAssuranceService, knowledge_quality_assurance_reviews, /api/platform/knowledge-quality-assurance, /api/agencies/{agency_id}/knowledge-quality-assurance, /platform/knowledge-quality-assurance, /agency/knowledge-quality-assurance",
+        "status": "foundation adopted",
+        "action": "Create metadata-only QA review records for airline knowledge production. Phase 52.6 does not auto-approve, publish, execute rules, call providers, generate AI/LLM output, run background workers, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -832,6 +840,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/operational-rule-composer", "agencyos": "/platform/operational-rule-composer"},
         {"supplementary": "/agent/rule-composer", "agencyos": "/agency/rule-composer"},
         {"supplementary": "/agent/operational-rule-composer", "agencyos": "/agency/rule-composer"},
+        {"supplementary": "/admin/knowledge-quality-assurance", "agencyos": "/platform/knowledge-quality-assurance"},
+        {"supplementary": "/agent/knowledge-quality-assurance", "agencyos": "/agency/knowledge-quality-assurance"},
+        {"supplementary": "/agent/knowledge-qa", "agencyos": "/agency/knowledge-quality-assurance"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -1051,6 +1062,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "OperationalRuleComposerRule",
             "OperationalRuleComposerRuleCreate",
             "OperationalRuleComposerRuleUpdate",
+            "KnowledgeQualityAssuranceReview",
+            "KnowledgeQualityAssuranceReviewCreate",
+            "KnowledgeQualityAssuranceReviewUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1135,6 +1149,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Visual policy editor foundation built in Phase 52.3",
             "Pricing formula builder foundation built in Phase 52.4",
             "Operational rule composer foundation built in Phase 52.5",
+            "Knowledge quality assurance foundation built in Phase 52.6",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

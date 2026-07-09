@@ -54,3 +54,5 @@ These relationships are links and schemas only. They do not execute parsing, tra
 Phase 52.4 adds `pricing_formula_builders` for no-code pricing formula metadata. Knowledge Import Templates can describe future pricing-table population schemas that target pricing formula records, but they do not parse files, execute imports, calculate prices, call providers, integrate payments, use AI, run workers, or send automatically to clients.
 
 Phase 52.5 adds `operational_rule_composer_rules` for no-code compound rule metadata. Knowledge Import Templates can describe future exception-rule-pack population schemas that target rule-composer records, but they do not parse files, execute imports, evaluate rules, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human review.
+
+Phase 52.6 adds `knowledge_quality_assurance_reviews` for metadata-only QA reviews. Knowledge Import Templates can describe future QA population columns, but they do not perform QA execution, auto-approve, publish, call providers, use AI, run workers, or replace human review.

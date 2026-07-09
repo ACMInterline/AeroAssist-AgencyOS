@@ -7,7 +7,7 @@ from database import Database
 from models import ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate
 
 
-PHASE_LABEL = "phase_52_5_operational_rule_composer_foundation"
+PHASE_LABEL = "phase_52_6_knowledge_quality_assurance_foundation"
 REFERENCE_DATA_DOMAINS_COLLECTION = "reference_data_domains"
 
 SUPPORTED_REFERENCE_DOMAIN_CODES = [

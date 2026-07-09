@@ -67,6 +67,8 @@ The operators are recorded for future scenario testing and human-reviewed airlin
 
 Reference Data Engine provides controlled values. Knowledge Import Templates describe future data population schemas. Visual Policy Editor stores human-readable service policy-card metadata. Pricing Formula Builder stores pricing formula metadata. Operational Rule Composer stores compound operational rule metadata as a separate layer so restrictions, outcomes, pricing, policy wording, capability, and service parameter definitions remain distinct.
 
+Phase 52.6 adds Knowledge Quality Assurance as a metadata-only review layer over rule-composer records. Knowledge QA can record conflicting rule, missing evidence, unsupported reference values, stale review, operational validation pending, or requested changes, but it does not execute rules, evaluate live cases, auto-approve, publish, call providers, use AI, run workers, or replace human authority.
+
 ## Boundaries
 
 Human authority remains final.

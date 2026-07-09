@@ -21455,6 +21455,76 @@ class OperationalRuleComposerRuleUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class KnowledgeQualityAssuranceReview(BaseDocument):
+    agency_id: Optional[str] = None
+    review_reference: str
+    target_type: str
+    target_id: str
+    airline_code: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    qa_status: str = "open"
+    issues: List[Dict[str, Any]] = Field(default_factory=list)
+    severity: str = "medium"
+    reviewer: Optional[Dict[str, Any]] = None
+    requested_changes: List[Dict[str, Any]] = Field(default_factory=list)
+    approval_recommendation: str = "no_recommendation"
+    governance_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    knowledge_quality_assurance_foundation: bool = True
+    auto_approval_disabled: bool = True
+    publishing_disabled: bool = True
+    rule_execution_disabled: bool = True
+    ai_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class KnowledgeQualityAssuranceReviewCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    review_reference: Optional[str] = None
+    target_type: str
+    target_id: str
+    airline_code: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    qa_status: str = "open"
+    issues: List[Dict[str, Any]] = Field(default_factory=list)
+    severity: str = "medium"
+    reviewer: Optional[Dict[str, Any]] = None
+    requested_changes: List[Dict[str, Any]] = Field(default_factory=list)
+    approval_recommendation: str = "no_recommendation"
+    governance_links: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class KnowledgeQualityAssuranceReviewUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    review_reference: Optional[str] = None
+    target_type: Optional[str] = None
+    target_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    qa_status: Optional[str] = None
+    issues: Optional[List[Dict[str, Any]]] = None
+    severity: Optional[str] = None
+    reviewer: Optional[Dict[str, Any]] = None
+    requested_changes: Optional[List[Dict[str, Any]]] = None
+    approval_recommendation: Optional[str] = None
+    governance_links: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

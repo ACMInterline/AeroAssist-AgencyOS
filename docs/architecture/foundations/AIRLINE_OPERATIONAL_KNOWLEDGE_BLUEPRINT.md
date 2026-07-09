@@ -40,6 +40,8 @@ Phase 52.4 implements metadata-only Pricing Formula Builder Foundation. It adds 
 
 Phase 52.5 implements metadata-only Operational Rule Composer Foundation. It adds no-code compound airline passenger service restriction and outcome records with applies-to metadata, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence, governance, service parameter taxonomy links, effective dates, and lifecycle status. It does not execute rules, evaluate live cases, calculate pricing, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+Phase 52.6 implements metadata-only Knowledge Quality Assurance Foundation. It adds QA review records for airline knowledge production with checks, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links. It does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -61,6 +63,7 @@ Phase 52.5 implements metadata-only Operational Rule Composer Foundation. It add
 - 52.3 Visual Policy Editor Foundation
 - 52.4 Pricing Formula Builder Foundation
 - 52.5 Operational Rule Composer Foundation
+- 52.6 Knowledge Quality Assurance Foundation
 
 ## Five Pillars
 
@@ -126,6 +129,12 @@ Phase 52.5 adds `operational_rule_composer_rules` for metadata-only compound rul
 
 Operational Rule Composer is a human-reviewed no-code metadata surface. It is not rule execution, live rule evaluation, pricing calculation, provider integration, AI generation, worker automation, automatic decisioning, or final operational authority.
 
+## Knowledge Quality Assurance
+
+Phase 52.6 adds `knowledge_quality_assurance_reviews` for metadata-only airline knowledge QA reviews. Reviews store target metadata, airline/service scope, QA status, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links.
+
+Knowledge Quality Assurance is a human-reviewed governance metadata surface. It is not automatic approval, publishing, rule execution, provider integration, AI generation, worker automation, automatic decisioning, or final operational authority.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -149,6 +158,7 @@ A decision pack should include:
 - Visual Policy Editor card metadata from Phase 52.3 when available.
 - Pricing Formula Builder metadata from Phase 52.4 when available.
 - Operational Rule Composer metadata from Phase 52.5 when available.
+- Knowledge QA review metadata from Phase 52.6 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

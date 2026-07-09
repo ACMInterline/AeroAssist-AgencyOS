@@ -41,6 +41,7 @@ import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePag
 import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
 import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilderPage"
 import RuleComposerPage from "./pages/agency/RuleComposerPage"
+import AgencyKnowledgeQualityAssurancePage from "./pages/agency/KnowledgeQualityAssurancePage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -140,6 +141,7 @@ import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServicePara
 import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
 import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBuilderPage"
 import PlatformOperationalRuleComposerPage from "./pages/platform/OperationalRuleComposerPage"
+import PlatformKnowledgeQualityAssurancePage from "./pages/platform/KnowledgeQualityAssurancePage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -285,6 +287,7 @@ const routes = {
   "/platform/visual-policy-editor": PlatformVisualPolicyEditorPage,
   "/platform/pricing-formula-builder": PlatformPricingFormulaBuilderPage,
   "/platform/operational-rule-composer": PlatformOperationalRuleComposerPage,
+  "/platform/knowledge-quality-assurance": PlatformKnowledgeQualityAssurancePage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -369,6 +372,7 @@ const routes = {
   "/agency/policy-editor": PolicyEditorPage,
   "/agency/pricing-formula-builder": AgencyPricingFormulaBuilderPage,
   "/agency/rule-composer": RuleComposerPage,
+  "/agency/knowledge-quality-assurance": AgencyKnowledgeQualityAssurancePage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,
