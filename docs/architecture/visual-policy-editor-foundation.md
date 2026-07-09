@@ -33,7 +33,10 @@ Visual Policy Editor cards can reference:
 - reference data domains for future controlled values
 - knowledge import template records for future structured data population
 - pricing formula builder records for separate no-code ancillary and service pricing metadata
+- operational rule composer records for separate no-code compound restriction and outcome metadata
 
 These links are stored as metadata only. The editor prepares the system for scenario testing, real airline data population, and future governed production workflows without introducing executable policy logic.
 
 Phase 52.4 adds `pricing_formula_builders` as a separate metadata layer for pricing formula records. Visual Policy Editor remains policy-card metadata and does not calculate pricing. Pricing Formula Builder references may use policy-card evidence, but live price calculation, payment integrations, provider integrations, AI, workers, and automatic client sending remain disabled.
+
+Phase 52.5 adds `operational_rule_composer_rules` as a separate metadata layer for compound restrictions and outcomes. Visual Policy Editor remains policy-card metadata and does not execute rules. Operational Rule Composer references may use policy-card evidence, but rule execution, live evaluation, provider integrations, AI, workers, automatic decisions, and final operational authority remain disabled.

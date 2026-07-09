@@ -40,6 +40,7 @@ import ImportTemplatesPage from "./pages/agency/ImportTemplatesPage"
 import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
 import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
 import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilderPage"
+import RuleComposerPage from "./pages/agency/RuleComposerPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -138,6 +139,7 @@ import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEngin
 import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
 import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
 import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBuilderPage"
+import PlatformOperationalRuleComposerPage from "./pages/platform/OperationalRuleComposerPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -282,6 +284,7 @@ const routes = {
   "/platform/knowledge-import-templates": PlatformKnowledgeImportTemplatesPage,
   "/platform/visual-policy-editor": PlatformVisualPolicyEditorPage,
   "/platform/pricing-formula-builder": PlatformPricingFormulaBuilderPage,
+  "/platform/operational-rule-composer": PlatformOperationalRuleComposerPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -365,6 +368,7 @@ const routes = {
   "/agency/import-templates": ImportTemplatesPage,
   "/agency/policy-editor": PolicyEditorPage,
   "/agency/pricing-formula-builder": AgencyPricingFormulaBuilderPage,
+  "/agency/rule-composer": RuleComposerPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

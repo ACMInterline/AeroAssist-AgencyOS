@@ -77,6 +77,8 @@ Phase 52.3 adds visual policy editor APIs only under `/api/platform/visual-polic
 
 Phase 52.4 adds pricing formula builder APIs only under `/api/platform/pricing-formula-builder/*` and `/api/agencies/{agency_id}/pricing-formula-builder/*`, plus frontend pages under `/platform/pricing-formula-builder` and `/agency/pricing-formula-builder`. It records metadata-only pricing formula metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live price calculation, payment integrations, provider integrations, AI/LLM generation, background workers, automatic client sending, or automation.
 
+Phase 52.5 adds operational rule composer APIs only under `/api/platform/operational-rule-composer/*` and `/api/agencies/{agency_id}/rule-composer/*`, plus frontend pages under `/platform/operational-rule-composer` and `/agency/rule-composer`. It records metadata-only compound rule metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, rule execution, live rule evaluation, pricing calculation, provider integrations, AI/LLM generation, background workers, automatic decisions, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

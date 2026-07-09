@@ -60,6 +60,10 @@ Phase 51.2 adds `request_segment_service_scopes` upstream of offer intelligence.
 
 Phase 52.4 adds `pricing_formula_builders` as metadata-only pricing formula references that future offer-intelligence packages may cite in pricing/cost reference sections. This does not generate prices, calculate live fares, integrate payments, call providers, use AI/LLM generation, run workers, send automatically to clients, or replace human authority.
 
+## Phase 52.5 Operational Rule Composer
+
+Phase 52.5 adds `operational_rule_composer_rules` as metadata-only compound rule references that future offer-intelligence packages may cite in required-action, risk, confidence, and evidence trace sections. This does not execute rules, evaluate live passenger cases, generate prices, call providers, use AI/LLM generation, run workers, make automatic decisions, send automatically to clients, or replace human authority.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_4_pricing_formula_builder_foundation"
+PHASE_LABEL = "phase_52_5_operational_rule_composer_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -174,6 +174,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "PricingFormulaBuilder, PricingFormulaBuilderCreate, PricingFormulaBuilderUpdate, PricingFormulaBuilderService, pricing_formula_builders, /api/platform/pricing-formula-builder, /api/agencies/{agency_id}/pricing-formula-builder, /platform/pricing-formula-builder, /agency/pricing-formula-builder",
         "status": "foundation adopted",
         "action": "Create metadata-only pricing formula builder records for airline ancillary and service pricing. Phase 52.4 does not calculate live prices, call providers, integrate payments, generate AI/LLM output, run background workers, send automatically to clients, or override human authority.",
+    },
+    {
+        "category": "Operational Rule Composer",
+        "concept": "No-code operational compound rule metadata",
+        "supplementary_concept": "compound airline passenger service restrictions, applies-to metadata, all conditions, any conditions, supported operators, result metadata, severity, client/internal messages, evidence, governance, parameter taxonomy links, effective dates, lifecycle status",
+        "current_equivalent": "OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate, OperationalRuleComposerService, operational_rule_composer_rules, /api/platform/operational-rule-composer, /api/agencies/{agency_id}/rule-composer, /platform/operational-rule-composer, /agency/rule-composer",
+        "status": "foundation adopted",
+        "action": "Create metadata-only operational compound rule composer records for airline passenger service restrictions and outcomes. Phase 52.5 does not execute rules, evaluate passenger cases, call providers, generate AI/LLM output, run background workers, automate decisions, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -821,6 +829,9 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/pricing-formula-builder", "agencyos": "/platform/pricing-formula-builder"},
         {"supplementary": "/agent/pricing-formula-builder", "agencyos": "/agency/pricing-formula-builder"},
         {"supplementary": "/agent/pricing-formulas", "agencyos": "/agency/pricing-formula-builder"},
+        {"supplementary": "/admin/operational-rule-composer", "agencyos": "/platform/operational-rule-composer"},
+        {"supplementary": "/agent/rule-composer", "agencyos": "/agency/rule-composer"},
+        {"supplementary": "/agent/operational-rule-composer", "agencyos": "/agency/rule-composer"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -1037,6 +1048,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "PricingFormulaBuilder",
             "PricingFormulaBuilderCreate",
             "PricingFormulaBuilderUpdate",
+            "OperationalRuleComposerRule",
+            "OperationalRuleComposerRuleCreate",
+            "OperationalRuleComposerRuleUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1120,6 +1134,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Knowledge import templates foundation built in Phase 52.2",
             "Visual policy editor foundation built in Phase 52.3",
             "Pricing formula builder foundation built in Phase 52.4",
+            "Operational rule composer foundation built in Phase 52.5",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

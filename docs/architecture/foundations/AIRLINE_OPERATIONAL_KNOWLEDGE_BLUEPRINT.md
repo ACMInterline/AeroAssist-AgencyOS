@@ -38,6 +38,8 @@ Phase 52.3 implements metadata-only Visual Policy Editor Foundation. It adds str
 
 Phase 52.4 implements metadata-only Pricing Formula Builder Foundation. It adds no-code airline ancillary and service pricing formula records with pricing units, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references. It does not calculate live prices, integrate payments, call providers, use AI/LLM generation, run background workers, send automatically to clients, or replace human authority.
 
+Phase 52.5 implements metadata-only Operational Rule Composer Foundation. It adds no-code compound airline passenger service restriction and outcome records with applies-to metadata, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence, governance, service parameter taxonomy links, effective dates, and lifecycle status. It does not execute rules, evaluate live cases, calculate pricing, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -58,6 +60,7 @@ Phase 52.4 implements metadata-only Pricing Formula Builder Foundation. It adds 
 - 52.2 Knowledge Import Templates Foundation
 - 52.3 Visual Policy Editor Foundation
 - 52.4 Pricing Formula Builder Foundation
+- 52.5 Operational Rule Composer Foundation
 
 ## Five Pillars
 
@@ -117,6 +120,12 @@ Phase 52.4 adds `pricing_formula_builders` for metadata-only airline ancillary a
 
 Pricing Formula Builder is a human-reviewed pricing metadata surface. It is not live price calculation, payment processing, provider integration, AI generation, worker automation, automatic client sending, or final operational authority.
 
+## Operational Rule Composer
+
+Phase 52.5 adds `operational_rule_composer_rules` for metadata-only compound rule production. Records store rule family, service family, service codes, applies-to metadata, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence links, governance links, service parameter taxonomy links, effective dates, and lifecycle status.
+
+Operational Rule Composer is a human-reviewed no-code metadata surface. It is not rule execution, live rule evaluation, pricing calculation, provider integration, AI generation, worker automation, automatic decisioning, or final operational authority.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -139,6 +148,7 @@ A decision pack should include:
 - Knowledge Import Template records from Phase 52.2 when available.
 - Visual Policy Editor card metadata from Phase 52.3 when available.
 - Pricing Formula Builder metadata from Phase 52.4 when available.
+- Operational Rule Composer metadata from Phase 52.5 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

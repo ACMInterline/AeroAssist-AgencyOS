@@ -70,4 +70,8 @@ Phase 52.4 adds `pricing_formula_builders` as no-code pricing formula metadata t
 
 Phase 52.3 adds `visual_policy_editor_cards` as no-code airline service policy-card metadata. Cards may reference Service Parameter Taxonomies through `service_parameter_taxonomy_links`, but they do not execute policy logic, evaluate rules, calculate pricing, call providers, generate AI/LLM output, run workers, or replace human review.
 
+## Operational Rule Composer Alignment
+
+Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metadata that can reference Service Parameter Taxonomies through `parameter_taxonomy_links`. Taxonomy remains the reusable measurable parameter vocabulary; Operational Rule Composer stores condition and outcome metadata. Neither layer executes rules, evaluates live cases, calculates prices, calls providers, uses AI, runs workers, makes automatic decisions, or replaces human review.
+
 Reference Data Domains are not parameter taxonomies and do not evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate operational decisions. Human authority remains final for both taxonomy governance and reference-domain governance.

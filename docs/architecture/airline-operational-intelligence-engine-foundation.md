@@ -76,7 +76,9 @@ Phase 52.3 adds the `visual_policy_editor_cards` collection. Visual Policy Edito
 
 Phase 52.4 adds the `pricing_formula_builders` collection. Pricing Formula Builder Foundation supplies no-code airline ancillary and service pricing formula metadata for pricing units, way, route type, flight type, fare bundle, category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references. It does not calculate live prices, integrate payments, call providers, use AI, run workers, send automatically to clients, or override human authority.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Pricing Formula Builder records, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
+Phase 52.5 adds the `operational_rule_composer_rules` collection. Operational Rule Composer Foundation supplies no-code compound rule metadata for applies-to scope, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence, governance, service parameter taxonomy links, effective dates, and lifecycle status. It does not execute rules, evaluate live cases, calculate pricing, call providers, use AI, run workers, or override human authority.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Pricing Formula Builder records, Operational Rule Composer records, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
 
 ## Routes
 
@@ -108,6 +110,7 @@ All routes are read-only visualization routes.
 - 52.2 Knowledge Import Templates Foundation - implemented as metadata-only reusable schemas for future airline knowledge population
 - 52.3 Visual Policy Editor Foundation - implemented as metadata-only no-code airline service policy cards for human-reviewed operational policy production
 - 52.4 Pricing Formula Builder Foundation - implemented as metadata-only no-code airline ancillary and service pricing formula records
+- 52.5 Operational Rule Composer Foundation - implemented as metadata-only no-code compound rule records for passenger service restrictions and outcomes
 
 ## Explicitly Excluded
 
@@ -143,3 +146,5 @@ Phase 52.2 does not implement parsing execution, scraping, AI, provider integrat
 Phase 52.3 does not implement policy execution, rule evaluation, pricing calculation, provider integrations, AI, background workers, old `/admin` routes, automatic policy publishing, or operational automation. It only stores structured policy-card metadata, and human authority remains final.
 
 Phase 52.4 does not implement live price calculation, pricing optimization, payment integrations, provider integrations, AI, background workers, automatic client sending, booking, ticketing, EMD issuance, or operational automation. It only stores pricing formula metadata, and human authority remains final.
+
+Phase 52.5 does not implement rule execution, live rule evaluation, pricing calculation, provider integrations, AI, background workers, automatic decisions, booking, ticketing, EMD issuance, or operational automation. It only stores compound rule metadata, and human authority remains final.

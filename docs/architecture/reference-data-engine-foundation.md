@@ -42,6 +42,10 @@ Phase 52.3 adds `visual_policy_editor_cards` as structured airline service polic
 
 Phase 52.4 adds `pricing_formula_builders` as no-code pricing formula metadata. Pricing Formula Builder records may use Reference Data Engine domains for controlled currencies, fare bundles, pricing units, route types, flight types, pricing categories, and formula component vocabulary, but Phase 52.4 does not calculate live prices, integrate payments, call providers, use AI, run workers, automatically send to clients, or replace human authority.
 
+## Operational Rule Composer Relationship
+
+Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metadata. Operational Rule Composer records may use Reference Data Engine domains for controlled airlines, airports, countries, route types, flight types, cabins, service codes, service families, passenger types, pet/container/document/vaccination metadata, mobility levels, wheelchair devices, batteries, medical equipment, temperature zones, and seasonal restrictions. Phase 52.5 does not execute rules, evaluate live cases, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human authority.
+
 It does not implement provider integrations, AI/LLM behavior, live rule evaluation, pricing calculation, booking, ticketing, background workers, old `/admin` routes, automatic promotion, or automatic client sending.
 
 Human authority remains final for domain governance, review, imports, operational use, and future production population.

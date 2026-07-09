@@ -21370,6 +21370,91 @@ class PricingFormulaBuilderUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalRuleComposerRule(BaseDocument):
+    agency_id: Optional[str] = None
+    rule_reference: str
+    rule_name: str
+    rule_family: str
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    applies_to: Dict[str, Any] = Field(default_factory=dict)
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    any_conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    result: Dict[str, Any] = Field(default_factory=dict)
+    severity: str = "advisory"
+    client_message: Optional[str] = None
+    internal_message: Optional[str] = None
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    governance_links: List[str] = Field(default_factory=list)
+    parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    lifecycle_status: str = "draft"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    operational_rule_composer_foundation: bool = True
+    rule_execution_disabled: bool = True
+    live_rule_evaluation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    automatic_decisioning_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class OperationalRuleComposerRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    rule_reference: Optional[str] = None
+    rule_name: str
+    rule_family: str
+    service_family: Optional[str] = None
+    service_codes: List[str] = Field(default_factory=list)
+    applies_to: Dict[str, Any] = Field(default_factory=dict)
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    any_conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    result: Dict[str, Any] = Field(default_factory=dict)
+    severity: str = "advisory"
+    client_message: Optional[str] = None
+    internal_message: Optional[str] = None
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    governance_links: List[str] = Field(default_factory=list)
+    parameter_taxonomy_links: List[str] = Field(default_factory=list)
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    lifecycle_status: str = "draft"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalRuleComposerRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    rule_reference: Optional[str] = None
+    rule_name: Optional[str] = None
+    rule_family: Optional[str] = None
+    service_family: Optional[str] = None
+    service_codes: Optional[List[str]] = None
+    applies_to: Optional[Dict[str, Any]] = None
+    conditions: Optional[List[Dict[str, Any]]] = None
+    any_conditions: Optional[List[Dict[str, Any]]] = None
+    result: Optional[Dict[str, Any]] = None
+    severity: Optional[str] = None
+    client_message: Optional[str] = None
+    internal_message: Optional[str] = None
+    evidence_links: Optional[List[Dict[str, Any]]] = None
+    governance_links: Optional[List[str]] = None
+    parameter_taxonomy_links: Optional[List[str]] = None
+    effective_from: Optional[str] = None
+    effective_to: Optional[str] = None
+    lifecycle_status: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

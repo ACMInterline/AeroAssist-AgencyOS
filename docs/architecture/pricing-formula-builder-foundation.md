@@ -44,3 +44,5 @@ Pricing Formula Builder records are advisory metadata. Agents and platform revie
 ## Relationship To Chapter 52
 
 Reference Data Engine supplies controlled values. Knowledge Import Templates describe future population schemas. Visual Policy Editor stores policy-card metadata. Pricing Formula Builder stores pricing formula metadata as a separate layer so pricing remains distinct from policy, capability, operational constraints, and service feasibility.
+
+Phase 52.5 adds Operational Rule Composer as a separate no-code compound rule metadata layer. Pricing Formula Builder may reference rule-condition metadata later for human review, but Phase 52.5 does not execute rules and Phase 52.4 does not calculate prices. Pricing formulas, policy cards, service parameters, reference data, and compound rules remain separate metadata surfaces under human authority.

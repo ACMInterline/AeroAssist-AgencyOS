@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_operational_intelligence_cases, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_operational_intelligence_cases, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
+from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -56,7 +56,8 @@ from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FI
 from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
 from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
 from services.knowledge_import_template_service import FOUNDATION_PHASE_LABEL as KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL, IMPORT_SCOPES as KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES, KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION, TEMPLATE_TYPES as KNOWLEDGE_IMPORT_TEMPLATE_TYPES
-from services.pricing_formula_builder_service import CLIENT_VISIBILITY_OPTIONS as PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS, FORMULA_STATUSES as PRICING_FORMULA_STATUSES, PHASE_LABEL, PRICING_FORMULA_BUILDERS_COLLECTION
+from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, PHASE_LABEL, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
+from services.pricing_formula_builder_service import CLIENT_VISIBILITY_OPTIONS as PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS, FORMULA_STATUSES as PRICING_FORMULA_STATUSES, PRICING_FORMULA_BUILDERS_COLLECTION
 from services.visual_policy_editor_service import POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
@@ -74,7 +75,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 52.4 pricing formula builder foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 52.5 operational rule composer foundation.",
 )
 
 app.add_middleware(
@@ -1380,6 +1381,52 @@ async def readiness() -> dict:
             item.get("pricing_category")
             for item in pricing_formula_builder_records
             if item.get("pricing_category") in PRICING_CATEGORIES
+        }
+    )
+    operational_rule_composer_records = await database.collection(OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION).find_many()
+    operational_rule_composer_rule_count = len(operational_rule_composer_records)
+    operational_rule_composer_active_rule_count = len(
+        [item for item in operational_rule_composer_records if not item.get("archived") and item.get("lifecycle_status") != "archived"]
+    )
+    operational_rule_composer_family_counts = {
+        family: len([item for item in operational_rule_composer_records if item.get("rule_family") == family])
+        for family in OPERATIONAL_RULE_FAMILIES
+    }
+    operational_rule_composer_lifecycle_counts = {
+        status: len([item for item in operational_rule_composer_records if item.get("lifecycle_status") == status])
+        for status in OPERATIONAL_RULE_LIFECYCLE_STATUSES
+    }
+    operational_rule_composer_severity_counts = {
+        severity: len([item for item in operational_rule_composer_records if item.get("severity") == severity])
+        for severity in OPERATIONAL_RULE_SEVERITY_LEVELS
+    }
+    operational_rule_composer_service_code_count = sum(
+        len(item.get("service_codes") or []) for item in operational_rule_composer_records
+    )
+    operational_rule_composer_condition_count = sum(len(item.get("conditions") or []) for item in operational_rule_composer_records)
+    operational_rule_composer_any_condition_count = sum(
+        len(item.get("any_conditions") or []) for item in operational_rule_composer_records
+    )
+    operational_rule_composer_evidence_link_count = sum(
+        len(item.get("evidence_links") or []) for item in operational_rule_composer_records
+    )
+    operational_rule_composer_governance_link_count = sum(
+        len(item.get("governance_links") or []) for item in operational_rule_composer_records
+    )
+    operational_rule_composer_parameter_taxonomy_link_count = sum(
+        len(item.get("parameter_taxonomy_links") or []) for item in operational_rule_composer_records
+    )
+    operational_rule_composer_client_message_count = len(
+        [item for item in operational_rule_composer_records if item.get("client_message")]
+    )
+    operational_rule_composer_internal_message_count = len(
+        [item for item in operational_rule_composer_records if item.get("internal_message")]
+    )
+    operational_rule_composer_family_coverage_count = len(
+        {
+            item.get("rule_family")
+            for item in operational_rule_composer_records
+            if item.get("rule_family") in OPERATIONAL_RULE_FAMILIES
         }
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
@@ -3517,6 +3564,58 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.4 creates metadata-only Pricing Formula Builder records for airline ancillary and service pricing. It stores pricing unit, way, route type, flight type, fare bundle, category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references without live price calculation, payment integrations, provider integrations, AI, workers, or automatic client sending. Human authority remains final.",
         },
+        "operational_rule_composer_foundation": {
+            "operational_rule_composer_enabled": True,
+            "operational_rule_composer_rules_collection_enabled": True,
+            "platform_operational_rule_composer_metadata_crud_enabled": True,
+            "agency_rule_composer_metadata_crud_enabled": True,
+            "platform_operational_rule_composer_ui_enabled": True,
+            "agency_rule_composer_ui_enabled": True,
+            "no_code_compound_rules_enabled": True,
+            "applies_to_metadata_enabled": True,
+            "all_conditions_metadata_enabled": True,
+            "any_conditions_metadata_enabled": True,
+            "result_metadata_enabled": True,
+            "severity_metadata_enabled": True,
+            "client_message_metadata_enabled": True,
+            "internal_message_metadata_enabled": True,
+            "evidence_links_metadata_enabled": True,
+            "governance_links_metadata_enabled": True,
+            "parameter_taxonomy_links_metadata_enabled": True,
+            "effective_dates_metadata_enabled": True,
+            "lifecycle_status_metadata_enabled": True,
+            "supported_operators": OPERATIONAL_RULE_SUPPORTED_OPERATORS,
+            "rule_families": OPERATIONAL_RULE_FAMILIES,
+            "severity_levels": OPERATIONAL_RULE_SEVERITY_LEVELS,
+            "lifecycle_statuses": OPERATIONAL_RULE_LIFECYCLE_STATUSES,
+            "metadata_only": True,
+            "rule_execution_disabled": True,
+            "live_rule_evaluation_disabled": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "automatic_decisioning_disabled": True,
+            "human_authority_final": True,
+            "operational_rule_composer_rule_count": operational_rule_composer_rule_count,
+            "operational_rule_composer_active_rule_count": operational_rule_composer_active_rule_count,
+            "operational_rule_composer_family_counts": operational_rule_composer_family_counts,
+            "operational_rule_composer_lifecycle_counts": operational_rule_composer_lifecycle_counts,
+            "operational_rule_composer_severity_counts": operational_rule_composer_severity_counts,
+            "operational_rule_composer_service_code_count": operational_rule_composer_service_code_count,
+            "operational_rule_composer_condition_count": operational_rule_composer_condition_count,
+            "operational_rule_composer_any_condition_count": operational_rule_composer_any_condition_count,
+            "operational_rule_composer_total_condition_count": operational_rule_composer_condition_count + operational_rule_composer_any_condition_count,
+            "operational_rule_composer_evidence_link_count": operational_rule_composer_evidence_link_count,
+            "operational_rule_composer_governance_link_count": operational_rule_composer_governance_link_count,
+            "operational_rule_composer_parameter_taxonomy_link_count": operational_rule_composer_parameter_taxonomy_link_count,
+            "operational_rule_composer_client_message_count": operational_rule_composer_client_message_count,
+            "operational_rule_composer_internal_message_count": operational_rule_composer_internal_message_count,
+            "operational_rule_composer_supported_operator_count": len(OPERATIONAL_RULE_SUPPORTED_OPERATORS),
+            "operational_rule_composer_supported_family_count": len(OPERATIONAL_RULE_FAMILIES),
+            "operational_rule_composer_family_coverage_count": operational_rule_composer_family_coverage_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 52.5 creates metadata-only Operational Rule Composer records for no-code compound airline passenger service restrictions and outcomes. It stores applies-to metadata, all/any condition groups, supported operators, result metadata, severity, messages, evidence, governance, parameter taxonomy links, effective dates, and lifecycle status without rule execution, live evaluation, provider integrations, AI, workers, or automatic decisions. Human authority remains final.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5468,6 +5567,7 @@ app.include_router(platform_reference_data_engine.router)
 app.include_router(platform_knowledge_import_templates.router)
 app.include_router(platform_visual_policy_editor.router)
 app.include_router(platform_pricing_formula_builder.router)
+app.include_router(platform_operational_rule_composer.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -5555,6 +5655,7 @@ app.include_router(agency_reference_data_engine.router)
 app.include_router(agency_knowledge_import_templates.router)
 app.include_router(agency_visual_policy_editor.router)
 app.include_router(agency_pricing_formula_builder.router)
+app.include_router(agency_operational_rule_composer.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

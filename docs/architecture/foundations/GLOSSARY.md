@@ -80,6 +80,10 @@ A Phase 52.3 metadata-only foundation that stores structured airline service pol
 
 A Phase 52.4 metadata-only foundation that stores no-code airline ancillary and service pricing formula records. Records contain pricing unit, way, route type, flight type, fare bundle, pricing category, amount type, currency, base amount, formula components, multipliers, applicability, manual confirmation, client visibility, refund/exchange condition references, evidence links, governance links, service parameter taxonomy links, and visual policy editor links. It does not calculate live prices, integrate payments, call providers, use AI/LLM generation, run background workers, send automatically to clients, or replace human authority.
 
+## Operational Rule Composer
+
+A Phase 52.5 metadata-only foundation that stores no-code compound airline passenger service restriction and outcome records. Records contain rule family, service family, service codes, applies-to metadata, all/any condition groups, supported operators, result metadata, severity, client/internal messages, evidence links, governance links, service parameter taxonomy links, effective dates, and lifecycle status. It does not execute rules, evaluate live cases, calculate pricing, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

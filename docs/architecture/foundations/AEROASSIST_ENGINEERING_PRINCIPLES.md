@@ -18,6 +18,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Service Parameter Taxonomies define measurable reusable fields; they do not evaluate rules, calculate prices, execute recommendations, or merge Policy, Pricing, Capability, Constraints, and Procedures.
 - Request Segment Service Scopes preserve segment-first passenger + segment + service intake metadata; they do not evaluate policy, calculate pricing, convert trips automatically, search, book, ticket, issue EMDs, call providers, generate AI output, or send client messages.
 - Reference Data Domains provide governed values, aliases, normalization rules, and validation rules; they do not call providers, generate AI, evaluate live rules, calculate prices, run workers, or restore old `/admin` routes.
+- Operational Rule Composer records define no-code compound rule metadata; they do not execute rules, evaluate live cases, calculate prices, call providers, run AI, launch workers, make automatic decisions, or replace human authority.
 - Evidence is required for operational recommendations.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.
@@ -53,3 +54,5 @@ Phase 52.1 adds Reference Data Domains as metadata-only operational vocabulary r
 Phase 52.2 adds Knowledge Import Templates as metadata-only schemas for airline knowledge population. They define columns, mappings, validation metadata, samples, accepted file types, review requirements, and governance links, but they must not parse files, scrape, run AI, call providers, launch workers, or automatically import/promote data.
 
 Phase 52.4 adds Pricing Formula Builder as metadata-only no-code formula records for airline ancillary and service pricing. They define pricing units, route/flight/fare context, amount types, currencies, base amounts, formula components, multipliers, applicability, manual confirmation, client visibility, and refund/exchange condition references, but they must not calculate live prices, integrate payments, call providers, run AI, launch workers, or send automatically to clients.
+
+Phase 52.5 adds Operational Rule Composer as metadata-only no-code compound rule records for airline passenger service restrictions and outcomes. They define applies-to scope, all/any condition groups, supported operators, result metadata, severity, messages, evidence, governance, parameter taxonomy links, effective dates, and lifecycle status, but they must not execute rules, evaluate live cases, calculate prices, call providers, run AI, launch workers, or make automatic decisions.
