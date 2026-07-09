@@ -28,6 +28,8 @@ Phase 51.0 implements metadata-only Operational Intelligence Pipeline Consolidat
 
 Phase 51.2 implements metadata-only Request Intake Segment-Service Precision. It adds Request Segment Service Scopes that preserve segment-first passenger + segment + service metadata before operational intelligence uses it. Pets and special items remain segment-scoped, requests remain intake, trips remain operational dossiers, and no policy evaluation, pricing calculation, provider execution, AI generation, worker, automatic sending, or automatic trip conversion is added.
 
+Phase 51.3 implements metadata-only Client & Passenger Master Workspace Consolidation. It makes Client the commercial owner and Passenger the reusable operational identity, supports many-to-many metadata, and makes passenger service history reusable across requests, trips, booking mirrors, ticket mirrors, EMD mirrors, documents, operational evaluations, feasibility, and recommendations. It adds no new AOIE intelligence and does not implement CRM sales pipelines, marketing automation, provider integrations, AI/LLM generation, booking, ticketing, payment gateways, workers, or automatic sending.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -41,7 +43,9 @@ Phase 51.2 implements metadata-only Request Intake Segment-Service Precision. It
 - 50.8 Airline & Itinerary Recommendation Engine
 - 50.9 Offer Builder Intelligence Integration
 - 51.0 Operational Intelligence Pipeline Consolidation
+- 51.1 Service Parameter Taxonomy Integration
 - 51.2 Request Intake Segment-Service Precision
+- 51.3 Client & Passenger Master Workspace Consolidation
 
 ## Five Pillars
 
@@ -94,6 +98,7 @@ A decision pack should include:
 - Operational Intelligence Case trace metadata from Phase 51.0 when available.
 - Service Parameter Taxonomy metadata from Phase 51.1 when available.
 - Request Segment Service Scope metadata from Phase 51.2 when available.
+- Passenger Master reusable service history and known operational profile metadata from Phase 51.3 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

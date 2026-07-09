@@ -49,6 +49,7 @@ import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPag
 import BookingWorkspaceMetadataPage from "./pages/agency/BookingWorkspaceMetadataPage"
 import BookingWorkspacesPage from "./pages/agency/BookingWorkspacesPage"
 import BookingsPage from "./pages/agency/BookingsPage"
+import AgencyClientMasterPage from "./pages/agency/ClientMasterPage"
 import ClientDetailPage from "./pages/agency/ClientDetailPage"
 import ClientsPage from "./pages/agency/ClientsPage"
 import DocumentDetailPage from "./pages/agency/DocumentDetailPage"
@@ -92,6 +93,7 @@ import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
 import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
 import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
 import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
+import AgencyPassengerMasterPage from "./pages/agency/PassengerMasterPage"
 import PassengerWorkspacesPage from "./pages/agency/PassengerWorkspacesPage"
 import PassengerServicesPage from "./pages/agency/PassengerServicesPage"
 import PassengersPage from "./pages/agency/PassengersPage"
@@ -138,6 +140,7 @@ import PlatformAncillaryPricingPage from "./pages/platform/AncillaryPricingPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
 import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
 import PlatformCapabilityCatalogPage from "./pages/platform/CapabilityCatalogPage"
+import PlatformClientMasterPage from "./pages/platform/ClientMasterPage"
 import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
 import PlatformDocumentWorkspacesPage from "./pages/platform/DocumentWorkspacesPage"
 import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
@@ -157,6 +160,7 @@ import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBu
 import PlatformFlightWorkspacesPage from "./pages/platform/FlightWorkspacesPage"
 import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPage"
 import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
+import PlatformPassengerMasterPage from "./pages/platform/PassengerMasterPage"
 import PlatformOperationalTimelinesPage from "./pages/platform/OperationalTimelinesPage"
 import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
 import PlatformPassengerServiceWorkflowsPage from "./pages/platform/PassengerServiceWorkflowsPage"
@@ -268,6 +272,8 @@ const routes = {
   "/platform/operational-intelligence-cases": PlatformOperationalIntelligenceCasesPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
+  "/platform/client-master": PlatformClientMasterPage,
+  "/platform/passenger-master": PlatformPassengerMasterPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -345,6 +351,8 @@ const routes = {
   "/agency/intelligence-cases": IntelligenceCasesPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
+  "/agency/clients": AgencyClientMasterPage,
+  "/agency/passengers": AgencyPassengerMasterPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,
@@ -577,11 +585,11 @@ export default function App() {
   }
 
   if (window.location.pathname === "/agency/clients") {
-    return <ClientsPage />
+    return <AgencyClientMasterPage />
   }
 
   if (window.location.pathname === "/agency/passengers") {
-    return <PassengersPage />
+    return <AgencyPassengerMasterPage />
   }
 
   if (window.location.pathname === "/agency/requests") {

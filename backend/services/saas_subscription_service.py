@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -40,6 +40,8 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "request_intakes", "label": "Intakes", "href": "/agency/request-intakes", "aliases": ["intakes", "request_intakes", "daily_work"]},
     {"key": "gds_parser", "label": "GDS Parser", "href": "/agency/gds-parser", "aliases": ["gds_parser", "gds"]},
     {"key": "crm", "label": "Clients & Passengers", "href": "/agency/clients", "aliases": ["crm", "clients", "passengers"]},
+    {"key": "client_master", "label": "Clients", "href": "/agency/clients", "aliases": ["client_master", "clients", "commercial_owner", "crm"]},
+    {"key": "passenger_master", "label": "Passengers", "href": "/agency/passengers", "aliases": ["passenger_master", "passengers", "operational_identity", "crm"]},
     {"key": "client_portal", "label": "Portal Actions", "href": "/agency/portal-actions", "aliases": ["client_portal", "portal_actions"]},
     {"key": "trips", "label": "Trips", "href": "/agency/trips", "aliases": ["trips", "trip_dossier"]},
     {"key": "offers", "label": "Offers", "href": "/agency/offers", "aliases": ["offers", "offer_builder"]},

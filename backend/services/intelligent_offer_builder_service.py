@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

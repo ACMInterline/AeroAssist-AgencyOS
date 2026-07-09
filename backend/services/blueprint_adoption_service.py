@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -158,6 +158,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "RequestSegmentServiceScope, RequestSegmentServiceScopeCreate, RequestSegmentServiceScopeUpdate, RequestSegmentServicePrecisionService, request_segment_service_scopes, /api/platform/request-segment-services, /api/agencies/{agency_id}/request-segment-services, /platform/request-segment-services, /agency/request-segment-services",
         "status": "foundation adopted",
         "action": "Preserve segment-first request intake precision by storing metadata-only passenger + segment + service scope records. Pets and special items remain segment-scoped, request records remain intake, trip records remain operational dossiers, and Phase 51.2 does not evaluate policy, calculate pricing, book, ticket, issue EMDs, call providers, generate AI/LLM output, run workers, convert trips automatically, or override human authority.",
+    },
+    {
+        "category": "Client Passenger Master Workspace",
+        "concept": "Client and passenger master operational entity consolidation",
+        "supplementary_concept": "client master, passenger master, many-to-many links, reusable passenger service history, operational preferences, known documents, portal access metadata, relationship graph",
+        "current_equivalent": "ClientMasterRecord, PassengerMasterRecord, ClientPassengerMasterLink, PassengerServiceHistoryRecord, PassengerOperationalPreference, PassengerKnownDocument, ClientPortalAccessProfile, ClientPassengerMasterService, client_master_records, passenger_master_records, client_passenger_links, passenger_service_history, passenger_operational_preferences, passenger_known_documents, client_portal_access_profiles, /api/platform/client-master, /api/platform/passenger-master, /api/agencies/{agency_id}/client-master, /api/agencies/{agency_id}/passenger-master, /platform/client-master, /platform/passenger-master, /agency/clients, /agency/passengers",
+        "status": "foundation adopted",
+        "action": "Consolidate Client as the commercial owner and Passenger as the reusable operational identity with many-to-many relationship metadata. Passenger history can be reused across requests, trips, booking mirrors, ticket mirrors, EMD mirrors, documents, operational evaluations, feasibility, and recommendations. Phase 51.3 does not implement CRM sales pipeline, marketing automation, provider integrations, AI/LLM generation, booking, ticketing, payment gateway, background workers, or automatic sending.",
     },
     {
         "category": "Platform / Agency UX",
@@ -773,6 +781,10 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
         {"supplementary": "/agent/request-segment-services", "agencyos": "/agency/request-segment-services"},
+        {"supplementary": "/admin/client-master", "agencyos": "/platform/client-master"},
+        {"supplementary": "/admin/passenger-master", "agencyos": "/platform/passenger-master"},
+        {"supplementary": "/agent/clients", "agencyos": "/agency/clients"},
+        {"supplementary": "/agent/passengers", "agencyos": "/agency/passengers"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -1047,6 +1059,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Operational intelligence pipeline consolidation foundation built in Phase 51.0",
             "Service parameter taxonomy integration foundation built in Phase 51.1",
             "Request intake segment-service precision foundation built in Phase 51.2",
+            "Client passenger master workspace foundation built in Phase 51.3",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

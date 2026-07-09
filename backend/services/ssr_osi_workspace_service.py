@@ -16,7 +16,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 SSR_OSI_WORKSPACE_COLLECTION = "ssr_osi_workspaces"
 
 SSR_OSI_OPERATIONAL_STATUSES = [item.value for item in SsrOsiOperationalStatus]

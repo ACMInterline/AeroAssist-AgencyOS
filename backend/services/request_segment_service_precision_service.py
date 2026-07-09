@@ -7,7 +7,7 @@ from database import Database
 from models import RequestSegmentServiceScope, RequestSegmentServiceScopeCreate, RequestSegmentServiceScopeUpdate
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 REQUEST_SEGMENT_SERVICE_SCOPES_COLLECTION = "request_segment_service_scopes"
 
 REQUEST_SEGMENT_SERVICE_SCOPE_STATUSES = ["draft", "captured", "needs_review", "ready", "converted", "archived"]

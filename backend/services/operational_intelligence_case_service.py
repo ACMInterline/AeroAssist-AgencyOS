@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

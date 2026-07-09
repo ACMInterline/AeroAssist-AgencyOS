@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_51_2_request_segment_service_precision_foundation"
+PHASE_LABEL = "phase_51_3_client_passenger_master_workspace_foundation"
 AIRLINE_KNOWLEDGE_VERSION_COLLECTION = "airline_knowledge_versions"
 AIRLINE_KNOWLEDGE_RELEASE_COLLECTION = "airline_knowledge_releases"
 

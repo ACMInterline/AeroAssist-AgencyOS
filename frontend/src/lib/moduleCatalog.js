@@ -90,6 +90,8 @@ export const platformModuleGroups = [
     audience: "Platform only",
     safety: "No automatic sending",
     items: [
+      { label: "Client Master", description: "Commercial owner master metadata", href: "/platform/client-master", icon: "users", badge: "Metadata only", metadata_only: true },
+      { label: "Passenger Master", description: "Operational identity master metadata", href: "/platform/passenger-master", icon: "user", badge: "Metadata only", metadata_only: true },
       { label: "Rules & Services", description: "Shared request service rules", href: "/platform/rules-services", icon: "check", badge: "Platform only" },
     ],
   },
@@ -155,8 +157,8 @@ export const agencyModuleGroups = [
     audience: "Agency workspace",
     safety: "Agency owned",
     items: [
-      { label: "Clients", description: "Accounts and contacts", href: "/agency/clients", icon: "users", entitlementKey: "crm" },
-      { label: "Passengers", description: "Traveler profiles", href: "/agency/passengers", icon: "user", entitlementKey: "crm" },
+      { label: "Clients", description: "Client master commercial-owner records", href: "/agency/clients", icon: "users", badge: "Metadata only", entitlementKey: "crm", metadata_only: true },
+      { label: "Passengers", description: "Passenger master operational identity records", href: "/agency/passengers", icon: "user", badge: "Metadata only", entitlementKey: "crm", metadata_only: true },
       { label: "Portal Actions", description: "Controlled client actions", href: "/agency/portal-actions", icon: "globe", badge: "Manual only", entitlementKey: "client_portal" },
     ],
   },

@@ -1257,6 +1257,610 @@ class ClientPassengerRelationshipUpdate(BaseModel):
     notes: Optional[str] = None
 
 
+class ClientMasterRecord(BaseDocument):
+    agency_id: Optional[str] = None
+    client_master_reference: str
+    client_status: str = "active"
+    client_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_client_profile_id: Optional[str] = None
+    commercial_owner_type: Optional[str] = None
+    profile: Dict[str, Any] = Field(default_factory=dict)
+    contacts: List[Dict[str, Any]] = Field(default_factory=list)
+    portal_status: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    relationship_graph: List[Dict[str, Any]] = Field(default_factory=list)
+    client_overview: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    client_is_commercial_owner: bool = True
+    passenger_is_operational_identity: bool = True
+    many_to_many_relationships_supported: bool = True
+    passenger_history_reusable: bool = True
+    crm_sales_pipeline_disabled: bool = True
+    marketing_automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_llm_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    payment_gateway_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class ClientMasterRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    client_master_reference: Optional[str] = None
+    client_status: str = "active"
+    client_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_client_profile_id: Optional[str] = None
+    commercial_owner_type: Optional[str] = None
+    profile: Dict[str, Any] = Field(default_factory=dict)
+    contacts: List[Dict[str, Any]] = Field(default_factory=list)
+    portal_status: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    relationship_graph: List[Dict[str, Any]] = Field(default_factory=list)
+    client_overview: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class ClientMasterRecordUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    client_master_reference: Optional[str] = None
+    client_status: Optional[str] = None
+    client_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_client_profile_id: Optional[str] = None
+    commercial_owner_type: Optional[str] = None
+    profile: Optional[Dict[str, Any]] = None
+    contacts: Optional[List[Dict[str, Any]]] = None
+    portal_status: Optional[str] = None
+    permissions: Optional[Dict[str, Any]] = None
+    linked_passenger_ids: Optional[List[str]] = None
+    request_ids: Optional[List[str]] = None
+    trip_ids: Optional[List[str]] = None
+    offer_ids: Optional[List[str]] = None
+    invoice_ids: Optional[List[str]] = None
+    communication_ids: Optional[List[str]] = None
+    document_ids: Optional[List[str]] = None
+    relationship_graph: Optional[List[Dict[str, Any]]] = None
+    client_overview: Optional[Dict[str, Any]] = None
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class PassengerMasterRecord(BaseDocument):
+    agency_id: Optional[str] = None
+    passenger_master_reference: str
+    passenger_status: str = "active"
+    passenger_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_passenger_profile_id: Optional[str] = None
+    operational_profile: Dict[str, Any] = Field(default_factory=dict)
+    service_history_ids: List[str] = Field(default_factory=list)
+    mobility_profile: Dict[str, Any] = Field(default_factory=dict)
+    medical_profile: Dict[str, Any] = Field(default_factory=dict)
+    pets: List[Dict[str, Any]] = Field(default_factory=list)
+    special_items: List[Dict[str, Any]] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    preferred_airlines: List[str] = Field(default_factory=list)
+    preferred_cabins: List[str] = Field(default_factory=list)
+    preferred_seats: List[str] = Field(default_factory=list)
+    relationship_graph: List[Dict[str, Any]] = Field(default_factory=list)
+    passenger_overview: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    client_is_commercial_owner: bool = True
+    passenger_is_operational_identity: bool = True
+    many_to_many_relationships_supported: bool = True
+    passenger_history_reusable: bool = True
+    crm_sales_pipeline_disabled: bool = True
+    marketing_automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_llm_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    payment_gateway_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PassengerMasterRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    passenger_master_reference: Optional[str] = None
+    passenger_status: str = "active"
+    passenger_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_passenger_profile_id: Optional[str] = None
+    operational_profile: Dict[str, Any] = Field(default_factory=dict)
+    service_history_ids: List[str] = Field(default_factory=list)
+    mobility_profile: Dict[str, Any] = Field(default_factory=dict)
+    medical_profile: Dict[str, Any] = Field(default_factory=dict)
+    pets: List[Dict[str, Any]] = Field(default_factory=list)
+    special_items: List[Dict[str, Any]] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    preferred_airlines: List[str] = Field(default_factory=list)
+    preferred_cabins: List[str] = Field(default_factory=list)
+    preferred_seats: List[str] = Field(default_factory=list)
+    relationship_graph: List[Dict[str, Any]] = Field(default_factory=list)
+    passenger_overview: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class PassengerMasterRecordUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    passenger_master_reference: Optional[str] = None
+    passenger_status: Optional[str] = None
+    passenger_version: Optional[str] = None
+    created_by: Optional[str] = None
+    source_passenger_profile_id: Optional[str] = None
+    operational_profile: Optional[Dict[str, Any]] = None
+    service_history_ids: Optional[List[str]] = None
+    mobility_profile: Optional[Dict[str, Any]] = None
+    medical_profile: Optional[Dict[str, Any]] = None
+    pets: Optional[List[Dict[str, Any]]] = None
+    special_items: Optional[List[Dict[str, Any]]] = None
+    document_ids: Optional[List[str]] = None
+    trip_ids: Optional[List[str]] = None
+    booking_ids: Optional[List[str]] = None
+    ticket_ids: Optional[List[str]] = None
+    emd_ids: Optional[List[str]] = None
+    operational_evaluation_ids: Optional[List[str]] = None
+    feasibility_ids: Optional[List[str]] = None
+    recommendation_ids: Optional[List[str]] = None
+    preferred_airlines: Optional[List[str]] = None
+    preferred_cabins: Optional[List[str]] = None
+    preferred_seats: Optional[List[str]] = None
+    relationship_graph: Optional[List[Dict[str, Any]]] = None
+    passenger_overview: Optional[Dict[str, Any]] = None
+    internal_notes: Optional[str] = None
+    agent_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class ClientPassengerMasterLink(BaseDocument):
+    agency_id: Optional[str] = None
+    link_reference: str
+    link_status: str = "active"
+    client_master_record_id: str
+    passenger_master_record_id: str
+    source_relationship_id: Optional[str] = None
+    relationship_type: Optional[str] = None
+    commercial_role: Optional[str] = None
+    beneficiary_role: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    portal_visibility: Dict[str, Any] = Field(default_factory=dict)
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    relationship_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    client_is_commercial_owner: bool = True
+    passenger_is_operational_identity: bool = True
+    many_to_many_relationships_supported: bool = True
+    passenger_history_reusable: bool = True
+    crm_sales_pipeline_disabled: bool = True
+    marketing_automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_llm_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    payment_gateway_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class ClientPassengerMasterLinkCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    link_reference: Optional[str] = None
+    link_status: str = "active"
+    client_master_record_id: str
+    passenger_master_record_id: str
+    source_relationship_id: Optional[str] = None
+    relationship_type: Optional[str] = None
+    commercial_role: Optional[str] = None
+    beneficiary_role: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    portal_visibility: Dict[str, Any] = Field(default_factory=dict)
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    offer_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    relationship_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class ClientPassengerMasterLinkUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    link_reference: Optional[str] = None
+    link_status: Optional[str] = None
+    client_master_record_id: Optional[str] = None
+    passenger_master_record_id: Optional[str] = None
+    source_relationship_id: Optional[str] = None
+    relationship_type: Optional[str] = None
+    commercial_role: Optional[str] = None
+    beneficiary_role: Optional[str] = None
+    permissions: Optional[Dict[str, Any]] = None
+    portal_visibility: Optional[Dict[str, Any]] = None
+    request_ids: Optional[List[str]] = None
+    trip_ids: Optional[List[str]] = None
+    offer_ids: Optional[List[str]] = None
+    invoice_ids: Optional[List[str]] = None
+    document_ids: Optional[List[str]] = None
+    relationship_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class PassengerServiceHistoryRecord(BaseDocument):
+    agency_id: Optional[str] = None
+    history_reference: str
+    history_status: str = "active"
+    passenger_master_record_id: str
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_summary: Optional[str] = None
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    evidence_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    outcome_summary: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    passenger_is_operational_identity: bool = True
+    passenger_history_reusable: bool = True
+    human_authority_final: bool = True
+
+
+class PassengerServiceHistoryCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    history_reference: Optional[str] = None
+    history_status: str = "active"
+    passenger_master_record_id: str
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_summary: Optional[str] = None
+    request_ids: List[str] = Field(default_factory=list)
+    trip_ids: List[str] = Field(default_factory=list)
+    booking_ids: List[str] = Field(default_factory=list)
+    ticket_ids: List[str] = Field(default_factory=list)
+    emd_ids: List[str] = Field(default_factory=list)
+    document_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    feasibility_ids: List[str] = Field(default_factory=list)
+    recommendation_ids: List[str] = Field(default_factory=list)
+    evidence_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    outcome_summary: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class PassengerServiceHistoryUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    history_reference: Optional[str] = None
+    history_status: Optional[str] = None
+    passenger_master_record_id: Optional[str] = None
+    service_family: Optional[str] = None
+    service_code: Optional[str] = None
+    ssr_code: Optional[str] = None
+    service_summary: Optional[str] = None
+    request_ids: Optional[List[str]] = None
+    trip_ids: Optional[List[str]] = None
+    booking_ids: Optional[List[str]] = None
+    ticket_ids: Optional[List[str]] = None
+    emd_ids: Optional[List[str]] = None
+    document_ids: Optional[List[str]] = None
+    operational_evaluation_ids: Optional[List[str]] = None
+    feasibility_ids: Optional[List[str]] = None
+    recommendation_ids: Optional[List[str]] = None
+    evidence_trace: Optional[List[Dict[str, Any]]] = None
+    outcome_summary: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class PassengerOperationalPreference(BaseDocument):
+    agency_id: Optional[str] = None
+    preference_reference: str
+    preference_status: str = "active"
+    passenger_master_record_id: str
+    preferred_airlines: List[str] = Field(default_factory=list)
+    preferred_cabins: List[str] = Field(default_factory=list)
+    preferred_seats: List[str] = Field(default_factory=list)
+    mobility_preferences: Dict[str, Any] = Field(default_factory=dict)
+    medical_preferences: Dict[str, Any] = Field(default_factory=dict)
+    pet_preferences: List[Dict[str, Any]] = Field(default_factory=list)
+    special_item_preferences: List[Dict[str, Any]] = Field(default_factory=list)
+    communication_preferences: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    passenger_is_operational_identity: bool = True
+    passenger_history_reusable: bool = True
+    human_authority_final: bool = True
+
+
+class PassengerOperationalPreferenceCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    preference_reference: Optional[str] = None
+    preference_status: str = "active"
+    passenger_master_record_id: str
+    preferred_airlines: List[str] = Field(default_factory=list)
+    preferred_cabins: List[str] = Field(default_factory=list)
+    preferred_seats: List[str] = Field(default_factory=list)
+    mobility_preferences: Dict[str, Any] = Field(default_factory=dict)
+    medical_preferences: Dict[str, Any] = Field(default_factory=dict)
+    pet_preferences: List[Dict[str, Any]] = Field(default_factory=list)
+    special_item_preferences: List[Dict[str, Any]] = Field(default_factory=list)
+    communication_preferences: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class PassengerOperationalPreferenceUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    preference_reference: Optional[str] = None
+    preference_status: Optional[str] = None
+    passenger_master_record_id: Optional[str] = None
+    preferred_airlines: Optional[List[str]] = None
+    preferred_cabins: Optional[List[str]] = None
+    preferred_seats: Optional[List[str]] = None
+    mobility_preferences: Optional[Dict[str, Any]] = None
+    medical_preferences: Optional[Dict[str, Any]] = None
+    pet_preferences: Optional[List[Dict[str, Any]]] = None
+    special_item_preferences: Optional[List[Dict[str, Any]]] = None
+    communication_preferences: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class PassengerKnownDocument(BaseDocument):
+    agency_id: Optional[str] = None
+    document_reference: str
+    document_status: str = "active"
+    passenger_master_record_id: str
+    document_type: Optional[str] = None
+    document_name: Optional[str] = None
+    document_ids: List[str] = Field(default_factory=list)
+    verification_status: Optional[str] = None
+    validity_start: Optional[date] = None
+    validity_end: Optional[date] = None
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_emd_ids: List[str] = Field(default_factory=list)
+    document_metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    passenger_is_operational_identity: bool = True
+    passenger_history_reusable: bool = True
+    human_authority_final: bool = True
+
+
+class PassengerKnownDocumentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    document_reference: Optional[str] = None
+    document_status: str = "active"
+    passenger_master_record_id: str
+    document_type: Optional[str] = None
+    document_name: Optional[str] = None
+    document_ids: List[str] = Field(default_factory=list)
+    verification_status: Optional[str] = None
+    validity_start: Optional[date] = None
+    validity_end: Optional[date] = None
+    linked_request_ids: List[str] = Field(default_factory=list)
+    linked_trip_ids: List[str] = Field(default_factory=list)
+    linked_booking_ids: List[str] = Field(default_factory=list)
+    linked_ticket_ids: List[str] = Field(default_factory=list)
+    linked_emd_ids: List[str] = Field(default_factory=list)
+    document_metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class PassengerKnownDocumentUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    document_reference: Optional[str] = None
+    document_status: Optional[str] = None
+    passenger_master_record_id: Optional[str] = None
+    document_type: Optional[str] = None
+    document_name: Optional[str] = None
+    document_ids: Optional[List[str]] = None
+    verification_status: Optional[str] = None
+    validity_start: Optional[date] = None
+    validity_end: Optional[date] = None
+    linked_request_ids: Optional[List[str]] = None
+    linked_trip_ids: Optional[List[str]] = None
+    linked_booking_ids: Optional[List[str]] = None
+    linked_ticket_ids: Optional[List[str]] = None
+    linked_emd_ids: Optional[List[str]] = None
+    document_metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
+class ClientPortalAccessProfile(BaseDocument):
+    agency_id: Optional[str] = None
+    portal_access_reference: str
+    portal_status: str = "no_portal_access"
+    client_master_record_id: str
+    source_portal_mapping_id: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    visible_request_ids: List[str] = Field(default_factory=list)
+    visible_trip_ids: List[str] = Field(default_factory=list)
+    visible_document_ids: List[str] = Field(default_factory=list)
+    portal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    client_passenger_master_foundation: bool = True
+    client_is_commercial_owner: bool = True
+    automatic_client_sending_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class ClientPortalAccessProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    portal_access_reference: Optional[str] = None
+    portal_status: str = "no_portal_access"
+    client_master_record_id: str
+    source_portal_mapping_id: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
+    permissions: Dict[str, Any] = Field(default_factory=dict)
+    linked_passenger_ids: List[str] = Field(default_factory=list)
+    visible_request_ids: List[str] = Field(default_factory=list)
+    visible_trip_ids: List[str] = Field(default_factory=list)
+    visible_document_ids: List[str] = Field(default_factory=list)
+    portal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+
+
+class ClientPortalAccessProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    portal_access_reference: Optional[str] = None
+    portal_status: Optional[str] = None
+    client_master_record_id: Optional[str] = None
+    source_portal_mapping_id: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
+    permissions: Optional[Dict[str, Any]] = None
+    linked_passenger_ids: Optional[List[str]] = None
+    visible_request_ids: Optional[List[str]] = None
+    visible_trip_ids: Optional[List[str]] = None
+    visible_document_ids: Optional[List[str]] = None
+    portal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+
+
 class PassengerMergeRequest(BaseModel):
     target_passenger_id: str
     reason: str
