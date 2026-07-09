@@ -20,6 +20,8 @@ Phase 50.6 implements the metadata-only Operational Knowledge Evaluation Engine.
 
 Phase 50.7 implements the metadata-only Passenger Service Feasibility Engine. It consumes Operational Evaluation Results and records advisory, explainable, evidence-linked, non-Boolean feasibility outcomes for passenger service requirements under evaluated airline, itinerary, and service conditions. Feasibility is not recommendation, does not rank airlines or itineraries, and human authority remains final.
 
+Phase 50.8 implements the metadata-only Airline & Itinerary Recommendation Engine. It consumes Passenger Service Feasibility and records advisory recommendation metadata across feasible airline and itinerary options. Recommendation is not feasibility, not booking, not search, not price generation, and human authority remains final.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -73,7 +75,7 @@ A decision pack should include:
 - Applicability assumptions.
 - Missing evidence or unresolved constraints.
 - Human review notes.
-- Recommendation rationale when recommendations are explicitly authorized in a future phase.
+- Recommendation rationale from Phase 50.8 Airline Recommendation metadata when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

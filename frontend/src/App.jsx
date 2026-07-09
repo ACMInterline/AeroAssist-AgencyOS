@@ -33,6 +33,7 @@ import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
 import KnowledgeGovernancePage from "./pages/agency/KnowledgeGovernancePage"
 import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPage"
 import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
+import RecommendationsPage from "./pages/agency/RecommendationsPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
@@ -116,6 +117,7 @@ import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAc
 import AirlineKnowledgeGovernancePage from "./pages/platform/AirlineKnowledgeGovernancePage"
 import AirlineKnowledgeNormalisationPage from "./pages/platform/AirlineKnowledgeNormalisationPage"
 import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
+import PlatformAirlineRecommendationsPage from "./pages/platform/AirlineRecommendationsPage"
 import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
@@ -254,6 +256,7 @@ const routes = {
   "/platform/airline-capability-matrix": AirlineCapabilityMatrixPage,
   "/platform/operational-evaluations": PlatformOperationalEvaluationsPage,
   "/platform/passenger-service-feasibility": PlatformPassengerServiceFeasibilityPage,
+  "/platform/airline-recommendations": PlatformAirlineRecommendationsPage,
   "/platform/reference": PlatformReferenceDataPage,
   "/platform/rules-services": PlatformRulesServicesPage,
   "/platform/documents": PlatformDocumentTemplatesPage,
@@ -326,6 +329,7 @@ const routes = {
   "/agency/capability-matrix": CapabilityMatrixPage,
   "/agency/operational-evaluations": OperationalEvaluationsPage,
   "/agency/service-feasibility": ServiceFeasibilityPage,
+  "/agency/recommendations": RecommendationsPage,
   "/agency/airline-policy-library": AirlinePolicyLibraryPage,
   "/agency/service-taxonomy": AgencyServiceTaxonomyPage,
   "/agency/service-mechanics": AgencyServiceMechanicsPage,

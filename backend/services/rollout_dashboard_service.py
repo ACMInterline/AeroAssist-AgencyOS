@@ -17,7 +17,7 @@ from services.feature_bundle_rollout_plan_service import PLAN_STAGES, FeatureBun
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES, FeatureBundleRolloutReadinessService
 
 
-PHASE_LABEL = "phase_50_7_passenger_service_feasibility_engine_foundation"
+PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
 
 VIEW_COLLECTION = "rollout_dashboard_views"
 SNAPSHOT_COLLECTION = "rollout_dashboard_snapshots"

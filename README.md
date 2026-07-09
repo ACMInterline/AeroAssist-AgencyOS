@@ -1143,7 +1143,17 @@ Before implementing future phases, Codex should read and follow:
 - Feasibility metadata for passenger context, trip / itinerary context, airline context, evaluation links, feasibility outcomes, satisfied/conditional/unsatisfied/unknown requirements, required actions, operational risk, evidence/evaluation/decision trace, confidence, lifecycle, and notes.
 - Metadata collection `passenger_service_feasibilities` with additive index registration only.
 - Architecture note: `docs/architecture/passenger-service-feasibility-engine-foundation.md`.
-- Feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation comes later in Phase 50.8. Phase 50.7 does not rank airlines, search flights, book, ticket, call providers, use AI or LLM prompts, execute parsers, optimise pricing, run background workers, or automate decisions.
+- Feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation is separate Phase 50.8 metadata. Phase 50.7 does not rank airlines, search flights, book, ticket, call providers, use AI or LLM prompts, execute parsers, optimise pricing, run background workers, or automate decisions.
+
+## Phase 50.8 Includes
+
+- Metadata-only Airline Recommendation records that consume Passenger Service Feasibility from Phase 50.7.
+- Platform UI `/platform/airline-recommendations` and APIs under `/api/platform/airline-recommendations` for metadata create/update/archive/list/detail views.
+- Agency UI `/agency/recommendations` and read-only APIs under `/api/agencies/{agency_id}/airline-recommendations`.
+- Recommendation metadata for passenger context, trip and itinerary context, airline context, feasibility/evaluation/capability/knowledge/evidence references, recommendation rank/status/summary, operational scores, commercial reference scores, recommendation level, explanation, required actions, comparison matrix, evidence, trace, lifecycle, and notes.
+- Metadata collection `airline_recommendations` with additive index registration only.
+- Architecture note: `docs/architecture/airline-recommendation-engine-foundation.md`.
+- Recommendation is not feasibility, not booking, not search, advisory, and subject to final human authority. Phase 50.8 does not run live GDS or NDC search, book, issue tickets or EMDs, call providers, execute parsers, generate AI/LLM text, generate prices, run background workers, or automate decisions.
 
 ## Intentionally Not Included Yet
 
@@ -1151,7 +1161,7 @@ Before implementing future phases, Codex should read and follow:
 - Payment gateway processing.
 - Full accounting or ledger reconciliation.
 - Automated booking, PNR creation, ticketing, GDS, NDC, OTA, or supplier integrations.
-- Airline scraping, external AI policy extraction or taxonomy/mechanics/pricing/comparison mapping, automated policy evaluation, automatic global policy/taxonomy/mechanics/pricing/comparison promotion, SSR/OSI/EMD/payment execution, automatic airline recommendation, invoice/payment/settlement execution from estimates, and automated live pricing.
+- Airline scraping, external AI policy extraction or taxonomy/mechanics/pricing/comparison mapping, automated policy evaluation, automatic global policy/taxonomy/mechanics/pricing/comparison promotion, SSR/OSI/EMD/payment execution, automatic airline recommendation execution, invoice/payment/settlement execution from estimates, live flight shopping, and automated live pricing.
 - Automatic staff invitation sending unless explicitly enabled in a future production delivery phase.
 
 ## Backend Setup

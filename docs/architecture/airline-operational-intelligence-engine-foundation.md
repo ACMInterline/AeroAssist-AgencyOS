@@ -58,7 +58,9 @@ Phase 50.6 adds the `operational_knowledge_evaluations` collection. The Operatio
 
 Phase 50.7 adds the `passenger_service_feasibilities` collection. The Passenger Service Feasibility Engine consumes Operational Evaluation Results and records advisory, explainable, evidence-linked, non-Boolean feasibility metadata. Feasibility answers whether passenger service requirements can be fulfilled under evaluated airline, itinerary, and service conditions. It is not recommendation, does not rank airlines, and human authority remains final.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, and Passenger Service Feasibility records.
+Phase 50.8 adds the `airline_recommendations` collection. The Airline & Itinerary Recommendation Engine consumes Passenger Service Feasibility and records advisory recommendation metadata across feasible airline and itinerary options. Recommendation is not feasibility, booking, search, price generation, or final authority.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, and Airline Recommendation records.
 
 ## Routes
 
@@ -81,7 +83,7 @@ All routes are read-only visualization routes.
 - 50.5 Airline Operational Capability Matrix Foundation - implemented as metadata-only capability inventory
 - 50.6 Operational Knowledge Evaluation Engine Foundation - implemented as metadata-only applicability evaluation
 - 50.7 Passenger Service Feasibility Engine Foundation - implemented as metadata-only advisory feasibility
-- 50.8 Airline & Itinerary Recommendation Engine Foundation
+- 50.8 Airline & Itinerary Recommendation Engine Foundation - implemented as metadata-only advisory recommendation
 - 50.9 Offer Builder Intelligence Integration Foundation
 
 ## Explicitly Excluded
@@ -99,4 +101,6 @@ Phase 50.5 does not implement live rule evaluation, passenger feasibility scorin
 
 Phase 50.6 does not implement AI reasoning, LLM prompts, flight search, itinerary recommendation, passenger feasibility scoring, booking, ticketing, provider integrations, parser execution, pricing optimisation, background workers, external API calls, or automation.
 
-Phase 50.7 does not implement airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI or LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, external API calls, or automation. Recommendation comes later in Phase 50.8.
+Phase 50.7 does not implement airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI or LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, external API calls, or automation. Phase 50.8 consumes feasibility metadata for advisory recommendation records.
+
+Phase 50.8 does not implement live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation. Offer-builder intelligence integration comes later in Phase 50.9.

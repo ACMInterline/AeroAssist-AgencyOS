@@ -68,7 +68,7 @@ Phase 50.6 determines what operationally applies.
 
 Phase 50.7 determines whether the passenger service requirements appear fulfilable under those evaluated conditions.
 
-This relationship does not turn Phase 50.7 into a recommendation engine. Recommendation comes later in Phase 50.8.
+This relationship does not turn Phase 50.7 into a recommendation engine. Phase 50.8 consumes feasibility metadata for advisory Airline Recommendation records.
 
 ## Explicit Exclusions
 

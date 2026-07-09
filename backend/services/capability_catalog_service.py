@@ -7,7 +7,7 @@ from models import CapabilityCatalogEntry
 from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleService
 
 
-PHASE_LABEL = "phase_50_7_passenger_service_feasibility_engine_foundation"
+PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
 
 CAPABILITY_COLLECTION = "capability_catalog"
 

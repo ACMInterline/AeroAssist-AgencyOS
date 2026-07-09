@@ -17,7 +17,7 @@ from services.operational_constraint_engine_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_50_7_passenger_service_feasibility_engine_foundation"
+EXPECTED_PHASE = "phase_50_8_airline_recommendation_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/operational-constraints"
 
@@ -267,8 +267,8 @@ def verify_blueprint_adoption() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if not any("Operational constraint engine foundation built in Phase 50.2" in item for item in gaps.get("already_built", [])):
         raise AssertionError(f"Blueprint gaps missing Phase 50.2 built marker: {gaps}")
-    if "Phase 50.8" not in gaps.get("next_intelligence_phase", ""):
-        raise AssertionError(f"Gap summary missing Phase 50.8 next intelligence phase: {gaps}")
+    if "Phase 50.9" not in gaps.get("next_intelligence_phase", ""):
+        raise AssertionError(f"Gap summary missing Phase 50.9 next intelligence phase: {gaps}")
 
 
 def verify_readiness() -> None:

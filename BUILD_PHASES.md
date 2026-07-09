@@ -2119,11 +2119,29 @@ Implemented scope:
 - Added filters by airline, feasibility outcome, confidence level, operational risk, passenger need category, SSR code, travel date, cabin, destination, and recommendation readiness.
 - Added readiness flags under `passenger_service_feasibility_engine_foundation`.
 - Added `docs/architecture/passenger-service-feasibility-engine-foundation.md`.
-- Clarified that feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation remains future Phase 50.8.
+- Clarified that feasibility is not Boolean, not recommendation, advisory, evidence-linked, and subject to final human authority. Recommendation remains separate Phase 50.8 metadata.
 
 Avoid adding:
 
 - Airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI/LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
+### Phase 50.8: Airline & Itinerary Recommendation Engine Foundation
+
+Implemented scope:
+
+- Added metadata-only `AirlineRecommendation`, `AirlineRecommendationCreate`, and `AirlineRecommendationUpdate` models for advisory airline and itinerary recommendation records.
+- Registered the additive `airline_recommendations` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/airline-recommendations` and UI at `/platform/airline-recommendations`.
+- Added agency read-only APIs under `/api/agencies/{agency_id}/airline-recommendations` and UI at `/agency/recommendations`.
+- Added metadata sections for Recommendation Dashboard, Comparison Matrix, Recommendation Cards, Operational Scores, Commercial Scores, Required Actions, Evidence, Recommendation Explanation, and Comparison Table.
+- Added filters by airline, recommendation level, operational score, risk, passenger need, cabin, destination, and travel date.
+- Added readiness flags under `airline_recommendation_engine_foundation`.
+- Added `docs/architecture/airline-recommendation-engine-foundation.md`.
+- Clarified that recommendation is not feasibility, not booking, not search, advisory, and subject to final human authority.
+
+Avoid adding:
+
+- Live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI/LLM generation, price generation, background workers, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
 ### Phase 38: Invoices And Payments
 

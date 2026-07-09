@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
-from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
+from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
@@ -46,7 +46,8 @@ from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES,
 from services.operational_constraint_engine_service import APPROVAL_STATUSES as OPERATIONAL_CONSTRAINT_APPROVAL_STATUSES, CONDITION_OPERATORS, CONSTRAINT_STATUSES as OPERATIONAL_CONSTRAINT_STATUSES, OUTCOME_TYPES as OPERATIONAL_CONSTRAINT_OUTCOME_TYPES, REVIEW_STATUSES as OPERATIONAL_CONSTRAINT_REVIEW_STATUSES
 from services.airline_capability_matrix_service import CAPABILITY_OUTCOMES as MATRIX_CAPABILITY_OUTCOMES, CAPABILITY_REVIEW_STATUSES as MATRIX_REVIEW_STATUSES, CAPABILITY_STATUSES as MATRIX_CAPABILITY_STATUSES, CAPABILITY_STATUS_VALUES as MATRIX_CAPABILITY_STATUS_VALUES, CONFIDENCE_LEVELS as MATRIX_CONFIDENCE_LEVELS, OPERATIONAL_RISK_LEVELS as MATRIX_RISK_LEVELS, OPERATIONAL_VALIDITY_STATUSES as MATRIX_VALIDITY_STATUSES
 from services.operational_knowledge_evaluation_service import EVALUATION_CONFIDENCE_LEVELS, EVALUATION_RESULT_VALUES, EVALUATION_STATUSES, EVALUATION_TYPES, OPERATIONAL_RESULTS as EVALUATION_OPERATIONAL_RESULTS, OPERATIONAL_RISK_LEVELS as EVALUATION_RISK_LEVELS
-from services.passenger_service_feasibility_service import FEASIBILITY_CONFIDENCE_LEVELS, FEASIBILITY_OUTCOMES, FEASIBILITY_STATUSES, FEASIBILITY_TYPES, OPERATIONAL_RISK_LEVELS as FEASIBILITY_RISK_LEVELS, PHASE_LABEL
+from services.passenger_service_feasibility_service import FEASIBILITY_CONFIDENCE_LEVELS, FEASIBILITY_OUTCOMES, FEASIBILITY_STATUSES, FEASIBILITY_TYPES, OPERATIONAL_RISK_LEVELS as FEASIBILITY_RISK_LEVELS
+from services.airline_recommendation_engine_service import AIRLINE_RECOMMENDATION_LEVELS, AIRLINE_RECOMMENDATION_STATUSES, PHASE_LABEL, RECOMMENDATION_STATUS_VALUES
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -63,7 +64,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.7 passenger service feasibility engine foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.8 airline recommendation engine foundation.",
 )
 
 app.add_middleware(
@@ -1090,6 +1091,46 @@ async def readiness() -> dict:
     )
     passenger_service_feasibility_recommendation_ready_count = len(
         [item for item in passenger_service_feasibility_records if item.get("recommendation_ready")]
+    )
+    airline_recommendation_records = await database.collection("airline_recommendations").find_many()
+    airline_recommendation_count = len(airline_recommendation_records)
+    airline_recommendation_status_counts = {
+        status: len([item for item in airline_recommendation_records if item.get("recommendation_status") == status])
+        for status in AIRLINE_RECOMMENDATION_STATUSES
+    }
+    airline_recommendation_level_counts = {
+        level: len([item for item in airline_recommendation_records if item.get("recommendation_level") == level])
+        for level in AIRLINE_RECOMMENDATION_LEVELS
+    }
+    airline_recommendation_status_value_counts = {
+        value: len([item for item in airline_recommendation_records if item.get("recommendation_status_value") == value])
+        for value in RECOMMENDATION_STATUS_VALUES
+    }
+    airline_recommendation_ready_count = len(
+        [item for item in airline_recommendation_records if item.get("recommendation_ready")]
+    )
+    airline_recommendation_feasibility_reference_count = sum(
+        len(item.get("feasibility_ids") or []) for item in airline_recommendation_records
+    )
+    airline_recommendation_comparison_matrix_count = sum(
+        len(item.get("comparison_matrix") or []) for item in airline_recommendation_records
+    )
+    airline_recommendation_evidence_count = sum(
+        len(item.get("recommendation_evidence") or []) for item in airline_recommendation_records
+    )
+    airline_recommendation_trace_count = sum(
+        len(item.get("recommendation_trace") or []) for item in airline_recommendation_records
+    )
+    airline_recommendation_required_action_count = sum(
+        len(item.get("required_ssrs") or [])
+        + len(item.get("required_osis") or [])
+        + len(item.get("required_emds") or [])
+        + len(item.get("required_documents") or [])
+        + int(bool(item.get("required_medif")))
+        + int(bool(item.get("required_manual_review")))
+        + int(bool(item.get("required_station_notification")))
+        + int(bool(item.get("required_crew_notification")))
+        for item in airline_recommendation_records
     )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
@@ -2677,7 +2718,7 @@ async def readiness() -> dict:
             "feasibility_is_advisory": True,
             "human_authority_final": True,
             "feasibility_is_not_recommendation": True,
-            "recommendation_engine_comes_later_phase_50_8": True,
+            "recommendation_engine_consumer_phase_50_8_enabled": True,
             "operational_evaluation_link_metadata_enabled": True,
             "passenger_context_metadata_enabled": True,
             "trip_itinerary_context_metadata_enabled": True,
@@ -2690,7 +2731,6 @@ async def readiness() -> dict:
             "evaluation_trace_metadata_enabled": True,
             "decision_trace_metadata_enabled": True,
             "confidence_metadata_enabled": True,
-            "future_50_8_recommendation_consumer_only": True,
             "future_50_9_offer_builder_consumer_only": True,
             "feasibility_statuses": FEASIBILITY_STATUSES,
             "feasibility_types": FEASIBILITY_TYPES,
@@ -2724,7 +2764,57 @@ async def readiness() -> dict:
             "passenger_service_feasibility_required_action_count": passenger_service_feasibility_required_action_count,
             "passenger_service_feasibility_recommendation_ready_count": passenger_service_feasibility_recommendation_ready_count,
             "readiness_required": False,
-            "diagnostic": "Phase 50.7 creates metadata-only Passenger Service Feasibility records. Feasibility consumes Operational Evaluation Results from Phase 50.6 and answers whether passenger operational service requirements can be fulfilled under evaluated conditions. Feasibility is not Boolean, is advisory, and does not recommend or rank airlines, search flights, book, ticket, use AI or LLM prompts, execute parsers, optimise pricing, call providers, run workers, or automate decisions.",
+            "diagnostic": "Phase 50.7 creates metadata-only Passenger Service Feasibility records. Feasibility consumes Operational Evaluation Results from Phase 50.6 and answers whether passenger operational service requirements can be fulfilled under evaluated conditions. Feasibility is not Boolean, is advisory, and does not book, ticket, search flights, use AI or LLM prompts, execute parsers, optimise pricing, call providers, run workers, or automate decisions. Phase 50.8 consumes feasibility metadata for advisory recommendation records.",
+        },
+        "airline_recommendation_engine_foundation": {
+            "airline_recommendation_engine_enabled": True,
+            "airline_recommendations_collection_enabled": True,
+            "platform_airline_recommendation_metadata_crud_enabled": True,
+            "agency_airline_recommendation_read_only_enabled": True,
+            "platform_airline_recommendations_ui_enabled": True,
+            "agency_recommendations_ui_enabled": True,
+            "consumes_passenger_service_feasibility": True,
+            "recommendation_is_not_feasibility": True,
+            "recommendation_compares_feasible_airlines": True,
+            "recommendation_is_advisory": True,
+            "human_authority_final": True,
+            "recommendation_dashboard_metadata_enabled": True,
+            "comparison_matrix_metadata_enabled": True,
+            "recommendation_card_metadata_enabled": True,
+            "operational_scores_metadata_enabled": True,
+            "commercial_scores_metadata_enabled": True,
+            "required_action_metadata_enabled": True,
+            "recommendation_explanation_metadata_enabled": True,
+            "recommendation_evidence_metadata_enabled": True,
+            "future_50_9_offer_builder_consumer_only": True,
+            "recommendation_statuses": AIRLINE_RECOMMENDATION_STATUSES,
+            "recommendation_status_values": RECOMMENDATION_STATUS_VALUES,
+            "recommendation_levels": AIRLINE_RECOMMENDATION_LEVELS,
+            "metadata_only": True,
+            "advisory_only": True,
+            "no_live_gds_search": True,
+            "no_ndc_search": True,
+            "flight_search_disabled": True,
+            "booking_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "provider_integrations_disabled": True,
+            "parser_execution_disabled": True,
+            "no_ai_generation": True,
+            "no_llm_generation": True,
+            "background_workers_disabled": True,
+            "airline_recommendation_count": airline_recommendation_count,
+            "airline_recommendation_status_counts": airline_recommendation_status_counts,
+            "airline_recommendation_level_counts": airline_recommendation_level_counts,
+            "airline_recommendation_status_value_counts": airline_recommendation_status_value_counts,
+            "airline_recommendation_ready_count": airline_recommendation_ready_count,
+            "airline_recommendation_feasibility_reference_count": airline_recommendation_feasibility_reference_count,
+            "airline_recommendation_comparison_matrix_count": airline_recommendation_comparison_matrix_count,
+            "airline_recommendation_evidence_count": airline_recommendation_evidence_count,
+            "airline_recommendation_trace_count": airline_recommendation_trace_count,
+            "airline_recommendation_required_action_count": airline_recommendation_required_action_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.8 creates metadata-only Airline & Itinerary Recommendation records. Recommendations consume Phase 50.7 Passenger Service Feasibility, compare feasible airlines and itinerary metadata, and remain advisory. This phase does not run live GDS or NDC search, book, issue tickets or EMDs, call providers, execute parsers, generate AI or LLM text, create prices, or run background workers.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -4481,6 +4571,7 @@ app.include_router(platform_airline_knowledge_governance.router)
 app.include_router(platform_airline_capability_matrix.router)
 app.include_router(platform_operational_evaluations.router)
 app.include_router(platform_passenger_service_feasibility.router)
+app.include_router(platform_airline_recommendations.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -4558,6 +4649,7 @@ app.include_router(agency_airline_knowledge_governance.router)
 app.include_router(agency_airline_capability_matrix.router)
 app.include_router(agency_operational_evaluations.router)
 app.include_router(agency_passenger_service_feasibility.router)
+app.include_router(agency_airline_recommendations.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

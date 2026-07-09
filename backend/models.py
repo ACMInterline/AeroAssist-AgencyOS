@@ -16176,6 +16176,231 @@ class PassengerServiceFeasibilityUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class AirlineRecommendation(BaseDocument):
+    agency_id: Optional[str] = None
+    recommendation_reference: str
+    recommendation_status: str = "draft"
+    recommendation_version: Optional[str] = None
+    created_by: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    itinerary_reference: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    travel_date: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    feasibility_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    recommendation_rank: Optional[int] = None
+    recommendation_status_value: Optional[str] = None
+    recommendation_summary: Optional[str] = None
+    operational_feasibility_score: Optional[float] = None
+    operational_confidence_score: Optional[float] = None
+    operational_risk_score: Optional[float] = None
+    passenger_comfort_score: Optional[float] = None
+    operational_complexity_score: Optional[float] = None
+    ancillary_cost_score: Optional[float] = None
+    ticket_cost_reference: Optional[str] = None
+    ancillary_cost_reference: Optional[str] = None
+    total_cost_reference: Optional[str] = None
+    recommendation_score: Optional[float] = None
+    recommendation_level: Optional[str] = None
+    recommendation_reason: Optional[str] = None
+    recommendation_strengths: List[str] = Field(default_factory=list)
+    recommendation_limitations: List[str] = Field(default_factory=list)
+    recommendation_conditions: List[str] = Field(default_factory=list)
+    required_ssrs: List[str] = Field(default_factory=list)
+    required_osis: List[str] = Field(default_factory=list)
+    required_emds: List[str] = Field(default_factory=list)
+    required_documents: List[str] = Field(default_factory=list)
+    required_medif: bool = False
+    required_manual_review: bool = False
+    required_station_notification: bool = False
+    required_crew_notification: bool = False
+    compared_airlines: List[str] = Field(default_factory=list)
+    compared_itineraries: List[str] = Field(default_factory=list)
+    comparison_summary: Optional[str] = None
+    comparison_notes: Optional[str] = None
+    comparison_matrix: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_ready: bool = False
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    airline_recommendation_engine_foundation: bool = True
+    recommendation_is_not_feasibility: bool = True
+    consumes_passenger_service_feasibility: bool = True
+    advisory_only: bool = True
+    human_authority_final: bool = True
+    no_live_gds_search: bool = True
+    no_ndc_search: bool = True
+    flight_search_disabled: bool = True
+    booking_disabled: bool = True
+    ticketing_disabled: bool = True
+    emd_issuance_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    parser_execution_disabled: bool = True
+    no_ai_generation: bool = True
+    no_llm_generation: bool = True
+    background_workers_disabled: bool = True
+
+
+class AirlineRecommendationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    recommendation_reference: Optional[str] = None
+    recommendation_status: str = "draft"
+    recommendation_version: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    itinerary_reference: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    travel_date: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    feasibility_ids: List[str] = Field(default_factory=list)
+    operational_evaluation_ids: List[str] = Field(default_factory=list)
+    capability_matrix_ids: List[str] = Field(default_factory=list)
+    knowledge_version_ids: List[str] = Field(default_factory=list)
+    evidence_reference_ids: List[str] = Field(default_factory=list)
+    recommendation_rank: Optional[int] = None
+    recommendation_status_value: Optional[str] = None
+    recommendation_summary: Optional[str] = None
+    operational_feasibility_score: Optional[float] = None
+    operational_confidence_score: Optional[float] = None
+    operational_risk_score: Optional[float] = None
+    passenger_comfort_score: Optional[float] = None
+    operational_complexity_score: Optional[float] = None
+    ancillary_cost_score: Optional[float] = None
+    ticket_cost_reference: Optional[str] = None
+    ancillary_cost_reference: Optional[str] = None
+    total_cost_reference: Optional[str] = None
+    recommendation_score: Optional[float] = None
+    recommendation_level: Optional[str] = None
+    recommendation_reason: Optional[str] = None
+    recommendation_strengths: List[str] = Field(default_factory=list)
+    recommendation_limitations: List[str] = Field(default_factory=list)
+    recommendation_conditions: List[str] = Field(default_factory=list)
+    required_ssrs: List[str] = Field(default_factory=list)
+    required_osis: List[str] = Field(default_factory=list)
+    required_emds: List[str] = Field(default_factory=list)
+    required_documents: List[str] = Field(default_factory=list)
+    required_medif: bool = False
+    required_manual_review: bool = False
+    required_station_notification: bool = False
+    required_crew_notification: bool = False
+    compared_airlines: List[str] = Field(default_factory=list)
+    compared_itineraries: List[str] = Field(default_factory=list)
+    comparison_summary: Optional[str] = None
+    comparison_notes: Optional[str] = None
+    comparison_matrix: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_evidence: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    recommendation_ready: bool = False
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineRecommendationUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    recommendation_reference: Optional[str] = None
+    recommendation_status: Optional[str] = None
+    recommendation_version: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    passenger_profile_reference: Optional[str] = None
+    passenger_need_summary: Optional[str] = None
+    passenger_need_category: Optional[str] = None
+    travel_request_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    itinerary_reference: Optional[str] = None
+    itinerary_summary: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    travel_date: Optional[str] = None
+    cabin_requested: Optional[str] = None
+    airline_code: Optional[str] = None
+    airline_name: Optional[str] = None
+    validating_carrier: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    feasibility_ids: Optional[List[str]] = None
+    operational_evaluation_ids: Optional[List[str]] = None
+    capability_matrix_ids: Optional[List[str]] = None
+    knowledge_version_ids: Optional[List[str]] = None
+    evidence_reference_ids: Optional[List[str]] = None
+    recommendation_rank: Optional[int] = None
+    recommendation_status_value: Optional[str] = None
+    recommendation_summary: Optional[str] = None
+    operational_feasibility_score: Optional[float] = None
+    operational_confidence_score: Optional[float] = None
+    operational_risk_score: Optional[float] = None
+    passenger_comfort_score: Optional[float] = None
+    operational_complexity_score: Optional[float] = None
+    ancillary_cost_score: Optional[float] = None
+    ticket_cost_reference: Optional[str] = None
+    ancillary_cost_reference: Optional[str] = None
+    total_cost_reference: Optional[str] = None
+    recommendation_score: Optional[float] = None
+    recommendation_level: Optional[str] = None
+    recommendation_reason: Optional[str] = None
+    recommendation_strengths: Optional[List[str]] = None
+    recommendation_limitations: Optional[List[str]] = None
+    recommendation_conditions: Optional[List[str]] = None
+    required_ssrs: Optional[List[str]] = None
+    required_osis: Optional[List[str]] = None
+    required_emds: Optional[List[str]] = None
+    required_documents: Optional[List[str]] = None
+    required_medif: Optional[bool] = None
+    required_manual_review: Optional[bool] = None
+    required_station_notification: Optional[bool] = None
+    required_crew_notification: Optional[bool] = None
+    compared_airlines: Optional[List[str]] = None
+    compared_itineraries: Optional[List[str]] = None
+    comparison_summary: Optional[str] = None
+    comparison_notes: Optional[str] = None
+    comparison_matrix: Optional[List[Dict[str, Any]]] = None
+    recommendation_evidence: Optional[List[Dict[str, Any]]] = None
+    recommendation_trace: Optional[List[Dict[str, Any]]] = None
+    recommendation_ready: Optional[bool] = None
+    archived: Optional[bool] = None
+    archived_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class RolloutDashboardCounts(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

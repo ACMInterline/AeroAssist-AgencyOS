@@ -54,7 +54,7 @@ A Phase 50.7 advisory, evidence-linked record that consumes Operational Evaluati
 
 ## Recommendation
 
-A future advisory output that suggests airline or itinerary options based on reviewed evidence and structured operational knowledge. A recommendation is not an execution action.
+An advisory output that suggests airline or itinerary options based on reviewed evidence, Passenger Service Feasibility, and structured operational knowledge. A recommendation is not an execution action, search action, booking action, price generation, or final authority.
 
 ## SSR
 

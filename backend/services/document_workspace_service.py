@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_50_7_passenger_service_feasibility_engine_foundation"
+PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

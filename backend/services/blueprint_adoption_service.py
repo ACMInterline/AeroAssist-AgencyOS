@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_7_passenger_service_feasibility_engine_foundation"
+PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -118,6 +118,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "PassengerServiceFeasibility, PassengerServiceFeasibilityCreate, PassengerServiceFeasibilityUpdate, PassengerServiceFeasibilityService, passenger_service_feasibilities, /api/platform/passenger-service-feasibility, /api/agencies/{agency_id}/passenger-service-feasibility, /platform/passenger-service-feasibility, /agency/service-feasibility",
         "status": "foundation adopted",
         "action": "Store metadata-only advisory feasibility records that consume Operational Evaluation Results. Feasibility is not Boolean, not recommendation, and does not rank airlines, search flights, book, ticket, use AI/LLM prompts, call providers, execute parsers, optimise pricing, run workers, or automate decisions.",
+    },
+    {
+        "category": "Airline Recommendations",
+        "concept": "Advisory airline and itinerary recommendation metadata",
+        "supplementary_concept": "Passenger Service Feasibility inputs, airline and itinerary comparison metadata, operational scores, commercial reference scores, recommendation level, required actions, evidence, and recommendation trace",
+        "current_equivalent": "AirlineRecommendation, AirlineRecommendationCreate, AirlineRecommendationUpdate, AirlineRecommendationService, airline_recommendations, /api/platform/airline-recommendations, /api/agencies/{agency_id}/airline-recommendations, /platform/airline-recommendations, /agency/recommendations",
+        "status": "foundation adopted",
+        "action": "Store metadata-only advisory recommendation records that consume Passenger Service Feasibility. Recommendation is not feasibility, booking, search, price generation, ticketing, EMD issuance, provider integration, parser execution, AI/LLM generation, background work, or final authority.",
     },
     {
         "category": "Platform / Agency UX",
@@ -723,6 +731,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/operational-evaluations", "agencyos": "/agency/operational-evaluations"},
         {"supplementary": "/admin/passenger-service-feasibility", "agencyos": "/platform/passenger-service-feasibility"},
         {"supplementary": "/agent/service-feasibility", "agencyos": "/agency/service-feasibility"},
+        {"supplementary": "/admin/airline-recommendations", "agencyos": "/platform/airline-recommendations"},
+        {"supplementary": "/agent/recommendations", "agencyos": "/agency/recommendations"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -735,9 +745,9 @@ ROUTE_POLICY: dict[str, Any] = {
 
 NEXT_PHASE_RECOMMENDATIONS: list[dict[str, str]] = [
     {
-        "phase": "Phase 50.8",
-        "title": "Airline & Itinerary Recommendation Engine Foundation",
-        "reason": "Passenger Service Feasibility records now describe advisory non-Boolean feasibility outcomes. The next intelligence phase should consume feasibility metadata for recommendation views without ranking automation, flight search, booking, ticketing, provider calls, AI/LLM reasoning, parser execution, pricing optimisation, workers, or automatic decisions.",
+        "phase": "Phase 50.9",
+        "title": "Offer Builder Intelligence Integration Foundation",
+        "reason": "Airline Recommendation records now describe advisory airline and itinerary preference metadata. The next intelligence phase should expose recommendation metadata to offer-builder workflows without offer mutation, booking, ticketing, EMD issuance, provider calls, AI/LLM generation, parser execution, live pricing, workers, or automatic decisions.",
     },
     {
         "phase": "Phase 42.2",
@@ -983,6 +993,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline operational capability matrix foundation built in Phase 50.5",
             "Operational knowledge evaluation engine foundation built in Phase 50.6",
             "Passenger service feasibility engine foundation built in Phase 50.7",
+            "Airline recommendation engine foundation built in Phase 50.8",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
@@ -1000,8 +1011,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Parallel trip/request/offer/booking/ticket/EMD models",
             "Supabase, Next.js, or Horizons-specific architecture migration",
         ],
-        "next_immediate_phase": "Phase 50.8 - Airline & Itinerary Recommendation Engine Foundation",
-        "next_intelligence_phase": "Phase 50.8 - Airline & Itinerary Recommendation Engine Foundation",
+        "next_immediate_phase": "Phase 50.9 - Offer Builder Intelligence Integration Foundation",
+        "next_intelligence_phase": "Phase 50.9 - Offer Builder Intelligence Integration Foundation",
         "next_operational_phase": "Phase 42.2 - Passenger Service Workflow Engine Foundation",
         "chapter_41_operational_workspaces": [
             "Operational travel workspaces",
