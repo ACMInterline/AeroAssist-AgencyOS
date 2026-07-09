@@ -59,6 +59,7 @@ import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
+import OfferIntelligencePage from "./pages/agency/OfferIntelligencePage"
 import AgencyOfferDecisionExportAuditReviewsPage from "./pages/agency/OfferDecisionExportAuditReviewsPage"
 import AgencyOfferDecisionExportCompliancePage from "./pages/agency/OfferDecisionExportCompliancePage"
 import AgencyOfferDecisionExportDeliveriesPage from "./pages/agency/OfferDecisionExportDeliveriesPage"
@@ -174,6 +175,7 @@ import PlatformOfferDecisionExportReleasesPage from "./pages/platform/OfferDecis
 import PlatformOfferDecisionExportsPage from "./pages/platform/OfferDecisionExportsPage"
 import PlatformOfferDecisionExplanationsPage from "./pages/platform/OfferDecisionExplanationsPage"
 import PlatformOfferDecisionPacksPage from "./pages/platform/OfferDecisionPacksPage"
+import PlatformIntelligentOfferBuilderPage from "./pages/platform/IntelligentOfferBuilderPage"
 import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorPage"
 import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
 import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
@@ -268,6 +270,7 @@ const routes = {
   "/platform/ancillary-pricing": PlatformAncillaryPricingPage,
   "/platform/policy-comparison": PlatformPolicyComparisonPage,
   "/platform/offer-policy-advisor": PlatformOfferPolicyAdvisorPage,
+  "/platform/intelligent-offer-builder": PlatformIntelligentOfferBuilderPage,
   "/platform/offer-decision-packs": PlatformOfferDecisionPacksPage,
   "/platform/offer-decision-explanations": PlatformOfferDecisionExplanationsPage,
   "/platform/offer-decision-exports": PlatformOfferDecisionExportsPage,
@@ -337,6 +340,7 @@ const routes = {
   "/agency/policy-comparison": AgencyPolicyComparisonPage,
   "/agency/airline-service-advisor": AirlineServiceAdvisorPage,
   "/agency/offer-policy-advisor": AgencyOfferPolicyAdvisorPage,
+  "/agency/offer-intelligence": OfferIntelligencePage,
   "/agency/offer-decision-packs": AgencyOfferDecisionPacksPage,
   "/agency/offer-decision-explanations": AgencyOfferDecisionExplanationsPage,
   "/agency/offer-decision-exports": AgencyOfferDecisionExportsPage,

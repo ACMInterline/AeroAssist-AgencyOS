@@ -56,6 +56,10 @@ A Phase 50.7 advisory, evidence-linked record that consumes Operational Evaluati
 
 An advisory output that suggests airline or itinerary options based on reviewed evidence, Passenger Service Feasibility, and structured operational knowledge. A recommendation is not an execution action, search action, booking action, price generation, or final authority.
 
+## Offer Intelligence Package
+
+A Phase 50.9 metadata package that prepares approved recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, evidence references, required actions, explanations, decision pack metadata, and lifecycle state for human-reviewed offer presentation. It does not create bookings, tickets, EMDs, prices, provider searches, AI/LLM output, or automatic client messages.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

@@ -1,0 +1,47 @@
+# Intelligent Offer Builder Integration Foundation
+
+Phase 50.9 creates the Intelligent Offer Builder Integration foundation.
+
+This phase is metadata-only. It consumes approved operational intelligence and prepares explainable offer-intelligence packages for later human-reviewed offer presentation.
+
+## Core Principle
+
+Offer Builder should not invent intelligence.
+
+Offer Builder consumes:
+
+- Passenger Service Feasibility from Phase 50.7.
+- Airline Recommendations from Phase 50.8.
+- Operational Evaluations from Phase 50.6.
+- Capability Matrix records from Phase 50.5.
+- Knowledge Governance, Knowledge Versions, and Evidence from Phase 50.4 and earlier.
+
+The offer layer is a presentation and decision-support layer. Recommendation and feasibility remain advisory. Human authority remains final.
+
+## Data Foundation
+
+Phase 50.9 adds:
+
+- `IntelligentOfferBuilderPackage`
+- `IntelligentOfferBuilderPackageCreate`
+- `IntelligentOfferBuilderPackageUpdate`
+- `IntelligentOfferBuilderService`
+- `intelligent_offer_builder_packages`
+- `/api/platform/intelligent-offer-builder`
+- `/api/agencies/{agency_id}/offer-intelligence`
+- `/platform/intelligent-offer-builder`
+- `/agency/offer-intelligence`
+
+Platform routes can create, update, archive, list, and read package metadata across agencies.
+
+Agency routes can create, update, archive, list, and read agency-scoped package metadata.
+
+## Package Metadata
+
+Offer-intelligence packages store package overview, passenger context, trip/request context, offer context, intelligence inputs, recommended options, operational readiness, required actions, pricing/cost references, client explanation, internal explanation, decision pack metadata, lifecycle, and notes.
+
+These records preserve references to recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, and evidence references. They do not recompute or generate intelligence.
+
+## Explicit Exclusions
+
+Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

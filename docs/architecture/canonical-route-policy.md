@@ -64,6 +64,7 @@ Phase 50.5 adds airline operational capability matrix APIs only under `/api/plat
 Phase 50.6 adds operational knowledge evaluation APIs only under `/api/platform/operational-evaluations/*` and `/api/agencies/{agency_id}/operational-evaluations/*`, plus frontend pages under `/platform/operational-evaluations` and `/agency/operational-evaluations`. It records deterministic, explainable, evidence-backed evaluation metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, AI reasoning, LLM prompts, flight search, itinerary recommendation, passenger feasibility scoring, booking, ticketing, provider integrations, parser execution, pricing optimisation, background workers, external API calls, or automation.
 Phase 50.7 adds passenger service feasibility APIs only under `/api/platform/passenger-service-feasibility/*` and `/api/agencies/{agency_id}/passenger-service-feasibility/*`, plus frontend pages under `/platform/passenger-service-feasibility` and `/agency/service-feasibility`. It records advisory, explainable, evidence-linked, non-Boolean feasibility metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI or LLM reasoning, parser execution, pricing optimisation, background workers, external API calls, or automatic operational decisions.
 Phase 50.8 adds airline recommendation APIs only under `/api/platform/airline-recommendations/*` and `/api/agencies/{agency_id}/airline-recommendations/*`, plus frontend pages under `/platform/airline-recommendations` and `/agency/recommendations`. It records advisory airline and itinerary recommendation metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation.
+Phase 50.9 adds intelligent offer builder integration APIs only under `/api/platform/intelligent-offer-builder/*` and `/api/agencies/{agency_id}/offer-intelligence/*`, plus frontend pages under `/platform/intelligent-offer-builder` and `/agency/offer-intelligence`. It records offer-intelligence package metadata only, and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live GDS search, NDC search, booking, ticketing, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, automatic client sending, external API calls, or automation.
 
 ## Route Mapping
 
@@ -190,6 +191,8 @@ Phase 50.8 adds airline recommendation APIs only under `/api/platform/airline-re
 | `/agent/service-feasibility` | `/agency/service-feasibility` |
 | `/admin/airline-recommendations` | `/platform/airline-recommendations` |
 | `/agent/recommendations` | `/agency/recommendations` |
+| `/admin/intelligent-offer-builder` | `/platform/intelligent-offer-builder` |
+| `/agent/offer-intelligence` | `/agency/offer-intelligence` |
 | `/documents` | `/agency/documents` and `/platform/document-templates` |
 | `/tickets` | `/agency/tickets-emds` |
 | `/bookings` | `/agency/booking-workspaces` |

@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
+PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
 AIRLINE_KNOWLEDGE_VERSION_COLLECTION = "airline_knowledge_versions"
 AIRLINE_KNOWLEDGE_RELEASE_COLLECTION = "airline_knowledge_releases"
 

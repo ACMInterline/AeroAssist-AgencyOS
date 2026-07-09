@@ -11,6 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
+from routers import agency_intelligent_offer_builder, platform_intelligent_offer_builder
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -47,7 +48,8 @@ from services.operational_constraint_engine_service import APPROVAL_STATUSES as 
 from services.airline_capability_matrix_service import CAPABILITY_OUTCOMES as MATRIX_CAPABILITY_OUTCOMES, CAPABILITY_REVIEW_STATUSES as MATRIX_REVIEW_STATUSES, CAPABILITY_STATUSES as MATRIX_CAPABILITY_STATUSES, CAPABILITY_STATUS_VALUES as MATRIX_CAPABILITY_STATUS_VALUES, CONFIDENCE_LEVELS as MATRIX_CONFIDENCE_LEVELS, OPERATIONAL_RISK_LEVELS as MATRIX_RISK_LEVELS, OPERATIONAL_VALIDITY_STATUSES as MATRIX_VALIDITY_STATUSES
 from services.operational_knowledge_evaluation_service import EVALUATION_CONFIDENCE_LEVELS, EVALUATION_RESULT_VALUES, EVALUATION_STATUSES, EVALUATION_TYPES, OPERATIONAL_RESULTS as EVALUATION_OPERATIONAL_RESULTS, OPERATIONAL_RISK_LEVELS as EVALUATION_RISK_LEVELS
 from services.passenger_service_feasibility_service import FEASIBILITY_CONFIDENCE_LEVELS, FEASIBILITY_OUTCOMES, FEASIBILITY_STATUSES, FEASIBILITY_TYPES, OPERATIONAL_RISK_LEVELS as FEASIBILITY_RISK_LEVELS
-from services.airline_recommendation_engine_service import AIRLINE_RECOMMENDATION_LEVELS, AIRLINE_RECOMMENDATION_STATUSES, PHASE_LABEL, RECOMMENDATION_STATUS_VALUES
+from services.airline_recommendation_engine_service import AIRLINE_RECOMMENDATION_LEVELS, AIRLINE_RECOMMENDATION_STATUSES, RECOMMENDATION_STATUS_VALUES
+from services.intelligent_offer_builder_service import INTELLIGENT_OFFER_CLIENT_VISIBILITY_STATUSES, INTELLIGENT_OFFER_PACKAGE_STATUSES, INTELLIGENT_OFFER_READINESS_STATUSES, PHASE_LABEL
 from services.airline_knowledge_governance_service import APPROVAL_STATUSES as GOVERNANCE_APPROVAL_STATUSES, CHANGE_TYPES as GOVERNANCE_CHANGE_TYPES, KNOWLEDGE_LIFECYCLE_STATUSES, KNOWLEDGE_SCOPES, RELEASE_STATUSES as GOVERNANCE_RELEASE_STATUSES, REVIEW_STATUSES as GOVERNANCE_REVIEW_STATUSES
 from services.airline_knowledge_normalisation_service import APPROVAL_STATUSES as NORMALISATION_APPROVAL_STATUSES, NORMALISATION_STATUSES, NORMALISATION_TYPES, REVIEW_STATUSES as NORMALISATION_REVIEW_STATUSES
 from services.ssr_osi_workspace_service import SSR_OSI_APPROVAL_STATUSES, SSR_OSI_NEED_CATEGORIES, SSR_OSI_OPERATIONAL_STATUSES, SSR_OSI_READINESS_STATUSES
@@ -64,7 +66,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 50.8 airline recommendation engine foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 50.9 intelligent offer builder integration foundation.",
 )
 
 app.add_middleware(
@@ -1131,6 +1133,68 @@ async def readiness() -> dict:
         + int(bool(item.get("required_station_notification")))
         + int(bool(item.get("required_crew_notification")))
         for item in airline_recommendation_records
+    )
+    intelligent_offer_builder_package_records = await database.collection("intelligent_offer_builder_packages").find_many()
+    intelligent_offer_builder_package_count = len(intelligent_offer_builder_package_records)
+    intelligent_offer_builder_package_status_counts = {
+        status: len([item for item in intelligent_offer_builder_package_records if item.get("package_status") == status])
+        for status in INTELLIGENT_OFFER_PACKAGE_STATUSES
+    }
+    intelligent_offer_builder_readiness_status_counts = {
+        status: len([item for item in intelligent_offer_builder_package_records if item.get("readiness_status") == status])
+        for status in INTELLIGENT_OFFER_READINESS_STATUSES
+    }
+    intelligent_offer_builder_client_visibility_status_counts = {
+        status: len([item for item in intelligent_offer_builder_package_records if item.get("client_visibility_status") == status])
+        for status in INTELLIGENT_OFFER_CLIENT_VISIBILITY_STATUSES
+    }
+    intelligent_offer_builder_recommendation_reference_count = sum(
+        len(item.get("recommendation_ids") or []) for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_feasibility_reference_count = sum(
+        len(item.get("feasibility_ids") or []) for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_evaluation_reference_count = sum(
+        len(item.get("operational_evaluation_ids") or []) for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_capability_matrix_reference_count = sum(
+        len(item.get("capability_matrix_ids") or []) for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_evidence_reference_count = sum(
+        len(item.get("evidence_reference_ids") or []) for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_required_action_count = sum(
+        len(item.get("required_ssrs") or [])
+        + len(item.get("required_osis") or [])
+        + len(item.get("required_emds") or [])
+        + len(item.get("required_documents") or [])
+        + len(item.get("required_follow_up_tasks") or [])
+        + int(bool(item.get("required_medif")))
+        + int(bool(item.get("required_manual_review")))
+        + int(bool(item.get("required_airline_approval")))
+        + int(bool(item.get("required_station_notification")))
+        + int(bool(item.get("required_crew_notification")))
+        for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_client_explanation_count = len(
+        [
+            item
+            for item in intelligent_offer_builder_package_records
+            if item.get("client_explanation_summary")
+            or item.get("client_visible_reasons")
+            or item.get("client_visible_limitations")
+            or item.get("client_visible_conditions")
+        ]
+    )
+    intelligent_offer_builder_internal_trace_count = sum(
+        len(item.get("internal_evidence_trace") or []) + len(item.get("internal_decision_trace") or [])
+        for item in intelligent_offer_builder_package_records
+    )
+    intelligent_offer_builder_decision_pack_ready_count = len(
+        [item for item in intelligent_offer_builder_package_records if item.get("decision_pack_ready")]
+    )
+    intelligent_offer_builder_approved_for_client_presentation_count = len(
+        [item for item in intelligent_offer_builder_package_records if item.get("approved_for_client_presentation")]
     )
     saas_subscription_plan_count = await database.collection("saas_subscription_plans").count()
     saas_plan_entitlement_count = await database.collection("saas_plan_entitlements").count()
@@ -2815,6 +2879,68 @@ async def readiness() -> dict:
             "airline_recommendation_required_action_count": airline_recommendation_required_action_count,
             "readiness_required": False,
             "diagnostic": "Phase 50.8 creates metadata-only Airline & Itinerary Recommendation records. Recommendations consume Phase 50.7 Passenger Service Feasibility, compare feasible airlines and itinerary metadata, and remain advisory. This phase does not run live GDS or NDC search, book, issue tickets or EMDs, call providers, execute parsers, generate AI or LLM text, create prices, or run background workers.",
+        },
+        "intelligent_offer_builder_integration_foundation": {
+            "intelligent_offer_builder_integration_enabled": True,
+            "intelligent_offer_builder_packages_collection_enabled": True,
+            "platform_intelligent_offer_builder_metadata_crud_enabled": True,
+            "agency_offer_intelligence_metadata_crud_enabled": True,
+            "platform_intelligent_offer_builder_ui_enabled": True,
+            "agency_offer_intelligence_ui_enabled": True,
+            "offer_builder_should_not_invent_intelligence": True,
+            "consumes_passenger_service_feasibility": True,
+            "consumes_airline_recommendations": True,
+            "consumes_operational_evaluations": True,
+            "consumes_capability_matrix": True,
+            "consumes_knowledge_governance_evidence": True,
+            "package_overview_metadata_enabled": True,
+            "passenger_context_metadata_enabled": True,
+            "trip_request_context_metadata_enabled": True,
+            "offer_context_metadata_enabled": True,
+            "intelligence_input_metadata_enabled": True,
+            "recommended_options_metadata_enabled": True,
+            "operational_readiness_metadata_enabled": True,
+            "required_action_metadata_enabled": True,
+            "pricing_cost_reference_metadata_enabled": True,
+            "client_explanation_metadata_enabled": True,
+            "internal_explanation_metadata_enabled": True,
+            "decision_pack_metadata_enabled": True,
+            "lifecycle_metadata_enabled": True,
+            "notes_metadata_enabled": True,
+            "package_statuses": INTELLIGENT_OFFER_PACKAGE_STATUSES,
+            "readiness_statuses": INTELLIGENT_OFFER_READINESS_STATUSES,
+            "client_visibility_statuses": INTELLIGENT_OFFER_CLIENT_VISIBILITY_STATUSES,
+            "metadata_only": True,
+            "advisory_only": True,
+            "human_authority_final": True,
+            "no_live_gds_search": True,
+            "no_ndc_search": True,
+            "flight_search_disabled": True,
+            "booking_disabled": True,
+            "ticketing_disabled": True,
+            "emd_issuance_disabled": True,
+            "provider_integrations_disabled": True,
+            "parser_execution_disabled": True,
+            "no_ai_generation": True,
+            "no_llm_generation": True,
+            "background_workers_disabled": True,
+            "automatic_sending_disabled": True,
+            "intelligent_offer_builder_package_count": intelligent_offer_builder_package_count,
+            "intelligent_offer_builder_package_status_counts": intelligent_offer_builder_package_status_counts,
+            "intelligent_offer_builder_readiness_status_counts": intelligent_offer_builder_readiness_status_counts,
+            "intelligent_offer_builder_client_visibility_status_counts": intelligent_offer_builder_client_visibility_status_counts,
+            "intelligent_offer_builder_recommendation_reference_count": intelligent_offer_builder_recommendation_reference_count,
+            "intelligent_offer_builder_feasibility_reference_count": intelligent_offer_builder_feasibility_reference_count,
+            "intelligent_offer_builder_evaluation_reference_count": intelligent_offer_builder_evaluation_reference_count,
+            "intelligent_offer_builder_capability_matrix_reference_count": intelligent_offer_builder_capability_matrix_reference_count,
+            "intelligent_offer_builder_evidence_reference_count": intelligent_offer_builder_evidence_reference_count,
+            "intelligent_offer_builder_required_action_count": intelligent_offer_builder_required_action_count,
+            "intelligent_offer_builder_client_explanation_count": intelligent_offer_builder_client_explanation_count,
+            "intelligent_offer_builder_internal_trace_count": intelligent_offer_builder_internal_trace_count,
+            "intelligent_offer_builder_decision_pack_ready_count": intelligent_offer_builder_decision_pack_ready_count,
+            "intelligent_offer_builder_approved_for_client_presentation_count": intelligent_offer_builder_approved_for_client_presentation_count,
+            "readiness_required": False,
+            "diagnostic": "Phase 50.9 creates metadata-only Intelligent Offer Builder package records. Packages consume approved recommendations, feasibility, evaluations, capability matrix records, knowledge versions, and evidence for explainable offer presentation support. They do not search, book, ticket, issue EMDs, call providers, run parsers, generate AI or LLM output, run workers, or send offers automatically.",
         },
         "platform_agency_ux_consolidation": {
             "platform_console_labels_enabled": True,
@@ -4572,6 +4698,7 @@ app.include_router(platform_airline_capability_matrix.router)
 app.include_router(platform_operational_evaluations.router)
 app.include_router(platform_passenger_service_feasibility.router)
 app.include_router(platform_airline_recommendations.router)
+app.include_router(platform_intelligent_offer_builder.router)
 app.include_router(platform_saas_subscriptions.router)
 app.include_router(platform_feature_flags.router)
 app.include_router(platform_feature_flag_audits.router)
@@ -4650,6 +4777,7 @@ app.include_router(agency_airline_capability_matrix.router)
 app.include_router(agency_operational_evaluations.router)
 app.include_router(agency_passenger_service_feasibility.router)
 app.include_router(agency_airline_recommendations.router)
+app.include_router(agency_intelligent_offer_builder.router)
 app.include_router(agency_saas_subscriptions.router)
 app.include_router(agency_feature_flags.router)
 app.include_router(agency_feature_flag_readiness.router)

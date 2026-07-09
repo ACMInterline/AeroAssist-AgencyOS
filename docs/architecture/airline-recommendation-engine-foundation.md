@@ -88,6 +88,12 @@ Phase 50.8 compares feasible options and records advisory preference metadata.
 
 Recommendation does not replace feasibility, and feasibility does not automatically become recommendation.
 
+## Relationship To Phase 50.9
+
+Phase 50.9 consumes Airline Recommendation metadata as one approved intelligence input for offer-intelligence packages.
+
+This relationship does not turn Phase 50.8 into an offer builder, booking engine, pricing engine, or client-sending system. Recommendations remain advisory preference metadata and human authority remains final.
+
 ## Explicit Exclusions
 
 Phase 50.8 does not implement live GDS search, NDC search, provider search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, background workers, price generation, fare calculation, offer mutation, external API calls, scraping, publishing, messaging, or automation.

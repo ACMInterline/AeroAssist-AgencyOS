@@ -96,6 +96,7 @@ export const platformModuleGroups = [
     audience: "Platform only",
     safety: "No booking or payment",
     items: [
+      { label: "Intelligent Offer Builder", description: "Offer-intelligence package metadata", href: "/platform/intelligent-offer-builder", icon: "rows", badge: "No sending", metadata_only: true },
       { label: "Offer Advisor", description: "Offer policy diagnostics", href: "/platform/offer-policy-advisor", icon: "rows", badge: "Read-only" },
       { label: "Decision Packs", description: "Offer evidence bundles", href: "/platform/offer-decision-packs", icon: "rows", badge: "Read-only" },
       { label: "Decision Explanations", description: "Human explanation timelines", href: "/platform/offer-decision-explanations", icon: "rows", badge: "Read-only" },
@@ -165,6 +166,7 @@ export const agencyModuleGroups = [
       { label: "Requests", description: "Operational work", href: "/agency/requests", icon: "clipboard", entitlementKey: "requests" },
       { label: "Trips", description: "Travel dossiers", href: "/agency/trips", icon: "plane", entitlementKey: "trips" },
       { label: "Offers", description: "Compare options", href: "/agency/offers", icon: "sparkles", entitlementKey: "offers" },
+      { label: "Offer Intelligence", description: "Offer-intelligence packages", href: "/agency/offer-intelligence", icon: "rows", badge: "No sending", entitlementKey: "offers", metadata_only: true },
       { label: "Booking Mirrors", description: "Internal PNR mirror records", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "booking_workspaces", metadata_only: true },
       { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: "files", badge: "Review only", entitlementKey: "booking_imports" },
       { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: "files", badge: "No issuance", entitlementKey: "tickets_emds" },

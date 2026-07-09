@@ -100,7 +100,7 @@ Evaluation determines what operationally applies.
 
 Recommendation comes later.
 
-Phase 50.6 produces an Operational Evaluation Result that Phase 50.7 consumes for advisory Passenger Service Feasibility. Phase 50.7 feasibility is not Boolean, not recommendation, and remains subject to final human authority. Future Phase 50.8 can consume feasibility for airline and itinerary recommendation. Future Phase 50.9 can consume recommendations for offer-builder intelligence integration.
+Phase 50.6 produces an Operational Evaluation Result that Phase 50.7 consumes for advisory Passenger Service Feasibility. Phase 50.7 feasibility is not Boolean, not recommendation, and remains subject to final human authority. Phase 50.8 consumes feasibility for airline and itinerary recommendation metadata. Phase 50.9 consumes evaluations, feasibility, recommendations, capability matrix records, and evidence references for offer-builder intelligence integration metadata.
 
 ## Explicit Exclusions
 

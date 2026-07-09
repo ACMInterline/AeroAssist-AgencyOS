@@ -60,6 +60,8 @@ Phase 50.7 adds the `passenger_service_feasibilities` collection. The Passenger 
 
 Phase 50.8 adds the `airline_recommendations` collection. The Airline & Itinerary Recommendation Engine consumes Passenger Service Feasibility and records advisory recommendation metadata across feasible airline and itinerary options. Recommendation is not feasibility, booking, search, price generation, or final authority.
 
+Phase 50.9 adds the `intelligent_offer_builder_packages` collection. Intelligent Offer Builder Integration consumes recommendations, feasibility, operational evaluations, capability matrix records, knowledge versions, and evidence references to prepare explainable offer-intelligence metadata. Offer Builder should not invent intelligence and does not send, search, book, ticket, issue EMDs, call providers, execute parsers, generate AI/LLM output, run workers, or override human authority.
+
 Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, and Airline Recommendation records.
 
 ## Routes
@@ -103,4 +105,6 @@ Phase 50.6 does not implement AI reasoning, LLM prompts, flight search, itinerar
 
 Phase 50.7 does not implement airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI or LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, external API calls, or automation. Phase 50.8 consumes feasibility metadata for advisory recommendation records.
 
-Phase 50.8 does not implement live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation. Offer-builder intelligence integration comes later in Phase 50.9.
+Phase 50.8 does not implement live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI or LLM generation, price generation, background workers, external API calls, or automation.
+
+Phase 50.9 does not implement live GDS search, NDC search, booking, ticketing, EMD issuance, provider integrations, parser execution, AI or LLM generation, price generation, background workers, automatic client sending, external API calls, or automation.

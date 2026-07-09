@@ -22,6 +22,8 @@ Phase 50.7 implements the metadata-only Passenger Service Feasibility Engine. It
 
 Phase 50.8 implements the metadata-only Airline & Itinerary Recommendation Engine. It consumes Passenger Service Feasibility and records advisory recommendation metadata across feasible airline and itinerary options. Recommendation is not feasibility, not booking, not search, not price generation, and human authority remains final.
 
+Phase 50.9 implements metadata-only Intelligent Offer Builder Integration. It consumes approved recommendations, feasibility records, operational evaluations, capability matrix records, knowledge versions, and evidence references to prepare offer-intelligence packages. Offer Builder should not invent intelligence and must not book, ticket, issue EMDs, search providers, generate AI/LLM content, execute parsers, run workers, send offers automatically, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -76,6 +78,7 @@ A decision pack should include:
 - Missing evidence or unresolved constraints.
 - Human review notes.
 - Recommendation rationale from Phase 50.8 Airline Recommendation metadata when available.
+- Offer-intelligence package traces from Phase 50.9 Intelligent Offer Builder Integration when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 

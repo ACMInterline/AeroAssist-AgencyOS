@@ -70,6 +70,8 @@ Phase 50.7 determines whether the passenger service requirements appear fulfilab
 
 This relationship does not turn Phase 50.7 into a recommendation engine. Phase 50.8 consumes feasibility metadata for advisory Airline Recommendation records.
 
+Phase 50.9 can also reference feasibility metadata inside offer-intelligence packages, but it must consume feasibility as approved advisory input. Offer Builder does not recompute feasibility or invent operational intelligence.
+
 ## Explicit Exclusions
 
 Phase 50.7 does not implement airline recommendation ranking, flight search, booking, ticketing, live provider integrations, AI or LLM reasoning, parser execution, pricing optimisation, background workers, automatic operational decisions, external API calls, scraping, publishing, messaging, or automation.

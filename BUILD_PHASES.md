@@ -2143,6 +2143,24 @@ Avoid adding:
 
 - Live GDS search, NDC search, flight booking, ticket issuance, EMD issuance, provider APIs, parser execution, AI/LLM generation, price generation, background workers, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
 
+### Phase 50.9: Intelligent Offer Builder Integration Foundation
+
+Implemented scope:
+
+- Added metadata-only `IntelligentOfferBuilderPackage`, `IntelligentOfferBuilderPackageCreate`, and `IntelligentOfferBuilderPackageUpdate` models for offer-intelligence packages.
+- Registered the additive `intelligent_offer_builder_packages` collection and lookup indexes without destructive migrations.
+- Added platform metadata create/update/archive/read/list APIs under `/api/platform/intelligent-offer-builder` and UI at `/platform/intelligent-offer-builder`.
+- Added agency-scoped metadata create/update/archive/read/list APIs under `/api/agencies/{agency_id}/offer-intelligence` and UI at `/agency/offer-intelligence`.
+- Added metadata sections for Package Overview, Passenger Context, Trip / Request Context, Offer Context, Intelligence Inputs, Recommended Options, Operational Readiness, Required Actions, Pricing / Cost References, Client Explanation, Internal Explanation, Decision Pack, Lifecycle, and Notes.
+- Added filters by package status, airline, recommendation level, readiness status, operational risk, passenger need, destination, travel date, offer workspace, and client visibility status.
+- Added readiness flags under `intelligent_offer_builder_integration_foundation`.
+- Added `docs/architecture/intelligent-offer-builder-integration-foundation.md`.
+- Clarified that Offer Builder should not invent intelligence and that recommendation, feasibility, evidence, and final authority remain separate.
+
+Avoid adding:
+
+- Live GDS search, NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, automation, `/agent` or `/admin` routes, or destructive Mongo index migration.
+
 ### Phase 38: Invoices And Payments
 
 Recommended scope:

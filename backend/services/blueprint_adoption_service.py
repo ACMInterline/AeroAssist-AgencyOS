@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_50_8_airline_recommendation_engine_foundation"
+PHASE_LABEL = "phase_50_9_intelligent_offer_builder_integration_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -126,6 +126,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineRecommendation, AirlineRecommendationCreate, AirlineRecommendationUpdate, AirlineRecommendationService, airline_recommendations, /api/platform/airline-recommendations, /api/agencies/{agency_id}/airline-recommendations, /platform/airline-recommendations, /agency/recommendations",
         "status": "foundation adopted",
         "action": "Store metadata-only advisory recommendation records that consume Passenger Service Feasibility. Recommendation is not feasibility, booking, search, price generation, ticketing, EMD issuance, provider integration, parser execution, AI/LLM generation, background work, or final authority.",
+    },
+    {
+        "category": "Intelligent Offer Builder",
+        "concept": "Offer-builder intelligence integration metadata",
+        "supplementary_concept": "offer intelligence package, recommendation inputs, feasibility inputs, operational readiness, required actions, client explanation, internal evidence trace, decision pack metadata",
+        "current_equivalent": "IntelligentOfferBuilderPackage, IntelligentOfferBuilderPackageCreate, IntelligentOfferBuilderPackageUpdate, IntelligentOfferBuilderService, intelligent_offer_builder_packages, /api/platform/intelligent-offer-builder, /api/agencies/{agency_id}/offer-intelligence, /platform/intelligent-offer-builder, /agency/offer-intelligence",
+        "status": "foundation adopted",
+        "action": "Prepare metadata-only offer-intelligence packages that consume approved operational intelligence. The Offer Builder presents decision support and does not invent intelligence, search flights, book, ticket, issue EMDs, call providers, execute parsers, generate AI/LLM output, run workers, send offers automatically, or override human authority.",
     },
     {
         "category": "Platform / Agency UX",
@@ -733,6 +741,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/service-feasibility", "agencyos": "/agency/service-feasibility"},
         {"supplementary": "/admin/airline-recommendations", "agencyos": "/platform/airline-recommendations"},
         {"supplementary": "/agent/recommendations", "agencyos": "/agency/recommendations"},
+        {"supplementary": "/admin/intelligent-offer-builder", "agencyos": "/platform/intelligent-offer-builder"},
+        {"supplementary": "/agent/offer-intelligence", "agencyos": "/agency/offer-intelligence"},
         {"supplementary": "/documents", "agencyos": "/agency/documents, /agency/document-workspaces, /platform/document-workspaces, and /platform/document-templates"},
         {"supplementary": "/admin/parser", "agencyos": "/platform/gds-parser"},
         {"supplementary": "/tickets", "agencyos": "/agency/tickets-emds"},
@@ -994,6 +1004,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Operational knowledge evaluation engine foundation built in Phase 50.6",
             "Passenger service feasibility engine foundation built in Phase 50.7",
             "Airline recommendation engine foundation built in Phase 50.8",
+            "Intelligent offer builder integration foundation built in Phase 50.9",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",
