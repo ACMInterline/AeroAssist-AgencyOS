@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_52_7_airline_knowledge_publishing_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -63,6 +63,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "operational_rule_composer", "label": "Rule Composer", "href": "/agency/rule-composer", "aliases": ["operational_rule_composer", "rule_composer", "compound_rules", "airline_intelligence"]},
     {"key": "knowledge_quality_assurance", "label": "Knowledge QA", "href": "/agency/knowledge-quality-assurance", "aliases": ["knowledge_quality_assurance", "knowledge_qa", "qa_reviews", "airline_intelligence"]},
     {"key": "airline_knowledge_publishing", "label": "Published Knowledge", "href": "/agency/published-knowledge", "aliases": ["airline_knowledge_publishing", "published_knowledge", "knowledge_publications", "airline_intelligence"]},
+    {"key": "operational_scenario_testing", "label": "Scenario Testing", "href": "/agency/scenario-testing", "aliases": ["operational_scenario_testing", "scenario_testing", "scenario_tests", "airline_intelligence"]},
     {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
     {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
     {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},

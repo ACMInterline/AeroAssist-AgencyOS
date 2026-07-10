@@ -44,6 +44,8 @@ Phase 52.6 implements metadata-only Knowledge Quality Assurance Foundation. It a
 
 Phase 52.7 implements metadata-only Airline Knowledge Publishing Foundation. It adds controlled publication workflow records for approved airline operational knowledge with included knowledge artifacts, QA review links, release channel, effective dates, supersession, rollback plan, consumer readiness, AOIE readiness, and agency visibility. It does not publish automatically, execute recommendations, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+Phase 52.8 implements metadata-only Operational Scenario Testing Foundation. It adds passenger service scenario test records for validating knowledge production examples across PETC, AVIH, SVAN, EXST passenger of size, CBBG, WCHC, MEDIF, POC, UMNR, musical instruments, sports equipment, and restricted equipment. It does not run live providers, AI/LLM generation, parser execution, automated scenario execution, booking, ticketing, EMD issuance, background workers, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -66,6 +68,8 @@ Phase 52.7 implements metadata-only Airline Knowledge Publishing Foundation. It 
 - 52.4 Pricing Formula Builder Foundation
 - 52.5 Operational Rule Composer Foundation
 - 52.6 Knowledge Quality Assurance Foundation
+- 52.7 Airline Knowledge Publishing Foundation
+- 52.8 Operational Scenario Testing Foundation
 
 ## Five Pillars
 

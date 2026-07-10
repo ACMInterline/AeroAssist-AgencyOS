@@ -92,6 +92,10 @@ A Phase 52.6 metadata-only foundation that stores airline knowledge QA review re
 
 A Phase 52.7 metadata-only foundation that stores controlled publication workflow records for approved airline operational knowledge. Records contain included knowledge versions, policy cards, pricing formulas, rules, QA review links, publication status, release channel, effective dates, supersession metadata, rollback plan, consumer readiness, AOIE readiness, and agency visibility. It does not publish automatically, execute recommendations, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+## Operational Scenario Testing
+
+A Phase 52.8 metadata-only foundation that stores passenger service scenario test cases for validating knowledge production examples. Records contain passenger, itinerary, airline, service requirement, pet, special item, document, expected policy, expected pricing, expected feasibility, expected recommendation, required-action, evidence, status, and review metadata. It does not run live providers, use AI/LLM generation, execute parsers, execute scenario automation, book, ticket, issue EMDs, run workers, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

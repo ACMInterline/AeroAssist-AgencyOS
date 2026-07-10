@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 TICKET_WORKSPACE_COLLECTION = "ticket_workspaces"
 TICKET_WORKSPACE_STATUSES = [
     TicketWorkspaceStatus.DRAFT.value,

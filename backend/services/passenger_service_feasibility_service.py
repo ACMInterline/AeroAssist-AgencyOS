@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 PASSENGER_SERVICE_FEASIBILITY_COLLECTION = "passenger_service_feasibilities"
 
 FEASIBILITY_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

@@ -43,6 +43,7 @@ import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilde
 import RuleComposerPage from "./pages/agency/RuleComposerPage"
 import AgencyKnowledgeQualityAssurancePage from "./pages/agency/KnowledgeQualityAssurancePage"
 import AgencyPublishedKnowledgePage from "./pages/agency/PublishedKnowledgePage"
+import AgencyScenarioTestingPage from "./pages/agency/ScenarioTestingPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -144,6 +145,7 @@ import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBu
 import PlatformOperationalRuleComposerPage from "./pages/platform/OperationalRuleComposerPage"
 import PlatformKnowledgeQualityAssurancePage from "./pages/platform/KnowledgeQualityAssurancePage"
 import PlatformAirlineKnowledgePublishingPage from "./pages/platform/AirlineKnowledgePublishingPage"
+import PlatformOperationalScenarioTestingPage from "./pages/platform/OperationalScenarioTestingPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -291,6 +293,7 @@ const routes = {
   "/platform/operational-rule-composer": PlatformOperationalRuleComposerPage,
   "/platform/knowledge-quality-assurance": PlatformKnowledgeQualityAssurancePage,
   "/platform/knowledge-publishing": PlatformAirlineKnowledgePublishingPage,
+  "/platform/operational-scenario-testing": PlatformOperationalScenarioTestingPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -377,6 +380,7 @@ const routes = {
   "/agency/rule-composer": RuleComposerPage,
   "/agency/knowledge-quality-assurance": AgencyKnowledgeQualityAssurancePage,
   "/agency/published-knowledge": AgencyPublishedKnowledgePage,
+  "/agency/scenario-testing": AgencyScenarioTestingPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

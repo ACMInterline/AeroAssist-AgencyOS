@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 AIRLINE_CAPABILITY_MATRIX_COLLECTION = "airline_capability_matrix"
 
 CAPABILITY_STATUSES = ["draft", "under_review", "approved", "active", "superseded", "archived"]

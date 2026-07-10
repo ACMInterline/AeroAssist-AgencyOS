@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineRecommendation, AirlineRecommendationCreate, AirlineRecommendationUpdate, new_id
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 AIRLINE_RECOMMENDATION_COLLECTION = "airline_recommendations"
 
 AIRLINE_RECOMMENDATION_STATUSES = ["draft", "in_review", "ready", "archived"]

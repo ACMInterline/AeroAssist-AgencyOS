@@ -13,7 +13,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
 READINESS_COLLECTION = "agency_feature_bundle_rollout_readiness"

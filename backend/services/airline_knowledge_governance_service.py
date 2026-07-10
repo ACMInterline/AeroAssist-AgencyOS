@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_3_visual_policy_editor_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 AIRLINE_KNOWLEDGE_VERSION_COLLECTION = "airline_knowledge_versions"
 AIRLINE_KNOWLEDGE_RELEASE_COLLECTION = "airline_knowledge_releases"
 

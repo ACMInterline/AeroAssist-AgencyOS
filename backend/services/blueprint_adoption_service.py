@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_7_airline_knowledge_publishing_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -198,6 +198,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "AirlineKnowledgePublication, AirlineKnowledgePublicationCreate, AirlineKnowledgePublicationUpdate, AirlineKnowledgePublishingService, airline_knowledge_publications, /api/platform/airline-knowledge-publishing, /api/agencies/{agency_id}/published-knowledge, /platform/knowledge-publishing, /agency/published-knowledge",
         "status": "foundation adopted",
         "action": "Create metadata-only controlled publication workflow records for approved airline operational knowledge. Phase 52.7 does not publish automatically, execute recommendations, call providers, generate AI/LLM output, run background workers, or override human authority.",
+    },
+    {
+        "category": "Operational Scenario Testing",
+        "concept": "Metadata-only scenario test cases for validating airline knowledge production",
+        "supplementary_concept": "PETC, AVIH, SVAN, EXST passenger of size, CBBG, WCHC, MEDIF, POC, UMNR, musical instrument, sports equipment, and restricted equipment passenger service scenarios with expected policy, pricing, feasibility, recommendation, action, and evidence metadata",
+        "current_equivalent": "OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate, OperationalScenarioTestingService, operational_scenario_tests, /api/platform/operational-scenario-testing, /api/agencies/{agency_id}/operational-scenario-testing, /platform/operational-scenario-testing, /agency/scenario-testing",
+        "status": "foundation adopted",
+        "action": "Create metadata-only operational scenario test records for passenger service examples. Phase 52.8 does not run live providers, AI/LLM generation, parser execution, automated evaluation, background workers, booking, ticketing, EMD issuance, or replace human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -1166,6 +1174,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Operational rule composer foundation built in Phase 52.5",
             "Knowledge quality assurance foundation built in Phase 52.6",
             "Airline knowledge publishing foundation built in Phase 52.7",
+            "Operational scenario testing foundation built in Phase 52.8",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

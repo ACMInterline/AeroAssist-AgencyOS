@@ -21616,6 +21616,91 @@ class AirlineKnowledgePublicationUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalScenarioTest(BaseDocument):
+    agency_id: Optional[str] = None
+    scenario_reference: str
+    scenario_name: str
+    scenario_family: str
+    passenger_context: Dict[str, Any] = Field(default_factory=dict)
+    itinerary_context: Dict[str, Any] = Field(default_factory=dict)
+    airline_context: Dict[str, Any] = Field(default_factory=dict)
+    service_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    pets: List[Dict[str, Any]] = Field(default_factory=list)
+    special_items: List[Dict[str, Any]] = Field(default_factory=list)
+    documents: List[Dict[str, Any]] = Field(default_factory=list)
+    expected_policy_outcome: Dict[str, Any] = Field(default_factory=dict)
+    expected_pricing_behavior: Dict[str, Any] = Field(default_factory=dict)
+    expected_feasibility: Dict[str, Any] = Field(default_factory=dict)
+    expected_recommendation_level: Optional[str] = None
+    expected_required_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    test_status: str = "draft"
+    review_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    operational_scenario_testing_foundation: bool = True
+    scenario_execution_disabled: bool = True
+    live_provider_execution_disabled: bool = True
+    ai_disabled: bool = True
+    automated_test_execution_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class OperationalScenarioTestCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scenario_reference: Optional[str] = None
+    scenario_name: str
+    scenario_family: str
+    passenger_context: Dict[str, Any] = Field(default_factory=dict)
+    itinerary_context: Dict[str, Any] = Field(default_factory=dict)
+    airline_context: Dict[str, Any] = Field(default_factory=dict)
+    service_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    pets: List[Dict[str, Any]] = Field(default_factory=list)
+    special_items: List[Dict[str, Any]] = Field(default_factory=list)
+    documents: List[Dict[str, Any]] = Field(default_factory=list)
+    expected_policy_outcome: Dict[str, Any] = Field(default_factory=dict)
+    expected_pricing_behavior: Dict[str, Any] = Field(default_factory=dict)
+    expected_feasibility: Dict[str, Any] = Field(default_factory=dict)
+    expected_recommendation_level: Optional[str] = None
+    expected_required_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    test_status: str = "draft"
+    review_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalScenarioTestUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scenario_reference: Optional[str] = None
+    scenario_name: Optional[str] = None
+    scenario_family: Optional[str] = None
+    passenger_context: Optional[Dict[str, Any]] = None
+    itinerary_context: Optional[Dict[str, Any]] = None
+    airline_context: Optional[Dict[str, Any]] = None
+    service_requirements: Optional[List[Dict[str, Any]]] = None
+    pets: Optional[List[Dict[str, Any]]] = None
+    special_items: Optional[List[Dict[str, Any]]] = None
+    documents: Optional[List[Dict[str, Any]]] = None
+    expected_policy_outcome: Optional[Dict[str, Any]] = None
+    expected_pricing_behavior: Optional[Dict[str, Any]] = None
+    expected_feasibility: Optional[Dict[str, Any]] = None
+    expected_recommendation_level: Optional[str] = None
+    expected_required_actions: Optional[List[Dict[str, Any]]] = None
+    evidence_links: Optional[List[Dict[str, Any]]] = None
+    test_status: Optional[str] = None
+    review_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

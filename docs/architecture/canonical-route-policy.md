@@ -83,6 +83,8 @@ Phase 52.6 adds knowledge quality assurance APIs only under `/api/platform/knowl
 
 Phase 52.7 adds airline knowledge publishing APIs only under `/api/platform/airline-knowledge-publishing/*` and `/api/agencies/{agency_id}/published-knowledge/*`, plus frontend pages under `/platform/knowledge-publishing` and `/agency/published-knowledge`. It records metadata-only controlled publication workflow metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, automatic publication, recommendation execution, AI/LLM generation, provider integrations, background workers, automatic decisions, or automation.
 
+Phase 52.8 adds operational scenario testing APIs only under `/api/platform/operational-scenario-testing/*` and `/api/agencies/{agency_id}/operational-scenario-testing/*`, plus frontend pages under `/platform/operational-scenario-testing` and `/agency/scenario-testing`. It records metadata-only passenger service scenario examples and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live provider tests, AI/LLM generation, parser execution, automated scenario execution, background workers, booking, ticketing, EMD issuance, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

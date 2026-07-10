@@ -5,7 +5,7 @@ from uuid import uuid4
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post
 
 
-EXPECTED_PHASE = "phase_52_3_visual_policy_editor_foundation"
+EXPECTED_PHASE = "phase_52_8_operational_scenario_testing_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

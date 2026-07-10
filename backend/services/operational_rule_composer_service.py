@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate
 
 
-PHASE_LABEL = "phase_52_7_airline_knowledge_publishing_foundation"
+PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
 OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION = "operational_rule_composer_rules"
 
 SUPPORTED_OPERATORS = [
