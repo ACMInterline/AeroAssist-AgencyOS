@@ -78,4 +78,8 @@ Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metad
 
 Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA reviews. Knowledge QA can flag incomplete service parameters or requested changes against Service Parameter Taxonomies, but it does not auto-approve, publish, execute rules, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human review.
 
+## Airline Knowledge Publishing Alignment
+
+Phase 52.7 adds `airline_knowledge_publications` as controlled publication workflow metadata. Publications can include knowledge artifacts that rely on Service Parameter Taxonomies and expose consumer readiness, AOIE readiness, and agency visibility metadata, but they do not publish automatically, execute recommendations, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human review.
+
 Reference Data Domains are not parameter taxonomies and do not evaluate rules, calculate prices, call providers, generate AI/LLM output, run workers, or automate operational decisions. Human authority remains final for both taxonomy governance and reference-domain governance.

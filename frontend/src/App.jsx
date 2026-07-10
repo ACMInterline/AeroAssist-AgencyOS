@@ -42,6 +42,7 @@ import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
 import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilderPage"
 import RuleComposerPage from "./pages/agency/RuleComposerPage"
 import AgencyKnowledgeQualityAssurancePage from "./pages/agency/KnowledgeQualityAssurancePage"
+import AgencyPublishedKnowledgePage from "./pages/agency/PublishedKnowledgePage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -142,6 +143,7 @@ import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorP
 import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBuilderPage"
 import PlatformOperationalRuleComposerPage from "./pages/platform/OperationalRuleComposerPage"
 import PlatformKnowledgeQualityAssurancePage from "./pages/platform/KnowledgeQualityAssurancePage"
+import PlatformAirlineKnowledgePublishingPage from "./pages/platform/AirlineKnowledgePublishingPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -288,6 +290,7 @@ const routes = {
   "/platform/pricing-formula-builder": PlatformPricingFormulaBuilderPage,
   "/platform/operational-rule-composer": PlatformOperationalRuleComposerPage,
   "/platform/knowledge-quality-assurance": PlatformKnowledgeQualityAssurancePage,
+  "/platform/knowledge-publishing": PlatformAirlineKnowledgePublishingPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -373,6 +376,7 @@ const routes = {
   "/agency/pricing-formula-builder": AgencyPricingFormulaBuilderPage,
   "/agency/rule-composer": RuleComposerPage,
   "/agency/knowledge-quality-assurance": AgencyKnowledgeQualityAssurancePage,
+  "/agency/published-knowledge": AgencyPublishedKnowledgePage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

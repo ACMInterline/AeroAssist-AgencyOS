@@ -80,7 +80,9 @@ Phase 52.5 adds the `operational_rule_composer_rules` collection. Operational Ru
 
 Phase 52.6 adds the `knowledge_quality_assurance_reviews` collection. Knowledge Quality Assurance Foundation supplies QA review metadata for airline knowledge production, including checks, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links. It does not auto-approve, publish, execute rules, call providers, use AI, run workers, or override human authority.
 
-Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Pricing Formula Builder records, Operational Rule Composer records, Knowledge QA reviews, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
+Phase 52.7 adds the `airline_knowledge_publications` collection. Airline Knowledge Publishing Foundation supplies controlled publication workflow metadata for approved airline operational knowledge, including included knowledge artifacts, QA review links, release channel, effective dates, supersession, rollback plan, consumer readiness, AOIE readiness, and agency visibility. It does not publish automatically, execute recommendations, call providers, use AI, run workers, or override human authority.
+
+Future AOIE does not reason over text alone. It reasons over structured Operational Knowledge Graph records, Reference Data Domains, Operational Constraints, Knowledge Normalisations, Knowledge Governance versions and releases, Capabilities, Policies, Pricing, Pricing Formula Builder records, Operational Rule Composer records, Knowledge QA reviews, Airline Knowledge Publication records, Evidence, Operational Evaluation Results, Passenger Service Feasibility records, Airline Recommendation records, Intelligent Offer Builder packages, Operational Intelligence Cases, Service Parameter Taxonomies, and Request Segment Service Scopes.
 
 ## Routes
 
@@ -153,3 +155,5 @@ Phase 52.4 does not implement live price calculation, pricing optimization, paym
 Phase 52.5 does not implement rule execution, live rule evaluation, pricing calculation, provider integrations, AI, background workers, automatic decisions, booking, ticketing, EMD issuance, or operational automation. It only stores compound rule metadata, and human authority remains final.
 
 Phase 52.6 does not implement auto-approval, publishing, rule execution, live evaluation, provider integrations, AI, background workers, booking, ticketing, EMD issuance, or operational automation. It only stores QA review metadata, and human authority remains final.
+
+Phase 52.7 does not implement automatic publication, recommendation execution, rule execution, live evaluation, provider integrations, AI, background workers, booking, ticketing, EMD issuance, or operational automation. It only stores controlled publication workflow metadata, and human authority remains final.

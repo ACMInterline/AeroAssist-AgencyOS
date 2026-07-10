@@ -56,3 +56,5 @@ Phase 52.4 adds `pricing_formula_builders` for no-code pricing formula metadata.
 Phase 52.5 adds `operational_rule_composer_rules` for no-code compound rule metadata. Knowledge Import Templates can describe future exception-rule-pack population schemas that target rule-composer records, but they do not parse files, execute imports, evaluate rules, calculate prices, call providers, use AI, run workers, make automatic decisions, or replace human review.
 
 Phase 52.6 adds `knowledge_quality_assurance_reviews` for metadata-only QA reviews. Knowledge Import Templates can describe future QA population columns, but they do not perform QA execution, auto-approve, publish, call providers, use AI, run workers, or replace human review.
+
+Phase 52.7 adds `airline_knowledge_publications` for controlled publication workflow metadata. Knowledge Import Templates can describe future publication inventory columns, but they do not publish automatically, execute recommendations, call providers, use AI, run workers, or replace human review.

@@ -2279,3 +2279,7 @@ Phase 52.5 adds the metadata-only Operational Rule Composer Foundation. It regis
 ## Implemented Phase 52.6
 
 Phase 52.6 adds the metadata-only Knowledge Quality Assurance Foundation. It registers `knowledge_quality_assurance_reviews`, platform Knowledge QA routes, agency Knowledge QA routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage for airline knowledge production QA reviews. It stores QA checks, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links without auto-approval, publishing, rule execution, AI/LLM generation, provider integrations, background workers, operational automation, or replacing human authority.
+
+## Implemented Phase 52.7
+
+Phase 52.7 adds the metadata-only Airline Knowledge Publishing Foundation. It registers `airline_knowledge_publications`, platform Knowledge Publishing routes, agency Published Knowledge routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage for controlled publication workflow records. It stores included knowledge versions, policy cards, pricing formulas, rules, QA review links, publication status, release channel, effective dates, supersession metadata, rollback plan, consumer readiness, AOIE readiness, and agency visibility without automatic publication, recommendation execution, provider integrations, AI/LLM generation, background workers, operational automation, or replacing human authority.

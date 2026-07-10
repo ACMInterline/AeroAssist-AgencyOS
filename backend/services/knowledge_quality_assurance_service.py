@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgeQualityAssuranceReview, KnowledgeQualityAssuranceReviewCreate, KnowledgeQualityAssuranceReviewUpdate
 
 
-PHASE_LABEL = "phase_52_6_knowledge_quality_assurance_foundation"
+PHASE_LABEL = "phase_52_7_airline_knowledge_publishing_foundation"
 KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION = "knowledge_quality_assurance_reviews"
 
 QA_CHECKS = [

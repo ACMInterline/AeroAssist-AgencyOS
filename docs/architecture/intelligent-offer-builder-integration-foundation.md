@@ -68,6 +68,10 @@ Phase 52.5 adds `operational_rule_composer_rules` as metadata-only compound rule
 
 Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA review references that future offer-intelligence packages may cite in readiness, evidence trace, risk, and unresolved issue sections. This does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run workers, send automatically to clients, or replace human authority.
 
+## Phase 52.7 Airline Knowledge Publishing
+
+Phase 52.7 adds `airline_knowledge_publications` as metadata-only publication workflow references that future offer-intelligence packages may cite for release channel, consumer readiness, AOIE readiness, agency visibility, and rollback context. This does not publish automatically, execute recommendations, call providers, use AI/LLM generation, run workers, send automatically to clients, or replace human authority.
+
 ## Explicit Exclusions
 
 Phase 50.9 does not implement live GDS/NDC search, booking, ticketing, EMD issuance, provider integrations, AI/LLM generation, parser execution, background workers, automatic client sending, fare calculation, price generation, external API calls, scraping, publishing, messaging, or automation.

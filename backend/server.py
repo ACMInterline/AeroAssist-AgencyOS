@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
+from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -56,7 +56,8 @@ from services.request_segment_service_precision_service import KNOWLEDGE_LINK_FI
 from services.client_passenger_master_service import CLIENT_MASTER_STATUSES, CLIENT_PASSENGER_LINK_STATUSES, CLIENT_PORTAL_ACCESS_STATUSES, MASTER_COLLECTIONS as CLIENT_PASSENGER_MASTER_COLLECTIONS, PASSENGER_DOCUMENT_STATUSES, PASSENGER_HISTORY_STATUSES, PASSENGER_MASTER_STATUSES, PASSENGER_PREFERENCE_STATUSES
 from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERENCE_DATA_ENGINE_GOVERNANCE_STATUSES, REFERENCE_DATA_DOMAINS_COLLECTION, REVIEW_STATUSES as REFERENCE_DATA_ENGINE_REVIEW_STATUSES, SUPPORTED_REFERENCE_DOMAIN_CODES
 from services.knowledge_import_template_service import FOUNDATION_PHASE_LABEL as KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL, IMPORT_SCOPES as KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES, KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION, TEMPLATE_TYPES as KNOWLEDGE_IMPORT_TEMPLATE_TYPES
-from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, PHASE_LABEL, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
+from services.airline_knowledge_publishing_service import AIRLINE_KNOWLEDGE_PUBLICATIONS_COLLECTION, PHASE_LABEL, PUBLICATION_STATUSES as AIRLINE_KNOWLEDGE_PUBLICATION_STATUSES, RELEASE_CHANNELS as AIRLINE_KNOWLEDGE_RELEASE_CHANNELS, VISIBILITY_STATUSES as AIRLINE_KNOWLEDGE_VISIBILITY_STATUSES
+from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
 from services.pricing_formula_builder_service import CLIENT_VISIBILITY_OPTIONS as PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS, FORMULA_STATUSES as PRICING_FORMULA_STATUSES, PRICING_FORMULA_BUILDERS_COLLECTION
 from services.visual_policy_editor_service import POLICY_CARD_STATUSES, POLICY_FAMILIES, SUPPORT_STATUSES as VISUAL_POLICY_SUPPORT_STATUSES, VISUAL_POLICY_EDITOR_CARDS_COLLECTION
@@ -76,7 +77,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 52.6 knowledge quality assurance foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 52.7 airline knowledge publishing foundation.",
 )
 
 app.add_middleware(
@@ -1477,6 +1478,55 @@ async def readiness() -> dict:
     )
     knowledge_quality_assurance_governance_link_count = sum(
         len(item.get("governance_links") or []) for item in knowledge_quality_assurance_records
+    )
+    airline_knowledge_publication_records = await database.collection(AIRLINE_KNOWLEDGE_PUBLICATIONS_COLLECTION).find_many()
+    airline_knowledge_publication_count = len(airline_knowledge_publication_records)
+    airline_knowledge_active_publication_count = len(
+        [
+            item
+            for item in airline_knowledge_publication_records
+            if not item.get("archived") and item.get("publication_status") != "archived"
+        ]
+    )
+    airline_knowledge_publication_status_counts = {
+        status: len([item for item in airline_knowledge_publication_records if item.get("publication_status") == status])
+        for status in AIRLINE_KNOWLEDGE_PUBLICATION_STATUSES
+    }
+    airline_knowledge_release_channel_counts = {
+        channel: len([item for item in airline_knowledge_publication_records if item.get("release_channel") == channel])
+        for channel in AIRLINE_KNOWLEDGE_RELEASE_CHANNELS
+    }
+    airline_knowledge_visibility_counts = {
+        status: len(
+            [
+                item
+                for item in airline_knowledge_publication_records
+                if isinstance(item.get("agency_visibility"), dict)
+                and item.get("agency_visibility", {}).get("visibility_status") == status
+            ]
+        )
+        for status in AIRLINE_KNOWLEDGE_VISIBILITY_STATUSES
+    }
+    airline_knowledge_publication_aoie_ready_count = len(
+        [item for item in airline_knowledge_publication_records if item.get("AOIE_ready") is True]
+    )
+    airline_knowledge_publication_knowledge_version_count = sum(
+        len(item.get("included_knowledge_version_ids") or []) for item in airline_knowledge_publication_records
+    )
+    airline_knowledge_publication_policy_card_count = sum(
+        len(item.get("included_policy_cards") or []) for item in airline_knowledge_publication_records
+    )
+    airline_knowledge_publication_pricing_formula_count = sum(
+        len(item.get("included_pricing_formulas") or []) for item in airline_knowledge_publication_records
+    )
+    airline_knowledge_publication_rule_count = sum(
+        len(item.get("included_rules") or []) for item in airline_knowledge_publication_records
+    )
+    airline_knowledge_publication_qa_review_count = sum(
+        len(item.get("qa_review_ids") or []) for item in airline_knowledge_publication_records
+    )
+    airline_knowledge_publication_supersession_count = sum(
+        len(item.get("supersedes_publication_ids") or []) for item in airline_knowledge_publication_records
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
     service_parameter_taxonomy_count = len(service_parameter_taxonomy_records)
@@ -3711,6 +3761,54 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.6 creates metadata-only Knowledge Quality Assurance reviews for airline knowledge production. It stores QA checks, issues, severities, reviewers, requested changes, approval recommendations, and governance links without auto-approval, publishing, rule execution, AI, providers, workers, or operational automation. Human authority remains final.",
         },
+        "airline_knowledge_publishing_foundation": {
+            "airline_knowledge_publishing_enabled": True,
+            "airline_knowledge_publications_collection_enabled": True,
+            "platform_airline_knowledge_publishing_metadata_crud_enabled": True,
+            "agency_published_knowledge_metadata_crud_enabled": True,
+            "platform_knowledge_publishing_ui_enabled": True,
+            "agency_published_knowledge_ui_enabled": True,
+            "controlled_publication_workflow_metadata_enabled": True,
+            "included_knowledge_version_metadata_enabled": True,
+            "included_policy_card_metadata_enabled": True,
+            "included_pricing_formula_metadata_enabled": True,
+            "included_rule_metadata_enabled": True,
+            "qa_review_metadata_enabled": True,
+            "release_channel_metadata_enabled": True,
+            "effective_date_metadata_enabled": True,
+            "supersession_metadata_enabled": True,
+            "rollback_plan_metadata_enabled": True,
+            "consumer_readiness_metadata_enabled": True,
+            "AOIE_ready_metadata_enabled": True,
+            "agency_visibility_metadata_enabled": True,
+            "publication_statuses": AIRLINE_KNOWLEDGE_PUBLICATION_STATUSES,
+            "release_channels": AIRLINE_KNOWLEDGE_RELEASE_CHANNELS,
+            "visibility_statuses": AIRLINE_KNOWLEDGE_VISIBILITY_STATUSES,
+            "metadata_only": True,
+            "automatic_publication_disabled": True,
+            "recommendation_execution_disabled": True,
+            "auto_approval_disabled": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "human_authority_final": True,
+            "airline_knowledge_publication_count": airline_knowledge_publication_count,
+            "airline_knowledge_active_publication_count": airline_knowledge_active_publication_count,
+            "airline_knowledge_publication_status_counts": airline_knowledge_publication_status_counts,
+            "airline_knowledge_release_channel_counts": airline_knowledge_release_channel_counts,
+            "airline_knowledge_visibility_counts": airline_knowledge_visibility_counts,
+            "airline_knowledge_publication_aoie_ready_count": airline_knowledge_publication_aoie_ready_count,
+            "airline_knowledge_publication_knowledge_version_count": airline_knowledge_publication_knowledge_version_count,
+            "airline_knowledge_publication_policy_card_count": airline_knowledge_publication_policy_card_count,
+            "airline_knowledge_publication_pricing_formula_count": airline_knowledge_publication_pricing_formula_count,
+            "airline_knowledge_publication_rule_count": airline_knowledge_publication_rule_count,
+            "airline_knowledge_publication_qa_review_count": airline_knowledge_publication_qa_review_count,
+            "airline_knowledge_publication_supersession_count": airline_knowledge_publication_supersession_count,
+            "airline_knowledge_publication_supported_status_count": len(AIRLINE_KNOWLEDGE_PUBLICATION_STATUSES),
+            "airline_knowledge_publication_supported_release_channel_count": len(AIRLINE_KNOWLEDGE_RELEASE_CHANNELS),
+            "readiness_required": False,
+            "diagnostic": "Phase 52.7 creates metadata-only Airline Knowledge Publishing records for controlled publication workflow tracking. It stores included knowledge artifacts, QA review links, status, release channel, effective dates, supersession, rollback plan, consumer readiness, AOIE readiness, and agency visibility without automatic publication, recommendation execution, providers, AI, workers, or operational automation. Human authority remains final.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5664,6 +5762,7 @@ app.include_router(platform_visual_policy_editor.router)
 app.include_router(platform_pricing_formula_builder.router)
 app.include_router(platform_operational_rule_composer.router)
 app.include_router(platform_knowledge_quality_assurance.router)
+app.include_router(platform_airline_knowledge_publishing.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -5753,6 +5852,7 @@ app.include_router(agency_visual_policy_editor.router)
 app.include_router(agency_pricing_formula_builder.router)
 app.include_router(agency_operational_rule_composer.router)
 app.include_router(agency_knowledge_quality_assurance.router)
+app.include_router(agency_airline_knowledge_publishing.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

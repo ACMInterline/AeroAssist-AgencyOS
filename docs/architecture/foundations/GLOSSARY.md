@@ -88,6 +88,10 @@ A Phase 52.5 metadata-only foundation that stores no-code compound airline passe
 
 A Phase 52.6 metadata-only foundation that stores airline knowledge QA review records. Records contain target metadata, airline/service scope, QA status, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links. It does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+## Airline Knowledge Publishing
+
+A Phase 52.7 metadata-only foundation that stores controlled publication workflow records for approved airline operational knowledge. Records contain included knowledge versions, policy cards, pricing formulas, rules, QA review links, publication status, release channel, effective dates, supersession metadata, rollback plan, consumer readiness, AOIE readiness, and agency visibility. It does not publish automatically, execute recommendations, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

@@ -81,6 +81,8 @@ Phase 52.5 adds operational rule composer APIs only under `/api/platform/operati
 
 Phase 52.6 adds knowledge quality assurance APIs only under `/api/platform/knowledge-quality-assurance/*` and `/api/agencies/{agency_id}/knowledge-quality-assurance/*`, plus frontend pages under `/platform/knowledge-quality-assurance` and `/agency/knowledge-quality-assurance`. It records metadata-only QA review metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, auto-approval, publishing, rule execution, AI/LLM generation, provider integrations, background workers, automatic decisions, or automation.
 
+Phase 52.7 adds airline knowledge publishing APIs only under `/api/platform/airline-knowledge-publishing/*` and `/api/agencies/{agency_id}/published-knowledge/*`, plus frontend pages under `/platform/knowledge-publishing` and `/agency/published-knowledge`. It records metadata-only controlled publication workflow metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, automatic publication, recommendation execution, AI/LLM generation, provider integrations, background workers, automatic decisions, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

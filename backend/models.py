@@ -21525,6 +21525,97 @@ class KnowledgeQualityAssuranceReviewUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class AirlineKnowledgePublication(BaseDocument):
+    agency_id: Optional[str] = None
+    publication_reference: str
+    publication_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    service_families: List[str] = Field(default_factory=list)
+    included_knowledge_version_ids: List[str] = Field(default_factory=list)
+    included_policy_cards: List[str] = Field(default_factory=list)
+    included_pricing_formulas: List[str] = Field(default_factory=list)
+    included_rules: List[str] = Field(default_factory=list)
+    qa_review_ids: List[str] = Field(default_factory=list)
+    publication_status: str = "draft"
+    release_channel: str = "internal_review"
+    effective_from: Optional[str] = None
+    effective_until: Optional[str] = None
+    supersedes_publication_ids: List[str] = Field(default_factory=list)
+    rollback_plan: Dict[str, Any] = Field(default_factory=dict)
+    consumer_readiness: Dict[str, Any] = Field(default_factory=dict)
+    AOIE_ready: bool = False
+    agency_visibility: Dict[str, Any] = Field(default_factory=dict)
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    airline_knowledge_publishing_foundation: bool = True
+    automatic_publication_disabled: bool = True
+    recommendation_execution_disabled: bool = True
+    auto_approval_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class AirlineKnowledgePublicationCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    publication_reference: Optional[str] = None
+    publication_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    service_families: List[str] = Field(default_factory=list)
+    included_knowledge_version_ids: List[str] = Field(default_factory=list)
+    included_policy_cards: List[str] = Field(default_factory=list)
+    included_pricing_formulas: List[str] = Field(default_factory=list)
+    included_rules: List[str] = Field(default_factory=list)
+    qa_review_ids: List[str] = Field(default_factory=list)
+    publication_status: str = "draft"
+    release_channel: str = "internal_review"
+    effective_from: Optional[str] = None
+    effective_until: Optional[str] = None
+    supersedes_publication_ids: List[str] = Field(default_factory=list)
+    rollback_plan: Dict[str, Any] = Field(default_factory=dict)
+    consumer_readiness: Dict[str, Any] = Field(default_factory=dict)
+    AOIE_ready: bool = False
+    agency_visibility: Dict[str, Any] = Field(default_factory=dict)
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineKnowledgePublicationUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    publication_reference: Optional[str] = None
+    publication_name: Optional[str] = None
+    airline_codes: Optional[List[str]] = None
+    service_families: Optional[List[str]] = None
+    included_knowledge_version_ids: Optional[List[str]] = None
+    included_policy_cards: Optional[List[str]] = None
+    included_pricing_formulas: Optional[List[str]] = None
+    included_rules: Optional[List[str]] = None
+    qa_review_ids: Optional[List[str]] = None
+    publication_status: Optional[str] = None
+    release_channel: Optional[str] = None
+    effective_from: Optional[str] = None
+    effective_until: Optional[str] = None
+    supersedes_publication_ids: Optional[List[str]] = None
+    rollback_plan: Optional[Dict[str, Any]] = None
+    consumer_readiness: Optional[Dict[str, Any]] = None
+    AOIE_ready: Optional[bool] = None
+    agency_visibility: Optional[Dict[str, Any]] = None
+    approved_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

@@ -69,6 +69,8 @@ Reference Data Engine provides controlled values. Knowledge Import Templates des
 
 Phase 52.6 adds Knowledge Quality Assurance as a metadata-only review layer over rule-composer records. Knowledge QA can record conflicting rule, missing evidence, unsupported reference values, stale review, operational validation pending, or requested changes, but it does not execute rules, evaluate live cases, auto-approve, publish, call providers, use AI, run workers, or replace human authority.
 
+Phase 52.7 adds Airline Knowledge Publishing as controlled publication workflow metadata. Knowledge Publishing can include approved rule references, QA review links, release channels, consumer readiness, and agency visibility metadata, but it does not execute rules, evaluate live cases, publish automatically, execute recommendations, call providers, use AI, run workers, or replace human authority.
+
 ## Boundaries
 
 Human authority remains final.

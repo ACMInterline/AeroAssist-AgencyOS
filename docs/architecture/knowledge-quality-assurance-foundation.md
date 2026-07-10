@@ -60,6 +60,10 @@ Knowledge QA can review metadata produced by Reference Data Engine, Knowledge Im
 
 The QA layer does not add new intelligence. It prepares the system for scenario testing, human-reviewed real airline data population, and governance readiness.
 
+## Airline Knowledge Publishing Relationship
+
+Phase 52.7 adds `airline_knowledge_publications` as a controlled publication workflow metadata layer. Knowledge Publishing can link `qa_review_ids` to approved QA records, but it does not publish automatically, execute recommendations, call providers, use AI, run workers, or replace human authority.
+
 ## Boundaries
 
 Human authority remains final.

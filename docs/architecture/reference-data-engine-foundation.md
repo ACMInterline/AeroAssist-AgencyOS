@@ -50,6 +50,10 @@ Phase 52.5 adds `operational_rule_composer_rules` as no-code compound rule metad
 
 Phase 52.6 adds `knowledge_quality_assurance_reviews` as metadata-only QA reviews. Knowledge QA may flag unsupported reference values, stale review, missing evidence, or operational validation pending for Reference Data Engine domains, but it does not auto-approve, publish, execute rules, call providers, use AI, run workers, or replace human authority.
 
+## Airline Knowledge Publishing Relationship
+
+Phase 52.7 adds `airline_knowledge_publications` as controlled publication workflow metadata. Publications can include knowledge built from Reference Data Engine domains and expose consumer readiness, AOIE readiness, and agency visibility metadata, but they do not publish automatically, execute recommendations, call providers, use AI, run workers, or replace human authority.
+
 It does not implement provider integrations, AI/LLM behavior, live rule evaluation, pricing calculation, booking, ticketing, background workers, old `/admin` routes, automatic promotion, or automatic client sending.
 
 Human authority remains final for domain governance, review, imports, operational use, and future production population.

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_6_knowledge_quality_assurance_foundation"
+PHASE_LABEL = "phase_52_7_airline_knowledge_publishing_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -190,6 +190,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "KnowledgeQualityAssuranceReview, KnowledgeQualityAssuranceReviewCreate, KnowledgeQualityAssuranceReviewUpdate, KnowledgeQualityAssuranceService, knowledge_quality_assurance_reviews, /api/platform/knowledge-quality-assurance, /api/agencies/{agency_id}/knowledge-quality-assurance, /platform/knowledge-quality-assurance, /agency/knowledge-quality-assurance",
         "status": "foundation adopted",
         "action": "Create metadata-only QA review records for airline knowledge production. Phase 52.6 does not auto-approve, publish, execute rules, call providers, generate AI/LLM output, run background workers, or override human authority.",
+    },
+    {
+        "category": "Airline Knowledge Publishing",
+        "concept": "Controlled publication workflow metadata for approved airline operational knowledge",
+        "supplementary_concept": "publication record, airline codes, service families, included knowledge versions, policy cards, pricing formulas, operational rules, QA review links, status, release channel, effective dates, supersession, rollback plan, consumer readiness, AOIE readiness, agency visibility",
+        "current_equivalent": "AirlineKnowledgePublication, AirlineKnowledgePublicationCreate, AirlineKnowledgePublicationUpdate, AirlineKnowledgePublishingService, airline_knowledge_publications, /api/platform/airline-knowledge-publishing, /api/agencies/{agency_id}/published-knowledge, /platform/knowledge-publishing, /agency/published-knowledge",
+        "status": "foundation adopted",
+        "action": "Create metadata-only controlled publication workflow records for approved airline operational knowledge. Phase 52.7 does not publish automatically, execute recommendations, call providers, generate AI/LLM output, run background workers, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -843,6 +851,10 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/admin/knowledge-quality-assurance", "agencyos": "/platform/knowledge-quality-assurance"},
         {"supplementary": "/agent/knowledge-quality-assurance", "agencyos": "/agency/knowledge-quality-assurance"},
         {"supplementary": "/agent/knowledge-qa", "agencyos": "/agency/knowledge-quality-assurance"},
+        {"supplementary": "/admin/airline-knowledge-publishing", "agencyos": "/platform/knowledge-publishing"},
+        {"supplementary": "/admin/knowledge-publishing", "agencyos": "/platform/knowledge-publishing"},
+        {"supplementary": "/agent/published-knowledge", "agencyos": "/agency/published-knowledge"},
+        {"supplementary": "/agent/airline-knowledge-publishing", "agencyos": "/agency/published-knowledge"},
         {"supplementary": "/admin/service-parameter-taxonomies", "agencyos": "/platform/service-parameter-taxonomies"},
         {"supplementary": "/agent/service-parameter-taxonomies", "agencyos": "/agency/service-parameter-taxonomies"},
         {"supplementary": "/admin/request-segment-services", "agencyos": "/platform/request-segment-services"},
@@ -1065,6 +1077,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "KnowledgeQualityAssuranceReview",
             "KnowledgeQualityAssuranceReviewCreate",
             "KnowledgeQualityAssuranceReviewUpdate",
+            "AirlineKnowledgePublication",
+            "AirlineKnowledgePublicationCreate",
+            "AirlineKnowledgePublicationUpdate",
             "ServiceParameterTaxonomy",
             "ServiceParameterTaxonomyCreate",
             "ServiceParameterTaxonomyUpdate",
@@ -1150,6 +1165,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Pricing formula builder foundation built in Phase 52.4",
             "Operational rule composer foundation built in Phase 52.5",
             "Knowledge quality assurance foundation built in Phase 52.6",
+            "Airline knowledge publishing foundation built in Phase 52.7",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

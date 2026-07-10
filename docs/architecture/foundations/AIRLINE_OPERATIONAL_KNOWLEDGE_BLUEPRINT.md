@@ -42,6 +42,8 @@ Phase 52.5 implements metadata-only Operational Rule Composer Foundation. It add
 
 Phase 52.6 implements metadata-only Knowledge Quality Assurance Foundation. It adds QA review records for airline knowledge production with checks, issues, severity, reviewer metadata, requested changes, approval recommendations, and governance links. It does not auto-approve, publish, execute rules, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
 
+Phase 52.7 implements metadata-only Airline Knowledge Publishing Foundation. It adds controlled publication workflow records for approved airline operational knowledge with included knowledge artifacts, QA review links, release channel, effective dates, supersession, rollback plan, consumer readiness, AOIE readiness, and agency visibility. It does not publish automatically, execute recommendations, call providers, use AI/LLM generation, run background workers, make automatic decisions, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -135,6 +137,12 @@ Phase 52.6 adds `knowledge_quality_assurance_reviews` for metadata-only airline 
 
 Knowledge Quality Assurance is a human-reviewed governance metadata surface. It is not automatic approval, publishing, rule execution, provider integration, AI generation, worker automation, automatic decisioning, or final operational authority.
 
+## Airline Knowledge Publishing
+
+Phase 52.7 adds `airline_knowledge_publications` for metadata-only controlled publication workflow records. Publications store included knowledge versions, policy cards, pricing formulas, rules, QA review links, publication status, release channel, effective dates, supersession metadata, rollback plan, consumer readiness, AOIE readiness, and agency visibility.
+
+Airline Knowledge Publishing is a human-controlled release metadata surface. It is not automatic publication, recommendation execution, provider integration, AI generation, worker automation, automatic decisioning, or final operational authority.
+
 ## Decision Pack Concept
 
 A decision pack is the future evidence-backed explanation of why a passenger service option is recommended, rejected, held for review, or considered uncertain.
@@ -159,6 +167,7 @@ A decision pack should include:
 - Pricing Formula Builder metadata from Phase 52.4 when available.
 - Operational Rule Composer metadata from Phase 52.5 when available.
 - Knowledge QA review metadata from Phase 52.6 when available.
+- Airline Knowledge Publication metadata from Phase 52.7 when available.
 
 Decision packs are advisory. They do not execute bookings, issue tickets or EMDs, send communications, charge payment methods, or override human authority.
 
