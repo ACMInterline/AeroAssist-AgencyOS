@@ -151,6 +151,7 @@ The repository currently contains:
 - Phase 50.9: Intelligent offer builder integration foundation.
 - Phase 51.0: Operational intelligence pipeline consolidation foundation.
 - Phase 51.1: Service parameter taxonomy integration foundation.
+- Phase 54.1: Operational workflow orchestration foundation.
 
 Phase 35 navigation hotfix:
 
@@ -2295,3 +2296,7 @@ Phase 52.9 adds the metadata-only Knowledge Population Toolkit Foundation. It re
 ## Implemented Phase 53.0
 
 Phase 53.0 adds the metadata-only End-to-End Stabilization & Pilot Readiness Foundation. It registers `pilot_readiness_profiles`, `pilot_readiness_assessments`, `pilot_readiness_checks`, `pilot_golden_path_cases`, `pilot_golden_path_runs`, and `pilot_readiness_issues`, plus platform Pilot Readiness routes, agency Pilot Readiness routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It provides deterministic 0-100 diagnostic scoring, critical-blocker handling, canonical remediation links, golden-path templates, stage-result persistence, issue resolution/reopen metadata, and separated client/internal diagnostic messages without production auto-seeding, destructive resets, operational record mutation, provider execution, AI/LLM generation, scraping, workers, schedulers, booking, ticketing, EMD issuance, sending, entitlement enforcement, or replacing human authority.
+
+## Implemented Phase 54.1
+
+Phase 54.1 adds the metadata-only Operational Workflow Orchestration Foundation. It registers `operational_workflow_definitions`, `operational_workflow_instances`, `operational_workflow_transitions`, `operational_workflow_guards`, and `operational_workflow_events`, plus platform and agency operational-workflow routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It stores configurable workflow definitions, workflow instances, guard results, blocked transitions, warning acknowledgements, immutable transition history, events, explicit adapter metadata, and entity workflow summaries without replacing request/trip/offer/booking/ticket/EMD/document/timeline/passenger-service workflow services, executing providers, running AI, sending messages, scheduling workers, bypassing agency isolation, or mutating existing operational entity statuses without future explicit adapters.

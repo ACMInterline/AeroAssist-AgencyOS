@@ -65,6 +65,12 @@ Passenger -> Service Requirement -> Operational Workspaces -> Timeline -> Future
 
 Workflow records track current, previous, and next stage metadata, readiness state, blocking and completed requirements, responsible team and agent, linked passenger/request/trip/booking/ticket/EMD/SSR-OSI/document/timeline workspaces, and future AOIE recommendation-pack references. They remain metadata-only and do not execute workflows, make AI decisions, start background workers, call airline APIs, connect to GDS/NDC, approve services automatically, issue tickets, issue EMDs, send messages, or automate actions.
 
+Phase 54.1 adds Operational Workflow Orchestration as the shared workflow-state layer around existing operational workspaces:
+
+Request / Trip / Offer / Booking / Ticket / EMD / Service -> Workflow Definition -> Guarded Transition -> Immutable History -> Timeline Evidence
+
+Operational workflow records store configurable definitions, agency instances, guard outcomes, warning acknowledgements, blockers, transition attempts, workflow events, and explicit adapter metadata. They do not replace request, trip, offer, booking, ticket, EMD, document, timeline, or passenger-service workflow services. Entity status synchronization remains disabled by default and requires future explicit adapters. The layer remains metadata-only and does not execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

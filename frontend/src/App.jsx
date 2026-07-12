@@ -52,6 +52,7 @@ import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
 import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
 import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstraintsPage"
+import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -138,6 +139,7 @@ import PlatformOperationalIntelligenceCasesPage from "./pages/platform/Operation
 import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
+import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkflowsPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -269,6 +271,7 @@ const routes = {
   "/platform/ssr-osi-workspaces": PlatformSsrOsiWorkspacesPage,
   "/platform/document-workspaces": PlatformDocumentWorkspacesPage,
   "/platform/operational-timelines": PlatformOperationalTimelinesPage,
+  "/platform/operational-workflows": PlatformOperationalWorkflowsPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -356,6 +359,7 @@ const routes = {
   "/agency/passenger-services": PassengerServicesPage,
   "/agency/document-workspaces": DocumentWorkspacesPage,
   "/agency/timeline": TimelinePage,
+  "/agency/operational-workflows": AgencyOperationalWorkflowsPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

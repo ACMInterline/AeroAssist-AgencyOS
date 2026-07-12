@@ -69,6 +69,11 @@ export default function TripWorkspacesPage() {
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
           </section>
 
+          <section className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            <p className="font-semibold text-slate-950">Operational workflow summary</p>
+            <p className="mt-1">Trip lifecycle summaries and guarded transition metadata are available in <a className="font-semibold text-blue-700" href="/agency/operational-workflows">Operational Workflows</a>. These summaries are read-only around the trip workspace and do not overwrite trip status.</p>
+          </section>
+
           <section className="rounded-lg border border-slate-200 bg-white p-5">
             <h3 className="font-semibold text-slate-950">Trip filters</h3>
             <div className="mt-4 grid gap-3 lg:grid-cols-6">

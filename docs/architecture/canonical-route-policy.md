@@ -89,6 +89,8 @@ Phase 52.9 adds knowledge population toolkit APIs only under `/api/platform/know
 
 Phase 53.0 adds pilot readiness APIs only under `/api/platform/pilot-readiness/*` and `/api/agencies/{agency_id}/pilot-readiness/*`, plus frontend pages under `/platform/pilot-readiness` and `/agency/pilot-readiness`. It records metadata-only stabilization diagnostics, deterministic readiness scores, golden-path case/run metadata, and issue remediation links without route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, production auto-seeding, destructive resets, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, or automation.
 
+Phase 54.1 adds operational workflow APIs only under `/api/platform/operational-workflows/*` and `/api/agencies/{agency_id}/operational-workflows/*`, plus frontend pages under `/platform/operational-workflows` and `/agency/operational-workflows`. It records metadata-only workflow definitions, instances, guard results, transition history, warnings, blockers, and events without route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, automatic workflow execution, or existing entity status mutation without future explicit adapters.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -175,6 +177,8 @@ Phase 53.0 adds pilot readiness APIs only under `/api/platform/pilot-readiness/*
 | `/agent/timeline` | `/agency/timeline` |
 | `/admin/passenger-service-workflows` | `/platform/passenger-service-workflows` |
 | `/agent/workflow-engine` | `/agency/workflow-engine` |
+| `/admin/operational-workflows` | `/platform/operational-workflows` |
+| `/agent/operational-workflows` | `/agency/operational-workflows` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

@@ -14946,6 +14946,228 @@ class PassengerServiceWorkflowUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalWorkflowDefinition(BaseDocument):
+    workflow_code: str
+    name: str
+    description: Optional[str] = None
+    entity_type: str
+    version: str = "1.0"
+    status: str = "draft"
+    initial_state: str
+    terminal_states: List[str] = Field(default_factory=list)
+    state_definitions_json: Dict[str, Any] = Field(default_factory=dict)
+    transition_definitions_json: List[Dict[str, Any]] = Field(default_factory=list)
+    required_modules_json: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_workflow_orchestration_foundation: bool = True
+    unrestricted_dynamic_mutation_disabled: bool = True
+    automatic_execution_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    entity_status_sync_disabled_by_default: bool = True
+
+
+class OperationalWorkflowDefinitionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    workflow_code: str
+    name: str
+    description: Optional[str] = None
+    entity_type: str
+    version: str = "1.0"
+    status: str = "draft"
+    initial_state: str
+    terminal_states: List[str] = Field(default_factory=list)
+    state_definitions_json: Dict[str, Any] = Field(default_factory=dict)
+    transition_definitions_json: List[Dict[str, Any]] = Field(default_factory=list)
+    required_modules_json: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkflowDefinitionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workflow_code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    entity_type: Optional[str] = None
+    version: Optional[str] = None
+    status: Optional[str] = None
+    initial_state: Optional[str] = None
+    terminal_states: Optional[List[str]] = None
+    state_definitions_json: Optional[Dict[str, Any]] = None
+    transition_definitions_json: Optional[List[Dict[str, Any]]] = None
+    required_modules_json: Optional[List[str]] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalWorkflowInstance(BaseDocument):
+    agency_id: str
+    workflow_definition_id: str
+    entity_type: str
+    entity_id: str
+    current_state: str
+    previous_state: Optional[str] = None
+    workflow_status: str = "active"
+    context_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    active_blockers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    active_warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warning_acknowledgements_json: List[Dict[str, Any]] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    suspended_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_workflow_orchestration_foundation: bool = True
+    entity_status_sync_disabled_by_default: bool = True
+    automation_disabled: bool = True
+
+
+class OperationalWorkflowInstanceStartRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    workflow_definition_id: str
+    entity_type: str
+    entity_id: str
+    current_state: Optional[str] = None
+    previous_state: Optional[str] = None
+    workflow_status: str = "active"
+    context_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    active_blockers_json: List[Dict[str, Any]] = Field(default_factory=list)
+    active_warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkflowTransition(BaseDocument):
+    agency_id: str
+    workflow_instance_id: str
+    transition_code: str
+    from_state: str
+    to_state: str
+    transition_status: str = "requested"
+    requested_by: Optional[str] = None
+    approved_by: Optional[str] = None
+    reason: Optional[str] = None
+    input_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    result_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    blocker_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    warning_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    executed_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_workflow_orchestration_foundation: bool = True
+    immutable_history: bool = True
+    entity_status_sync_disabled_by_default: bool = True
+
+
+class OperationalWorkflowTransitionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    transition_code: str
+    reason: Optional[str] = None
+    input_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    acknowledged_warning_codes: List[str] = Field(default_factory=list)
+    acknowledge_warnings: bool = False
+    approved_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkflowGuard(BaseDocument):
+    workflow_definition_id: str
+    guard_code: str
+    transition_code: str
+    guard_type: str
+    severity: str = "warning"
+    evaluation_mode: str = "metadata"
+    condition_json: Dict[str, Any] = Field(default_factory=dict)
+    failure_message_internal: str
+    failure_message_client: Optional[str] = None
+    remediation_guidance: Optional[str] = None
+    is_active: bool = True
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_workflow_orchestration_foundation: bool = True
+    automatic_execution_disabled: bool = True
+
+
+class OperationalWorkflowGuardCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    workflow_definition_id: str
+    guard_code: str
+    transition_code: str
+    guard_type: str
+    severity: str = "warning"
+    evaluation_mode: str = "metadata"
+    condition_json: Dict[str, Any] = Field(default_factory=dict)
+    failure_message_internal: str
+    failure_message_client: Optional[str] = None
+    remediation_guidance: Optional[str] = None
+    is_active: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkflowGuardUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    workflow_definition_id: Optional[str] = None
+    guard_code: Optional[str] = None
+    transition_code: Optional[str] = None
+    guard_type: Optional[str] = None
+    severity: Optional[str] = None
+    evaluation_mode: Optional[str] = None
+    condition_json: Optional[Dict[str, Any]] = None
+    failure_message_internal: Optional[str] = None
+    failure_message_client: Optional[str] = None
+    remediation_guidance: Optional[str] = None
+    is_active: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalWorkflowEvent(BaseDocument):
+    agency_id: str
+    workflow_instance_id: str
+    event_type: str
+    event_code: str
+    event_status: str = "recorded"
+    source_module: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    payload_json: Dict[str, Any] = Field(default_factory=dict)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    operational_workflow_orchestration_foundation: bool = True
+    immutable_history: bool = True
+
+
+class OperationalWorkflowWarningAcknowledgementRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    warning_codes: List[str] = Field(default_factory=list)
+    acknowledged_by: Optional[str] = None
+    acknowledgement_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

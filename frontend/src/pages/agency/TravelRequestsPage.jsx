@@ -70,6 +70,11 @@ export default function TravelRequestsPage() {
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
           </section>
 
+          <section className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            <p className="font-semibold text-slate-950">Operational workflow summary</p>
+            <p className="mt-1">Shared workflow-state summaries for request lifecycle coordination are available in <a className="font-semibold text-blue-700" href="/agency/operational-workflows">Operational Workflows</a>. These summaries are metadata-only and do not overwrite request status.</p>
+          </section>
+
           <section className="rounded-lg border border-slate-200 bg-white p-5">
             <h3 className="font-semibold text-slate-950">Request filters</h3>
             <div className="mt-4 grid gap-3 lg:grid-cols-5">

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
+PHASE_LABEL = "phase_54_1_operational_workflow_orchestration_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -222,6 +222,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "PilotReadinessProfile, PilotReadinessAssessment, PilotReadinessCheck, PilotGoldenPathCase, PilotGoldenPathRun, PilotReadinessIssue, PilotReadinessService, pilot_readiness_profiles, pilot_readiness_assessments, pilot_readiness_checks, pilot_golden_path_cases, pilot_golden_path_runs, pilot_readiness_issues, /api/platform/pilot-readiness, /api/agencies/{agency_id}/pilot-readiness, /platform/pilot-readiness, /agency/pilot-readiness",
         "status": "foundation adopted",
         "action": "Create metadata-only pilot readiness diagnostics for the connected knowledge-production-to-offer-readiness lifecycle. Phase 53.0 does not auto-seed production records, reset data, mutate operational records, call providers, generate AI/LLM output, scrape, run workers, schedule jobs, send messages, book, ticket, issue EMDs, enforce entitlements, or override human authority.",
+    },
+    {
+        "category": "Operational Workflow Orchestration",
+        "concept": "Canonical workflow-state and guarded transition metadata",
+        "supplementary_concept": "workflow definitions, agency workflow instances, guard outcomes, blocked transitions, warning acknowledgements, immutable transition history, workflow events, explicit adapters, entity summaries, remediation guidance",
+        "current_equivalent": "OperationalWorkflowDefinition, OperationalWorkflowInstance, OperationalWorkflowTransition, OperationalWorkflowGuard, OperationalWorkflowEvent, OperationalWorkflowOrchestrationService, operational_workflow_definitions, operational_workflow_instances, operational_workflow_transitions, operational_workflow_guards, operational_workflow_events, /api/platform/operational-workflows, /api/agencies/{agency_id}/operational-workflows, /platform/operational-workflows, /agency/operational-workflows",
+        "status": "foundation adopted",
+        "action": "Create metadata-only workflow-state orchestration around existing request, trip, offer, booking, ticket, EMD, document, timeline, and passenger-service workflow services. Phase 54.1 does not replace those services, execute providers, run AI/LLM generation, send messages, schedule workers, mutate existing entity statuses without future explicit adapters, bypass agency isolation, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -462,6 +470,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "PassengerServiceWorkflow, PassengerServiceWorkflowCreate, PassengerServiceWorkflowUpdate, PassengerServiceWorkflowService, /api/platform/passenger-service-workflows, /api/agencies/{agency_id}/passenger-service-workflows, /platform/passenger-service-workflows, /agency/workflow-engine",
         "status": "foundation adopted",
         "action": "Coordinate passenger service case metadata across passenger, request, trip, booking, ticket, EMD, SSR / OSI, document, timeline, and future AOIE references without automatic workflow execution, AI decision making, background workers, airline APIs, GDS/NDC connectivity, automatic approvals, automatic ticketing, automatic EMD issuance, automatic messaging, provider integrations, or automation.",
+    },
+    {
+        "category": "Operational Workflow Orchestration",
+        "concept": "Shared workflow-state orchestration metadata",
+        "supplementary_concept": "state definitions, transition definitions, guard configuration, guard results, warning acknowledgement, blockers, immutable transition history, workflow events, entity workflow summaries",
+        "current_equivalent": "OperationalWorkflowDefinition, OperationalWorkflowInstance, OperationalWorkflowTransition, OperationalWorkflowGuard, OperationalWorkflowEvent, OperationalWorkflowOrchestrationService, /api/platform/operational-workflows, /api/agencies/{agency_id}/operational-workflows, /platform/operational-workflows, /agency/operational-workflows",
+        "status": "foundation adopted",
+        "action": "Coordinate metadata-only lifecycle state around existing request, trip, offer, booking, ticket, EMD, document, timeline, and passenger-service workflow services without replacing them, executing providers, running AI, sending messages, scheduling workers, bypassing agency isolation, or mutating entity statuses without explicit future adapters.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -836,6 +852,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/timeline", "agencyos": "/agency/timeline"},
         {"supplementary": "/admin/passenger-service-workflows", "agencyos": "/platform/passenger-service-workflows"},
         {"supplementary": "/agent/workflow-engine", "agencyos": "/agency/workflow-engine"},
+        {"supplementary": "/admin/operational-workflows", "agencyos": "/platform/operational-workflows"},
+        {"supplementary": "/agent/operational-workflows", "agencyos": "/agency/operational-workflows"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
