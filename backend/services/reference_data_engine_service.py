@@ -7,7 +7,7 @@ from database import Database
 from models import ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate
 
 
-PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
+PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 REFERENCE_DATA_DOMAINS_COLLECTION = "reference_data_domains"
 
 SUPPORTED_REFERENCE_DOMAIN_CODES = [

@@ -45,6 +45,7 @@ import AgencyKnowledgeQualityAssurancePage from "./pages/agency/KnowledgeQuality
 import AgencyPublishedKnowledgePage from "./pages/agency/PublishedKnowledgePage"
 import AgencyScenarioTestingPage from "./pages/agency/ScenarioTestingPage"
 import AgencyKnowledgePopulationToolkitPage from "./pages/agency/KnowledgePopulationToolkitPage"
+import AgencyPilotReadinessPage from "./pages/agency/PilotReadinessPage"
 import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
 import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
 import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
@@ -148,6 +149,7 @@ import PlatformKnowledgeQualityAssurancePage from "./pages/platform/KnowledgeQua
 import PlatformAirlineKnowledgePublishingPage from "./pages/platform/AirlineKnowledgePublishingPage"
 import PlatformOperationalScenarioTestingPage from "./pages/platform/OperationalScenarioTestingPage"
 import PlatformKnowledgePopulationToolkitPage from "./pages/platform/KnowledgePopulationToolkitPage"
+import PlatformPilotReadinessPage from "./pages/platform/PilotReadinessPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -297,6 +299,7 @@ const routes = {
   "/platform/knowledge-publishing": PlatformAirlineKnowledgePublishingPage,
   "/platform/operational-scenario-testing": PlatformOperationalScenarioTestingPage,
   "/platform/knowledge-population-toolkit": PlatformKnowledgePopulationToolkitPage,
+  "/platform/pilot-readiness": PlatformPilotReadinessPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -385,6 +388,7 @@ const routes = {
   "/agency/published-knowledge": AgencyPublishedKnowledgePage,
   "/agency/scenario-testing": AgencyScenarioTestingPage,
   "/agency/knowledge-population-toolkit": AgencyKnowledgePopulationToolkitPage,
+  "/agency/pilot-readiness": AgencyPilotReadinessPage,
   "/agency/service-parameter-taxonomies": ServiceParameterTaxonomiesPage,
   "/agency/request-segment-services": RequestSegmentServicesPage,
   "/agency/clients": AgencyClientMasterPage,

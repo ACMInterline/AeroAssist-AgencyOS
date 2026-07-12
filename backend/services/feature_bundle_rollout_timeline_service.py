@@ -14,7 +14,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import payload_dict
 
 
-PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
+PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 
 TIMELINE_COLLECTION = "feature_bundle_rollout_timeline_entries"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

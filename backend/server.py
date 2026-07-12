@@ -11,7 +11,7 @@ from routers import agency_airline_intelligence_agency_consumption, agency_airli
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
-from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
+from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
@@ -58,7 +58,8 @@ from services.reference_data_engine_service import GOVERNANCE_STATUSES as REFERE
 from services.knowledge_import_template_service import FOUNDATION_PHASE_LABEL as KNOWLEDGE_IMPORT_TEMPLATE_FOUNDATION_PHASE_LABEL, IMPORT_SCOPES as KNOWLEDGE_IMPORT_TEMPLATE_IMPORT_SCOPES, KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION, TEMPLATE_TYPES as KNOWLEDGE_IMPORT_TEMPLATE_TYPES
 from services.airline_knowledge_publishing_service import AIRLINE_KNOWLEDGE_PUBLICATIONS_COLLECTION, PUBLICATION_STATUSES as AIRLINE_KNOWLEDGE_PUBLICATION_STATUSES, RELEASE_CHANNELS as AIRLINE_KNOWLEDGE_RELEASE_CHANNELS, VISIBILITY_STATUSES as AIRLINE_KNOWLEDGE_VISIBILITY_STATUSES
 from services.operational_scenario_testing_service import EXPECTED_RECOMMENDATION_LEVELS as OPERATIONAL_SCENARIO_EXPECTED_RECOMMENDATION_LEVELS, OPERATIONAL_SCENARIO_TESTS_COLLECTION, SCENARIO_FAMILIES as OPERATIONAL_SCENARIO_FAMILIES, SCENARIO_TEST_STATUSES as OPERATIONAL_SCENARIO_TEST_STATUSES
-from services.knowledge_population_toolkit_service import KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION, PHASE_LABEL, POPULATION_STATUSES as KNOWLEDGE_POPULATION_STATUSES, TOOLKIT_READINESS_STATUSES as KNOWLEDGE_POPULATION_READINESS_STATUSES
+from services.knowledge_population_toolkit_service import KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION, POPULATION_STATUSES as KNOWLEDGE_POPULATION_STATUSES, TOOLKIT_READINESS_STATUSES as KNOWLEDGE_POPULATION_READINESS_STATUSES
+from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PHASE_LABEL, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
 from services.pricing_formula_builder_service import CLIENT_VISIBILITY_OPTIONS as PRICING_FORMULA_CLIENT_VISIBILITY_OPTIONS, FORMULA_STATUSES as PRICING_FORMULA_STATUSES, PRICING_FORMULA_BUILDERS_COLLECTION
@@ -79,7 +80,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 52.9 knowledge population toolkit foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 53.0 end-to-end stabilization and pilot readiness foundation.",
 )
 
 app.add_middleware(
@@ -1606,6 +1607,42 @@ async def readiness() -> dict:
     knowledge_population_warning_count = sum(len(item.get("warnings") or []) for item in knowledge_population_toolkit_records)
     knowledge_population_next_action_count = sum(
         len(item.get("next_actions") or []) for item in knowledge_population_toolkit_records
+    )
+    pilot_readiness_profile_records = await database.collection(PILOT_READINESS_PROFILES_COLLECTION).find_many()
+    pilot_readiness_assessment_records = await database.collection(PILOT_READINESS_ASSESSMENTS_COLLECTION).find_many()
+    pilot_readiness_check_records = await database.collection(PILOT_READINESS_CHECKS_COLLECTION).find_many()
+    pilot_golden_path_case_records = await database.collection(PILOT_GOLDEN_PATH_CASES_COLLECTION).find_many()
+    pilot_golden_path_run_records = await database.collection(PILOT_GOLDEN_PATH_RUNS_COLLECTION).find_many()
+    pilot_readiness_issue_records = await database.collection(PILOT_READINESS_ISSUES_COLLECTION).find_many()
+    pilot_readiness_assessment_status_counts = {
+        status: len([item for item in pilot_readiness_assessment_records if item.get("assessment_status") == status])
+        for status in PILOT_READINESS_STATUSES
+    }
+    pilot_readiness_check_status_counts = {
+        status: len([item for item in pilot_readiness_check_records if item.get("status") == status])
+        for status in PILOT_READINESS_CHECK_STATUSES
+    }
+    pilot_readiness_check_family_counts = {
+        family: len([item for item in pilot_readiness_check_records if item.get("check_family") == family])
+        for family in PILOT_READINESS_CHECK_FAMILIES
+    }
+    pilot_golden_path_run_status_counts = {
+        status: len([item for item in pilot_golden_path_run_records if item.get("run_status") == status])
+        for status in PILOT_GOLDEN_PATH_STATUSES
+    }
+    pilot_readiness_issue_status_counts = {
+        status: len([item for item in pilot_readiness_issue_records if item.get("issue_status") == status])
+        for status in PILOT_READINESS_ISSUE_STATUSES
+    }
+    pilot_readiness_open_issue_count = len(
+        [item for item in pilot_readiness_issue_records if item.get("issue_status") in {"open", "in_review", "reopened"}]
+    )
+    pilot_readiness_critical_blocker_count = len(
+        [
+            item
+            for item in pilot_readiness_issue_records
+            if item.get("severity") == "critical" and item.get("issue_status") in {"open", "in_review", "reopened"}
+        ]
     )
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
     service_parameter_taxonomy_count = len(service_parameter_taxonomy_records)
@@ -3981,6 +4018,55 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 52.9 creates metadata-only Knowledge Population Toolkit records for airline knowledge population readiness, coverage, progress, gaps, blockers, warnings, and next actions. It does not scrape, auto-import, call providers, use AI, run workers, execute population jobs, or override human authority.",
         },
+        "end_to_end_stabilization_pilot_readiness_foundation": {
+            "pilot_readiness_enabled": True,
+            "pilot_readiness_profiles_collection_enabled": True,
+            "pilot_readiness_assessments_collection_enabled": True,
+            "pilot_readiness_checks_collection_enabled": True,
+            "pilot_golden_path_cases_collection_enabled": True,
+            "pilot_golden_path_runs_collection_enabled": True,
+            "pilot_readiness_issues_collection_enabled": True,
+            "platform_pilot_readiness_metadata_crud_enabled": True,
+            "agency_pilot_readiness_diagnostic_metadata_enabled": True,
+            "platform_pilot_readiness_ui_enabled": True,
+            "agency_pilot_readiness_ui_enabled": True,
+            "deterministic_readiness_scoring_enabled": True,
+            "critical_blockers_prevent_pilot_ready": True,
+            "golden_path_templates_exposed_without_auto_seed": True,
+            "golden_path_stage_results_persisted": True,
+            "remediation_links_use_canonical_routes": True,
+            "client_internal_message_separation_enabled": True,
+            "check_families": PILOT_READINESS_CHECK_FAMILIES,
+            "readiness_statuses": PILOT_READINESS_STATUSES,
+            "check_statuses": PILOT_READINESS_CHECK_STATUSES,
+            "golden_path_statuses": PILOT_GOLDEN_PATH_STATUSES,
+            "golden_path_stage_codes": PILOT_GOLDEN_PATH_STAGE_CODES,
+            "golden_path_sample_template_count": len(PILOT_GOLDEN_PATH_CASE_TEMPLATES),
+            "remediation_link_count": len(PILOT_READINESS_REMEDIATION_LINKS),
+            "metadata_only": True,
+            "production_seed_disabled": True,
+            "production_record_mutation_disabled": True,
+            "automation_disabled": True,
+            "provider_integrations_disabled": True,
+            "ai_disabled": True,
+            "destructive_reset_disabled": True,
+            "human_authority_final": True,
+            "pilot_readiness_profile_count": len(pilot_readiness_profile_records),
+            "pilot_readiness_assessment_count": len(pilot_readiness_assessment_records),
+            "pilot_readiness_check_count": len(pilot_readiness_check_records),
+            "pilot_golden_path_case_count": len(pilot_golden_path_case_records),
+            "pilot_golden_path_run_count": len(pilot_golden_path_run_records),
+            "pilot_readiness_issue_count": len(pilot_readiness_issue_records),
+            "pilot_readiness_open_issue_count": pilot_readiness_open_issue_count,
+            "pilot_readiness_critical_blocker_count": pilot_readiness_critical_blocker_count,
+            "pilot_readiness_assessment_status_counts": pilot_readiness_assessment_status_counts,
+            "pilot_readiness_check_status_counts": pilot_readiness_check_status_counts,
+            "pilot_readiness_check_family_counts": pilot_readiness_check_family_counts,
+            "pilot_golden_path_run_status_counts": pilot_golden_path_run_status_counts,
+            "pilot_readiness_issue_status_counts": pilot_readiness_issue_status_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 53.0 adds metadata-only end-to-end stabilization and pilot readiness diagnostics. It records assessment, check, golden-path run, and issue metadata only; it does not seed production records, reset data, execute providers, use AI, run workers, mutate operational records, or override human authority.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -5937,6 +6023,7 @@ app.include_router(platform_knowledge_quality_assurance.router)
 app.include_router(platform_airline_knowledge_publishing.router)
 app.include_router(platform_operational_scenario_testing.router)
 app.include_router(platform_knowledge_population_toolkit.router)
+app.include_router(platform_pilot_readiness.router)
 app.include_router(platform_service_parameter_taxonomies.router)
 app.include_router(platform_request_segment_services.router)
 app.include_router(platform_client_passenger_master.router)
@@ -6029,6 +6116,7 @@ app.include_router(agency_knowledge_quality_assurance.router)
 app.include_router(agency_airline_knowledge_publishing.router)
 app.include_router(agency_operational_scenario_testing.router)
 app.include_router(agency_knowledge_population_toolkit.router)
+app.include_router(agency_pilot_readiness.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

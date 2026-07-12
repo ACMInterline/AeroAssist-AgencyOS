@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
+PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,

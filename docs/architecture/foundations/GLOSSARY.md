@@ -100,6 +100,18 @@ A Phase 52.8 metadata-only foundation that stores passenger service scenario tes
 
 A Phase 52.9 metadata-only foundation that stores airline knowledge population readiness and coverage records. Records contain onboarding checklist, reference readiness, import template readiness, policy editor readiness, pricing builder readiness, rule composer readiness, QA readiness, publishing readiness, scenario test readiness, evidence coverage, population progress, missing domains, blockers, warnings, next actions, owner, due dates, and notes. It does not scrape, auto-import, call providers, use AI/LLM generation, execute parser/import jobs, run workers, or replace human authority.
 
+## Pilot Readiness
+
+A Phase 53.0 metadata-only diagnostic foundation that records whether the end-to-end AeroAssist lifecycle is coherent enough for pilot review. It uses profiles, deterministic assessments, checks, issue records, module readiness summaries, golden-path cases, golden-path runs, and remediation links without auto-seeding production data, resetting records, executing providers, using AI, sending messages, booking, ticketing, or overriding human authority.
+
+## Golden Path Case
+
+A metadata-only passenger service scenario used to test whether the knowledge-production-to-offer-readiness lifecycle has enough structured evidence and operational coverage for pilot review. Sample templates are exposed but not auto-seeded.
+
+## Golden Path Run
+
+A persisted diagnostic run of a golden-path case. It records stage statuses, warnings, blockers, evidence references, client-facing messages, and internal trace metadata without creating requests, offers, bookings, tickets, EMDs, messages, or external provider actions.
+
 ## SSR
 
 Special Service Request. A structured airline service request code or message used for passenger service handling.

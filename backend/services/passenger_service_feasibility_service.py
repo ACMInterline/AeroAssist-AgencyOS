@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
+PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 PASSENGER_SERVICE_FEASIBILITY_COLLECTION = "passenger_service_feasibilities"
 
 FEASIBILITY_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

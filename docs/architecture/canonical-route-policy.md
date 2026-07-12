@@ -87,6 +87,8 @@ Phase 52.8 adds operational scenario testing APIs only under `/api/platform/oper
 
 Phase 52.9 adds knowledge population toolkit APIs only under `/api/platform/knowledge-population-toolkit/*` and `/api/agencies/{agency_id}/knowledge-population-toolkit/*`, plus frontend pages under `/platform/knowledge-population-toolkit` and `/agency/knowledge-population-toolkit`. It records metadata-only airline knowledge population readiness and coverage metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, scraping, automatic import, AI/LLM generation, parser execution, provider integrations, background workers, population jobs, or automation.
 
+Phase 53.0 adds pilot readiness APIs only under `/api/platform/pilot-readiness/*` and `/api/agencies/{agency_id}/pilot-readiness/*`, plus frontend pages under `/platform/pilot-readiness` and `/agency/pilot-readiness`. It records metadata-only stabilization diagnostics, deterministic readiness scores, golden-path case/run metadata, and issue remediation links without route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, production auto-seeding, destructive resets, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -223,6 +225,8 @@ Phase 52.9 adds knowledge population toolkit APIs only under `/api/platform/know
 | `/agent/service-parameter-taxonomies` | `/agency/service-parameter-taxonomies` |
 | `/admin/request-segment-services` | `/platform/request-segment-services` |
 | `/agent/request-segment-services` | `/agency/request-segment-services` |
+| `/admin/pilot-readiness` | `/platform/pilot-readiness` |
+| `/agent/pilot-readiness` | `/agency/pilot-readiness` |
 | `/admin/client-master` | `/platform/client-master` |
 | `/admin/passenger-master` | `/platform/passenger-master` |
 | `/agent/passengers` | `/agency/passengers` |

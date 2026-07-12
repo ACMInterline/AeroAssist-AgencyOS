@@ -21816,6 +21816,310 @@ class KnowledgePopulationToolkitUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class PilotReadinessProfile(BaseDocument):
+    agency_id: Optional[str] = None
+    profile_reference: str
+    profile_name: str
+    profile_status: str = "draft"
+    pilot_scope: Optional[str] = None
+    target_airline_codes: List[str] = Field(default_factory=list)
+    target_service_families: List[str] = Field(default_factory=list)
+    target_service_codes: List[str] = Field(default_factory=list)
+    required_reference_domains: List[str] = Field(default_factory=list)
+    required_modules: List[str] = Field(default_factory=list)
+    minimum_score: int = 85
+    check_family_weights: Dict[str, Any] = Field(default_factory=dict)
+    owner: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotReadinessProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    profile_reference: Optional[str] = None
+    profile_name: str
+    profile_status: str = "draft"
+    pilot_scope: Optional[str] = None
+    target_airline_codes: List[str] = Field(default_factory=list)
+    target_service_families: List[str] = Field(default_factory=list)
+    target_service_codes: List[str] = Field(default_factory=list)
+    required_reference_domains: List[str] = Field(default_factory=list)
+    required_modules: List[str] = Field(default_factory=list)
+    minimum_score: int = 85
+    check_family_weights: Dict[str, Any] = Field(default_factory=dict)
+    owner: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotReadinessProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    profile_reference: Optional[str] = None
+    profile_name: Optional[str] = None
+    profile_status: Optional[str] = None
+    pilot_scope: Optional[str] = None
+    target_airline_codes: Optional[List[str]] = None
+    target_service_families: Optional[List[str]] = None
+    target_service_codes: Optional[List[str]] = None
+    required_reference_domains: Optional[List[str]] = None
+    required_modules: Optional[List[str]] = None
+    minimum_score: Optional[int] = None
+    check_family_weights: Optional[Dict[str, Any]] = None
+    owner: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PilotReadinessCheck(BaseDocument):
+    agency_id: Optional[str] = None
+    assessment_id: str
+    check_reference: str
+    check_code: str
+    check_family: str
+    label: str
+    status: str = "unknown"
+    severity: str = "low"
+    module_code: Optional[str] = None
+    module_name: Optional[str] = None
+    expected_signal: Optional[str] = None
+    observed_signal: Optional[str] = None
+    remediation_route: Optional[str] = None
+    agency_remediation_route: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    computed_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotReadinessAssessment(BaseDocument):
+    agency_id: Optional[str] = None
+    profile_id: Optional[str] = None
+    assessment_reference: str
+    assessment_status: str = "not_started"
+    airline_code: Optional[str] = None
+    service_family_codes: List[str] = Field(default_factory=list)
+    service_codes: List[str] = Field(default_factory=list)
+    readiness_score: int = 0
+    component_scores: Dict[str, Any] = Field(default_factory=dict)
+    critical_blocker_count: int = 0
+    high_issue_count: int = 0
+    warning_count: int = 0
+    check_ids: List[str] = Field(default_factory=list)
+    issue_ids: List[str] = Field(default_factory=list)
+    generated_at: Optional[datetime] = None
+    generated_by: Optional[str] = None
+    summary: Optional[str] = None
+    next_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    deterministic_scoring_enabled: bool = True
+    critical_blockers_prevent_pilot_ready: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotReadinessAssessmentRunRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    profile_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    service_family_codes: List[str] = Field(default_factory=list)
+    service_codes: List[str] = Field(default_factory=list)
+    required_reference_domains: List[str] = Field(default_factory=list)
+    required_modules: List[str] = Field(default_factory=list)
+    minimum_score: Optional[int] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotGoldenPathCase(BaseDocument):
+    agency_id: Optional[str] = None
+    case_reference: str
+    case_name: str
+    case_family: str
+    scenario_type: str
+    case_status: str = "draft"
+    airline_code: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    passenger_context: Dict[str, Any] = Field(default_factory=dict)
+    itinerary_context: Dict[str, Any] = Field(default_factory=dict)
+    service_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    expected_outcome: Dict[str, Any] = Field(default_factory=dict)
+    expected_required_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    sample_template_auto_seed_disabled: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotGoldenPathCaseCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    case_reference: Optional[str] = None
+    case_name: str
+    case_family: str
+    scenario_type: str
+    case_status: str = "draft"
+    airline_code: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    passenger_context: Dict[str, Any] = Field(default_factory=dict)
+    itinerary_context: Dict[str, Any] = Field(default_factory=dict)
+    service_requirements: List[Dict[str, Any]] = Field(default_factory=list)
+    expected_outcome: Dict[str, Any] = Field(default_factory=dict)
+    expected_required_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_links: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotGoldenPathCaseUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    case_reference: Optional[str] = None
+    case_name: Optional[str] = None
+    case_family: Optional[str] = None
+    scenario_type: Optional[str] = None
+    case_status: Optional[str] = None
+    airline_code: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    passenger_context: Optional[Dict[str, Any]] = None
+    itinerary_context: Optional[Dict[str, Any]] = None
+    service_requirements: Optional[List[Dict[str, Any]]] = None
+    expected_outcome: Optional[Dict[str, Any]] = None
+    expected_required_actions: Optional[List[Dict[str, Any]]] = None
+    evidence_links: Optional[List[Dict[str, Any]]] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PilotGoldenPathRun(BaseDocument):
+    agency_id: Optional[str] = None
+    case_id: str
+    case_reference: Optional[str] = None
+    run_reference: str
+    run_status: str = "unknown"
+    readiness_score: int = 0
+    stage_results: List[Dict[str, Any]] = Field(default_factory=list)
+    blocking_stage: Optional[str] = None
+    client_message: Optional[str] = None
+    internal_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    issue_ids: List[str] = Field(default_factory=list)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    golden_path_execution_disabled: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotGoldenPathRunCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotReadinessIssue(BaseDocument):
+    agency_id: Optional[str] = None
+    assessment_id: Optional[str] = None
+    golden_path_run_id: Optional[str] = None
+    issue_reference: str
+    issue_family: str
+    severity: str = "medium"
+    issue_status: str = "open"
+    title: str
+    description: Optional[str] = None
+    related_module: Optional[str] = None
+    remediation_route: Optional[str] = None
+    agency_remediation_route: Optional[str] = None
+    assigned_to: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    reopened_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    reopened_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    end_to_end_stabilization_pilot_readiness_foundation: bool = True
+    production_seed_disabled: bool = True
+    production_record_mutation_disabled: bool = True
+    automation_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    ai_disabled: bool = True
+    destructive_reset_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class PilotReadinessIssueUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    issue_status: Optional[str] = None
+    assigned_to: Optional[str] = None
+    resolution_notes: Optional[str] = None
+    reopened_notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
+PHASE_LABEL = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -214,6 +214,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "KnowledgePopulationToolkit, KnowledgePopulationToolkitCreate, KnowledgePopulationToolkitUpdate, KnowledgePopulationToolkitService, knowledge_population_toolkits, /api/platform/knowledge-population-toolkit, /api/agencies/{agency_id}/knowledge-population-toolkit, /platform/knowledge-population-toolkit, /agency/knowledge-population-toolkit",
         "status": "foundation adopted",
         "action": "Create metadata-only knowledge population toolkit records for airline knowledge coverage, readiness, progress, gaps, and next actions. Phase 52.9 does not scrape, auto-import, call providers, generate AI/LLM output, run background workers, execute population jobs, or override human authority.",
+    },
+    {
+        "category": "Pilot Readiness",
+        "concept": "End-to-end stabilization and pilot readiness diagnostics",
+        "supplementary_concept": "pilot readiness profiles, deterministic assessments, check families, critical blockers, golden-path cases, golden-path runs, stage results, issue remediation, canonical route links, separated client/internal diagnostic messages",
+        "current_equivalent": "PilotReadinessProfile, PilotReadinessAssessment, PilotReadinessCheck, PilotGoldenPathCase, PilotGoldenPathRun, PilotReadinessIssue, PilotReadinessService, pilot_readiness_profiles, pilot_readiness_assessments, pilot_readiness_checks, pilot_golden_path_cases, pilot_golden_path_runs, pilot_readiness_issues, /api/platform/pilot-readiness, /api/agencies/{agency_id}/pilot-readiness, /platform/pilot-readiness, /agency/pilot-readiness",
+        "status": "foundation adopted",
+        "action": "Create metadata-only pilot readiness diagnostics for the connected knowledge-production-to-offer-readiness lifecycle. Phase 53.0 does not auto-seed production records, reset data, mutate operational records, call providers, generate AI/LLM output, scrape, run workers, schedule jobs, send messages, book, ticket, issue EMDs, enforce entitlements, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
