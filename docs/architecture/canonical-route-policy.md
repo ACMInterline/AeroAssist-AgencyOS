@@ -85,6 +85,8 @@ Phase 52.7 adds airline knowledge publishing APIs only under `/api/platform/airl
 
 Phase 52.8 adds operational scenario testing APIs only under `/api/platform/operational-scenario-testing/*` and `/api/agencies/{agency_id}/operational-scenario-testing/*`, plus frontend pages under `/platform/operational-scenario-testing` and `/agency/scenario-testing`. It records metadata-only passenger service scenario examples and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, live provider tests, AI/LLM generation, parser execution, automated scenario execution, background workers, booking, ticketing, EMD issuance, or automation.
 
+Phase 52.9 adds knowledge population toolkit APIs only under `/api/platform/knowledge-population-toolkit/*` and `/api/agencies/{agency_id}/knowledge-population-toolkit/*`, plus frontend pages under `/platform/knowledge-population-toolkit` and `/agency/knowledge-population-toolkit`. It records metadata-only airline knowledge population readiness and coverage metadata and does not add route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, scraping, automatic import, AI/LLM generation, parser execution, provider integrations, background workers, population jobs, or automation.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

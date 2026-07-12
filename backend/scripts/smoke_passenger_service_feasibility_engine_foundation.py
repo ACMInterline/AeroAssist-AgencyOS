@@ -20,7 +20,7 @@ from services.passenger_service_feasibility_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_52_8_operational_scenario_testing_foundation"
+EXPECTED_PHASE = "phase_52_9_knowledge_population_toolkit_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/passenger-service-feasibility"
 

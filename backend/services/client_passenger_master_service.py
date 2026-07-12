@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
+PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
 
 CLIENT_MASTER_RECORDS_COLLECTION = "client_master_records"
 PASSENGER_MASTER_RECORDS_COLLECTION = "passenger_master_records"

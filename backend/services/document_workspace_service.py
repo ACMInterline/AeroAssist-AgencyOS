@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
+PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

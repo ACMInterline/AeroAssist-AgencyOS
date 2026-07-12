@@ -46,6 +46,8 @@ Phase 52.7 implements metadata-only Airline Knowledge Publishing Foundation. It 
 
 Phase 52.8 implements metadata-only Operational Scenario Testing Foundation. It adds passenger service scenario test records for validating knowledge production examples across PETC, AVIH, SVAN, EXST passenger of size, CBBG, WCHC, MEDIF, POC, UMNR, musical instruments, sports equipment, and restricted equipment. It does not run live providers, AI/LLM generation, parser execution, automated scenario execution, booking, ticketing, EMD issuance, background workers, or replace human authority.
 
+Phase 52.9 implements metadata-only Knowledge Population Toolkit Foundation. It adds airline knowledge population readiness and coverage records with onboarding checklist, reference readiness, import-template readiness, policy-editor readiness, pricing-builder readiness, rule-composer readiness, QA readiness, publishing readiness, scenario-test readiness, evidence coverage, progress, missing domains, blockers, warnings, and next actions. It does not scrape, auto-import, call providers, use AI/LLM generation, execute parser/import jobs, run workers, or replace human authority.
+
 ## Chapter 50 Phase Map
 
 - 50.0 AOIE Architecture Foundation
@@ -70,6 +72,7 @@ Phase 52.8 implements metadata-only Operational Scenario Testing Foundation. It 
 - 52.6 Knowledge Quality Assurance Foundation
 - 52.7 Airline Knowledge Publishing Foundation
 - 52.8 Operational Scenario Testing Foundation
+- 52.9 Knowledge Population Toolkit Foundation
 
 ## Five Pillars
 

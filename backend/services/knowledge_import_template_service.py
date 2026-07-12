@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgeImportTemplate, KnowledgeImportTemplateCreate, KnowledgeImportTemplateUpdate
 
 
-PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
+PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
 FOUNDATION_PHASE_LABEL = "phase_52_2_knowledge_import_templates_foundation"
 KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION = "knowledge_import_templates"
 

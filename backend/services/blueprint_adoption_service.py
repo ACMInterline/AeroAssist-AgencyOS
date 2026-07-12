@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
+PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -206,6 +206,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate, OperationalScenarioTestingService, operational_scenario_tests, /api/platform/operational-scenario-testing, /api/agencies/{agency_id}/operational-scenario-testing, /platform/operational-scenario-testing, /agency/scenario-testing",
         "status": "foundation adopted",
         "action": "Create metadata-only operational scenario test records for passenger service examples. Phase 52.8 does not run live providers, AI/LLM generation, parser execution, automated evaluation, background workers, booking, ticketing, EMD issuance, or replace human authority.",
+    },
+    {
+        "category": "Knowledge Population Toolkit",
+        "concept": "Metadata-only airline knowledge population readiness toolkit",
+        "supplementary_concept": "airline onboarding checklist, reference readiness, import template readiness, policy editor readiness, pricing builder readiness, rule composer readiness, QA readiness, publishing readiness, scenario test readiness, evidence coverage, population progress, missing domains, blockers, warnings, and next actions",
+        "current_equivalent": "KnowledgePopulationToolkit, KnowledgePopulationToolkitCreate, KnowledgePopulationToolkitUpdate, KnowledgePopulationToolkitService, knowledge_population_toolkits, /api/platform/knowledge-population-toolkit, /api/agencies/{agency_id}/knowledge-population-toolkit, /platform/knowledge-population-toolkit, /agency/knowledge-population-toolkit",
+        "status": "foundation adopted",
+        "action": "Create metadata-only knowledge population toolkit records for airline knowledge coverage, readiness, progress, gaps, and next actions. Phase 52.9 does not scrape, auto-import, call providers, generate AI/LLM output, run background workers, execute population jobs, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -1175,6 +1183,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Knowledge quality assurance foundation built in Phase 52.6",
             "Airline knowledge publishing foundation built in Phase 52.7",
             "Operational scenario testing foundation built in Phase 52.8",
+            "Knowledge population toolkit foundation built in Phase 52.9",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

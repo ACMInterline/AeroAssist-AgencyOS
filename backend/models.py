@@ -21701,6 +21701,121 @@ class OperationalScenarioTestUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class KnowledgePopulationToolkit(BaseDocument):
+    agency_id: Optional[str] = None
+    toolkit_reference: str
+    airline_code: str
+    population_status: str = "draft"
+    airline_onboarding_checklist: List[Dict[str, Any]] = Field(default_factory=list)
+    reference_readiness: Dict[str, Any] = Field(default_factory=dict)
+    import_template_readiness: Dict[str, Any] = Field(default_factory=dict)
+    policy_editor_readiness: Dict[str, Any] = Field(default_factory=dict)
+    pricing_builder_readiness: Dict[str, Any] = Field(default_factory=dict)
+    rule_composer_readiness: Dict[str, Any] = Field(default_factory=dict)
+    qa_readiness: Dict[str, Any] = Field(default_factory=dict)
+    publishing_readiness: Dict[str, Any] = Field(default_factory=dict)
+    scenario_test_readiness: Dict[str, Any] = Field(default_factory=dict)
+    coverage_summary: Dict[str, Any] = Field(default_factory=dict)
+    service_family_coverage: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_coverage: Dict[str, Any] = Field(default_factory=dict)
+    pricing_coverage: Dict[str, Any] = Field(default_factory=dict)
+    capability_coverage: Dict[str, Any] = Field(default_factory=dict)
+    QA_status: Optional[str] = None
+    publishing_status: Optional[str] = None
+    scenario_test_status: Optional[str] = None
+    population_progress: Dict[str, Any] = Field(default_factory=dict)
+    missing_domains: List[str] = Field(default_factory=list)
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    next_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    owner: Optional[str] = None
+    due_dates: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    knowledge_population_toolkit_foundation: bool = True
+    scraping_disabled: bool = True
+    auto_import_disabled: bool = True
+    ai_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    background_workers_disabled: bool = True
+    population_execution_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class KnowledgePopulationToolkitCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    toolkit_reference: Optional[str] = None
+    airline_code: str
+    population_status: str = "draft"
+    airline_onboarding_checklist: List[Dict[str, Any]] = Field(default_factory=list)
+    reference_readiness: Dict[str, Any] = Field(default_factory=dict)
+    import_template_readiness: Dict[str, Any] = Field(default_factory=dict)
+    policy_editor_readiness: Dict[str, Any] = Field(default_factory=dict)
+    pricing_builder_readiness: Dict[str, Any] = Field(default_factory=dict)
+    rule_composer_readiness: Dict[str, Any] = Field(default_factory=dict)
+    qa_readiness: Dict[str, Any] = Field(default_factory=dict)
+    publishing_readiness: Dict[str, Any] = Field(default_factory=dict)
+    scenario_test_readiness: Dict[str, Any] = Field(default_factory=dict)
+    coverage_summary: Dict[str, Any] = Field(default_factory=dict)
+    service_family_coverage: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_coverage: Dict[str, Any] = Field(default_factory=dict)
+    pricing_coverage: Dict[str, Any] = Field(default_factory=dict)
+    capability_coverage: Dict[str, Any] = Field(default_factory=dict)
+    QA_status: Optional[str] = None
+    publishing_status: Optional[str] = None
+    scenario_test_status: Optional[str] = None
+    population_progress: Dict[str, Any] = Field(default_factory=dict)
+    missing_domains: List[str] = Field(default_factory=list)
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    next_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    owner: Optional[str] = None
+    due_dates: List[Dict[str, Any]] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class KnowledgePopulationToolkitUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    toolkit_reference: Optional[str] = None
+    airline_code: Optional[str] = None
+    population_status: Optional[str] = None
+    airline_onboarding_checklist: Optional[List[Dict[str, Any]]] = None
+    reference_readiness: Optional[Dict[str, Any]] = None
+    import_template_readiness: Optional[Dict[str, Any]] = None
+    policy_editor_readiness: Optional[Dict[str, Any]] = None
+    pricing_builder_readiness: Optional[Dict[str, Any]] = None
+    rule_composer_readiness: Optional[Dict[str, Any]] = None
+    qa_readiness: Optional[Dict[str, Any]] = None
+    publishing_readiness: Optional[Dict[str, Any]] = None
+    scenario_test_readiness: Optional[Dict[str, Any]] = None
+    coverage_summary: Optional[Dict[str, Any]] = None
+    service_family_coverage: Optional[List[Dict[str, Any]]] = None
+    evidence_coverage: Optional[Dict[str, Any]] = None
+    pricing_coverage: Optional[Dict[str, Any]] = None
+    capability_coverage: Optional[Dict[str, Any]] = None
+    QA_status: Optional[str] = None
+    publishing_status: Optional[str] = None
+    scenario_test_status: Optional[str] = None
+    population_progress: Optional[Dict[str, Any]] = None
+    missing_domains: Optional[List[str]] = None
+    blockers: Optional[List[Dict[str, Any]]] = None
+    warnings: Optional[List[Dict[str, Any]]] = None
+    next_actions: Optional[List[Dict[str, Any]]] = None
+    owner: Optional[str] = None
+    due_dates: Optional[List[Dict[str, Any]]] = None
+    notes: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class VisualPolicyEditorCard(BaseDocument):
     agency_id: Optional[str] = None
     card_reference: str

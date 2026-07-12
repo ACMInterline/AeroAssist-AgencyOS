@@ -16,7 +16,7 @@ from services.service_parameter_taxonomy_service import (
 )
 
 
-PHASE_LABEL = "phase_52_8_operational_scenario_testing_foundation"
+PHASE_LABEL = "phase_52_9_knowledge_population_toolkit_foundation"
 PRICING_FORMULA_BUILDERS_COLLECTION = "pricing_formula_builders"
 
 FORMULA_STATUSES = ["draft", "in_review", "approved", "retired", "archived"]
