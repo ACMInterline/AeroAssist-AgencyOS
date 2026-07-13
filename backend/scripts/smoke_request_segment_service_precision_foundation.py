@@ -20,7 +20,7 @@ from services.request_segment_service_precision_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_54_2_agent_work_queue_assignment_foundation"
+EXPECTED_PHASE = "phase_54_3_sla_operational_deadline_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/request-segment-services"
 AGENCY_BASE_TEMPLATE = "/api/agencies/{agency_id}/request-segment-services"

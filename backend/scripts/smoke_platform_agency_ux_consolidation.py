@@ -5,7 +5,7 @@ import subprocess
 from smoke_booking_pnr_foundation import get
 
 
-EXPECTED_PHASE = "phase_54_2_agent_work_queue_assignment_foundation"
+EXPECTED_PHASE = "phase_54_3_sla_operational_deadline_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

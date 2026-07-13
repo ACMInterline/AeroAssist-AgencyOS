@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_54_2_agent_work_queue_assignment_foundation"
+PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -68,6 +68,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "pilot_readiness", "label": "Pilot Readiness", "href": "/agency/pilot-readiness", "aliases": ["pilot_readiness", "end_to_end_stabilization", "golden_path", "airline_intelligence"]},
     {"key": "operational_workflows", "label": "Operational Workflows", "href": "/agency/operational-workflows", "aliases": ["operational_workflows", "workflow_orchestration", "workflow_state", "requests"]},
     {"key": "work_queue", "label": "Agent Work Queue", "href": "/agency/work-queue", "aliases": ["work_queue", "agent_work_queue", "assignments", "daily_work", "requests"]},
+    {"key": "deadlines", "label": "Deadlines", "href": "/agency/deadlines", "aliases": ["deadlines", "sla_deadlines", "operational_deadlines", "work_queue", "requests"]},
     {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
     {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
     {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},

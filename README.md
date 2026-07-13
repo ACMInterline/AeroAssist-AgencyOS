@@ -8,6 +8,8 @@ Phase 54.1 adds the metadata-only Operational Workflow Orchestration Foundation.
 
 Phase 54.2 adds the metadata-only Agent Work Queue and Assignment Foundation. It exposes the canonical agency staff queue for actionable work from requests, trips, offers, bookings, ticketing, EMDs, passenger services, documents, approvals, knowledge gaps, disruptions, service cases, workflow blockers, tasks, and timelines without creating a duplicate task system, executing providers, automating workflows, sending messages, or bypassing agency isolation.
 
+Phase 54.3 adds the metadata-only SLA and Operational Deadline Engine Foundation. It exposes SLA policies, business calendars, calculated operational deadlines, due-soon/breach visibility, pause/resume/extension audit events, work-queue links, workflow links, and timeline history metadata without enforcing access, blocking routes, scheduling workers, calling providers, sending messages, or automating operational actions.
+
 ## Foundational Architecture Documents
 
 Permanent AeroAssist architecture foundations live under `docs/architecture/foundations/`:

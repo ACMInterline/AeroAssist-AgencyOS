@@ -54,6 +54,7 @@ import OperationalIntelligencePage from "./pages/agency/OperationalIntelligenceP
 import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstraintsPage"
 import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsPage"
 import AgentWorkQueuePage from "./pages/agency/AgentWorkQueuePage"
+import DeadlinesPage from "./pages/agency/DeadlinesPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -142,6 +143,7 @@ import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerS
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkflowsPage"
 import PlatformWorkQueueGovernancePage from "./pages/platform/WorkQueueGovernancePage"
+import PlatformSlaPoliciesPage from "./pages/platform/SlaPoliciesPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -275,6 +277,7 @@ const routes = {
   "/platform/operational-timelines": PlatformOperationalTimelinesPage,
   "/platform/operational-workflows": PlatformOperationalWorkflowsPage,
   "/platform/work-queues": PlatformWorkQueueGovernancePage,
+  "/platform/sla-policies": PlatformSlaPoliciesPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -364,6 +367,7 @@ const routes = {
   "/agency/timeline": TimelinePage,
   "/agency/operational-workflows": AgencyOperationalWorkflowsPage,
   "/agency/work-queue": AgentWorkQueuePage,
+  "/agency/deadlines": DeadlinesPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

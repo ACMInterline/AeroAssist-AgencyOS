@@ -112,6 +112,22 @@ A Phase 54.1 metadata-only foundation that records shared workflow definitions, 
 
 A Phase 54.2 metadata-only foundation that records canonical agency staff work items, queue definitions, saved queue views, and assignment events. It consolidates existing tasks, timelines, workflow blockers, operational workspace metadata, pilot readiness issues, and agency users without creating a second task system, executing providers, sending messages, running workers, or automating actions.
 
+## Operational SLA Policy
+
+A Phase 54.3 metadata-only policy for advisory deadline calculation. It describes scope, entity/work type, priority, service family, route/flight context, duration, business-hour behavior, pause conditions, escalation thresholds, and effective dates without enforcing runtime access or automating work.
+
+## Operational Deadline
+
+A Phase 54.3 metadata-only due-date record linked to source operational entities, work items, workflow instances, request tasks, and timeline entries. It stores calculated and original due dates, status, breach state, paused duration, explanation, calculation snapshot, manual extension metadata, and escalation suggestions.
+
+## Operational SLA Event
+
+A Phase 54.3 metadata-only audit event for deadline lifecycle changes such as started, paused, resumed, warning, breached, extended, completed, waived, or recalculated.
+
+## Operational Business Calendar
+
+A Phase 54.3 metadata-only calendar defining timezone, working days, working hours, holidays, and exceptions for advisory deadline calculations.
+
 ## Golden Path Case
 
 A metadata-only passenger service scenario used to test whether the knowledge-production-to-offer-readiness lifecycle has enough structured evidence and operational coverage for pilot review. Sample templates are exposed but not auto-seeded.

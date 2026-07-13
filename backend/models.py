@@ -15450,6 +15450,259 @@ class OperationalQueueViewUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
 
 
+class OperationalBusinessCalendar(BaseDocument):
+    agency_id: Optional[str] = None
+    calendar_code: str
+    name: str
+    timezone: str = "UTC"
+    working_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])
+    working_hours_json: Dict[str, Any] = Field(default_factory=lambda: {"start": "09:00", "end": "17:00"})
+    holidays: List[str] = Field(default_factory=list)
+    exceptions: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    sla_operational_deadline_engine_foundation: bool = True
+    external_calendar_integrations_disabled: bool = True
+    automation_disabled: bool = True
+
+
+class OperationalBusinessCalendarCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    calendar_code: Optional[str] = None
+    name: str
+    timezone: str = "UTC"
+    working_days: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])
+    working_hours_json: Dict[str, Any] = Field(default_factory=lambda: {"start": "09:00", "end": "17:00"})
+    holidays: List[str] = Field(default_factory=list)
+    exceptions: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalBusinessCalendarUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    calendar_code: Optional[str] = None
+    name: Optional[str] = None
+    timezone: Optional[str] = None
+    working_days: Optional[List[int]] = None
+    working_hours_json: Optional[Dict[str, Any]] = None
+    holidays: Optional[List[str]] = None
+    exceptions: Optional[List[Dict[str, Any]]] = None
+    status: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalSlaPolicy(BaseDocument):
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    policy_code: str
+    name: str
+    entity_type: str
+    work_item_type: Optional[str] = None
+    deadline_type: str
+    priority: Optional[str] = None
+    service_family: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    flight_context_json: Dict[str, Any] = Field(default_factory=dict)
+    duration_value: int = 1
+    duration_unit: str = "hours"
+    business_hours_behavior: str = "calendar_hours"
+    calendar_id: Optional[str] = None
+    pause_conditions: List[str] = Field(default_factory=list)
+    escalation_thresholds_json: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    timezone: str = "UTC"
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    sla_operational_deadline_engine_foundation: bool = True
+    policy_is_advisory_metadata: bool = True
+    automation_disabled: bool = True
+    enforcement_disabled: bool = True
+
+
+class OperationalSlaPolicyCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    policy_code: Optional[str] = None
+    name: str
+    entity_type: str
+    work_item_type: Optional[str] = None
+    deadline_type: str
+    priority: Optional[str] = None
+    service_family: Optional[str] = None
+    route_context_json: Dict[str, Any] = Field(default_factory=dict)
+    flight_context_json: Dict[str, Any] = Field(default_factory=dict)
+    duration_value: int = 1
+    duration_unit: str = "hours"
+    business_hours_behavior: str = "calendar_hours"
+    calendar_id: Optional[str] = None
+    pause_conditions: List[str] = Field(default_factory=list)
+    escalation_thresholds_json: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    timezone: str = "UTC"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalSlaPolicyUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scope: Optional[str] = None
+    policy_code: Optional[str] = None
+    name: Optional[str] = None
+    entity_type: Optional[str] = None
+    work_item_type: Optional[str] = None
+    deadline_type: Optional[str] = None
+    priority: Optional[str] = None
+    service_family: Optional[str] = None
+    route_context_json: Optional[Dict[str, Any]] = None
+    flight_context_json: Optional[Dict[str, Any]] = None
+    duration_value: Optional[int] = None
+    duration_unit: Optional[str] = None
+    business_hours_behavior: Optional[str] = None
+    calendar_id: Optional[str] = None
+    pause_conditions: Optional[List[str]] = None
+    escalation_thresholds_json: Optional[List[Dict[str, Any]]] = None
+    status: Optional[str] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    timezone: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalDeadline(BaseDocument):
+    agency_id: str
+    deadline_reference: str
+    policy_id: Optional[str] = None
+    policy_code: Optional[str] = None
+    source_entity_type: str
+    source_entity_id: str
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    work_item_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    deadline_type: str
+    priority: str = "normal"
+    service_family: Optional[str] = None
+    started_at: datetime = Field(default_factory=now_utc)
+    original_due_at: datetime
+    calculated_due_at: datetime
+    due_at: datetime
+    status: str = "open"
+    breach_state: str = "not_breached"
+    paused_duration_minutes: int = 0
+    paused_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    waived_at: Optional[datetime] = None
+    extended_at: Optional[datetime] = None
+    extension_reason: Optional[str] = None
+    manual_extension_approved: bool = False
+    explanation: str
+    calculation_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    escalation_suggestions: List[Dict[str, Any]] = Field(default_factory=list)
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    sla_operational_deadline_engine_foundation: bool = True
+    advisory_deadline_only: bool = True
+    enforcement_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    automation_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class OperationalDeadlineCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    deadline_reference: Optional[str] = None
+    policy_id: Optional[str] = None
+    policy_code: Optional[str] = None
+    source_entity_type: str
+    source_entity_id: str
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    work_item_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    deadline_type: str
+    priority: str = "normal"
+    service_family: Optional[str] = None
+    started_at: Optional[datetime] = None
+    due_at: Optional[datetime] = None
+    status: str = "open"
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalDeadlineUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    policy_id: Optional[str] = None
+    policy_code: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    work_item_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    deadline_type: Optional[str] = None
+    priority: Optional[str] = None
+    service_family: Optional[str] = None
+    due_at: Optional[datetime] = None
+    status: Optional[str] = None
+    breach_state: Optional[str] = None
+    explanation: Optional[str] = None
+    source_snapshot_json: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalDeadlineActionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    reason: Optional[str] = None
+    due_at: Optional[datetime] = None
+    force_recalculate: bool = False
+    actor_user_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalSlaEvent(BaseDocument):
+    agency_id: str
+    deadline_id: str
+    event_type: str
+    from_status: Optional[str] = None
+    to_status: Optional[str] = None
+    reason: Optional[str] = None
+    actor_user_id: Optional[str] = None
+    payload_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    sla_operational_deadline_engine_foundation: bool = True
+    preserve_deadline_audit_history: bool = True
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

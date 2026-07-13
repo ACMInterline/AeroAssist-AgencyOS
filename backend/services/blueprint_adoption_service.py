@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_2_agent_work_queue_assignment_foundation"
+PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -238,6 +238,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalWorkItem, OperationalQueueDefinition, OperationalAssignmentEvent, OperationalQueueView, AgentWorkQueueService, operational_work_items, operational_queue_definitions, operational_assignment_events, operational_queue_views, /api/platform/work-queues, /api/agencies/{agency_id}/work-queue, /platform/work-queues, /agency/work-queue",
         "status": "foundation adopted",
         "action": "Create the metadata-only canonical work queue for agency staff, reusing existing tasks, timelines, workflow events, operational workspaces, pilot readiness issues, and agency users. Phase 54.2 does not create a duplicate task system, execute providers, run AI/LLM generation, send messages, schedule workers, bypass agency isolation, automate actions, or override human authority.",
+    },
+    {
+        "category": "SLA and Operational Deadline Engine",
+        "concept": "Reusable SLA policy, calendar, deadline, and audit metadata",
+        "supplementary_concept": "SLA policies, operational deadlines, SLA events, business calendars, due-soon and breach states, pause/resume, manual extensions, work-queue and workflow metadata links",
+        "current_equivalent": "OperationalSlaPolicy, OperationalDeadline, OperationalSlaEvent, OperationalBusinessCalendar, OperationalSlaDeadlineService, operational_sla_policies, operational_deadlines, operational_sla_events, operational_business_calendars, /api/platform/sla-policies, /api/agencies/{agency_id}/deadlines, /platform/sla-policies, /agency/deadlines",
+        "status": "foundation adopted",
+        "action": "Create the metadata-only SLA and operational deadline engine around existing queues, workflows, requests, offers, bookings, ticketing, passenger services, timelines, disruptions, and service cases. Phase 54.3 calculates and explains deadlines, preserves manual extensions, and records audit metadata without enforcing access, blocking routes, scheduling workers, calling providers, sending messages, or automating operational actions.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -494,6 +502,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalWorkItem, OperationalQueueDefinition, OperationalAssignmentEvent, OperationalQueueView, AgentWorkQueueService, /api/platform/work-queues, /api/agencies/{agency_id}/work-queue, /platform/work-queues, /agency/work-queue",
         "status": "foundation adopted",
         "action": "Coordinate staff-visible operational work metadata across existing tasks, timelines, workflows, workspaces, pilot readiness issues, and agency users without duplicate task systems, duplicate workflow architecture, provider execution, AI, workers, sending, cross-agency leakage, or automation.",
+    },
+    {
+        "category": "SLA and Operational Deadline Engine",
+        "concept": "SLA policy and operational deadline metadata",
+        "supplementary_concept": "deadline calculations, business calendars, pause/resume, manual extensions, breach detection, escalation suggestions, queue and workflow links",
+        "current_equivalent": "OperationalSlaPolicy, OperationalDeadline, OperationalSlaEvent, OperationalBusinessCalendar, OperationalSlaDeadlineService, /api/platform/sla-policies, /api/agencies/{agency_id}/deadlines, /platform/sla-policies, /agency/deadlines",
+        "status": "foundation adopted",
+        "action": "Coordinate metadata-only operational deadlines for requests, offers, booking/ticketing, passenger services, documents, payments, disruptions, claims, refunds, and changes without enforcement, route blocking, workers, provider calls, sending, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -872,6 +888,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/operational-workflows", "agencyos": "/agency/operational-workflows"},
         {"supplementary": "/admin/work-queues", "agencyos": "/platform/work-queues"},
         {"supplementary": "/agent/work-queue", "agencyos": "/agency/work-queue"},
+        {"supplementary": "/admin/sla-policies", "agencyos": "/platform/sla-policies"},
+        {"supplementary": "/agent/deadlines", "agencyos": "/agency/deadlines"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},

@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_2_agent_work_queue_assignment_foundation"
+PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

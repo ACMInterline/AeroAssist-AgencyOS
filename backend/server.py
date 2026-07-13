@@ -9,7 +9,7 @@ from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
@@ -60,7 +60,8 @@ from services.airline_knowledge_publishing_service import AIRLINE_KNOWLEDGE_PUBL
 from services.operational_scenario_testing_service import EXPECTED_RECOMMENDATION_LEVELS as OPERATIONAL_SCENARIO_EXPECTED_RECOMMENDATION_LEVELS, OPERATIONAL_SCENARIO_TESTS_COLLECTION, SCENARIO_FAMILIES as OPERATIONAL_SCENARIO_FAMILIES, SCENARIO_TEST_STATUSES as OPERATIONAL_SCENARIO_TEST_STATUSES
 from services.knowledge_population_toolkit_service import KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION, POPULATION_STATUSES as KNOWLEDGE_POPULATION_STATUSES, TOOLKIT_READINESS_STATUSES as KNOWLEDGE_POPULATION_READINESS_STATUSES
 from services.operational_workflow_orchestration_service import BOOKING_READINESS_STATES as OPERATIONAL_WORKFLOW_BOOKING_READINESS_STATES, DEFAULT_WORKFLOW_DEFINITIONS as OPERATIONAL_WORKFLOW_DEFAULT_DEFINITIONS, GUARD_RESULTS as OPERATIONAL_WORKFLOW_GUARD_RESULTS, GUARD_TYPES as OPERATIONAL_WORKFLOW_GUARD_TYPES, OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION, OPERATIONAL_WORKFLOW_EVENTS_COLLECTION, OPERATIONAL_WORKFLOW_GUARDS_COLLECTION, OPERATIONAL_WORKFLOW_INSTANCES_COLLECTION, OPERATIONAL_WORKFLOW_TRANSITIONS_COLLECTION, REQUEST_LIFECYCLE_STATES as OPERATIONAL_WORKFLOW_REQUEST_STATES, SERVICE_FULFILLMENT_STATES as OPERATIONAL_WORKFLOW_SERVICE_STATES, TRANSITION_STATUSES as OPERATIONAL_WORKFLOW_TRANSITION_STATUSES, TRIP_LIFECYCLE_STATES as OPERATIONAL_WORKFLOW_TRIP_STATES, WORKFLOW_STATUSES as OPERATIONAL_WORKFLOW_STATUSES
-from services.agent_work_queue_service import ASSIGNMENT_EVENT_TYPES as OPERATIONAL_ASSIGNMENT_EVENT_TYPES, BLOCKER_STATUSES as OPERATIONAL_QUEUE_BLOCKER_STATUSES, CANONICAL_QUEUE_CODES as OPERATIONAL_QUEUE_CODES, DEFAULT_QUEUE_DEFINITIONS as OPERATIONAL_DEFAULT_QUEUE_DEFINITIONS, OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION, OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION, OPERATIONAL_QUEUE_VIEWS_COLLECTION, OPERATIONAL_WORK_ITEMS_COLLECTION, PHASE_LABEL, SLA_STATUSES as OPERATIONAL_QUEUE_SLA_STATUSES, WORK_ITEM_PRIORITIES as OPERATIONAL_WORK_ITEM_PRIORITIES, WORK_ITEM_SEVERITIES as OPERATIONAL_WORK_ITEM_SEVERITIES, WORK_ITEM_STATUSES as OPERATIONAL_WORK_ITEM_STATUSES, WORK_ITEM_TYPES as OPERATIONAL_WORK_ITEM_TYPES
+from services.agent_work_queue_service import ASSIGNMENT_EVENT_TYPES as OPERATIONAL_ASSIGNMENT_EVENT_TYPES, BLOCKER_STATUSES as OPERATIONAL_QUEUE_BLOCKER_STATUSES, CANONICAL_QUEUE_CODES as OPERATIONAL_QUEUE_CODES, DEFAULT_QUEUE_DEFINITIONS as OPERATIONAL_DEFAULT_QUEUE_DEFINITIONS, OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION, OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION, OPERATIONAL_QUEUE_VIEWS_COLLECTION, OPERATIONAL_WORK_ITEMS_COLLECTION, PHASE_LABEL as AGENT_WORK_QUEUE_PHASE_LABEL, SLA_STATUSES as OPERATIONAL_QUEUE_SLA_STATUSES, WORK_ITEM_PRIORITIES as OPERATIONAL_WORK_ITEM_PRIORITIES, WORK_ITEM_SEVERITIES as OPERATIONAL_WORK_ITEM_SEVERITIES, WORK_ITEM_STATUSES as OPERATIONAL_WORK_ITEM_STATUSES, WORK_ITEM_TYPES as OPERATIONAL_WORK_ITEM_TYPES
+from services.operational_sla_deadline_service import BREACH_STATES as OPERATIONAL_DEADLINE_BREACH_STATES, BUSINESS_HOURS_BEHAVIORS as OPERATIONAL_BUSINESS_HOURS_BEHAVIORS, DEADLINE_STATUSES as OPERATIONAL_DEADLINE_STATUSES, DEADLINE_TYPES as OPERATIONAL_DEADLINE_TYPES, DEFAULT_SLA_POLICIES as OPERATIONAL_DEFAULT_SLA_POLICIES, OPERATIONAL_BUSINESS_CALENDARS_COLLECTION, OPERATIONAL_DEADLINES_COLLECTION, OPERATIONAL_SLA_EVENTS_COLLECTION, OPERATIONAL_SLA_POLICIES_COLLECTION, PHASE_LABEL, SLA_DURATION_UNITS as OPERATIONAL_SLA_DURATION_UNITS, SLA_EVENT_TYPES as OPERATIONAL_SLA_EVENT_TYPES, SLA_POLICY_SCOPES as OPERATIONAL_SLA_POLICY_SCOPES, SLA_POLICY_STATUSES as OPERATIONAL_SLA_POLICY_STATUSES
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -82,7 +83,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 54.2 agent work queue and assignment foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 54.3 SLA and operational deadline engine foundation.",
 )
 
 app.add_middleware(
@@ -1684,6 +1685,10 @@ async def readiness() -> dict:
     operational_queue_definition_records = await database.collection(OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION).find_many()
     operational_assignment_event_records = await database.collection(OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION).find_many()
     operational_queue_view_records = await database.collection(OPERATIONAL_QUEUE_VIEWS_COLLECTION).find_many()
+    operational_sla_policy_records = await database.collection(OPERATIONAL_SLA_POLICIES_COLLECTION).find_many()
+    operational_deadline_records = await database.collection(OPERATIONAL_DEADLINES_COLLECTION).find_many()
+    operational_sla_event_records = await database.collection(OPERATIONAL_SLA_EVENTS_COLLECTION).find_many()
+    operational_business_calendar_records = await database.collection(OPERATIONAL_BUSINESS_CALENDARS_COLLECTION).find_many()
     operational_work_item_status_counts = {
         status: len([item for item in operational_work_item_records if item.get("status") == status])
         for status in OPERATIONAL_WORK_ITEM_STATUSES
@@ -1719,6 +1724,30 @@ async def readiness() -> dict:
     operational_work_item_unassigned_count = len([item for item in operational_work_item_records if not item.get("assigned_user_id")])
     operational_work_item_due_soon_count = len([item for item in operational_work_item_records if item.get("sla_status") == "due_soon"])
     operational_work_item_overdue_count = len([item for item in operational_work_item_records if item.get("sla_status") in {"overdue", "breached"}])
+    operational_deadline_status_counts = {
+        status: len([item for item in operational_deadline_records if item.get("status") == status])
+        for status in OPERATIONAL_DEADLINE_STATUSES
+    }
+    operational_deadline_breach_counts = {
+        breach_state: len([item for item in operational_deadline_records if item.get("breach_state") == breach_state])
+        for breach_state in OPERATIONAL_DEADLINE_BREACH_STATES
+    }
+    operational_deadline_type_counts = {
+        deadline_type: len([item for item in operational_deadline_records if item.get("deadline_type") == deadline_type])
+        for deadline_type in OPERATIONAL_DEADLINE_TYPES
+    }
+    operational_sla_policy_status_counts = {
+        status: len([item for item in operational_sla_policy_records if item.get("status") == status])
+        for status in OPERATIONAL_SLA_POLICY_STATUSES
+    }
+    operational_sla_event_type_counts = {
+        event_type: len([item for item in operational_sla_event_records if item.get("event_type") == event_type])
+        for event_type in OPERATIONAL_SLA_EVENT_TYPES
+    }
+    operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
+    operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
+    operational_deadline_paused_count = len([item for item in operational_deadline_records if item.get("status") == "paused"])
+    operational_deadline_completed_count = len([item for item in operational_deadline_records if item.get("status") == "completed"])
     service_parameter_taxonomy_records = await database.collection("service_parameter_taxonomies").find_many()
     service_parameter_taxonomy_count = len(service_parameter_taxonomy_records)
     service_parameter_taxonomy_status_counts = {
@@ -4258,6 +4287,65 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 54.2 adds the canonical agent work queue and assignment metadata layer. It consolidates work from existing requests, trips, offers, bookings, ticketing, EMDs, passenger services, documents, approvals, policy gaps, knowledge issues, disruptions, service cases, workflow blockers, timelines, request tasks, and pilot-readiness issues without creating a second task system, executing providers, running automation, exposing internal context to client routes, or bypassing agency isolation.",
         },
+        "sla_operational_deadline_engine_foundation": {
+            "sla_operational_deadline_engine_enabled": True,
+            "operational_sla_policies_collection_enabled": True,
+            "operational_deadlines_collection_enabled": True,
+            "operational_sla_events_collection_enabled": True,
+            "operational_business_calendars_collection_enabled": True,
+            "platform_sla_policy_governance_enabled": True,
+            "agency_deadline_workspace_enabled": True,
+            "deadline_calculation_enabled": True,
+            "business_calendar_calculation_enabled": True,
+            "pause_resume_metadata_enabled": True,
+            "extension_audit_enabled": True,
+            "manual_extensions_preserved": True,
+            "due_soon_detection_enabled": True,
+            "breach_detection_enabled": True,
+            "escalation_suggestion_metadata_enabled": True,
+            "work_queue_integration_enabled": True,
+            "workflow_event_integration_enabled": True,
+            "timeline_history_integration_enabled": True,
+            "request_offer_booking_ticketing_deadline_types_supported": True,
+            "passenger_service_notice_deadline_types_supported": True,
+            "disruption_claim_refund_change_deadline_types_supported": True,
+            "agency_isolation_enforced": True,
+            "metadata_only": True,
+            "provider_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "schedulers_disabled": True,
+            "automatic_execution_disabled": True,
+            "automation_disabled": True,
+            "enforcement_disabled": True,
+            "destructive_reset_disabled": True,
+            "human_authority_final": True,
+            "sla_policy_scopes": OPERATIONAL_SLA_POLICY_SCOPES,
+            "sla_policy_statuses": OPERATIONAL_SLA_POLICY_STATUSES,
+            "duration_units": OPERATIONAL_SLA_DURATION_UNITS,
+            "business_hours_behaviors": OPERATIONAL_BUSINESS_HOURS_BEHAVIORS,
+            "deadline_statuses": OPERATIONAL_DEADLINE_STATUSES,
+            "breach_states": OPERATIONAL_DEADLINE_BREACH_STATES,
+            "sla_event_types": OPERATIONAL_SLA_EVENT_TYPES,
+            "deadline_types": OPERATIONAL_DEADLINE_TYPES,
+            "default_sla_policy_count": len(OPERATIONAL_DEFAULT_SLA_POLICIES),
+            "operational_sla_policy_count": len(operational_sla_policy_records),
+            "operational_deadline_count": len(operational_deadline_records),
+            "operational_sla_event_count": len(operational_sla_event_records),
+            "operational_business_calendar_count": len(operational_business_calendar_records),
+            "operational_deadline_due_soon_count": operational_deadline_due_soon_count,
+            "operational_deadline_overdue_count": operational_deadline_overdue_count,
+            "operational_deadline_paused_count": operational_deadline_paused_count,
+            "operational_deadline_completed_count": operational_deadline_completed_count,
+            "operational_deadline_status_counts": operational_deadline_status_counts,
+            "operational_deadline_breach_counts": operational_deadline_breach_counts,
+            "operational_deadline_type_counts": operational_deadline_type_counts,
+            "operational_sla_policy_status_counts": operational_sla_policy_status_counts,
+            "operational_sla_event_type_counts": operational_sla_event_type_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 54.3 adds the metadata-only SLA and operational deadline engine. It stores SLA policies, business calendars, calculated deadlines, and SLA events; explains calculations; preserves manual extensions; detects due-soon and breach states; and emits work-queue/workflow/timeline metadata without enforcing access, blocking routes, scheduling workers, contacting providers, sending messages, or automating operational action.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -6249,6 +6337,7 @@ app.include_router(platform_document_workspaces.router)
 app.include_router(platform_operational_timelines.router)
 app.include_router(platform_operational_workflows.router)
 app.include_router(platform_agent_work_queues.router)
+app.include_router(platform_operational_sla_deadlines.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -6343,6 +6432,7 @@ app.include_router(agency_document_workspaces.router)
 app.include_router(agency_operational_timelines.router)
 app.include_router(agency_operational_workflows.router)
 app.include_router(agency_agent_work_queues.router)
+app.include_router(agency_operational_sla_deadlines.router)
 app.include_router(agency_passenger_service_workflows.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)

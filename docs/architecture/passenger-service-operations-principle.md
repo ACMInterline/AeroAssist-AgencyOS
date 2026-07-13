@@ -77,6 +77,12 @@ Request / Trip / Offer / Booking / Ticket / EMD / Service / Document / Workflow 
 
 Operational work items consolidate existing request tasks, workflow events, timeline-compatible context, workspace statuses, pilot readiness issues, and operational blockers into deterministic queues for agency staff. They do not create a second task system or a parallel workflow architecture. Platform can inspect queue governance metadata, while agency users perform scoped assignment actions with preserved actor history. The layer remains metadata-only and does not execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
 
+Phase 54.3 adds the SLA and Operational Deadline Engine as the advisory timing layer over work queues and workflows:
+
+Policy / Calendar -> Operational Deadline -> SLA Event -> Work Queue / Workflow / Timeline Metadata
+
+Operational deadlines calculate and explain due dates for requests, offers, booking/ticketing, passenger services, documents, payments, tasks, disruptions, claims, refunds, and changes. They preserve original due dates, manual extensions, pause/resume history, breach states, and escalation suggestions. The layer remains metadata-only and does not enforce routes, execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

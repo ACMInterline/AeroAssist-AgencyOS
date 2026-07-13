@@ -93,6 +93,8 @@ Phase 54.1 adds operational workflow APIs only under `/api/platform/operational-
 
 Phase 54.2 adds agent work queue APIs only under `/api/platform/work-queues/*` and `/api/agencies/{agency_id}/work-queue/*`, plus frontend pages under `/platform/work-queues` and `/agency/work-queue`. It records metadata-only operational work items, queue definitions, assignment events, and queue views without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate task systems, duplicate workflow architectures, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, or automatic operational execution.
 
+Phase 54.3 adds SLA and operational deadline APIs only under `/api/platform/sla-policies/*` and `/api/agencies/{agency_id}/deadlines/*`, plus frontend pages under `/platform/sla-policies` and `/agency/deadlines`. It records metadata-only SLA policies, business calendars, deadlines, and SLA events without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate task systems, duplicate workflow architectures, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, route blocking, access enforcement, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -182,6 +184,8 @@ Phase 54.2 adds agent work queue APIs only under `/api/platform/work-queues/*` a
 | `/admin/operational-workflows` | `/platform/operational-workflows` |
 | `/agent/operational-workflows` | `/agency/operational-workflows` |
 | `/admin/work-queues` | `/platform/work-queues` |
+| `/admin/sla-policies` | `/platform/sla-policies` |
+| `/agent/deadlines` | `/agency/deadlines` |
 | `/agent/work-queue` | `/agency/work-queue` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
