@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_1_operational_workflow_orchestration_foundation"
+PHASE_LABEL = "phase_54_2_agent_work_queue_assignment_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -230,6 +230,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalWorkflowDefinition, OperationalWorkflowInstance, OperationalWorkflowTransition, OperationalWorkflowGuard, OperationalWorkflowEvent, OperationalWorkflowOrchestrationService, operational_workflow_definitions, operational_workflow_instances, operational_workflow_transitions, operational_workflow_guards, operational_workflow_events, /api/platform/operational-workflows, /api/agencies/{agency_id}/operational-workflows, /platform/operational-workflows, /agency/operational-workflows",
         "status": "foundation adopted",
         "action": "Create metadata-only workflow-state orchestration around existing request, trip, offer, booking, ticket, EMD, document, timeline, and passenger-service workflow services. Phase 54.1 does not replace those services, execute providers, run AI/LLM generation, send messages, schedule workers, mutate existing entity statuses without future explicit adapters, bypass agency isolation, or override human authority.",
+    },
+    {
+        "category": "Agent Work Queue and Assignment",
+        "concept": "Canonical agency staff work queue and assignment metadata",
+        "supplementary_concept": "operational work items, queue definitions, assignment events, saved queue views, request tasks, operational timelines, workflow blockers, agency users",
+        "current_equivalent": "OperationalWorkItem, OperationalQueueDefinition, OperationalAssignmentEvent, OperationalQueueView, AgentWorkQueueService, operational_work_items, operational_queue_definitions, operational_assignment_events, operational_queue_views, /api/platform/work-queues, /api/agencies/{agency_id}/work-queue, /platform/work-queues, /agency/work-queue",
+        "status": "foundation adopted",
+        "action": "Create the metadata-only canonical work queue for agency staff, reusing existing tasks, timelines, workflow events, operational workspaces, pilot readiness issues, and agency users. Phase 54.2 does not create a duplicate task system, execute providers, run AI/LLM generation, send messages, schedule workers, bypass agency isolation, automate actions, or override human authority.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -478,6 +486,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalWorkflowDefinition, OperationalWorkflowInstance, OperationalWorkflowTransition, OperationalWorkflowGuard, OperationalWorkflowEvent, OperationalWorkflowOrchestrationService, /api/platform/operational-workflows, /api/agencies/{agency_id}/operational-workflows, /platform/operational-workflows, /agency/operational-workflows",
         "status": "foundation adopted",
         "action": "Coordinate metadata-only lifecycle state around existing request, trip, offer, booking, ticket, EMD, document, timeline, and passenger-service workflow services without replacing them, executing providers, running AI, sending messages, scheduling workers, bypassing agency isolation, or mutating entity statuses without explicit future adapters.",
+    },
+    {
+        "category": "Agent Work Queue and Assignment",
+        "concept": "Agency staff queue and assignment metadata",
+        "supplementary_concept": "work items, queue definitions, assignment events, queue views, deterministic ordering, bulk safe assignment, source synchronization",
+        "current_equivalent": "OperationalWorkItem, OperationalQueueDefinition, OperationalAssignmentEvent, OperationalQueueView, AgentWorkQueueService, /api/platform/work-queues, /api/agencies/{agency_id}/work-queue, /platform/work-queues, /agency/work-queue",
+        "status": "foundation adopted",
+        "action": "Coordinate staff-visible operational work metadata across existing tasks, timelines, workflows, workspaces, pilot readiness issues, and agency users without duplicate task systems, duplicate workflow architecture, provider execution, AI, workers, sending, cross-agency leakage, or automation.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -854,6 +870,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/workflow-engine", "agencyos": "/agency/workflow-engine"},
         {"supplementary": "/admin/operational-workflows", "agencyos": "/platform/operational-workflows"},
         {"supplementary": "/agent/operational-workflows", "agencyos": "/agency/operational-workflows"},
+        {"supplementary": "/admin/work-queues", "agencyos": "/platform/work-queues"},
+        {"supplementary": "/agent/work-queue", "agencyos": "/agency/work-queue"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
@@ -1210,6 +1228,9 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Airline knowledge publishing foundation built in Phase 52.7",
             "Operational scenario testing foundation built in Phase 52.8",
             "Knowledge population toolkit foundation built in Phase 52.9",
+            "End-to-end stabilization and pilot readiness foundation built in Phase 53.0",
+            "Operational workflow orchestration foundation built in Phase 54.1",
+            "Agent work queue and assignment foundation built in Phase 54.2",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -108,6 +108,10 @@ A Phase 53.0 metadata-only diagnostic foundation that records whether the end-to
 
 A Phase 54.1 metadata-only foundation that records shared workflow definitions, workflow instances, guarded transitions, warning acknowledgements, blockers, immutable transition history, workflow events, and explicit adapter metadata around existing operational workspaces. It coordinates lifecycle visibility without replacing request, trip, offer, booking, ticket, EMD, document, timeline, or passenger-service workflow services, and without provider execution, AI, background workers, message sending, automatic status mutation, booking, ticketing, EMD issuance, or automation.
 
+## Agent Work Queue
+
+A Phase 54.2 metadata-only foundation that records canonical agency staff work items, queue definitions, saved queue views, and assignment events. It consolidates existing tasks, timelines, workflow blockers, operational workspace metadata, pilot readiness issues, and agency users without creating a second task system, executing providers, sending messages, running workers, or automating actions.
+
 ## Golden Path Case
 
 A metadata-only passenger service scenario used to test whether the knowledge-production-to-offer-readiness lifecycle has enough structured evidence and operational coverage for pilot review. Sample templates are exposed but not auto-seeded.

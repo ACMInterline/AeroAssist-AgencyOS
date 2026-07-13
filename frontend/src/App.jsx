@@ -53,6 +53,7 @@ import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
 import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
 import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstraintsPage"
 import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsPage"
+import AgentWorkQueuePage from "./pages/agency/AgentWorkQueuePage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -140,6 +141,7 @@ import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEval
 import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
 import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
 import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkflowsPage"
+import PlatformWorkQueueGovernancePage from "./pages/platform/WorkQueueGovernancePage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -272,6 +274,7 @@ const routes = {
   "/platform/document-workspaces": PlatformDocumentWorkspacesPage,
   "/platform/operational-timelines": PlatformOperationalTimelinesPage,
   "/platform/operational-workflows": PlatformOperationalWorkflowsPage,
+  "/platform/work-queues": PlatformWorkQueueGovernancePage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -360,6 +363,7 @@ const routes = {
   "/agency/document-workspaces": DocumentWorkspacesPage,
   "/agency/timeline": TimelinePage,
   "/agency/operational-workflows": AgencyOperationalWorkflowsPage,
+  "/agency/work-queue": AgentWorkQueuePage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

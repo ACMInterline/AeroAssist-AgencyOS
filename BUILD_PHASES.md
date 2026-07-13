@@ -152,6 +152,7 @@ The repository currently contains:
 - Phase 51.0: Operational intelligence pipeline consolidation foundation.
 - Phase 51.1: Service parameter taxonomy integration foundation.
 - Phase 54.1: Operational workflow orchestration foundation.
+- Phase 54.2: Agent work queue and assignment foundation.
 
 Phase 35 navigation hotfix:
 
@@ -2300,3 +2301,7 @@ Phase 53.0 adds the metadata-only End-to-End Stabilization & Pilot Readiness Fou
 ## Implemented Phase 54.1
 
 Phase 54.1 adds the metadata-only Operational Workflow Orchestration Foundation. It registers `operational_workflow_definitions`, `operational_workflow_instances`, `operational_workflow_transitions`, `operational_workflow_guards`, and `operational_workflow_events`, plus platform and agency operational-workflow routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It stores configurable workflow definitions, workflow instances, guard results, blocked transitions, warning acknowledgements, immutable transition history, events, explicit adapter metadata, and entity workflow summaries without replacing request/trip/offer/booking/ticket/EMD/document/timeline/passenger-service workflow services, executing providers, running AI, sending messages, scheduling workers, bypassing agency isolation, or mutating existing operational entity statuses without future explicit adapters.
+
+## Implemented Phase 54.2
+
+Phase 54.2 adds the metadata-only Agent Work Queue and Assignment Foundation. It registers `operational_work_items`, `operational_queue_definitions`, `operational_assignment_events`, and `operational_queue_views`, plus platform work-queue governance routes, agency work-queue routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It consolidates actionable work from existing requests, trips, offers, bookings, ticketing, EMDs, passenger services, documents, approvals, policy gaps, knowledge issues, disruptions, service cases, request tasks, operational timelines, pilot readiness issues, and workflow blockers without creating a duplicate task system, executing providers, running AI, sending messages, scheduling workers, bypassing agency isolation, or automating operational actions.

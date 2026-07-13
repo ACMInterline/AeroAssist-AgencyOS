@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, new_id
 
 
-PHASE_LABEL = "phase_54_1_operational_workflow_orchestration_foundation"
+PHASE_LABEL = "phase_54_2_agent_work_queue_assignment_foundation"
 OPERATIONAL_CONSTRAINT_COLLECTION = "operational_constraints"
 
 CONSTRAINT_STATUSES = [

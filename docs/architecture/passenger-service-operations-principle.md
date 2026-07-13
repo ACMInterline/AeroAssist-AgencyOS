@@ -71,6 +71,12 @@ Request / Trip / Offer / Booking / Ticket / EMD / Service -> Workflow Definition
 
 Operational workflow records store configurable definitions, agency instances, guard outcomes, warning acknowledgements, blockers, transition attempts, workflow events, and explicit adapter metadata. They do not replace request, trip, offer, booking, ticket, EMD, document, timeline, or passenger-service workflow services. Entity status synchronization remains disabled by default and requires future explicit adapters. The layer remains metadata-only and does not execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
 
+Phase 54.2 adds the Agent Work Queue as the canonical staff-action layer over existing operational metadata:
+
+Request / Trip / Offer / Booking / Ticket / EMD / Service / Document / Workflow -> Work Item -> Assignment Event -> Queue View
+
+Operational work items consolidate existing request tasks, workflow events, timeline-compatible context, workspace statuses, pilot readiness issues, and operational blockers into deterministic queues for agency staff. They do not create a second task system or a parallel workflow architecture. Platform can inspect queue governance metadata, while agency users perform scoped assignment actions with preserved actor history. The layer remains metadata-only and does not execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

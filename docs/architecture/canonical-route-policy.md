@@ -91,6 +91,8 @@ Phase 53.0 adds pilot readiness APIs only under `/api/platform/pilot-readiness/*
 
 Phase 54.1 adds operational workflow APIs only under `/api/platform/operational-workflows/*` and `/api/agencies/{agency_id}/operational-workflows/*`, plus frontend pages under `/platform/operational-workflows` and `/agency/operational-workflows`. It records metadata-only workflow definitions, instances, guard results, transition history, warnings, blockers, and events without route blocking, redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, automatic workflow execution, or existing entity status mutation without future explicit adapters.
 
+Phase 54.2 adds agent work queue APIs only under `/api/platform/work-queues/*` and `/api/agencies/{agency_id}/work-queue/*`, plus frontend pages under `/platform/work-queues` and `/agency/work-queue`. It records metadata-only operational work items, queue definitions, assignment events, and queue views without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate task systems, duplicate workflow architectures, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -179,6 +181,8 @@ Phase 54.1 adds operational workflow APIs only under `/api/platform/operational-
 | `/agent/workflow-engine` | `/agency/workflow-engine` |
 | `/admin/operational-workflows` | `/platform/operational-workflows` |
 | `/agent/operational-workflows` | `/agency/operational-workflows` |
+| `/admin/work-queues` | `/platform/work-queues` |
+| `/agent/work-queue` | `/agency/work-queue` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

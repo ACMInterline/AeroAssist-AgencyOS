@@ -182,7 +182,7 @@ def public_intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_39_5_saas_subscription_entitlement_foundation":
+    if health.get("phase") != "phase_54_2_agent_work_queue_assignment_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]
@@ -229,6 +229,7 @@ def main() -> int:
         raise AssertionError("Service passenger/segment relationships were not stored.")
 
     intake = post("/api/public/request-intakes", public_intake_payload(f"phase27.intake.{int(time.time())}@example.com"), expect=201)
+    request("PATCH", f"/api/request-intakes/{intake['intake']['id']}/triage", {"agency_id": agency_id}, OWNER_HEADERS)
     converted = post(f"/api/request-intakes/{intake['intake']['id']}/convert", {}, OWNER_HEADERS)
     converted_detail = get(f"/api/agencies/{converted['request']['agency_id']}/requests/{converted['request']['id']}", OWNER_HEADERS)
     if converted_detail["request"].get("source_intake_id") != intake["intake"]["id"]:

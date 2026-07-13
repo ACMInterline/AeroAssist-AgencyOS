@@ -15168,6 +15168,288 @@ class OperationalWorkflowWarningAcknowledgementRequest(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class OperationalWorkItem(BaseDocument):
+    agency_id: str
+    work_item_code: str
+    work_item_type: str
+    source_entity_type: str
+    source_entity_id: str
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    status: str = "open"
+    priority: str = "normal"
+    severity: str = "medium"
+    queue_code: str = "unassigned"
+    assigned_user_id: Optional[str] = None
+    assigned_team_code: Optional[str] = None
+    due_at: Optional[datetime] = None
+    sla_status: Optional[str] = None
+    blocker_status: str = "not_blocked"
+    client_impact: Optional[str] = None
+    internal_context_json: Dict[str, Any] = Field(default_factory=dict)
+    compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
+    source_fingerprint: Optional[str] = None
+    accepted_at: Optional[datetime] = None
+    accepted_by_user_id: Optional[str] = None
+    released_at: Optional[datetime] = None
+    blocked_at: Optional[datetime] = None
+    blocked_reason: Optional[str] = None
+    reopened_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    agent_work_queue_assignment_foundation: bool = True
+    canonical_operational_queue: bool = True
+    existing_task_system_preserved: bool = True
+    client_facing_context_hidden: bool = True
+    provider_integrations_disabled: bool = True
+    automation_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class OperationalWorkItemCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    work_item_code: Optional[str] = None
+    work_item_type: str
+    source_entity_type: str
+    source_entity_id: str
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    status: str = "open"
+    priority: str = "normal"
+    severity: str = "medium"
+    queue_code: str = "unassigned"
+    assigned_user_id: Optional[str] = None
+    assigned_team_code: Optional[str] = None
+    due_at: Optional[datetime] = None
+    sla_status: Optional[str] = None
+    blocker_status: str = "not_blocked"
+    client_impact: Optional[str] = None
+    internal_context_json: Dict[str, Any] = Field(default_factory=dict)
+    compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
+    source_fingerprint: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkItemUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    work_item_code: Optional[str] = None
+    work_item_type: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    status: Optional[str] = None
+    priority: Optional[str] = None
+    severity: Optional[str] = None
+    queue_code: Optional[str] = None
+    assigned_user_id: Optional[str] = None
+    assigned_team_code: Optional[str] = None
+    due_at: Optional[datetime] = None
+    sla_status: Optional[str] = None
+    blocker_status: Optional[str] = None
+    client_impact: Optional[str] = None
+    internal_context_json: Optional[Dict[str, Any]] = None
+    compatibility_mapping_json: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalWorkItemGenerateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    work_item_type: str
+    source_entity_type: str
+    source_entity_id: str
+    workflow_instance_id: Optional[str] = None
+    workflow_event_id: Optional[str] = None
+    request_task_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    title: str
+    summary: Optional[str] = None
+    priority: str = "normal"
+    severity: str = "medium"
+    queue_code: str = "unassigned"
+    assigned_user_id: Optional[str] = None
+    assigned_team_code: Optional[str] = None
+    due_at: Optional[datetime] = None
+    sla_status: Optional[str] = None
+    blocker_status: str = "not_blocked"
+    client_impact: Optional[str] = None
+    internal_context_json: Dict[str, Any] = Field(default_factory=dict)
+    compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
+    generation_reason: Optional[str] = None
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalWorkItemActionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    to_user_id: Optional[str] = None
+    to_team_code: Optional[str] = None
+    reason: Optional[str] = None
+    blocker_status: Optional[str] = None
+    due_at: Optional[datetime] = None
+    internal_context_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalBulkAssignmentRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    work_item_ids: List[str] = Field(default_factory=list)
+    to_user_id: Optional[str] = None
+    to_team_code: Optional[str] = None
+    reason: str
+    only_unassigned: bool = True
+    max_items: int = 50
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalQueueDefinition(BaseDocument):
+    agency_id: Optional[str] = None
+    queue_code: str
+    name: str
+    description: Optional[str] = None
+    entity_types: List[str] = Field(default_factory=list)
+    filter_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    assignment_strategy: str = "manual"
+    is_active: bool = True
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    agent_work_queue_assignment_foundation: bool = True
+    existing_task_system_preserved: bool = True
+    automatic_assignment_disabled_by_default: bool = True
+    human_authority_final: bool = True
+
+
+class OperationalQueueDefinitionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    queue_code: str
+    name: str
+    description: Optional[str] = None
+    entity_types: List[str] = Field(default_factory=list)
+    filter_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    assignment_strategy: str = "manual"
+    is_active: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalQueueDefinitionUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    queue_code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    entity_types: Optional[List[str]] = None
+    filter_json: Optional[Dict[str, Any]] = None
+    sort_json: Optional[Dict[str, Any]] = None
+    assignment_strategy: Optional[str] = None
+    is_active: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalAssignmentEvent(BaseDocument):
+    agency_id: str
+    work_item_id: str
+    event_type: str
+    from_user_id: Optional[str] = None
+    to_user_id: Optional[str] = None
+    from_team_code: Optional[str] = None
+    to_team_code: Optional[str] = None
+    reason: Optional[str] = None
+    actor_user_id: Optional[str] = None
+    payload_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    agent_work_queue_assignment_foundation: bool = True
+    preserve_actor_history: bool = True
+
+
+class OperationalQueueView(BaseDocument):
+    agency_id: Optional[str] = None
+    view_code: str
+    name: str
+    owner_scope: str = "agency"
+    owner_user_id: Optional[str] = None
+    owner_team_code: Optional[str] = None
+    queue_code: Optional[str] = None
+    filter_json: Dict[str, Any] = Field(default_factory=dict)
+    column_settings_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    visibility: str = "agency"
+    is_default: bool = False
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    agent_work_queue_assignment_foundation: bool = True
+
+
+class OperationalQueueViewCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    view_code: Optional[str] = None
+    name: str
+    owner_scope: str = "agency"
+    owner_user_id: Optional[str] = None
+    owner_team_code: Optional[str] = None
+    queue_code: Optional[str] = None
+    filter_json: Dict[str, Any] = Field(default_factory=dict)
+    column_settings_json: Dict[str, Any] = Field(default_factory=dict)
+    sort_json: Dict[str, Any] = Field(default_factory=dict)
+    visibility: str = "agency"
+    is_default: bool = False
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalQueueViewUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    view_code: Optional[str] = None
+    name: Optional[str] = None
+    owner_scope: Optional[str] = None
+    owner_user_id: Optional[str] = None
+    owner_team_code: Optional[str] = None
+    queue_code: Optional[str] = None
+    filter_json: Optional[Dict[str, Any]] = None
+    column_settings_json: Optional[Dict[str, Any]] = None
+    sort_json: Optional[Dict[str, Any]] = None
+    visibility: Optional[str] = None
+    is_default: Optional[bool] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

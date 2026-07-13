@@ -91,9 +91,13 @@ def intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_39_5_saas_subscription_entitlement_foundation":
+    if health.get("phase") != "phase_54_2_agent_work_queue_assignment_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
+    agencies = get("/api/agencies", OWNER_HEADERS)["items"]
+    if not agencies:
+        raise AssertionError("No agency available for intake conversion smoke.")
+    agency_id = agencies[0]["id"]
     get("/api/request-intakes", {"Authorization": "Bearer definitely-not-valid"}, 401)
 
     email = f"phase26.{int(time.time())}@example.com"
@@ -117,7 +121,7 @@ def main() -> int:
 
     triaged = patch(
         f"/api/request-intakes/{intake_id}/triage",
-        {"priority": "high", "triage_notes": "Smoke triage note"},
+        {"agency_id": agency_id, "priority": "high", "triage_notes": "Smoke triage note"},
         OWNER_HEADERS,
     )
     if triaged["intake"]["status"] != "triaged" or triaged["intake"]["priority"] != "high":
