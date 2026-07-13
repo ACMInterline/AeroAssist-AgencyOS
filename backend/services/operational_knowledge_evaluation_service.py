@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 OPERATIONAL_KNOWLEDGE_EVALUATION_COLLECTION = "operational_knowledge_evaluations"
 
 EVALUATION_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

@@ -83,6 +83,12 @@ Policy / Calendar -> Operational Deadline -> SLA Event -> Work Queue / Workflow 
 
 Operational deadlines calculate and explain due dates for requests, offers, booking/ticketing, passenger services, documents, payments, tasks, disruptions, claims, refunds, and changes. They preserve original due dates, manual extensions, pause/resume history, breach states, and escalation suggestions. The layer remains metadata-only and does not enforce routes, execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate actions.
 
+Phase 54.4 adds Task Automation and Dependency Orchestration as the safe task-template layer over existing request tasks:
+
+Trigger Event -> Task Template / Automation Rule -> Existing Request Task -> Task Dependency -> Work Queue / Workflow Metadata
+
+Task automation records create existing request-task metadata idempotently, link predecessor/successor task dependencies, mark blocked successors as waiting, and synchronize generated task metadata into the work queue. The layer remains metadata-only and does not run arbitrary code, create a duplicate task system, execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate operational execution.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

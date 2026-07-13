@@ -17,7 +17,7 @@ from services.feature_bundle_rollout_plan_service import PLAN_STAGES, FeatureBun
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES, FeatureBundleRolloutReadinessService
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 
 VIEW_COLLECTION = "rollout_dashboard_views"
 SNAPSHOT_COLLECTION = "rollout_dashboard_snapshots"

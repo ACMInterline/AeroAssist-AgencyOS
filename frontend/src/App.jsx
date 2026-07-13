@@ -55,6 +55,7 @@ import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstrai
 import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsPage"
 import AgentWorkQueuePage from "./pages/agency/AgentWorkQueuePage"
 import DeadlinesPage from "./pages/agency/DeadlinesPage"
+import AgencyTaskAutomationPage from "./pages/agency/TaskAutomationPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -144,6 +145,7 @@ import PlatformOperationalConstraintsPage from "./pages/platform/OperationalCons
 import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkflowsPage"
 import PlatformWorkQueueGovernancePage from "./pages/platform/WorkQueueGovernancePage"
 import PlatformSlaPoliciesPage from "./pages/platform/SlaPoliciesPage"
+import PlatformTaskAutomationPage from "./pages/platform/TaskAutomationPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -278,6 +280,7 @@ const routes = {
   "/platform/operational-workflows": PlatformOperationalWorkflowsPage,
   "/platform/work-queues": PlatformWorkQueueGovernancePage,
   "/platform/sla-policies": PlatformSlaPoliciesPage,
+  "/platform/task-automation": PlatformTaskAutomationPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -368,6 +371,7 @@ const routes = {
   "/agency/operational-workflows": AgencyOperationalWorkflowsPage,
   "/agency/work-queue": AgentWorkQueuePage,
   "/agency/deadlines": DeadlinesPage,
+  "/agency/task-automation": AgencyTaskAutomationPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

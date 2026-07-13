@@ -16,7 +16,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 SSR_OSI_WORKSPACE_COLLECTION = "ssr_osi_workspaces"
 
 SSR_OSI_OPERATIONAL_STATUSES = [item.value for item in SsrOsiOperationalStatus]

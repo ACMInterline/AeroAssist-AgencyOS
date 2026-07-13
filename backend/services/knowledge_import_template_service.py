@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgeImportTemplate, KnowledgeImportTemplateCreate, KnowledgeImportTemplateUpdate
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 FOUNDATION_PHASE_LABEL = "phase_52_2_knowledge_import_templates_foundation"
 KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION = "knowledge_import_templates"
 

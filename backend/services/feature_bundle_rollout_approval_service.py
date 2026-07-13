@@ -18,7 +18,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 
 APPROVAL_COLLECTION = "feature_bundle_rollout_approvals"
 NOTE_COLLECTION = "feature_bundle_rollout_approval_notes"

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -246,6 +246,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalSlaPolicy, OperationalDeadline, OperationalSlaEvent, OperationalBusinessCalendar, OperationalSlaDeadlineService, operational_sla_policies, operational_deadlines, operational_sla_events, operational_business_calendars, /api/platform/sla-policies, /api/agencies/{agency_id}/deadlines, /platform/sla-policies, /agency/deadlines",
         "status": "foundation adopted",
         "action": "Create the metadata-only SLA and operational deadline engine around existing queues, workflows, requests, offers, bookings, ticketing, passenger services, timelines, disruptions, and service cases. Phase 54.3 calculates and explains deadlines, preserves manual extensions, and records audit metadata without enforcing access, blocking routes, scheduling workers, calling providers, sending messages, or automating operational actions.",
+    },
+    {
+        "category": "Task Automation and Dependency Orchestration",
+        "concept": "Safe task template, dependency, rule, and automation run metadata",
+        "supplementary_concept": "task templates, task dependencies, automation rules, automation runs, idempotent task creation, dependency blocking/unblocking, work-queue synchronization, workflow-event metadata links",
+        "current_equivalent": "OperationalTaskTemplate, OperationalTaskDependency, OperationalTaskAutomationRule, OperationalTaskAutomationRun, TaskAutomationDependencyService, operational_task_templates, operational_task_dependencies, operational_task_automation_rules, operational_task_automation_runs, /api/platform/task-automation, /api/agencies/{agency_id}/task-automation, /platform/task-automation, /agency/task-automation",
+        "status": "foundation adopted",
+        "action": "Create metadata-only safe task automation and dependency orchestration on top of existing request tasks, work queues, SLA due dates, and workflow events. Phase 54.4 creates task metadata idempotently and records dependency/audit metadata without arbitrary code execution, provider execution, AI/LLM generation, sending messages, scheduling workers, duplicate task systems, or automatic operational execution.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -510,6 +518,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalSlaPolicy, OperationalDeadline, OperationalSlaEvent, OperationalBusinessCalendar, OperationalSlaDeadlineService, /api/platform/sla-policies, /api/agencies/{agency_id}/deadlines, /platform/sla-policies, /agency/deadlines",
         "status": "foundation adopted",
         "action": "Coordinate metadata-only operational deadlines for requests, offers, booking/ticketing, passenger services, documents, payments, disruptions, claims, refunds, and changes without enforcement, route blocking, workers, provider calls, sending, or automation.",
+    },
+    {
+        "category": "Task Automation and Dependency Orchestration",
+        "concept": "Task template and dependency metadata",
+        "supplementary_concept": "safe task templates, automation rules, run audit records, predecessor/successor dependencies, blocked-by relationships, ready task visibility, work queue synchronization",
+        "current_equivalent": "OperationalTaskTemplate, OperationalTaskDependency, OperationalTaskAutomationRule, OperationalTaskAutomationRun, TaskAutomationDependencyService, /api/platform/task-automation, /api/agencies/{agency_id}/task-automation, /platform/task-automation, /agency/task-automation",
+        "status": "foundation adopted",
+        "action": "Coordinate metadata-only safe task creation and dependency visibility over existing request tasks and queues without arbitrary code execution, provider execution, AI, workers, sending, duplicate task systems, or automatic operational execution.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -890,6 +906,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/work-queue", "agencyos": "/agency/work-queue"},
         {"supplementary": "/admin/sla-policies", "agencyos": "/platform/sla-policies"},
         {"supplementary": "/agent/deadlines", "agencyos": "/agency/deadlines"},
+        {"supplementary": "/admin/task-automation", "agencyos": "/platform/task-automation"},
+        {"supplementary": "/agent/task-automation", "agencyos": "/agency/task-automation"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
@@ -1249,6 +1267,8 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "End-to-end stabilization and pilot readiness foundation built in Phase 53.0",
             "Operational workflow orchestration foundation built in Phase 54.1",
             "Agent work queue and assignment foundation built in Phase 54.2",
+            "SLA and operational deadline engine foundation built in Phase 54.3",
+            "Task automation and dependency orchestration foundation built in Phase 54.4",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

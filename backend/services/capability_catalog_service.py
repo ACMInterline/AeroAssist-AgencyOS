@@ -7,7 +7,7 @@ from models import CapabilityCatalogEntry
 from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleService
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 
 CAPABILITY_COLLECTION = "capability_catalog"
 

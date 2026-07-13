@@ -7,7 +7,7 @@ from database import Database
 from models import ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 REFERENCE_DATA_DOMAINS_COLLECTION = "reference_data_domains"
 
 SUPPORTED_REFERENCE_DOMAIN_CODES = [

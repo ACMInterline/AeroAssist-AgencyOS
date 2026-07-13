@@ -16,7 +16,7 @@ from services.airline_knowledge_normalisation_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_54_3_sla_operational_deadline_engine_foundation"
+EXPECTED_PHASE = "phase_54_4_task_automation_dependency_orchestration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-knowledge-normalisation"
 

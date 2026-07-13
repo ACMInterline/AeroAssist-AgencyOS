@@ -15703,6 +15703,237 @@ class OperationalSlaEvent(BaseDocument):
     preserve_deadline_audit_history: bool = True
 
 
+class OperationalTaskTemplate(BaseDocument):
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    template_code: str
+    title_pattern: str
+    description_pattern: Optional[str] = None
+    related_entity_types: List[str] = Field(default_factory=list)
+    trigger_event: str
+    default_priority: str = "normal"
+    due_offset_minutes: Optional[int] = None
+    due_offset_hours: Optional[int] = None
+    due_offset_days: Optional[int] = None
+    assigned_role_strategy: Optional[str] = None
+    assigned_team_strategy: Optional[str] = None
+    required_capability: Optional[str] = None
+    dependency_template_codes: List[str] = Field(default_factory=list)
+    completion_conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    task_automation_dependency_orchestration_foundation: bool = True
+    existing_tasks_preserved: bool = True
+    arbitrary_code_execution_disabled: bool = True
+    automation_is_safe_task_creation_only: bool = True
+
+
+class OperationalTaskTemplateCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    template_code: Optional[str] = None
+    title_pattern: str
+    description_pattern: Optional[str] = None
+    related_entity_types: List[str] = Field(default_factory=list)
+    trigger_event: str
+    default_priority: str = "normal"
+    due_offset_minutes: Optional[int] = None
+    due_offset_hours: Optional[int] = None
+    due_offset_days: Optional[int] = None
+    assigned_role_strategy: Optional[str] = None
+    assigned_team_strategy: Optional[str] = None
+    required_capability: Optional[str] = None
+    dependency_template_codes: List[str] = Field(default_factory=list)
+    completion_conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "active"
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalTaskTemplateUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scope: Optional[str] = None
+    template_code: Optional[str] = None
+    title_pattern: Optional[str] = None
+    description_pattern: Optional[str] = None
+    related_entity_types: Optional[List[str]] = None
+    trigger_event: Optional[str] = None
+    default_priority: Optional[str] = None
+    due_offset_minutes: Optional[int] = None
+    due_offset_hours: Optional[int] = None
+    due_offset_days: Optional[int] = None
+    assigned_role_strategy: Optional[str] = None
+    assigned_team_strategy: Optional[str] = None
+    required_capability: Optional[str] = None
+    dependency_template_codes: Optional[List[str]] = None
+    completion_conditions: Optional[List[Dict[str, Any]]] = None
+    status: Optional[str] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalTaskDependency(BaseDocument):
+    agency_id: str
+    predecessor_task_id: str
+    successor_task_id: str
+    predecessor_template_code: Optional[str] = None
+    successor_template_code: Optional[str] = None
+    dependency_type: str = "finish_to_start"
+    status: str = "pending"
+    satisfied_at: Optional[datetime] = None
+    blocked_reason: Optional[str] = None
+    automation_run_id: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    task_automation_dependency_orchestration_foundation: bool = True
+    dependency_enforcement_is_advisory: bool = True
+
+
+class OperationalTaskDependencyCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    predecessor_task_id: str
+    successor_task_id: str
+    predecessor_template_code: Optional[str] = None
+    successor_template_code: Optional[str] = None
+    dependency_type: str = "finish_to_start"
+    status: str = "pending"
+    satisfied_at: Optional[datetime] = None
+    blocked_reason: Optional[str] = None
+    automation_run_id: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalTaskDependencyUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    dependency_type: Optional[str] = None
+    status: Optional[str] = None
+    satisfied_at: Optional[datetime] = None
+    blocked_reason: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalTaskAutomationRule(BaseDocument):
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    rule_code: str
+    name: str
+    trigger_event: str
+    conditions_json: Dict[str, Any] = Field(default_factory=dict)
+    generated_template_code: str
+    deduplication_key_pattern: str
+    enabled: bool = True
+    status: str = "active"
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    task_automation_dependency_orchestration_foundation: bool = True
+    arbitrary_code_execution_disabled: bool = True
+    safe_task_creation_only: bool = True
+
+
+class OperationalTaskAutomationRuleCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    scope: str = "platform"
+    rule_code: Optional[str] = None
+    name: str
+    trigger_event: str
+    conditions_json: Dict[str, Any] = Field(default_factory=dict)
+    generated_template_code: str
+    deduplication_key_pattern: Optional[str] = None
+    enabled: bool = True
+    status: str = "active"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalTaskAutomationRuleUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    scope: Optional[str] = None
+    rule_code: Optional[str] = None
+    name: Optional[str] = None
+    trigger_event: Optional[str] = None
+    conditions_json: Optional[Dict[str, Any]] = None
+    generated_template_code: Optional[str] = None
+    deduplication_key_pattern: Optional[str] = None
+    enabled: Optional[bool] = None
+    status: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class OperationalTaskAutomationRun(BaseDocument):
+    agency_id: str
+    run_reference: str
+    trigger_event: str
+    source_entity_type: str
+    source_entity_id: str
+    idempotency_key: str
+    event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    rules_matched: List[Dict[str, Any]] = Field(default_factory=list)
+    tasks_created: List[Dict[str, Any]] = Field(default_factory=list)
+    tasks_skipped: List[Dict[str, Any]] = Field(default_factory=list)
+    dependencies_created: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    status: str = "completed"
+    retry_of_run_id: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    task_automation_dependency_orchestration_foundation: bool = True
+    idempotent_safe_automation: bool = True
+    arbitrary_code_execution_disabled: bool = True
+
+
+class OperationalTaskAutomationRunRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    trigger_event: str
+    source_entity_type: str
+    source_entity_id: str
+    request_id: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    template_codes: Optional[List[str]] = None
+    retry_of_run_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalTaskDependencyActionRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    reason: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

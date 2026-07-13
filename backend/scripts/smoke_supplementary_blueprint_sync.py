@@ -9,7 +9,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_54_3_sla_operational_deadline_engine_foundation"
+EXPECTED_PHASE = "phase_54_4_task_automation_dependency_orchestration_foundation"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -49,6 +49,7 @@ REQUIRED_CATEGORIES = {
     "Operational Workflow Orchestration",
     "Agent Work Queue and Assignment",
     "SLA and Operational Deadline Engine",
+    "Task Automation and Dependency Orchestration",
     "Feature Bundle Rollout Readiness",
     "Feature Bundle Rollout Plans",
     "Feature Bundle Rollout Approvals",

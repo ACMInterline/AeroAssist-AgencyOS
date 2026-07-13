@@ -128,6 +128,22 @@ A Phase 54.3 metadata-only audit event for deadline lifecycle changes such as st
 
 A Phase 54.3 metadata-only calendar defining timezone, working days, working hours, holidays, and exceptions for advisory deadline calculations.
 
+## Operational Task Template
+
+A Phase 54.4 metadata-only reusable task pattern that describes a title, description, trigger event, default priority, due offset, assignment strategy, required capability, dependency template codes, completion conditions, and effective dates for safe creation of existing request tasks.
+
+## Operational Task Dependency
+
+A Phase 54.4 metadata-only predecessor/successor relationship between existing request tasks. It can mark successors as waiting until dependency metadata is satisfied or waived, but it does not execute work, enforce routes, or call providers.
+
+## Operational Task Automation Rule
+
+A Phase 54.4 metadata-only rule that matches a trigger event and event snapshot to a generated task template with an idempotency/deduplication key. It does not execute arbitrary code.
+
+## Operational Task Automation Run
+
+A Phase 54.4 metadata-only audit record that stores the trigger event, event snapshot, matched rules, tasks created or skipped, dependency records created, warnings, errors, retry lineage, and idempotency key for safe task creation.
+
 ## Golden Path Case
 
 A metadata-only passenger service scenario used to test whether the knowledge-production-to-offer-readiness lifecycle has enough structured evidence and operational coverage for pilot review. Sample templates are exposed but not auto-seeded.

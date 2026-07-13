@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION = "operational_rule_composer_rules"
 
 SUPPORTED_OPERATORS = [

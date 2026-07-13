@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,

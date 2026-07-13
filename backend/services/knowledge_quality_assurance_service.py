@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgeQualityAssuranceReview, KnowledgeQualityAssuranceReviewCreate, KnowledgeQualityAssuranceReviewUpdate
 
 
-PHASE_LABEL = "phase_54_3_sla_operational_deadline_engine_foundation"
+PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
 KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION = "knowledge_quality_assurance_reviews"
 
 QA_CHECKS = [
