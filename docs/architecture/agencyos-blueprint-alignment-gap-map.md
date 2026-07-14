@@ -143,3 +143,6 @@ Before implementing future phases, Codex should read and follow:
 - Treat current request/booking/invoice modules as existing foundations, not as data to be migrated or renamed.
 - Keep trip dossier and segment-scoped applicability foundations additive before attaching offer, booking, ticket, document, invoice, and portal workflows.
 - Do not execute external integrations until mirror provenance, raw-payload retention, reconciliation, and explicit provider authorization rules are implemented.
+# Phase 55.1 Alignment
+
+Airline identity enrichment is now aligned through a canonical-profile composition layer. Existing `airline_profiles` remain authoritative; Phase 55.1 closes structured identity, relationship, hub, operational-classification, distribution, service-desk, evidence, completeness, confidence, effective-date, and revision visibility gaps without duplicating airline masters. Live source acquisition, automatic identity merging, and operational execution remain intentionally out of scope.

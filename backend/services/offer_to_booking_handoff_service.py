@@ -26,7 +26,7 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
+PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
 
 OFFER_BOOKING_HANDOFFS_COLLECTION = "offer_booking_handoffs"
 OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION = "offer_booking_handoff_checks"

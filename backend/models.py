@@ -21612,6 +21612,180 @@ class AirlineIntelligenceProfileUpdate(BaseModel):
     governance_status: Optional[RulesGovernanceStatus] = None
 
 
+class AirlineMasterProfile(BaseDocument):
+    canonical_airline_id: str
+    commercial_name: Optional[str] = None
+    accounting_prefix_code: Optional[str] = None
+    airline_type: str = "unknown"
+    active_status: AirlineStatus = AirlineStatus.ACTIVE
+    source_reference_ids: List[str] = Field(default_factory=list)
+    evidence_status: str = "unknown"
+    confidence: KnowledgeConfidence = KnowledgeConfidence.LOW
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    version: int = 1
+    last_verified_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineMasterProfileCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    canonical_airline_id: str
+    commercial_name: Optional[str] = None
+    accounting_prefix_code: Optional[str] = None
+    airline_type: str = "unknown"
+    active_status: AirlineStatus = AirlineStatus.ACTIVE
+    source_reference_ids: List[str] = Field(default_factory=list)
+    evidence_status: str = "unknown"
+    confidence: KnowledgeConfidence = KnowledgeConfidence.LOW
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    last_verified_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineMasterProfileUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    commercial_name: Optional[str] = None
+    accounting_prefix_code: Optional[str] = None
+    airline_type: Optional[str] = None
+    active_status: Optional[AirlineStatus] = None
+    source_reference_ids: Optional[List[str]] = None
+    evidence_status: Optional[str] = None
+    confidence: Optional[KnowledgeConfidence] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    review_status: Optional[RulesGovernanceStatus] = None
+    last_verified_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineIdentityAlias(BaseDocument):
+    canonical_airline_id: str
+    alias: str
+    normalized_alias: str
+    alias_type: str = "commercial_name"
+    source_reference_id: Optional[str] = None
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineGroupRelationship(BaseDocument):
+    canonical_airline_id: str
+    related_airline_id: Optional[str] = None
+    related_airline_name: Optional[str] = None
+    relationship_type: str
+    relationship_direction: str = "outbound"
+    codeshare_participation: Optional[bool] = None
+    interline_participation: Optional[bool] = None
+    notes: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineHubAssignment(BaseDocument):
+    canonical_airline_id: str
+    airport_code: str
+    assignment_type: str = "primary_hub"
+    region: Optional[str] = None
+    notes: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineOperationalClassification(BaseDocument):
+    canonical_airline_id: str
+    classifications: List[str] = Field(default_factory=list)
+    route_regions: List[str] = Field(default_factory=list)
+    domestic_operation: Optional[bool] = None
+    international_operation: Optional[bool] = None
+    short_haul: Optional[bool] = None
+    medium_haul: Optional[bool] = None
+    long_haul: Optional[bool] = None
+    operation_profile: str = "unknown"
+    aircraft_families: List[str] = Field(default_factory=list)
+    restricted_service_areas: List[str] = Field(default_factory=list)
+    source_reference_ids: List[str] = Field(default_factory=list)
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineDistributionSummary(BaseDocument):
+    canonical_airline_id: str
+    gds_participation: List[str] = Field(default_factory=list)
+    ndc_available: Optional[bool] = None
+    direct_web_servicing: Optional[bool] = None
+    call_center_servicing: Optional[bool] = None
+    agency_support_available: Optional[bool] = None
+    airport_only_servicing: Optional[bool] = None
+    ticket_stock: Optional[str] = None
+    validating_carrier_capability: Optional[bool] = None
+    emd_support_summary: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineServiceDeskSummary(BaseDocument):
+    canonical_airline_id: str
+    desk_type: str
+    available: Optional[bool] = None
+    regions: List[str] = Field(default_factory=list)
+    contact_ids: List[str] = Field(default_factory=list)
+    service_summary: Optional[str] = None
+    internal_notes: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+
+
+class AirlineProfileEvidenceLink(BaseDocument):
+    canonical_airline_id: str
+    target_type: str = "profile"
+    target_id: Optional[str] = None
+    source_collection: str
+    source_record_id: str
+    evidence_status: str = "unverified"
+    confidence: KnowledgeConfidence = KnowledgeConfidence.MEDIUM
+    review_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    conflict_status: str = "none"
+    field_paths: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    last_verified_at: Optional[datetime] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineProfileRevision(BaseDocument):
+    canonical_airline_id: str
+    profile_id: str
+    version: int
+    change_type: str
+    changed_fields: List[str] = Field(default_factory=list)
+    before_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    after_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    change_reason: Optional[str] = None
+    actor_user_id: Optional[str] = None
+
+
 class AirlineContact(BaseDocument):
     airline_id: str
     contact_type: str

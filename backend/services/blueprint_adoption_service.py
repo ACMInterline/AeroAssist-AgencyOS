@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
+PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -22,6 +22,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_profiles, airline_intelligence_profiles, airline_contacts, airline_fleet_types, aircraft_tail_numbers, aircraft_configurations, aircraft_seatmaps, airline_routes, airline_fare_families, airline_rbd_matrix_rows, airline_fare_rules, airline_ancillaries, airline_interline_agreements, airline_distribution_profiles, airline_pss_parameters, airline_gds_parameters, unified_exception_rules, airline_intelligence_data_packs with staged pack items, validation issues, import runs, review notes, and coverage snapshots, plus data pack review, promotion-readiness, knowledge versioning, publication-control metadata, and agency consumption bridge metadata",
         "status": "foundation adopted",
         "action": "Use Phase 39.0 data packs, Phase 39.1 review records, Phase 39.2 knowledge versions, and Phase 39.3 agency consumption bridge records as metadata-only staging, review, publication-control, and safe-use evidence before any future explicit promotion into operational airline tables.",
+    },
+    {
+        "category": "Airline Master Profile Intelligence",
+        "concept": "Canonical enriched airline identity and operational profile",
+        "supplementary_concept": "airline identity, aliases, airline groups, relationships, hubs, classification, distribution, service desks, evidence, confidence, revisions",
+        "current_equivalent": "airline_profiles as canonical identity plus airline_master_profiles, airline_identity_aliases, airline_group_relationships, airline_hub_assignments, airline_operational_classifications, airline_distribution_summaries, airline_service_desk_summaries, airline_profile_evidence_links, airline_profile_revisions, /api/platform/airline-master-profiles, /api/agencies/{agency_id}/airline-master-profiles, /platform/airline-master-profiles, /agency/airline-profiles",
+        "status": "foundation adopted",
+        "action": "Enrich the existing canonical airline identity with governed metadata, effective dates, evidence, completeness, confidence, and revisions. Do not create duplicate airline masters; expose only approved or published sanitized views to agencies.",
     },
     {
         "category": "Airline Intelligence Data Packs",

@@ -207,3 +207,14 @@ A metadata-only reusable vocabulary of measurable service fields, such as specie
 ## Request Segment Service Scope
 
 A Phase 51.2 metadata-only record that preserves segment-first intake precision by joining one passenger context, one request segment context, and one requested service context. It can include pet and special item metadata, operational flags, knowledge links, readiness, trip conversion metadata, request snapshots, decision traces, and operational notes. It does not evaluate policy, calculate pricing, search, book, ticket, issue EMDs, call providers, use AI/LLM logic, run workers, send automatically, or convert trips automatically.
+# Phase 55.1 Terms
+
+**Airline Master Profile**: The governed enrichment view composed around an existing canonical `airline_profiles.id`; it is not a separate airline catalogue.
+
+**Canonical Airline ID**: The stable id of the existing `airline_profiles` record used by airline intelligence, evidence, capability, and operational profile links.
+
+**Airline Identity Alias**: A governed former name, commercial name, code, or other identifier that resolves to one canonical airline identity.
+
+**Profile Completeness**: A deterministic measure of known identity, network, operations, servicing, governance, evidence, and effective-date fields. Missing data remains explicit.
+
+**Profile Confidence**: A deterministic advisory score based on governed confidence, completeness, verified evidence, and unresolved evidence conflicts.

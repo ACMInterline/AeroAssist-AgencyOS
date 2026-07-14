@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
+PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -56,6 +56,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "cms", "label": "Website / CMS", "href": "/agency/website", "aliases": ["cms", "website", "website_cms"]},
     {"key": "cms_media", "label": "CMS Media", "href": "/agency/website/media", "aliases": ["cms_media", "media_library", "cms"]},
     {"key": "airline_intelligence", "label": "Airline Intelligence", "href": "/agency/airline-policy-library", "aliases": ["airline_intelligence", "policies", "service_mechanics", "service_taxonomy"]},
+    {"key": "airline_profiles", "label": "Airline Profiles", "href": "/agency/airline-profiles", "aliases": ["airline_profiles", "airline_master_profiles", "airline_intelligence"]},
     {"key": "airline_coverage", "label": "Airline Coverage", "href": "/agency/airline-intelligence-coverage", "aliases": ["airline_coverage", "data_pack_coverage", "airline_intelligence"]},
     {"key": "knowledge_versions", "label": "Knowledge Versions", "href": "/agency/airline-intelligence-knowledge-versions", "aliases": ["knowledge_versions", "airline_intelligence"]},
     {"key": "airline_intelligence_consumption", "label": "Airline Intelligence Usage", "href": "/agency/airline-intelligence-consumption", "aliases": ["airline_intelligence_consumption", "usage_readiness", "airline_intelligence"]},

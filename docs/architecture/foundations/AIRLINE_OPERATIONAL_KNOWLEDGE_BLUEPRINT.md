@@ -184,3 +184,6 @@ Decision packs are advisory. They do not execute bookings, issue tickets or EMDs
 ## North Star
 
 AeroAssist first evaluates which airlines can safely and correctly fulfil the passenger's complete operational service profile, then recommends itinerary options.
+# Phase 55.1 Profile Context
+
+The Airline Master Profile Intelligence layer supplies canonical airline identity and governed operational context to the Airline Operational Knowledge Blueprint. It reuses `airline_profiles.id`, keeps evidence separate from normalized profile metadata, preserves conflicts and effective dates, and exposes only approved or published profile context to agencies. Policy, Pricing, Capability, Evidence, and Operational Constraints / Procedures remain distinct knowledge pillars.

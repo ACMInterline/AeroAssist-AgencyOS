@@ -236,3 +236,6 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 - Policy learning now starts with governed source ingestion and reviewed approved knowledge records; later promotion into canonical rules/services engines should remain explicit and audited.
 - Field profiles are agency-owned display configuration over platform-owned canonical fields; custom agency questions must remain in `agency_custom_fields`.
 - GDS parser runs and airline policy sources/extraction runs link to review summary document contexts.
+# Phase 55.1 Airline Master Profile Intelligence
+
+Canonical airline identity remains `airline_profiles`. Phase 55.1 adds global governed enrichment collections: `airline_master_profiles`, `airline_identity_aliases`, `airline_group_relationships`, `airline_hub_assignments`, `airline_operational_classifications`, `airline_distribution_summaries`, `airline_service_desk_summaries`, `airline_profile_evidence_links`, and `airline_profile_revisions`. Every record links through `canonical_airline_id`; none is an agency-owned or parallel airline master. The service composes these records with existing `airline_intelligence_profiles`, contacts, routes, distribution, capabilities, brand assets, and reference data.

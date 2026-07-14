@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
+PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
 
 OPERATIONAL_SLA_POLICIES_COLLECTION = "operational_sla_policies"
 OPERATIONAL_DEADLINES_COLLECTION = "operational_deadlines"

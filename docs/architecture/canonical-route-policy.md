@@ -266,3 +266,6 @@ Phase 54.9 adds workflow maturity APIs only under `/api/platform/workflow-maturi
 ## Boundary
 
 This policy does not redesign the app shell, introduce new route roots, or change existing tenant authorization. It records that `/platform` and `/agency` are the canonical user-facing roots for AeroAssist AgencyOS.
+# Phase 55.1 Airline Master Profiles
+
+Phase 55.1 uses `/api/platform/airline-master-profiles` for platform governance and `/api/agencies/{agency_id}/airline-master-profiles` for tenant-checked, approved/published read-only consumption. UI routes are `/platform/airline-master-profiles` and `/agency/airline-profiles`. No `/admin/*` or `/agent/*` route family is introduced.

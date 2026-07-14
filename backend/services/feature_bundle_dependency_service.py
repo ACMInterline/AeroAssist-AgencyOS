@@ -14,7 +14,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
+PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
 
 DEPENDENCY_COLLECTION = "feature_bundle_dependencies"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"
