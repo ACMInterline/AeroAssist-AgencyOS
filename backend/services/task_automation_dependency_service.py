@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
+PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

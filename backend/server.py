@@ -13,6 +13,7 @@ from routers import agency_agent_work_queues, agency_document_workspaces, agency
 from routers import agency_after_sales_workflows, platform_after_sales_workflows
 from routers import agency_operational_workflow_maturity, agency_operations_command_center, platform_operational_workflow_maturity, platform_operations_governance
 from routers import agency_airline_master_profiles, platform_airline_master_profiles
+from routers import agency_airline_policy_evidence_governance, platform_airline_policy_evidence_governance
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
@@ -71,7 +72,8 @@ from services.offer_to_booking_handoff_service import BOOKING_EXECUTION_INSTRUCT
 from services.after_sales_workflow_service import AFTER_SALES_CASES_COLLECTION, AFTER_SALES_CASE_ITEMS_COLLECTION, AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION, AFTER_SALES_DECISIONS_COLLECTION, AFTER_SALES_FINANCIAL_IMPACTS_COLLECTION, AFTER_SALES_RESOLUTIONS_COLLECTION, CASE_STATUSES as AFTER_SALES_CASE_STATUSES, CASE_TYPES as AFTER_SALES_CASE_TYPES, COMMUNICATION_TYPES as AFTER_SALES_COMMUNICATION_TYPES, DECISION_STATUSES as AFTER_SALES_DECISION_STATUSES, FINANCIAL_IMPACT_TYPES as AFTER_SALES_FINANCIAL_IMPACT_TYPES, RESOLUTION_STATUSES as AFTER_SALES_RESOLUTION_STATUSES
 from services.operations_command_center_service import VIEW_TYPES as OPERATIONS_COMMAND_CENTER_VIEW_TYPES, OperationsCommandCenterService
 from services.operational_workflow_maturity_service import GOLDEN_PATH_STAGES as OPERATIONAL_MATURITY_GOLDEN_PATH_STAGES, MATURITY_DIMENSIONS as OPERATIONAL_MATURITY_DIMENSIONS, TEST_CASE_TEMPLATES as OPERATIONAL_MATURITY_TEST_CASE_TEMPLATES, OperationalWorkflowMaturityService
-from services.airline_master_profile_intelligence_service import PHASE_LABEL, AirlineMasterProfileIntelligenceService
+from services.airline_master_profile_intelligence_service import AirlineMasterProfileIntelligenceService
+from services.airline_policy_evidence_governance_service import PHASE_LABEL, AirlinePolicyEvidenceGovernanceService
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -93,7 +95,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 55.1 airline master profile intelligence foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 55.2 airline policy evidence and source governance foundation.",
 )
 
 app.add_middleware(
@@ -1861,6 +1863,7 @@ async def readiness() -> dict:
     operations_command_center_snapshot = await OperationsCommandCenterService(database).platform_dashboard()
     operational_workflow_maturity_snapshot = await OperationalWorkflowMaturityService(database).platform_dashboard()
     airline_master_profile_coverage = await AirlineMasterProfileIntelligenceService(database).coverage()
+    airline_evidence_coverage = await AirlinePolicyEvidenceGovernanceService(database).coverage()
     operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
     operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
     operational_deadline_paused_count = len([item for item in operational_deadline_records if item.get("status") == "paused"])
@@ -4841,6 +4844,40 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 55.1 enriches the existing canonical airline_profiles identity with governed aliases, relationships, hubs, operational classification, distribution, service desks, evidence, confidence, effective dates, and revisions. Agency consumption is read-only and limited to approved or published metadata; internal notes and restricted evidence references are excluded.",
         },
+        "airline_policy_evidence_source_governance_foundation": {
+            "airline_policy_evidence_source_governance_enabled": True,
+            "canonical_evidence_governance_enabled": True,
+            "raw_source_truth_preserved": True,
+            "normalized_assertions_separate": True,
+            "source_registry_enabled": True,
+            "artifact_registration_enabled": True,
+            "assertion_registration_enabled": True,
+            "knowledge_object_linking_enabled": True,
+            "conflict_detection_enabled": True,
+            "conflicting_sources_preserved": True,
+            "conflict_review_resolution_enabled": True,
+            "supersede_without_destroying_enabled": True,
+            "source_authority_assessment_enabled": True,
+            "confidence_calculation_enabled": True,
+            "freshness_assessment_enabled": True,
+            "unsupported_knowledge_detection_enabled": True,
+            "evidence_trace_enabled": True,
+            "agency_safe_evidence_summary_enabled": True,
+            "restricted_evidence_protected": True,
+            "platform_evidence_governance_enabled": True,
+            "agency_evidence_read_only_enabled": True,
+            "physical_evidence_deletion_disabled": True,
+            "automatic_production_seeding_disabled": True,
+            "automatic_extraction_disabled": True,
+            "scraping_disabled": True,
+            "external_api_calls_disabled": True,
+            "provider_execution_disabled": True,
+            "ai_disabled": True,
+            "metadata_only": True,
+            **airline_evidence_coverage,
+            "readiness_required": False,
+            "diagnostic": "Phase 55.2 governs airline evidence sources, artifacts, assertions, links, reviews, conflicts, freshness, and access classifications around existing raw acquisition and policy source records. Conflicts and superseded evidence remain retained. Agencies receive only approved, agency-visible summaries without restricted URLs, attachments, internal notes, or raw source locations.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -6840,6 +6877,7 @@ app.include_router(platform_after_sales_workflows.router)
 app.include_router(platform_operations_governance.router)
 app.include_router(platform_operational_workflow_maturity.router)
 app.include_router(platform_airline_master_profiles.router)
+app.include_router(platform_airline_policy_evidence_governance.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -6942,6 +6980,7 @@ app.include_router(agency_after_sales_workflows.router)
 app.include_router(agency_operations_command_center.router)
 app.include_router(agency_operational_workflow_maturity.router)
 app.include_router(agency_airline_master_profiles.router)
+app.include_router(agency_airline_policy_evidence_governance.router)
 app.include_router(agency_passenger_service_workflows.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)

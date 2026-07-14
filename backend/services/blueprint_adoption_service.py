@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
+PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -30,6 +30,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_profiles as canonical identity plus airline_master_profiles, airline_identity_aliases, airline_group_relationships, airline_hub_assignments, airline_operational_classifications, airline_distribution_summaries, airline_service_desk_summaries, airline_profile_evidence_links, airline_profile_revisions, /api/platform/airline-master-profiles, /api/agencies/{agency_id}/airline-master-profiles, /platform/airline-master-profiles, /agency/airline-profiles",
         "status": "foundation adopted",
         "action": "Enrich the existing canonical airline identity with governed metadata, effective dates, evidence, completeness, confidence, and revisions. Do not create duplicate airline masters; expose only approved or published sanitized views to agencies.",
+    },
+    {
+        "category": "Airline Policy Evidence Governance",
+        "concept": "Canonical cross-domain source and assertion provenance",
+        "supplementary_concept": "evidence source, artifact, assertion, link, review, conflict, freshness, access classification, unsupported knowledge",
+        "current_equivalent": "airline_evidence_sources, airline_evidence_artifacts, airline_evidence_assertions, airline_evidence_links, airline_evidence_reviews, airline_evidence_conflicts, airline_evidence_freshness_assessments, airline_evidence_access_classifications, /api/platform/airline-evidence, /api/agencies/{agency_id}/airline-evidence, /platform/airline-evidence, /agency/airline-evidence",
+        "status": "foundation adopted",
+        "action": "Govern evidence around existing raw acquisition and policy sources, preserve conflicts and superseded truth, and expose only approved sanitized agency summaries without scraping, AI extraction, provider calls, physical deletion, or automatic publication.",
     },
     {
         "category": "Airline Intelligence Data Packs",

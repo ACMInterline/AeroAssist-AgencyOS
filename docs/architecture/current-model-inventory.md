@@ -239,3 +239,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 # Phase 55.1 Airline Master Profile Intelligence
 
 Canonical airline identity remains `airline_profiles`. Phase 55.1 adds global governed enrichment collections: `airline_master_profiles`, `airline_identity_aliases`, `airline_group_relationships`, `airline_hub_assignments`, `airline_operational_classifications`, `airline_distribution_summaries`, `airline_service_desk_summaries`, `airline_profile_evidence_links`, and `airline_profile_revisions`. Every record links through `canonical_airline_id`; none is an agency-owned or parallel airline master. The service composes these records with existing `airline_intelligence_profiles`, contacts, routes, distribution, capabilities, brand assets, and reference data.
+
+## Phase 55.2 Airline Evidence Governance
+
+Phase 55.2 adds `airline_evidence_sources`, `airline_evidence_artifacts`, `airline_evidence_assertions`, `airline_evidence_links`, `airline_evidence_reviews`, `airline_evidence_conflicts`, `airline_evidence_freshness_assessments`, and `airline_evidence_access_classifications`. These records govern provenance around existing `airline_policy_sources`, `airline_knowledge_acquisitions`, and `airline_knowledge_sources`; they do not replace raw source records. Links cover profile fields, policies, pricing formulas, operational rules, capabilities, distribution/PSS/GDS facts, interline/codeshare rules, contacts, knowledge items, and publications.

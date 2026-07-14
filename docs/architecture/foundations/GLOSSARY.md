@@ -218,3 +218,13 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Profile Completeness**: A deterministic measure of known identity, network, operations, servicing, governance, evidence, and effective-date fields. Missing data remains explicit.
 
 **Profile Confidence**: A deterministic advisory score based on governed confidence, completeness, verified evidence, and unresolved evidence conflicts.
+
+**Evidence Source Governance**: The authority, dating, freshness, access, review, supersession, and conflict metadata applied around retained raw source truth.
+
+**Evidence Assertion**: A structured claim derived or registered from one source and optionally one artifact. It remains separate from the policy, price, capability, or rule it supports.
+
+**Evidence Conflict**: A retained record of disagreeing assertions, including source ids, values, route/channel context, review status, and resolution metadata. Resolution never deletes the underlying source truth.
+
+**Evidence Freshness**: A deterministic advisory assessment based on capture, review, effective, expiry, and supersession dates.
+
+**Unsupported Knowledge**: A canonical knowledge record with no active Phase 55.2 evidence link; it requires manual review rather than automatic rejection or execution.

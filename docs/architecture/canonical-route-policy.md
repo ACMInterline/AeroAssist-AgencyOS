@@ -269,3 +269,7 @@ This policy does not redesign the app shell, introduce new route roots, or chang
 # Phase 55.1 Airline Master Profiles
 
 Phase 55.1 uses `/api/platform/airline-master-profiles` for platform governance and `/api/agencies/{agency_id}/airline-master-profiles` for tenant-checked, approved/published read-only consumption. UI routes are `/platform/airline-master-profiles` and `/agency/airline-profiles`. No `/admin/*` or `/agent/*` route family is introduced.
+
+## Phase 55.2 Airline Evidence
+
+Phase 55.2 uses `/api/platform/airline-evidence` for evidence governance and `/api/agencies/{agency_id}/airline-evidence` for tenant-checked, approved read-only summaries. UI routes are `/platform/airline-evidence` and `/agency/airline-evidence`. No alternate `/admin/*` or `/agent/*` root is introduced.

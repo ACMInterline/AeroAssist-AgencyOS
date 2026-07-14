@@ -1771,3 +1771,7 @@ Phase 1 implements the platform and agency workspace foundation. Phase 2 adds CR
 # Phase 55.1 Airline Master Profile Intelligence
 
 Phase 55.1 enriches the existing canonical `airline_profiles` identity with governed airline aliases, relationships, hubs, operational classification, distribution, service desks, evidence, effective dates, confidence, completeness, and revision history. Platform governance is available at `/platform/airline-master-profiles`; agencies receive approved or published read-only profiles at `/agency/airline-profiles`, with internal notes and restricted source details removed. See [Airline Master Profile Intelligence Foundation](docs/architecture/airline-master-profile-intelligence-foundation.md).
+
+## Phase 55.2 Airline Policy Evidence And Source Governance
+
+Phase 55.2 provides canonical cross-domain evidence provenance, assertion links, authority and confidence assessment, freshness, unsupported-knowledge diagnostics, conflict preservation, review, and access governance. Existing acquisition and policy records remain raw source truth. Platform governance is available at `/platform/airline-evidence`; agencies receive approved read-only summaries at `/agency/airline-evidence`. See [Airline Policy Evidence And Source Governance Foundation](docs/architecture/airline-policy-evidence-source-governance-foundation.md).

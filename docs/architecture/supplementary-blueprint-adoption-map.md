@@ -381,3 +381,7 @@ Phase 50.5 recognizes the Airline Operational Capability Matrix as the metadata 
 # Phase 55.1 Airline Master Profile Intelligence
 
 The supplementary airline catalogue concept is adopted by enriching the existing canonical `airline_profiles` record rather than adding another airline master. Phase 55.1 links aliases, group and operating relationships, hubs, classification, distribution, service desks, evidence, and revisions through `canonical_airline_id`. Canonical routes are `/platform/airline-master-profiles` and `/agency/airline-profiles`; agency visibility is approved/published and read-only.
+
+## Phase 55.2 Airline Evidence Governance
+
+The supplementary evidence and source concepts are adopted through canonical governance wrappers around existing raw airline acquisition and policy sources. Artifacts, assertions, links, reviews, conflicts, freshness assessments, and access classifications support all airline knowledge domains without duplicating or deleting source truth. Platform routes govern evidence; agency routes expose approved sanitized summaries only.

@@ -32,7 +32,7 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
+PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 
 AFTER_SALES_CASES_COLLECTION = "after_sales_cases"
 AFTER_SALES_CASE_ITEMS_COLLECTION = "after_sales_case_items"

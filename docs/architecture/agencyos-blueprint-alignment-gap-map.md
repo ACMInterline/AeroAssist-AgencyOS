@@ -146,3 +146,7 @@ Before implementing future phases, Codex should read and follow:
 # Phase 55.1 Alignment
 
 Airline identity enrichment is now aligned through a canonical-profile composition layer. Existing `airline_profiles` remain authoritative; Phase 55.1 closes structured identity, relationship, hub, operational-classification, distribution, service-desk, evidence, completeness, confidence, effective-date, and revision visibility gaps without duplicating airline masters. Live source acquisition, automatic identity merging, and operational execution remain intentionally out of scope.
+
+## Phase 55.2 Alignment
+
+Cross-domain airline provenance is now aligned through evidence sources, artifacts, assertions, links, reviews, conflicts, freshness, and access classifications. Existing source intake remains canonical raw truth. The remaining gaps are real source population, human governance capacity, and future explicitly authorized import tooling; scraping, AI extraction, provider calls, and automatic conflict resolution remain out of scope.

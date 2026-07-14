@@ -21786,6 +21786,214 @@ class AirlineProfileRevision(BaseDocument):
     actor_user_id: Optional[str] = None
 
 
+class AirlineEvidenceSource(BaseDocument):
+    scope: str = "platform"
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    source_reference: str
+    source_type: str
+    title: str
+    source_url: Optional[str] = None
+    source_owner: Optional[str] = None
+    raw_source_collection: Optional[str] = None
+    raw_source_record_id: Optional[str] = None
+    captured_at: datetime = Field(default_factory=now_utc)
+    publication_date: Optional[date] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    expiry_date: Optional[date] = None
+    review_due_date: Optional[date] = None
+    language: str = "en"
+    jurisdiction: Optional[str] = None
+    checksum: Optional[str] = None
+    confidence: str = "unknown"
+    authority_level: str = "unknown"
+    evidence_status: str = "draft"
+    accessibility: str = "internal_restricted"
+    access_classification_id: Optional[str] = None
+    superseded: bool = False
+    superseded_by_source_id: Optional[str] = None
+    supersedes_source_ids: List[str] = Field(default_factory=list)
+    reviewer_user_id: Optional[str] = None
+    review_decision: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceSourceCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    scope: str = "platform"
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    source_reference: Optional[str] = None
+    source_type: str
+    title: str
+    source_url: Optional[str] = None
+    source_owner: Optional[str] = None
+    raw_source_collection: Optional[str] = None
+    raw_source_record_id: Optional[str] = None
+    captured_at: Optional[datetime] = None
+    publication_date: Optional[date] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    expiry_date: Optional[date] = None
+    review_due_date: Optional[date] = None
+    language: str = "en"
+    jurisdiction: Optional[str] = None
+    checksum: Optional[str] = None
+    confidence: str = "unknown"
+    authority_level: str = "unknown"
+    evidence_status: str = "draft"
+    accessibility: str = "internal_restricted"
+    access_classification_id: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceSourceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: Optional[str] = None
+    source_url: Optional[str] = None
+    source_owner: Optional[str] = None
+    publication_date: Optional[date] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    expiry_date: Optional[date] = None
+    review_due_date: Optional[date] = None
+    language: Optional[str] = None
+    jurisdiction: Optional[str] = None
+    checksum: Optional[str] = None
+    confidence: Optional[str] = None
+    authority_level: Optional[str] = None
+    evidence_status: Optional[str] = None
+    accessibility: Optional[str] = None
+    access_classification_id: Optional[str] = None
+    reviewer_user_id: Optional[str] = None
+    review_decision: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceArtifact(BaseDocument):
+    agency_id: Optional[str] = None
+    source_id: str
+    artifact_reference: str
+    artifact_type: str
+    title: Optional[str] = None
+    storage_reference: Optional[str] = None
+    file_name: Optional[str] = None
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    checksum: Optional[str] = None
+    language: Optional[str] = None
+    accessibility: str = "internal_restricted"
+    access_classification_id: Optional[str] = None
+    captured_at: datetime = Field(default_factory=now_utc)
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceAssertion(BaseDocument):
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    source_id: str
+    artifact_id: Optional[str] = None
+    assertion_reference: str
+    assertion_type: str
+    assertion_key: str
+    assertion_title: Optional[str] = None
+    excerpt: Optional[str] = None
+    structured_value: Any = None
+    unit: Optional[str] = None
+    distribution_channel: Optional[str] = None
+    route_scope: Optional[str] = None
+    service_family: Optional[str] = None
+    jurisdiction: Optional[str] = None
+    language: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    confidence: str = "unknown"
+    authority_level: str = "unknown"
+    evidence_status: str = "draft"
+    accessibility: str = "internal_restricted"
+    superseded: bool = False
+    superseded_by_assertion_id: Optional[str] = None
+    supersedes_assertion_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceLink(BaseDocument):
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    source_id: str
+    assertion_id: Optional[str] = None
+    target_type: str
+    target_id: str
+    target_field_path: Optional[str] = None
+    link_status: str = "active"
+    agency_visible: bool = False
+    client_visible: bool = False
+    effective_from: Optional[date] = None
+    effective_to: Optional[date] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceReview(BaseDocument):
+    agency_id: Optional[str] = None
+    source_id: Optional[str] = None
+    assertion_id: Optional[str] = None
+    conflict_id: Optional[str] = None
+    review_type: str
+    review_status: str = "under_review"
+    review_decision: Optional[str] = None
+    reviewer_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceConflict(BaseDocument):
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    conflict_reference: str
+    conflict_type: str
+    assertion_key: str
+    source_ids: List[str] = Field(default_factory=list)
+    assertion_ids: List[str] = Field(default_factory=list)
+    conflicting_values: List[Any] = Field(default_factory=list)
+    distribution_channels: List[str] = Field(default_factory=list)
+    route_scopes: List[str] = Field(default_factory=list)
+    status: str = "detected"
+    accepted_assertion_ids: List[str] = Field(default_factory=list)
+    resolution_summary: Optional[str] = None
+    reviewer_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    source_truth_preserved: bool = True
+    internal_notes: Optional[str] = None
+
+
+class AirlineEvidenceFreshnessAssessment(BaseDocument):
+    agency_id: Optional[str] = None
+    source_id: Optional[str] = None
+    assertion_id: Optional[str] = None
+    assessed_at: datetime = Field(default_factory=now_utc)
+    freshness_status: str = "unknown"
+    age_days: Optional[int] = None
+    review_due_date: Optional[date] = None
+    effective_to: Optional[date] = None
+    explanation: str
+    assessed_by_user_id: Optional[str] = None
+
+
+class AirlineEvidenceAccessClassification(BaseDocument):
+    classification_code: str
+    name: str
+    description: Optional[str] = None
+    agency_visible: bool = False
+    client_visible: bool = False
+    attachment_visible: bool = False
+    internal_only: bool = True
+    active: bool = True
+
+
 class AirlineContact(BaseDocument):
     airline_id: str
     contact_type: str

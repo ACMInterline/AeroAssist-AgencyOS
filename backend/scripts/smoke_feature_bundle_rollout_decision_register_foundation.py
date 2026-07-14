@@ -14,7 +14,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_55_1_airline_master_profile_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 DECISION_CATEGORIES = {"readiness", "approval", "schedule", "dependency", "risk", "issue", "rollout_scope", "operational", "governance"}
 DECISION_STATUSES = {"draft", "proposed", "accepted", "deferred", "rejected", "superseded", "archived"}

@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate
 
 
-PHASE_LABEL = "phase_55_1_airline_master_profile_intelligence_foundation"
+PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 OPERATIONAL_SCENARIO_TESTS_COLLECTION = "operational_scenario_tests"
 
 SCENARIO_FAMILIES = [

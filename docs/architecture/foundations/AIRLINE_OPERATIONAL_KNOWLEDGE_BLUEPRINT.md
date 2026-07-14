@@ -187,3 +187,7 @@ AeroAssist first evaluates which airlines can safely and correctly fulfil the pa
 # Phase 55.1 Profile Context
 
 The Airline Master Profile Intelligence layer supplies canonical airline identity and governed operational context to the Airline Operational Knowledge Blueprint. It reuses `airline_profiles.id`, keeps evidence separate from normalized profile metadata, preserves conflicts and effective dates, and exposes only approved or published profile context to agencies. Policy, Pricing, Capability, Evidence, and Operational Constraints / Procedures remain distinct knowledge pillars.
+
+## Phase 55.2 Evidence Governance
+
+The Airline Policy Evidence and Source Governance layer makes the Evidence pillar traceable across Policy, Pricing, Capability, Operational Constraints / Procedures, profile, distribution, contact, and publication records. It links governance records to retained raw acquisition sources, keeps assertions separate from knowledge targets, preserves conflicting source variants, and exposes deterministic authority, confidence, freshness, access, and unsupported-knowledge metadata. Evidence informs advisory decisions; it does not execute rules or create operational truth automatically.
