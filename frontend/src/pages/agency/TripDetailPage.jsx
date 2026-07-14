@@ -355,6 +355,14 @@ function AcceptedOfferPanel({ state, onCreateOrOpenBookingWorkspace }) {
         <Metric label="Provider" value={readiness?.provider_target || "manual"} />
         <Metric label="Booking Workspace" value={bookingWorkspace?.workspace_number || "not created"} />
       </div>
+      {readiness ? (
+        <div className="flex flex-wrap gap-2 rounded-md border border-dashed border-slate-300 p-4">
+          <p className="text-sm text-slate-600">Use the booking handoff workspace to review blockers, mappings, documents, price/payment status, and instructions before creating or opening a booking mirror.</p>
+          <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${acceptance?.id || readiness.acceptance_id || ""}&booking_readiness_package_id=${readiness.id}&trip_id=${readiness.trip_id}`}>
+            Open booking handoff
+          </a>
+        </div>
+      ) : null}
       <section className="grid gap-4 lg:grid-cols-2">
         <SnapshotList
           title="Confirmed Segments"

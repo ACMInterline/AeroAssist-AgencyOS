@@ -95,6 +95,12 @@ Request Intake Origin -> Conversion Plan / Validation -> Conversion Run -> Entit
 
 The conversion layer preserves the request as immutable intake and audit origin, creates or explicitly attaches a downstream trip shell, records source snapshots and mappings, and links workflow, task, deadline, and timeline metadata. It never uses the request id as the trip id and does not book, ticket, call providers, run AI, seed production data, send messages, or automate operational execution.
 
+Phase 54.6 adds Offer-to-Booking Handoff and Booking Readiness as the controlled bridge from accepted offer to booking workspace:
+
+Frozen Accepted Offer Snapshot -> Booking Readiness Package -> Handoff Checks / Mappings -> Booking Instruction Metadata -> Booking Workspace Metadata
+
+The handoff layer preserves accepted commercial truth from frozen acceptance snapshots, reuses existing booking readiness packages, records blockers/warnings and passenger/segment/service/pricing/policy/document mappings, separates internal and client-facing traces, and links workflow, queue, task, deadline, and timeline metadata. It does not reconstruct commercial data from mutable offer records, execute bookings, issue tickets or EMDs, call providers, process payments, run AI, send messages, or automate operational execution.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

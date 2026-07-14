@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 OPERATIONAL_WORK_ITEMS_COLLECTION = "operational_work_items"
 OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION = "operational_queue_definitions"

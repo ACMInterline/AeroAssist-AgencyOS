@@ -323,6 +323,11 @@ function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mod
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Booking workspace</p>
             <h3 className="text-xl font-semibold text-slate-950">Create booking workspace</h3>
             <p className="mt-1 text-sm text-slate-600">Create an internal mirror only. No live booking or provider action will run.</p>
+            {selectedPackage ? (
+              <a className="mt-2 inline-flex rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${selectedPackage.acceptance_id || ""}&booking_readiness_package_id=${selectedPackage.id}&trip_id=${selectedPackage.trip_id || ""}`}>
+                Review booking handoff first
+              </a>
+            ) : null}
           </div>
           <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClose}>Close</button>
         </div>

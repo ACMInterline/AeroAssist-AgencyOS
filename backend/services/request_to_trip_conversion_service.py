@@ -22,7 +22,7 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.trip_dossier_service import create_trip_from_request, link_request_to_trip, write_request_timeline, write_trip_timeline
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 REQUEST_TRIP_CONVERSION_PLANS_COLLECTION = "request_trip_conversion_plans"
 REQUEST_TRIP_CONVERSION_RUNS_COLLECTION = "request_trip_conversion_runs"

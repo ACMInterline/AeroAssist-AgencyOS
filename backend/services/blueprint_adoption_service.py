@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -262,6 +262,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "RequestTripConversionPlan, RequestTripConversionRun, RequestTripEntityMapping, RequestTripConversionIssue, RequestToTripConversionService, request_trip_conversion_plans, request_trip_conversion_runs, request_trip_entity_mappings, request_trip_conversion_issues, /api/platform/request-trip-conversion, /api/agencies/{agency_id}/request-trip-conversion, /platform/request-trip-conversion, /agency/request-trip-conversion",
         "status": "foundation adopted",
         "action": "Create metadata-only request-to-trip conversion preview, validation, execution, mapping, and audit records while preserving the request as immutable intake origin and trip as downstream operational shell. Phase 54.5 does not book, ticket, call providers, run AI/LLM generation, schedule workers, seed production data, block routes, use request ids as trip ids, or automate operational execution.",
+    },
+    {
+        "category": "Offer-to-Booking Handoff Readiness",
+        "concept": "Controlled accepted-offer to booking workspace handoff metadata",
+        "supplementary_concept": "offer booking handoffs, readiness checks, passenger mappings, segment mappings, service mappings, document and approval mappings, pricing trace, policy trace, booking execution instructions, duplicate prevention, internal/client trace separation",
+        "current_equivalent": "OfferBookingHandoff, OfferBookingHandoffCheck, OfferBookingHandoffMapping, BookingExecutionInstruction, OfferToBookingHandoffService, offer_booking_handoffs, offer_booking_handoff_checks, offer_booking_handoff_mappings, booking_execution_instructions, /api/platform/booking-handoffs, /api/agencies/{agency_id}/booking-handoffs, /platform/booking-handoffs, /agency/booking-handoffs",
+        "status": "foundation adopted",
+        "action": "Create metadata-only offer-to-booking handoff readiness records while preserving frozen accepted-offer snapshots and existing booking readiness packages as source truth. Phase 54.6 does not reconstruct commercial data from mutable offers, book, ticket, issue EMDs, process payments, call providers, run AI/LLM generation, schedule workers, send messages, block routes, bypass agency isolation, or automate operational execution.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -542,6 +550,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "RequestTripConversionPlan, RequestTripConversionRun, RequestTripEntityMapping, RequestTripConversionIssue, RequestToTripConversionService, /api/platform/request-trip-conversion, /api/agencies/{agency_id}/request-trip-conversion, /platform/request-trip-conversion, /agency/request-trip-conversion",
         "status": "foundation adopted",
         "action": "Coordinate metadata-only request-to-trip conversion while preserving request intake origin, downstream trip shell separation, agency isolation, idempotency, and human authority without booking, ticketing, provider calls, AI, workers, seeding, route blocking, or automatic operational execution.",
+    },
+    {
+        "category": "Offer-to-Booking Handoff Readiness",
+        "concept": "Accepted offer to booking workspace handoff metadata",
+        "supplementary_concept": "frozen accepted offer snapshots, booking readiness packages, handoff checks, mappings, booking instructions, duplicate prevention, workflow/task/deadline/timeline links",
+        "current_equivalent": "OfferBookingHandoff, OfferBookingHandoffCheck, OfferBookingHandoffMapping, BookingExecutionInstruction, OfferToBookingHandoffService, /api/platform/booking-handoffs, /api/agencies/{agency_id}/booking-handoffs, /platform/booking-handoffs, /agency/booking-handoffs",
+        "status": "foundation adopted",
+        "action": "Coordinate metadata-only accepted-offer to booking workspace handoff readiness while preserving frozen accepted commercial snapshots, booking readiness package source truth, trace separation, agency isolation, idempotency, and human authority without mutable-offer reconstruction, booking execution, ticketing, EMD issuance, provider calls, AI, workers, payments, sending, or automatic operational execution.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -1286,6 +1302,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "SLA and operational deadline engine foundation built in Phase 54.3",
             "Task automation and dependency orchestration foundation built in Phase 54.4",
             "Request-to-trip operational conversion foundation built in Phase 54.5",
+            "Offer-to-booking handoff and booking readiness foundation built in Phase 54.6",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

@@ -261,9 +261,14 @@ export default function OfferBuilderPage({ workspaceId }) {
                   {selectedOption?.id === acceptedOptionId ? "Accepted" : "Accept"}
                 </button>
                 {state?.acceptance?.booking_readiness ? (
-                  <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenBookingWorkspace}>
-                    Booking Workspace
-                  </button>
+                  <>
+                    <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${state.acceptance.acceptance?.id || ""}&booking_readiness_package_id=${state.acceptance.booking_readiness.id}`}>
+                      Booking Handoff
+                    </a>
+                    <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenBookingWorkspace}>
+                      Booking Workspace
+                    </button>
+                  </>
                 ) : null}
               </div>
             </div>

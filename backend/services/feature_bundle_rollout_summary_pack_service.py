@@ -24,7 +24,7 @@ from services.feature_bundle_rollout_timeline_service import TIMELINE_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 SUMMARY_PACK_COLLECTION = "feature_bundle_rollout_summary_packs"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

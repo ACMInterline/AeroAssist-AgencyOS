@@ -153,6 +153,10 @@ The repository currently contains:
 - Phase 51.1: Service parameter taxonomy integration foundation.
 - Phase 54.1: Operational workflow orchestration foundation.
 - Phase 54.2: Agent work queue and assignment foundation.
+- Phase 54.3: SLA and operational deadline engine foundation.
+- Phase 54.4: Task automation and dependency orchestration foundation.
+- Phase 54.5: Request-to-trip operational conversion foundation.
+- Phase 54.6: Offer-to-booking handoff and booking readiness foundation.
 
 Phase 35 navigation hotfix:
 
@@ -2317,3 +2321,7 @@ Phase 54.4 adds the metadata-only Task Automation and Dependency Orchestration F
 ## Implemented Phase 54.5
 
 Phase 54.5 adds the metadata-only Request-to-Trip Operational Conversion Foundation. It registers `request_trip_conversion_plans`, `request_trip_conversion_runs`, `request_trip_entity_mappings`, and `request_trip_conversion_issues`, plus platform request-trip conversion diagnostics, agency conversion routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It previews, validates, safely executes, maps, and audits conversion from immutable request intake into a downstream trip dossier shell, including segment, passenger, service, pet/special-item scope, linked-offer, workflow, task, deadline, and timeline metadata without using request ids as trip ids, booking, ticketing, provider calls, AI, workers, seeding, route blocking, or operational execution.
+
+## Implemented Phase 54.6
+
+Phase 54.6 adds the metadata-only Offer-to-Booking Handoff and Booking Readiness Foundation. It registers `offer_booking_handoffs`, `offer_booking_handoff_checks`, `offer_booking_handoff_mappings`, and `booking_execution_instructions`, plus platform handoff diagnostics, agency booking handoff routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It builds a controlled handoff from frozen accepted-offer snapshots and existing booking readiness packages, records readiness checks, passenger/segment/service/document/approval/pricing mappings, booking instruction metadata, and workflow/work-queue/task/SLA/timeline links, and can create or reuse booking workspace metadata through the existing booking-readiness path without recreating accepted commercial data from mutable offers, executing bookings, issuing tickets or EMDs, processing payments, calling providers, running AI, scheduling workers, or automating operational execution.

@@ -16062,6 +16062,164 @@ class RequestTripConversionExecuteRequest(RequestTripConversionPreviewRequest):
     conversion_reason: Optional[str] = None
 
 
+class OfferBookingHandoff(BaseDocument):
+    agency_id: str
+    handoff_reference: str
+    acceptance_id: Optional[str] = None
+    booking_readiness_package_id: Optional[str] = None
+    trip_accepted_offer_snapshot_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    request_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_option_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    handoff_status: str = "draft"
+    readiness_status: str = "draft"
+    provider_target: str = "manual"
+    booking_mode: str = "manual"
+    idempotency_key: str
+    blocker_count: int = 0
+    warning_count: int = 0
+    check_count: int = 0
+    mapping_count: int = 0
+    instruction_count: int = 0
+    accepted_offer_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    readiness_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    policy_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    client_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    booking_execution_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    integration_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    handed_off_at: Optional[datetime] = None
+    booking_created_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    offer_to_booking_handoff_readiness_foundation: bool = True
+    accepted_offer_snapshot_required: bool = True
+    mutable_offer_reconstruction_disabled: bool = True
+    booking_execution_disabled: bool = True
+    provider_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    payment_processing_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    background_workers_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class OfferBookingHandoffCheck(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    acceptance_id: Optional[str] = None
+    booking_readiness_package_id: Optional[str] = None
+    check_key: str
+    label: str
+    category: str = "readiness"
+    status: str = "pending"
+    severity: str = "info"
+    details: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    evidence_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    remediation_guidance: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    offer_to_booking_handoff_readiness_foundation: bool = True
+    no_runtime_enforcement: bool = True
+
+
+class OfferBookingHandoffMapping(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    acceptance_id: Optional[str] = None
+    booking_readiness_package_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    mapping_type: str
+    source_entity_type: str
+    source_entity_id: str
+    target_entity_type: str
+    target_entity_id: str
+    mapping_status: str = "mapped"
+    mapping_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    target_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    offer_to_booking_handoff_readiness_foundation: bool = True
+    mapping_is_audit_metadata_only: bool = True
+
+
+class BookingExecutionInstruction(BaseDocument):
+    agency_id: str
+    handoff_id: str
+    acceptance_id: Optional[str] = None
+    booking_readiness_package_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    instruction_reference: str
+    instruction_type: str = "manual_booking"
+    instruction_status: str = "draft"
+    provider_target: str = "manual"
+    booking_mode: str = "manual"
+    title: str
+    summary: Optional[str] = None
+    instruction_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    passenger_mapping_json: List[Dict[str, Any]] = Field(default_factory=list)
+    segment_mapping_json: List[Dict[str, Any]] = Field(default_factory=list)
+    ticket_expectations_json: Dict[str, Any] = Field(default_factory=dict)
+    emd_expectations_json: Dict[str, Any] = Field(default_factory=dict)
+    supplier_readiness_json: Dict[str, Any] = Field(default_factory=dict)
+    pricing_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    policy_trace_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    offer_to_booking_handoff_readiness_foundation: bool = True
+    manual_execution_required: bool = True
+    provider_execution_disabled: bool = True
+    booking_execution_disabled: bool = True
+    ticket_issuance_disabled: bool = True
+    payment_processing_disabled: bool = True
+
+
+class OfferBookingHandoffBuildRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    acceptance_id: Optional[str] = None
+    booking_readiness_package_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_option_id: Optional[str] = None
+    provider_target: Optional[str] = None
+    booking_mode: str = "manual"
+    idempotency_key: Optional[str] = None
+    force_rebuild: bool = False
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OfferBookingHandoffBookingCreateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    provider_target: Optional[str] = None
+    booking_mode: Optional[str] = None
+    create_draft_record: bool = True
+    allow_conditional: bool = True
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

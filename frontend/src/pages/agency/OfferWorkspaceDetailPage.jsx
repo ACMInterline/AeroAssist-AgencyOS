@@ -263,6 +263,11 @@ function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
               Readiness: {readiness.status}
             </span>
           ) : null}
+          {readiness ? (
+            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${acceptance.id}&booking_readiness_package_id=${readiness.id}`}>
+              Handoff readiness
+            </a>
+          ) : null}
           <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_comparison", "offer_workspace", state?.workspace?.id)}>
             Offer documents
           </a>

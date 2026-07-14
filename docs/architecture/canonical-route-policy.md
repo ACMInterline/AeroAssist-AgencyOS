@@ -99,6 +99,8 @@ Phase 54.4 adds task automation and dependency orchestration APIs only under `/a
 
 Phase 54.5 adds request-to-trip operational conversion APIs only under `/api/platform/request-trip-conversion/*` and `/api/agencies/{agency_id}/request-trip-conversion/*`, plus frontend pages under `/platform/request-trip-conversion` and `/agency/request-trip-conversion`. It records metadata-only preview, validation, conversion run, mapping, and issue records while preserving the request as intake origin and the trip as downstream shell without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, automatic trip id reuse from request ids, booking, ticketing, provider execution, AI/LLM generation, background workers, schedulers, sending, route blocking, access enforcement, or automatic operational execution.
 
+Phase 54.6 adds offer-to-booking handoff APIs only under `/api/platform/booking-handoffs/*` and `/api/agencies/{agency_id}/booking-handoffs/*`, plus frontend pages under `/platform/booking-handoffs` and `/agency/booking-handoffs`. It records metadata-only accepted-offer handoff, readiness-check, mapping, and booking-instruction records while reusing frozen accepted-offer snapshots and existing booking readiness packages without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, mutable-offer commercial reconstruction, live booking, ticketing, EMD issuance, provider execution, AI/LLM generation, background workers, schedulers, sending, payment processing, route blocking, access enforcement, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

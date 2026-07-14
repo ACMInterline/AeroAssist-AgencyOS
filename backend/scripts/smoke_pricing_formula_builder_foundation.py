@@ -23,7 +23,7 @@ from services.pricing_formula_builder_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_54_5_request_to_trip_operational_conversion_foundation"
+EXPECTED_PHASE = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_AMOUNT_TYPES = {"fixed", "range", "percentage", "manual_quote", "formula", "included", "not_applicable"}

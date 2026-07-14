@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 BOOKING_WORKSPACE_COLLECTION = "booking_workspaces"
 BOOKING_WORKSPACE_STATUSES = [
     BookingWorkspaceStatus.DRAFT.value,

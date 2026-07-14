@@ -18,7 +18,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 APPROVAL_COLLECTION = "feature_bundle_rollout_approvals"
 NOTE_COLLECTION = "feature_bundle_rollout_approval_notes"

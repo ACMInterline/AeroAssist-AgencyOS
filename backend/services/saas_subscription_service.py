@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -46,6 +46,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "trips", "label": "Trips", "href": "/agency/trips", "aliases": ["trips", "trip_dossier"]},
     {"key": "offers", "label": "Offers", "href": "/agency/offers", "aliases": ["offers", "offer_builder"]},
     {"key": "booking_workspaces", "label": "Booking Workspaces", "href": "/agency/booking-workspaces", "aliases": ["booking_workspaces", "booking_foundation"]},
+    {"key": "booking_handoffs", "label": "Booking Handoffs", "href": "/agency/booking-handoffs", "aliases": ["booking_handoffs", "offer_booking_handoffs", "accepted_offer_handoff", "booking_readiness"]},
     {"key": "booking_imports", "label": "Booking Imports", "href": "/agency/booking-imports", "aliases": ["booking_imports", "gds_imports"]},
     {"key": "tickets_emds", "label": "Tickets & EMDs", "href": "/agency/tickets-emds", "aliases": ["tickets_emds", "ticketing", "emd_issuance"]},
     {"key": "refunds_exchanges", "label": "Refunds & Exchanges", "href": "/agency/refunds-exchanges", "aliases": ["refunds_exchanges", "service_cases"]},

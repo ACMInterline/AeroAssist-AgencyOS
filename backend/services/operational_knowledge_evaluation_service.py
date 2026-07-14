@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 OPERATIONAL_KNOWLEDGE_EVALUATION_COLLECTION = "operational_knowledge_evaluations"
 
 EVALUATION_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

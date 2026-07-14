@@ -7,7 +7,7 @@ from database import Database
 from models import VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate
 
 
-PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
+PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 VISUAL_POLICY_EDITOR_CARDS_COLLECTION = "visual_policy_editor_cards"
 
 POLICY_FAMILIES = [
