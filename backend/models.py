@@ -17489,6 +17489,7 @@ class AirlineKnowledgeNormalisationUpdate(BaseModel):
 
 class AirlineKnowledgeVersion(BaseDocument):
     agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
     knowledge_version_reference: str
     version_number: Optional[int] = None
     version_label: Optional[str] = None
@@ -17544,6 +17545,16 @@ class AirlineKnowledgeVersion(BaseDocument):
     rollback_reason: Optional[str] = None
     rollback_notes: Optional[str] = None
     historical_lookup_tags: List[str] = Field(default_factory=list)
+    snapshot_schema_version: str = "1.0"
+    triggering_source_ids: List[str] = Field(default_factory=list)
+    evidence_assertion_ids: List[str] = Field(default_factory=list)
+    published_release_ids: List[str] = Field(default_factory=list)
+    affected_airline_codes: List[str] = Field(default_factory=list)
+    affected_service_families: List[str] = Field(default_factory=list)
+    affected_route_scopes: List[str] = Field(default_factory=list)
+    version_item_count: int = 0
+    change_set_ids: List[str] = Field(default_factory=list)
+    historical_snapshot_immutable: bool = True
     internal_notes: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -17561,6 +17572,7 @@ class AirlineKnowledgeVersion(BaseDocument):
     provider_integrations_disabled: bool = True
     background_workers_disabled: bool = True
     automatic_publication_disabled: bool = True
+    deterministic_change_detection_foundation: bool = True
 
 
 class AirlineKnowledgeVersionCreate(BaseModel):
@@ -21992,6 +22004,115 @@ class AirlineEvidenceAccessClassification(BaseDocument):
     attachment_visible: bool = False
     internal_only: bool = True
     active: bool = True
+
+
+class AirlineKnowledgeVersionItem(BaseDocument):
+    version_id: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    object_type: str
+    source_collection: str
+    source_entity_id: str
+    object_reference: Optional[str] = None
+    service_family: Optional[str] = None
+    route_scope: Optional[str] = None
+    effective_from: Optional[datetime] = None
+    effective_until: Optional[datetime] = None
+    triggering_source_ids: List[str] = Field(default_factory=list)
+    evidence_assertion_ids: List[str] = Field(default_factory=list)
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    snapshot_hash: str
+    publication_status: str = "draft"
+    published_release_ids: List[str] = Field(default_factory=list)
+    historical_snapshot_immutable: bool = True
+
+
+class AirlineKnowledgeChangeSet(BaseDocument):
+    change_set_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    base_version_id: str
+    target_version_id: str
+    triggering_source_ids: List[str] = Field(default_factory=list)
+    published_release_ids: List[str] = Field(default_factory=list)
+    change_categories: List[str] = Field(default_factory=list)
+    change_summary: str
+    machine_diff_json: Dict[str, Any] = Field(default_factory=dict)
+    field_change_count: int = 0
+    highest_severity: str = "informational"
+    affected_airline_codes: List[str] = Field(default_factory=list)
+    affected_service_families: List[str] = Field(default_factory=list)
+    affected_route_scopes: List[str] = Field(default_factory=list)
+    potentially_affected_operation_count: int = 0
+    re_qa_required: bool = False
+    republish_required: bool = False
+    agency_visible: bool = False
+    review_status: str = "pending"
+    effective_from: Optional[datetime] = None
+    rollback_version_id: Optional[str] = None
+    historical_snapshots_unchanged: bool = True
+    internal_notes: Optional[str] = None
+
+
+class AirlineKnowledgeFieldChange(BaseDocument):
+    change_set_id: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    version_item_key: str
+    object_type: str
+    source_entity_id: Optional[str] = None
+    field_path: str
+    operation: str
+    change_category: str
+    severity: str = "informational"
+    before_value: Any = None
+    after_value: Any = None
+    before_type: Optional[str] = None
+    after_type: Optional[str] = None
+    human_summary: str
+    machine_diff_json: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AirlineKnowledgeImpactAssessment(BaseDocument):
+    change_set_id: str
+    agency_id: Optional[str] = None
+    impact_type: str
+    target_collection: str
+    target_id: str
+    target_reference: Optional[str] = None
+    impact_status: str = "potentially_affected"
+    impact_severity: str = "informational"
+    match_basis: List[str] = Field(default_factory=list)
+    impact_summary: str
+    requires_manual_review: bool = True
+    historical_snapshot_mutation_prohibited: bool = True
+
+
+class AirlineKnowledgeChangeReview(BaseDocument):
+    change_set_id: str
+    agency_id: Optional[str] = None
+    review_status: str = "under_review"
+    review_decision: Optional[str] = None
+    re_qa_required: bool = False
+    republish_required: bool = False
+    reviewer_user_id: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+
+
+class AirlineKnowledgeRevalidationRequest(BaseDocument):
+    change_set_id: str
+    agency_id: Optional[str] = None
+    request_type: str
+    request_status: str = "required"
+    reason: str
+    target_collection: Optional[str] = None
+    target_id: Optional[str] = None
+    requested_by_user_id: Optional[str] = None
+    requested_at: datetime = Field(default_factory=now_utc)
+    completed_at: Optional[datetime] = None
+    completion_notes: Optional[str] = None
 
 
 class AirlineContact(BaseDocument):

@@ -20,7 +20,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
+PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
 
 PROFILE_COLLECTION = "airline_master_profiles"
 ALIAS_COLLECTION = "airline_identity_aliases"

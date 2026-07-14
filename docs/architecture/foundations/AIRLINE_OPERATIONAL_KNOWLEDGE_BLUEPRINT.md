@@ -191,3 +191,7 @@ The Airline Master Profile Intelligence layer supplies canonical airline identit
 ## Phase 55.2 Evidence Governance
 
 The Airline Policy Evidence and Source Governance layer makes the Evidence pillar traceable across Policy, Pricing, Capability, Operational Constraints / Procedures, profile, distribution, contact, and publication records. It links governance records to retained raw acquisition sources, keeps assertions separate from knowledge targets, preserves conflicting source variants, and exposes deterministic authority, confidence, freshness, access, and unsupported-knowledge metadata. Evidence informs advisory decisions; it does not execute rules or create operational truth automatically.
+
+## Phase 55.3 Versioning And Change Detection
+
+Canonical knowledge versions contain immutable snapshots of source-backed objects across all five knowledge pillars. Deterministic structured differences identify changed fields, evidence causes, published releases, affected airline/service/route scope, and potentially impacted advisory or operational records. Material changes create human re-QA and republish obligations; they do not rewrite historical recommendations, offers, bookings, trips, or cases.

@@ -29,6 +29,7 @@ import AirlineIntelligenceReviewCoveragePage from "./pages/agency/AirlineIntelli
 import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
 import AirlineProfilesPage from "./pages/agency/AirlineProfilesPage"
 import AgencyAirlineEvidencePage from "./pages/agency/AirlineEvidencePage"
+import AgencyKnowledgeUpdatesPage from "./pages/agency/KnowledgeUpdatesPage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import CapabilityMatrixPage from "./pages/agency/CapabilityMatrixPage"
 import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
@@ -177,6 +178,7 @@ import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionP
 import AirlinesPage from "./pages/platform/AirlinesPage"
 import AirlineMasterProfilesPage from "./pages/platform/AirlineMasterProfilesPage"
 import PlatformAirlineEvidencePage from "./pages/platform/AirlineEvidencePage"
+import PlatformAirlineKnowledgeVersionsPage from "./pages/platform/AirlineKnowledgeVersionsPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAncillaryPricingPage from "./pages/platform/AncillaryPricingPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
@@ -308,6 +310,7 @@ const routes = {
   "/platform/airlines": AirlinesPage,
   "/platform/airline-master-profiles": AirlineMasterProfilesPage,
   "/platform/airline-evidence": PlatformAirlineEvidencePage,
+  "/platform/knowledge-versions": PlatformAirlineKnowledgeVersionsPage,
   "/platform/airline-intelligence-data-packs": AirlineIntelligenceDataPacksPage,
   "/platform/airline-intelligence-data-pack-reviews": AirlineIntelligenceDataPackReviewsPage,
   "/platform/airline-intelligence-knowledge-versions": PlatformAirlineIntelligenceKnowledgeVersionsPage,
@@ -409,6 +412,7 @@ const routes = {
   "/agency/airline-intelligence": AirlineIntelligencePage,
   "/agency/airline-profiles": AirlineProfilesPage,
   "/agency/airline-evidence": AgencyAirlineEvidencePage,
+  "/agency/knowledge-updates": AgencyKnowledgeUpdatesPage,
   "/agency/airline-intelligence-coverage": AirlineIntelligenceCoveragePage,
   "/agency/airline-intelligence-review-coverage": AirlineIntelligenceReviewCoveragePage,
   "/agency/airline-intelligence-knowledge-versions": AgencyAirlineIntelligenceKnowledgeVersionsPage,

@@ -1775,3 +1775,7 @@ Phase 55.1 enriches the existing canonical `airline_profiles` identity with gove
 ## Phase 55.2 Airline Policy Evidence And Source Governance
 
 Phase 55.2 provides canonical cross-domain evidence provenance, assertion links, authority and confidence assessment, freshness, unsupported-knowledge diagnostics, conflict preservation, review, and access governance. Existing acquisition and policy records remain raw source truth. Platform governance is available at `/platform/airline-evidence`; agencies receive approved read-only summaries at `/agency/airline-evidence`. See [Airline Policy Evidence And Source Governance Foundation](docs/architecture/airline-policy-evidence-source-governance-foundation.md).
+
+## Phase 55.3 Airline Knowledge Versioning And Change Detection
+
+Phase 55.3 reuses canonical airline knowledge governance and adds immutable object snapshots, structured field differences, source/release traceability, downstream impact review, and explicit re-QA or republish metadata. Platform users work at `/platform/knowledge-versions`; agencies see published operational updates at `/agency/knowledge-updates`. Historical operational snapshots are never rewritten. See [Airline Knowledge Versioning And Change Detection Foundation](docs/architecture/airline-knowledge-versioning-change-detection-foundation.md).

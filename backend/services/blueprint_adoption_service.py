@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
+PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -38,6 +38,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_evidence_sources, airline_evidence_artifacts, airline_evidence_assertions, airline_evidence_links, airline_evidence_reviews, airline_evidence_conflicts, airline_evidence_freshness_assessments, airline_evidence_access_classifications, /api/platform/airline-evidence, /api/agencies/{agency_id}/airline-evidence, /platform/airline-evidence, /agency/airline-evidence",
         "status": "foundation adopted",
         "action": "Govern evidence around existing raw acquisition and policy sources, preserve conflicts and superseded truth, and expose only approved sanitized agency summaries without scraping, AI extraction, provider calls, physical deletion, or automatic publication.",
+    },
+    {
+        "category": "Airline Knowledge Versioning And Change Detection",
+        "concept": "Immutable canonical knowledge snapshots and deterministic operational impact review",
+        "supplementary_concept": "version item, structured field change, change set, evidence cause, release trace, impact assessment, re-QA, republish review",
+        "current_equivalent": "airline_knowledge_versions plus airline_knowledge_version_items, airline_knowledge_change_sets, airline_knowledge_field_changes, airline_knowledge_impact_assessments, airline_knowledge_change_reviews, airline_knowledge_revalidation_requests, /api/platform/knowledge-versions, /api/agencies/{agency_id}/knowledge-updates, /platform/knowledge-versions, /agency/knowledge-updates",
+        "status": "foundation adopted",
+        "action": "Reuse canonical Phase 50.4 governance versions, retain Phase 39.2 staged data-pack history, compare immutable source-backed snapshots deterministically, and flag downstream records for human review without mutating historical operations or publishing automatically.",
     },
     {
         "category": "Airline Intelligence Data Packs",

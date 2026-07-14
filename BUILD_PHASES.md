@@ -2348,3 +2348,7 @@ Phase 55.1 adds the Airline Master Profile Intelligence Foundation. It keeps `ai
 ## Implemented Phase 55.2
 
 Phase 55.2 adds the Airline Policy Evidence and Source Governance Foundation. It registers canonical governance metadata for evidence sources, artifacts, assertions, knowledge links, reviews, conflicts, freshness, and access classifications while preserving existing acquisition and policy sources as raw truth. Platform users govern evidence at `/platform/airline-evidence`; agencies consume approved, agency-visible, sanitized summaries at `/agency/airline-evidence`. Conflicts and superseded records remain retained, and no scraping, automatic extraction, AI, provider call, physical evidence deletion, or automatic publication is added.
+
+## Implemented Phase 55.3
+
+Phase 55.3 adds the Airline Knowledge Versioning and Change Detection Foundation. It reuses the Phase 50.4 `airline_knowledge_versions` governance envelope and adds immutable canonical object snapshots, deterministic nested/list/formula/effective-date differences, source and published-release traceability, downstream impact assessments, human change reviews, and explicit re-QA or republish requests. Platform governance uses `/platform/knowledge-versions`; agencies receive published, read-only operational update summaries at `/agency/knowledge-updates`. It does not replace Phase 39.2 data-pack staging, mutate historical snapshots, update operational records, rerun recommendations, publish automatically, call providers, use AI, or run workers.

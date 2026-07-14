@@ -243,3 +243,7 @@ Canonical airline identity remains `airline_profiles`. Phase 55.1 adds global go
 ## Phase 55.2 Airline Evidence Governance
 
 Phase 55.2 adds `airline_evidence_sources`, `airline_evidence_artifacts`, `airline_evidence_assertions`, `airline_evidence_links`, `airline_evidence_reviews`, `airline_evidence_conflicts`, `airline_evidence_freshness_assessments`, and `airline_evidence_access_classifications`. These records govern provenance around existing `airline_policy_sources`, `airline_knowledge_acquisitions`, and `airline_knowledge_sources`; they do not replace raw source records. Links cover profile fields, policies, pricing formulas, operational rules, capabilities, distribution/PSS/GDS facts, interline/codeshare rules, contacts, knowledge items, and publications.
+
+## Phase 55.3 Airline Knowledge Versioning
+
+Phase 55.3 extends canonical `airline_knowledge_versions` with source, release, affected-scope, item-count, and immutable-history metadata. It adds `airline_knowledge_version_items`, `airline_knowledge_change_sets`, `airline_knowledge_field_changes`, `airline_knowledge_impact_assessments`, `airline_knowledge_change_reviews`, and `airline_knowledge_revalidation_requests`. Version items snapshot existing profile, policy, rule, pricing, capability, evidence, instruction, SSR/OSI, EMD, distribution, contact, service-desk, and publication records; they do not duplicate their operational ownership.

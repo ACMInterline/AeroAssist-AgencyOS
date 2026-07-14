@@ -273,3 +273,7 @@ Phase 55.1 uses `/api/platform/airline-master-profiles` for platform governance 
 ## Phase 55.2 Airline Evidence
 
 Phase 55.2 uses `/api/platform/airline-evidence` for evidence governance and `/api/agencies/{agency_id}/airline-evidence` for tenant-checked, approved read-only summaries. UI routes are `/platform/airline-evidence` and `/agency/airline-evidence`. No alternate `/admin/*` or `/agent/*` root is introduced.
+
+## Phase 55.3 Airline Knowledge Versions
+
+Phase 55.3 uses `/api/platform/knowledge-versions` for deterministic version, comparison, impact, review, and revalidation metadata. Agency published-update visibility is read-only at `/api/agencies/{agency_id}/knowledge-updates`. UI routes are `/platform/knowledge-versions` and `/agency/knowledge-updates`. Existing Phase 50.4 governance and Phase 39.2 data-pack version routes remain canonical for their separate lifecycle and staging responsibilities; no `/admin/*` or `/agent/*` root is introduced.

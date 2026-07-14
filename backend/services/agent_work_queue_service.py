@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
+PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
 
 OPERATIONAL_WORK_ITEMS_COLLECTION = "operational_work_items"
 OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION = "operational_queue_definitions"

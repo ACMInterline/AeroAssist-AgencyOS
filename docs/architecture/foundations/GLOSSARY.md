@@ -228,3 +228,9 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Evidence Freshness**: A deterministic advisory assessment based on capture, review, effective, expiry, and supersession dates.
 
 **Unsupported Knowledge**: A canonical knowledge record with no active Phase 55.2 evidence link; it requires manual review rather than automatic rejection or execution.
+
+**Knowledge Version Item**: An immutable snapshot of one canonical airline knowledge object within an `AirlineKnowledgeVersion` governance envelope.
+
+**Knowledge Change Set**: A deterministic comparison between two canonical knowledge versions, containing structured field differences, affected scope, evidence causes, release references, and revalidation requirements.
+
+**Revalidation Request**: Metadata requiring a human QA or publication review after material knowledge changes; it does not run QA or publish automatically.

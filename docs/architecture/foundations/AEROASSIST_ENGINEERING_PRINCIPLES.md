@@ -21,6 +21,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Operational Rule Composer records define no-code compound rule metadata; they do not execute rules, evaluate live cases, calculate prices, call providers, run AI, launch workers, make automatic decisions, or replace human authority.
 - Knowledge Quality Assurance records define review findings and requested changes; they do not auto-approve, publish, execute rules, call providers, run AI, launch workers, make automatic decisions, or replace human authority.
 - Evidence is required for operational recommendations.
+- Canonical knowledge snapshots are immutable; detected changes create review and revalidation metadata rather than rewriting historical operational truth.
 - Evidence governance must preserve raw sources, structured assertions, conflicts, effective dates, freshness, access classification, and human review separately. Conflict resolution must never erase source truth.
 - Chapter 50 remains advisory, not executory.
 - New services must fit the five-pillar knowledge model.

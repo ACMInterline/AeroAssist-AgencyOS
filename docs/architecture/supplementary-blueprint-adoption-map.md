@@ -385,3 +385,7 @@ The supplementary airline catalogue concept is adopted by enriching the existing
 ## Phase 55.2 Airline Evidence Governance
 
 The supplementary evidence and source concepts are adopted through canonical governance wrappers around existing raw airline acquisition and policy sources. Artifacts, assertions, links, reviews, conflicts, freshness assessments, and access classifications support all airline knowledge domains without duplicating or deleting source truth. Platform routes govern evidence; agency routes expose approved sanitized summaries only.
+
+## Phase 55.3 Airline Knowledge Versioning
+
+Deterministic canonical-knowledge snapshots, structured field-level changes, impact metadata, review decisions, and revalidation requests extend Phase 50.4 governance versions. Phase 39.2 remains staged data-pack versioning. Potentially affected publications, scenarios, comparisons, recommendations, offers, booking-readiness packages, service cases, assignments, trips, and unresolved cases are flagged for human review without mutation.

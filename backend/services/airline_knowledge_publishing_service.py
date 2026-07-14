@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgePublication, AirlineKnowledgePublicationCreate, AirlineKnowledgePublicationUpdate
 
 
-PHASE_LABEL = "phase_55_2_airline_policy_evidence_source_governance_foundation"
+PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
 AIRLINE_KNOWLEDGE_PUBLICATIONS_COLLECTION = "airline_knowledge_publications"
 
 PUBLICATION_STATUSES = [

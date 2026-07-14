@@ -61,6 +61,7 @@ export const platformModuleGroups = [
       { label: "Airlines / Knowledge", description: "Global airline records", href: "/platform/airlines", icon: "plane", badge: "Platform only" },
       { label: "Airline Master Profiles", description: "Canonical airline identity enrichment and governance", href: "/platform/airline-master-profiles", icon: "plane", badge: "Platform only", metadata_only: true },
       { label: "Airline Evidence", description: "Source, assertion, conflict, freshness, and access governance", href: "/platform/airline-evidence", icon: "files", badge: "Platform only", metadata_only: true },
+      { label: "Knowledge Versions", description: "Immutable snapshots, structured changes, impacts, and revalidation", href: "/platform/knowledge-versions", icon: "git", badge: "Platform only", metadata_only: true },
       { label: "Airline Operational Intelligence", description: "AOIE architecture map", href: "/platform/airline-operational-intelligence", icon: "layers", badge: "Architecture only", metadata_only: true },
       { label: "Airline Knowledge Acquisition", description: "Manual airline source evidence intake", href: "/platform/airline-knowledge-acquisition", icon: "file", badge: "Metadata only", metadata_only: true },
       { label: "Operational Constraints", description: "AOIE constraint language metadata", href: "/platform/operational-constraints", icon: "git", badge: "No live evaluation", metadata_only: true },
@@ -230,6 +231,7 @@ export const agencyModuleGroups = [
     items: [
       { label: "Airline Profiles", description: "Approved airline identity and operational summaries", href: "/agency/airline-profiles", icon: "plane", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
       { label: "Airline Evidence", description: "Approved evidence summaries and freshness", href: "/agency/airline-evidence", icon: "files", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
+      { label: "Knowledge Updates", description: "Published airline knowledge changes and operational warnings", href: "/agency/knowledge-updates", icon: "git", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
       { label: "Operational Intelligence", description: "AOIE architecture map", href: "/agency/operational-intelligence", icon: "layers", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
       { label: "Knowledge Acquisition", description: "Airline source evidence metadata", href: "/agency/knowledge-acquisition", icon: "file", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
       { label: "Operational Constraints", description: "AOIE constraint language metadata", href: "/agency/operational-constraints", icon: "git", badge: "Read-only", entitlementKey: "airline_intelligence", metadata_only: true },
