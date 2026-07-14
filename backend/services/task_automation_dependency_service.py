@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
+PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"
@@ -45,6 +45,7 @@ TASK_AUTOMATION_TRIGGER_EVENTS = [
     "payment_due",
     "disruption_reported",
     "refund_change_claim_opened",
+    "after_sales_case_opened",
     "pre_trip_check",
     "manual_retry",
 ]

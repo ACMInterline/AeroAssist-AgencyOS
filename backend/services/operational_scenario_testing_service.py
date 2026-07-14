@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate
 
 
-PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
+PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
 OPERATIONAL_SCENARIO_TESTS_COLLECTION = "operational_scenario_tests"
 
 SCENARIO_FAMILIES = [

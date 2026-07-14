@@ -13,7 +13,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
+PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
 
 REQUEST_WORKSPACE_COLLECTION = "travel_request_workspaces"
 REQUEST_TYPES = ["general", "flight", "hotel", "package", "multi_city", "group", "corporate", "leisure", "disruption", "service"]

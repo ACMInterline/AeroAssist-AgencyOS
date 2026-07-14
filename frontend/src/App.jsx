@@ -58,6 +58,7 @@ import DeadlinesPage from "./pages/agency/DeadlinesPage"
 import AgencyTaskAutomationPage from "./pages/agency/TaskAutomationPage"
 import RequestTripConversionPage from "./pages/agency/RequestTripConversionPage"
 import BookingHandoffsPage from "./pages/agency/BookingHandoffsPage"
+import AfterSalesPage from "./pages/agency/AfterSalesPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -150,6 +151,7 @@ import PlatformSlaPoliciesPage from "./pages/platform/SlaPoliciesPage"
 import PlatformTaskAutomationPage from "./pages/platform/TaskAutomationPage"
 import PlatformRequestTripConversionDiagnosticsPage from "./pages/platform/RequestTripConversionDiagnosticsPage"
 import PlatformBookingHandoffDiagnosticsPage from "./pages/platform/BookingHandoffDiagnosticsPage"
+import PlatformAfterSalesDiagnosticsPage from "./pages/platform/AfterSalesDiagnosticsPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -287,6 +289,7 @@ const routes = {
   "/platform/task-automation": PlatformTaskAutomationPage,
   "/platform/request-trip-conversion": PlatformRequestTripConversionDiagnosticsPage,
   "/platform/booking-handoffs": PlatformBookingHandoffDiagnosticsPage,
+  "/platform/after-sales": PlatformAfterSalesDiagnosticsPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -380,6 +383,7 @@ const routes = {
   "/agency/task-automation": AgencyTaskAutomationPage,
   "/agency/request-trip-conversion": RequestTripConversionPage,
   "/agency/booking-handoffs": BookingHandoffsPage,
+  "/agency/after-sales": AfterSalesPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

@@ -15,7 +15,7 @@ from services.feature_bundle_dependency_service import DEPENDENCY_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
+PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
 
 RISK_COLLECTION = "feature_bundle_rollout_risks"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

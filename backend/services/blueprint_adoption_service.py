@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
+PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -270,6 +270,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OfferBookingHandoff, OfferBookingHandoffCheck, OfferBookingHandoffMapping, BookingExecutionInstruction, OfferToBookingHandoffService, offer_booking_handoffs, offer_booking_handoff_checks, offer_booking_handoff_mappings, booking_execution_instructions, /api/platform/booking-handoffs, /api/agencies/{agency_id}/booking-handoffs, /platform/booking-handoffs, /agency/booking-handoffs",
         "status": "foundation adopted",
         "action": "Create metadata-only offer-to-booking handoff readiness records while preserving frozen accepted-offer snapshots and existing booking readiness packages as source truth. Phase 54.6 does not reconstruct commercial data from mutable offers, book, ticket, issue EMDs, process payments, call providers, run AI/LLM generation, schedule workers, send messages, block routes, bypass agency isolation, or automate operational execution.",
+    },
+    {
+        "category": "Servicing and After-Sales Workflow",
+        "concept": "Unified servicing workflow metadata after operational records exist",
+        "supplementary_concept": "after-sales cases, affected item links, coupon status snapshots, financial placeholders, decisions, approval guards, resolution metadata, communication records, internal/client message separation, workflow/task/SLA/queue/timeline links",
+        "current_equivalent": "AfterSalesCase, AfterSalesCaseItem, AfterSalesDecision, AfterSalesFinancialImpact, AfterSalesResolution, AfterSalesCommunicationRecord, AfterSalesWorkflowService, after_sales_cases, after_sales_case_items, after_sales_decisions, after_sales_financial_impacts, after_sales_resolutions, after_sales_communication_records, /api/platform/after-sales, /api/agencies/{agency_id}/after-sales, /platform/after-sales, /agency/after-sales",
+        "status": "foundation adopted",
+        "action": "Create metadata-only servicing and after-sales workflow records for voluntary change, schedule change, cancellation, refund, ticket exchange, EMD exchange/refund, claim, service amendment, passenger/document amendment, and disruption cases. Phase 54.7 does not mutate tickets or EMDs, commit money, execute providers, call external APIs, run AI/LLM generation, schedule workers, send messages, block routes, bypass agency isolation, or automate servicing execution.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -1303,6 +1311,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Task automation and dependency orchestration foundation built in Phase 54.4",
             "Request-to-trip operational conversion foundation built in Phase 54.5",
             "Offer-to-booking handoff and booking readiness foundation built in Phase 54.6",
+            "Servicing and after-sales workflow foundation built in Phase 54.7",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

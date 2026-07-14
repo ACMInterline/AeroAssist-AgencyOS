@@ -101,6 +101,8 @@ Phase 54.5 adds request-to-trip operational conversion APIs only under `/api/pla
 
 Phase 54.6 adds offer-to-booking handoff APIs only under `/api/platform/booking-handoffs/*` and `/api/agencies/{agency_id}/booking-handoffs/*`, plus frontend pages under `/platform/booking-handoffs` and `/agency/booking-handoffs`. It records metadata-only accepted-offer handoff, readiness-check, mapping, and booking-instruction records while reusing frozen accepted-offer snapshots and existing booking readiness packages without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, mutable-offer commercial reconstruction, live booking, ticketing, EMD issuance, provider execution, AI/LLM generation, background workers, schedulers, sending, payment processing, route blocking, access enforcement, or automatic operational execution.
 
+Phase 54.7 adds servicing and after-sales workflow APIs only under `/api/platform/after-sales/*` and `/api/agencies/{agency_id}/after-sales/*`, plus frontend pages under `/platform/after-sales` and `/agency/after-sales`. It records metadata-only after-sales cases, affected item links, decisions, financial placeholders, resolutions, and communication records without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, ticket or EMD mutation, financial commitments, provider execution, AI/LLM generation, background workers, schedulers, sending, payment processing, route blocking, access enforcement, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

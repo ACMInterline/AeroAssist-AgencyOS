@@ -101,6 +101,12 @@ Frozen Accepted Offer Snapshot -> Booking Readiness Package -> Handoff Checks / 
 
 The handoff layer preserves accepted commercial truth from frozen acceptance snapshots, reuses existing booking readiness packages, records blockers/warnings and passenger/segment/service/pricing/policy/document mappings, separates internal and client-facing traces, and links workflow, queue, task, deadline, and timeline metadata. It does not reconstruct commercial data from mutable offer records, execute bookings, issue tickets or EMDs, call providers, process payments, run AI, send messages, or automate operational execution.
 
+Phase 54.7 adds Servicing and After-Sales Workflow as the unified case layer after operational records exist:
+
+Trip / Booking / Ticket / EMD / Passenger / Document / Segment -> After-Sales Case -> Decision / Financial Placeholder / Resolution / Communication -> Workflow / Queue / SLA / Timeline Metadata
+
+The after-sales layer coordinates voluntary change, schedule change, cancellation, refund, ticket exchange, EMD exchange/refund, claim, service amendment, passenger/document amendment, and disruption cases. It records affected-record links, coupon-status awareness, financial placeholders, client approval guards, supplier-contact metadata, generated advice metadata, and internal/client message separation. It does not mutate tickets or EMDs, commit money, execute refunds/exchanges/voids, call providers, run AI, send messages, or automate servicing actions.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

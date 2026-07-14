@@ -16220,6 +16220,399 @@ class OfferBookingHandoffBookingCreateRequest(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class AfterSalesCase(BaseDocument):
+    agency_id: str
+    case_reference: str
+    case_type: str
+    case_status: str = "opened"
+    case_priority: str = "normal"
+    case_title: str
+    case_summary: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    refund_exchange_case_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    ticket_exchange_operation_id: Optional[str] = None
+    emd_exchange_operation_id: Optional[str] = None
+    workflow_instance_id: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    ticket_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    passenger_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    affected_segment_refs: List[str] = Field(default_factory=list)
+    timeline_entry_ids: List[str] = Field(default_factory=list)
+    task_ids: List[str] = Field(default_factory=list)
+    deadline_ids: List[str] = Field(default_factory=list)
+    work_item_ids: List[str] = Field(default_factory=list)
+    decision_ids: List[str] = Field(default_factory=list)
+    financial_impact_ids: List[str] = Field(default_factory=list)
+    resolution_ids: List[str] = Field(default_factory=list)
+    communication_ids: List[str] = Field(default_factory=list)
+    item_count: int = 0
+    decision_count: int = 0
+    financial_impact_count: int = 0
+    resolution_count: int = 0
+    communication_count: int = 0
+    impact_scope_json: Dict[str, Any] = Field(default_factory=dict)
+    coupon_status_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    residual_value_summary: Optional[str] = None
+    penalty_summary: Optional[str] = None
+    fare_difference_summary: Optional[str] = None
+    service_fee_summary: Optional[str] = None
+    refundability_summary: Optional[str] = None
+    document_requirements_json: List[Dict[str, Any]] = Field(default_factory=list)
+    supplier_communication_required: bool = False
+    client_approval_required: bool = False
+    approval_status: str = "not_required"
+    generated_advice_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_message_json: Dict[str, Any] = Field(default_factory=dict)
+    client_message_json: Dict[str, Any] = Field(default_factory=dict)
+    financial_estimate_json: Dict[str, Any] = Field(default_factory=dict)
+    integration_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    assigned_agent: Optional[str] = None
+    assigned_team: Optional[str] = None
+    opened_at: Optional[datetime] = None
+    resolved_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    change_exchange_foundation_reused: bool = True
+    ticket_workspace_reused: bool = True
+    emd_workspace_reused: bool = True
+    claim_case_metadata_supported: bool = True
+    internal_client_message_separation_enabled: bool = True
+    ticket_mutation_disabled: bool = True
+    emd_mutation_disabled: bool = True
+    financial_commitment_disabled: bool = True
+    provider_execution_disabled: bool = True
+    external_api_calls_disabled: bool = True
+    background_workers_disabled: bool = True
+    ai_disabled: bool = True
+    human_authority_final: bool = True
+
+
+class AfterSalesCaseItem(BaseDocument):
+    agency_id: str
+    case_id: str
+    case_reference: Optional[str] = None
+    item_type: str
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    segment_reference: Optional[str] = None
+    coupon_number: Optional[str] = None
+    coupon_status: Optional[str] = None
+    impact_type: Optional[str] = None
+    impact_status: str = "informational"
+    impact_summary: Optional[str] = None
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    impact_link_metadata_only: bool = True
+    no_ticket_mutation: bool = True
+
+
+class AfterSalesDecision(BaseDocument):
+    agency_id: str
+    case_id: str
+    decision_reference: str
+    decision_type: str = "manual_review"
+    decision_status: str = "draft"
+    decision_summary: Optional[str] = None
+    decision_reason: Optional[str] = None
+    requires_client_approval: bool = False
+    client_approval_status: str = "not_required"
+    approval_guard_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    client_visible_summary: Optional[str] = None
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    approval_guard_required: bool = True
+    no_financial_commitment: bool = True
+    no_ticket_mutation: bool = True
+
+
+class AfterSalesFinancialImpact(BaseDocument):
+    agency_id: str
+    case_id: str
+    impact_reference: str
+    impact_type: str = "other"
+    estimate_status: str = "placeholder"
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    direction: str = "neutral"
+    residual_value: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    fare_difference_amount: Optional[float] = None
+    service_fee_amount: Optional[float] = None
+    refundable_amount: Optional[float] = None
+    non_refundable_amount: Optional[float] = None
+    tax_refund_amount: Optional[float] = None
+    supplier_fee_amount: Optional[float] = None
+    calculation_basis: Optional[str] = None
+    placeholder_notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    financial_placeholder_only: bool = True
+    financial_commitment_disabled: bool = True
+    fare_recalculation_disabled: bool = True
+
+
+class AfterSalesResolution(BaseDocument):
+    agency_id: str
+    case_id: str
+    resolution_reference: str
+    resolution_type: str = "manual_resolution"
+    resolution_status: str = "draft"
+    resolution_summary: Optional[str] = None
+    outcome_json: Dict[str, Any] = Field(default_factory=dict)
+    ticket_mutation_authorized: bool = False
+    ticket_mutation_performed: bool = False
+    emd_mutation_authorized: bool = False
+    emd_mutation_performed: bool = False
+    financial_commitment_authorized: bool = False
+    financial_commitment_performed: bool = False
+    resolution_notes: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    explicit_authorized_action_required_for_future_mutation: bool = True
+    current_phase_mutation_disabled: bool = True
+    financial_commitment_disabled: bool = True
+
+
+class AfterSalesCommunicationRecord(BaseDocument):
+    agency_id: str
+    case_id: str
+    communication_reference: str
+    communication_type: str = "internal_note"
+    direction: str = "internal"
+    audience: str = "internal"
+    channel: str = "metadata"
+    sender: Optional[str] = None
+    recipient: Optional[str] = None
+    subject: Optional[str] = None
+    summary: Optional[str] = None
+    internal_message: Optional[str] = None
+    client_message: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    document_ids: List[str] = Field(default_factory=list)
+    timeline_entry_id: Optional[str] = None
+    sent_externally: bool = False
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_after_sales_workflow_foundation: bool = True
+    communication_records_metadata_only: bool = True
+    email_sending_disabled: bool = True
+    sms_sending_disabled: bool = True
+    provider_messaging_disabled: bool = True
+
+
+class AfterSalesCaseCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    id: Optional[str] = None
+    agency_id: Optional[str] = None
+    case_reference: Optional[str] = None
+    case_type: str
+    case_status: str = "opened"
+    case_priority: str = "normal"
+    case_title: str
+    case_summary: Optional[str] = None
+    operational_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    refund_exchange_case_id: Optional[str] = None
+    trip_change_operation_id: Optional[str] = None
+    ticket_exchange_operation_id: Optional[str] = None
+    emd_exchange_operation_id: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    ticket_workspace_ids: List[str] = Field(default_factory=list)
+    emd_workspace_ids: List[str] = Field(default_factory=list)
+    passenger_workspace_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    affected_segment_refs: List[str] = Field(default_factory=list)
+    residual_value_summary: Optional[str] = None
+    penalty_summary: Optional[str] = None
+    fare_difference_summary: Optional[str] = None
+    service_fee_summary: Optional[str] = None
+    refundability_summary: Optional[str] = None
+    document_requirements_json: List[Dict[str, Any]] = Field(default_factory=list)
+    supplier_communication_required: bool = False
+    client_approval_required: bool = False
+    generated_advice_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_message_json: Dict[str, Any] = Field(default_factory=dict)
+    client_message_json: Dict[str, Any] = Field(default_factory=dict)
+    financial_estimate_json: Dict[str, Any] = Field(default_factory=dict)
+    assigned_agent: Optional[str] = None
+    assigned_team: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AfterSalesCaseUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    case_status: Optional[str] = None
+    case_priority: Optional[str] = None
+    case_title: Optional[str] = None
+    case_summary: Optional[str] = None
+    assigned_agent: Optional[str] = None
+    assigned_team: Optional[str] = None
+    residual_value_summary: Optional[str] = None
+    penalty_summary: Optional[str] = None
+    fare_difference_summary: Optional[str] = None
+    service_fee_summary: Optional[str] = None
+    refundability_summary: Optional[str] = None
+    document_requirements_json: Optional[List[Dict[str, Any]]] = None
+    supplier_communication_required: Optional[bool] = None
+    client_approval_required: Optional[bool] = None
+    approval_status: Optional[str] = None
+    generated_advice_json: Optional[Dict[str, Any]] = None
+    internal_message_json: Optional[Dict[str, Any]] = None
+    client_message_json: Optional[Dict[str, Any]] = None
+    financial_estimate_json: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class AfterSalesCaseItemCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_type: str
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    segment_reference: Optional[str] = None
+    coupon_number: Optional[str] = None
+    coupon_status: Optional[str] = None
+    impact_type: Optional[str] = None
+    impact_status: str = "informational"
+    impact_summary: Optional[str] = None
+    snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AfterSalesDecisionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    decision_reference: Optional[str] = None
+    decision_type: str = "manual_review"
+    decision_status: str = "draft"
+    decision_summary: Optional[str] = None
+    decision_reason: Optional[str] = None
+    requires_client_approval: bool = False
+    client_approval_status: str = "not_required"
+    approval_guard_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_notes: Optional[str] = None
+    client_visible_summary: Optional[str] = None
+    decided_by: Optional[str] = None
+    decided_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AfterSalesFinancialImpactCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    impact_reference: Optional[str] = None
+    impact_type: str = "other"
+    estimate_status: str = "placeholder"
+    amount: Optional[float] = None
+    currency: Optional[str] = None
+    direction: str = "neutral"
+    residual_value: Optional[float] = None
+    penalty_amount: Optional[float] = None
+    fare_difference_amount: Optional[float] = None
+    service_fee_amount: Optional[float] = None
+    refundable_amount: Optional[float] = None
+    non_refundable_amount: Optional[float] = None
+    tax_refund_amount: Optional[float] = None
+    supplier_fee_amount: Optional[float] = None
+    calculation_basis: Optional[str] = None
+    placeholder_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AfterSalesResolutionCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    resolution_reference: Optional[str] = None
+    resolution_type: str = "manual_resolution"
+    resolution_status: str = "draft"
+    resolution_summary: Optional[str] = None
+    outcome_json: Dict[str, Any] = Field(default_factory=dict)
+    ticket_mutation_authorized: bool = False
+    ticket_mutation_performed: bool = False
+    emd_mutation_authorized: bool = False
+    emd_mutation_performed: bool = False
+    financial_commitment_authorized: bool = False
+    financial_commitment_performed: bool = False
+    resolution_notes: Optional[str] = None
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AfterSalesCommunicationRecordCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    communication_reference: Optional[str] = None
+    communication_type: str = "internal_note"
+    direction: str = "internal"
+    audience: str = "internal"
+    channel: str = "metadata"
+    sender: Optional[str] = None
+    recipient: Optional[str] = None
+    subject: Optional[str] = None
+    summary: Optional[str] = None
+    internal_message: Optional[str] = None
+    client_message: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    document_ids: List[str] = Field(default_factory=list)
+    timeline_entry_id: Optional[str] = None
+    sent_externally: bool = False
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

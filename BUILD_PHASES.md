@@ -157,6 +157,7 @@ The repository currently contains:
 - Phase 54.4: Task automation and dependency orchestration foundation.
 - Phase 54.5: Request-to-trip operational conversion foundation.
 - Phase 54.6: Offer-to-booking handoff and booking readiness foundation.
+- Phase 54.7: Servicing and after-sales workflow foundation.
 
 Phase 35 navigation hotfix:
 
@@ -2325,3 +2326,7 @@ Phase 54.5 adds the metadata-only Request-to-Trip Operational Conversion Foundat
 ## Implemented Phase 54.6
 
 Phase 54.6 adds the metadata-only Offer-to-Booking Handoff and Booking Readiness Foundation. It registers `offer_booking_handoffs`, `offer_booking_handoff_checks`, `offer_booking_handoff_mappings`, and `booking_execution_instructions`, plus platform handoff diagnostics, agency booking handoff routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It builds a controlled handoff from frozen accepted-offer snapshots and existing booking readiness packages, records readiness checks, passenger/segment/service/document/approval/pricing mappings, booking instruction metadata, and workflow/work-queue/task/SLA/timeline links, and can create or reuse booking workspace metadata through the existing booking-readiness path without recreating accepted commercial data from mutable offers, executing bookings, issuing tickets or EMDs, processing payments, calling providers, running AI, scheduling workers, or automating operational execution.
+
+## Implemented Phase 54.7
+
+Phase 54.7 adds the metadata-only Servicing and After-Sales Workflow Foundation. It registers `after_sales_cases`, `after_sales_case_items`, `after_sales_decisions`, `after_sales_financial_impacts`, `after_sales_resolutions`, and `after_sales_communication_records`, plus platform read-only diagnostics, agency after-sales operations routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It coordinates voluntary changes, schedule changes, cancellations, refunds, ticket exchanges, EMD exchange/refund cases, claims, service amendments, passenger/document amendments, and disruptions while linking affected trip, booking, ticket, EMD, passenger, document, SSR/OSI, segment, workflow, task, SLA, queue, and timeline metadata. It stores coupon-status awareness, client approval guards, financial placeholders, generated advice metadata, and internal/client message separation without mutating tickets or EMDs, committing money, calling providers, sending messages, using AI, scheduling workers, or automating operational execution.

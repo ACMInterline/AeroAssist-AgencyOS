@@ -10,6 +10,7 @@ from routers import agency_airline_capability_matrix, agency_airline_knowledge_a
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
 from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_booking_handoffs, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_request_trip_conversion, agency_ssr_osi_workspaces, agency_task_automation, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_booking_handoffs, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_request_trip_conversion, platform_ssr_osi_workspaces, platform_task_automation, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_after_sales_workflows, platform_after_sales_workflows
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
@@ -64,7 +65,8 @@ from services.agent_work_queue_service import ASSIGNMENT_EVENT_TYPES as OPERATIO
 from services.operational_sla_deadline_service import BREACH_STATES as OPERATIONAL_DEADLINE_BREACH_STATES, BUSINESS_HOURS_BEHAVIORS as OPERATIONAL_BUSINESS_HOURS_BEHAVIORS, DEADLINE_STATUSES as OPERATIONAL_DEADLINE_STATUSES, DEADLINE_TYPES as OPERATIONAL_DEADLINE_TYPES, DEFAULT_SLA_POLICIES as OPERATIONAL_DEFAULT_SLA_POLICIES, OPERATIONAL_BUSINESS_CALENDARS_COLLECTION, OPERATIONAL_DEADLINES_COLLECTION, OPERATIONAL_SLA_EVENTS_COLLECTION, OPERATIONAL_SLA_POLICIES_COLLECTION, PHASE_LABEL as SLA_OPERATIONAL_DEADLINE_PHASE_LABEL, SLA_DURATION_UNITS as OPERATIONAL_SLA_DURATION_UNITS, SLA_EVENT_TYPES as OPERATIONAL_SLA_EVENT_TYPES, SLA_POLICY_SCOPES as OPERATIONAL_SLA_POLICY_SCOPES, SLA_POLICY_STATUSES as OPERATIONAL_SLA_POLICY_STATUSES
 from services.task_automation_dependency_service import DEFAULT_AUTOMATION_RULES as OPERATIONAL_DEFAULT_TASK_AUTOMATION_RULES, OPERATIONAL_TASK_AUTOMATION_RULES_COLLECTION, OPERATIONAL_TASK_AUTOMATION_RUNS_COLLECTION, OPERATIONAL_TASK_DEPENDENCIES_COLLECTION, OPERATIONAL_TASK_TEMPLATES_COLLECTION, PHASE_LABEL as TASK_AUTOMATION_PHASE_LABEL, SAFE_TASK_TEMPLATES as OPERATIONAL_SAFE_TASK_TEMPLATES, TASK_AUTOMATION_RULE_STATUSES, TASK_AUTOMATION_RUN_STATUSES, TASK_AUTOMATION_TRIGGER_EVENTS, TASK_DEPENDENCY_STATUSES, TASK_DEPENDENCY_TYPES, TASK_TEMPLATE_STATUSES
 from services.request_to_trip_conversion_service import CONVERSION_ISSUE_TYPES, CONVERSION_MAPPING_TYPES, CONVERSION_MODES, CONVERSION_PLAN_STATUSES, CONVERSION_RUN_STATUSES, REQUEST_TRIP_CONVERSION_ISSUES_COLLECTION, REQUEST_TRIP_CONVERSION_PLANS_COLLECTION, REQUEST_TRIP_CONVERSION_RUNS_COLLECTION, REQUEST_TRIP_ENTITY_MAPPINGS_COLLECTION
-from services.offer_to_booking_handoff_service import BOOKING_EXECUTION_INSTRUCTIONS_COLLECTION, BOOKING_MODES as OFFER_BOOKING_MODES, HANDOFF_CHECK_STATUSES, HANDOFF_MAPPING_TYPES, HANDOFF_STATUSES, INSTRUCTION_TYPES as BOOKING_INSTRUCTION_TYPES, OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION, OFFER_BOOKING_HANDOFF_MAPPINGS_COLLECTION, OFFER_BOOKING_HANDOFFS_COLLECTION, PHASE_LABEL
+from services.offer_to_booking_handoff_service import BOOKING_EXECUTION_INSTRUCTIONS_COLLECTION, BOOKING_MODES as OFFER_BOOKING_MODES, HANDOFF_CHECK_STATUSES, HANDOFF_MAPPING_TYPES, HANDOFF_STATUSES, INSTRUCTION_TYPES as BOOKING_INSTRUCTION_TYPES, OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION, OFFER_BOOKING_HANDOFF_MAPPINGS_COLLECTION, OFFER_BOOKING_HANDOFFS_COLLECTION
+from services.after_sales_workflow_service import AFTER_SALES_CASES_COLLECTION, AFTER_SALES_CASE_ITEMS_COLLECTION, AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION, AFTER_SALES_DECISIONS_COLLECTION, AFTER_SALES_FINANCIAL_IMPACTS_COLLECTION, AFTER_SALES_RESOLUTIONS_COLLECTION, CASE_STATUSES as AFTER_SALES_CASE_STATUSES, CASE_TYPES as AFTER_SALES_CASE_TYPES, COMMUNICATION_TYPES as AFTER_SALES_COMMUNICATION_TYPES, DECISION_STATUSES as AFTER_SALES_DECISION_STATUSES, FINANCIAL_IMPACT_TYPES as AFTER_SALES_FINANCIAL_IMPACT_TYPES, PHASE_LABEL, RESOLUTION_STATUSES as AFTER_SALES_RESOLUTION_STATUSES
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -86,7 +88,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 54.6 offer-to-booking handoff readiness foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 54.7 servicing and after-sales workflow foundation.",
 )
 
 app.add_middleware(
@@ -1704,6 +1706,12 @@ async def readiness() -> dict:
     offer_booking_handoff_check_records = await database.collection(OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION).find_many()
     offer_booking_handoff_mapping_records = await database.collection(OFFER_BOOKING_HANDOFF_MAPPINGS_COLLECTION).find_many()
     booking_execution_instruction_records = await database.collection(BOOKING_EXECUTION_INSTRUCTIONS_COLLECTION).find_many()
+    after_sales_case_records = await database.collection(AFTER_SALES_CASES_COLLECTION).find_many()
+    after_sales_case_item_records = await database.collection(AFTER_SALES_CASE_ITEMS_COLLECTION).find_many()
+    after_sales_decision_records = await database.collection(AFTER_SALES_DECISIONS_COLLECTION).find_many()
+    after_sales_financial_impact_records = await database.collection(AFTER_SALES_FINANCIAL_IMPACTS_COLLECTION).find_many()
+    after_sales_resolution_records = await database.collection(AFTER_SALES_RESOLUTIONS_COLLECTION).find_many()
+    after_sales_communication_record_records = await database.collection(AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION).find_many()
     operational_work_item_status_counts = {
         status: len([item for item in operational_work_item_records if item.get("status") == status])
         for status in OPERATIONAL_WORK_ITEM_STATUSES
@@ -1820,6 +1828,30 @@ async def readiness() -> dict:
     booking_execution_instruction_type_counts = {
         instruction_type: len([item for item in booking_execution_instruction_records if item.get("instruction_type") == instruction_type])
         for instruction_type in BOOKING_INSTRUCTION_TYPES
+    }
+    after_sales_case_status_counts = {
+        status: len([item for item in after_sales_case_records if item.get("case_status") == status])
+        for status in AFTER_SALES_CASE_STATUSES
+    }
+    after_sales_case_type_counts = {
+        case_type: len([item for item in after_sales_case_records if item.get("case_type") == case_type])
+        for case_type in AFTER_SALES_CASE_TYPES
+    }
+    after_sales_decision_status_counts = {
+        status: len([item for item in after_sales_decision_records if item.get("decision_status") == status])
+        for status in AFTER_SALES_DECISION_STATUSES
+    }
+    after_sales_financial_impact_type_counts = {
+        impact_type: len([item for item in after_sales_financial_impact_records if item.get("impact_type") == impact_type])
+        for impact_type in AFTER_SALES_FINANCIAL_IMPACT_TYPES
+    }
+    after_sales_resolution_status_counts = {
+        status: len([item for item in after_sales_resolution_records if item.get("resolution_status") == status])
+        for status in AFTER_SALES_RESOLUTION_STATUSES
+    }
+    after_sales_communication_type_counts = {
+        communication_type: len([item for item in after_sales_communication_record_records if item.get("communication_type") == communication_type])
+        for communication_type in AFTER_SALES_COMMUNICATION_TYPES
     }
     operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
     operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
@@ -4592,6 +4624,66 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 54.6 adds a metadata-only offer-to-booking handoff readiness foundation. It consumes frozen accepted-offer snapshots and existing booking readiness packages, records checks, blockers, warnings, mappings, and booking instructions, and can safely create/link a booking workspace through the existing readiness path without reconstructing mutable offer data, booking execution, provider calls, ticketing, payments, AI, workers, or external automation.",
         },
+        "servicing_after_sales_workflow_foundation": {
+            "servicing_after_sales_workflow_enabled": True,
+            "after_sales_cases_collection_enabled": True,
+            "after_sales_case_items_collection_enabled": True,
+            "after_sales_decisions_collection_enabled": True,
+            "after_sales_financial_impacts_collection_enabled": True,
+            "after_sales_resolutions_collection_enabled": True,
+            "after_sales_communication_records_collection_enabled": True,
+            "agency_after_sales_workspace_enabled": True,
+            "platform_after_sales_governance_diagnostics_enabled": True,
+            "unified_case_types_supported": True,
+            "impact_scope_across_trip_booking_ticket_emd_passenger_segment_enabled": True,
+            "coupon_status_awareness_enabled": True,
+            "financial_placeholders_enabled": True,
+            "residual_value_metadata_enabled": True,
+            "penalty_metadata_enabled": True,
+            "fare_difference_metadata_enabled": True,
+            "service_fee_metadata_enabled": True,
+            "refundability_metadata_enabled": True,
+            "document_requirement_metadata_enabled": True,
+            "supplier_communication_metadata_enabled": True,
+            "client_approval_guard_enabled": True,
+            "generated_advice_metadata_enabled": True,
+            "internal_client_message_separation_enabled": True,
+            "workflow_integration_enabled": True,
+            "work_queue_integration_enabled": True,
+            "task_automation_integration_enabled": True,
+            "deadline_integration_enabled": True,
+            "timeline_integration_enabled": True,
+            "agency_isolation_enforced": True,
+            "metadata_only": True,
+            "ticket_mutation_disabled": True,
+            "emd_mutation_disabled": True,
+            "financial_commitment_disabled": True,
+            "provider_execution_disabled": True,
+            "external_api_calls_disabled": True,
+            "background_workers_disabled": True,
+            "ai_disabled": True,
+            "human_authority_final": True,
+            "case_statuses": AFTER_SALES_CASE_STATUSES,
+            "case_types": AFTER_SALES_CASE_TYPES,
+            "decision_statuses": AFTER_SALES_DECISION_STATUSES,
+            "financial_impact_types": AFTER_SALES_FINANCIAL_IMPACT_TYPES,
+            "resolution_statuses": AFTER_SALES_RESOLUTION_STATUSES,
+            "communication_types": AFTER_SALES_COMMUNICATION_TYPES,
+            "after_sales_case_count": len(after_sales_case_records),
+            "after_sales_case_item_count": len(after_sales_case_item_records),
+            "after_sales_decision_count": len(after_sales_decision_records),
+            "after_sales_financial_impact_count": len(after_sales_financial_impact_records),
+            "after_sales_resolution_count": len(after_sales_resolution_records),
+            "after_sales_communication_record_count": len(after_sales_communication_record_records),
+            "after_sales_case_status_counts": after_sales_case_status_counts,
+            "after_sales_case_type_counts": after_sales_case_type_counts,
+            "after_sales_decision_status_counts": after_sales_decision_status_counts,
+            "after_sales_financial_impact_type_counts": after_sales_financial_impact_type_counts,
+            "after_sales_resolution_status_counts": after_sales_resolution_status_counts,
+            "after_sales_communication_type_counts": after_sales_communication_type_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 54.7 adds the metadata-only servicing and after-sales workflow foundation. It records unified after-sales cases, affected item links, decisions, financial impact placeholders, resolutions, and communication metadata for changes, cancellations, refunds, exchanges, claims, amendments, and disruptions while reusing existing ticket, EMD, document, timeline, task, SLA, queue, workflow, and change/exchange foundations. It does not mutate tickets or EMDs, commit money, execute providers, call external APIs, send messages, run AI, or automate operational execution.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -6587,6 +6679,7 @@ app.include_router(platform_operational_sla_deadlines.router)
 app.include_router(platform_task_automation.router)
 app.include_router(platform_request_trip_conversion.router)
 app.include_router(platform_offer_booking_handoffs.router)
+app.include_router(platform_after_sales_workflows.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -6685,6 +6778,7 @@ app.include_router(agency_operational_sla_deadlines.router)
 app.include_router(agency_task_automation.router)
 app.include_router(agency_request_trip_conversion.router)
 app.include_router(agency_offer_booking_handoffs.router)
+app.include_router(agency_after_sales_workflows.router)
 app.include_router(agency_passenger_service_workflows.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)
