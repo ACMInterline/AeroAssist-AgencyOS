@@ -234,3 +234,9 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Knowledge Change Set**: A deterministic comparison between two canonical knowledge versions, containing structured field differences, affected scope, evidence causes, release references, and revalidation requirements.
 
 **Revalidation Request**: Metadata requiring a human QA or publication review after material knowledge changes; it does not run QA or publish automatically.
+
+**Airline Service Coverage Cell**: A deterministic snapshot of knowledge completeness, confidence, freshness, testing, publication readiness, and operational usability for one airline, service, and applicability scope.
+
+**Knowledge Gap**: An explicit missing, stale, conflicting, failed, or unpublished condition that requires human governance or population work. Critical gaps prevent an operational-ready coverage label.
+
+**Operational Usability Score**: A deterministic weighted coverage score constrained by critical-gap guards. It is an advisory knowledge-quality measure, not a passenger-specific recommendation or permission to execute.

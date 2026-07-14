@@ -1779,3 +1779,7 @@ Phase 55.2 provides canonical cross-domain evidence provenance, assertion links,
 ## Phase 55.3 Airline Knowledge Versioning And Change Detection
 
 Phase 55.3 reuses canonical airline knowledge governance and adds immutable object snapshots, structured field differences, source/release traceability, downstream impact review, and explicit re-QA or republish metadata. Platform users work at `/platform/knowledge-versions`; agencies see published operational updates at `/agency/knowledge-updates`. Historical operational snapshots are never rewritten. See [Airline Knowledge Versioning And Change Detection Foundation](docs/architecture/airline-knowledge-versioning-change-detection-foundation.md).
+
+## Phase 55.4 Airline Service Coverage And Knowledge Gap Management
+
+Phase 55.4 measures airline and service knowledge through deterministic completeness, confidence, freshness, scenario-test, publication-readiness, and operational-usability scores. It adds a dimensioned coverage matrix, critical-gap readiness guards, gap and remediation metadata, Knowledge Population Toolkit synchronization, Pilot Readiness counts, and agency-safe published coverage. Platform users work at `/platform/airline-service-coverage`; agencies consume read-only published coverage and warnings at `/agency/airline-service-coverage`. See [Airline Service Coverage And Knowledge Gap Management Foundation](docs/architecture/airline-service-coverage-gap-management-foundation.md).

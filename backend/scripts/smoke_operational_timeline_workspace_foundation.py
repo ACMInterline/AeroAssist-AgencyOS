@@ -10,7 +10,7 @@ from services.timeline_workspace_service import COMMUNICATION_TYPES, TIMELINE_EV
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+EXPECTED_PHASE = "phase_55_4_airline_service_coverage_gap_management_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EVENT_TYPES = {
     "passenger_created",

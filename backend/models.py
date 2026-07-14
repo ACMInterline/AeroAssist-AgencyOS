@@ -22115,6 +22115,190 @@ class AirlineKnowledgeRevalidationRequest(BaseDocument):
     completion_notes: Optional[str] = None
 
 
+class AirlineServiceCoverageProfile(BaseDocument):
+    coverage_profile_reference: str
+    agency_id: Optional[str] = None
+    assessment_id: str
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    airline_name: Optional[str] = None
+    coverage_status: str = "no_knowledge"
+    service_family_count: int = 0
+    coverage_cell_count: int = 0
+    operational_ready_cell_count: int = 0
+    critical_gap_count: int = 0
+    gap_count: int = 0
+    coverage_state_counts: Dict[str, int] = Field(default_factory=dict)
+    completeness_score: int = 0
+    confidence_score: int = 0
+    freshness_score: int = 0
+    test_coverage_score: int = 0
+    publication_readiness_score: int = 0
+    operational_usability_score: int = 0
+    population_toolkit_ids: List[str] = Field(default_factory=list)
+    pilot_readiness_assessment_ids: List[str] = Field(default_factory=list)
+    last_assessed_at: datetime = Field(default_factory=now_utc)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+    automatic_recommendation_mutation_disabled: bool = True
+
+
+class AirlineServiceCoverageCell(BaseDocument):
+    coverage_cell_reference: str
+    agency_id: Optional[str] = None
+    assessment_id: str
+    profile_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    service_family: str
+    service_code: Optional[str] = None
+    route_type: Optional[str] = None
+    flight_type: Optional[str] = None
+    cabin: Optional[str] = None
+    fare_bundle: Optional[str] = None
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    aircraft_family: Optional[str] = None
+    country_scope: List[str] = Field(default_factory=list)
+    airport_scope: List[str] = Field(default_factory=list)
+    distribution_channel: Optional[str] = None
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    evidence_freshness: str = "unknown"
+    coverage_status: str = "no_knowledge"
+    policy_present: bool = False
+    pricing_present: bool = False
+    rule_present: bool = False
+    evidence_present: bool = False
+    normalized_knowledge_present: bool = False
+    scenario_test_present: bool = False
+    scenario_test_passed: bool = False
+    qa_passed: bool = False
+    published: bool = False
+    approved_unpublished: bool = False
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    unresolved_conflict: bool = False
+    documents_defined: bool = False
+    approval_requirements_defined: bool = False
+    client_message_defined: bool = False
+    internal_instruction_defined: bool = False
+    distribution_scope_known: bool = False
+    completeness_score: int = 0
+    confidence_score: int = 0
+    freshness_score: int = 0
+    test_coverage_score: int = 0
+    publication_readiness_score: int = 0
+    operational_usability_score: int = 0
+    operational_ready: bool = False
+    critical_gap_types: List[str] = Field(default_factory=list)
+    gap_ids: List[str] = Field(default_factory=list)
+    source_reference_counts: Dict[str, int] = Field(default_factory=dict)
+    source_reference_ids: Dict[str, List[str]] = Field(default_factory=dict)
+    assessed_at: datetime = Field(default_factory=now_utc)
+    scoring_version: str = "1.0"
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineKnowledgeGap(BaseDocument):
+    gap_reference: str
+    agency_id: Optional[str] = None
+    assessment_id: str
+    profile_id: Optional[str] = None
+    coverage_cell_id: str
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    service_family: str
+    service_code: Optional[str] = None
+    gap_type: str
+    gap_status: str = "open"
+    severity: str = "medium"
+    critical: bool = False
+    title: str
+    description: str
+    remediation_guidance: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    owner: Optional[str] = None
+    due_date: Optional[date] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineCoverageTarget(BaseDocument):
+    target_reference: str
+    target_name: str
+    target_scope: str = "platform"
+    agency_id: Optional[str] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    service_families: List[str] = Field(default_factory=list)
+    service_codes: List[str] = Field(default_factory=list)
+    coverage_dimensions: List[Dict[str, Any]] = Field(default_factory=list)
+    minimum_scores: Dict[str, int] = Field(default_factory=dict)
+    required_gap_free_types: List[str] = Field(default_factory=list)
+    target_status: str = "active"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    owner: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineCoverageAssessment(BaseDocument):
+    assessment_reference: str
+    agency_id: Optional[str] = None
+    target_id: Optional[str] = None
+    assessment_status: str = "completed"
+    airline_codes: List[str] = Field(default_factory=list)
+    service_families: List[str] = Field(default_factory=list)
+    service_codes: List[str] = Field(default_factory=list)
+    coverage_dimensions: List[Dict[str, Any]] = Field(default_factory=list)
+    scoring_version: str = "1.0"
+    score_summary: Dict[str, Any] = Field(default_factory=dict)
+    coverage_state_counts: Dict[str, int] = Field(default_factory=dict)
+    integration_summary: Dict[str, Any] = Field(default_factory=dict)
+    profile_ids: List[str] = Field(default_factory=list)
+    coverage_cell_ids: List[str] = Field(default_factory=list)
+    gap_ids: List[str] = Field(default_factory=list)
+    remediation_plan_ids: List[str] = Field(default_factory=list)
+    operational_ready_cell_count: int = 0
+    critical_gap_count: int = 0
+    assessed_by_user_id: Optional[str] = None
+    started_at: datetime = Field(default_factory=now_utc)
+    completed_at: Optional[datetime] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    deterministic_scoring: bool = True
+    historical_knowledge_unchanged: bool = True
+
+
+class AirlineCoverageRemediationPlan(BaseDocument):
+    remediation_plan_reference: str
+    agency_id: Optional[str] = None
+    assessment_id: str
+    profile_id: Optional[str] = None
+    airline_code: str
+    plan_status: str = "draft"
+    priority: str = "medium"
+    gap_ids: List[str] = Field(default_factory=list)
+    remediation_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    population_toolkit_id: Optional[str] = None
+    owner: Optional[str] = None
+    due_date: Optional[date] = None
+    progress_percent: int = 0
+    blockers: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_remediation_disabled: bool = True
+
+
 class AirlineContact(BaseDocument):
     airline_id: str
     contact_type: str

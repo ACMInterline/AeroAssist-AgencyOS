@@ -389,3 +389,7 @@ The supplementary evidence and source concepts are adopted through canonical gov
 ## Phase 55.3 Airline Knowledge Versioning
 
 Deterministic canonical-knowledge snapshots, structured field-level changes, impact metadata, review decisions, and revalidation requests extend Phase 50.4 governance versions. Phase 39.2 remains staged data-pack versioning. Potentially affected publications, scenarios, comparisons, recommendations, offers, booking-readiness packages, service cases, assignments, trips, and unresolved cases are flagged for human review without mutation.
+
+## Phase 55.4 Airline Service Coverage And Gaps
+
+The supplementary airline-by-service coverage matrix is adopted through `airline_service_coverage_profiles`, dimensioned coverage cells, explicit knowledge gaps, governed targets, deterministic assessments, and remediation plans. Scores derive from existing evidence, policy, pricing, rules, capability, QA, publication, and scenario metadata. Critical gaps prevent an operational-ready label. Agencies receive published usable coverage and sanitized warnings only; drafts and restricted evidence remain platform-governed.

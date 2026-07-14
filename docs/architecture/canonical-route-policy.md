@@ -277,3 +277,7 @@ Phase 55.2 uses `/api/platform/airline-evidence` for evidence governance and `/a
 ## Phase 55.3 Airline Knowledge Versions
 
 Phase 55.3 uses `/api/platform/knowledge-versions` for deterministic version, comparison, impact, review, and revalidation metadata. Agency published-update visibility is read-only at `/api/agencies/{agency_id}/knowledge-updates`. UI routes are `/platform/knowledge-versions` and `/agency/knowledge-updates`. Existing Phase 50.4 governance and Phase 39.2 data-pack version routes remain canonical for their separate lifecycle and staging responsibilities; no `/admin/*` or `/agent/*` root is introduced.
+
+## Phase 55.4 Airline Service Coverage
+
+Phase 55.4 uses `/api/platform/airline-service-coverage` for coverage targets, deterministic assessments, matrix views, gap review, and remediation-plan metadata. Agency published coverage is read-only at `/api/agencies/{agency_id}/airline-service-coverage`. UI routes are `/platform/airline-service-coverage` and `/agency/airline-service-coverage`. The older `/agency/airline-intelligence-coverage` route remains the Phase 39 data-pack coverage view; Phase 55.4 is the canonical operational knowledge usability matrix. No `/admin/*` or `/agent/*` route root is introduced.

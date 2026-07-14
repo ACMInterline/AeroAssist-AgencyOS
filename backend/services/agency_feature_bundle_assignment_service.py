@@ -15,7 +15,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
 
 ASSIGNMENT_COLLECTION = "agency_feature_bundle_assignments"
 HISTORY_COLLECTION = "agency_feature_bundle_assignment_history"

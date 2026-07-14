@@ -7,7 +7,7 @@ from database import Database
 from models import PassengerServiceWorkflow, PassengerServiceWorkflowCreate, PassengerServiceWorkflowUpdate, new_id
 
 
-PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
 PASSENGER_SERVICE_WORKFLOW_COLLECTION = "passenger_service_workflows"
 
 WORKFLOW_STAGES = [

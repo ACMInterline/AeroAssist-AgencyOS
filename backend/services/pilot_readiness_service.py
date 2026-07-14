@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
 
 PILOT_READINESS_PROFILES_COLLECTION = "pilot_readiness_profiles"
 PILOT_READINESS_ASSESSMENTS_COLLECTION = "pilot_readiness_assessments"
@@ -71,6 +71,7 @@ REMEDIATION_LINKS: dict[str, dict[str, str]] = {
     "operational_scenario_testing": {"platform": "/platform/operational-scenario-testing", "agency": "/agency/scenario-testing"},
     "knowledge_population_toolkit": {"platform": "/platform/knowledge-population-toolkit", "agency": "/agency/knowledge-population-toolkit"},
     "airline_capability_matrix": {"platform": "/platform/airline-capability-matrix", "agency": "/agency/capability-matrix"},
+    "airline_service_coverage": {"platform": "/platform/airline-service-coverage", "agency": "/agency/airline-service-coverage"},
     "service_parameter_taxonomies": {"platform": "/platform/service-parameter-taxonomies", "agency": "/agency/service-parameter-taxonomies"},
     "request_segment_services": {"platform": "/platform/request-segment-services", "agency": "/agency/request-segment-services"},
     "client_passenger_master": {"platform": "/platform/client-master", "agency": "/agency/clients"},
@@ -651,6 +652,9 @@ class PilotReadinessService:
         return modules
 
     async def airline_service_coverage_summary(self, agency_id: str | None = None) -> dict[str, Any]:
+        coverage_profiles = await self._find("airline_service_coverage_profiles", agency_id=agency_id)
+        coverage_cells = await self._find("airline_service_coverage_cells", agency_id=agency_id)
+        coverage_gaps = await self._find("airline_knowledge_gaps", agency_id=agency_id)
         policies = await self._find("visual_policy_editor_cards", agency_id=agency_id)
         capabilities = await self._find("airline_capability_matrix", agency_id=agency_id)
         publications = await self._find("airline_knowledge_publications", agency_id=agency_id)
@@ -664,6 +668,12 @@ class PilotReadinessService:
             "policy_record_count": len(policies),
             "capability_record_count": len(capabilities),
             "publication_record_count": len(publications),
+            "coverage_profile_count": len(coverage_profiles),
+            "coverage_cell_count": len(coverage_cells),
+            "operational_ready_cell_count": len([item for item in coverage_cells if item.get("operational_ready")]),
+            "critical_gap_count": len([item for item in coverage_gaps if item.get("critical")]),
+            "deterministic_coverage_assessment_available": bool(coverage_cells),
+            "coverage_remediation_route": REMEDIATION_LINKS["airline_service_coverage"],
             "metadata_only": True,
         }
 

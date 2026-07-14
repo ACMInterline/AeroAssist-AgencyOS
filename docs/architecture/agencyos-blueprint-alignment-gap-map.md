@@ -154,3 +154,7 @@ Cross-domain airline provenance is now aligned through evidence sources, artifac
 ## Phase 55.3 Alignment
 
 Deterministic operational-knowledge change visibility is aligned by extending the existing governance version with immutable object items, structured field changes, source/release traceability, impact assessments, and revalidation requests. Phase 39.2 staged data-pack history remains separate. Automatic re-QA, republishing, rollback, or mutation of affected offers, recommendations, bookings, trips, and cases remain explicit gaps.
+
+## Phase 55.4 Alignment
+
+Airline and service coverage is aligned through deterministic projections over canonical knowledge sources rather than a second policy store. Dimensioned cells expose completeness, confidence, freshness, scenario, publication, and usability scores; critical gaps block the readiness label. Population Toolkit and Pilot Readiness receive coverage metadata, while recommendations remain advisory and Offer Intelligence remains unchanged. Real source population, human gap remediation, QA, and controlled publishing remain operational responsibilities.

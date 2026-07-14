@@ -247,3 +247,7 @@ Phase 55.2 adds `airline_evidence_sources`, `airline_evidence_artifacts`, `airli
 ## Phase 55.3 Airline Knowledge Versioning
 
 Phase 55.3 extends canonical `airline_knowledge_versions` with source, release, affected-scope, item-count, and immutable-history metadata. It adds `airline_knowledge_version_items`, `airline_knowledge_change_sets`, `airline_knowledge_field_changes`, `airline_knowledge_impact_assessments`, `airline_knowledge_change_reviews`, and `airline_knowledge_revalidation_requests`. Version items snapshot existing profile, policy, rule, pricing, capability, evidence, instruction, SSR/OSI, EMD, distribution, contact, service-desk, and publication records; they do not duplicate their operational ownership.
+
+## Phase 55.4 Airline Service Coverage And Gaps
+
+Phase 55.4 adds `airline_service_coverage_profiles`, `airline_service_coverage_cells`, `airline_knowledge_gaps`, `airline_coverage_targets`, `airline_coverage_assessments`, and `airline_coverage_remediation_plans`. These are deterministic governance projections over existing policy, pricing, rule, evidence, normalization, capability, QA, publication, scenario, population-toolkit, pilot-readiness, and recommendation records. They do not replace or duplicate those canonical knowledge and operational models.

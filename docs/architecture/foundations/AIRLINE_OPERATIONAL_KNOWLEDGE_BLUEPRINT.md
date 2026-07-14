@@ -195,3 +195,7 @@ The Airline Policy Evidence and Source Governance layer makes the Evidence pilla
 ## Phase 55.3 Versioning And Change Detection
 
 Canonical knowledge versions contain immutable snapshots of source-backed objects across all five knowledge pillars. Deterministic structured differences identify changed fields, evidence causes, published releases, affected airline/service/route scope, and potentially impacted advisory or operational records. Material changes create human re-QA and republish obligations; they do not rewrite historical recommendations, offers, bookings, trips, or cases.
+
+## Phase 55.4 Coverage And Gap Management
+
+Airline service coverage measures whether the five knowledge pillars are complete, evidenced, current, scenario-tested, QA-reviewed, and published for a dimensioned airline/service scope. Deterministic coverage cells and explicit gap records make unknown, stale, conflicting, failed, and unpublished knowledge visible. Critical gaps prevent operational-ready status. Coverage can guide population priorities and human recommendation review, but it cannot create policy truth, publish knowledge, or select an airline automatically.

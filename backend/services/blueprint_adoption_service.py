@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -46,6 +46,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_knowledge_versions plus airline_knowledge_version_items, airline_knowledge_change_sets, airline_knowledge_field_changes, airline_knowledge_impact_assessments, airline_knowledge_change_reviews, airline_knowledge_revalidation_requests, /api/platform/knowledge-versions, /api/agencies/{agency_id}/knowledge-updates, /platform/knowledge-versions, /agency/knowledge-updates",
         "status": "foundation adopted",
         "action": "Reuse canonical Phase 50.4 governance versions, retain Phase 39.2 staged data-pack history, compare immutable source-backed snapshots deterministically, and flag downstream records for human review without mutating historical operations or publishing automatically.",
+    },
+    {
+        "category": "Airline Service Coverage And Knowledge Gap Management",
+        "concept": "Deterministic airline-by-service operational knowledge usability matrix",
+        "supplementary_concept": "coverage profile, dimensioned coverage cell, critical knowledge gap, target, assessment, remediation plan, published agency view",
+        "current_equivalent": "airline_service_coverage_profiles, airline_service_coverage_cells, airline_knowledge_gaps, airline_coverage_targets, airline_coverage_assessments, airline_coverage_remediation_plans, /api/platform/airline-service-coverage, /api/agencies/{agency_id}/airline-service-coverage, /platform/airline-service-coverage, /agency/airline-service-coverage",
+        "status": "foundation adopted",
+        "action": "Measure canonical policy, pricing, rules, evidence, capability, QA, publication, and scenario coverage deterministically; block operational-ready labels on critical gaps; synchronize existing population and pilot-readiness metadata; expose only published sanitized agency views without automatic publication, recommendation, offer mutation, provider execution, or AI.",
     },
     {
         "category": "Airline Intelligence Data Packs",
