@@ -97,6 +97,8 @@ Phase 54.3 adds SLA and operational deadline APIs only under `/api/platform/sla-
 
 Phase 54.4 adds task automation and dependency orchestration APIs only under `/api/platform/task-automation/*` and `/api/agencies/{agency_id}/task-automation/*`, plus frontend pages under `/platform/task-automation` and `/agency/task-automation`. It records metadata-only task templates, dependencies, automation rules, and automation runs while reusing existing request tasks and work queues without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate task systems, arbitrary code execution, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, route blocking, access enforcement, or automatic operational execution.
 
+Phase 54.5 adds request-to-trip operational conversion APIs only under `/api/platform/request-trip-conversion/*` and `/api/agencies/{agency_id}/request-trip-conversion/*`, plus frontend pages under `/platform/request-trip-conversion` and `/agency/request-trip-conversion`. It records metadata-only preview, validation, conversion run, mapping, and issue records while preserving the request as intake origin and the trip as downstream shell without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, automatic trip id reuse from request ids, booking, ticketing, provider execution, AI/LLM generation, background workers, schedulers, sending, route blocking, access enforcement, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |

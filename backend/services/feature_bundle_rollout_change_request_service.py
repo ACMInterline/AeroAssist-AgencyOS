@@ -18,7 +18,7 @@ from services.feature_bundle_rollout_risk_service import RISK_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 
 CHANGE_REQUEST_COLLECTION = "feature_bundle_rollout_change_requests"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

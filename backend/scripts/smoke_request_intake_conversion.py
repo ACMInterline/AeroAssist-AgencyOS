@@ -91,7 +91,7 @@ def intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_54_4_task_automation_dependency_orchestration_foundation":
+    if health.get("phase") != "phase_54_5_request_to_trip_operational_conversion_foundation":
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]

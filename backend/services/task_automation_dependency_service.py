@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

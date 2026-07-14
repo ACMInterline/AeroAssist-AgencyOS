@@ -16,7 +16,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 SSR_OSI_WORKSPACE_COLLECTION = "ssr_osi_workspaces"
 
 SSR_OSI_OPERATIONAL_STATUSES = [item.value for item in SsrOsiOperationalStatus]

@@ -16,7 +16,7 @@ from services.service_parameter_taxonomy_service import (
 )
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 PRICING_FORMULA_BUILDERS_COLLECTION = "pricing_formula_builders"
 
 FORMULA_STATUSES = ["draft", "in_review", "approved", "retired", "archived"]

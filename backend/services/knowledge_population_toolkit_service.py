@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgePopulationToolkit, KnowledgePopulationToolkitCreate, KnowledgePopulationToolkitUpdate
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION = "knowledge_population_toolkits"
 
 POPULATION_STATUSES = [

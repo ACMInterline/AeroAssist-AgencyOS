@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -70,6 +70,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "work_queue", "label": "Agent Work Queue", "href": "/agency/work-queue", "aliases": ["work_queue", "agent_work_queue", "assignments", "daily_work", "requests"]},
     {"key": "deadlines", "label": "Deadlines", "href": "/agency/deadlines", "aliases": ["deadlines", "sla_deadlines", "operational_deadlines", "work_queue", "requests"]},
     {"key": "task_automation", "label": "Task Automation", "href": "/agency/task-automation", "aliases": ["task_automation", "task_templates", "task_dependencies", "automation_runs", "work_queue", "deadlines"]},
+    {"key": "request_trip_conversion", "label": "Request-to-Trip Conversion", "href": "/agency/request-trip-conversion", "aliases": ["request_trip_conversion", "request_to_trip", "conversion_wizard", "requests", "trips", "workflow_orchestration"]},
     {"key": "service_taxonomy", "label": "Service Taxonomy", "href": "/agency/service-taxonomy", "aliases": ["service_taxonomy", "airline_intelligence"]},
     {"key": "service_mechanics", "label": "Service Mechanics", "href": "/agency/service-mechanics", "aliases": ["service_mechanics", "airline_intelligence"]},
     {"key": "ancillary_pricing", "label": "Ancillary Pricing", "href": "/agency/ancillary-pricing", "aliases": ["ancillary_pricing", "airline_intelligence"]},

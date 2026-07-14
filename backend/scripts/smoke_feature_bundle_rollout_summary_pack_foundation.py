@@ -21,7 +21,7 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_54_4_task_automation_dependency_orchestration_foundation"
+EXPECTED_PHASE = "phase_54_5_request_to_trip_operational_conversion_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}

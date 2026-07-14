@@ -9,7 +9,7 @@ from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_ssr_osi_workspaces, agency_task_automation, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_ssr_osi_workspaces, platform_task_automation, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_request_trip_conversion, agency_ssr_osi_workspaces, agency_task_automation, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_request_trip_conversion, platform_ssr_osi_workspaces, platform_task_automation, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
@@ -62,7 +62,8 @@ from services.knowledge_population_toolkit_service import KNOWLEDGE_POPULATION_T
 from services.operational_workflow_orchestration_service import BOOKING_READINESS_STATES as OPERATIONAL_WORKFLOW_BOOKING_READINESS_STATES, DEFAULT_WORKFLOW_DEFINITIONS as OPERATIONAL_WORKFLOW_DEFAULT_DEFINITIONS, GUARD_RESULTS as OPERATIONAL_WORKFLOW_GUARD_RESULTS, GUARD_TYPES as OPERATIONAL_WORKFLOW_GUARD_TYPES, OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION, OPERATIONAL_WORKFLOW_EVENTS_COLLECTION, OPERATIONAL_WORKFLOW_GUARDS_COLLECTION, OPERATIONAL_WORKFLOW_INSTANCES_COLLECTION, OPERATIONAL_WORKFLOW_TRANSITIONS_COLLECTION, REQUEST_LIFECYCLE_STATES as OPERATIONAL_WORKFLOW_REQUEST_STATES, SERVICE_FULFILLMENT_STATES as OPERATIONAL_WORKFLOW_SERVICE_STATES, TRANSITION_STATUSES as OPERATIONAL_WORKFLOW_TRANSITION_STATUSES, TRIP_LIFECYCLE_STATES as OPERATIONAL_WORKFLOW_TRIP_STATES, WORKFLOW_STATUSES as OPERATIONAL_WORKFLOW_STATUSES
 from services.agent_work_queue_service import ASSIGNMENT_EVENT_TYPES as OPERATIONAL_ASSIGNMENT_EVENT_TYPES, BLOCKER_STATUSES as OPERATIONAL_QUEUE_BLOCKER_STATUSES, CANONICAL_QUEUE_CODES as OPERATIONAL_QUEUE_CODES, DEFAULT_QUEUE_DEFINITIONS as OPERATIONAL_DEFAULT_QUEUE_DEFINITIONS, OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION, OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION, OPERATIONAL_QUEUE_VIEWS_COLLECTION, OPERATIONAL_WORK_ITEMS_COLLECTION, PHASE_LABEL as AGENT_WORK_QUEUE_PHASE_LABEL, SLA_STATUSES as OPERATIONAL_QUEUE_SLA_STATUSES, WORK_ITEM_PRIORITIES as OPERATIONAL_WORK_ITEM_PRIORITIES, WORK_ITEM_SEVERITIES as OPERATIONAL_WORK_ITEM_SEVERITIES, WORK_ITEM_STATUSES as OPERATIONAL_WORK_ITEM_STATUSES, WORK_ITEM_TYPES as OPERATIONAL_WORK_ITEM_TYPES
 from services.operational_sla_deadline_service import BREACH_STATES as OPERATIONAL_DEADLINE_BREACH_STATES, BUSINESS_HOURS_BEHAVIORS as OPERATIONAL_BUSINESS_HOURS_BEHAVIORS, DEADLINE_STATUSES as OPERATIONAL_DEADLINE_STATUSES, DEADLINE_TYPES as OPERATIONAL_DEADLINE_TYPES, DEFAULT_SLA_POLICIES as OPERATIONAL_DEFAULT_SLA_POLICIES, OPERATIONAL_BUSINESS_CALENDARS_COLLECTION, OPERATIONAL_DEADLINES_COLLECTION, OPERATIONAL_SLA_EVENTS_COLLECTION, OPERATIONAL_SLA_POLICIES_COLLECTION, PHASE_LABEL as SLA_OPERATIONAL_DEADLINE_PHASE_LABEL, SLA_DURATION_UNITS as OPERATIONAL_SLA_DURATION_UNITS, SLA_EVENT_TYPES as OPERATIONAL_SLA_EVENT_TYPES, SLA_POLICY_SCOPES as OPERATIONAL_SLA_POLICY_SCOPES, SLA_POLICY_STATUSES as OPERATIONAL_SLA_POLICY_STATUSES
-from services.task_automation_dependency_service import DEFAULT_AUTOMATION_RULES as OPERATIONAL_DEFAULT_TASK_AUTOMATION_RULES, OPERATIONAL_TASK_AUTOMATION_RULES_COLLECTION, OPERATIONAL_TASK_AUTOMATION_RUNS_COLLECTION, OPERATIONAL_TASK_DEPENDENCIES_COLLECTION, OPERATIONAL_TASK_TEMPLATES_COLLECTION, PHASE_LABEL, SAFE_TASK_TEMPLATES as OPERATIONAL_SAFE_TASK_TEMPLATES, TASK_AUTOMATION_RULE_STATUSES, TASK_AUTOMATION_RUN_STATUSES, TASK_AUTOMATION_TRIGGER_EVENTS, TASK_DEPENDENCY_STATUSES, TASK_DEPENDENCY_TYPES, TASK_TEMPLATE_STATUSES
+from services.task_automation_dependency_service import DEFAULT_AUTOMATION_RULES as OPERATIONAL_DEFAULT_TASK_AUTOMATION_RULES, OPERATIONAL_TASK_AUTOMATION_RULES_COLLECTION, OPERATIONAL_TASK_AUTOMATION_RUNS_COLLECTION, OPERATIONAL_TASK_DEPENDENCIES_COLLECTION, OPERATIONAL_TASK_TEMPLATES_COLLECTION, PHASE_LABEL as TASK_AUTOMATION_PHASE_LABEL, SAFE_TASK_TEMPLATES as OPERATIONAL_SAFE_TASK_TEMPLATES, TASK_AUTOMATION_RULE_STATUSES, TASK_AUTOMATION_RUN_STATUSES, TASK_AUTOMATION_TRIGGER_EVENTS, TASK_DEPENDENCY_STATUSES, TASK_DEPENDENCY_TYPES, TASK_TEMPLATE_STATUSES
+from services.request_to_trip_conversion_service import CONVERSION_ISSUE_TYPES, CONVERSION_MAPPING_TYPES, CONVERSION_MODES, CONVERSION_PLAN_STATUSES, CONVERSION_RUN_STATUSES, PHASE_LABEL, REQUEST_TRIP_CONVERSION_ISSUES_COLLECTION, REQUEST_TRIP_CONVERSION_PLANS_COLLECTION, REQUEST_TRIP_CONVERSION_RUNS_COLLECTION, REQUEST_TRIP_ENTITY_MAPPINGS_COLLECTION
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -84,7 +85,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 54.4 task automation and dependency orchestration foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 54.5 request-to-trip operational conversion foundation.",
 )
 
 app.add_middleware(
@@ -1694,6 +1695,10 @@ async def readiness() -> dict:
     operational_task_dependency_records = await database.collection(OPERATIONAL_TASK_DEPENDENCIES_COLLECTION).find_many()
     operational_task_automation_rule_records = await database.collection(OPERATIONAL_TASK_AUTOMATION_RULES_COLLECTION).find_many()
     operational_task_automation_run_records = await database.collection(OPERATIONAL_TASK_AUTOMATION_RUNS_COLLECTION).find_many()
+    request_trip_conversion_plan_records = await database.collection(REQUEST_TRIP_CONVERSION_PLANS_COLLECTION).find_many()
+    request_trip_conversion_run_records = await database.collection(REQUEST_TRIP_CONVERSION_RUNS_COLLECTION).find_many()
+    request_trip_entity_mapping_records = await database.collection(REQUEST_TRIP_ENTITY_MAPPINGS_COLLECTION).find_many()
+    request_trip_conversion_issue_records = await database.collection(REQUEST_TRIP_CONVERSION_ISSUES_COLLECTION).find_many()
     operational_work_item_status_counts = {
         status: len([item for item in operational_work_item_records if item.get("status") == status])
         for status in OPERATIONAL_WORK_ITEM_STATUSES
@@ -1773,6 +1778,24 @@ async def readiness() -> dict:
     operational_task_dependency_satisfied_count = len([item for item in operational_task_dependency_records if item.get("status") == "satisfied"])
     operational_task_automation_created_task_count = sum(len(item.get("tasks_created") or []) for item in operational_task_automation_run_records)
     operational_task_automation_skipped_task_count = sum(len(item.get("tasks_skipped") or []) for item in operational_task_automation_run_records)
+    request_trip_conversion_plan_status_counts = {
+        status: len([item for item in request_trip_conversion_plan_records if item.get("plan_status") == status])
+        for status in CONVERSION_PLAN_STATUSES
+    }
+    request_trip_conversion_run_status_counts = {
+        status: len([item for item in request_trip_conversion_run_records if item.get("run_status") == status])
+        for status in CONVERSION_RUN_STATUSES
+    }
+    request_trip_conversion_mapping_type_counts = {
+        mapping_type: len([item for item in request_trip_entity_mapping_records if item.get("mapping_type") == mapping_type])
+        for mapping_type in CONVERSION_MAPPING_TYPES
+    }
+    request_trip_conversion_issue_type_counts = {
+        issue_type: len([item for item in request_trip_conversion_issue_records if item.get("issue_type") == issue_type])
+        for issue_type in CONVERSION_ISSUE_TYPES
+    }
+    request_trip_conversion_warning_count = len([item for item in request_trip_conversion_issue_records if item.get("severity") == "warning"])
+    request_trip_conversion_critical_issue_count = len([item for item in request_trip_conversion_issue_records if item.get("severity") == "critical"])
     operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
     operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
     operational_deadline_paused_count = len([item for item in operational_deadline_records if item.get("status") == "paused"])
@@ -4428,6 +4451,65 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 54.4 adds metadata-only task automation and dependency orchestration. It reuses request tasks, records safe task templates/rules/runs, links predecessor and successor task dependencies, refreshes the canonical work queue, and records workflow metadata without arbitrary code execution, background workers, provider integrations, AI, messaging, or operational execution.",
         },
+        "request_to_trip_operational_conversion_foundation": {
+            "request_to_trip_operational_conversion_enabled": True,
+            "request_trip_conversion_plans_collection_enabled": True,
+            "request_trip_conversion_runs_collection_enabled": True,
+            "request_trip_entity_mappings_collection_enabled": True,
+            "request_trip_conversion_issues_collection_enabled": True,
+            "agency_request_trip_conversion_workspace_enabled": True,
+            "platform_request_trip_conversion_diagnostics_enabled": True,
+            "conversion_preview_enabled": True,
+            "critical_validation_enabled": True,
+            "missing_data_warning_enabled": True,
+            "safe_warning_conversion_enabled": True,
+            "new_trip_creation_enabled": True,
+            "explicit_existing_trip_attachment_enabled": True,
+            "idempotency_enabled": True,
+            "safe_retry_enabled": True,
+            "source_request_snapshot_preservation_enabled": True,
+            "request_remains_immutable_intake_origin": True,
+            "trip_becomes_downstream_operational_shell": True,
+            "request_id_as_trip_id_forbidden": True,
+            "segment_mapping_enabled": True,
+            "passenger_mapping_enabled": True,
+            "service_requirement_carry_forward_enabled": True,
+            "pet_segment_scope_carry_forward_enabled": True,
+            "special_item_segment_scope_carry_forward_enabled": True,
+            "linked_offer_carry_forward_enabled": True,
+            "workflow_start_metadata_enabled": True,
+            "task_generation_integration_enabled": True,
+            "deadline_generation_integration_enabled": True,
+            "timeline_event_integration_enabled": True,
+            "agency_isolation_enforced": True,
+            "metadata_only": True,
+            "booking_execution_disabled": True,
+            "ticketing_disabled": True,
+            "provider_integrations_disabled": True,
+            "external_api_calls_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "schedulers_disabled": True,
+            "automatic_production_seeding_disabled": True,
+            "human_authority_final": True,
+            "conversion_modes": CONVERSION_MODES,
+            "conversion_plan_statuses": CONVERSION_PLAN_STATUSES,
+            "conversion_run_statuses": CONVERSION_RUN_STATUSES,
+            "conversion_mapping_types": CONVERSION_MAPPING_TYPES,
+            "conversion_issue_types": CONVERSION_ISSUE_TYPES,
+            "request_trip_conversion_plan_count": len(request_trip_conversion_plan_records),
+            "request_trip_conversion_run_count": len(request_trip_conversion_run_records),
+            "request_trip_entity_mapping_count": len(request_trip_entity_mapping_records),
+            "request_trip_conversion_issue_count": len(request_trip_conversion_issue_records),
+            "request_trip_conversion_warning_count": request_trip_conversion_warning_count,
+            "request_trip_conversion_critical_issue_count": request_trip_conversion_critical_issue_count,
+            "request_trip_conversion_plan_status_counts": request_trip_conversion_plan_status_counts,
+            "request_trip_conversion_run_status_counts": request_trip_conversion_run_status_counts,
+            "request_trip_conversion_mapping_type_counts": request_trip_conversion_mapping_type_counts,
+            "request_trip_conversion_issue_type_counts": request_trip_conversion_issue_type_counts,
+            "readiness_required": False,
+            "diagnostic": "Phase 54.5 adds the metadata-only request-to-trip operational conversion foundation. It previews, validates, safely executes, maps, and audits request intake conversion into a downstream trip shell while preserving the request as immutable intake origin, never using request id as trip id, and recording workflow, task, deadline, and timeline metadata without booking, ticketing, provider calls, AI, workers, seeding, or external execution.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -6421,6 +6503,7 @@ app.include_router(platform_operational_workflows.router)
 app.include_router(platform_agent_work_queues.router)
 app.include_router(platform_operational_sla_deadlines.router)
 app.include_router(platform_task_automation.router)
+app.include_router(platform_request_trip_conversion.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -6517,6 +6600,7 @@ app.include_router(agency_operational_workflows.router)
 app.include_router(agency_agent_work_queues.router)
 app.include_router(agency_operational_sla_deadlines.router)
 app.include_router(agency_task_automation.router)
+app.include_router(agency_request_trip_conversion.router)
 app.include_router(agency_passenger_service_workflows.router)
 app.include_router(agency_rollout_dashboard.router)
 app.include_router(agency_capabilities.router)

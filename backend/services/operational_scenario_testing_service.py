@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 OPERATIONAL_SCENARIO_TESTS_COLLECTION = "operational_scenario_tests"
 
 SCENARIO_FAMILIES = [

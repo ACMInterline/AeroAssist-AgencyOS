@@ -15934,6 +15934,134 @@ class OperationalTaskDependencyActionRequest(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
+class RequestTripConversionPlan(BaseDocument):
+    agency_id: str
+    plan_reference: str
+    request_id: str
+    target_trip_id: Optional[str] = None
+    conversion_mode: str = "new_trip"
+    plan_status: str = "preview"
+    idempotency_key: str
+    preview_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    validation_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    missing_data_warnings: List[Dict[str, Any]] = Field(default_factory=list)
+    critical_issues: List[Dict[str, Any]] = Field(default_factory=list)
+    remediation_guidance: List[str] = Field(default_factory=list)
+    source_request_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    request_to_trip_operational_conversion_foundation: bool = True
+    request_remains_intake_origin: bool = True
+    trip_becomes_operational_shell: bool = True
+    never_use_request_id_as_trip_id: bool = True
+    booking_execution_disabled: bool = True
+    provider_integrations_disabled: bool = True
+    automation_execution_disabled: bool = True
+
+
+class RequestTripConversionRun(BaseDocument):
+    agency_id: str
+    run_reference: str
+    plan_id: Optional[str] = None
+    request_id: str
+    trip_id: Optional[str] = None
+    conversion_mode: str = "new_trip"
+    run_status: str = "planned"
+    idempotency_key: str
+    source_request_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    validation_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    result_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    warning_count: int = 0
+    critical_issue_count: int = 0
+    mapping_count: int = 0
+    workflow_instance_id: Optional[str] = None
+    task_automation_run_id: Optional[str] = None
+    deadline_id: Optional[str] = None
+    timeline_event_ids: List[str] = Field(default_factory=list)
+    executed_at: Optional[datetime] = None
+    retry_of_run_id: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    request_to_trip_operational_conversion_foundation: bool = True
+    idempotent_conversion: bool = True
+    immutable_request_origin_preserved: bool = True
+    booking_execution_disabled: bool = True
+    provider_integrations_disabled: bool = True
+
+
+class RequestTripEntityMapping(BaseDocument):
+    agency_id: str
+    run_id: str
+    plan_id: Optional[str] = None
+    request_id: str
+    trip_id: str
+    mapping_type: str
+    source_entity_type: str
+    source_entity_id: str
+    target_entity_type: str
+    target_entity_id: str
+    mapping_status: str = "mapped"
+    mapping_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    target_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    notes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    request_to_trip_operational_conversion_foundation: bool = True
+    mapping_is_audit_metadata_only: bool = True
+
+
+class RequestTripConversionIssue(BaseDocument):
+    agency_id: str
+    plan_id: Optional[str] = None
+    run_id: Optional[str] = None
+    request_id: str
+    trip_id: Optional[str] = None
+    issue_code: str
+    issue_type: str = "warning"
+    severity: str = "warning"
+    status: str = "open"
+    title: str
+    description: Optional[str] = None
+    source_entity_type: Optional[str] = None
+    source_entity_id: Optional[str] = None
+    remediation_guidance: Optional[str] = None
+    issue_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    request_to_trip_operational_conversion_foundation: bool = True
+    warning_or_manual_review_only: bool = True
+    provider_integrations_disabled: bool = True
+
+
+class RequestTripConversionPreviewRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    agency_id: Optional[str] = None
+    request_id: str
+    existing_trip_id: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    allow_warnings: bool = True
+    start_workflow: bool = True
+    generate_tasks_deadlines: bool = True
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RequestTripConversionExecuteRequest(RequestTripConversionPreviewRequest):
+    plan_id: Optional[str] = None
+    force_retry: bool = False
+    conversion_reason: Optional[str] = None
+
+
 class AirlineOperationalKnowledgeEvidence(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 

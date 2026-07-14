@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 
 OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION = "operational_workflow_definitions"
 OPERATIONAL_WORKFLOW_INSTANCES_COLLECTION = "operational_workflow_instances"

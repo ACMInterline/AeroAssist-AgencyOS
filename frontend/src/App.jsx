@@ -56,6 +56,7 @@ import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsP
 import AgentWorkQueuePage from "./pages/agency/AgentWorkQueuePage"
 import DeadlinesPage from "./pages/agency/DeadlinesPage"
 import AgencyTaskAutomationPage from "./pages/agency/TaskAutomationPage"
+import RequestTripConversionPage from "./pages/agency/RequestTripConversionPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -146,6 +147,7 @@ import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkfl
 import PlatformWorkQueueGovernancePage from "./pages/platform/WorkQueueGovernancePage"
 import PlatformSlaPoliciesPage from "./pages/platform/SlaPoliciesPage"
 import PlatformTaskAutomationPage from "./pages/platform/TaskAutomationPage"
+import PlatformRequestTripConversionDiagnosticsPage from "./pages/platform/RequestTripConversionDiagnosticsPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -281,6 +283,7 @@ const routes = {
   "/platform/work-queues": PlatformWorkQueueGovernancePage,
   "/platform/sla-policies": PlatformSlaPoliciesPage,
   "/platform/task-automation": PlatformTaskAutomationPage,
+  "/platform/request-trip-conversion": PlatformRequestTripConversionDiagnosticsPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -372,6 +375,7 @@ const routes = {
   "/agency/work-queue": AgentWorkQueuePage,
   "/agency/deadlines": DeadlinesPage,
   "/agency/task-automation": AgencyTaskAutomationPage,
+  "/agency/request-trip-conversion": RequestTripConversionPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

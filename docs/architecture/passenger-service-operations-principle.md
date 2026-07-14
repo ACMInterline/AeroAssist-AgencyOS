@@ -89,6 +89,12 @@ Trigger Event -> Task Template / Automation Rule -> Existing Request Task -> Tas
 
 Task automation records create existing request-task metadata idempotently, link predecessor/successor task dependencies, mark blocked successors as waiting, and synchronize generated task metadata into the work queue. The layer remains metadata-only and does not run arbitrary code, create a duplicate task system, execute providers, run AI, send messages, schedule workers, book, ticket, issue EMDs, or automate operational execution.
 
+Phase 54.5 adds Request-to-Trip Operational Conversion as the auditable bridge from intake to trip dossier:
+
+Request Intake Origin -> Conversion Plan / Validation -> Conversion Run -> Entity Mapping -> Trip Dossier Shell
+
+The conversion layer preserves the request as immutable intake and audit origin, creates or explicitly attaches a downstream trip shell, records source snapshots and mappings, and links workflow, task, deadline, and timeline metadata. It never uses the request id as the trip id and does not book, ticket, call providers, run AI, seed production data, send messages, or automate operational execution.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

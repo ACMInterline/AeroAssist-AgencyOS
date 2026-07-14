@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_4_task_automation_dependency_orchestration_foundation"
+PHASE_LABEL = "phase_54_5_request_to_trip_operational_conversion_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -254,6 +254,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalTaskTemplate, OperationalTaskDependency, OperationalTaskAutomationRule, OperationalTaskAutomationRun, TaskAutomationDependencyService, operational_task_templates, operational_task_dependencies, operational_task_automation_rules, operational_task_automation_runs, /api/platform/task-automation, /api/agencies/{agency_id}/task-automation, /platform/task-automation, /agency/task-automation",
         "status": "foundation adopted",
         "action": "Create metadata-only safe task automation and dependency orchestration on top of existing request tasks, work queues, SLA due dates, and workflow events. Phase 54.4 creates task metadata idempotently and records dependency/audit metadata without arbitrary code execution, provider execution, AI/LLM generation, sending messages, scheduling workers, duplicate task systems, or automatic operational execution.",
+    },
+    {
+        "category": "Request-to-Trip Operational Conversion",
+        "concept": "Auditable request intake to trip dossier conversion metadata",
+        "supplementary_concept": "conversion plans, conversion runs, entity mappings, conversion issues, source snapshots, missing-data warnings, critical validation, safe retry, idempotency, workflow/task/deadline/timeline links",
+        "current_equivalent": "RequestTripConversionPlan, RequestTripConversionRun, RequestTripEntityMapping, RequestTripConversionIssue, RequestToTripConversionService, request_trip_conversion_plans, request_trip_conversion_runs, request_trip_entity_mappings, request_trip_conversion_issues, /api/platform/request-trip-conversion, /api/agencies/{agency_id}/request-trip-conversion, /platform/request-trip-conversion, /agency/request-trip-conversion",
+        "status": "foundation adopted",
+        "action": "Create metadata-only request-to-trip conversion preview, validation, execution, mapping, and audit records while preserving the request as immutable intake origin and trip as downstream operational shell. Phase 54.5 does not book, ticket, call providers, run AI/LLM generation, schedule workers, seed production data, block routes, use request ids as trip ids, or automate operational execution.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -526,6 +534,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationalTaskTemplate, OperationalTaskDependency, OperationalTaskAutomationRule, OperationalTaskAutomationRun, TaskAutomationDependencyService, /api/platform/task-automation, /api/agencies/{agency_id}/task-automation, /platform/task-automation, /agency/task-automation",
         "status": "foundation adopted",
         "action": "Coordinate metadata-only safe task creation and dependency visibility over existing request tasks and queues without arbitrary code execution, provider execution, AI, workers, sending, duplicate task systems, or automatic operational execution.",
+    },
+    {
+        "category": "Request-to-Trip Operational Conversion",
+        "concept": "Request intake to trip shell conversion metadata",
+        "supplementary_concept": "preview, validation, safe execution, entity mappings, warnings, critical issues, source snapshots, result snapshots, safe retry, workflow/task/deadline/timeline links",
+        "current_equivalent": "RequestTripConversionPlan, RequestTripConversionRun, RequestTripEntityMapping, RequestTripConversionIssue, RequestToTripConversionService, /api/platform/request-trip-conversion, /api/agencies/{agency_id}/request-trip-conversion, /platform/request-trip-conversion, /agency/request-trip-conversion",
+        "status": "foundation adopted",
+        "action": "Coordinate metadata-only request-to-trip conversion while preserving request intake origin, downstream trip shell separation, agency isolation, idempotency, and human authority without booking, ticketing, provider calls, AI, workers, seeding, route blocking, or automatic operational execution.",
     },
     {
         "category": "Feature Bundle Rollout Readiness",
@@ -1269,6 +1285,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Agent work queue and assignment foundation built in Phase 54.2",
             "SLA and operational deadline engine foundation built in Phase 54.3",
             "Task automation and dependency orchestration foundation built in Phase 54.4",
+            "Request-to-trip operational conversion foundation built in Phase 54.5",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

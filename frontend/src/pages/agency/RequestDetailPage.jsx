@@ -113,8 +113,7 @@ export default function RequestDetailPage({ requestId }) {
   }
 
   async function createTripDossier() {
-    const result = await apiPost(`/api/agencies/${state.agency.id}/trips/from-request/${requestId}`)
-    window.location.href = `/agency/trips/${result.trip.id}`
+    window.location.href = `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`
   }
 
   async function createOrOpenOfferWorkspace() {
@@ -152,6 +151,9 @@ export default function RequestDetailPage({ requestId }) {
               <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenOfferWorkspace}>
                 Create / open offer workspace
               </button>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/request-trip-conversion?request_id=${requestId}`}>
+                Conversion wizard
+              </a>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.request?.status === "archived" ? "Restore" : "Archive"}
               </button>
@@ -212,7 +214,7 @@ export default function RequestDetailPage({ requestId }) {
                   <p className="text-sm font-semibold text-slate-950">No trip dossier linked</p>
                   <p className="mt-1 text-sm text-slate-600">Create an operational shell when this request becomes active trip work. The original request will not be replaced.</p>
                 </div>
-                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createTripDossier}>Create Trip Dossier</button>
+                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createTripDossier}>Open Conversion Wizard</button>
               </div>
             )}
           </Panel>
