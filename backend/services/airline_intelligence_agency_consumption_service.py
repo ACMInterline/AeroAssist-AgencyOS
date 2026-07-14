@@ -25,7 +25,7 @@ from services.airline_intelligence_knowledge_version_service import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 
 CONSUMPTION_PROFILE_COLLECTION = "airline_intelligence_agency_consumption_profiles"
 ASSIGNMENT_VIEW_COLLECTION = "airline_intelligence_agency_knowledge_assignment_views"

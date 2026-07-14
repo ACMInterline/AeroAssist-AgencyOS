@@ -22911,6 +22911,300 @@ class AirlineContact(BaseDocument):
     governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
 
 
+class AirlineContactDirectoryEntry(BaseDocument):
+    contact_reference: str
+    agency_id: Optional[str] = None
+    airline_id: Optional[str] = None
+    airline_code: str
+    desk_type: str
+    contact_name: str
+    contact_status: str = "active"
+    legacy_contact_id: Optional[str] = None
+    market_scope: List[str] = Field(default_factory=list)
+    country_scope: List[str] = Field(default_factory=list)
+    airport_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    service_scope: List[str] = Field(default_factory=list)
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    language_codes: List[str] = Field(default_factory=list)
+    channel_ids: List[str] = Field(default_factory=list)
+    scope_ids: List[str] = Field(default_factory=list)
+    availability_ids: List[str] = Field(default_factory=list)
+    escalation_path_ids: List[str] = Field(default_factory=list)
+    authentication_required: bool = False
+    authentication_requirement_summary: Optional[str] = None
+    agency_identifier_required: bool = False
+    required_information: List[str] = Field(default_factory=list)
+    required_attachment_types: List[str] = Field(default_factory=list)
+    expected_response_minutes: Optional[int] = None
+    last_verified_at: Optional[datetime] = None
+    verification_status: str = "unverified"
+    next_review_at: Optional[datetime] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    freshness_status: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    secret_storage_disabled: bool = True
+    external_messaging_disabled: bool = True
+
+
+class AirlineContactChannel(BaseDocument):
+    channel_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    contact_directory_entry_id: str
+    channel_type: str
+    channel_label: str
+    contact_value: Optional[str] = None
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
+    channel_reference_value: Optional[str] = None
+    public_url: Optional[str] = None
+    language_codes: List[str] = Field(default_factory=list)
+    authentication_required: bool = False
+    authentication_requirement_summary: Optional[str] = None
+    agency_identifier_required: bool = False
+    expected_response_minutes: Optional[int] = None
+    access_classification: str = "agency_visible"
+    channel_status: str = "active"
+    preferred: bool = False
+    last_verified_at: Optional[datetime] = None
+    verification_status: str = "unverified"
+    next_review_at: Optional[datetime] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    freshness_status: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    stores_credentials: bool = False
+    secret_storage_disabled: bool = True
+
+
+class AirlineContactScope(BaseDocument):
+    scope_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    contact_directory_entry_id: str
+    scope_name: str
+    market_scope: List[str] = Field(default_factory=list)
+    country_scope: List[str] = Field(default_factory=list)
+    airport_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    service_scope: List[str] = Field(default_factory=list)
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    marketing_carrier_scope: List[str] = Field(default_factory=list)
+    operating_carrier_scope: List[str] = Field(default_factory=list)
+    scope_status: str = "active"
+    priority: int = 100
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineContactAvailability(BaseDocument):
+    availability_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    contact_directory_entry_id: str
+    timezone: str = "UTC"
+    is_24_hours: bool = False
+    operating_hours: List[Dict[str, Any]] = Field(default_factory=list)
+    holiday_dates: List[str] = Field(default_factory=list)
+    exception_hours: List[Dict[str, Any]] = Field(default_factory=list)
+    after_hours_instruction: Optional[str] = None
+    expected_response_minutes: Optional[int] = None
+    availability_status: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineContactEscalationPath(BaseDocument):
+    escalation_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    desk_type: str
+    path_name: str
+    contact_directory_entry_id: Optional[str] = None
+    service_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    escalation_steps: List[Dict[str, Any]] = Field(default_factory=list)
+    trigger_after_minutes: Optional[int] = None
+    path_status: str = "active"
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_escalation_disabled: bool = True
+
+
+class AirlineCommunicationTemplate(BaseDocument):
+    communication_template_reference: str
+    agency_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    template_type: str
+    template_name: str
+    desk_type: Optional[str] = None
+    channel_type: Optional[str] = None
+    service_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    language: str = "en"
+    subject_template: Optional[str] = None
+    internal_instructions: Optional[str] = None
+    supplier_message_template: str
+    client_status_message_template: Optional[str] = None
+    placeholder_keys: List[str] = Field(default_factory=list)
+    required_information: List[str] = Field(default_factory=list)
+    required_attachment_types: List[str] = Field(default_factory=list)
+    template_status: str = "draft"
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_sending_disabled: bool = True
+
+
+class AirlineCommunicationRequirement(BaseDocument):
+    communication_requirement_reference: str
+    agency_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    template_id: Optional[str] = None
+    contact_directory_entry_id: Optional[str] = None
+    requirement_name: str
+    desk_type: Optional[str] = None
+    template_type: Optional[str] = None
+    service_scope: List[str] = Field(default_factory=list)
+    required_information: List[str] = Field(default_factory=list)
+    required_document_types: List[str] = Field(default_factory=list)
+    required_attachment_types: List[str] = Field(default_factory=list)
+    required_identifiers: List[str] = Field(default_factory=list)
+    authentication_requirement_summary: Optional[str] = None
+    agency_identifier_required: bool = False
+    format_rules: List[str] = Field(default_factory=list)
+    requirement_status: str = "active"
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineContactVerification(BaseDocument):
+    verification_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    target_type: str
+    target_id: str
+    verification_status: str = "pending"
+    verification_method: str = "manual_review"
+    verified_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    next_review_at: Optional[datetime] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    verification_notes: Optional[str] = None
+    review_decision: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineSupplierInteractionRecord(BaseDocument):
+    agency_id: str
+    interaction_reference: str
+    airline_code: str
+    interaction_status: str = "recorded"
+    interaction_type: str = "supplier_contact"
+    direction: str = "outbound"
+    contact_directory_entry_id: Optional[str] = None
+    contact_channel_id: Optional[str] = None
+    communication_template_id: Optional[str] = None
+    escalation_path_id: Optional[str] = None
+    workflow_instance_id: Optional[str] = None
+    passenger_service_workflow_id: Optional[str] = None
+    after_sales_case_id: Optional[str] = None
+    task_id: Optional[str] = None
+    work_item_id: Optional[str] = None
+    deadline_id: Optional[str] = None
+    timeline_entry_id: Optional[str] = None
+    communication_log_id: Optional[str] = None
+    passenger_workspace_id: Optional[str] = None
+    travel_request_workspace_id: Optional[str] = None
+    trip_workspace_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_workspace_id: Optional[str] = None
+    emd_workspace_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    document_workspace_id: Optional[str] = None
+    channel_type: Optional[str] = None
+    desk_type: Optional[str] = None
+    subject: Optional[str] = None
+    interaction_summary: str
+    internal_instruction_snapshot: Optional[str] = None
+    supplier_message_snapshot: Optional[str] = None
+    client_status_message_snapshot: Optional[str] = None
+    required_information_snapshot: List[str] = Field(default_factory=list)
+    attachment_ids: List[str] = Field(default_factory=list)
+    supplier_reference: Optional[str] = None
+    occurred_at: datetime = Field(default_factory=now_utc)
+    response_due_at: Optional[datetime] = None
+    response_received_at: Optional[datetime] = None
+    outcome_status: Optional[str] = None
+    outcome_summary: Optional[str] = None
+    escalation_recommended: bool = False
+    created_by: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    sent_externally: bool = False
+    provider_messaging_disabled: bool = True
+    secret_storage_disabled: bool = True
+
+
 class AirlineFleetType(BaseDocument):
     airline_id: str
     aircraft_type: str

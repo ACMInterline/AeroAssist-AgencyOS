@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"
@@ -99,6 +99,12 @@ DISTRIBUTION_VERSIONED_OBJECT_COLLECTIONS = {
     "baggage_exception": "airline_baggage_exceptions",
     "commercial_bundle": "airline_commercial_bundles",
     "brand_comparison_profile": "airline_brand_comparison_profiles",
+    "contact_channel": "airline_contact_channels",
+    "contact_scope": "airline_contact_scopes",
+    "contact_availability": "airline_contact_availabilities",
+    "contact_escalation_path": "airline_contact_escalation_paths",
+    "communication_template": "airline_communication_templates",
+    "communication_requirement": "airline_communication_requirements",
 }
 
 ALL_VERSIONED_OBJECT_COLLECTIONS = {

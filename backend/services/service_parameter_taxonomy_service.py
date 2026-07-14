@@ -7,7 +7,7 @@ from database import Database
 from models import ServiceParameterTaxonomy, ServiceParameterTaxonomyCreate, ServiceParameterTaxonomyUpdate
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 SERVICE_PARAMETER_TAXONOMIES_COLLECTION = "service_parameter_taxonomies"
 
 SERVICE_PARAMETER_TAXONOMY_STATUSES = ["draft", "active", "in_review", "approved", "deprecated", "archived"]

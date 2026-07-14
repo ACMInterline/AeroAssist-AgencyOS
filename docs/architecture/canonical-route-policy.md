@@ -293,3 +293,7 @@ Phase 55.6 uses `/api/platform/interline-codeshare-intelligence` for governed ca
 ## Phase 55.7 Fare Brand Intelligence
 
 Phase 55.7 uses `/api/platform/fare-brand-intelligence` for governed fare-family, RBD, baggage, commercial-attribute, evidence-link, and comparison-profile metadata. Agency published intelligence and transient read-only comparisons use `/api/agencies/{agency_id}/fare-brand-library`. UI routes are `/platform/fare-brand-intelligence` and `/agency/fare-brand-library`. No provider, pricing-engine, `/admin/*`, or `/agent/*` route root is introduced.
+
+## Phase 55.8 Airline Contact Intelligence
+
+Phase 55.8 uses `/api/platform/airline-contact-intelligence` for governed contact directory, channel, scope, hours, escalation, template, requirement, verification, and interaction metadata. Agency published directory access, transient desk/template advice, and agency-owned interaction history use `/api/agencies/{agency_id}/airline-contact-directory`. UI routes are `/platform/airline-contact-intelligence` and `/agency/airline-contact-directory`. No provider-messaging, `/admin/*`, or `/agent/*` route root is introduced.

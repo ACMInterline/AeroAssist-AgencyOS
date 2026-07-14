@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -78,6 +78,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_fare_families, airline_fare_brand_attributes, airline_booking_class_mappings, airline_baggage_allowance_rules, airline_baggage_exceptions, airline_commercial_bundles, airline_fare_family_evidence_links, airline_brand_comparison_profiles, /api/platform/fare-brand-intelligence, /api/agencies/{agency_id}/fare-brand-library, /platform/fare-brand-intelligence, /agency/fare-brand-library",
         "status": "foundation adopted",
         "action": "Extend the canonical fare-family records with evidence-linked hierarchy, RBD, commercial-attribute, baggage, and comparison metadata; preserve legacy RBD and fare source truth; expose published agency-safe offer guidance while keeping unknown and interline contexts explicit and avoiding live pricing or availability claims.",
+    },
+    {
+        "category": "Airline Contact And Communication Intelligence",
+        "concept": "Governed airline and supplier desk, channel, hours, template, escalation, and interaction intelligence",
+        "supplementary_concept": "airline desk, contact channel, market and airport scope, operating hours, timezone, required information, communication template, escalation path, verification, freshness, evidence, supplier interaction",
+        "current_equivalent": "airline_contacts, airline_contact_channels, airline_contact_scopes, airline_contact_availabilities, airline_contact_escalation_paths, airline_communication_templates, airline_communication_requirements, airline_contact_verifications, airline_supplier_interactions, /api/platform/airline-contact-intelligence, /api/agencies/{agency_id}/airline-contact-directory, /platform/airline-contact-intelligence, /agency/airline-contact-directory",
+        "status": "foundation adopted",
+        "action": "Reuse the canonical airline contact registry, govern scope and freshness with evidence, keep internal, supplier, and client message content separate, log interactions against operational workflows, and prohibit credentials, automatic escalation, provider connectivity, and message sending.",
     },
     {
         "category": "Airline Intelligence Data Packs",

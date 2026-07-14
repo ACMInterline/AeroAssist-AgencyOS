@@ -9,7 +9,7 @@ from models import FeatureBundleRolloutSchedule, FeatureBundleRolloutScheduleCre
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_8_airline_contact_communication_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 SCHEDULE_STATUSES = {"Planned", "Ready", "AwaitingApproval", "Approved", "Deferred", "Cancelled", "CompletedMetadata"}
 

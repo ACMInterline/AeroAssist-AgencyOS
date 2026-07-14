@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

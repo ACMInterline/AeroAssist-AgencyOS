@@ -5,6 +5,7 @@ import FileText from "lucide-react/dist/esm/icons/file-text.js"
 import GitBranch from "lucide-react/dist/esm/icons/git-branch.js"
 import Layers3 from "lucide-react/dist/esm/icons/layers-3.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
+import Phone from "lucide-react/dist/esm/icons/phone.js"
 import Rows3 from "lucide-react/dist/esm/icons/rows-3.js"
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
@@ -20,6 +21,7 @@ const iconMap = {
   git: GitBranch,
   layers: Layers3,
   plane: Plane,
+  phone: Phone,
   rows: Rows3,
   shield: ShieldCheck,
   tags: Tags,

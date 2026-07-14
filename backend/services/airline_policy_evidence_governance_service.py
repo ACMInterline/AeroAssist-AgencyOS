@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
+PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
 
 SOURCE_COLLECTION = "airline_evidence_sources"
 ARTIFACT_COLLECTION = "airline_evidence_artifacts"
@@ -107,6 +107,13 @@ TARGET_COLLECTIONS = {
     "commercial_bundle": "airline_commercial_bundles",
     "brand_comparison_profile": "airline_brand_comparison_profiles",
     "contact": "airline_contacts",
+    "contact_channel": "airline_contact_channels",
+    "contact_scope": "airline_contact_scopes",
+    "contact_availability": "airline_contact_availabilities",
+    "contact_escalation_path": "airline_contact_escalation_paths",
+    "communication_template": "airline_communication_templates",
+    "communication_requirement": "airline_communication_requirements",
+    "contact_verification": "airline_contact_verifications",
     "published_knowledge": "airline_knowledge_publications",
     "knowledge_item": "airline_knowledge_items",
 }

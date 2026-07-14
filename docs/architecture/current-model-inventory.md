@@ -263,3 +263,7 @@ Phase 55.6 adds `airline_carrier_relationships`, `airline_interline_agreement_pr
 ## Phase 55.7 Fare Brand and Baggage Intelligence
 
 Phase 55.7 extends canonical `airline_fare_families` and adds `airline_fare_brand_attributes`, `airline_booking_class_mappings`, `airline_baggage_allowance_rules`, `airline_baggage_exceptions`, `airline_commercial_bundles`, `airline_fare_family_evidence_links`, and `airline_brand_comparison_profiles`. The records describe fare-family hierarchy, RBD/cabin/brand relationships, commercial inclusions, contextual baggage allowance, governed exceptions, evidence, versions, publication, and agency visibility. Older RBD, fare-rule, and ancillary source records remain preserved. All records are intelligence metadata and assert neither live pricing nor availability.
+
+## Phase 55.8 Contact and Communication Intelligence
+
+Phase 55.8 reuses canonical `airline_contacts` for `AirlineContactDirectoryEntry` metadata and adds `airline_contact_channels`, `airline_contact_scopes`, `airline_contact_availabilities`, `airline_contact_escalation_paths`, `airline_communication_templates`, `airline_communication_requirements`, `airline_contact_verifications`, and `airline_supplier_interactions`. The records govern desk scope, channels, timezones and hours, required information, manual escalation, separated message audiences, freshness, evidence, and interaction history. They contain no private credentials and perform no external messaging or escalation.

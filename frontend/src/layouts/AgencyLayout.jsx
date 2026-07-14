@@ -9,6 +9,7 @@ import Layers3 from "lucide-react/dist/esm/icons/layers-3.js"
 import Menu from "lucide-react/dist/esm/icons/menu.js"
 import Palette from "lucide-react/dist/esm/icons/palette.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
+import Phone from "lucide-react/dist/esm/icons/phone.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
 import Rows3 from "lucide-react/dist/esm/icons/rows-3.js"
 import Settings from "lucide-react/dist/esm/icons/settings.js"
@@ -30,6 +31,7 @@ const iconMap = {
   inbox: Inbox,
   layers: Layers3,
   plane: Plane,
+  phone: Phone,
   plus: Plus,
   rows: Rows3,
   settings: Settings,
