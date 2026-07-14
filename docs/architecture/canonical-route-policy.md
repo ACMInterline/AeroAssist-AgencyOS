@@ -105,6 +105,8 @@ Phase 54.7 adds servicing and after-sales workflow APIs only under `/api/platfor
 
 Phase 54.8 adds operations command center APIs only under `/api/platform/operations-governance/*` and `/api/agencies/{agency_id}/operations-command-center/*`, plus frontend pages under `/platform/operations-governance` and `/agency/operations-command-center`. It aggregates existing operational metadata into read-only dashboard, queue, kanban, calendar, timeline, exception, and workload views without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate operations collections, duplicate task systems, duplicate workflow architectures, uncontrolled drag-and-drop mutation, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, payment processing, route blocking, access enforcement, or automatic operational execution.
 
+Phase 54.9 adds workflow maturity APIs only under `/api/platform/workflow-maturity/*` and `/api/agencies/{agency_id}/workflow-maturity/*`, plus frontend pages under `/platform/workflow-maturity` and `/agency/workflow-maturity`. The diagnostic test-run POST returns an isolated non-persisted assessment and does not create production operational records. No `/admin`, `/agent`, `/api/admin`, `/api/agent`, redirect, alias, parallel workflow, or parallel maturity collection is introduced.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -199,6 +201,8 @@ Phase 54.8 adds operations command center APIs only under `/api/platform/operati
 | `/agent/work-queue` | `/agency/work-queue` |
 | `/admin/operations-command-center` | `/platform/operations-governance` |
 | `/agent/operations-command-center` | `/agency/operations-command-center` |
+| `/admin/workflow-maturity` | `/platform/workflow-maturity` |
+| `/agent/workflow-maturity` | `/agency/workflow-maturity` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

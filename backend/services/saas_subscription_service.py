@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -49,6 +49,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "booking_handoffs", "label": "Booking Handoffs", "href": "/agency/booking-handoffs", "aliases": ["booking_handoffs", "offer_booking_handoffs", "accepted_offer_handoff", "booking_readiness"]},
     {"key": "after_sales", "label": "After-Sales", "href": "/agency/after-sales", "aliases": ["after_sales", "servicing", "refunds_exchanges", "claims", "disruptions"]},
     {"key": "operations_command_center", "label": "Operations Command Center", "href": "/agency/operations-command-center", "aliases": ["operations_command_center", "command_center", "operations_dashboard", "work_queue", "deadlines", "workflow_orchestration"]},
+    {"key": "workflow_maturity", "label": "Workflow Maturity", "href": "/agency/workflow-maturity", "aliases": ["workflow_maturity", "epic_54_maturity", "golden_path", "operations_command_center", "pilot_readiness"]},
     {"key": "booking_imports", "label": "Booking Imports", "href": "/agency/booking-imports", "aliases": ["booking_imports", "gds_imports"]},
     {"key": "tickets_emds", "label": "Tickets & EMDs", "href": "/agency/tickets-emds", "aliases": ["tickets_emds", "ticketing", "emd_issuance"]},
     {"key": "refunds_exchanges", "label": "Refunds & Exchanges", "href": "/agency/refunds-exchanges", "aliases": ["refunds_exchanges", "service_cases"]},

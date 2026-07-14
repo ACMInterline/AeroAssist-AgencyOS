@@ -7,7 +7,7 @@ from database import Database
 from models import VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 VISUAL_POLICY_EDITOR_CARDS_COLLECTION = "visual_policy_editor_cards"
 
 POLICY_FAMILIES = [

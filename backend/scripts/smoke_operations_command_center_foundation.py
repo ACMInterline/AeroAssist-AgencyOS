@@ -11,7 +11,7 @@ from services.operations_command_center_service import PHASE_LABEL, VIEW_TYPES, 
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_54_8_operations_command_center_foundation"
+EXPECTED_PHASE = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 

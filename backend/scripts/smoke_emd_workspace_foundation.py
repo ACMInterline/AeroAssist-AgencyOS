@@ -23,7 +23,7 @@ from smoke_booking_workspace_foundation import (
 from smoke_ticket_workspace_foundation import create_booking_workspace
 
 
-EXPECTED_PHASE = "phase_54_8_operations_command_center_foundation"
+EXPECTED_PHASE = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EMD_STATUSES = {"draft", "review", "ready", "archived"}
 EMD_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}
@@ -805,7 +805,7 @@ def verify_blueprint_gap_summary() -> None:
     gaps = get("/api/platform/blueprint/gaps", OWNER_HEADERS)
     if not any("EMD workspace foundation built in Phase 41.8" in item for item in gaps.get("already_built", [])):
         raise AssertionError(f"Blueprint gap summary did not recognize EMD workspace foundation: {gaps}")
-    if "Phase 50.1" not in gaps.get("next_intelligence_phase", ""):
+    if "Phase 50.9" not in gaps.get("next_intelligence_phase", ""):
         raise AssertionError(f"Blueprint gap summary did not preserve next intelligence phase: {gaps}")
     if "Phase 42.2" not in gaps.get("next_operational_phase", ""):
         raise AssertionError(f"Blueprint gap summary did not preserve next operational phase: {gaps}")

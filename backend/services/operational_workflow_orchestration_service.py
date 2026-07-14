@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION = "operational_workflow_definitions"
 OPERATIONAL_WORKFLOW_INSTANCES_COLLECTION = "operational_workflow_instances"

@@ -60,6 +60,7 @@ import RequestTripConversionPage from "./pages/agency/RequestTripConversionPage"
 import BookingHandoffsPage from "./pages/agency/BookingHandoffsPage"
 import AfterSalesPage from "./pages/agency/AfterSalesPage"
 import OperationsCommandCenterPage from "./pages/agency/OperationsCommandCenterPage"
+import AgencyWorkflowMaturityPage from "./pages/agency/WorkflowMaturityPage"
 import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
@@ -154,6 +155,7 @@ import PlatformRequestTripConversionDiagnosticsPage from "./pages/platform/Reque
 import PlatformBookingHandoffDiagnosticsPage from "./pages/platform/BookingHandoffDiagnosticsPage"
 import PlatformAfterSalesDiagnosticsPage from "./pages/platform/AfterSalesDiagnosticsPage"
 import PlatformOperationsGovernancePage from "./pages/platform/OperationsGovernancePage"
+import PlatformWorkflowMaturityPage from "./pages/platform/WorkflowMaturityPage"
 import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
 import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
 import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
@@ -293,6 +295,7 @@ const routes = {
   "/platform/booking-handoffs": PlatformBookingHandoffDiagnosticsPage,
   "/platform/after-sales": PlatformAfterSalesDiagnosticsPage,
   "/platform/operations-governance": PlatformOperationsGovernancePage,
+  "/platform/workflow-maturity": PlatformWorkflowMaturityPage,
   "/platform/passenger-service-workflows": PlatformPassengerServiceWorkflowsPage,
   "/platform/rollout-dashboard": PlatformRolloutDashboardPage,
   "/platform/capabilities": PlatformCapabilityCatalogPage,
@@ -388,6 +391,7 @@ const routes = {
   "/agency/booking-handoffs": BookingHandoffsPage,
   "/agency/after-sales": AfterSalesPage,
   "/agency/operations-command-center": OperationsCommandCenterPage,
+  "/agency/workflow-maturity": AgencyWorkflowMaturityPage,
   "/agency/workflow-engine": WorkflowEnginePage,
   "/agency/rollout-dashboard": AgencyRolloutDashboardPage,
   "/agency/capabilities": CapabilitiesPage,

@@ -6,7 +6,7 @@ from typing import Any
 from database import Database
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 VIEW_TYPES = ["dashboard", "queue", "kanban", "calendar", "timeline", "exceptions", "workload"]
 

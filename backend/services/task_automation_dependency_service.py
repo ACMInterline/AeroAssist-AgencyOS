@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

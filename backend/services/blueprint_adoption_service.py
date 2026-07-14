@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -286,6 +286,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "OperationsCommandCenterService, existing operational source collections, /api/platform/operations-governance, /api/agencies/{agency_id}/operations-command-center, /platform/operations-governance, /agency/operations-command-center",
         "status": "foundation adopted",
         "action": "Create the read-only operations command center over existing work queue, SLA, workflow, request, offer, booking, ticket, EMD, SSR / OSI, document, trip, flight, after-sales, operational intelligence, pilot-readiness, task, invoice, and payment metadata. Phase 54.8 does not create a duplicate command-center collection, mutate source states, bypass workflow guards, enable uncontrolled drag-and-drop, execute providers, call external APIs, run AI/LLM generation, schedule workers, send messages, block routes, bypass agency isolation, or automate operational execution.",
+    },
+    {
+        "category": "End-to-End Operational Workflow Maturity",
+        "concept": "Epic 54 connected workflow maturity assessment and isolated golden-path diagnostics",
+        "supplementary_concept": "deterministic maturity scores, stage results, blocker register, remediation links, recent workflow errors, operational coverage, safe test templates",
+        "current_equivalent": "OperationalWorkflowMaturityService, Phase 53 pilot readiness records, canonical Epic 54 records, /api/platform/workflow-maturity, /api/agencies/{agency_id}/workflow-maturity, /platform/workflow-maturity, /agency/workflow-maturity",
+        "status": "foundation adopted",
+        "action": "Complete Epic 54 by consolidating existing workflow, queue, SLA, task dependency, request-trip conversion, booking handoff, after-sales, command-center, audit, and pilot-readiness metadata. Phase 54.9 adds no parallel subsystem or maturity collection, and isolated diagnostic runs never persist or create production operational records.",
     },
     {
         "category": "Service Parameter Taxonomies",
@@ -958,6 +966,8 @@ ROUTE_POLICY: dict[str, Any] = {
         {"supplementary": "/agent/task-automation", "agencyos": "/agency/task-automation"},
         {"supplementary": "/admin/operations-command-center", "agencyos": "/platform/operations-governance"},
         {"supplementary": "/agent/operations-command-center", "agencyos": "/agency/operations-command-center"},
+        {"supplementary": "/admin/workflow-maturity", "agencyos": "/platform/workflow-maturity"},
+        {"supplementary": "/agent/workflow-maturity", "agencyos": "/agency/workflow-maturity"},
         {"supplementary": "/admin/airline-knowledge-acquisition", "agencyos": "/platform/airline-knowledge-acquisition"},
         {"supplementary": "/agent/knowledge-acquisition", "agencyos": "/agency/knowledge-acquisition"},
         {"supplementary": "/admin/operational-constraints", "agencyos": "/platform/operational-constraints"},
@@ -1323,6 +1333,7 @@ def get_blueprint_gap_summary() -> dict[str, Any]:
             "Offer-to-booking handoff and booking readiness foundation built in Phase 54.6",
             "Servicing and after-sales workflow foundation built in Phase 54.7",
             "Operations command center foundation built in Phase 54.8",
+            "End-to-end operational workflow maturity foundation built in Phase 54.9; Epic 54 complete",
         ],
         "deferred": [
             "Full visual document designer, document version governance, public sharing links, automatic delivery, and e-signature",

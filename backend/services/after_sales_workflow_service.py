@@ -32,7 +32,7 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 AFTER_SALES_CASES_COLLECTION = "after_sales_cases"
 AFTER_SALES_CASE_ITEMS_COLLECTION = "after_sales_case_items"

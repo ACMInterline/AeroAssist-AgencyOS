@@ -12,7 +12,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user
 
 
-PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
+PHASE_LABEL = "phase_54_9_end_to_end_operational_workflow_maturity_foundation"
 
 READINESS_COLLECTION = "agency_feature_bundle_rollout_readiness"
 ASSIGNMENT_COLLECTION = "agency_feature_bundle_assignments"

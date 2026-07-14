@@ -26,6 +26,7 @@ These principles guide future AeroAssist implementation. They are architectural 
 - Operational constraints should be represented generically where possible.
 - Do not introduce `/admin/*` or `/agent/*` route roots.
 - Do not introduce parallel RBAC or parallel trip/request/offer/booking/ticket/EMD models.
+- End-to-end maturity diagnostics must reuse canonical workflow and Phase 53 readiness records; test scenarios must not silently become production operational records.
 - Do not migrate architecture to Supabase, Next.js, or Horizons.
 
 ## Model Discipline
@@ -43,6 +44,10 @@ When a future phase needs new metadata, it should first ask:
 ## Advisory Boundary
 
 AeroAssist can structure knowledge, display evidence, explain uncertainty, and prepare human-reviewed decision support. It must not silently cross into execution, enforcement, billing, provider integration, AI automation, scraping, scheduling, or route blocking unless a future phase explicitly authorizes that behavior.
+
+## Operational Maturity Diagnostics
+
+Phase 54.9 maturity scoring is a deterministic aggregate over canonical records. Diagnostic test cases are isolated response previews, are not persisted, and cannot create or mutate production requests, trips, offers, bookings, tickets, EMDs, after-sales cases, tasks, deadlines, or communications.
 
 ## Request Segment Service Scopes
 
