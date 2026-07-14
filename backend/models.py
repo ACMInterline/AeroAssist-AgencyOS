@@ -23205,6 +23205,209 @@ class AirlineSupplierInteractionRecord(BaseDocument):
     secret_storage_disabled: bool = True
 
 
+class AirlineIntelligenceReadinessProfile(BaseDocument):
+    profile_reference: str
+    profile_name: str
+    profile_status: str = "not_started"
+    agency_id: Optional[str] = None
+    airline_codes: List[str] = Field(default_factory=list)
+    required_service_families: List[str] = Field(default_factory=list)
+    target_markets: List[str] = Field(default_factory=list)
+    target_routes: List[str] = Field(default_factory=list)
+    minimum_readiness_score: int = 85
+    required_dimension_codes: List[str] = Field(default_factory=list)
+    critical_dimension_codes: List[str] = Field(default_factory=list)
+    required_release_gate_codes: List[str] = Field(default_factory=list)
+    owner: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+    automatic_production_seeding_disabled: bool = True
+
+
+class AirlineIntelligenceReadinessAssessment(BaseDocument):
+    assessment_reference: str
+    profile_id: Optional[str] = None
+    agency_id: Optional[str] = None
+    airline_code: str
+    assessment_status: str = "not_started"
+    readiness_score: int = 0
+    dimension_scores: Dict[str, int] = Field(default_factory=dict)
+    confidence_score: int = 0
+    freshness_score: int = 0
+    service_coverage_score: int = 0
+    critical_blocker_count: int = 0
+    blocker_count: int = 0
+    warning_count: int = 0
+    check_ids: List[str] = Field(default_factory=list)
+    issue_ids: List[str] = Field(default_factory=list)
+    source_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    recent_change_references: List[str] = Field(default_factory=list)
+    coverage_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    client_summary: Optional[str] = None
+    internal_summary: Optional[str] = None
+    generated_at: Optional[datetime] = None
+    generated_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    deterministic_scoring: bool = True
+    automatic_release_disabled: bool = True
+
+
+class AirlineIntelligenceReadinessCheck(BaseDocument):
+    check_reference: str
+    assessment_id: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    dimension_code: str
+    label: str
+    status: str = "unknown"
+    severity: str = "medium"
+    critical: bool = False
+    score: int = 0
+    weight: int = 1
+    expected_signal: Optional[str] = None
+    observed_signal: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    blockers: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    remediation_route: Optional[str] = None
+    agency_remediation_route: Optional[str] = None
+    calculated_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceReleaseCandidate(BaseDocument):
+    candidate_reference: str
+    candidate_name: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    candidate_status: str = "not_started"
+    readiness_assessment_id: str
+    publication_id: Optional[str] = None
+    knowledge_version_id: Optional[str] = None
+    version_snapshot_id: Optional[str] = None
+    release_reference: Optional[str] = None
+    service_family_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    assigned_agency_ids: List[str] = Field(default_factory=list)
+    usable_modules: List[str] = Field(default_factory=list)
+    readiness_score: int = 0
+    confidence_score: int = 0
+    freshness_score: int = 0
+    gate_ids: List[str] = Field(default_factory=list)
+    decision_ids: List[str] = Field(default_factory=list)
+    issue_ids: List[str] = Field(default_factory=list)
+    blockers: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    rollback_reference: Optional[str] = None
+    client_facing_summary: Optional[str] = None
+    internal_release_notes: Optional[str] = None
+    released_at: Optional[datetime] = None
+    released_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+    historical_snapshot_mutation_disabled: bool = True
+
+
+class AirlineIntelligenceReleaseGate(BaseDocument):
+    gate_reference: str
+    candidate_id: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    gate_code: str
+    label: str
+    gate_status: str = "pending"
+    critical: bool = True
+    expected_signal: Optional[str] = None
+    observed_signal: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    reviewer: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_reason: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineIntelligenceReleaseDecision(BaseDocument):
+    decision_reference: str
+    candidate_id: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    decision_status: str
+    decision_reason: str
+    decision_by: str
+    decision_at: datetime = Field(default_factory=now_utc)
+    prior_candidate_status: str
+    resulting_candidate_status: str
+    gate_snapshot: List[Dict[str, Any]] = Field(default_factory=list)
+    blocker_snapshot: List[str] = Field(default_factory=list)
+    assigned_agency_ids: List[str] = Field(default_factory=list)
+    rollback_reference: Optional[str] = None
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    publication_mutation_disabled: bool = True
+    automatic_release_disabled: bool = True
+
+
+class AirlineIntelligencePopulationWave(BaseDocument):
+    wave_reference: str
+    wave_name: str
+    agency_id: Optional[str] = None
+    wave_status: str = "not_started"
+    airline_codes: List[str] = Field(default_factory=list)
+    service_family_targets: List[str] = Field(default_factory=list)
+    target_markets: List[str] = Field(default_factory=list)
+    target_routes: List[str] = Field(default_factory=list)
+    responsible_reviewer: Optional[str] = None
+    due_date: Optional[date] = None
+    readiness_score: int = 0
+    completion_percentage: int = 0
+    release_candidate_ids: List[str] = Field(default_factory=list)
+    release_assignment: Dict[str, Any] = Field(default_factory=dict)
+    blockers: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    archived: bool = False
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+
+
+class AirlineIntelligenceScaleIssue(BaseDocument):
+    issue_reference: str
+    agency_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    assessment_id: Optional[str] = None
+    release_candidate_id: Optional[str] = None
+    population_wave_id: Optional[str] = None
+    dimension_code: Optional[str] = None
+    issue_status: str = "open"
+    severity: str = "medium"
+    critical: bool = False
+    title: str
+    description: str
+    remediation_guidance: Optional[str] = None
+    owner: Optional[str] = None
+    source_reference_ids: List[str] = Field(default_factory=list)
+    resolved_by: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    resolution_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
 class AirlineFleetType(BaseDocument):
     airline_id: str
     aircraft_type: str

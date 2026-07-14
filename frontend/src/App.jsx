@@ -35,6 +35,7 @@ import AgencyAirlineDistributionCapabilitiesPage from "./pages/agency/AirlineDis
 import AgencyInterlineCodeshareAdvisorPage from "./pages/agency/InterlineCodeshareAdvisorPage"
 import AgencyFareBrandLibraryPage from "./pages/agency/FareBrandLibraryPage"
 import AgencyAirlineContactDirectoryPage from "./pages/agency/AirlineContactDirectoryPage"
+import AgencyAirlineIntelligenceReadinessPage from "./pages/agency/AirlineIntelligenceReadinessPage"
 import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
 import CapabilityMatrixPage from "./pages/agency/CapabilityMatrixPage"
 import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
@@ -189,6 +190,7 @@ import PlatformAirlineDistributionCapabilitiesPage from "./pages/platform/Airlin
 import PlatformInterlineCodeshareIntelligencePage from "./pages/platform/InterlineCodeshareIntelligencePage"
 import PlatformFareBrandIntelligencePage from "./pages/platform/FareBrandIntelligencePage"
 import PlatformAirlineContactIntelligencePage from "./pages/platform/AirlineContactIntelligencePage"
+import PlatformAirlineIntelligenceReadinessPage from "./pages/platform/AirlineIntelligenceReadinessPage"
 import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
 import PlatformAncillaryPricingPage from "./pages/platform/AncillaryPricingPage"
 import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
@@ -326,6 +328,7 @@ const routes = {
   "/platform/interline-codeshare-intelligence": PlatformInterlineCodeshareIntelligencePage,
   "/platform/fare-brand-intelligence": PlatformFareBrandIntelligencePage,
   "/platform/airline-contact-intelligence": PlatformAirlineContactIntelligencePage,
+  "/platform/airline-intelligence-readiness": PlatformAirlineIntelligenceReadinessPage,
   "/platform/airline-intelligence-data-packs": AirlineIntelligenceDataPacksPage,
   "/platform/airline-intelligence-data-pack-reviews": AirlineIntelligenceDataPackReviewsPage,
   "/platform/airline-intelligence-knowledge-versions": PlatformAirlineIntelligenceKnowledgeVersionsPage,
@@ -433,6 +436,7 @@ const routes = {
   "/agency/interline-codeshare-advisor": AgencyInterlineCodeshareAdvisorPage,
   "/agency/fare-brand-library": AgencyFareBrandLibraryPage,
   "/agency/airline-contact-directory": AgencyAirlineContactDirectoryPage,
+  "/agency/airline-intelligence-readiness": AgencyAirlineIntelligenceReadinessPage,
   "/agency/airline-intelligence-coverage": AirlineIntelligenceCoveragePage,
   "/agency/airline-intelligence-review-coverage": AirlineIntelligenceReviewCoveragePage,
   "/agency/airline-intelligence-knowledge-versions": AgencyAirlineIntelligenceKnowledgeVersionsPage,

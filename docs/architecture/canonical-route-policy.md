@@ -297,3 +297,7 @@ Phase 55.7 uses `/api/platform/fare-brand-intelligence` for governed fare-family
 ## Phase 55.8 Airline Contact Intelligence
 
 Phase 55.8 uses `/api/platform/airline-contact-intelligence` for governed contact directory, channel, scope, hours, escalation, template, requirement, verification, and interaction metadata. Agency published directory access, transient desk/template advice, and agency-owned interaction history use `/api/agencies/{agency_id}/airline-contact-directory`. UI routes are `/platform/airline-contact-intelligence` and `/agency/airline-contact-directory`. No provider-messaging, `/admin/*`, or `/agent/*` route root is introduced.
+
+## Phase 55.9 Airline Intelligence Readiness
+
+Phase 55.9 uses `/api/platform/airline-intelligence-readiness` for readiness profiles, deterministic assessments, release candidates and gates, audited decisions, population waves, and issue metadata. Agency read-only released coverage uses `/api/agencies/{agency_id}/airline-intelligence-readiness`. UI routes are `/platform/airline-intelligence-readiness` and `/agency/airline-intelligence-readiness`. Draft governance and restricted source traces are excluded from agency responses, and no `/admin/*` or `/agent/*` route root is introduced.

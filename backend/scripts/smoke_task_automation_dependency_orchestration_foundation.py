@@ -37,7 +37,7 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 from smoke_operational_workflow_orchestration_foundation import definition_payload
 
 
-EXPECTED_PHASE = "phase_55_8_airline_contact_communication_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 

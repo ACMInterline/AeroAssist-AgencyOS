@@ -5,7 +5,7 @@ import subprocess
 from smoke_booking_pnr_foundation import get
 
 
-EXPECTED_PHASE = "phase_55_8_airline_contact_communication_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 

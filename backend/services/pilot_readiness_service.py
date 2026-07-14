@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 
 PILOT_READINESS_PROFILES_COLLECTION = "pilot_readiness_profiles"
 PILOT_READINESS_ASSESSMENTS_COLLECTION = "pilot_readiness_assessments"

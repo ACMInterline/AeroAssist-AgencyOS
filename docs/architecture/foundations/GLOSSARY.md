@@ -250,3 +250,13 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **GDS Participation**: Evidence-linked metadata describing an airline's documented participation and capability statuses in Amadeus, Sabre, Travelport, or another governed GDS context.
 
 **NDC Capability**: Evidence-linked metadata describing airline-direct or aggregator NDC shopping, booking, fulfillment, and servicing behavior. It contains no credentials and performs no NDC operation.
+
+**Airline Intelligence Readiness Assessment**: A deterministic Phase 55.9 projection across canonical airline master, evidence, version, coverage, capability, QA, publication, assignment, and consumption metadata. It records readiness; it does not publish or execute.
+
+**Release Candidate**: A human-governed metadata record that binds one readiness assessment to version, publication, service scope, agency assignment, effective date, message, and rollback references for controlled review.
+
+**Release Gate**: A deterministic requirement that must pass before Phase 55.9 can mark a release candidate ready. Critical gates cannot be overridden by an aggregate score.
+
+**Population Wave**: A controlled planning group of airlines, service-family targets, markets, routes, reviewers, due dates, readiness progress, blockers, and release assignments. Completion does not trigger publication.
+
+**Scale Issue**: A readiness blocker or warning linked to an assessment, release candidate, or population wave, with severity, remediation, ownership, and resolution metadata.

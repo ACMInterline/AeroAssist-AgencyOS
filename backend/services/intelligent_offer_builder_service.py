@@ -12,7 +12,7 @@ from models import (
 from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
 
 
-PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

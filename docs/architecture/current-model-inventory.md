@@ -267,3 +267,18 @@ Phase 55.7 extends canonical `airline_fare_families` and adds `airline_fare_bran
 ## Phase 55.8 Contact and Communication Intelligence
 
 Phase 55.8 reuses canonical `airline_contacts` for `AirlineContactDirectoryEntry` metadata and adds `airline_contact_channels`, `airline_contact_scopes`, `airline_contact_availabilities`, `airline_contact_escalation_paths`, `airline_communication_templates`, `airline_communication_requirements`, `airline_contact_verifications`, and `airline_supplier_interactions`. The records govern desk scope, channels, timezones and hours, required information, manual escalation, separated message audiences, freshness, evidence, and interaction history. They contain no private credentials and perform no external messaging or escalation.
+
+## Phase 55.9 Airline Intelligence Scale and Release Readiness
+
+| Model | Collection | Responsibility |
+| --- | --- | --- |
+| `AirlineIntelligenceReadinessProfile` | `airline_intelligence_readiness_profiles` | Reusable airline, service, market, score, and release-gate assessment scope. |
+| `AirlineIntelligenceReadinessAssessment` | `airline_intelligence_readiness_assessments` | Deterministic readiness result with source, coverage, confidence, freshness, and change snapshots. |
+| `AirlineIntelligenceReadinessCheck` | `airline_intelligence_readiness_checks` | One scored readiness dimension with observed source references and remediation routes. |
+| `AirlineIntelligenceReleaseCandidate` | `airline_intelligence_release_candidates` | Human-controlled release candidate references, scope, assignments, messages, and rollback metadata. |
+| `AirlineIntelligenceReleaseGate` | `airline_intelligence_release_gates` | Deterministic critical release requirement and observed result. |
+| `AirlineIntelligenceReleaseDecision` | `airline_intelligence_release_decisions` | Immutable human decision snapshot preserving prior status, gates, blockers, actor, and rollback reference. |
+| `AirlineIntelligencePopulationWave` | `airline_intelligence_population_waves` | Controlled airline/service population target, progress, reviewer, due date, blockers, and release assignment. |
+| `AirlineIntelligenceScaleIssue` | `airline_intelligence_scale_issues` | Readiness, candidate, or wave blocker/warning with remediation and resolution audit. |
+
+These models reference canonical Epic 55 knowledge and publication records. They are not a parallel airline catalogue, knowledge store, publication engine, or operational execution system.

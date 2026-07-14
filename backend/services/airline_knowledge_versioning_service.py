@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"

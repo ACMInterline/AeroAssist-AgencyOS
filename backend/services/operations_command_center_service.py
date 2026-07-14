@@ -6,7 +6,7 @@ from typing import Any
 from database import Database
 
 
-PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 
 VIEW_TYPES = ["dashboard", "queue", "kanban", "calendar", "timeline", "exceptions", "workload"]
 

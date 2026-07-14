@@ -13,7 +13,7 @@ from routers import agency_agent_work_queues, agency_document_workspaces, agency
 from routers import agency_after_sales_workflows, platform_after_sales_workflows
 from routers import agency_operational_workflow_maturity, agency_operations_command_center, platform_operational_workflow_maturity, platform_operations_governance
 from routers import agency_airline_master_profiles, platform_airline_master_profiles
-from routers import agency_airline_contact_directory, agency_airline_distribution_capabilities, agency_airline_fare_brand_intelligence, agency_airline_knowledge_versioning, agency_airline_policy_evidence_governance, agency_airline_service_coverage, agency_interline_codeshare_intelligence, platform_airline_contact_intelligence, platform_airline_distribution_capabilities, platform_airline_fare_brand_intelligence, platform_airline_knowledge_versioning, platform_airline_policy_evidence_governance, platform_airline_service_coverage, platform_interline_codeshare_intelligence
+from routers import agency_airline_contact_directory, agency_airline_distribution_capabilities, agency_airline_fare_brand_intelligence, agency_airline_intelligence_readiness, agency_airline_knowledge_versioning, agency_airline_policy_evidence_governance, agency_airline_service_coverage, agency_interline_codeshare_intelligence, platform_airline_contact_intelligence, platform_airline_distribution_capabilities, platform_airline_fare_brand_intelligence, platform_airline_intelligence_readiness, platform_airline_knowledge_versioning, platform_airline_policy_evidence_governance, platform_airline_service_coverage, platform_interline_codeshare_intelligence
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
 from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
@@ -79,7 +79,8 @@ from services.airline_service_coverage_gap_service import AirlineServiceCoverage
 from services.airline_distribution_capability_service import AirlineDistributionCapabilityService
 from services.interline_codeshare_intelligence_service import InterlineCodeshareIntelligenceService
 from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
-from services.airline_contact_communication_intelligence_service import PHASE_LABEL, AirlineContactCommunicationIntelligenceService
+from services.airline_contact_communication_intelligence_service import AirlineContactCommunicationIntelligenceService
+from services.airline_intelligence_scale_readiness_service import PHASE_LABEL, AirlineIntelligenceScaleReadinessService
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -1876,6 +1877,7 @@ async def readiness() -> dict:
     interline_codeshare_intelligence_coverage = await InterlineCodeshareIntelligenceService(database).coverage()
     airline_fare_brand_intelligence_coverage = await AirlineFareFamilyBrandIntelligenceService(database).coverage()
     airline_contact_communication_intelligence_coverage = await AirlineContactCommunicationIntelligenceService(database).coverage()
+    airline_intelligence_scale_readiness_coverage = await AirlineIntelligenceScaleReadinessService(database).coverage()
     operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
     operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
     operational_deadline_paused_count = len([item for item in operational_deadline_records if item.get("status") == "paused"])
@@ -5090,6 +5092,38 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 55.8 adds governed airline and supplier desk, channel, scope, operating-hours, escalation, message-template, requirement, verification, and interaction-history intelligence. Internal instructions, supplier messages, and client status text remain separate; no credentials are stored and no message, escalation, provider action, or background process is executed.",
         },
+        "airline_intelligence_scale_release_readiness_foundation": {
+            "airline_intelligence_scale_release_readiness_enabled": True,
+            "epic_55_canonical_sources_reused": True,
+            "readiness_profiles_collection_enabled": True,
+            "readiness_assessments_collection_enabled": True,
+            "readiness_checks_collection_enabled": True,
+            "release_candidates_collection_enabled": True,
+            "release_gates_collection_enabled": True,
+            "release_decisions_collection_enabled": True,
+            "population_waves_collection_enabled": True,
+            "scale_issues_collection_enabled": True,
+            "eighteen_readiness_dimensions_enabled": True,
+            "eleven_deterministic_release_gates_enabled": True,
+            "critical_blocker_guard_enabled": True,
+            "decision_audit_enabled": True,
+            "population_wave_tracking_enabled": True,
+            "agency_release_assignment_enabled": True,
+            "rollback_reference_gate_enabled": True,
+            "client_internal_message_separation_enabled": True,
+            "agency_released_read_only_projection_enabled": True,
+            "draft_governance_agency_visibility_disabled": True,
+            "automatic_publication_disabled": True,
+            "automatic_production_seeding_disabled": True,
+            "provider_connectivity_disabled": True,
+            "external_api_calls_disabled": True,
+            "ai_disabled": True,
+            "background_workers_disabled": True,
+            "metadata_only": True,
+            **airline_intelligence_scale_readiness_coverage,
+            "readiness_required": False,
+            "diagnostic": "Phase 55.9 consolidates Epic 55 knowledge, evidence, coverage, capability, QA, publication, and agency-consumption metadata into deterministic scale-readiness assessments and human-controlled release gates. It does not seed production, publish automatically, call providers, or mutate historical knowledge snapshots.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7096,6 +7130,7 @@ app.include_router(platform_airline_distribution_capabilities.router)
 app.include_router(platform_interline_codeshare_intelligence.router)
 app.include_router(platform_airline_fare_brand_intelligence.router)
 app.include_router(platform_airline_contact_intelligence.router)
+app.include_router(platform_airline_intelligence_readiness.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -7157,6 +7192,7 @@ app.include_router(agency_airline_knowledge_publishing.router)
 app.include_router(agency_operational_scenario_testing.router)
 app.include_router(agency_knowledge_population_toolkit.router)
 app.include_router(agency_pilot_readiness.router)
+app.include_router(agency_airline_intelligence_readiness.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

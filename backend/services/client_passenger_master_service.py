@@ -24,7 +24,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 
 CLIENT_MASTER_RECORDS_COLLECTION = "client_master_records"
 PASSENGER_MASTER_RECORDS_COLLECTION = "passenger_master_records"
