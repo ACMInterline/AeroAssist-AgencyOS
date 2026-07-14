@@ -19044,6 +19044,7 @@ class IntelligentOfferBuilderPackage(BaseDocument):
     consumes_operational_evaluations: bool = True
     consumes_capability_matrix: bool = True
     consumes_knowledge_governance_evidence: bool = True
+    consumes_fare_brand_intelligence: bool = True
     advisory_only: bool = True
     human_authority_final: bool = True
     no_live_gds_search: bool = True
@@ -22970,11 +22971,273 @@ class AirlineFareFamily(BaseDocument):
     airline_id: str
     family_code: str
     family_name: str
+    fare_family_reference: Optional[str] = None
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    brand_code: Optional[str] = None
+    commercial_name: Optional[str] = None
     cabin: Optional[str] = None
+    parent_fare_family_id: Optional[str] = None
+    parent_family_code: Optional[str] = None
+    hierarchy_level: int = 0
+    display_order: int = 0
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    client_safe_label: Optional[str] = None
     benefits_json: Dict[str, Any] = Field(default_factory=dict)
     restrictions_json: Dict[str, Any] = Field(default_factory=dict)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
     source_metadata_json: Dict[str, Any] = Field(default_factory=dict)
     governance_status: RulesGovernanceStatus = RulesGovernanceStatus.DRAFT
+    metadata_only: bool = True
+
+
+class AirlineFareBrandAttribute(BaseDocument):
+    attribute_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    fare_family_id: str
+    brand_code: Optional[str] = None
+    attribute_code: str
+    attribute_label: str
+    attribute_category: str = "commercial"
+    attribute_status: str = "unknown"
+    value_text: Optional[str] = None
+    value_number: Optional[float] = None
+    value_boolean: Optional[bool] = None
+    unit: Optional[str] = None
+    included: Optional[bool] = None
+    chargeable: Optional[bool] = None
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    client_safe_label: Optional[str] = None
+    client_safe_value: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineBookingClassMapping(BaseDocument):
+    booking_class_mapping_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    rbd_code: str
+    cabin: Optional[str] = None
+    fare_family_id: Optional[str] = None
+    brand_code: Optional[str] = None
+    mapping_status: str = "unknown"
+    variable_by_fare_basis: bool = False
+    upgrade_to_rbd_codes: List[str] = Field(default_factory=list)
+    downgrade_to_rbd_codes: List[str] = Field(default_factory=list)
+    known_restrictions: List[str] = Field(default_factory=list)
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    legacy_rbd_matrix_row_id: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineBaggageAllowanceRule(BaseDocument):
+    baggage_rule_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    fare_family_id: Optional[str] = None
+    brand_code: Optional[str] = None
+    cabin: Optional[str] = None
+    rbd_scope: List[str] = Field(default_factory=list)
+    allowance_status: str = "unknown"
+    baggage_concept: str = "unknown"
+    cabin_baggage_pieces: Optional[int] = None
+    cabin_baggage_weight_kg: Optional[float] = None
+    personal_item_included: Optional[bool] = None
+    checked_baggage_pieces: Optional[int] = None
+    checked_baggage_weight_kg: Optional[float] = None
+    checked_baggage_weight_per_piece_kg: Optional[float] = None
+    infant_allowance: Dict[str, Any] = Field(default_factory=dict)
+    child_allowance: Dict[str, Any] = Field(default_factory=dict)
+    status_member_exceptions: List[Dict[str, Any]] = Field(default_factory=list)
+    special_item_inclusions: List[str] = Field(default_factory=list)
+    special_item_exclusions: List[str] = Field(default_factory=list)
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    codeshare_interline_status: str = "unknown"
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineBaggageException(BaseDocument):
+    baggage_exception_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    baggage_rule_id: Optional[str] = None
+    fare_family_id: Optional[str] = None
+    exception_type: str
+    exception_status: str = "unknown"
+    priority: int = 100
+    passenger_type_scope: List[str] = Field(default_factory=list)
+    status_tier_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    marketing_carrier_scope: List[str] = Field(default_factory=list)
+    operating_carrier_scope: List[str] = Field(default_factory=list)
+    special_item_scope: List[str] = Field(default_factory=list)
+    allowance_overrides: Dict[str, Any] = Field(default_factory=dict)
+    special_item_inclusions: List[str] = Field(default_factory=list)
+    special_item_exclusions: List[str] = Field(default_factory=list)
+    warning_message: Optional[str] = None
+    client_safe_message: Optional[str] = None
+    manual_review_required: bool = False
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineCommercialBundle(BaseDocument):
+    commercial_bundle_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    bundle_code: str
+    bundle_name: str
+    cabin: Optional[str] = None
+    fare_family_ids: List[str] = Field(default_factory=list)
+    brand_codes: List[str] = Field(default_factory=list)
+    rbd_codes: List[str] = Field(default_factory=list)
+    attribute_ids: List[str] = Field(default_factory=list)
+    baggage_rule_ids: List[str] = Field(default_factory=list)
+    ancillary_inclusions: List[str] = Field(default_factory=list)
+    hierarchy_rank: int = 0
+    distribution_channel_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    bundle_status: str = "unknown"
+    client_safe_label: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineFareFamilyEvidenceLink(BaseDocument):
+    fare_family_evidence_reference: str
+    agency_id: Optional[str] = None
+    airline_code: str
+    target_type: str
+    target_id: str
+    evidence_source_id: Optional[str] = None
+    evidence_artifact_id: Optional[str] = None
+    evidence_assertion_id: Optional[str] = None
+    evidence_link_id: Optional[str] = None
+    evidence_status: str = "draft"
+    authority_level: str = "unknown"
+    confidence: str = "unknown"
+    freshness_status: str = "unknown"
+    accessibility: str = "internal_restricted"
+    agency_visible: bool = False
+    client_visible: bool = False
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineBrandComparisonProfile(BaseDocument):
+    comparison_profile_reference: str
+    agency_id: Optional[str] = None
+    profile_name: str
+    airline_codes: List[str] = Field(default_factory=list)
+    fare_family_ids: List[str] = Field(default_factory=list)
+    cabin_scope: List[str] = Field(default_factory=list)
+    attribute_codes: List[str] = Field(default_factory=list)
+    include_baggage: bool = True
+    include_flexibility: bool = True
+    include_services: bool = True
+    comparison_status: str = "draft"
+    client_safe_title: Optional[str] = None
+    client_safe_labels: Dict[str, str] = Field(default_factory=dict)
+    internal_column_notes: Dict[str, str] = Field(default_factory=dict)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    confidence: str = "unknown"
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
 
 
 class AirlineRbdMatrixRow(BaseDocument):

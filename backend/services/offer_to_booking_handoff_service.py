@@ -27,7 +27,7 @@ from services.timeline_workspace_service import OperationalTimelineService
 from services.airline_distribution_capability_service import AirlineDistributionCapabilityService
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 OFFER_BOOKING_HANDOFFS_COLLECTION = "offer_booking_handoffs"
 OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION = "offer_booking_handoff_checks"

@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,

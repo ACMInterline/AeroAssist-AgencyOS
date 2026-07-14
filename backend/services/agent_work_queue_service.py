@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 OPERATIONAL_WORK_ITEMS_COLLECTION = "operational_work_items"
 OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION = "operational_queue_definitions"

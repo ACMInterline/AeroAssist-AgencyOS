@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -70,6 +70,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_carrier_relationships, airline_interline_agreement_profiles, airline_codeshare_rules, airline_operating_carrier_policy_rules, airline_validating_carrier_rules, airline_through_check_rules, airline_baggage_responsibility_rules, airline_service_responsibility_rules, airline_interline_emd_rules, /api/platform/interline-codeshare-intelligence, /api/agencies/{agency_id}/interline-codeshare-advisor, /platform/interline-codeshare-intelligence, /agency/interline-codeshare-advisor",
         "status": "foundation adopted",
         "action": "Preserve legacy interline and EMD source truth, evaluate multi-segment carrier roles and responsibilities from governed effective evidence, and return explicit unknown, unsupported, or manual-review outcomes without provider connectivity or operational execution.",
+    },
+    {
+        "category": "Airline Fare Family RBD Baggage And Brand Intelligence",
+        "concept": "Governed airline commercial-product hierarchy and operational comparison intelligence",
+        "supplementary_concept": "fare family, fare brand, RBD, cabin, baggage allowance, baggage exception, commercial attribute, comparison profile, evidence, offer projection",
+        "current_equivalent": "airline_fare_families, airline_fare_brand_attributes, airline_booking_class_mappings, airline_baggage_allowance_rules, airline_baggage_exceptions, airline_commercial_bundles, airline_fare_family_evidence_links, airline_brand_comparison_profiles, /api/platform/fare-brand-intelligence, /api/agencies/{agency_id}/fare-brand-library, /platform/fare-brand-intelligence, /agency/fare-brand-library",
+        "status": "foundation adopted",
+        "action": "Extend the canonical fare-family records with evidence-linked hierarchy, RBD, commercial-attribute, baggage, and comparison metadata; preserve legacy RBD and fare source truth; expose published agency-safe offer guidance while keeping unknown and interline contexts explicit and avoiding live pricing or availability claims.",
     },
     {
         "category": "Airline Intelligence Data Packs",

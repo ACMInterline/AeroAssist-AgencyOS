@@ -289,3 +289,7 @@ Phase 55.5 uses `/api/platform/airline-distribution-capabilities` for governed c
 ## Phase 55.6 Interline and Codeshare Intelligence
 
 Phase 55.6 uses `/api/platform/interline-codeshare-intelligence` for governed carrier relationships and responsibility-rule metadata. Agency published intelligence and transient advisory evaluation use `/api/agencies/{agency_id}/interline-codeshare-advisor`. UI routes are `/platform/interline-codeshare-intelligence` and `/agency/interline-codeshare-advisor`. Existing canonical `/platform/*`, `/agency/*`, `/api/platform/*`, and `/api/agencies/{agency_id}/*` families remain unchanged; no carrier-, provider-, `/admin/*`, or `/agent/*` route root is introduced.
+
+## Phase 55.7 Fare Brand Intelligence
+
+Phase 55.7 uses `/api/platform/fare-brand-intelligence` for governed fare-family, RBD, baggage, commercial-attribute, evidence-link, and comparison-profile metadata. Agency published intelligence and transient read-only comparisons use `/api/agencies/{agency_id}/fare-brand-library`. UI routes are `/platform/fare-brand-intelligence` and `/agency/fare-brand-library`. No provider, pricing-engine, `/admin/*`, or `/agent/*` route root is introduced.

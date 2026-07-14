@@ -16,7 +16,7 @@ from services.service_parameter_taxonomy_service import (
 )
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 PRICING_FORMULA_BUILDERS_COLLECTION = "pricing_formula_builders"
 
 FORMULA_STATUSES = ["draft", "in_review", "approved", "retired", "archived"]

@@ -401,3 +401,7 @@ The supplementary PSS/GDS/NDC and distribution-capability concepts are adopted t
 ## Phase 55.6 Interline Codeshare and Operating Carrier Intelligence
 
 The supplementary multi-carrier relationship and responsibility concepts are adopted through normalized records for marketing, operating, validating, ticketing, plating, and handling carriers. Interline, codeshare, SPA, alliance, wet lease, franchise, regional affiliate, through-check, baggage, SSR, pricing, ticket, EMD, airport, exchange, and disruption responsibility are evidence-linked and scope-aware. Advisory evaluation references existing constraints, feasibility, recommendations, and offer intelligence without replacing or mutating them.
+
+## Phase 55.7 Fare Family, RBD, Baggage, and Brand Intelligence
+
+The supplementary fare-family, booking-class, baggage, commercial-bundle, comparison, evidence, and offer-product concepts are adopted through an extension of canonical `airline_fare_families` plus seven focused metadata collections. The implementation preserves older RBD/fare/ancillary source truth, links governed evidence and versions, exposes only published client-safe agency views, and gives offer intelligence structured attributes without inventing live pricing or availability.

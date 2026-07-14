@@ -18,7 +18,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 AIRLINE_DISTRIBUTION_CHANNELS_COLLECTION = "airline_distribution_channels"
 AIRLINE_DISTRIBUTION_CAPABILITIES_COLLECTION = "airline_distribution_capabilities"

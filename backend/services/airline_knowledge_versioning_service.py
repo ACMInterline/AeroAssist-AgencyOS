@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"
@@ -92,6 +92,13 @@ DISTRIBUTION_VERSIONED_OBJECT_COLLECTIONS = {
     "baggage_responsibility_rule": "airline_baggage_responsibility_rules",
     "service_responsibility_rule": "airline_service_responsibility_rules",
     "interline_emd_rule": "airline_interline_emd_rules",
+    "fare_family": "airline_fare_families",
+    "fare_brand_attribute": "airline_fare_brand_attributes",
+    "booking_class_mapping": "airline_booking_class_mappings",
+    "baggage_allowance_rule": "airline_baggage_allowance_rules",
+    "baggage_exception": "airline_baggage_exceptions",
+    "commercial_bundle": "airline_commercial_bundles",
+    "brand_comparison_profile": "airline_brand_comparison_profiles",
 }
 
 ALL_VERSIONED_OBJECT_COLLECTIONS = {

@@ -21,7 +21,7 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}

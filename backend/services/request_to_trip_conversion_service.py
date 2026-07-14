@@ -22,7 +22,7 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.trip_dossier_service import create_trip_from_request, link_request_to_trip, write_request_timeline, write_trip_timeline
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 REQUEST_TRIP_CONVERSION_PLANS_COLLECTION = "request_trip_conversion_plans"
 REQUEST_TRIP_CONVERSION_RUNS_COLLECTION = "request_trip_conversion_runs"

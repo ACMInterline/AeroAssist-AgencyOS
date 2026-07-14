@@ -259,3 +259,7 @@ Phase 55.5 adds `airline_distribution_channels`, `airline_distribution_capabilit
 ## Phase 55.6 Interline and Carrier Responsibility Intelligence
 
 Phase 55.6 adds `airline_carrier_relationships`, `airline_interline_agreement_profiles`, `airline_codeshare_rules`, `airline_operating_carrier_policy_rules`, `airline_validating_carrier_rules`, `airline_through_check_rules`, `airline_baggage_responsibility_rules`, `airline_service_responsibility_rules`, and `airline_interline_emd_rules`. These normalized records preserve and optionally link the older `airline_interline_agreements` and `airline_emd_interline_rules` source records. They store effective, scoped, evidence-backed carrier responsibility assertions and do not execute booking, ticketing, EMD, provider, or servicing actions.
+
+## Phase 55.7 Fare Brand and Baggage Intelligence
+
+Phase 55.7 extends canonical `airline_fare_families` and adds `airline_fare_brand_attributes`, `airline_booking_class_mappings`, `airline_baggage_allowance_rules`, `airline_baggage_exceptions`, `airline_commercial_bundles`, `airline_fare_family_evidence_links`, and `airline_brand_comparison_profiles`. The records describe fare-family hierarchy, RBD/cabin/brand relationships, commercial inclusions, contextual baggage allowance, governed exceptions, evidence, versions, publication, and agency visibility. Older RBD, fare-rule, and ancillary source records remain preserved. All records are intelligence metadata and assert neither live pricing nor availability.

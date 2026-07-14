@@ -22,7 +22,7 @@ from smoke_booking_workspace_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 TICKET_STATUSES = {"draft", "review", "ready", "archived"}
 TICKET_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}

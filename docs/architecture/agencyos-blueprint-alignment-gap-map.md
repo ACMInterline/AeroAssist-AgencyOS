@@ -165,4 +165,10 @@ Distribution capability intelligence is aligned by normalizing channel, PSS, GDS
 
 ## Phase 55.6 Alignment
 
+Phase 55.6 adopts the supplementary interline, codeshare, carrier-role, through-check, baggage-responsibility, service-responsibility, and EMD-responsibility concepts through evidence-backed advisory metadata. It preserves canonical airline and legacy interline records and introduces no provider execution.
+
 Multi-carrier responsibility intelligence is aligned through additive carrier relationship, interline agreement, codeshare, operating-carrier, validating-carrier, through-check, baggage, service-responsibility, and interline-EMD records. Governed evidence drives deterministic itinerary carrier-role and responsibility explanations while unknown and manual-review states remain explicit. Existing interline and EMD records remain source truth; live provider execution and operational mutation remain intentional gaps.
+
+## Phase 55.7 Alignment
+
+Phase 55.7 adopts fare-family hierarchy, fare-brand attributes, RBD mapping, baggage allowance and exception, commercial bundle, evidence, and comparison concepts around the existing canonical fare-family model. It closes the commercial-product comparison gap for offer preparation while preserving live fare shopping and availability as future provider-bound concerns. Unknown, variable, and multi-carrier contexts remain warnings or manual-review states.

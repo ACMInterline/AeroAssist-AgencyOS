@@ -18,7 +18,7 @@ from models import (
 from services.knowledge_population_toolkit_service import KnowledgePopulationToolkitService
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 
 COVERAGE_PROFILE_COLLECTION = "airline_service_coverage_profiles"
 COVERAGE_CELL_COLLECTION = "airline_service_coverage_cells"

@@ -9,9 +9,10 @@ from models import (
     IntelligentOfferBuilderPackageCreate,
     IntelligentOfferBuilderPackageUpdate,
 )
+from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
 
 
-PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = "phase_55_7_airline_fare_family_rbd_baggage_brand_intelligence_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]
@@ -266,6 +267,9 @@ class IntelligentOfferBuilderService:
         projected["required_action_summary"] = self._action_summary(projected)
         projected["explanation_summary"] = self._explanation_summary(projected)
         projected["decision_pack_metadata_summary"] = self._decision_pack_summary(projected)
+        projected["fare_brand_intelligence"] = await AirlineFareFamilyBrandIntelligenceService(
+            self.db
+        ).offer_builder_package_attributes(projected)
         projected["read_only"] = read_only
         projected.update(self.safety_flags())
         return projected
@@ -380,6 +384,7 @@ class IntelligentOfferBuilderService:
             "consumes_operational_evaluations": True,
             "consumes_capability_matrix": True,
             "consumes_knowledge_governance_evidence": True,
+            "consumes_fare_brand_intelligence": True,
             "advisory_only": True,
             "human_authority_final": True,
             "no_live_gds_search": True,
