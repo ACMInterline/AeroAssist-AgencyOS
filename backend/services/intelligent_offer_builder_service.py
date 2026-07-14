@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

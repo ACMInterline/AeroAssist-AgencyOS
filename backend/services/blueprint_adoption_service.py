@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -62,6 +62,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_distribution_channels, airline_distribution_capabilities, airline_pss_profiles, airline_gds_participations, airline_ndc_capabilities, airline_fulfillment_capabilities, airline_servicing_capabilities, airline_distribution_restrictions, airline_distribution_evidence_links, /api/platform/airline-distribution-capabilities, /api/agencies/{agency_id}/distribution-capabilities, /platform/airline-distribution-capabilities, /agency/distribution-capabilities",
         "status": "foundation adopted",
         "action": "Extend retained distribution/PSS/GDS source context with normalized evidence-linked planning metadata; distinguish capability from provider stage; prohibit credentials and live-connectivity assumptions; expose published agency-safe guidance and booking-handoff fallbacks without provider execution.",
+    },
+    {
+        "category": "Interline Codeshare And Operating Carrier Intelligence",
+        "concept": "Governed multi-carrier relationship and operational responsibility intelligence",
+        "supplementary_concept": "marketing, operating, validating, ticketing, plating, handling, interline, codeshare, through-check, baggage, SSR, policy, EMD, servicing responsibility",
+        "current_equivalent": "airline_carrier_relationships, airline_interline_agreement_profiles, airline_codeshare_rules, airline_operating_carrier_policy_rules, airline_validating_carrier_rules, airline_through_check_rules, airline_baggage_responsibility_rules, airline_service_responsibility_rules, airline_interline_emd_rules, /api/platform/interline-codeshare-intelligence, /api/agencies/{agency_id}/interline-codeshare-advisor, /platform/interline-codeshare-intelligence, /agency/interline-codeshare-advisor",
+        "status": "foundation adopted",
+        "action": "Preserve legacy interline and EMD source truth, evaluate multi-segment carrier roles and responsibilities from governed effective evidence, and return explicit unknown, unsupported, or manual-review outcomes without provider connectivity or operational execution.",
     },
     {
         "category": "Airline Intelligence Data Packs",

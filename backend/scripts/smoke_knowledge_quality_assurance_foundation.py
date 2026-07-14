@@ -19,7 +19,7 @@ from services.knowledge_quality_assurance_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+EXPECTED_PHASE = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_CHECKS = {

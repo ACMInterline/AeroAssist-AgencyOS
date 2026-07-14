@@ -397,3 +397,7 @@ The supplementary airline-by-service coverage matrix is adopted through `airline
 ## Phase 55.5 Airline Distribution Capability Intelligence
 
 The supplementary PSS/GDS/NDC and distribution-capability concepts are adopted through normalized channel, capability, host, participation, fulfillment, servicing, restriction, and evidence-link records. Existing `airline_distribution_profiles`, `airline_pss_parameters`, and `airline_gds_parameters` remain retained source context. Published agency views distinguish documented, configured, sandbox-tested, and production-enabled provider metadata without storing credentials or asserting live connectivity.
+
+## Phase 55.6 Interline Codeshare and Operating Carrier Intelligence
+
+The supplementary multi-carrier relationship and responsibility concepts are adopted through normalized records for marketing, operating, validating, ticketing, plating, and handling carriers. Interline, codeshare, SPA, alliance, wet lease, franchise, regional affiliate, through-check, baggage, SSR, pricing, ticket, EMD, airport, exchange, and disruption responsibility are evidence-linked and scope-aware. Advisory evaluation references existing constraints, feasibility, recommendations, and offer intelligence without replacing or mutating them.

@@ -162,3 +162,7 @@ Airline and service coverage is aligned through deterministic projections over c
 ## Phase 55.5 Alignment
 
 Distribution capability intelligence is aligned by normalizing channel, PSS, GDS, NDC, fulfillment, servicing, restriction, and evidence metadata around the retained broad distribution records. Capability status and provider readiness are separate, unknown remains explicit, and booking handoff consumes only published advisory context. Real credential storage, live connectivity, provider health, shopping, booking, ticketing, EMD issuance, and servicing execution remain intentional gaps.
+
+## Phase 55.6 Alignment
+
+Multi-carrier responsibility intelligence is aligned through additive carrier relationship, interline agreement, codeshare, operating-carrier, validating-carrier, through-check, baggage, service-responsibility, and interline-EMD records. Governed evidence drives deterministic itinerary carrier-role and responsibility explanations while unknown and manual-review states remain explicit. Existing interline and EMD records remain source truth; live provider execution and operational mutation remain intentional gaps.

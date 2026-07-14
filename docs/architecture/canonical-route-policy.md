@@ -285,3 +285,7 @@ Phase 55.4 uses `/api/platform/airline-service-coverage` for coverage targets, d
 ## Phase 55.5 Airline Distribution Capabilities
 
 Phase 55.5 uses `/api/platform/airline-distribution-capabilities` for governed channel, capability, PSS, GDS, NDC, fulfillment, servicing, restriction, and evidence metadata. Agency published planning visibility is read-only at `/api/agencies/{agency_id}/distribution-capabilities`. UI routes are `/platform/airline-distribution-capabilities` and `/agency/distribution-capabilities`. Existing broad distribution/PSS/GDS records remain canonical source context; no `/admin/*`, `/agent/*`, or provider-specific route root is introduced.
+
+## Phase 55.6 Interline and Codeshare Intelligence
+
+Phase 55.6 uses `/api/platform/interline-codeshare-intelligence` for governed carrier relationships and responsibility-rule metadata. Agency published intelligence and transient advisory evaluation use `/api/agencies/{agency_id}/interline-codeshare-advisor`. UI routes are `/platform/interline-codeshare-intelligence` and `/agency/interline-codeshare-advisor`. Existing canonical `/platform/*`, `/agency/*`, `/api/platform/*`, and `/api/agencies/{agency_id}/*` families remain unchanged; no carrier-, provider-, `/admin/*`, or `/agent/*` route root is introduced.

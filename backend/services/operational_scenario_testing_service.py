@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalScenarioTest, OperationalScenarioTestCreate, OperationalScenarioTestUpdate
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 OPERATIONAL_SCENARIO_TESTS_COLLECTION = "operational_scenario_tests"
 
 SCENARIO_FAMILIES = [

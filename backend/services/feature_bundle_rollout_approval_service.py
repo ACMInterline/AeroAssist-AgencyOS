@@ -18,7 +18,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 
 APPROVAL_COLLECTION = "feature_bundle_rollout_approvals"
 NOTE_COLLECTION = "feature_bundle_rollout_approval_notes"

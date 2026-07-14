@@ -255,3 +255,7 @@ Phase 55.4 adds `airline_service_coverage_profiles`, `airline_service_coverage_c
 ## Phase 55.5 Airline Distribution Capability Intelligence
 
 Phase 55.5 adds `airline_distribution_channels`, `airline_distribution_capabilities`, `airline_pss_profiles`, `airline_gds_participations`, `airline_ndc_capabilities`, `airline_fulfillment_capabilities`, `airline_servicing_capabilities`, `airline_distribution_restrictions`, and `airline_distribution_evidence_links`. These normalized governance records link to and preserve existing `airline_distribution_profiles`, `airline_pss_parameters`, and `airline_gds_parameters` source context. They describe planning capability and provider stage; they do not store credentials or provide live connectivity.
+
+## Phase 55.6 Interline and Carrier Responsibility Intelligence
+
+Phase 55.6 adds `airline_carrier_relationships`, `airline_interline_agreement_profiles`, `airline_codeshare_rules`, `airline_operating_carrier_policy_rules`, `airline_validating_carrier_rules`, `airline_through_check_rules`, `airline_baggage_responsibility_rules`, `airline_service_responsibility_rules`, and `airline_interline_emd_rules`. These normalized records preserve and optionally link the older `airline_interline_agreements` and `airline_emd_interline_rules` source records. They store effective, scoped, evidence-backed carrier responsibility assertions and do not execute booking, ticketing, EMD, provider, or servicing actions.

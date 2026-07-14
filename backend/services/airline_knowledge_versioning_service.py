@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"
@@ -83,6 +83,15 @@ DISTRIBUTION_VERSIONED_OBJECT_COLLECTIONS = {
     "fulfillment_capability": "airline_fulfillment_capabilities",
     "servicing_capability": "airline_servicing_capabilities",
     "distribution_restriction": "airline_distribution_restrictions",
+    "carrier_relationship": "airline_carrier_relationships",
+    "interline_agreement_profile": "airline_interline_agreement_profiles",
+    "codeshare_rule": "airline_codeshare_rules",
+    "operating_carrier_policy_rule": "airline_operating_carrier_policy_rules",
+    "validating_carrier_rule": "airline_validating_carrier_rules",
+    "through_check_rule": "airline_through_check_rules",
+    "baggage_responsibility_rule": "airline_baggage_responsibility_rules",
+    "service_responsibility_rule": "airline_service_responsibility_rules",
+    "interline_emd_rule": "airline_interline_emd_rules",
 }
 
 ALL_VERSIONED_OBJECT_COLLECTIONS = {

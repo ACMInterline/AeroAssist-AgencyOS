@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -61,6 +61,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "knowledge_updates", "label": "Knowledge Updates", "href": "/agency/knowledge-updates", "aliases": ["knowledge_updates", "knowledge_change_detection", "knowledge_versions", "airline_intelligence"]},
     {"key": "airline_service_coverage", "label": "Airline Service Coverage", "href": "/agency/airline-service-coverage", "aliases": ["airline_service_coverage", "knowledge_gap_management", "airline_coverage", "airline_intelligence"]},
     {"key": "airline_distribution_capabilities", "label": "Distribution Capabilities", "href": "/agency/distribution-capabilities", "aliases": ["airline_distribution_capabilities", "distribution_capabilities", "pss", "gds", "ndc", "airline_intelligence"]},
+    {"key": "interline_codeshare_intelligence", "label": "Interline & Codeshare Advisor", "href": "/agency/interline-codeshare-advisor", "aliases": ["interline", "codeshare", "operating_carrier", "validating_carrier", "airline_intelligence"]},
     {"key": "airline_coverage", "label": "Airline Coverage", "href": "/agency/airline-intelligence-coverage", "aliases": ["airline_coverage", "data_pack_coverage", "airline_intelligence"]},
     {"key": "knowledge_versions", "label": "Knowledge Versions", "href": "/agency/airline-intelligence-knowledge-versions", "aliases": ["knowledge_versions", "airline_intelligence"]},
     {"key": "airline_intelligence_consumption", "label": "Airline Intelligence Usage", "href": "/agency/airline-intelligence-consumption", "aliases": ["airline_intelligence_consumption", "usage_readiness", "airline_intelligence"]},
