@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 INTELLIGENT_OFFER_BUILDER_COLLECTION = "intelligent_offer_builder_packages"
 
 INTELLIGENT_OFFER_PACKAGE_STATUSES = ["draft", "in_review", "ready", "approved", "archived"]

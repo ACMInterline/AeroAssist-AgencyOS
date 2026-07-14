@@ -103,6 +103,8 @@ Phase 54.6 adds offer-to-booking handoff APIs only under `/api/platform/booking-
 
 Phase 54.7 adds servicing and after-sales workflow APIs only under `/api/platform/after-sales/*` and `/api/agencies/{agency_id}/after-sales/*`, plus frontend pages under `/platform/after-sales` and `/agency/after-sales`. It records metadata-only after-sales cases, affected item links, decisions, financial placeholders, resolutions, and communication records without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, ticket or EMD mutation, financial commitments, provider execution, AI/LLM generation, background workers, schedulers, sending, payment processing, route blocking, access enforcement, or automatic operational execution.
 
+Phase 54.8 adds operations command center APIs only under `/api/platform/operations-governance/*` and `/api/agencies/{agency_id}/operations-command-center/*`, plus frontend pages under `/platform/operations-governance` and `/agency/operations-command-center`. It aggregates existing operational metadata into read-only dashboard, queue, kanban, calendar, timeline, exception, and workload views without adding redirects, aliases, `/admin`, `/agent`, `/api/admin`, `/api/agent`, duplicate operations collections, duplicate task systems, duplicate workflow architectures, uncontrolled drag-and-drop mutation, provider execution, AI/LLM generation, background workers, schedulers, sending, booking, ticketing, EMD issuance, payment processing, route blocking, access enforcement, or automatic operational execution.
+
 ## Route Mapping
 
 | Supplementary route | AgencyOS route |
@@ -195,6 +197,8 @@ Phase 54.7 adds servicing and after-sales workflow APIs only under `/api/platfor
 | `/admin/sla-policies` | `/platform/sla-policies` |
 | `/agent/deadlines` | `/agency/deadlines` |
 | `/agent/work-queue` | `/agency/work-queue` |
+| `/admin/operations-command-center` | `/platform/operations-governance` |
+| `/agent/operations-command-center` | `/agency/operations-command-center` |
 | `/admin/feature-bundle-rollout-readiness` | `/platform/feature-bundle-rollout-readiness` |
 | `/agent/bundle-rollout-readiness` | `/agency/bundle-rollout-readiness` |
 | `/admin/feature-bundle-rollout-plans` | `/platform/feature-bundle-rollout-plans` |

@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 TICKET_WORKSPACE_COLLECTION = "ticket_workspaces"
 TICKET_WORKSPACE_STATUSES = [
     TicketWorkspaceStatus.DRAFT.value,

@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalTimeline, OperationalTimelineCreate, OperationalTimelineUpdate, new_id
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 OPERATIONAL_TIMELINE_COLLECTION = "operational_timelines"
 
 TIMELINE_EVENT_TYPES = [

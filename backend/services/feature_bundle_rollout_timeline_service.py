@@ -14,7 +14,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import payload_dict
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 
 TIMELINE_COLLECTION = "feature_bundle_rollout_timeline_entries"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

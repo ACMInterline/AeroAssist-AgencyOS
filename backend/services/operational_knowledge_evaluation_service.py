@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 OPERATIONAL_KNOWLEDGE_EVALUATION_COLLECTION = "operational_knowledge_evaluations"
 
 EVALUATION_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

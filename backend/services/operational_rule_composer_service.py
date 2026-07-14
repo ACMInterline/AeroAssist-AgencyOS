@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION = "operational_rule_composer_rules"
 
 SUPPORTED_OPERATORS = [

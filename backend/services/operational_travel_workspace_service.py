@@ -13,7 +13,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 
 WORKSPACE_COLLECTION = "operational_travel_workspaces"
 WORKSPACE_TYPES = ["general", "request", "trip", "offer", "booking", "ticketing", "documents", "disruption", "service_case"]

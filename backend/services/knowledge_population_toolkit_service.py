@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgePopulationToolkit, KnowledgePopulationToolkitCreate, KnowledgePopulationToolkitUpdate
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION = "knowledge_population_toolkits"
 
 POPULATION_STATUSES = [

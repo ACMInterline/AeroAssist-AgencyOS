@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 
 OPERATIONAL_WORK_ITEMS_COLLECTION = "operational_work_items"
 OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION = "operational_queue_definitions"

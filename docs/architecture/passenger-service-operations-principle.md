@@ -107,6 +107,12 @@ Trip / Booking / Ticket / EMD / Passenger / Document / Segment -> After-Sales Ca
 
 The after-sales layer coordinates voluntary change, schedule change, cancellation, refund, ticket exchange, EMD exchange/refund, claim, service amendment, passenger/document amendment, and disruption cases. It records affected-record links, coupon-status awareness, financial placeholders, client approval guards, supplier-contact metadata, generated advice metadata, and internal/client message separation. It does not mutate tickets or EMDs, commit money, execute refunds/exchanges/voids, call providers, run AI, send messages, or automate servicing actions.
 
+Phase 54.8 adds the Operations Command Center as the primary visibility shell over the operational work systems:
+
+Work Queue / SLA / Workflow / Requests / Offers / Bookings / Services / Documents / After-Sales / Pilot Readiness -> Command Center Aggregate
+
+The command center gives agency staff one place to see workload, unassigned work, due-soon and overdue records, blockers, triage, booking handoffs, service documents, departure horizons, disruptions, after-sales cases, knowledge/manual-review cases, payment blockers, workflow-derived kanban lanes, calendar events, timeline events, and team workload. It does not introduce a new operational source of truth, mutate statuses, bypass workflow guards, enable uncontrolled drag-and-drop, execute providers, call external APIs, run AI, send messages, schedule workers, or automate operational execution.
+
 Phase 51.2 adds segment-first intake precision:
 
 Passenger -> Request -> Segment -> Service Requirement -> Operational Intelligence

@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 
 PILOT_READINESS_PROFILES_COLLECTION = "pilot_readiness_profiles"
 PILOT_READINESS_ASSESSMENTS_COLLECTION = "pilot_readiness_assessments"

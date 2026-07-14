@@ -29,7 +29,7 @@ from services.after_sales_workflow_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_54_7_servicing_after_sales_workflow_foundation"
+EXPECTED_PHASE = "phase_54_8_operations_command_center_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -368,9 +368,7 @@ def verify_live_api(paths: dict) -> None:
         raise AssertionError(f"Platform after-sales diagnostics failed: {platform}")
     get(f"/api/platform/after-sales/{case['id']}", OWNER_HEADERS)
     request("POST", "/api/platform/after-sales", {"case_type": "refund"}, OWNER_HEADERS, 405)
-    status, isolation_payload = request("GET", f"/api/agencies/other-agency/after-sales/{case['id']}", None, AGENCY_AGENT_HEADERS)
-    if status not in {403, 404}:
-        raise AssertionError(f"Agency isolation failed, expected 403 or 404 and got {status}: {isolation_payload}")
+    request("GET", f"/api/agencies/other-agency/after-sales/{case['id']}", None, AGENCY_AGENT_HEADERS, 404)
 
 
 def main() -> None:

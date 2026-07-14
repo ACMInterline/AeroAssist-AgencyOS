@@ -7,7 +7,7 @@ from database import Database
 from models import ServiceParameterTaxonomy, ServiceParameterTaxonomyCreate, ServiceParameterTaxonomyUpdate
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 SERVICE_PARAMETER_TAXONOMIES_COLLECTION = "service_parameter_taxonomies"
 
 SERVICE_PARAMETER_TAXONOMY_STATUSES = ["draft", "active", "in_review", "approved", "deprecated", "archived"]

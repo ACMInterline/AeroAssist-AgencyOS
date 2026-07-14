@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_54_7_servicing_after_sales_workflow_foundation"
+PHASE_LABEL = "phase_54_8_operations_command_center_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,

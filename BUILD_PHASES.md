@@ -158,6 +158,7 @@ The repository currently contains:
 - Phase 54.5: Request-to-trip operational conversion foundation.
 - Phase 54.6: Offer-to-booking handoff and booking readiness foundation.
 - Phase 54.7: Servicing and after-sales workflow foundation.
+- Phase 54.8: Operations command center foundation.
 
 Phase 35 navigation hotfix:
 
@@ -2330,3 +2331,7 @@ Phase 54.6 adds the metadata-only Offer-to-Booking Handoff and Booking Readiness
 ## Implemented Phase 54.7
 
 Phase 54.7 adds the metadata-only Servicing and After-Sales Workflow Foundation. It registers `after_sales_cases`, `after_sales_case_items`, `after_sales_decisions`, `after_sales_financial_impacts`, `after_sales_resolutions`, and `after_sales_communication_records`, plus platform read-only diagnostics, agency after-sales operations routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It coordinates voluntary changes, schedule changes, cancellations, refunds, ticket exchanges, EMD exchange/refund cases, claims, service amendments, passenger/document amendments, and disruptions while linking affected trip, booking, ticket, EMD, passenger, document, SSR/OSI, segment, workflow, task, SLA, queue, and timeline metadata. It stores coupon-status awareness, client approval guards, financial placeholders, generated advice metadata, and internal/client message separation without mutating tickets or EMDs, committing money, calling providers, sending messages, using AI, scheduling workers, or automating operational execution.
+
+## Implemented Phase 54.8
+
+Phase 54.8 adds the metadata-only Operations Command Center Foundation. It introduces the read-only aggregate `OperationsCommandCenterService`, platform operations-governance routes, agency operations-command-center routes, UI pages, module catalog entries, architecture documentation, readiness metadata, and smoke coverage. It summarizes current workload, unassigned work, overdue/due-soon records, blockers, triage, offers, accepted-offer handoffs, booking/ticketing readiness, service documents, departure horizons, disruptions, after-sales cases, knowledge/manual-review cases, payment blockers, pilot-readiness issues, calendar events, workflow-derived kanban lanes, timeline events, and team workload without adding a new command-center collection, duplicating operational data, mutating workflow states, enabling uncontrolled drag-and-drop, executing providers, calling external APIs, using AI, sending messages, scheduling workers, or automating operational execution.
