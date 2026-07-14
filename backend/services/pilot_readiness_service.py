@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 PILOT_READINESS_PROFILES_COLLECTION = "pilot_readiness_profiles"
 PILOT_READINESS_ASSESSMENTS_COLLECTION = "pilot_readiness_assessments"

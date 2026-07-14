@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

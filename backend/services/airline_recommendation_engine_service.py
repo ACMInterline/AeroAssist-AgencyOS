@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineRecommendation, AirlineRecommendationCreate, AirlineRecommendationUpdate, new_id
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 AIRLINE_RECOMMENDATION_COLLECTION = "airline_recommendations"
 
 AIRLINE_RECOMMENDATION_STATUSES = ["draft", "in_review", "ready", "archived"]

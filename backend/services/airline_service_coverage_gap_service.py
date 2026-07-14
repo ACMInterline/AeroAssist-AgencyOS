@@ -18,7 +18,7 @@ from models import (
 from services.knowledge_population_toolkit_service import KnowledgePopulationToolkitService
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 COVERAGE_PROFILE_COLLECTION = "airline_service_coverage_profiles"
 COVERAGE_CELL_COLLECTION = "airline_service_coverage_cells"
@@ -149,6 +149,8 @@ SOURCE_COLLECTIONS = {
     "pilot_profiles": "pilot_readiness_profiles",
     "pilot_assessments": "pilot_readiness_assessments",
     "distribution": "airline_distribution_summaries",
+    "distribution_channels": "airline_distribution_channels",
+    "distribution_capabilities": "airline_distribution_capabilities",
     "recommendations": "airline_recommendations",
     "service_instructions": "airline_policy_extracted_communication_rules",
 }
@@ -645,6 +647,11 @@ class AirlineServiceCoverageGapService:
         for key, collection in SOURCE_COLLECTIONS.items():
             records = await self.db.collection(collection).find_many()
             loaded[key] = [record for record in records if not record.get("archived") and self._agency_source_visible(record, agency_id)]
+        loaded["distribution"] = [
+            *loaded["distribution"],
+            *loaded["distribution_channels"],
+            *loaded["distribution_capabilities"],
+        ]
         return loaded
 
     def _assess_cell(
@@ -666,7 +673,7 @@ class AirlineServiceCoverageGapService:
                 record
                 for record in sources[source_type]
                 if self._airline_matches(record, airline_code, source_type)
-                and self._service_matches(record, service_family, service_code, source_type)
+                and (source_type == "distribution" or self._service_matches(record, service_family, service_code, source_type))
                 and self._dimension_matches(record, dimension, source_type)
             ]
 

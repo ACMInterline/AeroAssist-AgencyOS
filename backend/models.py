@@ -22299,6 +22299,302 @@ class AirlineCoverageRemediationPlan(BaseDocument):
     automatic_remediation_disabled: bool = True
 
 
+class AirlineDistributionChannel(BaseDocument):
+    channel_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    airline_name: Optional[str] = None
+    channel_code: str
+    channel_name: str
+    channel_type: str = "manual_offline_process"
+    provider_name: Optional[str] = None
+    provider_code: Optional[str] = None
+    capability_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    fallback_method: Optional[str] = None
+    manual_handling_required: bool = False
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    country_scope: List[str] = Field(default_factory=list)
+    distribution_channel_profile_id: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    credentials_stored: bool = False
+    live_connectivity_confirmed: bool = False
+
+
+class AirlineDistributionCapability(BaseDocument):
+    capability_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: str
+    channel_code: str
+    capability_area: str
+    capability_code: str
+    capability_name: Optional[str] = None
+    capability_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    operating_carrier: Optional[str] = None
+    marketing_carrier: Optional[str] = None
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    country_scope: List[str] = Field(default_factory=list)
+    cabin_scope: List[str] = Field(default_factory=list)
+    service_family_scope: List[str] = Field(default_factory=list)
+    service_code_scope: List[str] = Field(default_factory=list)
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    live_execution_disabled: bool = True
+
+
+class AirlinePssProfile(BaseDocument):
+    pss_profile_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    known_pss: Optional[str] = None
+    reservation_host: Optional[str] = None
+    departure_control_context: Optional[str] = None
+    ticketing_host: Optional[str] = None
+    emd_host: Optional[str] = None
+    emd_capability_status: str = "unknown"
+    confidence: str = "unknown"
+    uncertainty_notes: Optional[str] = None
+    legacy_pss_parameters_id: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class AirlineGdsParticipation(BaseDocument):
+    gds_participation_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: Optional[str] = None
+    channel_code: Optional[str] = None
+    gds_code: str
+    participation_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    shopping_status: str = "unknown"
+    booking_status: str = "unknown"
+    ticketing_status: str = "unknown"
+    servicing_status: str = "unknown"
+    market_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    legacy_gds_parameters_id: Optional[str] = None
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    credentials_stored: bool = False
+
+
+class AirlineNdcCapability(BaseDocument):
+    ndc_capability_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: Optional[str] = None
+    channel_code: Optional[str] = None
+    ndc_type: str = "airline_direct_ndc"
+    provider_name: Optional[str] = None
+    provider_code: Optional[str] = None
+    ndc_standard_version: Optional[str] = None
+    capability_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    shopping_status: str = "unknown"
+    booking_status: str = "unknown"
+    fulfillment_status: str = "unknown"
+    servicing_status: str = "unknown"
+    offer_order_context: Dict[str, Any] = Field(default_factory=dict)
+    market_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    credentials_stored: bool = False
+    live_connectivity_confirmed: bool = False
+
+
+class AirlineFulfillmentCapability(BaseDocument):
+    fulfillment_capability_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: Optional[str] = None
+    channel_code: Optional[str] = None
+    capability_code: str
+    capability_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    rfic_scope: List[str] = Field(default_factory=list)
+    rfisc_scope: List[str] = Field(default_factory=list)
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    fulfillment_execution_disabled: bool = True
+
+
+class AirlineServicingCapability(BaseDocument):
+    servicing_capability_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: Optional[str] = None
+    channel_code: Optional[str] = None
+    capability_code: str
+    capability_status: str = "unknown"
+    provider_stage: str = "documented_capability"
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    conditions: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    restriction_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    provider_specific_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    servicing_execution_disabled: bool = True
+
+
+class AirlineDistributionRestriction(BaseDocument):
+    restriction_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    channel_id: Optional[str] = None
+    channel_code: Optional[str] = None
+    capability_ids: List[str] = Field(default_factory=list)
+    restriction_type: str
+    restriction_status: str = "active"
+    title: str
+    description: str
+    route_scope: List[str] = Field(default_factory=list)
+    market_scope: List[str] = Field(default_factory=list)
+    country_scope: List[str] = Field(default_factory=list)
+    cabin_scope: List[str] = Field(default_factory=list)
+    service_scope: List[str] = Field(default_factory=list)
+    fallback_method: Optional[str] = None
+    manual_review_required: bool = True
+    evidence_link_ids: List[str] = Field(default_factory=list)
+    effective_from: Optional[date] = None
+    effective_until: Optional[date] = None
+    freshness_status: str = "unknown"
+    governance_status: str = "draft"
+    approval_status: str = "draft"
+    publication_status: str = "draft"
+    agency_visibility_status: str = "platform_only"
+    visible_agency_ids: List[str] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_enforcement_disabled: bool = True
+
+
+class AirlineDistributionEvidenceLink(BaseDocument):
+    distribution_evidence_reference: str
+    agency_id: Optional[str] = None
+    canonical_airline_id: Optional[str] = None
+    airline_code: str
+    target_type: str
+    target_id: str
+    evidence_source_id: Optional[str] = None
+    evidence_artifact_id: Optional[str] = None
+    evidence_assertion_id: Optional[str] = None
+    evidence_link_id: Optional[str] = None
+    evidence_status: str = "draft"
+    authority_level: str = "unknown"
+    confidence: str = "unknown"
+    freshness_status: str = "unknown"
+    accessibility: str = "internal_restricted"
+    agency_visible: bool = False
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    review_notes: Optional[str] = None
+    internal_notes: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
 class AirlineContact(BaseDocument):
     airline_id: str
     contact_type: str

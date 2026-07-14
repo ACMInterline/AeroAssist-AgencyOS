@@ -30,7 +30,7 @@ from smoke_operational_scenario_testing_foundation import scenario_payload
 from smoke_visual_policy_editor_foundation import card_payload
 
 
-EXPECTED_PHASE = "phase_55_4_airline_service_coverage_gap_management_foundation"
+EXPECTED_PHASE = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/knowledge-versions"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}

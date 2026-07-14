@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [
@@ -54,6 +54,14 @@ ADOPTION_ITEMS: list[dict[str, Any]] = [
         "current_equivalent": "airline_service_coverage_profiles, airline_service_coverage_cells, airline_knowledge_gaps, airline_coverage_targets, airline_coverage_assessments, airline_coverage_remediation_plans, /api/platform/airline-service-coverage, /api/agencies/{agency_id}/airline-service-coverage, /platform/airline-service-coverage, /agency/airline-service-coverage",
         "status": "foundation adopted",
         "action": "Measure canonical policy, pricing, rules, evidence, capability, QA, publication, and scenario coverage deterministically; block operational-ready labels on critical gaps; synchronize existing population and pilot-readiness metadata; expose only published sanitized agency views without automatic publication, recommendation, offer mutation, provider execution, or AI.",
+    },
+    {
+        "category": "Airline Distribution PSS GDS NDC Capability Intelligence",
+        "concept": "Governed airline distribution planning and provider-readiness intelligence",
+        "supplementary_concept": "distribution channel, PSS host, GDS participation, NDC capability, shopping, booking, fulfillment, servicing, restrictions, evidence, fallback",
+        "current_equivalent": "airline_distribution_channels, airline_distribution_capabilities, airline_pss_profiles, airline_gds_participations, airline_ndc_capabilities, airline_fulfillment_capabilities, airline_servicing_capabilities, airline_distribution_restrictions, airline_distribution_evidence_links, /api/platform/airline-distribution-capabilities, /api/agencies/{agency_id}/distribution-capabilities, /platform/airline-distribution-capabilities, /agency/distribution-capabilities",
+        "status": "foundation adopted",
+        "action": "Extend retained distribution/PSS/GDS source context with normalized evidence-linked planning metadata; distinguish capability from provider stage; prohibit credentials and live-connectivity assumptions; expose published agency-safe guidance and booking-handoff fallbacks without provider execution.",
     },
     {
         "category": "Airline Intelligence Data Packs",

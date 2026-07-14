@@ -251,3 +251,7 @@ Phase 55.3 extends canonical `airline_knowledge_versions` with source, release, 
 ## Phase 55.4 Airline Service Coverage And Gaps
 
 Phase 55.4 adds `airline_service_coverage_profiles`, `airline_service_coverage_cells`, `airline_knowledge_gaps`, `airline_coverage_targets`, `airline_coverage_assessments`, and `airline_coverage_remediation_plans`. These are deterministic governance projections over existing policy, pricing, rule, evidence, normalization, capability, QA, publication, scenario, population-toolkit, pilot-readiness, and recommendation records. They do not replace or duplicate those canonical knowledge and operational models.
+
+## Phase 55.5 Airline Distribution Capability Intelligence
+
+Phase 55.5 adds `airline_distribution_channels`, `airline_distribution_capabilities`, `airline_pss_profiles`, `airline_gds_participations`, `airline_ndc_capabilities`, `airline_fulfillment_capabilities`, `airline_servicing_capabilities`, `airline_distribution_restrictions`, and `airline_distribution_evidence_links`. These normalized governance records link to and preserve existing `airline_distribution_profiles`, `airline_pss_parameters`, and `airline_gds_parameters` source context. They describe planning capability and provider stage; they do not store credentials or provide live connectivity.

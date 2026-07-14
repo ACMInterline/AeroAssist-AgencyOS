@@ -24,9 +24,10 @@ from services.booking_workspace_service import BookingWorkspaceService
 from services.operational_sla_deadline_service import OperationalSlaDeadlineService
 from services.task_automation_dependency_service import TaskAutomationDependencyService
 from services.timeline_workspace_service import OperationalTimelineService
+from services.airline_distribution_capability_service import AirlineDistributionCapabilityService
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 OFFER_BOOKING_HANDOFFS_COLLECTION = "offer_booking_handoffs"
 OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION = "offer_booking_handoff_checks"
@@ -61,6 +62,7 @@ class OfferToBookingHandoffService:
         self.deadlines = OperationalSlaDeadlineService(db)
         self.task_automation = TaskAutomationDependencyService(db)
         self.timelines = OperationalTimelineService(db)
+        self.distribution_capabilities = AirlineDistributionCapabilityService(db)
 
     def safety_flags(self) -> dict[str, bool]:
         return {
@@ -165,7 +167,12 @@ class OfferToBookingHandoffService:
             pricing_trace_json=trace["pricing_trace_json"],
             internal_trace_json=trace["internal_trace_json"],
             client_trace_json=trace["client_trace_json"],
-            booking_execution_snapshot_json={"booking_mode": data["booking_mode"], "provider_target": data.get("provider_target"), "no_provider_execution": True},
+            booking_execution_snapshot_json={
+                "booking_mode": data["booking_mode"],
+                "provider_target": data.get("provider_target"),
+                "distribution_capability_planning": context.get("distribution_capability") or {},
+                "no_provider_execution": True,
+            },
             created_by=user.get("id"),
             updated_by=user.get("id"),
             metadata={**(data.get("metadata") or {}), "notes": data.get("notes")},
@@ -397,6 +404,14 @@ class OfferToBookingHandoffService:
         existing_booking = None
         if readiness:
             existing_booking = await self.db.collection("booking_workspaces").find_one({"agency_id": agency_id, "booking_readiness_package_id": readiness["id"]})
+        airline_codes = self._distribution_airline_codes(readiness or {}, acceptance or {}, trip_snapshot or {})
+        provider_target = self._norm(data.get("provider_target") or (readiness or {}).get("provider_target") or "")
+        distribution_channel = "manual_offline_process" if provider_target == "manual" else provider_target or None
+        distribution_capability = await self.distribution_capabilities.booking_handoff_summary(
+            agency_id,
+            airline_codes=airline_codes,
+            channel_code=distribution_channel,
+        )
         return {
             "agency_id": agency_id,
             "acceptance": acceptance,
@@ -405,6 +420,7 @@ class OfferToBookingHandoffService:
             "trip_id": trip_id,
             "trip": trip,
             "existing_booking_workspace": existing_booking,
+            "distribution_capability": distribution_capability,
         }
 
     def _calculate_checks(self, context: dict[str, Any], data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -423,6 +439,8 @@ class OfferToBookingHandoffService:
         rules = acceptance.get("rules_feasibility_snapshot_json") or {}
         ssr = readiness.get("ssr_json") or []
         osi = readiness.get("osi_json") or []
+        distribution_capability = context.get("distribution_capability") or {}
+        distribution_ready = bool(distribution_capability.get("available_channel_count"))
         checks = [
             self._check("accepted_offer_snapshot", "Accepted offer snapshot exists", "snapshot", bool(acceptance and acceptance.get("status") == "accepted"), "Accepted offer snapshot is required before booking handoff.", blocked=not bool(acceptance)),
             self._check("trip_linkage", "Trip linkage", "trip", bool(context.get("trip_id")), "Accepted offer must be linked to a trip dossier.", blocked=not bool(context.get("trip_id"))),
@@ -436,7 +454,15 @@ class OfferToBookingHandoffService:
             self._check("airline_recommendation_trace", "Airline recommendation trace", "recommendation", bool(rules.get("recommendation") or rules.get("rules_summary") or (acceptance.get("client_visible_summary_json") or {}).get("option_label")), "Airline recommendation trace is advisory metadata and should remain linked where available.", warning=True),
             self._check("documents_and_approvals", "Approvals and documents", "documents", not required_documents, "Required documents or approvals remain human-reviewed prerequisites.", warning=bool(required_documents)),
             self._check("payment_invoice_prerequisite", "Payment and invoice prerequisite", "payment", pricing_summary.get("total_amount") is not None and bool(pricing_summary.get("currency")), "Payment/invoice prerequisite is metadata-only and must remain human reviewed.", warning=True),
-            self._check("supplier_gds_readiness", "Supplier/GDS readiness", "supplier", data.get("booking_mode") == "manual" or bool(readiness.get("provider_target")), "Supplier or import readiness is metadata-only; no GDS/NDC action will run.", warning=True),
+            self._check(
+                "supplier_gds_readiness",
+                "Supplier/GDS/NDC planning readiness",
+                "supplier",
+                data.get("booking_mode") == "manual" or distribution_ready,
+                "Published distribution capability metadata is advisory; no GDS/NDC/provider action will run.",
+                warning=True,
+                evidence={"distribution_capability": distribution_capability},
+            ),
             self._check("booking_mode", "PNR/import/manual booking mode", "booking", data.get("booking_mode") in BOOKING_MODES, "Select manual, PNR import, supplier reference, or imported confirmation mode.", blocked=data.get("booking_mode") not in BOOKING_MODES),
             self._check("ticket_emd_expectations", "Ticket/EMD expectations", "ticket_emd", bool(ssr or osi or services or fare_bundle), "Ticket and EMD expectations remain metadata-only until later human action.", warning=not bool(ssr or osi or services or fare_bundle)),
             self._check("unresolved_blockers", "Unresolved blockers", "blockers", not bool(policy_violations), "Resolve policy violations or critical missing structures before handoff.", blocked=bool(policy_violations)),
@@ -573,7 +599,12 @@ class OfferToBookingHandoffService:
             segment_mapping_json=segment_mappings,
             ticket_expectations_json={"ticket_expected": True, "issuance_disabled": True, "source": "accepted_offer_handoff"},
             emd_expectations_json={"emd_possible": bool((readiness.get("services_snapshot_json") or {}) or readiness.get("ssr_json")), "issuance_disabled": True},
-            supplier_readiness_json={"provider_target": readiness.get("provider_target") or data.get("provider_target") or "manual", "gds_ndc_execution_disabled": True},
+            supplier_readiness_json={
+                "provider_target": readiness.get("provider_target") or data.get("provider_target") or "manual",
+                "distribution_capability_planning": context.get("distribution_capability") or {},
+                "live_connectivity_confirmed": False,
+                "gds_ndc_execution_disabled": True,
+            },
             pricing_trace_json=handoff.get("pricing_trace_json") or {},
             policy_trace_json=handoff.get("policy_trace_json") or {},
             internal_notes=data.get("notes"),
@@ -816,6 +847,7 @@ class OfferToBookingHandoffService:
                 "required_documents": readiness.get("required_documents_json") or [],
                 "ssr_json": readiness.get("ssr_json") or [],
                 "osi_json": readiness.get("osi_json") or [],
+                "distribution_capability_planning": context.get("distribution_capability") or {},
                 "metadata_only": True,
             },
             "client_trace_json": {
@@ -853,6 +885,23 @@ class OfferToBookingHandoffService:
         if any(check["status"] in {"warning", "pending"} for check in checks):
             return "conditional"
         return "ready"
+
+    def _distribution_airline_codes(self, readiness: dict[str, Any], acceptance: dict[str, Any], trip_snapshot: dict[str, Any]) -> list[str]:
+        segment_sources: list[Any] = [
+            readiness.get("segments_snapshot_json") or [],
+            (acceptance.get("accepted_routing_snapshot_json") or {}).get("segments") or [],
+            trip_snapshot.get("confirmed_segments_json") or [],
+        ]
+        codes: list[str] = []
+        for segments in segment_sources:
+            for segment in segments if isinstance(segments, list) else []:
+                if not isinstance(segment, dict):
+                    continue
+                for key in ["airline_code", "marketing_carrier", "operating_carrier", "validating_carrier", "carrier"]:
+                    code = str(segment.get(key) or "").strip().upper()
+                    if code and code not in codes:
+                        codes.append(code)
+        return codes
 
     def _idempotency_key(self, context: dict[str, Any], data: dict[str, Any]) -> str:
         acceptance_id = (context.get("acceptance") or {}).get("id") or "no_acceptance"

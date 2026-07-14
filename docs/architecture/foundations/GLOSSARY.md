@@ -240,3 +240,13 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Knowledge Gap**: An explicit missing, stale, conflicting, failed, or unpublished condition that requires human governance or population work. Critical gaps prevent an operational-ready coverage label.
 
 **Operational Usability Score**: A deterministic weighted coverage score constrained by critical-gap guards. It is an advisory knowledge-quality measure, not a passenger-specific recommendation or permission to execute.
+
+**Distribution Channel Capability**: Governed metadata describing which shopping, booking, fulfillment, or servicing function is documented for one airline and channel under a stated scope. It does not provide connectivity.
+
+**Provider Readiness Stage**: The explicit distinction between documented capability, configured provider, tested sandbox, and production-enabled provider metadata. No stage alone proves that a provider is currently reachable.
+
+**PSS Profile**: Governed planning metadata for an airline's known passenger service system, reservation host, departure-control context, ticketing host, and EMD host, including uncertainty and evidence.
+
+**GDS Participation**: Evidence-linked metadata describing an airline's documented participation and capability statuses in Amadeus, Sabre, Travelport, or another governed GDS context.
+
+**NDC Capability**: Evidence-linked metadata describing airline-direct or aggregator NDC shopping, booking, fulfillment, and servicing behavior. It contains no credentials and performs no NDC operation.

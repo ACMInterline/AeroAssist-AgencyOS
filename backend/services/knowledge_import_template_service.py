@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgeImportTemplate, KnowledgeImportTemplateCreate, KnowledgeImportTemplateUpdate
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 FOUNDATION_PHASE_LABEL = "phase_52_2_knowledge_import_templates_foundation"
 KNOWLEDGE_IMPORT_TEMPLATES_COLLECTION = "knowledge_import_templates"
 

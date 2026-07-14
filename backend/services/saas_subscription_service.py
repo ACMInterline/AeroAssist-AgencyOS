@@ -23,7 +23,7 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"
@@ -60,6 +60,7 @@ AGENCY_MODULE_VISIBILITY_CATALOG: list[dict[str, Any]] = [
     {"key": "airline_evidence", "label": "Airline Evidence", "href": "/agency/airline-evidence", "aliases": ["airline_evidence", "evidence_governance", "airline_intelligence"]},
     {"key": "knowledge_updates", "label": "Knowledge Updates", "href": "/agency/knowledge-updates", "aliases": ["knowledge_updates", "knowledge_change_detection", "knowledge_versions", "airline_intelligence"]},
     {"key": "airline_service_coverage", "label": "Airline Service Coverage", "href": "/agency/airline-service-coverage", "aliases": ["airline_service_coverage", "knowledge_gap_management", "airline_coverage", "airline_intelligence"]},
+    {"key": "airline_distribution_capabilities", "label": "Distribution Capabilities", "href": "/agency/distribution-capabilities", "aliases": ["airline_distribution_capabilities", "distribution_capabilities", "pss", "gds", "ndc", "airline_intelligence"]},
     {"key": "airline_coverage", "label": "Airline Coverage", "href": "/agency/airline-intelligence-coverage", "aliases": ["airline_coverage", "data_pack_coverage", "airline_intelligence"]},
     {"key": "knowledge_versions", "label": "Knowledge Versions", "href": "/agency/airline-intelligence-knowledge-versions", "aliases": ["knowledge_versions", "airline_intelligence"]},
     {"key": "airline_intelligence_consumption", "label": "Airline Intelligence Usage", "href": "/agency/airline-intelligence-consumption", "aliases": ["airline_intelligence_consumption", "usage_readiness", "airline_intelligence"]},

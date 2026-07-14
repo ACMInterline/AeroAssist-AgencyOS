@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 SOURCE_COLLECTION = "airline_evidence_sources"
 ARTIFACT_COLLECTION = "airline_evidence_artifacts"
@@ -81,6 +81,14 @@ TARGET_COLLECTIONS = {
     "distribution_fact": "airline_distribution_profiles",
     "pss_fact": "airline_pss_parameters",
     "gds_fact": "airline_gds_parameters",
+    "distribution_channel": "airline_distribution_channels",
+    "distribution_capability": "airline_distribution_capabilities",
+    "pss_profile": "airline_pss_profiles",
+    "gds_participation": "airline_gds_participations",
+    "ndc_capability": "airline_ndc_capabilities",
+    "fulfillment_capability": "airline_fulfillment_capabilities",
+    "servicing_capability": "airline_servicing_capabilities",
+    "distribution_restriction": "airline_distribution_restrictions",
     "interline_codeshare_rule": "airline_interline_agreements",
     "contact": "airline_contacts",
     "published_knowledge": "airline_knowledge_publications",

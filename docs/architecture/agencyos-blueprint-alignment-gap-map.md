@@ -158,3 +158,7 @@ Deterministic operational-knowledge change visibility is aligned by extending th
 ## Phase 55.4 Alignment
 
 Airline and service coverage is aligned through deterministic projections over canonical knowledge sources rather than a second policy store. Dimensioned cells expose completeness, confidence, freshness, scenario, publication, and usability scores; critical gaps block the readiness label. Population Toolkit and Pilot Readiness receive coverage metadata, while recommendations remain advisory and Offer Intelligence remains unchanged. Real source population, human gap remediation, QA, and controlled publishing remain operational responsibilities.
+
+## Phase 55.5 Alignment
+
+Distribution capability intelligence is aligned by normalizing channel, PSS, GDS, NDC, fulfillment, servicing, restriction, and evidence metadata around the retained broad distribution records. Capability status and provider readiness are separate, unknown remains explicit, and booking handoff consumes only published advisory context. Real credential storage, live connectivity, provider health, shopping, booking, ticketing, EMD issuance, and servicing execution remain intentional gaps.

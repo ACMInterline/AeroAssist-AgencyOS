@@ -393,3 +393,7 @@ Deterministic canonical-knowledge snapshots, structured field-level changes, imp
 ## Phase 55.4 Airline Service Coverage And Gaps
 
 The supplementary airline-by-service coverage matrix is adopted through `airline_service_coverage_profiles`, dimensioned coverage cells, explicit knowledge gaps, governed targets, deterministic assessments, and remediation plans. Scores derive from existing evidence, policy, pricing, rules, capability, QA, publication, and scenario metadata. Critical gaps prevent an operational-ready label. Agencies receive published usable coverage and sanitized warnings only; drafts and restricted evidence remain platform-governed.
+
+## Phase 55.5 Airline Distribution Capability Intelligence
+
+The supplementary PSS/GDS/NDC and distribution-capability concepts are adopted through normalized channel, capability, host, participation, fulfillment, servicing, restriction, and evidence-link records. Existing `airline_distribution_profiles`, `airline_pss_parameters`, and `airline_gds_parameters` remain retained source context. Published agency views distinguish documented, configured, sandbox-tested, and production-enabled provider metadata without storing credentials or asserting live connectivity.

@@ -199,3 +199,7 @@ Canonical knowledge versions contain immutable snapshots of source-backed object
 ## Phase 55.4 Coverage And Gap Management
 
 Airline service coverage measures whether the five knowledge pillars are complete, evidenced, current, scenario-tested, QA-reviewed, and published for a dimensioned airline/service scope. Deterministic coverage cells and explicit gap records make unknown, stale, conflicting, failed, and unpublished knowledge visible. Critical gaps prevent operational-ready status. Coverage can guide population priorities and human recommendation review, but it cannot create policy truth, publish knowledge, or select an airline automatically.
+
+## Phase 55.5 Distribution Capability Intelligence
+
+Distribution capability intelligence is part of the Capability pillar. It records how published airline knowledge says shopping, booking, fulfillment, and servicing can occur through direct, GDS, NDC, partner, and manual channels. Capability status remains separate from provider readiness, evidence proves the assertion, and restrictions qualify it. A production-enabled provider record is still planning metadata and never proves live connectivity by itself.

@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"
@@ -72,6 +72,22 @@ VERSIONED_OBJECT_COLLECTIONS = {
     "contact": "airline_contacts",
     "service_desk": "airline_service_desk_summaries",
     "published_knowledge_package": "airline_knowledge_publications",
+}
+
+DISTRIBUTION_VERSIONED_OBJECT_COLLECTIONS = {
+    "distribution_channel": "airline_distribution_channels",
+    "distribution_capability_detail": "airline_distribution_capabilities",
+    "pss_profile": "airline_pss_profiles",
+    "gds_participation": "airline_gds_participations",
+    "ndc_capability": "airline_ndc_capabilities",
+    "fulfillment_capability": "airline_fulfillment_capabilities",
+    "servicing_capability": "airline_servicing_capabilities",
+    "distribution_restriction": "airline_distribution_restrictions",
+}
+
+ALL_VERSIONED_OBJECT_COLLECTIONS = {
+    **VERSIONED_OBJECT_COLLECTIONS,
+    **DISTRIBUTION_VERSIONED_OBJECT_COLLECTIONS,
 }
 
 IMPACT_TARGET_COLLECTIONS = {
@@ -266,7 +282,7 @@ class AirlineKnowledgeVersioningService:
     ) -> dict[str, Any]:
         data = payload_dict(payload)
         object_type = str(data.get("object_type") or "")
-        collection = VERSIONED_OBJECT_COLLECTIONS.get(object_type)
+        collection = ALL_VERSIONED_OBJECT_COLLECTIONS.get(object_type)
         if not collection:
             raise AirlineKnowledgeVersioningError("Knowledge object type is not registered for canonical versioning.")
         if data.get("source_collection") and data["source_collection"] != collection:
@@ -720,7 +736,7 @@ class AirlineKnowledgeVersioningService:
             "impact_assessments": await self.db.collection(IMPACT_ASSESSMENT_COLLECTION).find_many(),
             "revalidation_requests": await self.db.collection(REVALIDATION_REQUEST_COLLECTION).find_many(),
             "coverage": await self.coverage(),
-            "versioned_object_types": sorted(VERSIONED_OBJECT_COLLECTIONS),
+            "versioned_object_types": sorted(ALL_VERSIONED_OBJECT_COLLECTIONS),
             "change_categories": CHANGE_CATEGORIES,
             **self.safety_flags(),
         }

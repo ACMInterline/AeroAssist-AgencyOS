@@ -21,7 +21,7 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_55_4_airline_service_coverage_gap_management_foundation"
+EXPECTED_PHASE = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}
