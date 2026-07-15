@@ -219,3 +219,6 @@ Journey authoring may enrich a blank draft field only from governed internal ref
 ## Phase 56.2 Composition Consumption
 
 Journey option composition consumes published, agency-visible Fare Brand Intelligence plus advisory policy, feasibility, recommendation, evidence, version, and contact references from the five-pillar model. Restricted evidence remains internal, manual fare metadata remains clearly manual, and unknown applicability remains reviewable. The comparison and snapshot layers explain options to human agents; they do not create airline truth, retrieve live inventory, select an airline automatically, publish an offer, or execute fulfillment.
+## Journey Comparison Consumption
+
+Phase 56.3 consumes governed airline policy, pricing, capability, evidence, fare-brand, baggage, carrier-responsibility, and passenger-service assessments only through existing canonical projections. Client comparisons must state conditional, unknown, evidence-required, or airline-confirmation-required outcomes explicitly. Airline knowledge remains advisory and traceable; a comparison leader or agent preference does not create operational truth or execute a journey.

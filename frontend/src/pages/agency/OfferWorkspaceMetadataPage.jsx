@@ -120,6 +120,7 @@ function OfferList({ offers }) {
                 <p className="mt-1 text-xs text-slate-500">{offer.offer_reference}</p>
                 <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=offer_workspace_v2&source_entity_id=${encodeURIComponent(offer.id)}`}>Open Journey View</a>
                 <a className="ml-3 mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journey-option-composition?offer_id=${encodeURIComponent(offer.id)}`}>Prepare itinerary options</a>
+                <a className="ml-3 mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journey-comparison-presentations?offer_id=${encodeURIComponent(offer.id)}`}>Prepare client comparison</a>
                 <p className="mt-1"><StatusBadge status={offer.offer_status} /></p>
                 <p className="mt-2 text-xs text-slate-500">{offer.offer_type || "Offer type unset"}</p>
               </td>

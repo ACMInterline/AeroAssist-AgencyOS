@@ -331,3 +331,23 @@ These collections form a projection layer only. Canonical operational entities a
 | `JourneyOptionOfferHandoff` | `journey_option_offer_handoffs` | Explicit metadata-only preview/apply trace to the existing Offer Workspace. |
 
 These records are agency-scoped composition and decision-support projections. Canonical Journey segments, Request, Trip, Offer, Booking, Ticket, EMD, Passenger, accepted-offer snapshots, and issued-document truth remain in their existing models.
+
+## Phase 56.3 Journey Comparison Presentation Records
+
+| Model | Collection | Ownership and role |
+| --- | --- | --- |
+| `JourneyComparisonPresentation` | `journey_comparison_presentations` | Agency-owned client-presentation envelope linked to canonical Journey and Phase 56.2 composition truth. |
+| `JourneyComparisonOptionProjection` | `journey_comparison_option_projections` | Deterministic option schedule, complexity, warning, unknown, and completeness projection. |
+| `JourneyComparisonSegmentProjection` | `journey_comparison_segment_projections` | Source-linked client timeline projection; not a second segment model. |
+| `JourneyComparisonConnectionProjection` | `journey_comparison_connection_projections` | Connection timing, change, overnight, MCT-unknown, and manual-review metadata. |
+| `JourneyComparisonFareBrandProjection` | `journey_comparison_fare_brand_projections` | Fare-brand price, baggage, flexibility, benefit, warning, and unknown projection. |
+| `JourneyComparisonServiceSuitabilityProjection` | `journey_comparison_service_suitability_projections` | Advisory service suitability, confirmation, document, and warning projection. |
+| `JourneyComparisonDimension` | `journey_comparison_dimensions` | Governed client/internal comparison dimension configuration. |
+| `JourneyComparisonResult` | `journey_comparison_results` | Hashed deterministic leaders, ties, unknowns, and review result without automatic preference. |
+| `JourneyPresentationContentBlock` | `journey_presentation_content_blocks` | Separately stored client-safe and internal presentation text. |
+| `JourneyPresentationConfiguration` | `journey_comparison_presentation_configurations` | Per-presentation visibility and display configuration; the Phase 56.0 model class is reused. |
+| `JourneyPresentationSnapshot` | `journey_presentation_snapshots` | Versioned client/internal payload; immutable after finalization. |
+| `JourneyPresentationReview` | `journey_presentation_reviews` | Explicit reviewer checklist and decision metadata. |
+| `JourneyPresentationHandoff` | `journey_presentation_handoffs` | Explicit metadata-only Offer or Document handoff trace. |
+
+These records are agency-scoped projections and governance metadata. They do not replace canonical Journey, operational workspaces, accepted Offer snapshots, Documents, or issued records and perform no publication, messaging, rendering, or provider execution.

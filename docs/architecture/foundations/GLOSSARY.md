@@ -296,3 +296,14 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Composition Snapshot**: A versioned deterministic copy of ordered options, references, commercial metadata, assessments, warnings, comparisons, and provenance. A finalized snapshot is immutable.
 
 **Offer Handoff Trace**: An explicit metadata record describing how a finalized composition is linked to the existing Offer Workspace. It does not publish, send, accept, book, ticket, or issue an EMD.
+### Journey Comparison Presentation
+
+An agency-owned, source-linked projection that compares canonical itinerary options, fare brands, commercial values, and advisory passenger-service suitability for human review and client-safe presentation. It is not live shopping, an Offer, a public share, or an execution instruction.
+
+### Dimension Leader
+
+An option that deterministically leads a named comparison dimension, such as lowest recorded price or shortest elapsed time. A dimension leader is not an automatic preferred option and ties and unknowns must be preserved.
+
+### Preferred Option
+
+An itinerary projection selected explicitly by an authorized agency user with a reason, actor, and timestamp. It remains advisory presentation metadata and does not accept, book, ticket, issue, publish, or send anything.

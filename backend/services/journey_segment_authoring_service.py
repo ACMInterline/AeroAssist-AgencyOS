@@ -25,7 +25,7 @@ from services.canonical_journey_itinerary_service import CanonicalJourneyItinera
 from services.gds_parser_service import GdsParserService
 
 
-PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
+PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
 
 SESSION_COLLECTION = "journey_authoring_sessions"
 SOURCE_COLLECTION = "journey_import_sources"

@@ -9,7 +9,7 @@ from models import FlightWorkspace, FlightWorkspaceCreate, FlightWorkspaceStatus
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
+EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 FLIGHT_STATUSES = {"draft", "active", "schedule_review", "ready", "flown", "archived"}
 

@@ -18,7 +18,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
+PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
 
 AIRLINE_CARRIER_RELATIONSHIPS_COLLECTION = "airline_carrier_relationships"
 AIRLINE_INTERLINE_AGREEMENT_PROFILES_COLLECTION = "airline_interline_agreement_profiles"

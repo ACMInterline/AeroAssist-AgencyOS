@@ -22,6 +22,7 @@ import TripWorkspacesPage from "./pages/agency/TripWorkspacesPage"
 import JourneyWorkspacePage from "./pages/agency/JourneyWorkspacePage"
 import JourneyAuthoringWorkspacePage from "./pages/agency/JourneyAuthoringWorkspacePage"
 import JourneyOptionCompositionWorkspacePage from "./pages/agency/JourneyOptionCompositionWorkspacePage"
+import JourneyComparisonPresentationWorkspacePage from "./pages/agency/JourneyComparisonPresentationWorkspacePage"
 import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
 import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
@@ -231,6 +232,7 @@ import PlatformTripWorkspacesPage from "./pages/platform/TripWorkspacesPage"
 import PlatformJourneyEnginePage from "./pages/platform/JourneyEnginePage"
 import PlatformJourneyAuthoringDiagnosticsPage from "./pages/platform/JourneyAuthoringDiagnosticsPage"
 import PlatformJourneyOptionCompositionDiagnosticsPage from "./pages/platform/JourneyOptionCompositionDiagnosticsPage"
+import PlatformJourneyComparisonPresentationDiagnosticsPage from "./pages/platform/JourneyComparisonPresentationDiagnosticsPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
@@ -307,6 +309,7 @@ const routes = {
   "/platform/journey-engine": PlatformJourneyEnginePage,
   "/platform/journey-authoring": PlatformJourneyAuthoringDiagnosticsPage,
   "/platform/journey-option-compositions": PlatformJourneyOptionCompositionDiagnosticsPage,
+  "/platform/journey-comparison-presentations": PlatformJourneyComparisonPresentationDiagnosticsPage,
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
   "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
   "/platform/ticket-workspaces": PlatformTicketWorkspacesPage,
@@ -415,6 +418,7 @@ const routes = {
   "/agency/journeys": JourneyWorkspacePage,
   "/agency/journey-authoring": JourneyAuthoringWorkspacePage,
   "/agency/journey-option-composition": JourneyOptionCompositionWorkspacePage,
+  "/agency/journey-comparison-presentations": JourneyComparisonPresentationWorkspacePage,
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
   "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
   "/agency/ticket-workspaces": TicketWorkspaceMetadataPage,

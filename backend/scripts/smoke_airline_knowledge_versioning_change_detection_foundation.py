@@ -30,7 +30,7 @@ from smoke_operational_scenario_testing_foundation import scenario_payload
 from smoke_visual_policy_editor_foundation import card_payload
 
 
-EXPECTED_PHASE = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
+EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/knowledge-versions"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}

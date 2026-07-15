@@ -323,3 +323,12 @@ Agency routes permit governed authoring metadata operations under existing agenc
 - Platform API: `/api/platform/journey-option-compositions`
 
 Agency APIs expose agency-scoped composition metadata operations through existing authorization. Platform APIs expose read-only totals, validation metadata, and composition diagnostics. Phase 56.2 introduces no `/admin/*`, `/agent/*`, parallel Offer or Journey root, provider endpoint, public mutation, or direct database access from the frontend.
+
+## Phase 56.3 Journey Comparison Presentation Routes
+
+- Agency workspace: `/agency/journey-comparison-presentations`
+- Platform diagnostics: `/platform/journey-comparison-presentations`
+- Agency API: `/api/agencies/{agency_id}/journey-comparison-presentations`
+- Platform API: `/api/platform/journey-comparison-presentations`
+
+Agency APIs expose tenant-checked presentation projection, wording, preview, explicit preference, snapshot, review, and metadata-only handoff operations. Platform APIs expose read-only counts, dimensions, validation metadata, and summarized diagnostics. Phase 56.3 introduces no `/admin/*`, `/agent/*`, public share route, unauthenticated mutation, parallel Offer/Document/Journey domain, provider endpoint, or direct frontend database access.
