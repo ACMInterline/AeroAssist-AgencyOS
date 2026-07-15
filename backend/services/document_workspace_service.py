@@ -14,7 +14,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 DOCUMENT_WORKSPACE_COLLECTION = "document_workspaces"
 
 DOCUMENT_WORKSPACE_STATUSES = [item.value for item in DocumentWorkspaceStatus]

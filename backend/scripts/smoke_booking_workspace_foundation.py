@@ -9,7 +9,7 @@ from models import BookingWorkspace, BookingWorkspaceMetadataCreate, BookingWork
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+EXPECTED_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 BOOKING_STATUSES = {"draft", "ready_to_book", "booking_in_progress", "booked", "blocked", "cancelled"}
 

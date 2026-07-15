@@ -22,7 +22,7 @@ from smoke_booking_workspace_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+EXPECTED_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 TICKET_STATUSES = {"draft", "review", "ready", "archived"}
 TICKET_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}

@@ -17,7 +17,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 READINESS_PROFILE_COLLECTION = "airline_intelligence_readiness_profiles"
 READINESS_ASSESSMENT_COLLECTION = "airline_intelligence_readiness_assessments"

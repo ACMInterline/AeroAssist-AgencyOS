@@ -23,7 +23,7 @@ from smoke_booking_workspace_foundation import (
 from smoke_ticket_workspace_foundation import create_booking_workspace
 
 
-EXPECTED_PHASE = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+EXPECTED_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EMD_STATUSES = {"draft", "review", "ready", "archived"}
 EMD_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}

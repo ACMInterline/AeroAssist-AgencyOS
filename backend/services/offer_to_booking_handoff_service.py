@@ -27,7 +27,7 @@ from services.timeline_workspace_service import OperationalTimelineService
 from services.airline_distribution_capability_service import AirlineDistributionCapabilityService
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 OFFER_BOOKING_HANDOFFS_COLLECTION = "offer_booking_handoffs"
 OFFER_BOOKING_HANDOFF_CHECKS_COLLECTION = "offer_booking_handoff_checks"

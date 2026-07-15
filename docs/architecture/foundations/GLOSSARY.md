@@ -272,3 +272,15 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Journey Snapshot**: A versioned, deterministically hashed normalized Journey payload. Once finalized, it is immutable and cannot be physically deleted through Journey APIs.
 
 **Client-Safe Journey Projection**: A sanitized Journey presentation that removes internal summaries, operational notes, private source locations, raw/provider payloads, credentials, secrets, and storage references. It does not itself publish content.
+
+## Phase 56.1 Terms
+
+**Journey Authoring Session**: An agency-owned working context that gathers sources, editable segment drafts, validation, provenance, corrections, and explicit application metadata before canonical Journey records are changed.
+
+**Journey Import Source**: An immutable raw text or linked-record snapshot with source identity, actor, time, parser/import references, and deterministic hash.
+
+**Journey Segment Draft**: A temporary editable normalization record used to prepare a canonical Journey segment projection. It is not an operational flight segment or a parallel source of truth.
+
+**Field Provenance**: The trace of a draft field's raw, normalized, enriched, agent-confirmed, overridden, unresolved, or rejected value and source.
+
+**Journey Authoring Application**: The auditable explicit operation that maps segment draft ids to created or superseded Phase 56.0 Journey records without publishing a snapshot.

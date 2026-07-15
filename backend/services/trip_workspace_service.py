@@ -8,7 +8,7 @@ from models import TripWorkspace, TripWorkspaceCreate, TripWorkspaceUpdate, new_
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 TRIP_WORKSPACE_COLLECTION = "trip_workspaces"
 TRIP_STATUSES = ["draft", "planning", "active", "ready", "traveling", "completed", "archived"]

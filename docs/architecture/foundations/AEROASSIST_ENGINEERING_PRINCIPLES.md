@@ -82,3 +82,5 @@ Phase 55.9 airline-intelligence release readiness must consolidate canonical Epi
 ## Canonical Journey Representation
 
 Journey and itinerary views are projections over canonical operational entities. They must retain source entity and source segment references, preserve accepted and issued historical snapshots, represent unknown data explicitly, and never become a parallel Trip, Offer, Booking, Ticket, EMD, Passenger, or flight-segment source of truth. Only supplied UTC timestamps may drive deterministic elapsed-time calculations. Finalized Journey snapshots are immutable and non-destructive.
+
+Journey authoring records are pre-application metadata, not another canonical itinerary family. Preserve raw source input immutably, distinguish raw/normalized/enriched/agent-confirmed values, reuse existing parsers and imports, require explicit timezone context for calculations, retain corrections and application traces, and never overwrite agent-confirmed fields with enrichment. Apply through the canonical Journey service and never mutate finalized snapshots or auto-publish.

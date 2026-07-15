@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 56.0 is active as `phase_56_0_canonical_journey_itinerary_representation_foundation`.
+Phase 56.0 was introduced as `phase_56_0_canonical_journey_itinerary_representation_foundation`; the active project marker is now `phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation`.
 
 This phase is metadata-only presentation infrastructure. It does not search availability, calculate live fares, create bookings, issue tickets or EMDs, call providers, scrape, run AI, publish automatically, or schedule background work.
 

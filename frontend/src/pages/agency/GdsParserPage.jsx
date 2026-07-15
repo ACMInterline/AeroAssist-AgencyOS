@@ -179,6 +179,7 @@ export default function GdsParserPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-imports">Booking imports</a>
+              {selectedRun ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/journey-authoring?parser_run_id=${selectedRun.id}`}>Create option from parsed itinerary</a> : null}
               {selectedRun ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref(selectedRun.id)}>Generate parse review summary</a> : null}
             </div>
           </div>

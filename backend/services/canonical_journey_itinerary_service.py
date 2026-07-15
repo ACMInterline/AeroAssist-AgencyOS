@@ -23,7 +23,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 JOURNEY_COLLECTION = "journey_representations"
 OPTION_COLLECTION = "journey_itinerary_options"

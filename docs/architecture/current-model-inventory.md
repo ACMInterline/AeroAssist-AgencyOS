@@ -297,4 +297,19 @@ These models reference canonical Epic 55 knowledge and publication records. They
 | `JourneyPresentationConfiguration` | `journey_presentation_configurations` | Agency and client-safe display configuration. |
 | `JourneySnapshot` | `journey_snapshots` | Deterministically hashed version payload; finalized records are immutable and have no physical delete route. |
 
+## Phase 56.1 Journey Authoring Models
+
+| Model | Collection | Role |
+| --- | --- | --- |
+| `JourneyAuthoringSession` | `journey_authoring_sessions` | Agency-owned working context before explicit application to canonical Journey records. |
+| `JourneyImportSource` | `journey_import_sources` | Immutable raw text/payload snapshot, hash, actor, parser/import references, and restricted metadata. |
+| `JourneySegmentDraft` | `journey_segment_drafts` | Editable normalized segment preparation record; never a second canonical segment source. |
+| `JourneyFieldProvenance` | `journey_field_provenance` | Field-level imported, normalized, enriched, confirmed, overridden, unresolved, or rejected history. |
+| `JourneyAuthoringCorrection` | `journey_authoring_corrections` | Non-destructive agent and normalization correction history. |
+| `JourneyAuthoringValidation` | `journey_authoring_validations` | Persistent, supersedable validation finding with severity and resolution metadata. |
+| `JourneyAuthoringApplication` | `journey_authoring_applications` | Trace from draft ids to created/replaced Phase 56.0 Journey record ids. |
+| `JourneyAuthoringTemplate` | `journey_authoring_templates` | Optional agency defaults for manual entry; no templates are seeded automatically. |
+
+These records are metadata preparation and traceability records. `JourneyRepresentation`, `JourneyItineraryOption`, `JourneyLegRepresentation`, `JourneySegmentRepresentation`, and `JourneyConnectionRepresentation` remain the canonical presentation family.
+
 These collections form a projection layer only. Canonical operational entities and accepted/issued historical snapshots are reused and never rewritten.

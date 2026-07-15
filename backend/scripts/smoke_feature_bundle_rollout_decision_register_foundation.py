@@ -14,7 +14,7 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+EXPECTED_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 DECISION_CATEGORIES = {"readiness", "approval", "schedule", "dependency", "risk", "issue", "rollout_scope", "operational", "governance"}
 DECISION_STATUSES = {"draft", "proposed", "accepted", "deferred", "rejected", "superseded", "archived"}

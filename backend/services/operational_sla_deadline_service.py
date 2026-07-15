@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 OPERATIONAL_SLA_POLICIES_COLLECTION = "operational_sla_policies"
 OPERATIONAL_DEADLINES_COLLECTION = "operational_deadlines"

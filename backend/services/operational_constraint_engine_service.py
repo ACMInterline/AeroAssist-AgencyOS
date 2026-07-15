@@ -7,7 +7,7 @@ from database import Database
 from models import OperationalConstraint, OperationalConstraintCreate, OperationalConstraintUpdate, new_id
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 OPERATIONAL_CONSTRAINT_COLLECTION = "operational_constraints"
 
 CONSTRAINT_STATUSES = [

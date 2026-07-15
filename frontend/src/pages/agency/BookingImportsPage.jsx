@@ -138,6 +138,7 @@ function DraftCard({ draft, onImport, onParse, working }) {
           <p className="mt-1 text-sm text-slate-600">{label(draft.parser_status)} · {draft.linked_trip_id || "No trip link"}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/journey-authoring?booking_import_draft_id=${draft.id}`}>Import into Journey</a>
           <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => onParse(draft.id)} disabled={working}>{working ? "Working..." : "Parse with GDS Parser"}</button>
           {draft.latest_parser_run_id ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/gds-parser?parser_run_id=${draft.latest_parser_run_id}`}>{lowConfidence ? "Correct low-confidence parse" : "Open parser run"}</a> : null}
           <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("booking_import_review_summary", "booking_import_draft", draft.id)}>Review document</a>

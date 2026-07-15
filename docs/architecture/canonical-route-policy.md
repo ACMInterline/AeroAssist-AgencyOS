@@ -305,3 +305,12 @@ Phase 55.9 uses `/api/platform/airline-intelligence-readiness` for readiness pro
 ## Phase 56.0 Journey Engine
 
 Platform read-only governance and diagnostics use `/api/platform/journey-engine` and `/platform/journey-engine`. Agency representation reads and authorized metadata writes use `/api/agencies/{agency_id}/journeys` and `/agency/journeys`. Source projection actions remain under the same agency route family, including `from-trip`, `from-offer`, `from-booking`, `from-ticket`, and `from-emd`. Finalized snapshots have no destructive route. No `/admin/*`, `/agent/*`, parallel public journey API, or unauthenticated mutation route is introduced.
+
+## Phase 56.1 Journey Authoring
+
+- Agency workspace: `/agency/journey-authoring`
+- Platform diagnostics: `/platform/journey-authoring`
+- Agency API: `/api/agencies/{agency_id}/journey-authoring`
+- Platform API: `/api/platform/journey-authoring`
+
+Agency routes permit governed authoring metadata operations under existing agency-role checks. Platform routes are read-only diagnostics. Phase 56.1 introduces no `/admin/*`, `/agent/*`, parallel Journey route root, provider endpoint, or unauthenticated mutation.

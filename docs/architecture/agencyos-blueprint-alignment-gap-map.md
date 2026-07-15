@@ -184,3 +184,7 @@ Phase 55.9 closes the Epic 55 scale-readiness governance gap by consolidating th
 ## Phase 56.0 Alignment
 
 Phase 56.0 closes the canonical cross-module itinerary-presentation gap. It projects existing Trip, Offer, Booking, Ticket, EMD, Passenger, service, and segment truth into one source-traceable Journey shape for agent views and future documents/mobile experiences. It does not close later gaps for timezone enrichment, MCT intelligence, live shopping/pricing, client publication, or provider execution, and it does not establish a competing operational dossier or segment model.
+
+## Phase 56.1 Alignment
+
+Phase 56.1 closes the high-friction itinerary-entry gap without introducing another segment source of truth. Existing parser and Booking Import output can become editable, provenance-rich drafts, while manual entry and internal reference enrichment remain explicit and reviewable. Deterministic chronology and connection checks improve preparation quality, but completeness does not imply approval and MCT, live schedule, provider, pricing, and publication gaps remain intentionally open.

@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgeNormalisation, AirlineKnowledgeNormalisationCreate, AirlineKnowledgeNormalisationUpdate, new_id
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 AIRLINE_KNOWLEDGE_NORMALISATION_COLLECTION = "airline_knowledge_normalisations"
 
 NORMALISATION_STATUSES = [

@@ -18,7 +18,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 AIRLINE_DISTRIBUTION_CHANNELS_COLLECTION = "airline_distribution_channels"
 AIRLINE_DISTRIBUTION_CAPABILITIES_COLLECTION = "airline_distribution_capabilities"

@@ -20,6 +20,7 @@ import WorkflowEnginePage from "./pages/agency/WorkflowEnginePage"
 import FlightWorkspacesPage from "./pages/agency/FlightWorkspacesPage"
 import TripWorkspacesPage from "./pages/agency/TripWorkspacesPage"
 import JourneyWorkspacePage from "./pages/agency/JourneyWorkspacePage"
+import JourneyAuthoringWorkspacePage from "./pages/agency/JourneyAuthoringWorkspacePage"
 import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
 import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
@@ -227,6 +228,7 @@ import PlatformTicketWorkspacesPage from "./pages/platform/TicketWorkspacesPage"
 import PlatformEmdWorkspacesPage from "./pages/platform/EmdWorkspacesPage"
 import PlatformTripWorkspacesPage from "./pages/platform/TripWorkspacesPage"
 import PlatformJourneyEnginePage from "./pages/platform/JourneyEnginePage"
+import PlatformJourneyAuthoringDiagnosticsPage from "./pages/platform/JourneyAuthoringDiagnosticsPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
@@ -301,6 +303,7 @@ const routes = {
   "/platform/flight-workspaces": PlatformFlightWorkspacesPage,
   "/platform/trip-workspaces": PlatformTripWorkspacesPage,
   "/platform/journey-engine": PlatformJourneyEnginePage,
+  "/platform/journey-authoring": PlatformJourneyAuthoringDiagnosticsPage,
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
   "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
   "/platform/ticket-workspaces": PlatformTicketWorkspacesPage,
@@ -407,6 +410,7 @@ const routes = {
   "/agency/flight-workspaces": FlightWorkspacesPage,
   "/agency/trip-workspaces": TripWorkspacesPage,
   "/agency/journeys": JourneyWorkspacePage,
+  "/agency/journey-authoring": JourneyAuthoringWorkspacePage,
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
   "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
   "/agency/ticket-workspaces": TicketWorkspaceMetadataPage,

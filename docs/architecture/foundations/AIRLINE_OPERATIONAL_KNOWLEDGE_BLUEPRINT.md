@@ -211,3 +211,7 @@ Phase 55.9 applies deterministic readiness dimensions and critical human-control
 ## Phase 56.0 Journey Consumption
 
 The Canonical Journey representation may present advisory evidence, feasibility, recommendation, fare-brand, service, and warning references produced by the five-pillar knowledge model. The Journey layer consumes those references for explanation; it does not create airline operational truth, run live evaluation, calculate live prices, or execute a recommendation. Passenger Need remains the root and canonical operational records remain authoritative.
+
+## Phase 56.1 Governed Journey Authoring
+
+Journey authoring may enrich a blank draft field only from governed internal reference or intelligence records and must retain field-level provenance. Knowledge-derived labels or context remain evidence-backed advisory data; they cannot be converted into invented schedules, carrier roles, fare attributes, approval, or operational certainty. Agent confirmation outranks enrichment, and unresolved operational facts remain unknown.

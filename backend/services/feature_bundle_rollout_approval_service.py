@@ -18,7 +18,7 @@ from services.agency_feature_flag_bundle_service import AgencyFeatureFlagBundleS
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 APPROVAL_COLLECTION = "feature_bundle_rollout_approvals"
 NOTE_COLLECTION = "feature_bundle_rollout_approval_notes"

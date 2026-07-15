@@ -18,7 +18,7 @@ from models import (
 from services.knowledge_population_toolkit_service import KnowledgePopulationToolkitService
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 COVERAGE_PROFILE_COLLECTION = "airline_service_coverage_profiles"
 COVERAGE_CELL_COLLECTION = "airline_service_coverage_cells"

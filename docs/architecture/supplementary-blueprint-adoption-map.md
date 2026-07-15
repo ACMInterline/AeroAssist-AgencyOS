@@ -417,3 +417,9 @@ The supplementary governed-population and controlled-release concepts are adopte
 ## Phase 56.0 Canonical Journey Projection
 
 Supplementary itinerary, option, leg, segment, connection, fare-brand, service, provenance, presentation, and version concepts are adopted as source-linked projection records. Existing request/trip/offer/booking/ticket/EMD and segment records remain canonical. Accepted-offer, booking-readiness, ticket, and EMD history remains immutable. Parallel operational entities, automatic journey publication, live search/pricing, provider calls, AI, background workers, and alternate route roots remain rejected.
+
+## Phase 56.1 Journey Authoring Adoption
+
+Adopted: agency authoring sessions, immutable raw source retention, adapters over the existing GDS Parser and Booking Import Drafts, editable segment normalization drafts, field provenance, correction/validation history, governed internal enrichment, deterministic timezone-aware calculations, explicit canonical Journey application, and read-only Platform diagnostics.
+
+Not adopted: universal parsing, live airline schedules, live availability/pricing, public-data lookup, provider execution, AI inference, automatic publication, MCT certainty without governed data, or duplicate Journey/segment ownership.

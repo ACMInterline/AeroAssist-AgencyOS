@@ -26853,3 +26853,284 @@ class JourneySnapshot(BaseDocument):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     physical_deletion_disabled: bool = True
+
+
+class JourneyAuthoringSessionStatus(str, Enum):
+    DRAFT = "draft"
+    IMPORTED = "imported"
+    NORMALIZED = "normalized"
+    REQUIRES_REVIEW = "requires_review"
+    READY_TO_APPLY = "ready_to_apply"
+    PARTIALLY_APPLIED = "partially_applied"
+    APPLIED = "applied"
+    ARCHIVED = "archived"
+
+
+class JourneyAuthoringMode(str, Enum):
+    MANUAL = "manual"
+    PASTED_TEXT = "pasted_text"
+    PARSER_RUN = "parser_run"
+    BOOKING_IMPORT = "booking_import"
+    EXISTING_JOURNEY = "existing_journey"
+    MIXED = "mixed"
+
+
+class JourneyImportSourceType(str, Enum):
+    MANUAL = "manual"
+    GDS_CRYPTIC = "gds_cryptic"
+    GDS_GRAPHICAL_TEXT = "gds_graphical_text"
+    AIRLINE_CONFIRMATION = "airline_confirmation"
+    AGENCY_ITINERARY = "agency_itinerary"
+    WEBSITE_TEXT = "website_text"
+    EMAIL_TEXT = "email_text"
+    PDF_EXTRACTED_TEXT = "pdf_extracted_text"
+    BOOKING_IMPORT_DRAFT = "booking_import_draft"
+    PARSER_RUN = "parser_run"
+    STRUCTURED_JSON = "structured_json"
+    EXISTING_JOURNEY = "existing_journey"
+    OTHER = "other"
+
+
+class JourneySegmentDraftType(str, Enum):
+    FLIGHT = "flight"
+    SURFACE = "surface"
+    RAIL = "rail"
+    BUS = "bus"
+    FERRY = "ferry"
+    UNKNOWN = "unknown"
+
+
+class JourneyFieldValueStatus(str, Enum):
+    IMPORTED = "imported"
+    NORMALIZED = "normalized"
+    ENRICHED = "enriched"
+    AGENT_CONFIRMED = "agent_confirmed"
+    AGENT_OVERRIDDEN = "agent_overridden"
+    UNRESOLVED = "unresolved"
+    REJECTED = "rejected"
+
+
+class JourneyAuthoringCorrectionType(str, Enum):
+    NORMALIZATION = "normalization"
+    MANUAL_OVERRIDE = "manual_override"
+    ENRICHMENT = "enrichment"
+    REORDER = "reorder"
+    MERGE = "merge"
+    SPLIT = "split"
+    DELETE = "delete"
+    RESTORE = "restore"
+    ASSIGNMENT = "assignment"
+    GROUPING = "grouping"
+
+
+class JourneyAuthoringValidationSeverity(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+    CRITICAL = "critical"
+
+
+class JourneyAuthoringApplicationMode(str, Enum):
+    CREATE_NEW_JOURNEY = "create_new_journey"
+    CREATE_NEW_OPTION = "create_new_option"
+    APPEND_TO_OPTION = "append_to_option"
+    REPLACE_DRAFT_OPTION = "replace_draft_option"
+    UPDATE_UNFINALIZED_OPTION = "update_unfinalized_option"
+
+
+class JourneyAuthoringSession(BaseDocument):
+    agency_id: str
+    journey_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    passenger_context_ids: List[str] = Field(default_factory=list)
+    title: str
+    status: JourneyAuthoringSessionStatus = JourneyAuthoringSessionStatus.DRAFT
+    authoring_mode: JourneyAuthoringMode = JourneyAuthoringMode.MANUAL
+    source_type: JourneyImportSourceType = JourneyImportSourceType.MANUAL
+    source_label: Optional[str] = None
+    parser_profile_id: Optional[str] = None
+    parser_run_id: Optional[str] = None
+    booking_import_draft_id: Optional[str] = None
+    created_by: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    validation_summary: Dict[str, Any] = Field(default_factory=dict)
+    completeness_score: int = 0
+    warnings_count: int = 0
+    blocking_errors_count: int = 0
+    source_hash: Optional[str] = None
+    normalized_hash: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class JourneyImportSource(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    source_type: JourneyImportSourceType
+    source_label: Optional[str] = None
+    raw_text: str = ""
+    raw_payload: Optional[Dict[str, Any]] = None
+    filename: Optional[str] = None
+    mime_type: Optional[str] = None
+    parser_profile_id: Optional[str] = None
+    parser_run_id: Optional[str] = None
+    booking_import_draft_id: Optional[str] = None
+    imported_by: Optional[str] = None
+    imported_at: datetime = Field(default_factory=now_utc)
+    source_hash: str
+    extraction_status: str = "preserved"
+    notes: Optional[str] = None
+    restricted_metadata: Dict[str, Any] = Field(default_factory=dict)
+    immutable_raw_source: bool = True
+    metadata_only: bool = True
+
+
+class JourneySegmentDraft(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    source_id: Optional[str] = None
+    source_segment_reference: Optional[str] = None
+    sequence: int
+    option_group_key: str = "option-1"
+    leg_group_key: str = "leg-1"
+    segment_type: JourneySegmentDraftType = JourneySegmentDraftType.FLIGHT
+    marketing_carrier_code: Optional[str] = None
+    marketing_carrier_name: Optional[str] = None
+    marketing_flight_number: Optional[str] = None
+    operating_carrier_code: Optional[str] = None
+    operating_carrier_name: Optional[str] = None
+    operating_flight_number: Optional[str] = None
+    departure_airport_code: Optional[str] = None
+    departure_airport_name: Optional[str] = None
+    departure_city: Optional[str] = None
+    departure_country: Optional[str] = None
+    arrival_airport_code: Optional[str] = None
+    arrival_airport_name: Optional[str] = None
+    arrival_city: Optional[str] = None
+    arrival_country: Optional[str] = None
+    departure_terminal: Optional[str] = None
+    arrival_terminal: Optional[str] = None
+    departure_local_datetime: Optional[datetime] = None
+    arrival_local_datetime: Optional[datetime] = None
+    departure_timezone: Optional[str] = None
+    arrival_timezone: Optional[str] = None
+    departure_utc: Optional[datetime] = None
+    arrival_utc: Optional[datetime] = None
+    scheduled_duration_minutes: Optional[int] = None
+    arrival_day_offset: Optional[int] = None
+    overnight_indicator: bool = False
+    equipment_code: Optional[str] = None
+    equipment_label: Optional[str] = None
+    cabin: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_family_code: Optional[str] = None
+    fare_brand_label: Optional[str] = None
+    status_code: Optional[str] = None
+    married_segment_indicator: bool = False
+    technical_stop_indicator: bool = False
+    technical_stop_details: List[Dict[str, Any]] = Field(default_factory=list)
+    surface_segment_indicator: bool = False
+    codeshare_indicator: bool = False
+    same_flight_continuation_indicator: bool = False
+    source_confidence: Optional[float] = None
+    completeness_status: JourneyDataCompletenessStatus = JourneyDataCompletenessStatus.UNKNOWN
+    completeness_score: int = 0
+    review_status: str = "unreviewed"
+    blocking_errors: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    notes: Optional[str] = None
+    raw_segment_text: Optional[str] = None
+    source_provenance: Dict[str, Any] = Field(default_factory=dict)
+    normalized_at: Optional[datetime] = None
+    confirmed_at: Optional[datetime] = None
+    confirmed_by: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    active: bool = True
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class JourneyFieldProvenance(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    segment_draft_id: str
+    field_name: str
+    raw_value: Any = None
+    normalized_value: Any = None
+    confirmed_value: Any = None
+    value_status: JourneyFieldValueStatus = JourneyFieldValueStatus.UNRESOLVED
+    source_type: str
+    source_reference: Optional[str] = None
+    parser_confidence: Optional[float] = None
+    enrichment_source_type: Optional[str] = None
+    enrichment_source_id: Optional[str] = None
+    changed_by: Optional[str] = None
+    changed_at: datetime = Field(default_factory=now_utc)
+    reason: Optional[str] = None
+    metadata_only: bool = True
+
+
+class JourneyAuthoringCorrection(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    segment_draft_id: Optional[str] = None
+    field_name: Optional[str] = None
+    correction_type: JourneyAuthoringCorrectionType
+    previous_value: Any = None
+    new_value: Any = None
+    reason: Optional[str] = None
+    corrected_by: Optional[str] = None
+    corrected_at: datetime = Field(default_factory=now_utc)
+    metadata_only: bool = True
+
+
+class JourneyAuthoringValidation(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    segment_draft_id: Optional[str] = None
+    validation_code: str
+    severity: JourneyAuthoringValidationSeverity
+    category: str
+    message: str
+    field_names: List[str] = Field(default_factory=list)
+    blocking: bool = False
+    detected_at: datetime = Field(default_factory=now_utc)
+    resolved_at: Optional[datetime] = None
+    resolved_by: Optional[str] = None
+    resolution_note: Optional[str] = None
+    superseded_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class JourneyAuthoringApplication(BaseDocument):
+    agency_id: str
+    authoring_session_id: str
+    journey_id: str
+    option_id: Optional[str] = None
+    applied_segment_draft_ids: List[str] = Field(default_factory=list)
+    created_journey_record_ids: List[str] = Field(default_factory=list)
+    replaced_journey_record_ids: List[str] = Field(default_factory=list)
+    application_mode: JourneyAuthoringApplicationMode
+    applied_by: Optional[str] = None
+    applied_at: datetime = Field(default_factory=now_utc)
+    result_hash: str
+    warnings: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+
+
+class JourneyAuthoringTemplate(BaseDocument):
+    agency_id: str
+    name: str
+    default_segment_type: JourneySegmentDraftType = JourneySegmentDraftType.FLIGHT
+    default_cabin: Optional[str] = None
+    default_status_code: Optional[str] = None
+    default_source_type: JourneyImportSourceType = JourneyImportSourceType.MANUAL
+    default_timezone_strategy: str = "explicit_only"
+    active: bool = True
+    created_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True

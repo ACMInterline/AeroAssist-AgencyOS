@@ -8,7 +8,7 @@ from models import OfferWorkspaceV2, OfferWorkspaceV2Create, OfferWorkspaceV2Upd
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 
 OFFER_WORKSPACE_COLLECTION = "offer_workspaces_v2"
 OFFER_STATUSES = ["draft", "preparing", "review", "ready", "shared", "accepted", "declined", "expired", "archived"]

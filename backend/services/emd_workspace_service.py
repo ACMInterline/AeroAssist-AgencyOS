@@ -15,7 +15,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
+PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 EMD_WORKSPACE_COLLECTION = "emd_workspaces"
 EMD_WORKSPACE_STATUSES = [
     EmdWorkspaceStatus.DRAFT.value,
