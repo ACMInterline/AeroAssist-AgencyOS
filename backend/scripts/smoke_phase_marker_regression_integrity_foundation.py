@@ -13,7 +13,7 @@ from build_phase import (
     phase_is_at_least,
     phase_is_exact,
 )
-from phase_assertions import assert_application_phase_at_least
+from phase_assertions import application_phase_is_at_least, assert_application_phase_at_least
 from smoke_booking_pnr_foundation import get
 
 
@@ -53,6 +53,25 @@ def verify_phase_utility() -> None:
         raise AssertionError("A newer current phase did not satisfy a historical minimum.")
     if phase_is_at_least("phase_55_9_historical_foundation", MINIMUM_PHASE):
         raise AssertionError("An older current phase satisfied a newer minimum.")
+    if not application_phase_is_at_least(
+        "phase_56_5_2_legacy_regression_suite_migration",
+        MINIMUM_PHASE,
+        source="focused helper check",
+    ):
+        raise AssertionError("The shared smoke helper rejected a newer application phase.")
+    if application_phase_is_at_least(
+        "phase_56_4_offer_delivery_client_interaction_foundation",
+        MINIMUM_PHASE,
+        source="focused helper check",
+    ):
+        raise AssertionError("The shared smoke helper accepted an older application phase.")
+    try:
+        application_phase_is_at_least("phase_unknown", MINIMUM_PHASE, source="focused helper check")
+    except AssertionError as exc:
+        if "focused helper check" not in str(exc):
+            raise AssertionError("The shared smoke helper omitted its readable source context.") from exc
+    else:
+        raise AssertionError("The shared smoke helper accepted a malformed application phase.")
     for invalid in ["phase_unknown", "phase_56_foundation", "56_5_1_foundation", "phase_56_5_1"]:
         try:
             parse_phase_identifier(invalid)
@@ -62,8 +81,7 @@ def verify_phase_utility() -> None:
 
 
 def verify_static_registration() -> None:
-    if CURRENT_BUILD_PHASE != MINIMUM_PHASE:
-        raise AssertionError(f"Canonical build phase is stale: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     server_text = (ROOT / "backend/server.py").read_text(encoding="utf-8")
     for text in [
         "from build_phase import CURRENT_BUILD_PHASE",
@@ -77,11 +95,8 @@ def verify_static_registration() -> None:
 def verify_runtime_registration() -> None:
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if not phase_is_exact(health.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Health did not report the exact current build phase: {health.get('phase')}")
-    if not phase_is_exact(readiness.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Readiness did not report the exact current build phase: {readiness.get('phase')}")
     assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("phase_marker_regression_integrity_foundation") or {}
     for key in [
         "current_build_phase_centralized",

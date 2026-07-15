@@ -35,7 +35,10 @@ from services.operational_workflow_orchestration_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_54_1_operational_workflow_orchestration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -131,7 +134,7 @@ def guard_payload(definition_id: str, guard_code: str, transition_code: str, gua
 
 
 def verify_models_and_registration() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     for collection in [
         OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION,
@@ -275,7 +278,7 @@ def find_transition(transitions: list[dict], code: str) -> dict:
 
 def verify_workflow_endpoints() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
     section = readiness.get("operational_workflow_orchestration_foundation") or {}

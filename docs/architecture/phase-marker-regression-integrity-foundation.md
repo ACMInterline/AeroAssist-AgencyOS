@@ -70,3 +70,7 @@ git --no-pager diff --check
 ```
 
 Frontend build validation is not required because Phase 56.5.1 changes no frontend file.
+
+## Phase 56.5.2 Follow-On
+
+Phase 56.5.2 applies these semantics to the remaining historical smoke suite and adds a complete machine-readable inventory, deterministic inventory validator, narrow batch runner, exact-current allowlist, and cached readiness counts. See [Legacy Regression Suite Migration](legacy-regression-suite-migration.md).

@@ -1825,3 +1825,7 @@ Phase 56.4 embeds Delivery & Responses in the canonical Offer Workspace at `/age
 ## Phase 56.5.1 Phase Marker And Regression Integrity
 
 Phase 56.5.1 centralizes the current backend build marker as `phase_56_5_1_regression_integrity_foundation`, adds deterministic numeric phase comparison, and separates current application metadata from capability introduction and immutable historical provenance. Epic 55 and Phase 56 historical smokes now require the running application to be at or after their capability phase instead of requiring a stale exact build marker. No route, collection, product behavior, stored snapshot, or frontend surface changes. See [Phase Marker and Regression Integrity Foundation](docs/architecture/phase-marker-regression-integrity-foundation.md).
+
+## Phase 56.5.2 Legacy Regression Suite Migration
+
+Phase 56.5.2 advances the canonical marker to `phase_56_5_2_legacy_regression_suite_migration` and migrates the remaining historical smokes to evidence-backed minimum application phases while preserving capability assertions and immutable provenance. A complete checked-in inventory, deterministic validator, documented exact-current allowlist, narrow batch runner, and lightweight readiness counts make all smoke phase semantics explicit. No product route, schema, collection, stored record, tenant boundary, service behavior, production data, or frontend surface changes. See [Legacy Regression Suite Migration](docs/architecture/legacy-regression-suite-migration.md).

@@ -10,7 +10,10 @@ from models import AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_8_feature_flag_audit_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -65,7 +68,7 @@ def verify_routes(paths: dict) -> None:
 
 def verify_route_policy() -> None:
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected route policy phase: {route_policy.get('phase')}")
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
     rejected_roots = {item.get("root") for item in route_policy.get("rejected_routes") or []}
@@ -111,11 +114,11 @@ def main() -> int:
     run_key = uuid4().hex[:10]
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("feature_flag_audit_foundation") or {}
     for flag in [
@@ -187,7 +190,7 @@ def main() -> int:
     )
 
     audit_response = get(f"/api/platform/feature-flags/audits?agency_id={agency_id}&feature_key={feature_key}", OWNER_HEADERS)
-    if audit_response.get("phase") != EXPECTED_PHASE or audit_response.get("read_only") is not True:
+    if not application_phase_is_at_least(audit_response.get("phase"), MINIMUM_PHASE) or audit_response.get("read_only") is not True:
         raise AssertionError(f"Audit response is not read-only 39.8 metadata: {audit_response}")
     if audit_response.get("audit_count", 0) < 2:
         raise AssertionError(f"Expected create/update audit history, got: {audit_response}")
@@ -199,7 +202,7 @@ def main() -> int:
             raise AssertionError(f"Audit item missing metadata key {key}: {latest_audit}")
 
     platform_readiness = get(f"/api/platform/feature-flags/readiness/{feature_key}?agency_id={agency_id}", OWNER_HEADERS)
-    if platform_readiness.get("phase") != EXPECTED_PHASE or platform_readiness.get("read_only") is not True:
+    if not application_phase_is_at_least(platform_readiness.get("phase"), MINIMUM_PHASE) or platform_readiness.get("read_only") is not True:
         raise AssertionError(f"Platform readiness response is not read-only 39.8 metadata: {platform_readiness}")
     if platform_readiness.get("readiness_count") != 1:
         raise AssertionError(f"Expected one platform readiness record for smoke feature: {platform_readiness}")
@@ -211,7 +214,7 @@ def main() -> int:
         raise AssertionError(f"Default readiness should not mark rollout ready: {readiness_item}")
 
     agency_readiness = get(f"/api/agencies/{agency_id}/feature-readiness/{feature_key}", OWNER_HEADERS)
-    if agency_readiness.get("phase") != EXPECTED_PHASE or agency_readiness.get("read_only") is not True:
+    if not application_phase_is_at_least(agency_readiness.get("phase"), MINIMUM_PHASE) or agency_readiness.get("read_only") is not True:
         raise AssertionError(f"Agency readiness response is not read-only 39.8 metadata: {agency_readiness}")
     if not agency_readiness.get("item") or agency_readiness["item"].get("agency_id") != agency_id:
         raise AssertionError(f"Agency readiness did not scope to requested agency: {agency_readiness}")

@@ -14,7 +14,10 @@ OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {
 AGENCY_ADMIN_HEADERS = {"X-Demo-User-Email": "agency.owner@aeroassist.dev"}
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 PORTAL_HEADERS = {"X-Demo-User-Email": "anna.client@example.com"}
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_35_0_trip_dossier_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -61,7 +64,7 @@ def assert_absent(text: str, needles: list[str], label: str) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     post("/api/reference/seed", {}, OWNER_HEADERS)

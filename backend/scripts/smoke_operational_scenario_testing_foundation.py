@@ -17,7 +17,10 @@ from services.operational_scenario_testing_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_52_8_operational_scenario_testing_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -130,7 +133,7 @@ def scenario_payload(agency_id: str, reference: str, status: str = "ready_for_re
 
 
 def verify_model_and_collection_registration() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     if OPERATIONAL_SCENARIO_TESTS_COLLECTION not in AGENCY_OWNED_COLLECTIONS:
         raise AssertionError("operational_scenario_tests is not registered as agency-owned metadata.")
@@ -225,7 +228,7 @@ def verify_router_ui_docs_registration() -> None:
 
 def verify_crud_read_only_and_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     post("/api/reference/seed", {}, OWNER_HEADERS)

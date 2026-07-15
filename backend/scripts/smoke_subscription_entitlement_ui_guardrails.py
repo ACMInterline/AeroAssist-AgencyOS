@@ -5,7 +5,10 @@ from uuid import uuid4
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_6_subscription_entitlement_ui_guardrails"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -41,7 +44,7 @@ def verify_routes(paths: dict) -> None:
 
 def verify_route_policy() -> None:
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected route policy phase: {route_policy.get('phase')}")
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
     rejected_roots = {item.get("root") for item in route_policy.get("rejected_routes") or []}
@@ -84,11 +87,11 @@ def main() -> int:
     run_key = uuid4().hex[:10]
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("subscription_entitlement_ui_guardrails") or {}
     for flag in [
@@ -190,7 +193,7 @@ def main() -> int:
         )
 
     agency_visibility = get(f"/api/agencies/{agency_id}/saas-subscriptions/module-visibility", OWNER_HEADERS)
-    if agency_visibility.get("phase") != EXPECTED_PHASE or agency_visibility.get("read_only") is not True:
+    if not application_phase_is_at_least(agency_visibility.get("phase"), MINIMUM_PHASE) or agency_visibility.get("read_only") is not True:
         raise AssertionError(f"Agency visibility response is not read-only 39.6 metadata: {agency_visibility}")
     by_key = agency_visibility.get("visibility_by_key") or {}
     expected_statuses = {
@@ -207,7 +210,7 @@ def main() -> int:
         require_flag(agency_visibility, flag)
 
     platform_visibility = get("/api/platform/saas-subscriptions/entitlement-visibility", OWNER_HEADERS)
-    if platform_visibility.get("phase") != EXPECTED_PHASE or platform_visibility.get("owner_review_metadata_only") is not True:
+    if not application_phase_is_at_least(platform_visibility.get("phase"), MINIMUM_PHASE) or platform_visibility.get("owner_review_metadata_only") is not True:
         raise AssertionError(f"Platform visibility response is not owner-review metadata: {platform_visibility}")
     agency_item = next((item for item in platform_visibility.get("items") or [] if item.get("agency_id") == agency_id), None)
     if not agency_item:

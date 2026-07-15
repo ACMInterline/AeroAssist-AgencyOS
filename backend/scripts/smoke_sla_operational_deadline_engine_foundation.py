@@ -36,7 +36,10 @@ from services.operational_sla_deadline_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_54_3_sla_operational_deadline_engine_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -139,7 +142,7 @@ def create_manual_work_item(agency_id: str, source_entity_id: str) -> dict:
 
 
 def verify_models_and_registration() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     for collection in [
         OPERATIONAL_SLA_POLICIES_COLLECTION,
@@ -299,10 +302,10 @@ def verify_router_ui_docs_registration() -> None:
 
 def verify_health_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("sla_operational_deadline_engine_foundation") or {}
     for key in [
@@ -508,7 +511,7 @@ def verify_deadline_lifecycle(agency_id: str, other_agency_id: str) -> None:
 def main() -> int:
     verify_models_and_registration()
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     agencies = get("/api/agencies", OWNER_HEADERS).get("items") or []
     if not agencies:

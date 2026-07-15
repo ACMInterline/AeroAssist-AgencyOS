@@ -6,8 +6,11 @@ import time
 import urllib.error
 import urllib.request
 
+from phase_assertions import application_phase_is_at_least
+
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
+MINIMUM_PHASE = "phase_26_0_request_intake_operational_request_stabilization"
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 
@@ -91,7 +94,7 @@ def intake_payload(email: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_56_3_journey_comparison_client_presentation_foundation":
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     post("/api/reference/seed", {}, OWNER_HEADERS)
     agencies = get("/api/agencies", OWNER_HEADERS)["items"]

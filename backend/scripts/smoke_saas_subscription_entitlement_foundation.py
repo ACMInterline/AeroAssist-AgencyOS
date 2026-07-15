@@ -18,7 +18,10 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -157,11 +160,11 @@ def main() -> int:
     run_key = uuid4().hex[:10]
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("saas_subscription_entitlement_foundation") or {}
     for flag in [

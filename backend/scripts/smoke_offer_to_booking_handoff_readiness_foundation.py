@@ -25,7 +25,10 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 from smoke_offer_acceptance_booking_readiness import builder_payload, create_priced_option
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_54_6_offer_to_booking_handoff_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -92,7 +95,7 @@ def assert_status_calculation() -> None:
 
 
 def verify_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service PHASE_LABEL mismatch: {PHASE_LABEL}")
     for collection in [
         OFFER_BOOKING_HANDOFFS_COLLECTION,
@@ -199,10 +202,10 @@ def verify_routes_and_docs(paths: dict) -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("offer_to_booking_handoff_readiness_foundation") or {}
     for flag in [

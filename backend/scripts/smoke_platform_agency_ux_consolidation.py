@@ -5,7 +5,10 @@ import subprocess
 from smoke_booking_pnr_foundation import get
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_4_platform_agency_ux_consolidation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -33,7 +36,7 @@ def verify_route_policy() -> None:
             raise AssertionError(f"Non-canonical route introduced: {path}")
 
     route_policy = get("/api/platform/blueprint/route-policy")
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected route policy phase: {route_policy.get('phase')}")
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
     rejected_roots = {item.get("root") for item in route_policy.get("rejected_routes") or []}
@@ -108,11 +111,11 @@ def verify_frontend_build() -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("platform_agency_ux_consolidation") or {}
     for flag in [

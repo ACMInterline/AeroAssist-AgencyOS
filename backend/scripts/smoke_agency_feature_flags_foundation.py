@@ -10,7 +10,10 @@ from models import AgencyFeatureFlag, AgencyFeatureFlagReview, AgencyFeatureFlag
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_7_agency_feature_flags_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -88,7 +91,7 @@ def verify_routes(paths: dict) -> None:
 
 def verify_route_policy() -> None:
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected route policy phase: {route_policy.get('phase')}")
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
     rejected_roots = {item.get("root") for item in route_policy.get("rejected_routes") or []}
@@ -133,11 +136,11 @@ def main() -> int:
     run_key = uuid4().hex[:10]
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("agency_feature_flags_foundation") or {}
     for flag in [
@@ -236,13 +239,13 @@ def main() -> int:
         raise AssertionError(f"Snapshot is not immutable metadata: {snapshot}")
 
     platform_summary = get("/api/platform/feature-flags/summary", OWNER_HEADERS)
-    if platform_summary.get("phase") != EXPECTED_PHASE or platform_summary.get("metadata_only") is not True:
+    if not application_phase_is_at_least(platform_summary.get("phase"), MINIMUM_PHASE) or platform_summary.get("metadata_only") is not True:
         raise AssertionError(f"Platform summary is not metadata-only 39.7 data: {platform_summary}")
     if (platform_summary.get("state_counts") or {}).get("pilot", 0) < 1:
         raise AssertionError(f"Platform summary did not count pilot flag: {platform_summary}")
 
     agency_summary = get(f"/api/agencies/{agency_id}/feature-flags/summary", OWNER_HEADERS)
-    if agency_summary.get("phase") != EXPECTED_PHASE or agency_summary.get("read_only") is not True:
+    if not application_phase_is_at_least(agency_summary.get("phase"), MINIMUM_PHASE) or agency_summary.get("read_only") is not True:
         raise AssertionError(f"Agency summary is not read-only metadata: {agency_summary}")
     for safety_flag in ["automatic_enforcement_disabled", "billing_disabled", "provider_execution_disabled", "feature_blocking_disabled"]:
         require_flag(agency_summary, safety_flag)

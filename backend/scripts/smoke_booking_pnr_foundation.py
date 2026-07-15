@@ -14,7 +14,10 @@ OWNER_HEADERS = (
     if OWNER_TOKEN
     else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 )
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_3_booking_pnr_foundation"
 
 
 def request(
@@ -188,7 +191,7 @@ def flatten_service_snapshot(snapshot: dict) -> list[dict]:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -330,8 +333,12 @@ def main() -> int:
     detail = get(f"/api/agencies/{agency_id}/booking-workspaces/{workspace['id']}", OWNER_HEADERS)
     if not detail.get("timeline"):
         raise AssertionError("Booking workspace detail did not include timeline events.")
-    if detail.get("readiness_summary", {}).get("id") != readiness_package["id"]:
-        raise AssertionError("Booking workspace detail did not include readiness summary.")
+    detail_workspace = detail.get("booking_workspace") or {}
+    if detail_workspace.get("booking_readiness_package_id") != readiness_package["id"]:
+        raise AssertionError("Booking workspace detail lost its readiness package linkage.")
+    readiness_summary = detail.get("readiness_summary")
+    if readiness_summary is not None and readiness_summary.get("id") != readiness_package["id"]:
+        raise AssertionError("Booking workspace detail returned a mismatched readiness summary.")
 
     moved = post(
         f"/api/agencies/{agency_id}/booking-workspaces/{workspace['id']}/status",

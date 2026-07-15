@@ -18,7 +18,10 @@ from services.intelligent_offer_builder_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_50_9_intelligent_offer_builder_integration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/intelligent-offer-builder"
 AGENCY_BASE_TEMPLATE = "/api/agencies/{agency_id}/offer-intelligence"
@@ -154,7 +157,7 @@ def package_payload(agency_id: str, reference: str) -> dict:
 def verify_model_and_collection_registration() -> None:
     if INTELLIGENT_OFFER_BUILDER_COLLECTION not in AGENCY_OWNED_COLLECTIONS:
         raise AssertionError("intelligent_offer_builder_packages is not registered as agency-owned metadata.")
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
 
     payload = package_payload("agency-smoke", "IOB-SMOKE-MODEL")
@@ -445,7 +448,7 @@ def verify_package_crud_and_filters() -> None:
 
 def verify_readiness_and_blueprint() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected active phase label: {health.get('phase')}")
 
     readiness = get("/api/readiness")

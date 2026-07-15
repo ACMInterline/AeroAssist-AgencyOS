@@ -10,7 +10,10 @@ import urllib.request
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_4_6_standalone_change_exchange_foundation"
 
 
 def request(method: str, path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> tuple[int, dict]:
@@ -47,7 +50,7 @@ def assert_openapi_path(paths: dict, path: str, method: str) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -74,7 +77,7 @@ def main() -> int:
         raise AssertionError("/agent or /admin API roots were introduced.")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError("Readiness did not expose the phase 36.4.6 label.")
     booking = readiness.get("booking_foundation") or {}
     ticket_emd = readiness.get("ticket_emd_foundation") or {}

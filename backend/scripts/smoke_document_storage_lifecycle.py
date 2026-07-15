@@ -6,8 +6,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from phase_assertions import application_phase_is_at_least
+
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
+MINIMUM_PHASE = "phase_25_0_document_storage_lifecycle_delivery_provider_readiness"
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 
@@ -54,7 +57,7 @@ def assert_safe(value: object) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != "phase_39_5_saas_subscription_entitlement_foundation":
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     readiness = get("/api/readiness")
     if not readiness.get("ok"):

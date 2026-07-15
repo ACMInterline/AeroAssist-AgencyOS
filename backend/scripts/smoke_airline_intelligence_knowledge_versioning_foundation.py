@@ -18,7 +18,10 @@ from models import (  # noqa: E402
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_2_airline_intelligence_knowledge_versioning_foundation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:
@@ -71,7 +74,7 @@ def main() -> int:
     verify_model_and_collection_registration()
     run_key = uuid4().hex[:10]
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -133,7 +136,7 @@ def main() -> int:
         assert_openapi_path(paths, path, method)
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("airline_intelligence_knowledge_versioning_foundation") or {}
     for key in [

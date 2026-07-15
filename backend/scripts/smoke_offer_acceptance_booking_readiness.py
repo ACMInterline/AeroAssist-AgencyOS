@@ -14,7 +14,10 @@ OWNER_HEADERS = (
     if OWNER_TOKEN
     else {"X-Demo-User-Email": "owner@aeroassist.dev"}
 )
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_2_offer_acceptance_booking_readiness"
 
 
 def request(
@@ -171,7 +174,7 @@ def create_priced_option(agency_id: str, workspace_id: str) -> dict:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")

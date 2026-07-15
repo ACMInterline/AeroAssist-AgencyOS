@@ -31,7 +31,10 @@ from services.client_passenger_master_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_51_3_client_passenger_master_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -133,7 +136,7 @@ def passenger_payload(agency_id: str, reference: str) -> dict:
 
 
 def verify_model_and_collection_registration() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     for collection in MASTER_COLLECTIONS:
         if collection not in AGENCY_OWNED_COLLECTIONS:
@@ -461,9 +464,9 @@ def verify_runtime_metadata() -> None:
 
     health = get("/api/health", OWNER_HEADERS)
     readiness = get("/api/readiness", OWNER_HEADERS)
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"health phase mismatch: {health.get('phase')}")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"readiness phase mismatch: {readiness.get('phase')}")
     section = readiness.get("client_passenger_master_workspace_foundation")
     if not section:

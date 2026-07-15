@@ -11,7 +11,10 @@ from smoke_offer_decision_export_release_readiness_foundation import create_prev
 from smoke_offer_decision_pack_foundation import option_signature
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_38_0_offer_decision_export_audit_review_foundation"
 
 
 def patch(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:
@@ -133,7 +136,7 @@ def create_audit_source(agency_id: str, run_key: str) -> tuple[dict, dict, dict,
 def main() -> int:
     run_key = uuid4().hex[:10]
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -168,7 +171,7 @@ def main() -> int:
         assert_openapi_path(paths, path, method)
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("offer_decision_export_audit_review_foundation") or {}
     for key in [

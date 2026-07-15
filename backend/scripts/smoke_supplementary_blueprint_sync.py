@@ -9,7 +9,10 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, get
 from services.special_services_unified_facade import SpecialServicesUnifiedFacade
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_4_5_supplementary_blueprint_sync"
 REQUIRED_CATEGORIES = {
     "RBAC",
     "Airline Intelligence",
@@ -84,7 +87,7 @@ async def assert_facade_safe() -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -98,7 +101,7 @@ def main() -> int:
         assert_openapi_path(paths, path, method)
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     blueprint_sync = readiness.get("blueprint_sync") or {}
     for flag in [

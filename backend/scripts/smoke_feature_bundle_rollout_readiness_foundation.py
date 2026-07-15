@@ -9,7 +9,10 @@ from models import FeatureBundleRolloutChecklistItem, FeatureBundleRolloutReadin
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_40_1_feature_bundle_rollout_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -138,10 +141,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("feature_bundle_rollout_readiness_foundation") or {}
     for flag in [
@@ -208,7 +211,7 @@ def verify_endpoint_behavior() -> None:
         raise AssertionError(f"Assignment was not created for rollout readiness smoke: {created}")
 
     platform_before_defaults = get("/api/platform/feature-bundle-rollout-readiness", OWNER_HEADERS)
-    if platform_before_defaults.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(platform_before_defaults.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Platform rollout readiness phase mismatch: {platform_before_defaults}")
     for flag in ["metadata_only", "feature_activation_disabled", "feature_access_enforcement_disabled", "billing_disabled", "provider_execution_disabled"]:
         require_flag(platform_before_defaults, flag)

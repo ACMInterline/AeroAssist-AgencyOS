@@ -17,7 +17,10 @@ from services.visual_policy_editor_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_52_3_visual_policy_editor_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED_POLICY_FAMILIES = {
@@ -113,7 +116,7 @@ def card_payload(agency_id: str, reference: str, policy_family: str = "PETC") ->
 
 
 def verify_model_and_collection_registration() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     if VISUAL_POLICY_EDITOR_CARDS_COLLECTION not in AGENCY_OWNED_COLLECTIONS:
         raise AssertionError("visual_policy_editor_cards is not registered as agency-owned metadata.")
@@ -196,7 +199,7 @@ def verify_router_ui_docs_registration() -> None:
 
 def verify_crud_and_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
 
     agencies = get("/api/agencies", OWNER_HEADERS).get("items") or []
@@ -270,7 +273,7 @@ def verify_crud_and_readiness() -> None:
         raise AssertionError("Agency archive did not persist archived metadata.")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("visual_policy_editor_foundation") or {}
     for flag in [

@@ -32,7 +32,10 @@ from services.service_parameter_taxonomy_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_51_1_service_parameter_taxonomy_integration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/service-parameter-taxonomies"
 AGENCY_BASE_TEMPLATE = "/api/agencies/{agency_id}/service-parameter-taxonomies"
@@ -216,7 +219,7 @@ def taxonomy_payload(agency_id: str, reference: str) -> dict:
 def verify_model_and_collection_registration() -> None:
     if SERVICE_PARAMETER_TAXONOMIES_COLLECTION not in AGENCY_OWNED_COLLECTIONS:
         raise AssertionError("service_parameter_taxonomies is not registered as agency-owned metadata.")
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
 
     payload = taxonomy_payload("agency-smoke", "SPT-SMOKE-MODEL")
@@ -542,11 +545,11 @@ def verify_taxonomy_crud_and_filters() -> None:
 
 def verify_readiness_and_blueprint() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected active phase label: {health.get('phase')}")
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Readiness phase mismatch: {readiness.get('phase')}")
     section = readiness.get("service_parameter_taxonomy_integration_foundation") or {}
     required_flags = [
@@ -576,13 +579,13 @@ def verify_readiness_and_blueprint() -> None:
             raise AssertionError(f"Readiness section missing {flag}: {section}")
 
     adoption = get("/api/platform/blueprint/adoption-map", OWNER_HEADERS)
-    if adoption.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(adoption.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Adoption phase mismatch: {adoption.get('phase')}")
     if "ServiceParameterTaxonomy" not in str(adoption):
         raise AssertionError(f"Adoption map missing ServiceParameterTaxonomy: {adoption}")
 
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Route policy phase mismatch: {route_policy.get('phase')}")
     mappings = route_policy.get("route_mappings") or []
     expected_mappings = [

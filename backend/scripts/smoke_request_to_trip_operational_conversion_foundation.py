@@ -19,7 +19,10 @@ from services.request_to_trip_conversion_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_54_5_request_to_trip_operational_conversion_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -185,7 +188,7 @@ def ensure_second_agency(existing_agencies: list[dict]) -> str:
 
 
 def validate_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service PHASE_LABEL mismatch: {PHASE_LABEL}")
     for collection in [
         REQUEST_TRIP_CONVERSION_PLANS_COLLECTION,
@@ -256,10 +259,10 @@ def validate_static_contracts() -> None:
 
 def validate_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("request_to_trip_operational_conversion_foundation") or {}
     for flag in [

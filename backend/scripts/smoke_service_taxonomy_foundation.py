@@ -2,7 +2,10 @@
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_8_service_taxonomy_foundation"
 
 SAMPLE_POLICY_TEXT = """General:
 Kids Solo applies to children aged 5 to 14 years. UMT applies to unaccompanied teenagers on selected flights.
@@ -42,7 +45,7 @@ def assert_mapping(text: str, expected_domain: str, expected_family: str, expect
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")

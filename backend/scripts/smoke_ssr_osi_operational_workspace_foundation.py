@@ -16,7 +16,10 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_41_9_ssr_osi_operational_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AOIE_PATH = "Passenger Need -> SSR / OSI Workspace -> Airline Knowledge -> Capability Matrix -> Operational Feasibility -> Offer Builder"
 
@@ -316,10 +319,10 @@ def verify_blueprint_adoption() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("ssr_osi_operational_workspace_foundation") or {}
     for flag in [
@@ -473,7 +476,7 @@ def verify_endpoint_behavior() -> None:
         OWNER_HEADERS,
         201,
     )
-    if created.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(created.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected create phase: {created.get('phase')}")
     assert_disabled_response(created)
     workspace = created.get("ssr_osi_workspace") or {}

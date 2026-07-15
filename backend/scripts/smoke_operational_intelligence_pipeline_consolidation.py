@@ -17,7 +17,10 @@ from services.operational_intelligence_case_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_51_0_operational_intelligence_pipeline_consolidation_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/operational-intelligence-cases"
 AGENCY_BASE_TEMPLATE = "/api/agencies/{agency_id}/intelligence-cases"
@@ -133,7 +136,7 @@ def case_payload(agency_id: str, reference: str) -> dict:
 def verify_model_and_collection_registration() -> None:
     if OPERATIONAL_INTELLIGENCE_CASES_COLLECTION not in AGENCY_OWNED_COLLECTIONS:
         raise AssertionError("operational_intelligence_cases is not registered as agency-owned metadata.")
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
 
     payload = case_payload("agency-smoke", "OIC-SMOKE-MODEL")
@@ -453,7 +456,7 @@ def verify_case_crud_and_filters() -> None:
 
 def verify_readiness_and_blueprint() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected active phase label: {health.get('phase')}")
 
     readiness = get("/api/readiness")

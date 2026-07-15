@@ -6,7 +6,10 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 from smoke_service_mechanics_mapping_foundation import main as mechanics_smoke_main
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_37_1_policy_comparison_service_advisor_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:
@@ -139,7 +142,7 @@ def main() -> int:
     airline_codes = ["ZX", "QY"]
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")

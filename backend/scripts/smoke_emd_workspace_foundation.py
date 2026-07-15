@@ -23,7 +23,10 @@ from smoke_booking_workspace_foundation import (
 from smoke_ticket_workspace_foundation import create_booking_workspace
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_41_8_emd_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EMD_STATUSES = {"draft", "review", "ready", "archived"}
 EMD_DOCUMENT_STATUSES = {"draft_metadata", "issued", "voided", "exchanged", "refunded", "partially_refunded", "cancelled", "unknown"}
@@ -310,10 +313,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("emd_workspace_foundation") or {}
     for flag in [
@@ -451,7 +454,7 @@ def verify_endpoint_behavior() -> None:
         OWNER_HEADERS,
         201,
     )
-    if created.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(created.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected create phase: {created.get('phase')}")
     assert_disabled_response(created)
     emd = created.get("emd_workspace") or {}

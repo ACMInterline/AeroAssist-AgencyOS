@@ -8,7 +8,10 @@ from pathlib import Path
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_32_0_blueprint_alignment_canonical_operations_model"
 
 
 def request(method: str, path: str, body: dict | None = None, expect: int | None = None) -> tuple[int, dict]:
@@ -51,7 +54,7 @@ def main() -> int:
     )
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
     readiness = get("/api/readiness")
     alignment = readiness.get("blueprint_alignment") or {}

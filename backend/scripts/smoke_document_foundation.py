@@ -5,7 +5,10 @@ from smoke_booking_pnr_foundation import OWNER_HEADERS, flatten_service_snapshot
 from smoke_ticket_emd_foundation import create_booking_record, service_key
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_5_document_foundation"
 
 
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:
@@ -51,7 +54,7 @@ def assert_context_preview(agency_id: str, source_context_type: str, source_cont
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")

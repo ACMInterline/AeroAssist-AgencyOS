@@ -15,7 +15,10 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_40_3_rollout_dashboard_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTED_SECTIONS = {
     "capability_catalog",
@@ -221,10 +224,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("rollout_dashboard_foundation") or {}
     for flag in [
@@ -301,7 +304,7 @@ def verify_endpoint_behavior() -> None:
 
 
 def assert_dashboard_response(payload: dict, *, agency_id: str | None) -> None:
-    if payload.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected dashboard phase: {payload}")
     if agency_id is not None and payload.get("agency_id") != agency_id:
         raise AssertionError(f"Agency dashboard did not stay agency-scoped: {payload}")
@@ -322,7 +325,7 @@ def assert_dashboard_response(payload: dict, *, agency_id: str | None) -> None:
 
 
 def assert_summary_response(payload: dict, *, agency_id: str | None = None) -> None:
-    if payload.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected dashboard summary phase: {payload}")
     if agency_id is not None and payload.get("agency_id") != agency_id:
         raise AssertionError(f"Agency dashboard summary did not stay agency-scoped: {payload}")
@@ -338,7 +341,7 @@ def assert_summary_response(payload: dict, *, agency_id: str | None = None) -> N
 
 
 def assert_snapshot_response(payload: dict, *, agency_id: str | None = None) -> None:
-    if payload.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected dashboard snapshot phase: {payload}")
     if agency_id is not None and payload.get("agency_id") != agency_id:
         raise AssertionError(f"Agency dashboard snapshots did not stay agency-scoped: {payload}")

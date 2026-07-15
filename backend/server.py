@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from build_phase import CURRENT_BUILD_PHASE
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
+from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
@@ -36,7 +37,9 @@ from services.feature_bundle_rollout_risk_service import RISK_IMPACTS, RISK_LIKE
 from services.feature_bundle_rollout_rollback_plan_service import ROLLBACK_PRIORITIES, ROLLBACK_SCOPES, ROLLBACK_STATUSES, ROLLBACK_TRIGGERS
 from services.feature_bundle_rollout_schedule_service import SCHEDULE_STATUSES
 from services.feature_bundle_rollout_summary_pack_service import PACK_AUDIENCES, PACK_STATUSES
-from services.feature_bundle_rollout_timeline_service import TIMELINE_EVENT_TYPES
+from services.feature_bundle_rollout_timeline_service import (
+    TIMELINE_EVENT_TYPES as FEATURE_BUNDLE_ROLLOUT_TIMELINE_EVENT_TYPES,
+)
 from services.operational_travel_workspace_service import WORKSPACE_PRIORITIES, WORKSPACE_STATUSES, WORKSPACE_TYPES
 from services.passenger_workspace_service import PASSENGER_STATUSES
 from services.flight_workspace_service import FLIGHT_STATUSES
@@ -45,7 +48,10 @@ from services.offer_workspace_service import OFFER_STATUSES
 from services.booking_workspace_service import BOOKING_WORKSPACE_STATUSES
 from services.emd_workspace_service import EMD_DOCUMENT_STATUSES, EMD_WORKSPACE_STATUSES
 from services.document_workspace_service import DOCUMENT_WORKSPACE_STATUSES, DOCUMENT_WORKSPACE_TYPES
-from services.timeline_workspace_service import COMMUNICATION_TYPES, TIMELINE_EVENT_TYPES
+from services.timeline_workspace_service import (
+    COMMUNICATION_TYPES,
+    TIMELINE_EVENT_TYPES as OPERATIONAL_TIMELINE_EVENT_TYPES,
+)
 from services.passenger_service_workflow_service import READINESS_STATES, WORKFLOW_STAGES
 from services.airline_operational_intelligence_service import AirlineOperationalIntelligenceService
 from services.airline_knowledge_acquisition_service import ACQUISITION_STATUSES, APPROVAL_STATUSES as ACQUISITION_APPROVAL_STATUSES, KNOWLEDGE_GRAPH_PILLARS, REVIEW_STATUSES as ACQUISITION_REVIEW_STATUSES, SOURCE_TYPES as ACQUISITION_SOURCE_TYPES
@@ -108,7 +114,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 56.5.1 regression integrity foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.5.2 legacy regression suite migration.",
 )
 
 app.add_middleware(
@@ -442,7 +448,7 @@ async def readiness() -> dict:
     operational_timeline_count = len(operational_timeline_records)
     operational_timeline_event_type_counts = {
         event_type: len([item for item in operational_timeline_records if item.get("event_type") == event_type])
-        for event_type in TIMELINE_EVENT_TYPES
+        for event_type in OPERATIONAL_TIMELINE_EVENT_TYPES
     }
     operational_timeline_communication_type_counts = {
         communication_type: len([item for item in operational_timeline_records if item.get("communication_type") == communication_type])
@@ -2086,7 +2092,7 @@ async def readiness() -> dict:
     feature_bundle_rollout_timeline_count = len(feature_bundle_rollout_timeline_records)
     feature_bundle_rollout_timeline_event_type_counts = {
         event_type: len([item for item in feature_bundle_rollout_timeline_records if item.get("event_type") == event_type])
-        for event_type in TIMELINE_EVENT_TYPES
+        for event_type in FEATURE_BUNDLE_ROLLOUT_TIMELINE_EVENT_TYPES
     }
     feature_bundle_dependency_records = await database.collection("feature_bundle_dependencies").find_many()
     feature_bundle_dependency_count = len(feature_bundle_dependency_records)
@@ -5215,6 +5221,15 @@ async def readiness() -> dict:
             "immutable_snapshot_phase_mutation_disabled": True,
             "readiness_required": False,
             "diagnostic": "Phase 56.5.1 centralizes current build metadata and gives historical smoke tests numeric minimum-phase semantics while preserving capability and immutable snapshot provenance.",
+        },
+        "legacy_regression_suite_migration": {
+            **SMOKE_INVENTORY_SUMMARY,
+            "legacy_runtime_exact_assertions_migrated": True,
+            "exact_current_assertions_allowlisted": True,
+            "historical_provenance_preserved": True,
+            "product_behavior_changed": False,
+            "readiness_required": False,
+            "diagnostic": "Phase 56.5.2 inventories the complete smoke suite and migrates historical runtime phase checks to evidence-backed minimum semantics. Exact current-build assertions are restricted to the allowlisted current migration smoke.",
         },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,

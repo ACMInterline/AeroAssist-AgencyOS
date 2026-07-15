@@ -11,7 +11,10 @@ from smoke_service_mechanics_mapping_foundation import main as mechanics_smoke_m
 from smoke_service_taxonomy_foundation import main as taxonomy_smoke_main
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_37_4_offer_explanation_decision_timeline_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:
@@ -35,7 +38,7 @@ def main() -> int:
     variant_code = f"wchr_explanation_{run_key}"
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -71,7 +74,7 @@ def main() -> int:
         assert_openapi_path(paths, path, method)
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("offer_decision_explanation_foundation") or {}
     for key in [

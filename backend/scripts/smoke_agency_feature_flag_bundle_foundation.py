@@ -9,7 +9,10 @@ from models import BundleReadiness, FeatureFlagBundle, FeatureFlagBundleMember, 
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_39_9_feature_flag_bundle_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -86,7 +89,7 @@ def verify_routes(paths: dict) -> None:
 
 def verify_route_policy() -> None:
     route_policy = get("/api/platform/blueprint/route-policy", OWNER_HEADERS)
-    if route_policy.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(route_policy.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected route policy phase: {route_policy.get('phase')}")
     canonical_roots = {item.get("root") for item in route_policy.get("canonical_routes") or []}
     rejected_roots = {item.get("root") for item in route_policy.get("rejected_routes") or []}
@@ -130,10 +133,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("feature_flag_bundle_foundation") or {}
     for flag in [
@@ -173,7 +176,7 @@ def verify_readiness() -> None:
 
 def verify_endpoint_behavior() -> None:
     platform_bundles = get("/api/platform/feature-flag-bundles", OWNER_HEADERS)
-    if platform_bundles.get("phase") != EXPECTED_PHASE or platform_bundles.get("read_only") is not True:
+    if not application_phase_is_at_least(platform_bundles.get("phase"), MINIMUM_PHASE) or platform_bundles.get("read_only") is not True:
         raise AssertionError(f"Platform bundle response is not read-only 39.9 metadata: {platform_bundles}")
     for flag in ["metadata_only", "runtime_feature_enforcement_disabled", "entitlement_checks_disabled", "billing_disabled", "rollout_disabled", "provider_integrations_disabled", "background_workers_disabled", "notifications_disabled"]:
         require_flag(platform_bundles, flag)
@@ -192,7 +195,7 @@ def verify_endpoint_behavior() -> None:
     if members.get("member_count", 0) < 1 or members.get("read_only") is not True:
         raise AssertionError(f"Platform bundle members missing: {members}")
     reviews = get("/api/platform/feature-flag-bundles/reviews", OWNER_HEADERS)
-    if reviews.get("phase") != EXPECTED_PHASE or reviews.get("read_only") is not True:
+    if not application_phase_is_at_least(reviews.get("phase"), MINIMUM_PHASE) or reviews.get("read_only") is not True:
         raise AssertionError(f"Platform bundle reviews response is not read-only: {reviews}")
 
     agencies = get("/api/agencies", OWNER_HEADERS).get("items") or []
@@ -200,7 +203,7 @@ def verify_endpoint_behavior() -> None:
         raise AssertionError("Smoke requires seeded demo agency.")
     agency_id = agencies[0]["id"]
     agency_bundles = get(f"/api/agencies/{agency_id}/feature-flag-bundles", OWNER_HEADERS)
-    if agency_bundles.get("phase") != EXPECTED_PHASE or agency_bundles.get("agency_id") != agency_id:
+    if not application_phase_is_at_least(agency_bundles.get("phase"), MINIMUM_PHASE) or agency_bundles.get("agency_id") != agency_id:
         raise AssertionError(f"Agency bundle response is not scoped to agency: {agency_bundles}")
     if agency_bundles.get("read_only") is not True or agency_bundles.get("metadata_only") is not True:
         raise AssertionError(f"Agency bundle response should be read-only metadata: {agency_bundles}")

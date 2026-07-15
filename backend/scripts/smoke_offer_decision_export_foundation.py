@@ -7,7 +7,10 @@ from smoke_offer_policy_advisor_integration_foundation import create_offer_works
 from smoke_policy_comparison_service_advisor_foundation import seed_airline_facts
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_37_5_offer_decision_export_foundation"
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:
@@ -101,7 +104,7 @@ def main() -> int:
     variant_code = f"wchr_export_{run_key}"
 
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
@@ -128,7 +131,7 @@ def main() -> int:
         assert_openapi_path(paths, path, method)
 
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("offer_decision_export_foundation") or {}
     for key in [

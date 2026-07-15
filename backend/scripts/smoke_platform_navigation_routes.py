@@ -10,7 +10,10 @@ from pathlib import Path
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
 OWNER_TOKEN = os.getenv("AEROASSIST_SMOKE_OWNER_TOKEN")
 OWNER_HEADERS = {"Authorization": f"Bearer {OWNER_TOKEN}"} if OWNER_TOKEN else {"X-Demo-User-Email": "owner@aeroassist.dev"}
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_35_0_trip_dossier_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -51,11 +54,13 @@ def reject_text(source: str, needles: list[str], label: str) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     app = (ROOT / "frontend/src/App.jsx").read_text(encoding="utf-8")
     layout = (ROOT / "frontend/src/layouts/PlatformLayout.jsx").read_text(encoding="utf-8")
+    module_catalog = (ROOT / "frontend/src/lib/moduleCatalog.js").read_text(encoding="utf-8")
+    platform_catalog = module_catalog.split("export const agencyModuleGroups", 1)[0]
     dashboard = (ROOT / "frontend/src/pages/platform/PlatformDashboardPage.jsx").read_text(encoding="utf-8")
     agencies = (ROOT / "frontend/src/pages/platform/PlatformAgenciesPage.jsx").read_text(encoding="utf-8")
     agency_detail = (ROOT / "frontend/src/pages/platform/PlatformAgencyDetailPage.jsx").read_text(encoding="utf-8")
@@ -77,8 +82,10 @@ def main() -> int:
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",
     ], "App platform routes")
-    require_text(layout, ["Summary", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", "Service Mechanics", 'href="/platform/agencies"', 'href="/platform/airlines"', 'href="/platform/airline-policy-ingestion"', 'href="/platform/service-taxonomy"', 'href="/platform/service-mechanics"'], "Platform header")
+    require_text(layout, ["Platform Console", "platformModuleGroups", "PlatformModuleGroup", "PlatformModuleLink"], "Platform header")
+    require_text(platform_catalog, ["Platform Console", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", "Service Mechanics", 'href: "/platform/agencies"', 'href: "/platform/airlines"', 'href: "/platform/airline-policy-ingestion"', 'href: "/platform/service-taxonomy"', 'href: "/platform/service-mechanics"'], "Platform module catalog")
     reject_text(layout, ["Agency Workspace", 'href="/agency"'], "Platform header")
+    reject_text(platform_catalog, ["Agency Workspace", 'href: "/agency"'], "Platform module catalog")
     require_text(dashboard, ['href="/platform/agencies"', "Manage agencies"], "Platform dashboard")
     require_text(agencies, ["Agencies", "Create Agency", "Promise.allSettled", "agencies = state?.agencies || []"], "Platform agencies defensive route")
     require_text(agency_detail, ["Enter workspace", "`/agency?agency_id=${agencyId}`"], "Contextual agency workspace entry")

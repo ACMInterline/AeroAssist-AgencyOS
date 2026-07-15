@@ -10,7 +10,10 @@ from services.capability_catalog_service import DEFAULT_CAPABILITY_CATALOG
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_40_1_feature_bundle_rollout_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -116,12 +119,12 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
     system_readiness = get("/api/system/readiness")
     for payload in [readiness, system_readiness]:
-        if payload.get("phase") != EXPECTED_PHASE:
+        if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
             raise AssertionError(f"Unexpected readiness phase: {payload.get('phase')}")
     section = readiness.get("capability_catalog_foundation") or {}
     for flag in [
@@ -166,7 +169,7 @@ def verify_readiness() -> None:
 
 def verify_endpoint_behavior() -> None:
     platform_capabilities = get("/api/platform/capabilities", OWNER_HEADERS)
-    if platform_capabilities.get("phase") != EXPECTED_PHASE or platform_capabilities.get("read_only") is not True:
+    if not application_phase_is_at_least(platform_capabilities.get("phase"), MINIMUM_PHASE) or platform_capabilities.get("read_only") is not True:
         raise AssertionError(f"Platform capability response is not read-only metadata: {platform_capabilities}")
     for flag in ["metadata_only", "runtime_feature_enforcement_disabled", "entitlement_checks_disabled", "route_blocking_disabled", "billing_disabled", "provider_execution_disabled", "external_services_disabled"]:
         require_flag(platform_capabilities, flag)
@@ -204,7 +207,7 @@ def verify_endpoint_behavior() -> None:
         f"/api/agencies/{agency_id}/capabilities/unavailable",
     ]:
         response = get(path, OWNER_HEADERS)
-        if response.get("phase") != EXPECTED_PHASE or response.get("read_only") is not True:
+        if not application_phase_is_at_least(response.get("phase"), MINIMUM_PHASE) or response.get("read_only") is not True:
             raise AssertionError(f"Agency capability filtered endpoint malformed: {path} {response}")
 
     summary = get("/api/platform/summary", OWNER_HEADERS)

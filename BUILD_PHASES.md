@@ -2418,3 +2418,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Converts Epic 55 and Phase 56.0-56.4 historical regression smokes to capability-specific minimum-phase assertions without weakening their behavioral, readiness, isolation, or safety checks.
 - Adds no product behavior, route, collection, migration, provider operation, AI, worker, or frontend surface.
 - See [Phase Marker and Regression Integrity Foundation](docs/architecture/phase-marker-regression-integrity-foundation.md).
+
+## Phase 56.5.2 - Legacy Regression Suite Migration
+
+- Active marker: `phase_56_5_2_legacy_regression_suite_migration`.
+- Migrates the remaining historical smoke suite from stale exact current-build comparisons to evidence-backed, capability-specific minimum-phase assertions.
+- Preserves all capability behavior, tenancy, authorization, persistence, validation, negative-path, idempotency, immutable snapshot, and historical provenance assertions.
+- Adds a complete machine-readable smoke inventory, deterministic static validator, documented exact-current allowlist, narrow filtered runner, and lightweight cached readiness counts.
+- Leaves exactly one current-build smoke allowlisted for Phase 56.5.2 registration; all historical capability smokes remain valid as the application advances.
+- Adds no product behavior, route, schema, collection, migration, provider operation, AI, worker, production-data change, or frontend surface.
+- See [Legacy Regression Suite Migration](docs/architecture/legacy-regression-suite-migration.md).

@@ -13,7 +13,10 @@ from smoke_booking_pnr_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_4_ticket_emd_foundation"
 
 
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:
@@ -61,7 +64,7 @@ def create_booking_record() -> tuple[str, dict, dict, dict]:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")

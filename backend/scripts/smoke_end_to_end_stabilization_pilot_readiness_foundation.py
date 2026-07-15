@@ -33,7 +33,10 @@ from services.pilot_readiness_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_53_0_end_to_end_stabilization_pilot_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -111,7 +114,7 @@ def golden_case_payload(agency_id: str, reference: str, scenario_type: str, fami
 
 
 def verify_models_and_collections() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
+    if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
     for collection in [
         PILOT_READINESS_PROFILES_COLLECTION,
@@ -212,7 +215,7 @@ def verify_router_ui_docs_registration() -> None:
 
 def verify_health_readiness_and_core_workflow() -> tuple[str, str, str]:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
     section = readiness.get("end_to_end_stabilization_pilot_readiness_foundation") or {}

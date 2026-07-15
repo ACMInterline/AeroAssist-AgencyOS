@@ -21,7 +21,10 @@ from smoke_feature_bundle_rollout_rollback_plan_foundation import (
 )
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_40_13_feature_bundle_rollout_summary_pack_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PACK_STATUSES = {"draft", "assembled", "reviewing", "ready", "archived"}
 PACK_AUDIENCES = {"platform", "agency", "operations", "compliance", "executive"}
@@ -256,10 +259,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("feature_bundle_rollout_summary_pack_foundation") or {}
     for flag in [
@@ -354,7 +357,7 @@ def verify_endpoint_behavior() -> None:
         OWNER_HEADERS,
         201,
     )
-    if created.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(created.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected create phase: {created.get('phase')}")
     assert_disabled_response(created)
     summary_pack = created.get("summary_pack") or {}

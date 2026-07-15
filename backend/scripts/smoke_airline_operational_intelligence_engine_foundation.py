@@ -14,7 +14,10 @@ from services.airline_operational_intelligence_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-operational-intelligence"
 
@@ -111,7 +114,7 @@ def verify_no_execution_code() -> None:
 
 
 def verify_endpoint_payload(payload: dict, agency_view: bool = False) -> None:
-    if payload.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected AOIE phase: {payload}")
     if payload.get("metadata_only") is not True or payload.get("architecture_only") is not True:
         raise AssertionError(f"AOIE payload is not architecture-only metadata: {payload}")
@@ -182,10 +185,10 @@ def verify_api_behavior() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("airline_operational_intelligence_engine_architecture_foundation") or {}
     for key in [

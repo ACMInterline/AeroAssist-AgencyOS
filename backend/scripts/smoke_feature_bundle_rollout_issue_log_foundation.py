@@ -14,7 +14,10 @@ from models import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_40_9_feature_bundle_rollout_issue_log_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 ISSUE_SEVERITIES = {"low", "medium", "high", "critical"}
 ISSUE_STATUSES = {"open", "in_review", "follow_up", "resolved", "closed", "deleted"}
@@ -199,10 +202,10 @@ def verify_frontend_and_docs() -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("feature_bundle_rollout_issue_log_foundation") or {}
     for flag in [
@@ -353,7 +356,7 @@ def verify_endpoint_behavior() -> None:
         OWNER_HEADERS,
         201,
     )
-    if created.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(created.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected create phase: {created.get('phase')}")
     assert_disabled_response(created)
     issue = created.get("issue") or {}
@@ -466,7 +469,7 @@ def assert_issue_shape(issue: dict, *, agency_view: bool = False) -> None:
 
 
 def assert_summary_shape(payload: dict, *, agency_id: str | None = None) -> None:
-    if payload.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(payload.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected summary phase: {payload}")
     if agency_id is not None and payload.get("agency_id") != agency_id:
         raise AssertionError(f"Agency issue summary did not stay agency-scoped: {payload}")

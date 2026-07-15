@@ -2,7 +2,10 @@
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post
 
 
-EXPECTED_PHASE = "phase_39_5_saas_subscription_entitlement_foundation"
+from phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = "phase_36_6_gds_parser_foundation"
 
 
 RAW_GDS_TEXT = """RP/SOF1A0980/SOF1A0980 AA/SU 30JUN26/0915Z ABC123
@@ -25,7 +28,7 @@ def require_flag(section: dict, key: str, expected: object = True) -> None:
 
 def main() -> int:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
+    if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
     openapi = get("/openapi.json")
