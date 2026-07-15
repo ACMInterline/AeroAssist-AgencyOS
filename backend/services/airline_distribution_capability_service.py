@@ -18,7 +18,10 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 AIRLINE_DISTRIBUTION_CHANNELS_COLLECTION = "airline_distribution_channels"
 AIRLINE_DISTRIBUTION_CAPABILITIES_COLLECTION = "airline_distribution_capabilities"

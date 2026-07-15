@@ -6,7 +6,9 @@ from database import Database
 from models import AgencyFeatureFlagAudit, AgencyFeatureFlagReadiness, now_utc
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 AUDIT_COLLECTION = "agency_feature_flag_audits"
 READINESS_COLLECTION = "agency_feature_flag_readiness"

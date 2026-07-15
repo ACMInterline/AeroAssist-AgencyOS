@@ -17,14 +17,16 @@ from models import (
     AirlineServiceDeskSummary,
 )
 from services.airline_master_profile_intelligence_service import (
+    CAPABILITY_PHASE,
     PHASE_LABEL,
     PROFILE_COLLECTIONS,
     AirlineMasterProfileIntelligenceService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_1_airline_master_profile_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -40,8 +42,9 @@ def reject_text(path: Path, text: str) -> None:
 
 
 def verify_models_and_collections() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.1 label: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.1 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.1 service")
     expected_collections = {
         "airline_master_profiles",
         "airline_identity_aliases",
@@ -172,11 +175,9 @@ def assert_no_internal_material(value: object) -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_master_profile_intelligence_foundation") or {}
     for key in ["airline_master_profile_intelligence_enabled", "canonical_airline_identity_reused", "duplicate_airline_catalogue_disabled", "platform_profile_governance_enabled", "agency_approved_published_read_only_enabled", "alias_resolution_enabled", "profile_completeness_scoring_enabled", "profile_confidence_scoring_enabled", "effective_dating_enabled", "revision_history_enabled", "conflicting_evidence_preserved", "internal_notes_restricted", "automatic_production_seeding_disabled", "metadata_only"]:
         if section.get(key) is not True:

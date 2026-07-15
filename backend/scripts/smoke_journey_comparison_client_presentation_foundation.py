@@ -24,6 +24,7 @@ from models import (
 )
 from routers import agency_journey_comparison_presentations, platform_journey_comparison_presentations
 from services.journey_comparison_client_presentation_service import (
+    CAPABILITY_PHASE,
     CONNECTION_COLLECTION,
     CONTENT_COLLECTION,
     DIMENSION_COLLECTION,
@@ -42,12 +43,13 @@ from services.journey_comparison_client_presentation_service import (
     JourneyComparisonClientPresentationService,
     JourneyComparisonPresentationError,
 )
+from phase_assertions import assert_application_phase_at_least
 from services.journey_option_fare_brand_composition_service import JourneyOptionFareBrandCompositionService
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 from smoke_journey_option_fare_brand_composition_workspace_foundation import build_journey, seed_governed_fare
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -58,8 +60,9 @@ def require_text(path: Path, text: str) -> None:
 
 
 def verify_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 56.3 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 56.3 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 56.3 service")
     if not agency_journey_comparison_presentations.router or not platform_journey_comparison_presentations.router:
         raise AssertionError("Journey comparison routers did not import.")
 
@@ -275,8 +278,7 @@ def ensure_second_agency(agencies: list[dict]) -> str:
 
 def verify_live_api() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health.get('phase')}; expected {EXPECTED_PHASE}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
     section = readiness.get("journey_comparison_client_presentation_foundation") or {}
     for key in JourneyComparisonClientPresentationService(Database()).safety_flags():

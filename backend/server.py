@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from build_phase import CURRENT_BUILD_PHASE
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
 from routers import platform
@@ -72,20 +73,20 @@ from services.offer_to_booking_handoff_service import BOOKING_EXECUTION_INSTRUCT
 from services.after_sales_workflow_service import AFTER_SALES_CASES_COLLECTION, AFTER_SALES_CASE_ITEMS_COLLECTION, AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION, AFTER_SALES_DECISIONS_COLLECTION, AFTER_SALES_FINANCIAL_IMPACTS_COLLECTION, AFTER_SALES_RESOLUTIONS_COLLECTION, CASE_STATUSES as AFTER_SALES_CASE_STATUSES, CASE_TYPES as AFTER_SALES_CASE_TYPES, COMMUNICATION_TYPES as AFTER_SALES_COMMUNICATION_TYPES, DECISION_STATUSES as AFTER_SALES_DECISION_STATUSES, FINANCIAL_IMPACT_TYPES as AFTER_SALES_FINANCIAL_IMPACT_TYPES, RESOLUTION_STATUSES as AFTER_SALES_RESOLUTION_STATUSES
 from services.operations_command_center_service import VIEW_TYPES as OPERATIONS_COMMAND_CENTER_VIEW_TYPES, OperationsCommandCenterService
 from services.operational_workflow_maturity_service import GOLDEN_PATH_STAGES as OPERATIONAL_MATURITY_GOLDEN_PATH_STAGES, MATURITY_DIMENSIONS as OPERATIONAL_MATURITY_DIMENSIONS, TEST_CASE_TEMPLATES as OPERATIONAL_MATURITY_TEST_CASE_TEMPLATES, OperationalWorkflowMaturityService
-from services.airline_master_profile_intelligence_service import AirlineMasterProfileIntelligenceService
-from services.airline_policy_evidence_governance_service import AirlinePolicyEvidenceGovernanceService
-from services.airline_knowledge_versioning_service import AirlineKnowledgeVersioningService
-from services.airline_service_coverage_gap_service import AirlineServiceCoverageGapService
-from services.airline_distribution_capability_service import AirlineDistributionCapabilityService
-from services.interline_codeshare_intelligence_service import InterlineCodeshareIntelligenceService
-from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
-from services.airline_contact_communication_intelligence_service import AirlineContactCommunicationIntelligenceService
-from services.airline_intelligence_scale_readiness_service import AirlineIntelligenceScaleReadinessService
-from services.canonical_journey_itinerary_service import CanonicalJourneyItineraryService
-from services.journey_segment_authoring_service import JourneySegmentAuthoringService
-from services.journey_option_fare_brand_composition_service import JourneyOptionFareBrandCompositionService
-from services.journey_comparison_client_presentation_service import JourneyComparisonClientPresentationService
-from services.offer_delivery_client_interaction_service import PHASE_LABEL, OfferDeliveryClientInteractionService
+from services.airline_master_profile_intelligence_service import CAPABILITY_PHASE as AIRLINE_MASTER_PROFILE_CAPABILITY_PHASE, AirlineMasterProfileIntelligenceService
+from services.airline_policy_evidence_governance_service import CAPABILITY_PHASE as AIRLINE_EVIDENCE_CAPABILITY_PHASE, AirlinePolicyEvidenceGovernanceService
+from services.airline_knowledge_versioning_service import CAPABILITY_PHASE as AIRLINE_KNOWLEDGE_VERSIONING_CAPABILITY_PHASE, AirlineKnowledgeVersioningService
+from services.airline_service_coverage_gap_service import CAPABILITY_PHASE as AIRLINE_SERVICE_COVERAGE_CAPABILITY_PHASE, AirlineServiceCoverageGapService
+from services.airline_distribution_capability_service import CAPABILITY_PHASE as AIRLINE_DISTRIBUTION_CAPABILITY_PHASE, AirlineDistributionCapabilityService
+from services.interline_codeshare_intelligence_service import CAPABILITY_PHASE as INTERLINE_CODESHARE_CAPABILITY_PHASE, InterlineCodeshareIntelligenceService
+from services.airline_fare_family_brand_intelligence_service import CAPABILITY_PHASE as AIRLINE_FARE_BRAND_CAPABILITY_PHASE, AirlineFareFamilyBrandIntelligenceService
+from services.airline_contact_communication_intelligence_service import CAPABILITY_PHASE as AIRLINE_CONTACT_CAPABILITY_PHASE, AirlineContactCommunicationIntelligenceService
+from services.airline_intelligence_scale_readiness_service import CAPABILITY_PHASE as AIRLINE_INTELLIGENCE_READINESS_CAPABILITY_PHASE, AirlineIntelligenceScaleReadinessService
+from services.canonical_journey_itinerary_service import CAPABILITY_PHASE as CANONICAL_JOURNEY_CAPABILITY_PHASE, CanonicalJourneyItineraryService
+from services.journey_segment_authoring_service import CAPABILITY_PHASE as JOURNEY_AUTHORING_CAPABILITY_PHASE, JourneySegmentAuthoringService
+from services.journey_option_fare_brand_composition_service import CAPABILITY_PHASE as JOURNEY_COMPOSITION_CAPABILITY_PHASE, JourneyOptionFareBrandCompositionService
+from services.journey_comparison_client_presentation_service import CAPABILITY_PHASE as JOURNEY_PRESENTATION_CAPABILITY_PHASE, JourneyComparisonClientPresentationService
+from services.offer_delivery_client_interaction_service import CAPABILITY_PHASE as OFFER_DELIVERY_CAPABILITY_PHASE, OfferDeliveryClientInteractionService
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -107,7 +108,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 56.4 offer delivery and client interaction foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.5.1 regression integrity foundation.",
 )
 
 app.add_middleware(
@@ -134,7 +135,7 @@ async def root_health() -> dict:
         "ok": True,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": PHASE_LABEL,
+        "phase": CURRENT_BUILD_PHASE,
     }
 
 
@@ -2270,7 +2271,7 @@ async def readiness() -> dict:
         "ok": ok,
         "service": "AeroAssist AgencyOS API",
         "app_env": settings.app_env,
-        "phase": PHASE_LABEL,
+        "phase": CURRENT_BUILD_PHASE,
         "config": config,
         "database": database_status,
         "storage": storage,
@@ -4836,6 +4837,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 54.9 completes Epic 54 with a deterministic aggregate maturity assessment and isolated golden-path diagnostics over the existing workflow, queue, SLA, task dependency, request-to-trip conversion, offer-to-booking handoff, after-sales, command-center, timeline, and Phase 53 pilot-readiness foundations. It creates no parallel subsystem or production operational records.",
         },
         "airline_master_profile_intelligence_foundation": {
+            "capability_phase": AIRLINE_MASTER_PROFILE_CAPABILITY_PHASE,
             "airline_master_profile_intelligence_enabled": True,
             "canonical_airline_identity_reused": True,
             "duplicate_airline_catalogue_disabled": True,
@@ -4869,6 +4871,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.1 enriches the existing canonical airline_profiles identity with governed aliases, relationships, hubs, operational classification, distribution, service desks, evidence, confidence, effective dates, and revisions. Agency consumption is read-only and limited to approved or published metadata; internal notes and restricted evidence references are excluded.",
         },
         "airline_policy_evidence_source_governance_foundation": {
+            "capability_phase": AIRLINE_EVIDENCE_CAPABILITY_PHASE,
             "airline_policy_evidence_source_governance_enabled": True,
             "canonical_evidence_governance_enabled": True,
             "raw_source_truth_preserved": True,
@@ -4903,6 +4906,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.2 governs airline evidence sources, artifacts, assertions, links, reviews, conflicts, freshness, and access classifications around existing raw acquisition and policy source records. Conflicts and superseded evidence remain retained. Agencies receive only approved, agency-visible summaries without restricted URLs, attachments, internal notes, or raw source locations.",
         },
         "airline_knowledge_versioning_change_detection_foundation": {
+            "capability_phase": AIRLINE_KNOWLEDGE_VERSIONING_CAPABILITY_PHASE,
             "airline_knowledge_versioning_change_detection_enabled": True,
             "canonical_airline_knowledge_version_reused": True,
             "immutable_version_items_enabled": True,
@@ -4929,6 +4933,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.3 reuses the canonical airline_knowledge_versions governance envelope and adds immutable object snapshots, deterministic field-level changes, impact assessments, reviews, and explicit re-QA or republish requests. Historical offers, recommendations, bookings, trips, and published snapshots are identified for review but never mutated automatically. Agencies see only published or effective update summaries.",
         },
         "airline_service_coverage_gap_management_foundation": {
+            "capability_phase": AIRLINE_SERVICE_COVERAGE_CAPABILITY_PHASE,
             "airline_service_coverage_gap_management_enabled": True,
             "airline_service_coverage_profiles_collection_enabled": True,
             "airline_service_coverage_cells_collection_enabled": True,
@@ -4966,6 +4971,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.4 projects existing policy, pricing, rule, evidence, QA, publication, scenario, capability, toolkit, pilot-readiness, and recommendation metadata into deterministic airline-by-service coverage cells. Critical gaps prevent operational-ready status. Agency views contain only published coverage and sanitized missing-or-unknown warnings; assessments never publish knowledge or mutate offers and recommendations.",
         },
         "airline_distribution_pss_gds_ndc_capability_intelligence_foundation": {
+            "capability_phase": AIRLINE_DISTRIBUTION_CAPABILITY_PHASE,
             "airline_distribution_pss_gds_ndc_capability_intelligence_enabled": True,
             "airline_distribution_channels_collection_enabled": True,
             "airline_distribution_capabilities_collection_enabled": True,
@@ -5005,6 +5011,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.5 adds governed distribution-channel, PSS, GDS, NDC, fulfillment, servicing, restriction, and evidence-link intelligence around existing broad distribution records. Provider stage is recorded separately from capability status, credentials are prohibited, and every agency view is published and read-only. Booking handoff consumes advisory planning snapshots only; no provider connectivity or execution is introduced.",
         },
         "interline_codeshare_operating_carrier_intelligence_foundation": {
+            "capability_phase": INTERLINE_CODESHARE_CAPABILITY_PHASE,
             "interline_codeshare_operating_carrier_intelligence_enabled": True,
             "airline_carrier_relationships_collection_enabled": True,
             "airline_interline_agreement_profiles_collection_enabled": True,
@@ -5039,6 +5046,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.6 adds governed carrier relationships and responsibility rules for interline, codeshare, operating, validating, ticketing, plating, handling, baggage, through-check, special-service, and EMD contexts. It produces advisory itinerary responsibility traces with explicit unknown, unsupported, and manual-review states; it preserves legacy source truth and does not connect to or execute provider systems.",
         },
         "airline_fare_family_rbd_baggage_brand_intelligence_foundation": {
+            "capability_phase": AIRLINE_FARE_BRAND_CAPABILITY_PHASE,
             "airline_fare_family_rbd_baggage_brand_intelligence_enabled": True,
             "canonical_airline_fare_families_collection_reused": True,
             "airline_fare_brand_attributes_collection_enabled": True,
@@ -5069,6 +5077,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.7 adds governed fare-family hierarchy, RBD mapping, commercial attributes, baggage allowances and exceptions, comparison profiles, and offer-builder projections. Unknown and interline contexts remain explicit manual-review states. It neither calculates live fares nor invents availability, and it does not connect to or execute providers.",
         },
         "airline_contact_communication_intelligence_foundation": {
+            "capability_phase": AIRLINE_CONTACT_CAPABILITY_PHASE,
             "airline_contact_communication_intelligence_enabled": True,
             "canonical_airline_contacts_collection_reused": True,
             "airline_contact_channels_collection_enabled": True,
@@ -5103,6 +5112,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.8 adds governed airline and supplier desk, channel, scope, operating-hours, escalation, message-template, requirement, verification, and interaction-history intelligence. Internal instructions, supplier messages, and client status text remain separate; no credentials are stored and no message, escalation, provider action, or background process is executed.",
         },
         "airline_intelligence_scale_release_readiness_foundation": {
+            "capability_phase": AIRLINE_INTELLIGENCE_READINESS_CAPABILITY_PHASE,
             "airline_intelligence_scale_release_readiness_enabled": True,
             "epic_55_canonical_sources_reused": True,
             "readiness_profiles_collection_enabled": True,
@@ -5135,6 +5145,7 @@ async def readiness() -> dict:
             "diagnostic": "Phase 55.9 consolidates Epic 55 knowledge, evidence, coverage, capability, QA, publication, and agency-consumption metadata into deterministic scale-readiness assessments and human-controlled release gates. It does not seed production, publish automatically, call providers, or mutate historical knowledge snapshots.",
         },
         "canonical_journey_itinerary_representation_foundation": {
+            "capability_phase": CANONICAL_JOURNEY_CAPABILITY_PHASE,
             "canonical_journey_itinerary_representation_enabled": True,
             "canonical_operational_entities_reused": True,
             "duplicate_operational_entities_disabled": True,
@@ -5166,28 +5177,44 @@ async def readiness() -> dict:
             "diagnostic": "Phase 56.0 establishes the canonical journey and itinerary presentation layer while preserving Request, Trip, Offer, Booking, Ticket, EMD, Passenger, and canonical segment records as source truth. Projections retain provenance, finalized snapshots are immutable, and no live availability, pricing, provider connectivity, external calls, AI, background workers, or automatic publication is introduced.",
         },
         "journey_segment_authoring_intelligent_import_workspace_foundation": {
+            "capability_phase": JOURNEY_AUTHORING_CAPABILITY_PHASE,
             **JourneySegmentAuthoringService(database).safety_flags(),
             **journey_segment_authoring_coverage,
             "readiness_required": False,
             "diagnostic": "Phase 56.1 preserves immutable raw inputs, normalizes editable segment drafts with field provenance, performs deterministic timezone-aware calculations, and applies only through canonical Phase 56.0 Journey records. It performs no live schedule or pricing lookup, provider call, scraping, AI inference, background work, or automatic publication.",
         },
         "journey_option_fare_brand_composition_workspace_foundation": {
+            "capability_phase": JOURNEY_COMPOSITION_CAPABILITY_PHASE,
             **JourneyOptionFareBrandCompositionService(database).safety_flags(),
             **journey_option_composition_coverage,
             "readiness_required": False,
             "diagnostic": "Phase 56.2 composes canonical Journey segment projections, governed fare-brand intelligence, explicit agency commercial values, and advisory service assessments into offer-ready itinerary alternatives. It retrieves no live fares or availability, contacts no provider, publishes nothing automatically, and performs no booking, ticketing, or EMD execution.",
         },
         "journey_comparison_client_presentation_foundation": {
+            "capability_phase": JOURNEY_PRESENTATION_CAPABILITY_PHASE,
             **JourneyComparisonClientPresentationService(database).safety_flags(),
             **journey_comparison_presentation_coverage,
             "readiness_required": False,
             "diagnostic": "Phase 56.3 converts existing canonical Journey and composition data into deterministic, client-safe itinerary and fare-brand comparisons with explicit operational suitability, unknown states, agent-controlled preference, immutable snapshots, and reviewable handoffs. It does not retrieve live fares or availability, publish offers, create public share links, send messages, or execute provider operations.",
         },
         "offer_delivery_client_interaction_foundation": {
+            "capability_phase": OFFER_DELIVERY_CAPABILITY_PHASE,
             **OfferDeliveryClientInteractionService(database).safety_flags(),
             **offer_delivery_coverage,
             "readiness_required": False,
             "diagnostic": "Phase 56.4 enables controlled authenticated delivery and recipient-bound client decisions against immutable released presentation snapshots. It does not retrieve live fares or availability, connect to providers, publish anonymous links, process payments, create bookings, issue tickets or EMDs, send uncontrolled external messages, use AI, scrape, or run background workers.",
+        },
+        "phase_marker_regression_integrity_foundation": {
+            "current_build_phase_centralized": True,
+            "numeric_phase_comparison_enabled": True,
+            "exact_phase_comparison_enabled": True,
+            "invalid_phase_detection_enabled": True,
+            "historical_minimum_phase_assertions_enabled": True,
+            "capability_provenance_separated": True,
+            "historical_provenance_preserved": True,
+            "immutable_snapshot_phase_mutation_disabled": True,
+            "readiness_required": False,
+            "diagnostic": "Phase 56.5.1 centralizes current build metadata and gives historical smoke tests numeric minimum-phase semantics while preserving capability and immutable snapshot provenance.",
         },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,

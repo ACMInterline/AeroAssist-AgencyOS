@@ -7,7 +7,9 @@ from database import Database
 from models import OperationalRuleComposerRule, OperationalRuleComposerRuleCreate, OperationalRuleComposerRuleUpdate
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION = "operational_rule_composer_rules"
 
 SUPPORTED_OPERATORS = [

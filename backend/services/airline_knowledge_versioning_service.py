@@ -19,7 +19,10 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"

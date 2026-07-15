@@ -30,6 +30,7 @@ from routers import (
 )
 from services.offer_delivery_client_interaction_service import (
     AUDIT_COLLECTION,
+    CAPABILITY_PHASE,
     DELIVERY_COLLECTIONS,
     DELIVERY_COLLECTION,
     DOCUMENT_LINK_COLLECTION,
@@ -39,10 +40,11 @@ from services.offer_delivery_client_interaction_service import (
     PHASE_LABEL,
     VERSION_COLLECTION,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, request
 
 
-EXPECTED_PHASE = "phase_56_4_offer_delivery_client_interaction_foundation"
+MINIMUM_PHASE = "phase_56_4_offer_delivery_client_interaction_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -66,8 +68,9 @@ def restricted_key_found(value: object) -> bool:
 
 
 def verify_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 56.4 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 56.4 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 56.4 service")
     if not all([
         agency_offer_deliveries.router,
         platform_offer_delivery_diagnostics.router,
@@ -458,8 +461,7 @@ async def verify_service_behavior() -> None:
 
 def verify_live_api() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health.get('phase')}; expected {EXPECTED_PHASE}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
     section = readiness.get("offer_delivery_client_interaction_foundation") or {}
     for key in OfferDeliveryClientInteractionService(Database()).safety_flags():

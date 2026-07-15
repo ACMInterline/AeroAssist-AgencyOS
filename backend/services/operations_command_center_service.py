@@ -6,7 +6,9 @@ from typing import Any
 from database import Database
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 VIEW_TYPES = ["dashboard", "queue", "kanban", "calendar", "timeline", "exceptions", "workload"]
 

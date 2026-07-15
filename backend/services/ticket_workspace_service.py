@@ -15,7 +15,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 TICKET_WORKSPACE_COLLECTION = "ticket_workspaces"
 TICKET_WORKSPACE_STATUSES = [
     TicketWorkspaceStatus.DRAFT.value,

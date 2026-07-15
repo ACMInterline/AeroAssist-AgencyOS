@@ -20,6 +20,7 @@ from models import (
     AirlineValidatingCarrierRule,
 )
 from services.interline_codeshare_intelligence_service import (
+    CAPABILITY_PHASE,
     CARRIER_ROLES,
     ENTITY_CONFIG,
     INTERLINE_INTELLIGENCE_COLLECTIONS,
@@ -30,10 +31,11 @@ from services.interline_codeshare_intelligence_service import (
     RULE_STATUSES,
     InterlineCodeshareIntelligenceService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/interline-codeshare-intelligence"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -62,8 +64,9 @@ def assert_agency_safe(value: object) -> None:
 
 
 def verify_models_collections_indexes_and_taxonomies() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.6 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.6 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.6 service")
     expected_collections = {
         "airline_carrier_relationships",
         "airline_interline_agreement_profiles",
@@ -227,8 +230,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if health.get("phase") != EXPECTED_PHASE or readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Phase 55.6 marker is not active: {health.get('phase')} / {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("interline_codeshare_operating_carrier_intelligence_foundation") or {}
     for key in [
         "interline_codeshare_operating_carrier_intelligence_enabled",

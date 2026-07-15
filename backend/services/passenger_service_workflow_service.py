@@ -7,7 +7,9 @@ from database import Database
 from models import PassengerServiceWorkflow, PassengerServiceWorkflowCreate, PassengerServiceWorkflowUpdate, new_id
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 PASSENGER_SERVICE_WORKFLOW_COLLECTION = "passenger_service_workflows"
 
 WORKFLOW_STAGES = [

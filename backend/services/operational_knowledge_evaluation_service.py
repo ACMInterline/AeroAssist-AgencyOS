@@ -12,7 +12,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 OPERATIONAL_KNOWLEDGE_EVALUATION_COLLECTION = "operational_knowledge_evaluations"
 
 EVALUATION_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

@@ -21,7 +21,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 OPERATIONAL_SLA_POLICIES_COLLECTION = "operational_sla_policies"
 OPERATIONAL_DEADLINES_COLLECTION = "operational_deadlines"

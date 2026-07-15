@@ -32,7 +32,9 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 AFTER_SALES_CASES_COLLECTION = "after_sales_cases"
 AFTER_SALES_CASE_ITEMS_COLLECTION = "after_sales_case_items"

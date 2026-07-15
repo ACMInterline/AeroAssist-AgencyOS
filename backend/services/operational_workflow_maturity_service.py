@@ -9,7 +9,9 @@ from services.operations_command_center_service import OperationsCommandCenterSe
 from services.pilot_readiness_service import PilotReadinessService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 MATURITY_DIMENSIONS = [
     "workflow_linkage",

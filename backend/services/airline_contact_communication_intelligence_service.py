@@ -21,7 +21,10 @@ from models import (
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_8_airline_contact_communication_intelligence_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 AIRLINE_CONTACT_DIRECTORY_COLLECTION = "airline_contacts"
 AIRLINE_CONTACT_CHANNELS_COLLECTION = "airline_contact_channels"

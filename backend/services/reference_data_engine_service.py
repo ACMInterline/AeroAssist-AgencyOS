@@ -7,7 +7,9 @@ from database import Database
 from models import ReferenceDataDomain, ReferenceDataDomainCreate, ReferenceDataDomainUpdate
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 REFERENCE_DATA_DOMAINS_COLLECTION = "reference_data_domains"
 
 SUPPORTED_REFERENCE_DOMAIN_CODES = [

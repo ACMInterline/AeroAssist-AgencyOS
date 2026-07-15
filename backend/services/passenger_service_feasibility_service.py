@@ -12,7 +12,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 PASSENGER_SERVICE_FEASIBILITY_COLLECTION = "passenger_service_feasibilities"
 
 FEASIBILITY_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

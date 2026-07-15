@@ -21,7 +21,10 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_2_airline_policy_evidence_source_governance_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 SOURCE_COLLECTION = "airline_evidence_sources"
 ARTIFACT_COLLECTION = "airline_evidence_artifacts"

@@ -2408,3 +2408,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Does not retrieve live fares or availability, expose anonymous links, connect to providers, process payments, create bookings, issue tickets/EMDs, send uncontrolled messages, scrape, use AI, run workers, or seed production data.
 - See [Offer Delivery and Client Interaction Foundation](docs/architecture/offer-delivery-client-interaction-foundation.md).
 - Enforces the permanent [Product Surface and Workspace Governance](docs/architecture/product-surface-workspace-governance.md) review gate: one operational object has one primary workspace, while Phase 56 engines remain contextual tools.
+
+## Phase 56.5.1 - Phase Marker And Regression Integrity Foundation
+
+- Active marker: `phase_56_5_1_regression_integrity_foundation`.
+- Centralizes current application build metadata in `backend/build_phase.py` and wires health, readiness, and runtime service phase responses to that source.
+- Adds deterministic numeric phase parsing and comparison, including multi-component versions such as 56.5.1 and numeric ordering such as 56.10 after 56.9.
+- Separates current build metadata from exact capability provenance and immutable historical record or snapshot provenance.
+- Converts Epic 55 and Phase 56.0-56.4 historical regression smokes to capability-specific minimum-phase assertions without weakening their behavioral, readiness, isolation, or safety checks.
+- Adds no product behavior, route, collection, migration, provider operation, AI, worker, or frontend surface.
+- See [Phase Marker and Regression Integrity Foundation](docs/architecture/phase-marker-regression-integrity-foundation.md).

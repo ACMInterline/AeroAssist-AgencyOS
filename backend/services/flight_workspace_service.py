@@ -8,7 +8,9 @@ from models import FlightWorkspace, FlightWorkspaceCreate, FlightWorkspaceUpdate
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 FLIGHT_WORKSPACE_COLLECTION = "flight_workspaces"
 FLIGHT_STATUSES = ["draft", "active", "schedule_review", "ready", "flown", "archived"]

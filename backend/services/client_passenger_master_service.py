@@ -24,7 +24,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 CLIENT_MASTER_RECORDS_COLLECTION = "client_master_records"
 PASSENGER_MASTER_RECORDS_COLLECTION = "passenger_master_records"

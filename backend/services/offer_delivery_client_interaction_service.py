@@ -30,7 +30,10 @@ from services.journey_comparison_client_presentation_service import (
 from services.offer_acceptance_service import OfferAcceptanceService
 
 
-PHASE_LABEL = "phase_56_4_offer_delivery_client_interaction_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_56_4_offer_delivery_client_interaction_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 DELIVERY_COLLECTION = "journey_offer_deliveries"
 VERSION_COLLECTION = "journey_offer_delivery_versions"

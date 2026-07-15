@@ -23,7 +23,10 @@ from models import (
 from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 COMPOSITION_COLLECTION = "journey_option_compositions"
 OPTION_COLLECTION = "journey_option_alternatives"

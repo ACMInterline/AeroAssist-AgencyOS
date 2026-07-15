@@ -22,6 +22,7 @@ from services.canonical_journey_itinerary_service import CanonicalJourneyItinera
 from services.journey_segment_authoring_service import (
     APPLICATION_COLLECTION,
     AUTHORING_COLLECTIONS,
+    CAPABILITY_PHASE,
     CORRECTION_COLLECTION,
     DRAFT_COLLECTION,
     PHASE_LABEL,
@@ -34,10 +35,11 @@ from services.journey_segment_authoring_service import (
     JourneyAuthoringError,
     JourneySegmentAuthoringService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -48,8 +50,9 @@ def require_text(path: Path, text: str) -> None:
 
 
 def verify_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 56.1 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 56.1 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 56.1 service")
     expected_collections = {
         SESSION_COLLECTION, SOURCE_COLLECTION, DRAFT_COLLECTION, PROVENANCE_COLLECTION,
         CORRECTION_COLLECTION, VALIDATION_COLLECTION, APPLICATION_COLLECTION, TEMPLATE_COLLECTION,
@@ -291,8 +294,7 @@ def ensure_second_agency(agencies: list[dict]) -> str:
 
 def verify_live_api() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
     section = readiness.get("journey_segment_authoring_intelligent_import_workspace_foundation") or {}
     for key in [

@@ -17,7 +17,9 @@ from services.offer_decision_export_delivery_service import actor_from_user, enu
 from services.agency_feature_flag_audit_service import AgencyFeatureFlagAuditService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 FLAG_COLLECTION = "agency_feature_flags"
 REVIEW_COLLECTION = "agency_feature_flag_reviews"

@@ -13,7 +13,9 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 REQUEST_WORKSPACE_COLLECTION = "travel_request_workspaces"
 REQUEST_TYPES = ["general", "flight", "hotel", "package", "multi_city", "group", "corporate", "leisure", "disruption", "service"]

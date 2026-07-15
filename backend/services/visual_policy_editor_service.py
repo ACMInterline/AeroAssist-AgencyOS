@@ -7,7 +7,9 @@ from database import Database
 from models import VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 VISUAL_POLICY_EDITOR_CARDS_COLLECTION = "visual_policy_editor_cards"
 
 POLICY_FAMILIES = [

@@ -18,7 +18,10 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_6_interline_codeshare_operating_carrier_intelligence_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 AIRLINE_CARRIER_RELATIONSHIPS_COLLECTION = "airline_carrier_relationships"
 AIRLINE_INTERLINE_AGREEMENT_PROFILES_COLLECTION = "airline_interline_agreement_profiles"

@@ -18,6 +18,7 @@ from models import (
     AirlineIntelligenceScaleIssue,
 )
 from services.airline_intelligence_scale_readiness_service import (
+    CAPABILITY_PHASE,
     ASSESSMENT_STATUSES,
     ASSESSMENT_TEMPLATES,
     DIMENSION_CONFIG,
@@ -27,10 +28,11 @@ from services.airline_intelligence_scale_readiness_service import (
     AirlineIntelligenceScaleReadinessError,
     AirlineIntelligenceScaleReadinessService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-intelligence-readiness"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -86,8 +88,9 @@ def assert_agency_safe(value: object) -> None:
 
 
 def verify_models_collections_indexes_and_taxonomies() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.9 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.9 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.9 service")
     expected_collections = {
         "airline_intelligence_readiness_profiles",
         "airline_intelligence_readiness_assessments",
@@ -326,8 +329,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if health.get("phase") != EXPECTED_PHASE or readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Phase 55.9 marker is not active: {health.get('phase')} / {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_intelligence_scale_release_readiness_foundation") or {}
     for key in [
         "airline_intelligence_scale_release_readiness_enabled",
@@ -360,7 +363,8 @@ def verify_live_routes() -> None:
         raise AssertionError("Phase 55.9 smoke requires a seeded agency.")
     agency_id = agencies[0]["id"]
     dashboard = get(PLATFORM_BASE, OWNER_HEADERS)
-    if dashboard.get("phase") != EXPECTED_PHASE or len(dashboard.get("assessment_templates") or []) != 10:
+    assert_application_phase_at_least(dashboard.get("phase"), MINIMUM_PHASE, source="platform readiness endpoint")
+    if len(dashboard.get("assessment_templates") or []) != 10:
         raise AssertionError("Platform airline intelligence readiness endpoint is incomplete.")
     assessment = post(f"{PLATFORM_BASE}/assessments/run", {
         "airline_code": "ZZ",

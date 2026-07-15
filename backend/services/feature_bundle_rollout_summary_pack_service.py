@@ -24,7 +24,9 @@ from services.feature_bundle_rollout_timeline_service import TIMELINE_COLLECTION
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 SUMMARY_PACK_COLLECTION = "feature_bundle_rollout_summary_packs"
 PLAN_COLLECTION = "agency_feature_bundle_rollout_plans"

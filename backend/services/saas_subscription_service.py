@@ -23,7 +23,9 @@ from models import (
 from services.offer_decision_export_delivery_service import actor_from_user, enum_value, payload_dict
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 PLAN_COLLECTION = "saas_subscription_plans"
 ENTITLEMENT_COLLECTION = "saas_plan_entitlements"

@@ -17,6 +17,7 @@ from models import (
     AirlineKnowledgeVersionItem,
 )
 from services.airline_knowledge_versioning_service import (
+    CAPABILITY_PHASE,
     CHANGE_CATEGORIES,
     IMPACT_TARGET_COLLECTIONS,
     PHASE_LABEL,
@@ -24,13 +25,14 @@ from services.airline_knowledge_versioning_service import (
     VERSIONING_COLLECTIONS,
     AirlineKnowledgeVersioningService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_airline_knowledge_governance_foundation import release_payload
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 from smoke_operational_scenario_testing_foundation import scenario_payload
 from smoke_visual_policy_editor_foundation import card_payload
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_3_airline_knowledge_versioning_change_detection_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/knowledge-versions"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -69,8 +71,9 @@ def assert_no_restricted_material(value: object) -> None:
 
 
 def verify_models_collections_and_indexes() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.3 label: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.3 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.3 service")
     expected_collections = {
         "airline_knowledge_versions",
         "airline_knowledge_version_items",
@@ -261,11 +264,9 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_knowledge_versioning_change_detection_foundation") or {}
     for key in [
         "airline_knowledge_versioning_change_detection_enabled",

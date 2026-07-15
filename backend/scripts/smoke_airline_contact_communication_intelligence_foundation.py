@@ -20,6 +20,7 @@ from models import (
     AirlineSupplierInteractionRecord,
 )
 from services.airline_contact_communication_intelligence_service import (
+    CAPABILITY_PHASE,
     COMMUNICATION_TEMPLATE_TYPES,
     CONTACT_CHANNEL_TYPES,
     CONTACT_DESK_TYPES,
@@ -29,10 +30,11 @@ from services.airline_contact_communication_intelligence_service import (
     AirlineContactCommunicationIntelligenceError,
     AirlineContactCommunicationIntelligenceService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_8_airline_contact_communication_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-contact-intelligence"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -74,8 +76,9 @@ def assert_agency_safe(value: object) -> None:
 
 
 def verify_models_collections_indexes_and_taxonomies() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.8 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.8 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.8 service")
     expected_collections = {
         "airline_contacts",
         "airline_contact_channels",
@@ -393,8 +396,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if health.get("phase") != EXPECTED_PHASE or readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Phase 55.8 marker is not active: {health.get('phase')} / {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_contact_communication_intelligence_foundation") or {}
     for key in [
         "airline_contact_communication_intelligence_enabled",

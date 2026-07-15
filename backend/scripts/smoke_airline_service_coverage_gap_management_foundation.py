@@ -17,6 +17,7 @@ from models import (
     AirlineServiceCoverageProfile,
 )
 from services.airline_service_coverage_gap_service import (
+    CAPABILITY_PHASE,
     COVERAGE_COLLECTIONS,
     COVERAGE_DIMENSIONS,
     COVERAGE_STATUSES,
@@ -26,10 +27,11 @@ from services.airline_service_coverage_gap_service import (
     SERVICE_COVERAGE_CATALOG,
     AirlineServiceCoverageGapService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_4_airline_service_coverage_gap_management_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-service-coverage"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -68,8 +70,9 @@ def assert_no_restricted_material(value: object) -> None:
 
 
 def verify_models_collections_and_indexes() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.4 label: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.4 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.4 service")
     expected = {
         "airline_service_coverage_profiles",
         "airline_service_coverage_cells",
@@ -265,8 +268,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if health.get("phase") != EXPECTED_PHASE or readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Phase 55.4 marker is not active: {health.get('phase')} / {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_service_coverage_gap_management_foundation") or {}
     for key in [
         "airline_service_coverage_gap_management_enabled",

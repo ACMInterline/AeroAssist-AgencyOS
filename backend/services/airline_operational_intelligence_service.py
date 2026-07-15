@@ -6,7 +6,9 @@ from database import Database
 from models import AirlineOperationalIntelligenceArchitecture
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 ARCHITECTURE_COLLECTION = "airline_operational_intelligence_architecture"
 ARCHITECTURE_REFERENCE = "phase_50_0_airline_operational_intelligence_engine_architecture_foundation"
 

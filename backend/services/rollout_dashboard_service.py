@@ -17,7 +17,9 @@ from services.feature_bundle_rollout_plan_service import PLAN_STAGES, FeatureBun
 from services.feature_bundle_rollout_readiness_service import READINESS_STATUSES, FeatureBundleRolloutReadinessService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 VIEW_COLLECTION = "rollout_dashboard_views"
 SNAPSHOT_COLLECTION = "rollout_dashboard_snapshots"

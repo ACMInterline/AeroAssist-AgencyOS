@@ -22,7 +22,9 @@ from services.task_automation_dependency_service import TaskAutomationDependency
 from services.trip_dossier_service import create_trip_from_request, link_request_to_trip, write_request_timeline, write_trip_timeline
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 REQUEST_TRIP_CONVERSION_PLANS_COLLECTION = "request_trip_conversion_plans"
 REQUEST_TRIP_CONVERSION_RUNS_COLLECTION = "request_trip_conversion_runs"

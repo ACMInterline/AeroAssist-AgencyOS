@@ -18,7 +18,10 @@ from models import (
 from services.knowledge_population_toolkit_service import KnowledgePopulationToolkitService
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_55_4_airline_service_coverage_gap_management_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 COVERAGE_PROFILE_COLLECTION = "airline_service_coverage_profiles"
 COVERAGE_CELL_COLLECTION = "airline_service_coverage_cells"

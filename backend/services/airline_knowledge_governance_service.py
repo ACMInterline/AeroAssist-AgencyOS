@@ -15,7 +15,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 AIRLINE_KNOWLEDGE_VERSION_COLLECTION = "airline_knowledge_versions"
 AIRLINE_KNOWLEDGE_RELEASE_COLLECTION = "airline_knowledge_releases"
 

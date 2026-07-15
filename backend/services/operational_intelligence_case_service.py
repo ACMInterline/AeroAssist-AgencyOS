@@ -11,7 +11,9 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+PHASE_LABEL = CURRENT_BUILD_PHASE
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

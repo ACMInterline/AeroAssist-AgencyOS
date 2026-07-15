@@ -17,6 +17,7 @@ from models import (
     AirlineEvidenceSource,
 )
 from services.airline_policy_evidence_governance_service import (
+    CAPABILITY_PHASE,
     CONFLICT_STATUSES,
     EVIDENCE_COLLECTIONS,
     PHASE_LABEL,
@@ -25,11 +26,12 @@ from services.airline_policy_evidence_governance_service import (
     TARGET_COLLECTIONS,
     AirlinePolicyEvidenceGovernanceService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_airline_knowledge_acquisition_workspace_foundation import acquisition_payload
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_2_airline_policy_evidence_source_governance_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 PLATFORM_BASE = "/api/platform/airline-evidence"
@@ -69,8 +71,9 @@ def assert_no_restricted_material(value: object) -> None:
 
 
 def verify_models_collections_and_indexes() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.2 label: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.2 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.2 service")
     expected = {
         "airline_evidence_sources",
         "airline_evidence_artifacts",
@@ -190,11 +193,9 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
 
 def verify_readiness() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
-    if readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_policy_evidence_source_governance_foundation") or {}
     for key in [
         "airline_policy_evidence_source_governance_enabled",

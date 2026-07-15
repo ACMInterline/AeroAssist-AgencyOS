@@ -28,7 +28,10 @@ from services.journey_option_fare_brand_composition_service import (
 )
 
 
-PHASE_LABEL = "phase_56_3_journey_comparison_client_presentation_foundation"
+from build_phase import CURRENT_BUILD_PHASE
+
+CAPABILITY_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+PHASE_LABEL = CURRENT_BUILD_PHASE
 
 PRESENTATION_COLLECTION = "journey_comparison_presentations"
 OPTION_COLLECTION = "journey_comparison_option_projections"

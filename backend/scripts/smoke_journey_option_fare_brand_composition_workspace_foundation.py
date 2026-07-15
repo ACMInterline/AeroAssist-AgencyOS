@@ -23,6 +23,7 @@ from models import (
 from services.canonical_journey_itinerary_service import CanonicalJourneyItineraryService
 from services.journey_option_fare_brand_composition_service import (
     ASSIGNMENT_COLLECTION,
+    CAPABILITY_PHASE,
     COMPARISON_PROFILE_COLLECTION,
     COMPARISON_RESULT_COLLECTION,
     COMPOSITION_COLLECTION,
@@ -39,10 +40,11 @@ from services.journey_option_fare_brand_composition_service import (
     JourneyOptionCompositionError,
     JourneyOptionFareBrandCompositionService,
 )
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
@@ -53,8 +55,9 @@ def require_text(path: Path, text: str) -> None:
 
 
 def verify_static_contracts() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 56.2 marker: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 56.2 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 56.2 service")
     expected = {
         COMPOSITION_COLLECTION, OPTION_COLLECTION, ASSIGNMENT_COLLECTION, FARE_CHOICE_COLLECTION, PRICE_COLLECTION,
         METRIC_COLLECTION, SERVICE_ASSESSMENT_COLLECTION, COMPARISON_PROFILE_COLLECTION, COMPARISON_RESULT_COLLECTION,
@@ -319,8 +322,7 @@ def ensure_second_agency(agencies: list[dict]) -> str:
 
 def verify_live_api() -> None:
     health = get("/api/health")
-    if health.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     readiness = get("/api/readiness")
     section = readiness.get("journey_option_fare_brand_composition_workspace_foundation") or {}
     for key in [

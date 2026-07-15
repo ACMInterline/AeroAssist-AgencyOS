@@ -20,6 +20,7 @@ from models import (
     AirlineServicingCapability,
 )
 from services.airline_distribution_capability_service import (
+    CAPABILITY_PHASE,
     CAPABILITY_CATALOG,
     CAPABILITY_STATUSES,
     DISTRIBUTION_CHANNEL_CODES,
@@ -30,10 +31,11 @@ from services.airline_distribution_capability_service import (
     AirlineDistributionCapabilityService,
 )
 from services.offer_to_booking_handoff_service import OfferToBookingHandoffService
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_3_journey_comparison_client_presentation_foundation"
+MINIMUM_PHASE = "phase_55_5_airline_distribution_pss_gds_ndc_capability_intelligence_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-distribution-capabilities"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
@@ -72,8 +74,9 @@ def assert_agency_safe(value: object) -> None:
 
 
 def verify_models_collections_indexes_and_taxonomies() -> None:
-    if PHASE_LABEL != EXPECTED_PHASE:
-        raise AssertionError(f"Unexpected Phase 55.5 label: {PHASE_LABEL}")
+    if CAPABILITY_PHASE != MINIMUM_PHASE:
+        raise AssertionError(f"Unexpected Phase 55.5 capability provenance: {CAPABILITY_PHASE}")
+    assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.5 service")
     expected_collections = {
         "airline_distribution_channels",
         "airline_distribution_capabilities",
@@ -256,8 +259,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if health.get("phase") != EXPECTED_PHASE or readiness.get("phase") != EXPECTED_PHASE:
-        raise AssertionError(f"Phase 55.5 marker is not active: {health.get('phase')} / {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("airline_distribution_pss_gds_ndc_capability_intelligence_foundation") or {}
     for key in [
         "airline_distribution_pss_gds_ndc_capability_intelligence_enabled",
