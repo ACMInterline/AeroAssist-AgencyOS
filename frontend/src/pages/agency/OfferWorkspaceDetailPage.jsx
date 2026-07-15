@@ -4,6 +4,7 @@ import Columns3 from "lucide-react/dist/esm/icons/columns-3.js"
 import Copy from "lucide-react/dist/esm/icons/copy.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
 import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
+import OfferDeliveryPanel from "../../components/offers/OfferDeliveryPanel"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -11,6 +12,8 @@ import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 export default function OfferWorkspaceDetailPage({ workspaceId }) {
+  const query = useMemo(() => new URLSearchParams(window.location.search), [workspaceId])
+  const section = query.get("section") || "overview"
   const [state, setState] = useState(null)
   const [form, setForm] = useState({ label: "New option", option_type: "flight", main_airline_code: "", provider_name: "manual" })
   const [error, setError] = useState("")
@@ -154,6 +157,9 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
 
+          <OfferLifecycleNavigation workspaceId={workspaceId} active={section} />
+
+          {section === "delivery" ? <OfferDeliveryPanel agency={state?.agency} offerId={workspaceId} clientId={state?.workspace?.client_summary_json?.client_id || ""} presentationId={query.get("presentation_id") || ""} showHeader={false} /> : section === "client" ? <ClientPassengerContext state={state} /> : section === "suitability" ? <AirlineSuitability options={state?.options || []} /> : section === "history" ? <OfferHistory state={state} /> : <>
           <AcceptancePanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
 
           <section className="grid gap-4 md:grid-cols-5">
@@ -210,11 +216,44 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
           </section>
 
           <ComparisonMatrix matrix={state?.matrix} />
+          </>}
         </div>
       </ProtectedRoute>
     </AgencyLayout>
   )
 }
+
+function OfferLifecycleNavigation({ workspaceId, active }) {
+  const encoded = encodeURIComponent(workspaceId)
+  const stages = [
+    ["overview", "Overview", `/agency/offers/${encoded}`],
+    ["client", "Client & Passengers", `/agency/offers/${encoded}?section=client`],
+    ["itinerary", "Itinerary Builder", `/agency/journey-authoring?offer_id=${encoded}`],
+    ["options", "Itinerary Options & Fare Brands", `/agency/journey-option-composition?offer_id=${encoded}`],
+    ["suitability", "Airline Suitability", `/agency/offers/${encoded}?section=suitability`],
+    ["comparison", "Offer Comparison", `/agency/journey-comparison-presentations?offer_id=${encoded}`],
+    ["preview", "Client Preview", `/agency/journey-comparison-presentations?offer_id=${encoded}&view=client-preview`],
+    ["delivery", "Delivery & Responses", `/agency/offers/${encoded}?section=delivery`],
+    ["history", "History", `/agency/offers/${encoded}?section=history`],
+  ]
+  return <nav className="flex gap-1 overflow-x-auto border-y border-slate-200 py-3" aria-label="Offer lifecycle">{stages.map(([key, label, href]) => <a className={`whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold ${active === key ? "bg-blue-700 text-white" : "text-slate-700 hover:bg-slate-100"}`} href={href} key={key}>{label}</a>)}</nav>
+}
+
+function ClientPassengerContext({ state }) {
+  const summary = state?.workspace?.client_summary_json || {}
+  return <section className="space-y-5"><div><h3 className="text-lg font-semibold text-slate-950">Client & Passengers</h3><p className="mt-1 text-sm text-slate-600">This Offer references canonical Client and Passenger records; profiles remain owned by their respective workspaces.</p></div><dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><ContextValue label="Client" value={summary.client_name || summary.client_id} /><ContextValue label="Passengers" value={summary.passenger_names?.join(", ") || summary.passenger_count} /><ContextValue label="Request" value={state?.request?.request_reference} /><ContextValue label="Trip" value={state?.trip?.trip_reference} /></dl><div className="flex flex-wrap gap-2"><a className="secondary-button" href="/agency/clients">Open Clients</a><a className="secondary-button" href="/agency/passengers">Open Passengers</a></div></section>
+}
+
+function AirlineSuitability({ options }) {
+  return <section><h3 className="text-lg font-semibold text-slate-950">Airline Suitability</h3><p className="mt-1 text-sm text-slate-600">Advisory service suitability remains separate from confirmed airline approval.</p><div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">{options.map((option) => <div className="grid gap-2 py-4 md:grid-cols-[minmax(0,1fr)_180px_140px]" key={option.id}><div><p className="font-semibold text-slate-950">{option.label}</p><p className="mt-1 text-sm text-slate-600">{option.service_feasibility_json?.client_summary || "Service suitability requires agent review."}</p></div><span className="text-sm">{String(option.service_feasibility_json?.overall_status || "unknown").replaceAll("_", " ")}</span><span className="text-sm text-slate-500">{option.main_airline_code || "Airline unknown"}</span></div>)}</div>{!options.length ? <EmptyState title="No itinerary options" body="Prepare itinerary options before assessing airline suitability." /> : null}</section>
+}
+
+function OfferHistory({ state }) {
+  const history = state?.acceptance?.history || []
+  return <section><h3 className="text-lg font-semibold text-slate-950">Offer History</h3><p className="mt-1 text-sm text-slate-600">Acceptance history is shown here; delivery views and client responses remain available under Delivery & Responses.</p>{history.length ? <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">{history.map((item) => <div className="py-3 text-sm" key={item.id}><p className="font-semibold text-slate-950">{String(item.status || "recorded").replaceAll("_", " ")}</p><p className="mt-1 text-slate-600">{item.client_visible_summary_json?.option_label || item.option_id}</p><p className="mt-1 text-xs text-slate-500">{String(item.updated_at || item.created_at || "").slice(0, 19)}</p></div>)}</div> : <EmptyState title="No history yet" body="Offer acceptance and response history will appear here." />}</section>
+}
+
+function ContextValue({ label, value }) { return <div className="border-y border-slate-200 py-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 text-sm font-semibold text-slate-950">{value || "Not linked"}</dd></div> }
 
 function contextLabel(state) {
   const request = state?.request

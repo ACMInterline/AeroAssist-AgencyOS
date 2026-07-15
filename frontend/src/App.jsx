@@ -23,6 +23,7 @@ import JourneyWorkspacePage from "./pages/agency/JourneyWorkspacePage"
 import JourneyAuthoringWorkspacePage from "./pages/agency/JourneyAuthoringWorkspacePage"
 import JourneyOptionCompositionWorkspacePage from "./pages/agency/JourneyOptionCompositionWorkspacePage"
 import JourneyComparisonPresentationWorkspacePage from "./pages/agency/JourneyComparisonPresentationWorkspacePage"
+import OfferDeliveryContextPage from "./pages/agency/OfferDeliveryContextPage"
 import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
 import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
 import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
@@ -233,6 +234,7 @@ import PlatformJourneyEnginePage from "./pages/platform/JourneyEnginePage"
 import PlatformJourneyAuthoringDiagnosticsPage from "./pages/platform/JourneyAuthoringDiagnosticsPage"
 import PlatformJourneyOptionCompositionDiagnosticsPage from "./pages/platform/JourneyOptionCompositionDiagnosticsPage"
 import PlatformJourneyComparisonPresentationDiagnosticsPage from "./pages/platform/JourneyComparisonPresentationDiagnosticsPage"
+import PlatformOfferDeliveryDiagnosticsPage from "./pages/platform/OfferDeliveryDiagnosticsPage"
 import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
 import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
 import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
@@ -267,6 +269,8 @@ import PortalInvoiceDetailPage from "./pages/portal/PortalInvoiceDetailPage"
 import PortalInvoicesPage from "./pages/portal/PortalInvoicesPage"
 import PortalOfferDetailPage from "./pages/portal/PortalOfferDetailPage"
 import PortalOffersPage from "./pages/portal/PortalOffersPage"
+import PortalOfferDeliveriesPage from "./pages/portal/PortalOfferDeliveriesPage"
+import PortalOfferDeliveryDetailPage from "./pages/portal/PortalOfferDeliveryDetailPage"
 import PortalPassengerDetailPage from "./pages/portal/PortalPassengerDetailPage"
 import PortalPassengersPage from "./pages/portal/PortalPassengersPage"
 import PortalPaymentsPage from "./pages/portal/PortalPaymentsPage"
@@ -310,6 +314,7 @@ const routes = {
   "/platform/journey-authoring": PlatformJourneyAuthoringDiagnosticsPage,
   "/platform/journey-option-compositions": PlatformJourneyOptionCompositionDiagnosticsPage,
   "/platform/journey-comparison-presentations": PlatformJourneyComparisonPresentationDiagnosticsPage,
+  "/platform/offer-delivery-diagnostics": PlatformOfferDeliveryDiagnosticsPage,
   "/platform/offer-workspaces": PlatformOfferWorkspacesPage,
   "/platform/booking-workspaces": PlatformBookingWorkspacesPage,
   "/platform/ticket-workspaces": PlatformTicketWorkspacesPage,
@@ -419,6 +424,7 @@ const routes = {
   "/agency/journey-authoring": JourneyAuthoringWorkspacePage,
   "/agency/journey-option-composition": JourneyOptionCompositionWorkspacePage,
   "/agency/journey-comparison-presentations": JourneyComparisonPresentationWorkspacePage,
+  "/agency/offer-deliveries": OfferDeliveryContextPage,
   "/agency/offer-workspaces": OfferWorkspaceMetadataPage,
   "/agency/booking-workspaces": BookingWorkspaceMetadataPage,
   "/agency/ticket-workspaces": TicketWorkspaceMetadataPage,
@@ -517,6 +523,7 @@ const routes = {
   "/portal/requests": PortalRequestsPage,
   "/portal/requests/new": PortalRequestCreatePage,
   "/portal/offers": PortalOffersPage,
+  "/portal/travel-options": PortalOfferDeliveriesPage,
   "/portal/bookings": PortalBookingsPage,
   "/portal/documents": PortalDocumentsPage,
   "/portal/invoices": PortalInvoicesPage,
@@ -690,6 +697,11 @@ export default function App() {
   const portalOfferMatch = window.location.pathname.match(/^\/portal\/offers\/([^/]+)$/)
   if (portalOfferMatch) {
     return <PortalOfferDetailPage offerId={portalOfferMatch[1]} />
+  }
+
+  const portalOfferDeliveryMatch = window.location.pathname.match(/^\/portal\/travel-options\/([^/]+)$/)
+  if (portalOfferDeliveryMatch) {
+    return <PortalOfferDeliveryDetailPage deliveryId={portalOfferDeliveryMatch[1]} />
   }
 
   const portalBookingMatch = window.location.pathname.match(/^\/portal\/bookings\/([^/]+)$/)

@@ -350,4 +350,23 @@ These records are agency-scoped composition and decision-support projections. Ca
 | `JourneyPresentationReview` | `journey_presentation_reviews` | Explicit reviewer checklist and decision metadata. |
 | `JourneyPresentationHandoff` | `journey_presentation_handoffs` | Explicit metadata-only Offer or Document handoff trace. |
 
+### Phase 56.4 Offer Delivery and Client Interaction
+
+| Model | Collection | Ownership and purpose |
+|---|---|---|
+| `JourneyOfferDelivery` | `journey_offer_deliveries` | Agency-controlled delivery container referencing canonical Journey, composition, finalized presentation snapshot, Offer, Client, and Passenger records. |
+| `JourneyOfferDeliveryVersion` | `journey_offer_delivery_versions` | Deterministically hashed client-safe payload copied from one finalized Phase 56.3 snapshot; immutable after release. |
+| `JourneyOfferDeliveryRecipient` | `journey_offer_delivery_recipients` | Authorized Client Portal recipient metadata without credentials, secrets, or public tokens. |
+| `JourneyOfferClientInteraction` | `journey_offer_client_interactions` | Append-only, non-invasive interaction metadata bound to recipient and released version. |
+| `JourneyOfferClientDecision` | `journey_offer_client_decisions` | Explicit accept, decline, request-change, question, or save decision against one immutable version. |
+| `JourneyOfferClientQuestion` | `journey_offer_client_questions` | Client-safe question and agency reply metadata; never an internal-note channel. |
+| `JourneyOfferWarningAcknowledgement` | `journey_offer_warning_acknowledgements` | Recipient and version-bound acknowledgement of a copied client-safe warning. |
+| `JourneyOfferDocumentPackageLink` | `journey_offer_document_package_links` | Link to canonical Document package/render records using the immutable delivery payload hash. |
+| `JourneyOfferAcceptanceHandoff` | `journey_offer_acceptance_handoffs` | Guarded, idempotent bridge from an explicit accept decision to canonical `OfferAcceptanceService`. |
+| `JourneyOfferDeliveryAuditEvent` | `journey_offer_delivery_audit_events` | Append-only release, access, decision, supersession, handoff, and document activity history. |
+
+These records project and coordinate canonical sources; they do not duplicate Journey, Offer, Offer Acceptance, Document, Client, Passenger, Portal identity, or Timeline truth.
+
+Offer Workspace remains the primary Agency commercial owner. Phase 56.4 records are subordinate delivery/version/interaction records rendered under its Delivery & Responses context; internal `JourneyOffer*` names are retained for compatibility with the uncommitted implementation's collection contract.
+
 These records are agency-scoped projections and governance metadata. They do not replace canonical Journey, operational workspaces, accepted Offer snapshots, Documents, or issued records and perform no publication, messaging, rendering, or provider execution.

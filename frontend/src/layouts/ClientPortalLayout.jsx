@@ -8,6 +8,7 @@ import Repeat2 from "lucide-react/dist/esm/icons/repeat-2.js"
 import UserCircle from "lucide-react/dist/esm/icons/user-circle.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
 import WalletCards from "lucide-react/dist/esm/icons/wallet-cards.js"
+import ListChecks from "lucide-react/dist/esm/icons/list-checks.js"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
@@ -33,6 +34,7 @@ export default function ClientPortalLayout({ children, user, brand }) {
             <Nav href="/portal/passengers" icon={<Users className="h-4 w-4" />} label="Passengers" />
             <Nav href="/portal/requests" icon={<ClipboardList className="h-4 w-4" />} label="Requests" />
             <Nav href="/portal/offers" icon={<FileText className="h-4 w-4" />} label="Offers" />
+            <Nav href="/portal/travel-options" icon={<ListChecks className="h-4 w-4" />} label="Travel Options" />
             <Nav href="/portal/bookings" icon={<Briefcase className="h-4 w-4" />} label="Bookings" />
             <Nav href="/portal/documents" icon={<FileText className="h-4 w-4" />} label="Documents" />
             <Nav href="/portal/invoices" icon={<ReceiptText className="h-4 w-4" />} label="Invoices" />

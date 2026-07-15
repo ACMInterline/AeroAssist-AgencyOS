@@ -89,3 +89,11 @@ Journey option composition must reference canonical Journey segments rather than
 ## Journey Comparison Presentation Rule
 
 Client itinerary comparisons must project canonical Journey and governed composition truth. They must preserve unknowns, keep internal evidence and commercial construction out of client payloads, distinguish deterministic dimension leaders from an explicit human preferred option, and hand off only immutable reviewed snapshots. A presentation must never become a parallel Offer, Document, Booking, Ticket, or provider-execution model.
+
+## Offer Delivery Rule
+
+Client delivery must originate from an immutable, reviewed Journey comparison snapshot and must use authenticated portal identity plus explicit recipient authorization. Released payloads remain immutable, warning acknowledgement and client decisions remain auditable, and acceptance must pass through the canonical Offer Acceptance service as a separate guarded action. Delivery records must never become a parallel Offer, Document, messaging, payment, booking, ticketing, or provider-execution system.
+
+## Product Surface Review Gate
+
+One operational object has one primary workspace. Engines and services do not automatically justify top-level Agency pages; supporting capabilities should be embedded or linked contextually from their owning workspace. Separate surfaces require a different actor, Platform governance purpose, independent lifecycle, or materially different operational object. Every phase must apply [Product Surface and Workspace Governance](../product-surface-workspace-governance.md), use travel-agent vocabulary in ordinary UI, preserve passenger-needs-first design, and reject duplicate lifecycles or unnecessary navigation.

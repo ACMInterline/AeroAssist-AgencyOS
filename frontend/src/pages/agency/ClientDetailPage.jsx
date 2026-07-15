@@ -80,6 +80,7 @@ export default function ClientDetailPage({ clientId }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={state?.client?.status} />
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/offers">Offers</a>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={() => setShowEdit((value) => !value)}>Edit</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.client?.status === "archived" ? "Restore" : "Archive"}

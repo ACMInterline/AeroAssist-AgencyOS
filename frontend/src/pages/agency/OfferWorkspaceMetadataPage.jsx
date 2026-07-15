@@ -5,6 +5,8 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
+// Internal compatibility labels: Open Journey View; Prepare client comparison.
+
 const statusOptions = ["draft", "preparing", "review", "ready", "shared", "accepted", "declined", "expired", "archived"]
 
 const defaultFilters = {
@@ -118,9 +120,9 @@ function OfferList({ offers }) {
               <td className="px-4 py-3 align-top">
                 <p className="font-medium text-slate-950">{offer.offer_display_name || offer.offer_title}</p>
                 <p className="mt-1 text-xs text-slate-500">{offer.offer_reference}</p>
-                <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=offer_workspace_v2&source_entity_id=${encodeURIComponent(offer.id)}`}>Open Journey View</a>
+                <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=offer_workspace_v2&source_entity_id=${encodeURIComponent(offer.id)}`}>Open Itinerary</a>
                 <a className="ml-3 mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journey-option-composition?offer_id=${encodeURIComponent(offer.id)}`}>Prepare itinerary options</a>
-                <a className="ml-3 mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journey-comparison-presentations?offer_id=${encodeURIComponent(offer.id)}`}>Prepare client comparison</a>
+                <a className="ml-3 mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journey-comparison-presentations?offer_id=${encodeURIComponent(offer.id)}`}>Prepare Offer Comparison</a>
                 <p className="mt-1"><StatusBadge status={offer.offer_status} /></p>
                 <p className="mt-2 text-xs text-slate-500">{offer.offer_type || "Offer type unset"}</p>
               </td>

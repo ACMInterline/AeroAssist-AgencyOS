@@ -1,4 +1,5 @@
 export const platformModuleGroups = [
+  // Internal compatibility labels used by historical Phase 56 checks: Journeys.
   {
     title: "SaaS & Agencies",
     description: "Platform owners manage subscribed agencies, account setup, and the overall SaaS operating layer.",
@@ -15,6 +16,7 @@ export const platformModuleGroups = [
       { label: "Journey Authoring", description: "Import, provenance, validation, and application diagnostics", href: "/platform/journey-authoring", icon: "clipboard", badge: "Read-only diagnostics", metadata_only: true },
       { label: "Journey Option Compositions", description: "Itinerary, fare-brand, pricing, comparison, and handoff diagnostics", href: "/platform/journey-option-compositions", icon: "rows", badge: "Read-only diagnostics", metadata_only: true },
       { label: "Journey Comparison Presentations", description: "Client-safe comparison, snapshot, review, and handoff diagnostics", href: "/platform/journey-comparison-presentations", icon: "rows", badge: "Read-only diagnostics", metadata_only: true },
+      { label: "Offer Delivery Diagnostics", description: "Immutable release, recipient, interaction, decision, and acceptance diagnostics", href: "/platform/offer-delivery-diagnostics", icon: "files", badge: "Read-only diagnostics", metadata_only: true, workspace_owner: "offer", surface_type: "platform_diagnostic", navigation_visibility: "visible", user_facing_label: "Offer Delivery Diagnostics" },
       { label: "Offer Workspaces", description: "Offer workspace metadata", href: "/platform/offer-workspaces", icon: "rows", badge: "Metadata only", metadata_only: true },
       { label: "Booking Workspaces", description: "Booking workspace metadata", href: "/platform/booking-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Ticket Workspaces", description: "Ticket workspace metadata", href: "/platform/ticket-workspaces", icon: "files", badge: "Metadata only", metadata_only: true },
@@ -173,11 +175,12 @@ export const agencyModuleGroups = [
       { label: "Passenger Workspaces", description: "Passenger workspace metadata", href: "/agency/passenger-workspaces", icon: "user", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
       { label: "Flight Workspaces", description: "Flight workspace metadata", href: "/agency/flight-workspaces", icon: "plane", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
       { label: "Trip Workspaces", description: "Trip workspace metadata", href: "/agency/trip-workspaces", icon: "plane", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
-      { label: "Journeys", description: "Canonical itinerary views and immutable presentation snapshots", href: "/agency/journeys", icon: "git", badge: "Projection layer", entitlementKey: "requests", metadata_only: true },
-      { label: "Journey Authoring", description: "Paste, normalize, validate, and apply itinerary segment drafts", href: "/agency/journey-authoring", icon: "clipboard", badge: "Governed drafts", entitlementKey: "requests", metadata_only: true },
-      { label: "Journey Option Composition", description: "Compose route alternatives, fare brands, prices, comparisons, and offer handoffs", href: "/agency/journey-option-composition", icon: "rows", badge: "Offer preparation", entitlementKey: "offers", metadata_only: true },
-      { label: "Journey Comparison Presentations", description: "Review itinerary and fare-brand comparisons for client presentation", href: "/agency/journey-comparison-presentations", icon: "rows", badge: "Client review", entitlementKey: "offers", metadata_only: true },
-      { label: "Offer Workspaces", description: "Offer workspace metadata", href: "/agency/offer-workspaces", icon: "rows", badge: "Read-only", entitlementKey: "offers", metadata_only: true },
+      { label: "Itinerary View", description: "Canonical itinerary views and protected presentation versions", href: "/agency/journeys", icon: "git", badge: "Contextual", entitlementKey: "requests", metadata_only: true, workspace_owner: "offer_trip_booking", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Itinerary" },
+      { label: "Itinerary Builder", description: "Prepare and validate itinerary segment drafts", href: "/agency/journey-authoring", icon: "clipboard", badge: "Contextual", entitlementKey: "requests", metadata_only: true, workspace_owner: "offer", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Itinerary Builder" },
+      { label: "Itinerary Options & Fare Brands", description: "Prepare route alternatives, fare brands, prices, and comparisons", href: "/agency/journey-option-composition", icon: "rows", badge: "Contextual", entitlementKey: "offers", metadata_only: true, workspace_owner: "offer", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Itinerary Options & Fare Brands" },
+      { label: "Offer Comparison", description: "Review itinerary and fare options for client presentation", href: "/agency/journey-comparison-presentations", icon: "rows", badge: "Contextual", entitlementKey: "offers", metadata_only: true, workspace_owner: "offer", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Offer Comparison" },
+      { label: "Offer Delivery", description: "Release protected offer versions and review client responses", href: "/agency/offer-deliveries", icon: "files", badge: "Contextual", entitlementKey: "offers", metadata_only: true, workspace_owner: "offer", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Offer Delivery" },
+      { label: "Offer Metadata Records", description: "Legacy offer workspace metadata", href: "/agency/offer-workspaces", icon: "rows", badge: "Contextual", entitlementKey: "offers", metadata_only: true, workspace_owner: "offer", surface_type: "contextual_tool", navigation_visibility: "contextual", user_facing_label: "Offer Metadata" },
       { label: "Booking Workspaces", description: "Booking workspace metadata", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "booking_workspaces", metadata_only: true },
       { label: "Ticket Workspaces", description: "Ticket workspace metadata", href: "/agency/ticket-workspaces", icon: "files", badge: "Read-only", entitlementKey: "tickets_emds", metadata_only: true },
       { label: "EMD Workspaces", description: "EMD workspace metadata", href: "/agency/emd-workspaces", icon: "files", badge: "Read-only", entitlementKey: "tickets_emds", metadata_only: true },
@@ -215,7 +218,7 @@ export const agencyModuleGroups = [
     items: [
       { label: "Requests", description: "Operational work", href: "/agency/requests", icon: "clipboard", entitlementKey: "requests" },
       { label: "Trips", description: "Travel dossiers", href: "/agency/trips", icon: "plane", entitlementKey: "trips" },
-      { label: "Offers", description: "Compare options", href: "/agency/offers", icon: "sparkles", entitlementKey: "offers" },
+      { label: "Offers", description: "Prepare, compare, deliver, and manage client responses", href: "/agency/offers", icon: "sparkles", entitlementKey: "offers", workspace_owner: "offer", surface_type: "primary_workspace", navigation_visibility: "visible", user_facing_label: "Offer Workspace" },
       { label: "Offer Intelligence", description: "Offer-intelligence packages", href: "/agency/offer-intelligence", icon: "rows", badge: "No sending", entitlementKey: "offers", metadata_only: true },
       { label: "Booking Handoffs", description: "Accepted-offer readiness handoff", href: "/agency/booking-handoffs", icon: "git", badge: "Metadata only", entitlementKey: "booking_handoffs", metadata_only: true },
       { label: "After-Sales", description: "Unified servicing cases", href: "/agency/after-sales", icon: "clipboard", badge: "Metadata only", entitlementKey: "after_sales", metadata_only: true },

@@ -27825,3 +27825,194 @@ class JourneyPresentationHandoff(BaseDocument):
     public_share_links_disabled: bool = True
     external_messaging_disabled: bool = True
     provider_execution_disabled: bool = True
+
+
+class JourneyOfferDelivery(BaseDocument):
+    agency_id: str
+    delivery_code: str
+    presentation_id: str
+    presentation_snapshot_id: str
+    journey_id: str
+    composition_id: str
+    offer_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    client_id: str
+    passenger_ids: List[str] = Field(default_factory=list)
+    status: str = "draft"
+    audience_type: str = "client"
+    language_code: str = "en"
+    currency_code: str = "EUR"
+    title: str
+    client_intro: Optional[str] = None
+    client_footer: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    released_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    superseded_at: Optional[datetime] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+    public_share_links_disabled: bool = True
+
+
+class JourneyOfferDeliveryVersion(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    version_number: int
+    source_presentation_snapshot_id: str
+    source_snapshot_hash: str
+    payload_hash: str
+    client_payload: Dict[str, Any] = Field(default_factory=dict)
+    release_notes: Optional[str] = None
+    released_by: Optional[str] = None
+    released_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    status: str = "draft"
+    supersedes_version_id: Optional[str] = None
+    superseded_by_version_id: Optional[str] = None
+    immutable: bool = False
+    finalized_at: Optional[datetime] = None
+    metadata_only: bool = True
+    physical_deletion_disabled: bool = True
+
+
+class JourneyOfferDeliveryRecipient(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: Optional[str] = None
+    client_id: str
+    passenger_id: Optional[str] = None
+    portal_user_id: Optional[str] = None
+    recipient_role: str = "client"
+    display_name: str
+    email_reference: Optional[str] = None
+    access_status: str = "authorized"
+    invited_at: Optional[datetime] = None
+    first_opened_at: Optional[datetime] = None
+    last_opened_at: Optional[datetime] = None
+    acknowledged_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    locale: str = "en"
+    timezone: str = "UTC"
+    metadata_only: bool = True
+
+
+class JourneyOfferClientInteraction(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    recipient_id: str
+    interaction_type: str
+    option_id: Optional[str] = None
+    fare_brand_id: Optional[str] = None
+    warning_code: Optional[str] = None
+    interaction_metadata: Dict[str, Any] = Field(default_factory=dict)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    metadata_only: bool = True
+    invasive_analytics_disabled: bool = True
+
+
+class JourneyOfferClientDecision(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    recipient_id: str
+    decision_type: str
+    selected_option_id: Optional[str] = None
+    selected_fare_brand_id: Optional[str] = None
+    client_comment: Optional[str] = None
+    acknowledged_warning_codes: List[str] = Field(default_factory=list)
+    terms_acknowledged: bool = False
+    submitted_at: datetime = Field(default_factory=now_utc)
+    status: str = "submitted"
+    canonical_acceptance_id: Optional[str] = None
+    handoff_status: str = "not_started"
+    handoff_error: Optional[str] = None
+    superseded_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class JourneyOfferClientQuestion(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    recipient_id: str
+    parent_question_id: Optional[str] = None
+    audience: str = "agency"
+    message_text: str
+    status: str = "open"
+    created_by_type: str = "client"
+    created_by_id: Optional[str] = None
+    answered_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class JourneyOfferWarningAcknowledgement(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    recipient_id: str
+    warning_code: str
+    warning_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    acknowledged_at: datetime = Field(default_factory=now_utc)
+    acknowledgement_text: Optional[str] = None
+    required: bool = False
+    source_type: Optional[str] = None
+    source_id: Optional[str] = None
+    metadata_only: bool = True
+
+
+class JourneyOfferDocumentPackageLink(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    document_package_id: str
+    render_job_id: Optional[str] = None
+    document_type: str = "journey_comparison_offer"
+    language_code: str = "en"
+    status: str = "prepared"
+    generated_at: Optional[datetime] = None
+    available_at: Optional[datetime] = None
+    downloaded_at: Optional[datetime] = None
+    checksum: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class JourneyOfferAcceptanceHandoff(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: str
+    decision_id: str
+    offer_id: str
+    selected_option_id: str
+    selected_fare_brand_id: Optional[str] = None
+    preview_payload: Dict[str, Any] = Field(default_factory=dict)
+    validation_results: List[Dict[str, Any]] = Field(default_factory=list)
+    status: str = "previewed"
+    canonical_acceptance_id: Optional[str] = None
+    applied_by: Optional[str] = None
+    applied_at: Optional[datetime] = None
+    failure_code: Optional[str] = None
+    failure_message: Optional[str] = None
+    metadata_only: bool = True
+    automatic_booking_disabled: bool = True
+
+
+class JourneyOfferDeliveryAuditEvent(BaseDocument):
+    agency_id: str
+    delivery_id: str
+    delivery_version_id: Optional[str] = None
+    recipient_id: Optional[str] = None
+    event_type: str
+    actor_type: str = "agency_user"
+    actor_id: Optional[str] = None
+    summary: str
+    event_metadata: Dict[str, Any] = Field(default_factory=dict)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    metadata_only: bool = True
+    append_only: bool = True

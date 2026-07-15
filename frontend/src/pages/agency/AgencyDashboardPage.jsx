@@ -88,8 +88,8 @@ export default function AgencyDashboardPage() {
                 <p className="mt-2 text-sm leading-6 text-slate-600">{group.description}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700">{group.audience}</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{group.items.length} tools</span>
-                  <EntitlementGroupBadges counts={summarizeEntitlementVisibility(group.items, state?.entitlementVisibility?.visibility_by_key || {})} />
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">{group.items.filter((item) => item.navigation_visibility !== "contextual").length} workspaces</span>
+                  <EntitlementGroupBadges counts={summarizeEntitlementVisibility(group.items.filter((item) => item.navigation_visibility !== "contextual"), state?.entitlementVisibility?.visibility_by_key || {})} />
                 </div>
               </a>
             ))}

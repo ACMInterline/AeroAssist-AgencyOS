@@ -2396,3 +2396,15 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Adds `/agency/journey-comparison-presentations` and read-only `/platform/journey-comparison-presentations` workspaces.
 - Preserves explicit unknowns, agent-controlled preference, finalized snapshot immutability, tenant isolation, and client/internal separation.
 - Adds no live search, pricing, availability, public sharing, publication, rendering, messaging, provider execution, booking, ticketing, EMD issuance, AI, scraping, or background work.
+
+## Phase 56.4 - Offer Delivery & Client Interaction Foundation
+
+- Active marker: `phase_56_4_offer_delivery_client_interaction_foundation`.
+- Adds agency-owned delivery containers, immutable released versions, authorized recipients, append-only interactions, version-bound warning acknowledgements, explicit decisions, client-safe questions, Document package links, canonical Offer Acceptance handoffs, and append-only audit events.
+- Embeds reusable Delivery & Responses capability in canonical `/agency/offers/{offer_id}`; `/agency/offer-deliveries` remains a guarded contextual deep route requiring Offer ownership.
+- Retains the distinct authenticated `/portal/travel-options` client surface and read-only `/platform/offer-delivery-diagnostics` governance surface.
+- Requires a finalized Phase 56.3 presentation snapshot, preserves source and payload hashes, and never mutates the source snapshot or a released delivery payload.
+- Reuses existing Client Portal identity, Client/Passenger relationships, Offer Acceptance, Document package, audit, and Timeline foundations.
+- Does not retrieve live fares or availability, expose anonymous links, connect to providers, process payments, create bookings, issue tickets/EMDs, send uncontrolled messages, scrape, use AI, run workers, or seed production data.
+- See [Offer Delivery and Client Interaction Foundation](docs/architecture/offer-delivery-client-interaction-foundation.md).
+- Enforces the permanent [Product Surface and Workspace Governance](docs/architecture/product-surface-workspace-governance.md) review gate: one operational object has one primary workspace, while Phase 56 engines remain contextual tools.

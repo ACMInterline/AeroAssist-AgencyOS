@@ -331,4 +331,18 @@ Agency APIs expose agency-scoped composition metadata operations through existin
 - Agency API: `/api/agencies/{agency_id}/journey-comparison-presentations`
 - Platform API: `/api/platform/journey-comparison-presentations`
 
+## Phase 56.4 Offer Delivery
+
+- Primary Agency workspace: `/agency/offers/{offer_id}` with Delivery & Responses context
+- Contextual compatibility route: `/agency/offer-deliveries?offer_id={offer_id}`
+- Agency API: `/api/agencies/{agency_id}/offer-deliveries`
+- Authenticated client workspace: `/portal/travel-options`
+- Authenticated client API: `/api/portal/offer-deliveries`
+- Platform diagnostics: `/platform/offer-delivery-diagnostics`
+- Platform API: `/api/platform/offer-delivery-diagnostics`
+
+Client routes extend the existing authenticated portal family and resolve authorization through canonical portal, client, passenger relationship, delivery-recipient, and agency records. IDs are never authorization credentials. No anonymous public link, `/admin/*`, `/agent/*`, duplicate offer/acceptance route family, or unrestricted Platform impersonation route is introduced.
+
+The permanent [Product Surface Review Gate](product-surface-workspace-governance.md) requires engines and supporting tools to preserve the route context of their owning primary workspace. Phase 56 authoring, options, comparison, and delivery routes are contextual tools; only Offer Workspace owns the Agency commercial lifecycle.
+
 Agency APIs expose tenant-checked presentation projection, wording, preview, explicit preference, snapshot, review, and metadata-only handoff operations. Platform APIs expose read-only counts, dimensions, validation metadata, and summarized diagnostics. Phase 56.3 introduces no `/admin/*`, `/agent/*`, public share route, unauthenticated mutation, parallel Offer/Document/Journey domain, provider endpoint, or direct frontend database access.

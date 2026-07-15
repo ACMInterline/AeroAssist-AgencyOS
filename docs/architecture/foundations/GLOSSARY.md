@@ -307,3 +307,23 @@ An option that deterministically leads a named comparison dimension, such as low
 ### Preferred Option
 
 An itinerary projection selected explicitly by an authorized agency user with a reason, actor, and timestamp. It remains advisory presentation metadata and does not accept, book, ticket, issue, publish, or send anything.
+
+## Phase 56.4 Terms
+
+**Offer Delivery**: An agency-governed envelope that makes an immutable, client-safe Phase 56.3 presentation version available to explicitly authorized authenticated portal recipients. It is not an Offer, public share, message delivery provider, booking instruction, or payment request.
+
+**Delivery Version**: A deterministic immutable client payload captured from a reviewed presentation snapshot. Releasing a change requires a new version; a released version is never edited in place.
+
+**Delivery Recipient**: An agency-authorized relationship between one delivery and an existing client or portal identity. Possession of a delivery identifier alone grants no access.
+
+**Client Decision**: An auditable accept, decline, or request-changes statement made by an authorized recipient against one immutable delivery version. It does not itself create a booking or financial commitment.
+
+**Warning Acknowledgement**: A recipient's explicit acknowledgement of a specified client-visible warning on a particular immutable delivery version. It records awareness and does not remove or resolve the warning.
+
+**Acceptance Handoff**: A separate guarded operation that maps an eligible client decision to the existing canonical Offer Acceptance service. It preserves the accepted snapshot and does not itself book, ticket, issue an EMD, or take payment.
+
+**Primary Workspace**: The single Agency surface that owns an operational object's lifecycle and user context. Supporting engines appear as contextual tools rather than duplicate primary workspaces.
+
+**Contextual Tool**: A capability, panel, step, or deep route used within an owning workspace. It may have a modular service but does not receive a primary Agency navigation position.
+
+**Product Surface Review Gate**: The required ownership, navigation, terminology, lifecycle-duplication, and passenger-needs-first review defined in [Product Surface and Workspace Governance](../product-surface-workspace-governance.md).

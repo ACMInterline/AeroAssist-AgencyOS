@@ -185,6 +185,7 @@ export default function AgencyLayout({ children, user, agency }) {
 }
 
 function NavSection({ group, pathname, collapsed, entitlementVisibility }) {
+  const navigationItems = group.items.filter((item) => item.navigation_visibility !== "contextual")
   return (
     <div className="mb-6">
       {!collapsed ? (
@@ -194,7 +195,7 @@ function NavSection({ group, pathname, collapsed, entitlementVisibility }) {
         </div>
       ) : null}
       <nav className="grid gap-1" aria-label={group.title}>
-        {group.items.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
+        {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
       </nav>
     </div>
   )

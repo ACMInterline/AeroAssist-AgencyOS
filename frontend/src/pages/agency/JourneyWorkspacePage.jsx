@@ -16,6 +16,8 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
+// Internal compatibility label: Create Journey Representation.
+
 const defaultPresentation = {
   show_airline_logos: true,
   show_aircraft: true,
@@ -78,23 +80,23 @@ export default function JourneyWorkspacePage() {
     const supported = { trip: "trip", offer: "offer", booking: "booking", ticket: "ticket", emd: "emd" }
     const key = Object.keys(supported).find((item) => routeType.includes(item))
     if (!key) {
-      setError("This source type needs a manual Journey representation.")
+      setError("This source type needs a manual Itinerary.")
       return
     }
     const created = await apiPost(`/api/agencies/${state.agency.id}/journeys/from-${supported[key]}/${encodeURIComponent(sourceId)}`, {})
     const journeyId = created.journey?.id
-    setNotice(created.created === false ? "Existing Journey representation opened." : "Journey representation created from source metadata.")
+    setNotice(created.created === false ? "Existing Itinerary opened." : "Itinerary created from source metadata.")
     await load(journeyId)
   }
 
   async function createManual() {
     const created = await apiPost(`/api/agencies/${state.agency.id}/journeys`, {
-      title: "New journey representation",
+      title: "New itinerary",
       source_entity_type: "manual_entry",
       source_entity_id: `manual:${Date.now()}`,
       status: "draft",
     })
-    setNotice("Draft Journey representation created. Unknown route data remains flagged for review.")
+    setNotice("Draft Itinerary created. Unknown route data remains flagged for review.")
     await load(created.journey.id)
   }
 
@@ -107,7 +109,7 @@ export default function JourneyWorkspacePage() {
   async function savePresentation() {
     const response = await apiPut(`/api/agencies/${state.agency.id}/journeys/${selectedId}/presentation`, presentation)
     setPresentation({ ...defaultPresentation, ...response.presentation })
-    setNotice("Presentation settings saved. Source operational records were not changed.")
+    setNotice("Offer display settings saved. Source operational records were not changed.")
   }
 
   const journey = detail?.journey
@@ -118,8 +120,8 @@ export default function JourneyWorkspacePage() {
           <header className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold uppercase text-blue-700">Daily Work</p>
-              <h1 className="mt-2 text-2xl font-semibold text-slate-950">Journeys</h1>
-              <p className="mt-1 max-w-4xl text-sm text-slate-600">Canonical itinerary presentations projected from operational records. Source records remain authoritative; unknown data stays visible and no availability, live price, booking, ticketing, provider, or publishing action runs here.</p>
+              <h1 className="mt-2 text-2xl font-semibold text-slate-950">Itineraries</h1>
+              <p className="mt-1 max-w-4xl text-sm text-slate-600">Itinerary views built from operational records. Source records remain authoritative; unknown data stays visible and no availability, live price, booking, ticketing, provider, or publishing action runs here.</p>
             </div>
             <div className="flex gap-2">
               <button type="button" title="Create manual journey" onClick={() => createManual().catch((err) => setError(err.message))} className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700"><Plus className="h-4 w-4" /></button>
@@ -127,12 +129,12 @@ export default function JourneyWorkspacePage() {
             </div>
           </header>
 
-          {sourceType && sourceId ? <section className="flex flex-wrap items-center justify-between gap-3 border-y border-blue-200 bg-blue-50 px-4 py-3"><div><p className="font-semibold text-blue-950">Source context ready</p><p className="text-sm text-blue-800">Create or open the Journey view for this {title(sourceType)} record.</p></div><button type="button" onClick={() => createFromSource().catch((err) => setError(err.message))} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><GitBranch className="h-4 w-4" />Create Journey Representation</button></section> : null}
+          {sourceType && sourceId ? <section className="flex flex-wrap items-center justify-between gap-3 border-y border-blue-200 bg-blue-50 px-4 py-3"><div><p className="font-semibold text-blue-950">Source context ready</p><p className="text-sm text-blue-800">Create or open the Itinerary view for this {title(sourceType)} record.</p></div><button type="button" onClick={() => createFromSource().catch((err) => setError(err.message))} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><GitBranch className="h-4 w-4" />Create Itinerary</button></section> : null}
           {notice ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{notice}</div> : null}
           {error ? <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <Metric label="Journeys" value={state?.journeys?.length || 0} />
+            <Metric label="Itineraries" value={state?.journeys?.length || 0} />
             <Metric label="Options" value={state?.summary?.itinerary_option_count || 0} />
             <Metric label="Segments" value={state?.summary?.journey_segment_count || 0} />
             <Metric label="Snapshots" value={state?.summary?.snapshot_count || 0} />
@@ -141,13 +143,13 @@ export default function JourneyWorkspacePage() {
 
           <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
             <aside>
-              <div className="flex items-center justify-between"><h2 className="font-semibold text-slate-950">Journey list</h2><span className="text-sm text-slate-500">{state?.journeys?.length || 0}</span></div>
+              <div className="flex items-center justify-between"><h2 className="font-semibold text-slate-950">Itinerary list</h2><span className="text-sm text-slate-500">{state?.journeys?.length || 0}</span></div>
               <div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
                 {(state?.journeys || []).map((item) => <button type="button" onClick={() => selectJourney(item.id).catch((err) => setError(err.message))} className={`block w-full px-2 py-3 text-left ${selectedId === item.id ? "bg-blue-50" : "hover:bg-slate-50"}`} key={item.id}><p className="font-semibold text-slate-950">{item.title}</p><p className="mt-1 text-sm text-slate-600">{item.origin_airport_code || "Unknown"} → {item.destination_airport_code || "Unknown"}</p><div className="mt-2 flex items-center justify-between text-xs text-slate-500"><span>{title(item.source_entity_type)}</span><span>{item.completeness_score || 0}%</span></div></button>)}
               </div>
             </aside>
 
-            {journey ? <JourneyDetail detail={detail} presentation={presentation} setPresentation={setPresentation} onSavePresentation={savePresentation} onCreateSnapshot={createSnapshot} onError={setError} /> : <EmptyState title="No journey selected" body="Create a representation from a canonical source record or start a manual draft." />}
+            {journey ? <JourneyDetail detail={detail} presentation={presentation} setPresentation={setPresentation} onSavePresentation={savePresentation} onCreateSnapshot={createSnapshot} onError={setError} /> : <EmptyState title="No itinerary selected" body="Create an itinerary from a canonical source record or start a manual draft." />}
           </div>
         </div>
       </ProtectedRoute>
@@ -158,15 +160,17 @@ export default function JourneyWorkspacePage() {
 function JourneyDetail({ detail, presentation, setPresentation, onSavePresentation, onCreateSnapshot, onError }) {
   const journey = detail.journey
   const options = detail.itinerary_options || []
+  const sourceOfferId = ["offer", "offer_workspace"].includes(journey.source_entity_type) ? journey.source_entity_id : ""
+  const deliveryHref = sourceOfferId ? `/agency/offers/${encodeURIComponent(sourceOfferId)}?section=delivery` : "/agency/offers"
   return <main className="min-w-0 space-y-7">
     <section className="border-b border-slate-200 pb-5">
       <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase text-slate-500">{journey.journey_reference}</p><h2 className="mt-1 text-xl font-semibold text-slate-950">{journey.title}</h2><p className="mt-2 text-2xl font-semibold text-slate-950">{journey.origin_airport_code || "Unknown"} <ArrowRight className="mx-2 inline h-5 w-5 text-slate-400" /> {journey.destination_airport_code || "Unknown"}</p></div><div className="flex flex-wrap gap-2"><Badge value={journey.presentation_status} />{journey.manual_review_required ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200"><TriangleAlert className="h-3.5 w-3.5" />Review required</span> : <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200"><ShieldCheck className="h-3.5 w-3.5" />Complete</span>}</div></div>
       <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4"><Info label="Source context" value={title(journey.source_entity_type)} /><Info label="Passengers" value={(journey.passenger_ids || []).length || "Unknown"} /><Info label="Departure" value={dateText(journey.departure_date)} /><Info label="Completeness" value={`${journey.completeness_score || 0}%`} /></div>
-      <div className="mt-4 flex flex-wrap gap-2"><a href={`/agency/journey-authoring?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"><Plane className="h-4 w-4" />Edit Journey segments</a><a href={`/agency/journey-option-composition?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><GitBranch className="h-4 w-4" />Compose itinerary options</a><a href={`/agency/journey-comparison-presentations?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"><GitBranch className="h-4 w-4" />Prepare client comparison</a></div>
+      <div className="mt-4 flex flex-wrap gap-2"><a href={`/agency/journey-authoring?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"><Plane className="h-4 w-4" />Edit itinerary segments</a><a href={`/agency/journey-option-composition?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><GitBranch className="h-4 w-4" />Compose itinerary options</a><a href={`/agency/journey-comparison-presentations?journey_id=${encodeURIComponent(journey.id)}`} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"><GitBranch className="h-4 w-4" />Prepare client comparison</a><a href={deliveryHref} className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800"><GitBranch className="h-4 w-4" />Open Delivery & Responses</a></div>
       {(journey.warning_codes || []).length ? <div className="mt-4 flex flex-wrap gap-2">{journey.warning_codes.map((item) => <Badge value={item} warning key={item} />)}</div> : null}
     </section>
 
-    <section><div className="flex items-end justify-between"><div><h3 className="text-lg font-semibold text-slate-950">Itinerary options</h3><p className="mt-1 text-sm text-slate-600">Chronological projections with explicit provenance and unknown-data states.</p></div><span className="text-sm text-slate-500">{options.length}</span></div>{options.length ? <div className="mt-4 grid gap-4">{options.map((option) => <ItineraryOption option={option} detail={detail} key={option.id} />)}</div> : <EmptyState title="No itinerary options" body="Add an option or project segments from an existing operational source." />}</section>
+    <section><div className="flex items-end justify-between"><div><h3 className="text-lg font-semibold text-slate-950">Itinerary options</h3><p className="mt-1 text-sm text-slate-600">Chronological itinerary details with explicit provenance and unknown-data states.</p></div><span className="text-sm text-slate-500">{options.length}</span></div>{options.length ? <div className="mt-4 grid gap-4">{options.map((option) => <ItineraryOption option={option} detail={detail} key={option.id} />)}</div> : <EmptyState title="No itinerary options" body="Add an option or project segments from an existing operational source." />}</section>
 
     <section className="grid gap-6 lg:grid-cols-2">
       <ReferenceSection title="Fare brands" items={detail.fare_brands || []} empty="No fare-brand presentation attached." render={(item) => <div><div className="flex justify-between gap-3"><p className="font-semibold text-slate-950">{item.client_display_name || item.brand_name}</p><Badge value={item.data_status} /></div><p className="mt-2 text-sm text-slate-600">{item.cabin_code ? `${title(item.cabin_code)} · ` : ""}{item.currency && item.total_price != null ? `${item.currency} ${item.total_price}` : "Price not supplied"}</p><p className="mt-1 text-sm text-slate-600">Baggage: {item.baggage_summary || "Unknown"}</p><p className="mt-1 text-sm text-slate-600">Changes: {item.change_summary || "Unknown"}</p></div>} />
@@ -175,7 +179,7 @@ function JourneyDetail({ detail, presentation, setPresentation, onSavePresentati
 
     <section className="grid gap-6 lg:grid-cols-2">
       <div><div className="flex items-center gap-2"><History className="h-4 w-4 text-blue-700" /><h3 className="text-lg font-semibold text-slate-950">Snapshots and versions</h3></div><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">{(detail.snapshots || []).map((item) => <div className="flex items-center justify-between gap-3 py-3" key={item.id}><div><p className="font-semibold text-slate-950">Version {item.version_number} · {title(item.snapshot_type)}</p><p className="mt-1 text-xs text-slate-500">{item.content_hash?.slice(0, 14)}… · {item.immutable ? "Finalized and immutable" : "Draft"}</p></div><Badge value={item.immutable ? "immutable" : "draft"} /></div>)}{!(detail.snapshots || []).length ? <p className="py-4 text-sm text-slate-500">No snapshots yet.</p> : null}</div><button type="button" onClick={() => onCreateSnapshot().catch((err) => onError(err.message))} className="mt-3 inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-800"><History className="h-4 w-4" />Create immutable snapshot</button></div>
-      <div><div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-blue-700" /><h3 className="text-lg font-semibold text-slate-950">Presentation settings</h3></div><div className="mt-3 grid gap-2 sm:grid-cols-2">{Object.keys(defaultPresentation).map((key) => <label className="flex items-center gap-2 border-b border-slate-200 py-2 text-sm text-slate-700" key={key}><input type="checkbox" checked={Boolean(presentation[key])} onChange={(event) => setPresentation({ ...presentation, [key]: event.target.checked })} /><span>{title(key)}</span></label>)}</div><button type="button" onClick={() => onSavePresentation().catch((err) => onError(err.message))} className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><Save className="h-4 w-4" />Save settings</button></div>
+      <div><div className="flex items-center gap-2"><Settings2 className="h-4 w-4 text-blue-700" /><h3 className="text-lg font-semibold text-slate-950">Offer display settings</h3></div><div className="mt-3 grid gap-2 sm:grid-cols-2">{Object.keys(defaultPresentation).map((key) => <label className="flex items-center gap-2 border-b border-slate-200 py-2 text-sm text-slate-700" key={key}><input type="checkbox" checked={Boolean(presentation[key])} onChange={(event) => setPresentation({ ...presentation, [key]: event.target.checked })} /><span>{title(key)}</span></label>)}</div><button type="button" onClick={() => onSavePresentation().catch((err) => onError(err.message))} className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-700 px-3 py-2 text-sm font-semibold text-white"><Save className="h-4 w-4" />Save settings</button></div>
     </section>
   </main>
 }
@@ -183,7 +187,7 @@ function JourneyDetail({ detail, presentation, setPresentation, onSavePresentati
 function ItineraryOption({ option, detail }) {
   const segments = (detail.segments || []).filter((item) => item.itinerary_option_id === option.id).sort((a, b) => (a.segment_number || 0) - (b.segment_number || 0))
   const connections = (detail.connections || []).filter((item) => item.itinerary_option_id === option.id)
-  return <article className="rounded-md border border-slate-200 bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-blue-700">Option {option.option_number}</p><h4 className="mt-1 font-semibold text-slate-950">{option.title}</h4><p className="mt-1 text-sm text-slate-600">{minutes(option.total_elapsed_minutes)} total · {option.total_segment_count || segments.length} segments · {option.total_connection_count || connections.length} connections</p></div><div className="flex flex-wrap gap-2"><Badge value={option.status} />{option.manual_review_required ? <Badge value="manual review" warning /> : null}</div></div><div className="mt-5 border-l-2 border-blue-200 pl-5">{segments.map((segment, index) => <div key={segment.id}><Segment segment={segment} />{index < segments.length - 1 ? <Connection connection={connections.find((item) => item.inbound_segment_id === segment.id)} /> : null}</div>)}</div>{!segments.length ? <p className="mt-4 text-sm text-amber-800">No projected segments. Source data remains incomplete.</p> : null}<p className="mt-4 text-xs text-slate-500">Provenance: {title(option.source_provenance?.provenance_type)} · {title(option.source_provenance?.data_state)} · parsed data is not treated as verified automatically.</p></article>
+  return <article className="rounded-md border border-slate-200 bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-blue-700">Option {option.option_number}</p><h4 className="mt-1 font-semibold text-slate-950">{option.title}</h4><p className="mt-1 text-sm text-slate-600">{minutes(option.total_elapsed_minutes)} total · {option.total_segment_count || segments.length} segments · {option.total_connection_count || connections.length} connections</p></div><div className="flex flex-wrap gap-2"><Badge value={option.status} />{option.manual_review_required ? <Badge value="manual review" warning /> : null}</div></div><div className="mt-5 border-l-2 border-blue-200 pl-5">{segments.map((segment, index) => <div key={segment.id}><Segment segment={segment} />{index < segments.length - 1 ? <Connection connection={connections.find((item) => item.inbound_segment_id === segment.id)} /> : null}</div>)}</div>{!segments.length ? <p className="mt-4 text-sm text-amber-800">No itinerary segments. Source data remains incomplete.</p> : null}<p className="mt-4 text-xs text-slate-500">Provenance: {title(option.source_provenance?.provenance_type)} · {title(option.source_provenance?.data_state)} · parsed data is not treated as verified automatically.</p></article>
 }
 
 function Segment({ segment }) {
