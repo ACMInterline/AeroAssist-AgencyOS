@@ -17,7 +17,7 @@ from services.offer_decision_export_delivery_service import actor_from_user, enu
 from services.agency_feature_flag_audit_service import AgencyFeatureFlagAuditService
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 FLAG_COLLECTION = "agency_feature_flags"
 REVIEW_COLLECTION = "agency_feature_flag_reviews"

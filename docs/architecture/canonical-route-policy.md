@@ -301,3 +301,7 @@ Phase 55.8 uses `/api/platform/airline-contact-intelligence` for governed contac
 ## Phase 55.9 Airline Intelligence Readiness
 
 Phase 55.9 uses `/api/platform/airline-intelligence-readiness` for readiness profiles, deterministic assessments, release candidates and gates, audited decisions, population waves, and issue metadata. Agency read-only released coverage uses `/api/agencies/{agency_id}/airline-intelligence-readiness`. UI routes are `/platform/airline-intelligence-readiness` and `/agency/airline-intelligence-readiness`. Draft governance and restricted source traces are excluded from agency responses, and no `/admin/*` or `/agent/*` route root is introduced.
+
+## Phase 56.0 Journey Engine
+
+Platform read-only governance and diagnostics use `/api/platform/journey-engine` and `/platform/journey-engine`. Agency representation reads and authorized metadata writes use `/api/agencies/{agency_id}/journeys` and `/agency/journeys`. Source projection actions remain under the same agency route family, including `from-trip`, `from-offer`, `from-booking`, `from-ticket`, and `from-emd`. Finalized snapshots have no destructive route. No `/admin/*`, `/agent/*`, parallel public journey API, or unauthenticated mutation route is introduced.

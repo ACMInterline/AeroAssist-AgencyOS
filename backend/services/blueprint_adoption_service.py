@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 
 ADOPTION_ITEMS: list[dict[str, Any]] = [

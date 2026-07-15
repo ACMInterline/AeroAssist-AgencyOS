@@ -9,7 +9,7 @@ from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
-from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_offer_booking_handoffs, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_request_trip_conversion, agency_ssr_osi_workspaces, agency_task_automation, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_offer_booking_handoffs, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_request_trip_conversion, platform_ssr_osi_workspaces, platform_task_automation, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
+from routers import agency_agent_work_queues, agency_document_workspaces, agency_emd_workspaces, agency_flight_workspaces, agency_journeys, agency_offer_booking_handoffs, agency_offer_workspaces, agency_operational_sla_deadlines, agency_operational_timelines, agency_operational_travel_workspaces, agency_operational_workflows, agency_passenger_service_workflows, agency_passenger_workspaces, agency_request_trip_conversion, agency_ssr_osi_workspaces, agency_task_automation, agency_ticket_workspaces, agency_travel_request_workspaces, agency_trip_workspaces, platform_agent_work_queues, platform_booking_workspaces, platform_document_workspaces, platform_emd_workspaces, platform_flight_workspaces, platform_journey_engine, platform_offer_booking_handoffs, platform_offer_workspaces, platform_operational_sla_deadlines, platform_operational_timelines, platform_operational_travel_workspaces, platform_operational_workflows, platform_passenger_service_workflows, platform_passenger_workspaces, platform_request_trip_conversion, platform_ssr_osi_workspaces, platform_task_automation, platform_ticket_workspaces, platform_travel_request_workspaces, platform_trip_workspaces
 from routers import agency_after_sales_workflows, platform_after_sales_workflows
 from routers import agency_operational_workflow_maturity, agency_operations_command_center, platform_operational_workflow_maturity, platform_operations_governance
 from routers import agency_airline_master_profiles, platform_airline_master_profiles
@@ -80,7 +80,8 @@ from services.airline_distribution_capability_service import AirlineDistribution
 from services.interline_codeshare_intelligence_service import InterlineCodeshareIntelligenceService
 from services.airline_fare_family_brand_intelligence_service import AirlineFareFamilyBrandIntelligenceService
 from services.airline_contact_communication_intelligence_service import AirlineContactCommunicationIntelligenceService
-from services.airline_intelligence_scale_readiness_service import PHASE_LABEL, AirlineIntelligenceScaleReadinessService
+from services.airline_intelligence_scale_readiness_service import AirlineIntelligenceScaleReadinessService
+from services.canonical_journey_itinerary_service import PHASE_LABEL, CanonicalJourneyItineraryService
 from services.pilot_readiness_service import CHECK_FAMILIES as PILOT_READINESS_CHECK_FAMILIES, CHECK_STATUSES as PILOT_READINESS_CHECK_STATUSES, GOLDEN_PATH_CASE_TEMPLATES as PILOT_GOLDEN_PATH_CASE_TEMPLATES, GOLDEN_PATH_STAGE_CODES as PILOT_GOLDEN_PATH_STAGE_CODES, GOLDEN_PATH_STATUSES as PILOT_GOLDEN_PATH_STATUSES, ISSUE_STATUSES as PILOT_READINESS_ISSUE_STATUSES, PILOT_GOLDEN_PATH_CASES_COLLECTION, PILOT_GOLDEN_PATH_RUNS_COLLECTION, PILOT_READINESS_ASSESSMENTS_COLLECTION, PILOT_READINESS_CHECKS_COLLECTION, PILOT_READINESS_ISSUES_COLLECTION, PILOT_READINESS_PROFILES_COLLECTION, READINESS_STATUSES as PILOT_READINESS_STATUSES, REMEDIATION_LINKS as PILOT_READINESS_REMEDIATION_LINKS
 from services.knowledge_quality_assurance_service import APPROVAL_RECOMMENDATIONS as KNOWLEDGE_QA_APPROVAL_RECOMMENDATIONS, KNOWLEDGE_QUALITY_ASSURANCE_REVIEWS_COLLECTION, QA_CHECKS as KNOWLEDGE_QA_CHECKS, QA_STATUSES as KNOWLEDGE_QA_STATUSES, SEVERITY_LEVELS as KNOWLEDGE_QA_SEVERITY_LEVELS, TARGET_TYPES as KNOWLEDGE_QA_TARGET_TYPES
 from services.operational_rule_composer_service import LIFECYCLE_STATUSES as OPERATIONAL_RULE_LIFECYCLE_STATUSES, OPERATIONAL_RULE_COMPOSER_RULES_COLLECTION, RULE_FAMILIES as OPERATIONAL_RULE_FAMILIES, SEVERITY_LEVELS as OPERATIONAL_RULE_SEVERITY_LEVELS, SUPPORTED_OPERATORS as OPERATIONAL_RULE_SUPPORTED_OPERATORS
@@ -102,7 +103,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 55.5 airline distribution, PSS, GDS, and NDC capability intelligence foundation.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.0 canonical journey and itinerary representation foundation.",
 )
 
 app.add_middleware(
@@ -1878,6 +1879,7 @@ async def readiness() -> dict:
     airline_fare_brand_intelligence_coverage = await AirlineFareFamilyBrandIntelligenceService(database).coverage()
     airline_contact_communication_intelligence_coverage = await AirlineContactCommunicationIntelligenceService(database).coverage()
     airline_intelligence_scale_readiness_coverage = await AirlineIntelligenceScaleReadinessService(database).coverage()
+    canonical_journey_itinerary_coverage = await CanonicalJourneyItineraryService(database).coverage()
     operational_deadline_due_soon_count = len([item for item in operational_deadline_records if item.get("status") == "due_soon" or item.get("breach_state") == "due_soon"])
     operational_deadline_overdue_count = len([item for item in operational_deadline_records if item.get("status") == "overdue" or item.get("breach_state") == "breached"])
     operational_deadline_paused_count = len([item for item in operational_deadline_records if item.get("status") == "paused"])
@@ -5124,6 +5126,37 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 55.9 consolidates Epic 55 knowledge, evidence, coverage, capability, QA, publication, and agency-consumption metadata into deterministic scale-readiness assessments and human-controlled release gates. It does not seed production, publish automatically, call providers, or mutate historical knowledge snapshots.",
         },
+        "canonical_journey_itinerary_representation_foundation": {
+            "canonical_journey_itinerary_representation_enabled": True,
+            "canonical_operational_entities_reused": True,
+            "duplicate_operational_entities_disabled": True,
+            "journey_representation_collection_enabled": True,
+            "itinerary_option_representation_enabled": True,
+            "journey_leg_representation_enabled": True,
+            "journey_segment_projection_enabled": True,
+            "journey_connection_representation_enabled": True,
+            "journey_fare_brand_presentation_enabled": True,
+            "journey_service_presentation_enabled": True,
+            "journey_presentation_configuration_enabled": True,
+            "immutable_journey_snapshots_enabled": True,
+            "finalized_snapshot_mutation_disabled": True,
+            "source_provenance_enabled": True,
+            "trip_projection_enabled": True,
+            "offer_projection_enabled": True,
+            "booking_projection_enabled": True,
+            "ticket_reference_enabled": True,
+            "agency_isolation_enabled": True,
+            "client_safe_projection_enabled": True,
+            "live_availability_disabled": True,
+            "live_pricing_disabled": True,
+            "provider_connectivity_disabled": True,
+            "external_api_calls_disabled": True,
+            "automatic_publication_disabled": True,
+            "metadata_only": True,
+            **canonical_journey_itinerary_coverage,
+            "readiness_required": False,
+            "diagnostic": "Phase 56.0 establishes the canonical journey and itinerary presentation layer while preserving Request, Trip, Offer, Booking, Ticket, EMD, Passenger, and canonical segment records as source truth. Projections retain provenance, finalized snapshots are immutable, and no live availability, pricing, provider connectivity, external calls, AI, background workers, or automatic publication is introduced.",
+        },
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7131,6 +7164,7 @@ app.include_router(platform_interline_codeshare_intelligence.router)
 app.include_router(platform_airline_fare_brand_intelligence.router)
 app.include_router(platform_airline_contact_intelligence.router)
 app.include_router(platform_airline_intelligence_readiness.router)
+app.include_router(platform_journey_engine.router)
 app.include_router(platform_passenger_service_workflows.router)
 app.include_router(platform_rollout_dashboard.router)
 app.include_router(platform_capabilities.router)
@@ -7193,6 +7227,7 @@ app.include_router(agency_operational_scenario_testing.router)
 app.include_router(agency_knowledge_population_toolkit.router)
 app.include_router(agency_pilot_readiness.router)
 app.include_router(agency_airline_intelligence_readiness.router)
+app.include_router(agency_journeys.router)
 app.include_router(agency_service_parameter_taxonomies.router)
 app.include_router(agency_request_segment_services.router)
 app.include_router(agency_client_passenger_master.router)

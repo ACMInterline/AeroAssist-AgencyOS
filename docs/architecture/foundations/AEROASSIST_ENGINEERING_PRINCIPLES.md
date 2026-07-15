@@ -78,3 +78,7 @@ Phase 55.4 coverage scores must be deterministic projections over canonical evid
 Phase 55.5 distribution capability records must separate documented capability, configured provider, tested sandbox, and production-enabled provider stages. They must never store credentials or imply live connectivity, and they must extend the existing distribution/PSS/GDS context rather than replace it.
 
 Phase 55.9 airline-intelligence release readiness must consolidate canonical Epic 55 sources. Critical gates must override aggregate scores, release decisions must be human and audited, population-wave completion must never auto-publish, and agency views must exclude drafts and restricted internal traces.
+
+## Canonical Journey Representation
+
+Journey and itinerary views are projections over canonical operational entities. They must retain source entity and source segment references, preserve accepted and issued historical snapshots, represent unknown data explicitly, and never become a parallel Trip, Offer, Booking, Ticket, EMD, Passenger, or flight-segment source of truth. Only supplied UTC timestamps may drive deterministic elapsed-time calculations. Finalized Journey snapshots are immutable and non-destructive.

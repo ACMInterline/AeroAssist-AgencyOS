@@ -9,7 +9,7 @@ from services.operations_command_center_service import OperationsCommandCenterSe
 from services.pilot_readiness_service import PilotReadinessService
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 MATURITY_DIMENSIONS = [
     "workflow_linkage",

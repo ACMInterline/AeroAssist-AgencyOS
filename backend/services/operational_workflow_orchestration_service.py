@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 OPERATIONAL_WORKFLOW_DEFINITIONS_COLLECTION = "operational_workflow_definitions"
 OPERATIONAL_WORKFLOW_INSTANCES_COLLECTION = "operational_workflow_instances"

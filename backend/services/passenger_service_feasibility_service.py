@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 PASSENGER_SERVICE_FEASIBILITY_COLLECTION = "passenger_service_feasibilities"
 
 FEASIBILITY_STATUSES = ["draft", "in_review", "completed", "blocked", "archived"]

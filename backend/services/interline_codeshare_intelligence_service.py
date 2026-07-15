@@ -18,7 +18,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 AIRLINE_CARRIER_RELATIONSHIPS_COLLECTION = "airline_carrier_relationships"
 AIRLINE_INTERLINE_AGREEMENT_PROFILES_COLLECTION = "airline_interline_agreement_profiles"

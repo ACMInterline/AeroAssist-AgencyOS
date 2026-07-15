@@ -282,3 +282,19 @@ Phase 55.8 reuses canonical `airline_contacts` for `AirlineContactDirectoryEntry
 | `AirlineIntelligenceScaleIssue` | `airline_intelligence_scale_issues` | Readiness, candidate, or wave blocker/warning with remediation and resolution audit. |
 
 These models reference canonical Epic 55 knowledge and publication records. They are not a parallel airline catalogue, knowledge store, publication engine, or operational execution system.
+
+## Phase 56.0 Canonical Journey Representation Models
+
+| Model | Collection | Canonical role |
+| --- | --- | --- |
+| `JourneyRepresentation` | `journey_representations` | Agency-scoped presentation root referencing one canonical operational source. |
+| `JourneyItineraryOption` | `journey_itinerary_options` | Presented routing option with supplied chronology, carrier sets, warnings, and advisory references. |
+| `JourneyLegRepresentation` | `journey_leg_representations` | Presentation grouping that references projected segment and connection ids. |
+| `JourneySegmentRepresentation` | `journey_segment_representations` | Source-linked segment projection; it never replaces `trip_segments`, Flight Workspace, Offer segment, Booking snapshot, or ticket coupon truth. |
+| `JourneyConnectionRepresentation` | `journey_connection_representations` | Deterministic or manually supplied adjacent-segment connection metadata with explicit unknown state. |
+| `JourneyFareBrandPresentation` | `journey_fare_brand_presentations` | Existing fare-family, attribute, baggage, and price-reference presentation. |
+| `JourneyServicePresentation` | `journey_service_presentations` | Passenger/segment-scoped service, SSR/OSI, approval, document, EMD, warning, and message presentation. |
+| `JourneyPresentationConfiguration` | `journey_presentation_configurations` | Agency and client-safe display configuration. |
+| `JourneySnapshot` | `journey_snapshots` | Deterministically hashed version payload; finalized records are immutable and have no physical delete route. |
+
+These collections form a projection layer only. Canonical operational entities and accepted/issued historical snapshots are reused and never rewritten.

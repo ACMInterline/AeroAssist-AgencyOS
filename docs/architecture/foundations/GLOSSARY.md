@@ -260,3 +260,15 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Population Wave**: A controlled planning group of airlines, service-family targets, markets, routes, reviewers, due dates, readiness progress, blockers, and release assignments. Completion does not trigger publication.
 
 **Scale Issue**: A readiness blocker or warning linked to an assessment, release candidate, or population wave, with severity, remediation, ownership, and resolution metadata.
+
+## Phase 56.0 Terms
+
+**Journey Representation**: An agency-scoped, source-linked presentation projection over canonical Request, Trip, Offer, Booking, Ticket, EMD, Passenger, service, and segment records. It is not an operational source of truth.
+
+**Itinerary Option**: One presented routing choice within a Journey, including supplied chronology, carrier roles, counts, advisory references, warnings, and provenance.
+
+**Journey Segment Projection**: A presentation record that references a canonical source segment or a clearly identified manual/imported source. It does not replace the source segment.
+
+**Journey Snapshot**: A versioned, deterministically hashed normalized Journey payload. Once finalized, it is immutable and cannot be physically deleted through Journey APIs.
+
+**Client-Safe Journey Projection**: A sanitized Journey presentation that removes internal summaries, operational notes, private source locations, raw/provider payloads, credentials, secrets, and storage references. It does not itself publish content.

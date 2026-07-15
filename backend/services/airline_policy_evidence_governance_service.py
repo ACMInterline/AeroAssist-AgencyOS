@@ -21,7 +21,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 
 SOURCE_COLLECTION = "airline_evidence_sources"
 ARTIFACT_COLLECTION = "airline_evidence_artifacts"

@@ -7,7 +7,7 @@ from database import Database
 from models import VisualPolicyEditorCard, VisualPolicyEditorCardCreate, VisualPolicyEditorCardUpdate
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 VISUAL_POLICY_EDITOR_CARDS_COLLECTION = "visual_policy_editor_cards"
 
 POLICY_FAMILIES = [

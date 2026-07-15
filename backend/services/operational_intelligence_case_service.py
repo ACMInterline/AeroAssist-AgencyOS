@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

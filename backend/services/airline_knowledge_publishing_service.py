@@ -7,7 +7,7 @@ from database import Database
 from models import AirlineKnowledgePublication, AirlineKnowledgePublicationCreate, AirlineKnowledgePublicationUpdate
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 AIRLINE_KNOWLEDGE_PUBLICATIONS_COLLECTION = "airline_knowledge_publications"
 
 PUBLICATION_STATUSES = [

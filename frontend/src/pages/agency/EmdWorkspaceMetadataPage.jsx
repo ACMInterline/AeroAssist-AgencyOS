@@ -120,6 +120,7 @@ function EmdList({ emds }) {
               <td className="px-4 py-3 align-top">
                 <p className="font-medium text-slate-950">{emd.emd_display_name}</p>
                 <p className="mt-1 text-xs text-slate-500">{emd.emd_reference}</p>
+                <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=emd_workspace&source_entity_id=${encodeURIComponent(emd.id)}`}>Open Journey View</a>
                 <p className="mt-1 text-xs text-slate-500">{emd.emd_number || "EMD number unset"}</p>
                 <p className="mt-2 text-xs text-slate-500">{emd.emd_type || "Type unset"} {emd.emd_a_or_s ? `(${emd.emd_a_or_s})` : ""}</p>
               </td>

@@ -16,7 +16,7 @@ from services.service_parameter_taxonomy_service import (
 )
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 PRICING_FORMULA_BUILDERS_COLLECTION = "pricing_formula_builders"
 
 FORMULA_STATUSES = ["draft", "in_review", "approved", "retired", "archived"]

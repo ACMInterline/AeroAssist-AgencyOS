@@ -17,7 +17,7 @@ from services.knowledge_import_template_service import (
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+EXPECTED_PHASE = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 EXPECTED_FOUNDATION_PHASE = "phase_52_2_knowledge_import_templates_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 

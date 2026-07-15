@@ -7,7 +7,7 @@ from database import Database
 from models import KnowledgePopulationToolkit, KnowledgePopulationToolkitCreate, KnowledgePopulationToolkitUpdate
 
 
-PHASE_LABEL = "phase_55_9_airline_intelligence_scale_release_readiness_foundation"
+PHASE_LABEL = "phase_56_0_canonical_journey_itinerary_representation_foundation"
 KNOWLEDGE_POPULATION_TOOLKITS_COLLECTION = "knowledge_population_toolkits"
 
 POPULATION_STATUSES = [

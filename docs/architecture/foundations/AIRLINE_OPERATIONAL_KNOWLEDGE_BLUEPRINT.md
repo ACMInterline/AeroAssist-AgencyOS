@@ -207,3 +207,7 @@ Distribution capability intelligence is part of the Capability pillar. It record
 ## Epic 55 Scale and Release Readiness
 
 Phase 55.9 applies deterministic readiness dimensions and critical human-controlled release gates across the five pillars. A high aggregate score cannot override missing evidence, unresolved conflict, inadequate required-service coverage, failed QA, untested scenarios, missing version snapshots, invalid effective dates, mixed client/internal messages, invalid agency consumption payloads, or a missing rollback reference. Population-wave completion is planning metadata and never publishes by itself.
+
+## Phase 56.0 Journey Consumption
+
+The Canonical Journey representation may present advisory evidence, feasibility, recommendation, fare-brand, service, and warning references produced by the five-pillar knowledge model. The Journey layer consumes those references for explanation; it does not create airline operational truth, run live evaluation, calculate live prices, or execute a recommendation. Passenger Need remains the root and canonical operational records remain authoritative.

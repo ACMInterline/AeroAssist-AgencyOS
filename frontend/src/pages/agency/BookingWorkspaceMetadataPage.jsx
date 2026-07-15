@@ -114,6 +114,7 @@ function BookingList({ bookings }) {
               <td className="px-4 py-3 align-top">
                 <p className="font-medium text-slate-950">{booking.booking_display_name}</p>
                 <p className="mt-1 text-xs text-slate-500">{booking.booking_reference}</p>
+                <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=booking_workspace&source_entity_id=${encodeURIComponent(booking.id)}`}>Open Journey View</a>
                 <p className="mt-2 text-xs text-slate-500">{booking.booking_type || "Booking type unset"}</p>
               </td>
               <td className="px-4 py-3 align-top"><StatusBadge status={booking.booking_status} /></td>

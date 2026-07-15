@@ -116,6 +116,7 @@ function TripList({ trips }) {
               <td className="px-4 py-3 align-top">
                 <p className="font-medium text-slate-950">{trip.trip_display_name || trip.trip_reference}</p>
                 <p className="mt-1 text-xs text-slate-500">{trip.trip_reference}</p>
+                <a className="mt-2 inline-flex text-xs font-semibold text-blue-700 hover:text-blue-900" href={`/agency/journeys?source_entity_type=trip_workspace&source_entity_id=${encodeURIComponent(trip.id)}`}>Open Journey View</a>
                 <p className="mt-1"><StatusBadge status={trip.trip_status} /></p>
                 <p className="mt-2 text-xs text-slate-500">{trip.operational_workspace?.workspace_title || trip.operational_workspace_id || "No assigned workspace"}</p>
               </td>
