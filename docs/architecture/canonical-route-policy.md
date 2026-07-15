@@ -314,3 +314,12 @@ Platform read-only governance and diagnostics use `/api/platform/journey-engine`
 - Platform API: `/api/platform/journey-authoring`
 
 Agency routes permit governed authoring metadata operations under existing agency-role checks. Platform routes are read-only diagnostics. Phase 56.1 introduces no `/admin/*`, `/agent/*`, parallel Journey route root, provider endpoint, or unauthenticated mutation.
+
+## Phase 56.2 Journey Option Composition Routes
+
+- Agency workspace: `/agency/journey-option-composition`
+- Platform diagnostics: `/platform/journey-option-compositions`
+- Agency API: `/api/agencies/{agency_id}/journey-option-compositions`
+- Platform API: `/api/platform/journey-option-compositions`
+
+Agency APIs expose agency-scoped composition metadata operations through existing authorization. Platform APIs expose read-only totals, validation metadata, and composition diagnostics. Phase 56.2 introduces no `/admin/*`, `/agent/*`, parallel Offer or Journey root, provider endpoint, public mutation, or direct database access from the frontend.

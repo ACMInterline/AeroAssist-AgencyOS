@@ -542,6 +542,17 @@ AGENCY_OWNED_COLLECTIONS = [
     "journey_authoring_validations",
     "journey_authoring_applications",
     "journey_authoring_templates",
+    "journey_option_compositions",
+    "journey_option_alternatives",
+    "journey_option_segment_assignments",
+    "journey_fare_brand_choices",
+    "journey_commercial_price_breakdowns",
+    "journey_option_metric_snapshots",
+    "journey_option_service_assessments",
+    "journey_option_comparison_profiles",
+    "journey_option_comparison_results",
+    "journey_option_composition_snapshots",
+    "journey_option_offer_handoffs",
     "airline_knowledge_releases",
     "airline_capability_matrix",
     "operational_knowledge_evaluations",
@@ -3930,6 +3941,55 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         ],
         "journey_authoring_templates": [
             {"keys": [("agency_id", ASCENDING), ("active", ASCENDING), ("name", ASCENDING)], "name": "journey_authoring_templates_agency_lookup"},
+        ],
+        "journey_option_compositions": [
+            {"keys": [("agency_id", ASCENDING), ("journey_id", ASCENDING), ("version_number", ASCENDING)], "name": "journey_option_compositions_journey_version_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("updated_at", ASCENDING)], "name": "journey_option_compositions_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("archived_at", ASCENDING)], "name": "journey_option_compositions_archive_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("offer_id", ASCENDING), ("offer_workspace_id", ASCENDING)], "name": "journey_option_compositions_offer_lookup"},
+        ],
+        "journey_option_alternatives": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("display_order", ASCENDING)], "name": "journey_option_alternatives_composition_order_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("journey_id", ASCENDING), ("status", ASCENDING)], "name": "journey_option_alternatives_journey_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("archived_at", ASCENDING)], "name": "journey_option_alternatives_archive_lookup"},
+        ],
+        "journey_option_segment_assignments": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("option_id", ASCENDING), ("display_order", ASCENDING)], "name": "journey_option_segment_assignments_order_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("option_id", ASCENDING), ("source_segment_id", ASCENDING)], "name": "journey_option_segment_assignments_source_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("archived_at", ASCENDING)], "name": "journey_option_segment_assignments_archive_lookup"},
+        ],
+        "journey_fare_brand_choices": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("option_id", ASCENDING), ("display_order", ASCENDING)], "name": "journey_fare_brand_choices_option_order_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("fare_family_id", ASCENDING), ("source_type", ASCENDING)], "name": "journey_fare_brand_choices_family_source_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("archived_at", ASCENDING)], "name": "journey_fare_brand_choices_archive_lookup"},
+        ],
+        "journey_commercial_price_breakdowns": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("option_id", ASCENDING), ("fare_choice_id", ASCENDING)], "name": "journey_commercial_price_breakdowns_choice_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("currency", ASCENDING), ("validity_until", ASCENDING)], "name": "journey_commercial_price_breakdowns_currency_validity_lookup"},
+        ],
+        "journey_option_metric_snapshots": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("option_id", ASCENDING), ("calculated_at", ASCENDING)], "name": "journey_option_metric_snapshots_option_lookup"},
+        ],
+        "journey_option_service_assessments": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("option_id", ASCENDING), ("fare_choice_id", ASCENDING)], "name": "journey_option_service_assessments_option_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("service_code", ASCENDING), ("feasibility_status", ASCENDING)], "name": "journey_option_service_assessments_service_lookup"},
+        ],
+        "journey_option_comparison_profiles": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("status", ASCENDING)], "name": "journey_option_comparison_profiles_composition_lookup"},
+        ],
+        "journey_option_comparison_results": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("generated_at", ASCENDING)], "name": "journey_option_comparison_results_composition_lookup"},
+            {"keys": [("content_hash", ASCENDING)], "name": "journey_option_comparison_results_hash_lookup"},
+        ],
+        "journey_option_composition_snapshots": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("snapshot_number", ASCENDING)], "name": "journey_option_composition_snapshots_number_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("journey_id", ASCENDING), ("finalized", ASCENDING)], "name": "journey_option_composition_snapshots_finalized_lookup"},
+            {"keys": [("content_hash", ASCENDING)], "name": "journey_option_composition_snapshots_hash_lookup"},
+        ],
+        "journey_option_offer_handoffs": [
+            {"keys": [("agency_id", ASCENDING), ("composition_id", ASCENDING), ("snapshot_id", ASCENDING)], "name": "journey_option_offer_handoffs_composition_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("offer_id", ASCENDING), ("offer_workspace_id", ASCENDING)], "name": "journey_option_offer_handoffs_offer_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("handoff_status", ASCENDING), ("created_at", ASCENDING)], "name": "journey_option_offer_handoffs_status_lookup"},
         ],
         "airline_fleet_types": [[("airline_id", ASCENDING)], [("aircraft_type", ASCENDING)]],
         "aircraft_tail_numbers": [[("airline_id", ASCENDING)], [("tail_number", ASCENDING)]],

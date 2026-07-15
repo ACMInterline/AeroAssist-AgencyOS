@@ -33,7 +33,7 @@ from services.offer_to_booking_handoff_service import OfferToBookingHandoffServi
 from smoke_booking_pnr_foundation import OWNER_HEADERS, assert_openapi_path, get, post, put, request
 
 
-EXPECTED_PHASE = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+EXPECTED_PHASE = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 PLATFORM_BASE = "/api/platform/airline-distribution-capabilities"
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}

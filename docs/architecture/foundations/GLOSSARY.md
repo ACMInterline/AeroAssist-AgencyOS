@@ -284,3 +284,15 @@ A Phase 51.2 metadata-only record that preserves segment-first intake precision 
 **Field Provenance**: The trace of a draft field's raw, normalized, enriched, agent-confirmed, overridden, unresolved, or rejected value and source.
 
 **Journey Authoring Application**: The auditable explicit operation that maps segment draft ids to created or superseded Phase 56.0 Journey records without publishing a snapshot.
+
+## Phase 56.2 Terms
+
+**Journey Option Composition**: An agency-owned working envelope that arranges canonical Journey segment references into comparable itinerary alternatives without becoming a segment, Trip, or Offer source of truth.
+
+**Journey Fare Brand Choice**: A governed Phase 55.7 import or an explicitly manual commercial-product choice attached to one itinerary alternative. It does not prove live availability or price.
+
+**Commercial Price Breakdown**: Currency-consistent agency-entered amount metadata with deterministic total validation and provenance. It is not a live fare calculation, invoice, or payment.
+
+**Composition Snapshot**: A versioned deterministic copy of ordered options, references, commercial metadata, assessments, warnings, comparisons, and provenance. A finalized snapshot is immutable.
+
+**Offer Handoff Trace**: An explicit metadata record describing how a finalized composition is linked to the existing Offer Workspace. It does not publish, send, accept, book, ticket, or issue an EMD.

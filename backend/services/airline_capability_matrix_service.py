@@ -12,7 +12,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 AIRLINE_CAPABILITY_MATRIX_COLLECTION = "airline_capability_matrix"
 
 CAPABILITY_STATUSES = ["draft", "under_review", "approved", "active", "superseded", "archived"]

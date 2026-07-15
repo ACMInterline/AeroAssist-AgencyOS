@@ -11,7 +11,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 OPERATIONAL_INTELLIGENCE_CASES_COLLECTION = "operational_intelligence_cases"
 
 OPERATIONAL_INTELLIGENCE_CASE_STATUSES = ["draft", "assembling", "in_review", "ready", "blocked", "archived"]

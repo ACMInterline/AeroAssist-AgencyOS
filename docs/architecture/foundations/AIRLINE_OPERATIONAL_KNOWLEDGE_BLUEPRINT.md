@@ -215,3 +215,7 @@ The Canonical Journey representation may present advisory evidence, feasibility,
 ## Phase 56.1 Governed Journey Authoring
 
 Journey authoring may enrich a blank draft field only from governed internal reference or intelligence records and must retain field-level provenance. Knowledge-derived labels or context remain evidence-backed advisory data; they cannot be converted into invented schedules, carrier roles, fare attributes, approval, or operational certainty. Agent confirmation outranks enrichment, and unresolved operational facts remain unknown.
+
+## Phase 56.2 Composition Consumption
+
+Journey option composition consumes published, agency-visible Fare Brand Intelligence plus advisory policy, feasibility, recommendation, evidence, version, and contact references from the five-pillar model. Restricted evidence remains internal, manual fare metadata remains clearly manual, and unknown applicability remains reviewable. The comparison and snapshot layers explain options to human agents; they do not create airline truth, retrieve live inventory, select an airline automatically, publish an offer, or execute fulfillment.

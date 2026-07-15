@@ -19,7 +19,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 
 VERSION_COLLECTION = "airline_knowledge_versions"
 VERSION_ITEM_COLLECTION = "airline_knowledge_version_items"

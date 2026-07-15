@@ -22,7 +22,7 @@ from models import (
 )
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 
 OPERATIONAL_TASK_TEMPLATES_COLLECTION = "operational_task_templates"
 OPERATIONAL_TASK_DEPENDENCIES_COLLECTION = "operational_task_dependencies"

@@ -9,7 +9,7 @@ from services.operations_command_center_service import OperationsCommandCenterSe
 from services.pilot_readiness_service import PilotReadinessService
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 
 MATURITY_DIMENSIONS = [
     "workflow_linkage",

@@ -6,7 +6,7 @@ from typing import Any
 from database import Database
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 
 VIEW_TYPES = ["dashboard", "queue", "kanban", "calendar", "timeline", "exceptions", "workload"]
 

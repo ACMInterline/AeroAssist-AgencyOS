@@ -27134,3 +27134,346 @@ class JourneyAuthoringTemplate(BaseDocument):
     created_by: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
+
+
+class JourneyOptionCompositionStatus(str, Enum):
+    DRAFT = "draft"
+    COMPOSING = "composing"
+    REQUIRES_REVIEW = "requires_review"
+    READY = "ready"
+    SNAPSHOTTED = "snapshotted"
+    PREPARED_FOR_OFFER = "prepared_for_offer"
+    ARCHIVED = "archived"
+
+
+class JourneyOptionAlternativeStatus(str, Enum):
+    DRAFT = "draft"
+    INCOMPLETE = "incomplete"
+    REQUIRES_REVIEW = "requires_review"
+    COMPLETE = "complete"
+    ARCHIVED = "archived"
+
+
+class JourneyFareBrandChoiceSource(str, Enum):
+    GOVERNED_FARE_INTELLIGENCE = "governed_fare_intelligence"
+    JOURNEY_PRESENTATION = "journey_presentation"
+    PARSER_IMPORT = "parser_import"
+    OFFER_RECORD = "offer_record"
+    PRICING_RULE = "pricing_rule"
+    AGENCY_MANUAL = "agency_manual"
+    OTHER = "other"
+
+
+class JourneyCompositionUncertaintyStatus(str, Enum):
+    CONFIRMED = "confirmed"
+    CONDITIONAL = "conditional"
+    UNKNOWN = "unknown"
+    REQUIRES_REVIEW = "requires_review"
+
+
+class JourneyOptionComposition(BaseDocument):
+    agency_id: str
+    journey_id: str
+    authoring_session_id: Optional[str] = None
+    request_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    offer_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    title: str
+    internal_title: Optional[str] = None
+    client_safe_title: Optional[str] = None
+    status: JourneyOptionCompositionStatus = JourneyOptionCompositionStatus.DRAFT
+    version_number: int = 1
+    preferred_option_id: Optional[str] = None
+    preferred_fare_choice_id: Optional[str] = None
+    client_rationale: Optional[str] = None
+    internal_decision_notes: Optional[str] = None
+    requires_review: bool = False
+    completeness_score: int = 0
+    source_refs: List[Dict[str, Any]] = Field(default_factory=list)
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    canonical_journey_reused: bool = True
+
+
+class JourneyOptionAlternative(BaseDocument):
+    agency_id: str
+    composition_id: str
+    journey_id: str
+    option_code: str
+    display_order: int
+    internal_label: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_safe_label: Optional[str] = None
+    headline: Optional[str] = None
+    route_summary: Optional[str] = None
+    carrier_summary: Optional[str] = None
+    commercial_summary: Optional[str] = None
+    operational_summary: Optional[str] = None
+    status: JourneyOptionAlternativeStatus = JourneyOptionAlternativeStatus.DRAFT
+    cloned_from_option_id: Optional[str] = None
+    requires_review: bool = False
+    warning_codes: List[str] = Field(default_factory=list)
+    metric_snapshot_id: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class JourneyOptionSegmentAssignment(BaseDocument):
+    agency_id: str
+    composition_id: str
+    option_id: str
+    journey_id: str
+    journey_segment_projection_id: Optional[str] = None
+    journey_leg_id: Optional[str] = None
+    source_segment_type: str = "journey_segment_projection"
+    source_segment_id: str
+    display_order: int
+    included: bool = True
+    assignment_role: str = "itinerary"
+    justification: Optional[str] = None
+    provenance: Dict[str, Any] = Field(default_factory=dict)
+    archived_at: Optional[datetime] = None
+    metadata_only: bool = True
+    source_segment_remains_canonical: bool = True
+
+
+class JourneyFareBrandChoice(BaseDocument):
+    agency_id: str
+    composition_id: str
+    option_id: str
+    display_order: int
+    airline_id: Optional[str] = None
+    airline_code: Optional[str] = None
+    fare_family_id: Optional[str] = None
+    fare_brand_attribute_refs: List[str] = Field(default_factory=list)
+    commercial_bundle_id: Optional[str] = None
+    external_brand_name: Optional[str] = None
+    client_safe_label: str
+    cabin: Optional[str] = None
+    booking_class: Optional[str] = None
+    fare_basis: Optional[str] = None
+    passenger_type_applicability: List[str] = Field(default_factory=list)
+    route_applicability: List[str] = Field(default_factory=list)
+    segment_applicability: List[str] = Field(default_factory=list)
+    baggage_summary: Optional[str] = None
+    carry_on_summary: Optional[str] = None
+    seat_selection_inclusion: str = "unknown"
+    meal_inclusion: str = "unknown"
+    lounge_inclusion: str = "unknown"
+    priority_check_in: str = "unknown"
+    priority_boarding: str = "unknown"
+    fast_track: str = "unknown"
+    refundability: str = "unknown"
+    changeability: str = "unknown"
+    no_show_handling: Optional[str] = None
+    cancellation_handling: Optional[str] = None
+    advance_purchase_requirement: Optional[str] = None
+    minimum_stay: Optional[str] = None
+    maximum_stay: Optional[str] = None
+    ticketing_deadline: Optional[datetime] = None
+    sales_restriction: Optional[str] = None
+    point_of_sale_restriction: Optional[str] = None
+    channel_restriction: Optional[str] = None
+    corporate_or_negotiated: bool = False
+    included_service_codes: List[str] = Field(default_factory=list)
+    excluded_service_codes: List[str] = Field(default_factory=list)
+    optional_service_codes: List[str] = Field(default_factory=list)
+    client_visible_highlights: List[str] = Field(default_factory=list)
+    internal_agent_notes: Optional[str] = None
+    price_breakdown_id: Optional[str] = None
+    evidence_refs: List[str] = Field(default_factory=list)
+    knowledge_version_refs: List[str] = Field(default_factory=list)
+    source_type: JourneyFareBrandChoiceSource = JourneyFareBrandChoiceSource.AGENCY_MANUAL
+    source_provenance: Dict[str, Any] = Field(default_factory=dict)
+    manual_entry: bool = True
+    uncertainty_status: JourneyCompositionUncertaintyStatus = JourneyCompositionUncertaintyStatus.UNKNOWN
+    requires_review: bool = True
+    archived_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class JourneyCommercialPriceBreakdown(BaseDocument):
+    agency_id: str
+    composition_id: str
+    option_id: str
+    fare_choice_id: str
+    currency: str
+    supplier_amount: float = 0
+    base_amount: float = 0
+    tax_amount: float = 0
+    ancillary_amount: float = 0
+    service_fee: float = 0
+    ticketing_fee: float = 0
+    assistance_fee: float = 0
+    markup_amount: float = 0
+    discount_amount: float = 0
+    total_selling_amount: float = 0
+    passenger_count: int = 1
+    amount_basis: str = "per_itinerary"
+    source_type: str = "agency_manual"
+    source_ref: Optional[str] = None
+    manual_entry: bool = True
+    estimated: bool = True
+    calculation_trace: Dict[str, Any] = Field(default_factory=dict)
+    conversion_metadata: Optional[Dict[str, Any]] = None
+    validity_until: Optional[datetime] = None
+    ticketing_deadline: Optional[datetime] = None
+    client_visible: bool = True
+    internal_cost_visible: bool = False
+    metadata_only: bool = True
+
+
+class JourneyOptionMetricSnapshot(BaseDocument):
+    agency_id: str
+    composition_id: str
+    option_id: str
+    leg_count: int = 0
+    segment_count: int = 0
+    stop_count: int = 0
+    connection_count: int = 0
+    total_elapsed_minutes: Optional[int] = None
+    scheduled_flight_minutes: int = 0
+    total_connection_minutes: int = 0
+    shortest_connection_minutes: Optional[int] = None
+    longest_connection_minutes: Optional[int] = None
+    departure_at: Optional[datetime] = None
+    arrival_at: Optional[datetime] = None
+    overnight_indicator: bool = False
+    overnight_connection_indicator: bool = False
+    date_change_indicator: bool = False
+    timezone_change_indicator: bool = False
+    airport_change_indicator: bool = False
+    terminal_change_indicator: bool = False
+    separate_ticket_indicator: bool = False
+    self_transfer_indicator: bool = False
+    surface_sector_indicator: bool = False
+    technical_stop_indicator: bool = False
+    interline_indicator: bool = False
+    codeshare_indicator: bool = False
+    route_classification: str = "unknown"
+    marketing_carriers: List[str] = Field(default_factory=list)
+    operating_carriers: List[str] = Field(default_factory=list)
+    validating_carrier: Optional[str] = None
+    itinerary_completeness_score: int = 0
+    commercial_completeness_score: int = 0
+    service_completeness_score: int = 0
+    operational_review_required: bool = False
+    warning_codes: List[str] = Field(default_factory=list)
+    calculated_at: datetime = Field(default_factory=now_utc)
+    calculation_trace: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+
+
+class JourneyOptionServiceAssessment(BaseDocument):
+    agency_id: str
+    composition_id: str
+    option_id: str
+    fare_choice_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    service_request_id: Optional[str] = None
+    service_code: str
+    assessment_status: str = "not_assessed"
+    feasibility_status: str = "unknown"
+    airline_capability_status: str = "unknown"
+    airline_confirmation_required: bool = False
+    ssr_required: bool = False
+    osi_required: bool = False
+    emd_required: bool = False
+    document_required: bool = False
+    manual_contact_required: bool = False
+    contact_match_exists: bool = False
+    baggage_continuity_status: str = "unknown"
+    assistance_continuity_status: str = "unknown"
+    policy_ownership_status: str = "unknown"
+    knowledge_freshness_status: str = "unknown"
+    critical_knowledge_gap: bool = False
+    evidence_refs: List[str] = Field(default_factory=list)
+    warning_codes: List[str] = Field(default_factory=list)
+    client_safe_summary: Optional[str] = None
+    internal_summary: Optional[str] = None
+    assessed_at: datetime = Field(default_factory=now_utc)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    advisory_only: bool = True
+
+
+class JourneyOptionComparisonProfile(BaseDocument):
+    agency_id: str
+    composition_id: str
+    name: str = "Standard journey option comparison"
+    comparison_dimensions: List[str] = Field(default_factory=list)
+    weighting_metadata: Dict[str, Any] = Field(default_factory=dict)
+    client_visible_dimensions: List[str] = Field(default_factory=list)
+    internal_dimensions: List[str] = Field(default_factory=list)
+    status: str = "active"
+    metadata_only: bool = True
+
+
+class JourneyOptionComparisonResult(BaseDocument):
+    agency_id: str
+    composition_id: str
+    comparison_profile_id: Optional[str] = None
+    option_ids: List[str] = Field(default_factory=list)
+    structured_rows: List[Dict[str, Any]] = Field(default_factory=list)
+    human_readable_rows: List[Dict[str, Any]] = Field(default_factory=list)
+    lowest_price_option_id: Optional[str] = None
+    shortest_duration_option_id: Optional[str] = None
+    fewest_stops_option_id: Optional[str] = None
+    best_baggage_option_id: Optional[str] = None
+    preferred_option_id: Optional[str] = None
+    tie_dimensions: List[str] = Field(default_factory=list)
+    unknown_dimensions: List[str] = Field(default_factory=list)
+    generated_at: datetime = Field(default_factory=now_utc)
+    content_hash: str
+    metadata_only: bool = True
+    unsupported_recommendation_disabled: bool = True
+
+
+class JourneyOptionCompositionSnapshot(BaseDocument):
+    agency_id: str
+    composition_id: str
+    journey_id: str
+    snapshot_number: int
+    snapshot_status: str = "draft"
+    snapshot_payload: Dict[str, Any] = Field(default_factory=dict)
+    source_refs: List[Dict[str, Any]] = Field(default_factory=list)
+    evidence_refs: List[str] = Field(default_factory=list)
+    knowledge_version_refs: List[str] = Field(default_factory=list)
+    content_hash: str
+    finalized: bool = False
+    finalized_at: Optional[datetime] = None
+    finalized_by: Optional[str] = None
+    created_by: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata_only: bool = True
+    physical_deletion_disabled: bool = True
+
+
+class JourneyOptionOfferHandoff(BaseDocument):
+    agency_id: str
+    composition_id: str
+    snapshot_id: str
+    offer_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    linked_route_alternative_id: Optional[str] = None
+    linked_fare_option_ids: List[str] = Field(default_factory=list)
+    handoff_status: str = "previewed"
+    preview_payload: Dict[str, Any] = Field(default_factory=dict)
+    route_alternative_links: List[Dict[str, Any]] = Field(default_factory=list)
+    fare_option_links: List[Dict[str, Any]] = Field(default_factory=list)
+    created_records: List[Dict[str, Any]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    trace: Dict[str, Any] = Field(default_factory=dict)
+    created_by: Optional[str] = None
+    applied_at: Optional[datetime] = None
+    metadata_only: bool = True
+    automatic_publication_disabled: bool = True
+    provider_execution_disabled: bool = True

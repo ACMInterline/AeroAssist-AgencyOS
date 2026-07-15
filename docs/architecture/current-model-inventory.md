@@ -313,3 +313,21 @@ These models reference canonical Epic 55 knowledge and publication records. They
 These records are metadata preparation and traceability records. `JourneyRepresentation`, `JourneyItineraryOption`, `JourneyLegRepresentation`, `JourneySegmentRepresentation`, and `JourneyConnectionRepresentation` remain the canonical presentation family.
 
 These collections form a projection layer only. Canonical operational entities and accepted/issued historical snapshots are reused and never rewritten.
+
+## Phase 56.2 Journey Option Composition Records
+
+| Model | Collection | Ownership and role |
+| --- | --- | --- |
+| `JourneyOptionComposition` | `journey_option_compositions` | Agency-owned working envelope linked to one canonical Journey and optional existing operational records. |
+| `JourneyOptionAlternative` | `journey_option_alternatives` | Ordered itinerary-alternative presentation metadata; not a duplicate segment or Trip. |
+| `JourneyOptionSegmentAssignment` | `journey_option_segment_assignments` | Non-destructive reference from an option to a canonical Journey segment. |
+| `JourneyFareBrandChoice` | `journey_fare_brand_choices` | Governed Phase 55.7 import or explicitly manual fare-brand choice with provenance and uncertainty. |
+| `JourneyCommercialPriceBreakdown` | `journey_commercial_price_breakdowns` | Agency-entered, currency-consistent commercial metadata with deterministic arithmetic. |
+| `JourneyOptionMetricSnapshot` | `journey_option_metric_snapshots` | Deterministic schedule and route projection from stored canonical values. |
+| `JourneyOptionServiceAssessment` | `journey_option_service_assessments` | Advisory passenger-service, approval, evidence, and warning projection. |
+| `JourneyOptionComparisonProfile` | `journey_option_comparison_profiles` | Saved deterministic comparison dimensions and display metadata. |
+| `JourneyOptionComparisonResult` | `journey_option_comparison_results` | Hashed comparison result with explicit unknown values and warnings. |
+| `JourneyOptionCompositionSnapshot` | `journey_option_composition_snapshots` | Versioned immutable evidence pack once finalized. |
+| `JourneyOptionOfferHandoff` | `journey_option_offer_handoffs` | Explicit metadata-only preview/apply trace to the existing Offer Workspace. |
+
+These records are agency-scoped composition and decision-support projections. Canonical Journey segments, Request, Trip, Offer, Booking, Ticket, EMD, Passenger, accepted-offer snapshots, and issued-document truth remain in their existing models.

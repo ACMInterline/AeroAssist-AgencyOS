@@ -423,3 +423,9 @@ Supplementary itinerary, option, leg, segment, connection, fare-brand, service, 
 Adopted: agency authoring sessions, immutable raw source retention, adapters over the existing GDS Parser and Booking Import Drafts, editable segment normalization drafts, field provenance, correction/validation history, governed internal enrichment, deterministic timezone-aware calculations, explicit canonical Journey application, and read-only Platform diagnostics.
 
 Not adopted: universal parsing, live airline schedules, live availability/pricing, public-data lookup, provider execution, AI inference, automatic publication, MCT certainty without governed data, or duplicate Journey/segment ownership.
+
+## Phase 56.2 Journey Option Composition Adoption
+
+Adopted: agency-scoped option composition over canonical Journey segment references, stable option and fare ordering, non-destructive clone/archive/restore behavior, Phase 55.7 governed fare-brand imports, explicit manual fare metadata, deterministic commercial arithmetic and route metrics, advisory service assessments, readable comparison results, agent-selected preferences, immutable finalized snapshots, explicit Offer Workspace handoff traces, and read-only Platform diagnostics.
+
+Not adopted: duplicate segment ownership, live fares or availability, fare calculation, MCT certainty, automatic recommendation, provider execution, client publication, offer acceptance, booking, ticketing, EMD issuance, payment, AI, scraping, workers, or automatic production seeding.

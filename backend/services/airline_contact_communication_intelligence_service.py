@@ -21,7 +21,7 @@ from models import (
 from services.timeline_workspace_service import OperationalTimelineService
 
 
-PHASE_LABEL = "phase_56_1_journey_segment_authoring_intelligent_import_workspace_foundation"
+PHASE_LABEL = "phase_56_2_journey_option_fare_brand_composition_workspace_foundation"
 
 AIRLINE_CONTACT_DIRECTORY_COLLECTION = "airline_contacts"
 AIRLINE_CONTACT_CHANNELS_COLLECTION = "airline_contact_channels"
