@@ -3,12 +3,19 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 TRUE_VALUES = {"1", "true", "yes", "on"}
 FALSE_VALUES = {"0", "false", "no", "off"}
 VALID_APP_ENVS = {"development", "test", "production"}
 VALID_DB_MODES = {"memory", "mongo"}
+VALID_READINESS_PUBLIC_MODES = {"detailed", "summary"}
+VALID_TOKEN_REFRESH_POLICIES = {"disabled", "manual_metadata"}
+VALID_FRAME_OPTIONS = {"DENY", "SAMEORIGIN"}
+VALID_CORP_POLICIES = {"same-origin", "same-site", "cross-origin"}
+VALID_COOP_POLICIES = {"same-origin", "same-origin-allow-popups", "unsafe-none"}
+VALID_COEP_POLICIES = {"unsafe-none", "require-corp", "credentialless"}
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
 PLACEHOLDER_AUTH_SECRETS = {
     "",
@@ -40,6 +47,16 @@ def env_int(name: str, default: int) -> int:
         return default
 
 
+def env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 def env_list(name: str, default: str = "") -> list[str]:
     raw = os.getenv(name, default)
     return [item.strip() for item in raw.split(",") if item.strip()]
@@ -67,6 +84,31 @@ class AppSettings:
     public_app_url: str | None
     auth_token_secret: str
     token_expiry_minutes: int
+    token_clock_skew_seconds: int
+    token_refresh_policy: str
+    token_refresh_window_minutes: int
+    login_throttle_enabled: bool
+    login_max_attempts: int
+    login_lock_duration_seconds: int
+    login_failure_reset_seconds: int
+    login_backoff_base_seconds: float
+    login_backoff_max_seconds: float
+    security_headers_enabled: bool
+    security_content_security_policy: str | None
+    security_hsts_enabled: bool
+    security_hsts_max_age_seconds: int
+    security_hsts_include_subdomains: bool
+    security_hsts_preload: bool
+    security_frame_options: str
+    security_referrer_policy: str
+    security_permissions_policy: str
+    security_cross_origin_resource_policy: str
+    security_cross_origin_opener_policy: str
+    security_cross_origin_embedder_policy: str
+    readiness_public_mode: str
+    readiness_authenticated_detail_enabled: bool
+    readiness_internal_enabled: bool
+    readiness_internal_key: str
     invitation_expiry_hours: int
     password_reset_expiry_hours: int
     smtp_secret_refs: list[str]
@@ -94,6 +136,42 @@ def get_settings() -> AppSettings:
         public_app_url=os.getenv("PUBLIC_APP_URL") or None,
         auth_token_secret=os.getenv("AUTH_TOKEN_SECRET", ""),
         token_expiry_minutes=env_int("TOKEN_EXPIRY_MINUTES", 720),
+        token_clock_skew_seconds=env_int("TOKEN_CLOCK_SKEW_SECONDS", 30),
+        token_refresh_policy=os.getenv("TOKEN_REFRESH_POLICY", "disabled").strip().lower() or "disabled",
+        token_refresh_window_minutes=env_int("TOKEN_REFRESH_WINDOW_MINUTES", 60),
+        login_throttle_enabled=env_bool("LOGIN_THROTTLE_ENABLED", True),
+        login_max_attempts=env_int("LOGIN_MAX_ATTEMPTS", 5),
+        login_lock_duration_seconds=env_int("LOGIN_LOCK_DURATION_SECONDS", 900),
+        login_failure_reset_seconds=env_int("LOGIN_FAILURE_RESET_SECONDS", 900),
+        login_backoff_base_seconds=env_float("LOGIN_BACKOFF_BASE_SECONDS", 0.1),
+        login_backoff_max_seconds=env_float("LOGIN_BACKOFF_MAX_SECONDS", 2.0),
+        security_headers_enabled=env_bool("SECURITY_HEADERS_ENABLED", True),
+        security_content_security_policy=os.getenv("SECURITY_CONTENT_SECURITY_POLICY") or None,
+        security_hsts_enabled=env_bool("SECURITY_HSTS_ENABLED", production),
+        security_hsts_max_age_seconds=env_int("SECURITY_HSTS_MAX_AGE_SECONDS", 31_536_000),
+        security_hsts_include_subdomains=env_bool("SECURITY_HSTS_INCLUDE_SUBDOMAINS", True),
+        security_hsts_preload=env_bool("SECURITY_HSTS_PRELOAD", False),
+        security_frame_options=os.getenv("SECURITY_FRAME_OPTIONS", "DENY").strip() or "DENY",
+        security_referrer_policy=os.getenv("SECURITY_REFERRER_POLICY", "no-referrer").strip() or "no-referrer",
+        security_permissions_policy=os.getenv(
+            "SECURITY_PERMISSIONS_POLICY",
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+        ).strip(),
+        security_cross_origin_resource_policy=os.getenv(
+            "SECURITY_CROSS_ORIGIN_RESOURCE_POLICY", "same-site"
+        ).strip() or "same-site",
+        security_cross_origin_opener_policy=os.getenv(
+            "SECURITY_CROSS_ORIGIN_OPENER_POLICY", "same-origin"
+        ).strip() or "same-origin",
+        security_cross_origin_embedder_policy=os.getenv(
+            "SECURITY_CROSS_ORIGIN_EMBEDDER_POLICY", "unsafe-none"
+        ).strip() or "unsafe-none",
+        readiness_public_mode=os.getenv(
+            "READINESS_PUBLIC_MODE", "summary" if production else "detailed"
+        ).strip().lower(),
+        readiness_authenticated_detail_enabled=env_bool("READINESS_AUTHENTICATED_DETAIL_ENABLED", True),
+        readiness_internal_enabled=env_bool("READINESS_INTERNAL_ENABLED", not production),
+        readiness_internal_key=os.getenv("READINESS_INTERNAL_KEY", ""),
         invitation_expiry_hours=env_int("INVITATION_EXPIRY_HOURS", 72),
         password_reset_expiry_hours=env_int("PASSWORD_RESET_EXPIRY_HOURS", 2),
         smtp_secret_refs=env_list("SMTP_SECRET_REFS"),
@@ -161,6 +239,32 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
     else:
         add("pass", "AUTH_TOKEN_SECRET", "AUTH_TOKEN_SECRET is configured.")
 
+    if settings.token_expiry_minutes <= 0:
+        add("fail", "TOKEN_EXPIRY_MINUTES", "TOKEN_EXPIRY_MINUTES must be greater than zero.")
+    else:
+        add("pass", "TOKEN_EXPIRY_MINUTES", "Token lifetime is configured.")
+
+    if not 0 <= settings.token_clock_skew_seconds <= 300:
+        add("fail", "TOKEN_CLOCK_SKEW_SECONDS", "TOKEN_CLOCK_SKEW_SECONDS must be between 0 and 300.")
+    else:
+        add("pass", "TOKEN_CLOCK_SKEW_SECONDS", "Token clock-skew tolerance is bounded.")
+
+    if settings.token_refresh_policy not in VALID_TOKEN_REFRESH_POLICIES:
+        add("fail", "TOKEN_REFRESH_POLICY", "TOKEN_REFRESH_POLICY must be disabled or manual_metadata.")
+    elif settings.token_refresh_window_minutes < 0:
+        add("fail", "TOKEN_REFRESH_WINDOW_MINUTES", "TOKEN_REFRESH_WINDOW_MINUTES must not be negative.")
+    else:
+        add("pass", "TOKEN_REFRESH_POLICY", "Token refresh policy metadata is configured; no refresh execution is enabled.")
+
+    if settings.login_max_attempts < 2:
+        add("fail", "LOGIN_MAX_ATTEMPTS", "LOGIN_MAX_ATTEMPTS must be at least 2.")
+    elif settings.login_lock_duration_seconds <= 0 or settings.login_failure_reset_seconds <= 0:
+        add("fail", "LOGIN_THROTTLE_WINDOWS", "Login lock and failure reset intervals must be greater than zero.")
+    elif settings.login_backoff_base_seconds < 0 or settings.login_backoff_max_seconds < settings.login_backoff_base_seconds:
+        add("fail", "LOGIN_BACKOFF", "Login backoff must be non-negative and its maximum must not be below its base.")
+    else:
+        add("pass", "LOGIN_THROTTLE", "Temporary login throttling and reset windows are configured.")
+
     if not settings.cors_allowed_origins:
         add("fail", "CORS_ALLOWED_ORIGINS", "At least one CORS origin is required.")
     elif "*" in settings.cors_allowed_origins and settings.is_production:
@@ -169,8 +273,69 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
         add("fail", "CORS_ALLOWED_ORIGINS", "Production CORS must not include local development origins.")
     elif any(origin == "*" for origin in settings.cors_allowed_origins):
         add("warn", "CORS_ALLOWED_ORIGINS", "Wildcard CORS is development-only.")
+    elif any(
+        urlparse(origin).scheme not in {"http", "https"}
+        or not urlparse(origin).netloc
+        or urlparse(origin).path != ""
+        or bool(urlparse(origin).params or urlparse(origin).query or urlparse(origin).fragment)
+        or bool(urlparse(origin).username or urlparse(origin).password)
+        for origin in settings.cors_allowed_origins
+    ):
+        add("fail", "CORS_ALLOWED_ORIGINS", "CORS origins must be absolute HTTP(S) origins without paths.")
     else:
         add("pass", "CORS_ALLOWED_ORIGINS", "CORS origins are configured.")
+
+    if settings.readiness_public_mode not in VALID_READINESS_PUBLIC_MODES:
+        add("fail", "READINESS_PUBLIC_MODE", "READINESS_PUBLIC_MODE must be summary or detailed.")
+    elif settings.is_production and settings.readiness_public_mode != "summary":
+        add("fail", "READINESS_PUBLIC_MODE", "Production public readiness must use summary mode.")
+    else:
+        add("pass", "READINESS_PUBLIC_MODE", f"Public readiness mode is {settings.readiness_public_mode}.")
+
+    if settings.is_production and settings.readiness_internal_enabled and len(settings.readiness_internal_key) < 24:
+        add("fail", "READINESS_INTERNAL_KEY", "Enabled production internal readiness requires a key of at least 24 characters.")
+    elif settings.readiness_internal_enabled:
+        add("pass", "READINESS_INTERNAL_ENABLED", "Internal readiness is enabled with environment-appropriate access control.")
+    else:
+        add("pass", "READINESS_INTERNAL_ENABLED", "Internal readiness is disabled.")
+
+    if settings.readiness_authenticated_detail_enabled:
+        add("pass", "READINESS_AUTHENTICATED_DETAIL_ENABLED", "Detailed readiness is available to active Platform users.")
+    else:
+        add("pass", "READINESS_AUTHENTICATED_DETAIL_ENABLED", "Authenticated detailed readiness is disabled.")
+
+    if settings.security_hsts_max_age_seconds < 0:
+        add("fail", "SECURITY_HSTS_MAX_AGE_SECONDS", "HSTS max age must not be negative.")
+    elif settings.is_production and not settings.security_headers_enabled:
+        add("fail", "SECURITY_HEADERS_ENABLED", "Production must enable HTTP security headers.")
+    elif settings.is_production and not settings.security_hsts_enabled:
+        add("fail", "SECURITY_HSTS_ENABLED", "Production must enable HSTS.")
+    else:
+        add("pass", "SECURITY_HEADERS", "HTTP security header policy is configured.")
+
+    configured_header_values = [
+        settings.security_content_security_policy or "",
+        settings.security_frame_options,
+        settings.security_referrer_policy,
+        settings.security_permissions_policy,
+        settings.security_cross_origin_resource_policy,
+        settings.security_cross_origin_opener_policy,
+        settings.security_cross_origin_embedder_policy,
+    ]
+    if any("\r" in value or "\n" in value for value in configured_header_values):
+        add("fail", "SECURITY_HEADER_VALUES", "HTTP security header values must not contain line breaks.")
+    elif settings.security_frame_options.upper() not in VALID_FRAME_OPTIONS:
+        add("fail", "SECURITY_FRAME_OPTIONS", "SECURITY_FRAME_OPTIONS must be DENY or SAMEORIGIN.")
+    elif settings.security_cross_origin_resource_policy not in VALID_CORP_POLICIES:
+        add("fail", "SECURITY_CROSS_ORIGIN_RESOURCE_POLICY", "Invalid Cross-Origin-Resource-Policy value.")
+    elif settings.security_cross_origin_opener_policy not in VALID_COOP_POLICIES:
+        add("fail", "SECURITY_CROSS_ORIGIN_OPENER_POLICY", "Invalid Cross-Origin-Opener-Policy value.")
+    elif settings.security_cross_origin_embedder_policy not in VALID_COEP_POLICIES:
+        add("fail", "SECURITY_CROSS_ORIGIN_EMBEDDER_POLICY", "Invalid Cross-Origin-Embedder-Policy value.")
+    elif not settings.security_referrer_policy or not settings.security_permissions_policy:
+        add("fail", "SECURITY_HEADER_VALUES", "Referrer and Permissions policies must not be empty.")
+    else:
+        add("pass", "SECURITY_HEADER_VALUES", "HTTP security header values are valid and injection-safe.")
 
     if include_storage:
         if settings.is_production and not os.getenv("DOCUMENT_EXPORT_STORAGE_DIR"):

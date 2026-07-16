@@ -36,7 +36,7 @@ def verify_inventory() -> dict[str, int | bool]:
     if summary != summarize_smoke_inventory(inventory):
         raise AssertionError("Smoke inventory summary is nondeterministic.")
     allowlist = inventory.get("exact_current_allowlist") or []
-    if len(allowlist) != 1 or allowlist[0].get("script_path") != "backend/scripts/smoke_github_actions_continuous_integration_foundation.py":
+    if len(allowlist) != 1 or allowlist[0].get("script_path") != "backend/scripts/smoke_authentication_security_http_hardening_foundation.py":
         raise AssertionError(f"Exact-current assertion allowlist is invalid: {allowlist}")
     return summary
 

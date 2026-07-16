@@ -582,6 +582,9 @@ class AuthIdentity(BaseDocument):
     status: UserStatus = UserStatus.INVITED
     last_login_at: Optional[datetime] = None
     failed_login_count: int = 0
+    first_failed_login_at: Optional[datetime] = None
+    last_failed_login_at: Optional[datetime] = None
+    locked_until: Optional[datetime] = None
     password_reset_required: bool = False
 
 

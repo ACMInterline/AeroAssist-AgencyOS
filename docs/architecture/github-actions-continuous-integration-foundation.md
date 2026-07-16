@@ -84,3 +84,7 @@ In GitHub, open **Actions**, choose **Full smoke regression**, and select **Run 
 - Local structural validation cannot prove that GitHub-hosted runners, service containers, or scheduling are available.
 - Workflow duration depends on GitHub runner and package-cache performance; the focused workflow is bounded to 25 minutes and full regression to 60 minutes.
 - CI validates the production image layout but does not replace deployment readiness review or production monitoring.
+
+## Phase 56.5.4 Security Follow-On
+
+Phase 56.5.4 keeps all four CI workflows and migrates this phase's smoke to historical minimum semantics. The production Docker workflow now verifies the Phase 56.5.4 marker and 136-script inventory, while the new security smoke owns the sole exact-current assertion. See [Authentication, Security, and HTTP Hardening Foundation](authentication-security-http-hardening-foundation.md).

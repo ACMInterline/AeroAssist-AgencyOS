@@ -10,18 +10,21 @@ ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "scripts"))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import get
 from smoke_inventory import SMOKE_INVENTORY_PATH, SMOKE_INVENTORY_SUMMARY, load_smoke_inventory
-from validate_ci_foundation import EXPECTED_PHASE, validate_ci_foundation
+from validate_ci_foundation import validate_ci_foundation
+
+
+MINIMUM_PHASE = "phase_56_5_3_github_actions_continuous_integration_foundation"
 
 
 def main() -> None:
     errors = validate_ci_foundation()
     if errors:
         raise AssertionError("CI foundation validation failed: " + "; ".join(errors))
-    if not phase_is_exact(CURRENT_BUILD_PHASE, EXPECTED_PHASE):
-        raise AssertionError(f"Canonical current build phase mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
 
     expected_manifest = BACKEND / "scripts" / "smoke_inventory.json"
     if SMOKE_INVENTORY_PATH != expected_manifest or not SMOKE_INVENTORY_PATH.is_file():
@@ -32,10 +35,8 @@ def main() -> None:
 
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if not phase_is_exact(health.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Health phase mismatch: {health.get('phase')}")
-    if not phase_is_exact(readiness.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Readiness phase mismatch: {readiness.get('phase')}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
 
     section = readiness.get("github_actions_continuous_integration_foundation") or {}
     required_true = (

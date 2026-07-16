@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Callable, Iterable, Optional
 
 from fastapi import Depends, Header, HTTPException, Request, status
@@ -7,6 +7,8 @@ from config import get_settings
 from database import Database, get_database
 from models import AuthIdentity, AuthSession, now_utc
 from security import hash_password, hash_token, new_raw_token, normalize_email, verify_password
+from http_security import log_security_event
+from services.authentication_security_service import token_refresh_metadata, validate_auth_token
 from services.seed_service import DEMO_OWNER_EMAIL, seed_core_data
 from services.tenant_service import assert_agency_access, require_any_agency_role, require_any_platform_role
 
@@ -18,17 +20,30 @@ DEFAULT_TOKEN_EXPIRY_MINUTES = SETTINGS.token_expiry_minutes
 DEFAULT_INVITATION_EXPIRY_HOURS = SETTINGS.invitation_expiry_hours
 
 def token_response(raw_token: str, session: dict) -> dict:
+    refresh_metadata = token_refresh_metadata(session["expires_at"])
     return {
         "access_token": raw_token,
         "token_type": "bearer",
         "expires_at": session["expires_at"],
+        "refresh": refresh_metadata,
     }
 
 
 def safe_identity(identity: dict | None) -> dict | None:
     if not identity:
         return None
-    return {key: value for key, value in identity.items() if key not in {"password_hash"}}
+    return {
+        key: value
+        for key, value in identity.items()
+        if key
+        not in {
+            "password_hash",
+            "failed_login_count",
+            "first_failed_login_at",
+            "last_failed_login_at",
+            "locked_until",
+        }
+    }
 
 
 async def ensure_auth_identity(
@@ -60,7 +75,10 @@ async def create_session(
 ) -> dict:
     raw_token = new_raw_token()
     issued_at = now_utc()
-    expires_at = issued_at + timedelta(minutes=minutes or DEFAULT_TOKEN_EXPIRY_MINUTES)
+    lifetime_minutes = DEFAULT_TOKEN_EXPIRY_MINUTES if minutes is None else minutes
+    if lifetime_minutes <= 0:
+        raise ValueError("Session lifetime must be greater than zero.")
+    expires_at = issued_at + timedelta(minutes=lifetime_minutes)
     session = AuthSession(
         identity_id=identity["id"],
         token_hash=hash_token(raw_token),
@@ -107,20 +125,24 @@ async def get_current_identity(
         await seed_core_data(db)
     if authorization and authorization.lower().startswith("bearer "):
         raw_token = authorization.split(" ", 1)[1].strip()
-        session = await db.collection("auth_sessions").find_one({"token_hash": hash_token(raw_token)})
-        if not session or session.get("status") != "active":
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked session.")
-        expires_at = session["expires_at"]
-        if isinstance(expires_at, str):
-            expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
-        if expires_at <= now_utc():
-            await db.collection("auth_sessions").update_one({"id": session["id"]}, {"status": "expired"})
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired.")
-        identity = await db.collection("auth_identities").find_one({"id": session["identity_id"]})
-        if not identity or identity.get("status") not in {"active", "email_unverified"}:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Active identity required.")
-        await db.collection("auth_sessions").update_one({"id": session["id"]}, {"last_seen_at": now_utc()})
-        return identity
+        result = await validate_auth_token(db, raw_token)
+        if not result.valid:
+            log_security_event(
+                "invalid_token",
+                outcome="denied",
+                reason=result.reason,
+                session_id=(result.session or {}).get("id"),
+            )
+            detail = {
+                "expired_token": "Session expired.",
+                "inactive_identity": "Active identity required.",
+            }.get(result.reason, "Invalid or revoked session.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=detail,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return result.identity or {}
 
     if DEMO_AUTH_ENABLED:
         email = x_demo_user_email or DEMO_OWNER_EMAIL

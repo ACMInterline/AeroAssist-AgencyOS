@@ -81,12 +81,12 @@ jobs:
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_3_github_actions_continuous_integration_foundation"
+          expected = "phase_56_5_4_authentication_security_http_hardening_foundation"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 135
+          assert section["inventoried_smoke_scripts"] == 136
           assert section["unresolved_scripts"] == 0
           print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
           PY

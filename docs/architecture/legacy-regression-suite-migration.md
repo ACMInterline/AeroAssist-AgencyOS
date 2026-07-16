@@ -59,7 +59,7 @@ The inventory is suitable for a future CI workflow, but this phase deliberately 
 
 ## Exact-Current Allowlist
 
-`backend/scripts/smoke_legacy_regression_suite_migration.py` is the only exact-current smoke. It validates Phase 56.5.2 canonical build, health, readiness, inventory counts, and registration. The allowlist entry in `smoke_inventory.json` documents why exact equality is necessary. Historical capability smokes use minimum semantics.
+At Phase 56.5.2, `backend/scripts/smoke_legacy_regression_suite_migration.py` owned the exact-current assertion. Exact-current ownership advances with each release-registration phase; this smoke now uses minimum semantics. The current allowlist entry in `smoke_inventory.json` documents its active owner and reason. Historical capability smokes use minimum semantics.
 
 ## Provenance Preservation
 
@@ -103,3 +103,7 @@ The Docker build context and ignore rules were not the cause: production builds 
 ## Phase 56.5.3 CI Follow-On
 
 Phase 56.5.3 makes the production-import correction repeatable in GitHub Actions. The Phase 56.5.2 smoke now uses minimum-phase semantics, while the Phase 56.5.3 registration smoke is the sole exact-current assertion. The canonical inventory also classifies CI tiers and backend-state isolation, and the production Docker workflow proves that the tracked loader and manifest exist under `/app` before importing `server` and starting a healthy container. See [GitHub Actions Continuous Integration Foundation](github-actions-continuous-integration-foundation.md).
+
+## Phase 56.5.4 Security Follow-On
+
+Phase 56.5.4 migrates the Phase 56.5.3 CI smoke to minimum-phase semantics and advances sole exact-current ownership to the authentication, security, and HTTP hardening smoke. Public production readiness now exposes a safe summary while the historical detailed payload remains available through configured internal readiness and the development/test regression contract. See [Authentication, Security, and HTTP Hardening Foundation](authentication-security-http-hardening-foundation.md).

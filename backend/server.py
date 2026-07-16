@@ -1,11 +1,21 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Header, HTTPException, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from build_phase import CURRENT_BUILD_PHASE
 from config import assert_startup_safe, configure_logging, get_settings, validate_config
 from database import database
+from http_security import (
+    SecurityHttpMiddleware,
+    http_exception_handler,
+    internal_readiness_authorized,
+    security_readiness_metadata,
+    unexpected_exception_handler,
+    validation_exception_handler,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
@@ -107,6 +117,7 @@ from services.rollout_dashboard_service import DASHBOARD_SECTIONS
 from services.saas_subscription_service import AGENCY_MODULE_VISIBILITY_CATALOG
 from services.secret_service import check_secret
 from services.seed_service import seed_core_data
+from services.authentication_security_service import validate_auth_token
 
 settings = get_settings()
 configure_logging(settings)
@@ -114,7 +125,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 56.5.3 GitHub Actions continuous integration.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.5.4 authentication, security, and HTTP hardening.",
 )
 
 app.add_middleware(
@@ -123,7 +134,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID"],
+    max_age=600,
 )
+app.add_middleware(SecurityHttpMiddleware, settings=settings)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, unexpected_exception_handler)
 
 
 @app.on_event("startup")
@@ -137,12 +154,14 @@ async def startup() -> None:
 @app.get("/api/health")
 async def root_health() -> dict:
     settings = get_settings()
-    return {
+    payload = {
         "ok": True,
         "service": "AeroAssist AgencyOS API",
-        "app_env": settings.app_env,
         "phase": CURRENT_BUILD_PHASE,
     }
+    if not settings.is_production:
+        payload["app_env"] = settings.app_env
+    return payload
 
 
 def storage_status() -> dict:
@@ -180,8 +199,7 @@ def delivery_config_status() -> dict:
     }
 
 
-@app.get("/api/readiness")
-async def readiness() -> dict:
+async def internal_readiness_payload() -> dict:
     settings = get_settings()
     config = validate_config(settings, include_storage=False)
     storage = storage_status()
@@ -5248,6 +5266,7 @@ async def readiness() -> dict:
             "readiness_required": False,
             "diagnostic": "Phase 56.5.3 defines least-privilege GitHub Actions validation for static checks, production Docker imports, focused inventory smokes, and scheduled or manual full regression. CI never deploys or requires production credentials.",
         },
+        "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7152,9 +7171,55 @@ async def readiness() -> dict:
     }
 
 
+async def public_readiness_payload() -> dict:
+    settings = get_settings()
+    config = validate_config(settings, include_storage=False)
+    database_status = await database.readiness()
+    inventory = {
+        key: value
+        for key, value in SMOKE_INVENTORY_SUMMARY.items()
+        if key
+        in {
+            "total_smoke_scripts",
+            "inventoried_smoke_scripts",
+            "unresolved_scripts",
+            "inventory_validation_ready",
+        }
+    }
+    return {
+        "ok": bool(config.get("ok") and database_status.get("ok")),
+        "service": "AeroAssist AgencyOS API",
+        "phase": CURRENT_BUILD_PHASE,
+        "readiness_mode": "public_summary",
+        "diagnostics": {
+            "configuration": "ready" if config.get("ok") else "attention_required",
+            "database": "ready" if database_status.get("ok") else "unavailable",
+        },
+        "inventory": inventory,
+        "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
+    }
+
+
+@app.get("/api/readiness")
+async def readiness(authorization: str | None = Header(default=None)) -> dict:
+    settings = get_settings()
+    if settings.readiness_public_mode == "detailed":
+        return await internal_readiness_payload()
+    if settings.readiness_authenticated_detail_enabled and authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        result = await validate_auth_token(database, token, update_last_seen=False)
+        if result.valid and result.identity:
+            user = await database.collection("platform_users").find_one({"email": result.identity.get("email")})
+            if user and user.get("status") == "active" and user.get("global_role"):
+                return await internal_readiness_payload()
+    return await public_readiness_payload()
+
+
 @app.get("/api/system/readiness")
-async def system_readiness() -> dict:
-    return await readiness()
+async def system_readiness(x_internal_readiness_key: str | None = Header(default=None)) -> dict:
+    if not internal_readiness_authorized(x_internal_readiness_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
+    return await internal_readiness_payload()
 
 
 @app.get("/api/audit-events")

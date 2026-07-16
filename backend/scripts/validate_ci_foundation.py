@@ -12,12 +12,12 @@ ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "scripts"))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least
 from smoke_inventory import load_smoke_inventory
 from validate_smoke_inventory import validate_inventory
 
 
-EXPECTED_PHASE = "phase_56_5_3_github_actions_continuous_integration_foundation"
+MINIMUM_PHASE = "phase_56_5_3_github_actions_continuous_integration_foundation"
 WORKFLOW_SPECS = {
     ".github/workflows/ci-fast.yml": (
         "pull_request:",
@@ -110,8 +110,8 @@ def validate_workflow(path: Path, required_tokens: tuple[str, ...]) -> list[str]
 
 def validate_ci_foundation() -> list[str]:
     errors: list[str] = []
-    if not phase_is_exact(CURRENT_BUILD_PHASE, EXPECTED_PHASE):
-        errors.append(f"Current build phase is {CURRENT_BUILD_PHASE!r}, expected {EXPECTED_PHASE!r}")
+    if not phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE):
+        errors.append(f"Current build phase is {CURRENT_BUILD_PHASE!r}, expected at least {MINIMUM_PHASE!r}")
 
     for relative, tokens in WORKFLOW_SPECS.items():
         errors.extend(validate_workflow(ROOT / relative, tokens))
@@ -122,12 +122,15 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_github_actions_continuous_integration_foundation.py"
+    exact_path = "backend/scripts/smoke_authentication_security_http_hardening_foundation.py"
+    ci_path = "backend/scripts/smoke_github_actions_continuous_integration_foundation.py"
     legacy_path = "backend/scripts/smoke_legacy_regression_suite_migration.py"
     if len(allowlist) != 1 or allowlist[0].get("script_path") != exact_path:
-        errors.append("Phase 56.5.3 smoke must be the sole exact-current allowlist entry.")
+        errors.append("The active release-registration smoke must be the sole exact-current allowlist entry.")
     if entry_by_path.get(exact_path, {}).get("phase_assertion_mode") != "exact_current":
-        errors.append("Phase 56.5.3 smoke is not classified as exact_current.")
+        errors.append("The active release-registration smoke is not classified as exact_current.")
+    if entry_by_path.get(ci_path, {}).get("phase_assertion_mode") != "minimum":
+        errors.append("Phase 56.5.3 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(legacy_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.2 smoke did not migrate to minimum-phase semantics.")
     if summary.get("unresolved_scripts") != 0:
@@ -142,6 +145,7 @@ def validate_ci_foundation() -> list[str]:
     }
     required_focused = {
         exact_path,
+        ci_path,
         legacy_path,
         "backend/scripts/smoke_phase_marker_regression_integrity_foundation.py",
         "backend/scripts/smoke_backend.py",

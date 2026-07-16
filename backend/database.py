@@ -749,6 +749,14 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             await create_compatible_index(collection, collection_name, spec, unique=True)
 
     compound_indexes = {
+        "auth_identities": [
+            {"keys": [("locked_until", ASCENDING)], "name": "auth_identities_temporary_lock_lookup", "sparse": True},
+            {"keys": [("last_failed_login_at", ASCENDING)], "name": "auth_identities_failed_login_reset_lookup", "sparse": True},
+        ],
+        "auth_sessions": [
+            {"keys": [("status", ASCENDING), ("expires_at", ASCENDING)], "name": "auth_sessions_status_expiry_lookup"},
+            {"keys": [("identity_id", ASCENDING), ("status", ASCENDING)], "name": "auth_sessions_identity_status_lookup"},
+        ],
         "client_profiles": [[("agency_id", ASCENDING), ("primary_email", ASCENDING)]],
         "invitations": [
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("normalized_email", ASCENDING), ("target_role", ASCENDING), ("status", ASCENDING)],

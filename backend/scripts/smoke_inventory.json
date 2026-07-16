@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_github_actions_continuous_integration_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.3 build marker and GitHub Actions CI registration.",
-      "exact_reason": "This smoke explicitly tests current CI release registration; all historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_authentication_security_http_hardening_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 56.5.4 build marker and authentication, security, and HTTP hardening registration.",
+      "exact_reason": "This smoke explicitly tests current security release registration; all historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -533,6 +533,26 @@
       "suitable_for_future_ci": true,
       "notes": "Minimum evidenced by introducing commit 8820fa6c and the capability registration present in that change.",
       "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
+    },
+    {
+      "script_path": "backend/scripts/smoke_authentication_security_http_hardening_foundation.py",
+      "capability_name": "Authentication Security HTTP Hardening Foundation",
+      "minimum_application_phase": "phase_56_5_4_authentication_security_http_hardening_foundation",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "authentication",
+        "security",
+        "deployment",
+        "readiness"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current smoke for Phase 56.5.4 temporary login locking, opaque token validation, security headers, CORS, request correlation, safe JSON errors, and readiness modes.",
+      "ci_tier": "focused",
       "execution_isolation": "shared_backend"
     },
     {
@@ -1064,7 +1084,7 @@
       "script_path": "backend/scripts/smoke_github_actions_continuous_integration_foundation.py",
       "capability_name": "GitHub Actions Continuous Integration Foundation",
       "minimum_application_phase": "phase_56_5_3_github_actions_continuous_integration_foundation",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": false,
@@ -1077,7 +1097,7 @@
       "suitable_for_future_ci": true,
       "ci_tier": "focused",
       "execution_isolation": "shared_backend",
-      "notes": "Exact-current smoke for Phase 56.5.3 CI workflow, production import, inventory-tier, security, and readiness registration."
+      "notes": "Historical minimum-phase smoke for Phase 56.5.3 CI workflow, production import, inventory-tier, security, and readiness registration."
     },
     {
       "script_path": "backend/scripts/smoke_intelligent_offer_builder_integration_foundation.py",
@@ -1235,7 +1255,7 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Allowlisted exact current-build assertion for Phase 56.5.2 health, readiness, and canonical marker registration.",
+      "notes": "Historical minimum-phase assertion for Phase 56.5.2 smoke inventory, readiness, and canonical marker registration.",
       "ci_tier": "focused",
       "execution_isolation": "shared_backend"
     },

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
@@ -25,9 +26,17 @@ from models import (
     now_utc,
 )
 from security import hash_password, hash_token, normalize_email, verify_password
+from http_security import correlation_id, log_security_event
+from services.authentication_security_service import (
+    clear_login_failures,
+    failure_backoff_seconds,
+    login_attempt_state,
+    record_login_failure,
+)
 from services.seed_service import seed_core_data
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+DUMMY_PASSWORD_HASH = hash_password("aeroassist-nonexistent-identity-timing-pad")
 
 
 def parse_dt(value: object):
@@ -98,24 +107,69 @@ async def read_me(
 
 @router.post("/login")
 async def login(payload: LoginRequest, request: Request, db: Database = Depends(get_database)) -> dict:
-    if get_settings().seed_on_startup:
+    settings = get_settings()
+    if settings.seed_on_startup:
         await seed_core_data(db)
     normalized = normalize_email(payload.email)
     identity = await db.collection("auth_identities").find_one({"normalized_email": normalized})
-    if not identity or not verify_password(payload.password, identity.get("password_hash", "")):
-        if identity:
-            await db.collection("auth_identities").update_one(
-                {"id": identity["id"]},
-                {"failed_login_count": identity.get("failed_login_count", 0) + 1},
+    if identity:
+        state = login_attempt_state(identity, settings=settings)
+        if state.locked:
+            log_security_event(
+                "temporary_account_lock",
+                outcome="denied",
+                reason="lock_active",
+                request_id=correlation_id(request),
+                identity_id=identity.get("id"),
             )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Sign-in is temporarily unavailable. Try again later.",
+                headers={"Retry-After": str(state.retry_after_seconds)},
+            )
+
+    password_valid = verify_password(payload.password, identity.get("password_hash", "") if identity else DUMMY_PASSWORD_HASH)
+    if not identity or not password_valid:
+        failure_state = await record_login_failure(db, identity, settings=settings) if identity else None
+        delay = failure_state.backoff_seconds if failure_state else failure_backoff_seconds(1, settings)
+        if delay > 0:
+            await asyncio.sleep(delay)
+        log_security_event(
+            "failed_login",
+            outcome="denied",
+            reason="invalid_credentials",
+            request_id=correlation_id(request),
+            identity_id=identity.get("id") if identity else None,
+        )
+        if failure_state and failure_state.locked:
+            log_security_event(
+                "temporary_account_lock",
+                outcome="locked",
+                reason="maximum_attempts_reached",
+                request_id=correlation_id(request),
+                identity_id=identity.get("id"),
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Sign-in is temporarily unavailable. Try again later.",
+                headers={"Retry-After": str(failure_state.retry_after_seconds)},
+            )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     if identity.get("status") in {"suspended", "archived", "invited"}:
+        log_security_event(
+            "failed_login",
+            outcome="denied",
+            reason="identity_status",
+            request_id=correlation_id(request),
+            identity_id=identity.get("id"),
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This account cannot log in.")
 
-    updated_identity = await db.collection("auth_identities").update_one(
-        {"id": identity["id"]},
-        {"last_login_at": now_utc(), "failed_login_count": 0},
-    )
+    updated_identity = await clear_login_failures(db, identity["id"])
     session_bundle = await create_session(db, updated_identity or identity, request)
     payload_out = await resolve_auth_payload(db, updated_identity or identity)
     return safe_auth_response(payload_out, session_bundle["raw_token"], session_bundle["session"])

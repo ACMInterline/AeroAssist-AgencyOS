@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 
-CURRENT_BUILD_PHASE = "phase_56_5_3_github_actions_continuous_integration_foundation"
+CURRENT_BUILD_PHASE = "phase_56_5_4_authentication_security_http_hardening_foundation"
 
 _PHASE_PATTERN = re.compile(
     r"^phase_(?P<numeric>\d+(?:_\d+)+)_(?P<label>[a-z][a-z0-9]*(?:_[a-z0-9]+)*)$"

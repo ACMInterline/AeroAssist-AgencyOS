@@ -2438,3 +2438,14 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Reproduces the production `/app` image layout and verifies the tracked runtime inventory loader, manifest path, server import, container health, and readiness metadata without publishing an image or deploying.
 - Adds no product route, schema, collection, migration, frontend surface, production secret, provider operation, production-data change, or deployment automation.
 - See [GitHub Actions Continuous Integration Foundation](docs/architecture/github-actions-continuous-integration-foundation.md).
+
+## Phase 56.5.4 - Authentication, Security, and HTTP Hardening Foundation
+
+- Active marker: `phase_56_5_4_authentication_security_http_hardening_foundation`.
+- Adds configurable bounded login backoff, temporary account locks, reset windows, and timing-balanced invalid credential checks without redesigning identity records.
+- Centralizes opaque session validation with configurable lifetime, bounded clock skew, invalid-token diagnostics, and metadata-only refresh policy.
+- Adds request correlation IDs, safe consistent JSON errors, redacted structured security events, and configurable CSP, HSTS, frame, MIME, referrer, permissions, CORP, COOP, and compatible COEP headers.
+- Keeps exact Vite development origins, rejects wildcard/local production CORS configuration, and separates lightweight public readiness from explicitly enabled internal diagnostics without runtime filesystem scanning.
+- Migrates the Phase 56.5.3 smoke to minimum-phase semantics and makes the Phase 56.5.4 security smoke the sole exact-current release assertion.
+- Adds no OAuth, SSO, identity provider, product route, product workflow, provider operation, booking execution, AI, or commercial behavior.
+- See [Authentication, Security, and HTTP Hardening Foundation](docs/architecture/authentication-security-http-hardening-foundation.md).
