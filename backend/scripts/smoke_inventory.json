@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_authentication_security_http_hardening_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.4 build marker and authentication, security, and HTTP hardening registration.",
-      "exact_reason": "This smoke explicitly tests current security release registration; all historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 56.5.5 build marker and MongoDB security, backup, restore, and disaster-recovery registration.",
+      "exact_reason": "This smoke explicitly tests current infrastructure-hardening release registration; all historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -539,7 +539,7 @@
       "script_path": "backend/scripts/smoke_authentication_security_http_hardening_foundation.py",
       "capability_name": "Authentication Security HTTP Hardening Foundation",
       "minimum_application_phase": "phase_56_5_4_authentication_security_http_hardening_foundation",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": false,
@@ -551,7 +551,27 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current smoke for Phase 56.5.4 temporary login locking, opaque token validation, security headers, CORS, request correlation, safe JSON errors, and readiness modes.",
+      "notes": "Minimum-phase regression for Phase 56.5.4 temporary login locking, opaque token validation, security headers, CORS, request correlation, safe JSON errors, and readiness modes.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
+    },
+    {
+      "script_path": "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py",
+      "capability_name": "MongoDB Security Backup Disaster Recovery Foundation",
+      "minimum_application_phase": "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "security",
+        "deployment",
+        "backup",
+        "readiness"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current smoke for authenticated MongoDB configuration, internal-only networking, checksummed manifests, retention controls, guarded restore, disposable rehearsal, and non-sensitive readiness.",
       "ci_tier": "focused",
       "execution_isolation": "shared_backend"
     },

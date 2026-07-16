@@ -66,17 +66,19 @@ if [[ ! -d "$BACKUP_ROOT" ]]; then
   exit "$STATUS"
 fi
 
-mongo_backup="$(latest_for "mongo.archive.gz")"
+mongo_backup="$(find "$BACKUP_ROOT" -mindepth 2 -maxdepth 2 -type f -name 'mongodb-*.archive.gz' 2>/dev/null | sort | tail -n 1)"
 if [[ -z "$mongo_backup" ]]; then
   fail "latest MongoDB backup is missing."
 else
   mongo_age="$(age_hours "$mongo_backup" || true)"
   echo "Latest MongoDB backup: $mongo_backup"
   echo "MongoDB backup age: ${mongo_age}h"
-  if verify_checksum "$mongo_backup"; then
-    pass "latest MongoDB backup checksum verified."
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if APP_DIR="${APP_DIR:-/opt/aeroassist-agencyos}" ENV_FILE="${ENV_FILE:-.env.production}" \
+    COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}" "$script_dir/verify_mongodb_backup.sh" "$mongo_backup"; then
+    pass "latest MongoDB backup checksum, manifest, and archive inspection verified."
   else
-    fail "latest MongoDB backup checksum verification failed."
+    fail "latest MongoDB backup verification failed."
   fi
   if [[ "$mongo_age" == "unknown" || "$mongo_age" -gt "$MAX_MONGO_AGE_HOURS" ]]; then
     fail "latest MongoDB backup is older than ${MAX_MONGO_AGE_HOURS}h."

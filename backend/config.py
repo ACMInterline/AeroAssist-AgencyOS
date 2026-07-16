@@ -1,9 +1,9 @@
 import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 
 TRUE_VALUES = {"1", "true", "yes", "on"}
@@ -22,6 +22,14 @@ PLACEHOLDER_AUTH_SECRETS = {
     "replace-with-a-long-random-secret",
     "replace-with-a-long-random-production-secret",
     "local-dev-auth-token-secret-change-me",
+}
+PLACEHOLDER_MONGO_SECRETS = {
+    "",
+    "changeme",
+    "change-me",
+    "password",
+    "replace-with-a-long-random-mongodb-root-password",
+    "replace-with-a-long-random-mongodb-app-password",
 }
 
 
@@ -68,6 +76,32 @@ def configured_storage_root() -> Path:
     return root.resolve()
 
 
+def insecure_production_secret(value: str) -> bool:
+    normalized = value.strip().lower()
+    return (
+        len(value) < 16
+        or normalized in PLACEHOLDER_MONGO_SECRETS
+        or normalized.startswith("replace-with-")
+    )
+
+
+def configured_mongodb_url(production: bool) -> str:
+    explicit = os.getenv("MONGODB_URL", "").strip()
+    if explicit:
+        return explicit
+    if not env_bool("MONGO_AUTHENTICATION_ENABLED", False):
+        return "" if production else "mongodb://localhost:27017"
+    username = os.getenv("MONGO_APP_USERNAME", "").strip()
+    password = os.getenv("MONGO_APP_PASSWORD", "")
+    host = os.getenv("MONGO_HOST", "mongo").strip() or "mongo"
+    port = env_int("MONGO_PORT", 27017)
+    auth_source = os.getenv("MONGO_AUTH_SOURCE", "admin").strip() or "admin"
+    return (
+        f"mongodb://{quote(username, safe='')}:{quote(password, safe='')}@{host}:{port}"
+        f"/?authSource={quote(auth_source, safe='')}"
+    )
+
+
 @dataclass(frozen=True)
 class AppSettings:
     app_env: str
@@ -75,14 +109,26 @@ class AppSettings:
     seed_on_startup: bool
     seed_endpoint_enabled: bool
     db_mode: str
-    mongodb_url: str
+    mongodb_url: str = field(repr=False)
     mongodb_database: str
+    mongodb_authentication_enabled: bool
+    mongo_root_username: str
+    mongo_root_password: str = field(repr=False)
+    mongo_app_username: str
+    mongo_app_password: str = field(repr=False)
+    mongo_auth_source: str
+    mongo_host: str
+    mongo_port: int
+    backup_root: Path
+    backup_retention_days: int
+    backup_minimum_count: int
+    backup_environment_label: str
     cors_allowed_origins: list[str]
     document_export_storage_dir: Path
     log_level: str
     frontend_url: str | None
     public_app_url: str | None
-    auth_token_secret: str
+    auth_token_secret: str = field(repr=False)
     token_expiry_minutes: int
     token_clock_skew_seconds: int
     token_refresh_policy: str
@@ -108,7 +154,7 @@ class AppSettings:
     readiness_public_mode: str
     readiness_authenticated_detail_enabled: bool
     readiness_internal_enabled: bool
-    readiness_internal_key: str
+    readiness_internal_key: str = field(repr=False)
     invitation_expiry_hours: int
     password_reset_expiry_hours: int
     smtp_secret_refs: list[str]
@@ -127,8 +173,24 @@ def get_settings() -> AppSettings:
         seed_on_startup=env_bool("SEED_ON_STARTUP", not production),
         seed_endpoint_enabled=env_bool("SEED_ENDPOINT_ENABLED", not production),
         db_mode=os.getenv("AEROASSIST_DB_MODE", "memory").strip().lower() or "memory",
-        mongodb_url=os.getenv("MONGODB_URL", "" if production else "mongodb://localhost:27017").strip(),
-        mongodb_database=os.getenv("MONGODB_DATABASE", "aeroassist_agencyos").strip() or "aeroassist_agencyos",
+        mongodb_url=configured_mongodb_url(production),
+        mongodb_database=(
+            os.getenv("MONGO_DATABASE") or os.getenv("MONGODB_DATABASE", "aeroassist_agencyos")
+        ).strip() or "aeroassist_agencyos",
+        mongodb_authentication_enabled=env_bool("MONGO_AUTHENTICATION_ENABLED", False),
+        mongo_root_username=os.getenv("MONGO_INITDB_ROOT_USERNAME", "").strip(),
+        mongo_root_password=os.getenv("MONGO_INITDB_ROOT_PASSWORD", ""),
+        mongo_app_username=os.getenv("MONGO_APP_USERNAME", "").strip(),
+        mongo_app_password=os.getenv("MONGO_APP_PASSWORD", ""),
+        mongo_auth_source=os.getenv("MONGO_AUTH_SOURCE", "admin").strip() or "admin",
+        mongo_host=os.getenv("MONGO_HOST", "mongo" if production else "localhost").strip(),
+        mongo_port=env_int("MONGO_PORT", 27017),
+        backup_root=Path(os.getenv("BACKUP_ROOT", "/var/backups/aeroassist")).expanduser(),
+        backup_retention_days=env_int("BACKUP_RETENTION_DAYS", 30),
+        backup_minimum_count=env_int("BACKUP_MINIMUM_COUNT", 7),
+        backup_environment_label=os.getenv(
+            "BACKUP_ENVIRONMENT_LABEL", "production" if production else "development"
+        ).strip(),
         cors_allowed_origins=env_list("CORS_ALLOWED_ORIGINS", DEFAULT_CORS_ORIGINS),
         document_export_storage_dir=configured_storage_root(),
         log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO",
@@ -210,6 +272,82 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
         add("fail", "MONGODB_DATABASE", "MONGODB_DATABASE is required.")
     else:
         add("pass", "MONGODB_DATABASE", "MongoDB database name is configured.")
+
+    auth_flag_explicit = "MONGO_AUTHENTICATION_ENABLED" in os.environ
+    if settings.is_production and not auth_flag_explicit:
+        add(
+            "fail",
+            "MONGO_AUTHENTICATION_ENABLED",
+            "Production must explicitly enable authenticated MongoDB after completing the existing-volume migration runbook.",
+        )
+    elif settings.is_production and not settings.mongodb_authentication_enabled:
+        add(
+            "fail",
+            "MONGO_AUTHENTICATION_ENABLED",
+            "Production MongoDB authentication must be enabled; unauthenticated fallback is not allowed.",
+        )
+    elif settings.mongodb_authentication_enabled:
+        missing_credentials = [
+            name
+            for name, value in (
+                ("MONGO_APP_USERNAME", settings.mongo_app_username),
+                ("MONGO_APP_PASSWORD", settings.mongo_app_password),
+            )
+            if not value
+        ]
+        if missing_credentials:
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "Authenticated MongoDB is missing required application credentials.",
+            )
+        elif bool(settings.mongo_root_username) != bool(settings.mongo_root_password):
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "MongoDB administrative credentials must be supplied as a complete pair when present.",
+            )
+        elif settings.is_production and insecure_production_secret(settings.mongo_app_password):
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "The production MongoDB application password must be a non-placeholder value of at least 16 characters.",
+            )
+        elif (
+            settings.is_production
+            and settings.mongo_root_password
+            and insecure_production_secret(settings.mongo_root_password)
+        ):
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "The production MongoDB administrative password must be a non-placeholder value of at least 16 characters when present.",
+            )
+        elif not settings.mongo_host or not settings.mongo_auth_source or settings.mongo_port < 1 or settings.mongo_port > 65535:
+            add("fail", "MONGO_AUTHENTICATION_CONFIGURATION", "MongoDB auth source and port must be valid.")
+        elif not urlparse(settings.mongodb_url).username:
+            add(
+                "fail",
+                "MONGODB_URL",
+                "Authenticated MongoDB mode requires an authenticated application URI.",
+            )
+        else:
+            add(
+                "pass",
+                "MONGO_AUTHENTICATION_ENABLED",
+                "Authenticated MongoDB uses dedicated application credentials; administrative credentials are optional at application runtime and values are not reported.",
+            )
+    else:
+        add("warn", "MONGO_AUTHENTICATION_ENABLED", "MongoDB authentication is disabled for explicit non-production use.")
+
+    if settings.backup_retention_days < 1:
+        add("fail", "BACKUP_RETENTION_DAYS", "Backup retention days must be at least 1.")
+    elif settings.backup_minimum_count < 1:
+        add("fail", "BACKUP_MINIMUM_COUNT", "Backup minimum count must be at least 1.")
+    elif not settings.backup_environment_label:
+        add("fail", "BACKUP_ENVIRONMENT_LABEL", "Backup environment label must not be empty.")
+    else:
+        add("pass", "BACKUP_RETENTION", "Backup retention and minimum-count controls are configured.")
 
     if settings.is_production and settings.demo_auth_enabled:
         add("fail", "DEMO_AUTH_ENABLED", "Production must disable demo header auth.")

@@ -16,6 +16,7 @@ from http_security import (
     unexpected_exception_handler,
     validation_exception_handler,
 )
+from mongodb_security import mongodb_security_readiness_metadata
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
@@ -125,7 +126,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 56.5.4 authentication, security, and HTTP hardening.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.5.5 MongoDB security, backup, and disaster recovery.",
 )
 
 app.add_middleware(
@@ -5267,6 +5268,7 @@ async def internal_readiness_payload() -> dict:
             "diagnostic": "Phase 56.5.3 defines least-privilege GitHub Actions validation for static checks, production Docker imports, focused inventory smokes, and scheduled or manual full regression. CI never deploys or requires production credentials.",
         },
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
+        "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7197,6 +7199,7 @@ async def public_readiness_payload() -> dict:
         },
         "inventory": inventory,
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
+        "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
     }
 
 

@@ -88,3 +88,5 @@ In GitHub, open **Actions**, choose **Full smoke regression**, and select **Run 
 ## Phase 56.5.4 Security Follow-On
 
 Phase 56.5.4 keeps all four CI workflows and migrates this phase's smoke to historical minimum semantics. The production Docker workflow now verifies the Phase 56.5.4 marker and 136-script inventory, while the new security smoke owns the sole exact-current assertion. See [Authentication, Security, and HTTP Hardening Foundation](authentication-security-http-hardening-foundation.md).
+
+Phase 56.5.5 preserves least-privilege workflow permissions, advances the inventory to 137 scripts, and moves exact-current ownership to the MongoDB security and disaster-recovery smoke. Fast CI checks shell structure and restore guards; Docker CI uses ephemeral credentials and isolated resources to prove authenticated startup, backup, manifest inspection, count-verified restore rehearsal, and backend health. It uploads no database archive and never deploys or restores production. See [MongoDB Security, Backup, and Disaster Recovery Foundation](mongodb-security-backup-disaster-recovery-foundation.md).

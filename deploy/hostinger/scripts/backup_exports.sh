@@ -9,6 +9,8 @@ TIMESTAMP="${TIMESTAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 
 cd "$APP_DIR"
+[[ "$TIMESTAMP" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || { echo "FAIL: TIMESTAMP must use YYYYMMDDTHHMMSSZ format." >&2; exit 1; }
+export AEROASSIST_ENV_FILE="$ENV_FILE"
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_ROOT" "$BACKUP_DIR"
 

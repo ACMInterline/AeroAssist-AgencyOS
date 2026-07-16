@@ -11,6 +11,7 @@ APP_BASE_URL="${APP_BASE_URL:-}"
 RUN_PREFLIGHT="${RUN_PREFLIGHT:-true}"
 
 cd "$APP_DIR"
+export AEROASSIST_ENV_FILE="$ENV_FILE"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "FAIL: $ENV_FILE is missing. Copy .env.production.example and set production values." >&2

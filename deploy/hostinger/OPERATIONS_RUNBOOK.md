@@ -39,12 +39,14 @@ deploy/hostinger/FIRST_DEPLOYMENT_CHECKLIST.md
 3. Copy `.env.production.example` to `.env.production`.
 4. Set a real `AUTH_TOKEN_SECRET`.
 5. Set `PUBLIC_APP_URL`, `FRONTEND_URL`, and `CORS_ALLOWED_ORIGINS` to the production domain.
-6. Use `FRONTEND_HTTP_PORT=127.0.0.1:8080` when host nginx terminates TLS.
-7. Keep `DEMO_AUTH_ENABLED=false`, `SEED_ON_STARTUP=false`, and `SEED_ENDPOINT_ENABLED=false`.
-8. Run `deploy/hostinger/scripts/preflight.sh`.
-9. Build and start Compose.
-10. Configure host nginx and TLS.
-11. Run readiness and smoke checks.
+6. Configure distinct MongoDB root and application credentials and keep MongoDB without a host port.
+7. For an existing populated volume, complete `MONGODB_DISASTER_RECOVERY_RUNBOOK.md` before enabling authentication.
+8. Use `FRONTEND_HTTP_PORT=127.0.0.1:8080` when host nginx terminates TLS.
+9. Keep `DEMO_AUTH_ENABLED=false`, `SEED_ON_STARTUP=false`, and `SEED_ENDPOINT_ENABLED=false`.
+10. Run `deploy/hostinger/scripts/preflight.sh`.
+11. Build and start Compose.
+12. Configure host nginx and TLS.
+13. Run readiness and smoke checks.
 
 ## Reverse Proxy And TLS
 
@@ -153,7 +155,7 @@ It does not use real credentials.
 
 ## Backups
 
-Backups are timestamped under `/var/backups/aeroassist` by default. Phase 23 adds combined backup, verification, and conservative dry-run-first pruning.
+Backups are timestamped under `/var/backups/aeroassist` by default. Phase 56.5.5 extends the Phase 23 foundation with timestamped MongoDB archive names, SHA-256 checksums, credential-free manifests, collection/document counts, and `mongorestore --dryRun` archive inspection.
 
 Combined MongoDB and document exports:
 
@@ -197,6 +199,8 @@ Apply pruning:
 deploy/hostinger/scripts/prune_backups.sh --apply
 ```
 
+Configure `BACKUP_RETENTION_DAYS` and `BACKUP_MINIMUM_COUNT`. Unverified sets are skipped, the newest verified set is protected, and the minimum count is retained.
+
 Store off-server copies according to your operational policy. This phase does not add automated remote backup storage.
 
 ## Backup Timer
@@ -232,23 +236,25 @@ sudo systemctl disable --now aeroassist-backup-verify.timer
 
 ## Restore
 
-Restore is documented in:
+Authentication migration, restore rehearsal, disaster recovery, rollback, credential rotation, document-storage recovery, and full-VPS-loss recovery are documented in:
 
 ```text
-deploy/hostinger/scripts/restore_mongo.md
+deploy/hostinger/MONGODB_DISASTER_RECOVERY_RUNBOOK.md
 ```
 
 High-level process:
 
 1. Announce maintenance window.
 2. Take a fresh backup of the current state.
-3. Verify backup checksums.
-4. Stop frontend/backend.
-5. Restore MongoDB with `mongorestore --drop`.
-6. Restore document exports tarball.
-7. Restart services.
-8. Run readiness and smoke checks.
-9. Have application owners validate business-critical records.
+3. Verify checksum, manifest, and archive inspection.
+4. Rehearse the selected archive in a disposable MongoDB container and compare counts.
+5. Use validation-only restore planning against an explicitly named target.
+6. Prefer restore to a new database and validate before cutover.
+7. Use the multi-part production confirmation only during an approved recovery operation.
+8. Restore document exports separately.
+9. Run readiness and smoke checks and have application owners validate business-critical records.
+
+No deployment, application startup, CI workflow, or systemd unit invokes production restore.
 
 ## Rollback
 
@@ -263,7 +269,7 @@ UPDATE_GIT=false deploy/hostinger/scripts/deploy.sh
 
 Data rollback should use the restore procedure and only after confirming the selected backup point.
 
-Do not automate destructive rollback until migrations and backup verification policies exist.
+Do not automate destructive rollback. Phase 56.5.5 provides explicit guarded tooling and requires human recovery authorization.
 
 ## Health And Readiness
 

@@ -56,7 +56,7 @@ section "Disk"
 df -h / "$BACKUP_ROOT" 2>/dev/null || df -h /
 
 section "Latest Backups"
-mongo_backup="$(latest_backup "mongo.archive.gz")"
+mongo_backup="$(find "$BACKUP_ROOT" -mindepth 2 -maxdepth 2 -type f -name 'mongodb-*.archive.gz' 2>/dev/null | sort | tail -n 1)"
 export_backup="$(latest_backup "document_exports.tar.gz")"
 echo "MongoDB: ${mongo_backup:-missing}"
 echo "Document exports: ${export_backup:-missing}"

@@ -54,13 +54,25 @@ jobs:
         run: python3 -m compileall -q backend
 
       - name: Validate build phase ordering
-        run: cd backend && python3 -c "from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least; assert phase_is_at_least(CURRENT_BUILD_PHASE, 'phase_56_5_3_github_actions_continuous_integration_foundation'); assert phase_is_at_least('phase_56_10_example', 'phase_56_9_example')"
+        run: cd backend && python3 -c "from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least; assert phase_is_at_least(CURRENT_BUILD_PHASE, 'phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation'); assert phase_is_at_least('phase_56_10_example', 'phase_56_9_example')"
 
       - name: Validate smoke inventory
         run: python3 backend/scripts/validate_smoke_inventory.py
 
       - name: Validate CI foundation
         run: python3 backend/scripts/validate_ci_foundation.py
+
+      - name: Validate MongoDB backup shell safety
+        run: |
+          bash -n deploy/hostinger/mongodb/init-application-user.sh
+          bash -n deploy/hostinger/scripts/backup_mongo.sh
+          bash -n deploy/hostinger/scripts/verify_mongodb_backup.sh
+          bash -n deploy/hostinger/scripts/restore_mongodb_backup.sh
+          bash -n deploy/hostinger/scripts/test_restore_mongodb_backup.sh
+          bash -n deploy/hostinger/scripts/prune_backups.sh
+
+      - name: Run MongoDB security foundation static smoke
+        run: python3 backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py --static
 
       - name: Import production runtime modules
         run: cd backend && python3 -c "import smoke_inventory, server; print(server.app)"

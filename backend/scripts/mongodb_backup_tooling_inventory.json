@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "phase": "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation",
+  "mongodb_internal_network_only": true,
+  "application_root_credentials_excluded": true,
+  "backup_tooling": [
+    "backup_mongo.sh",
+    "verify_mongodb_backup.sh",
+    "restore_mongodb_backup.sh",
+    "test_restore_mongodb_backup.sh",
+    "prune_backups.sh"
+  ],
+  "strict_shell_mode_required": true,
+  "manifest_verification_required": true,
+  "dry_run_restore_default": true,
+  "production_confirmation_required": true,
+  "automatic_production_restore_disabled": true
+}

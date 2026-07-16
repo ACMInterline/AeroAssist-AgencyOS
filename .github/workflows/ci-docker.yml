@@ -6,6 +6,8 @@ on:
       - "backend/**"
       - "docker-compose.yml"
       - "docker-compose.production.yml"
+      - ".env.production.example"
+      - "deploy/hostinger/**"
       - ".github/workflows/**"
   push:
     branches:
@@ -14,6 +16,8 @@ on:
       - "backend/**"
       - "docker-compose.yml"
       - "docker-compose.production.yml"
+      - ".env.production.example"
+      - "deploy/hostinger/**"
       - ".github/workflows/**"
   workflow_dispatch:
 
@@ -81,15 +85,81 @@ jobs:
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_4_authentication_security_http_hardening_foundation"
+          expected = "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 136
+          assert section["inventoried_smoke_scripts"] == 137
           assert section["unresolved_scripts"] == 0
           print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
           PY
+
+      - name: Create ephemeral authenticated MongoDB configuration
+        run: |
+          env_file="${RUNNER_TEMP}/aeroassist-ci-mongodb.env"
+          root_password="$(openssl rand -hex 24)"
+          app_password="$(openssl rand -hex 24)"
+          auth_secret="$(openssl rand -hex 32)"
+          cat > "$env_file" <<EOF
+          APP_ENV=production
+          AEROASSIST_DB_MODE=mongo
+          MONGO_AUTHENTICATION_ENABLED=true
+          MONGO_INITDB_ROOT_USERNAME=ci_root
+          MONGO_INITDB_ROOT_PASSWORD=$root_password
+          MONGO_APP_USERNAME=ci_app
+          MONGO_APP_PASSWORD=$app_password
+          MONGO_AUTH_SOURCE=admin
+          MONGO_DATABASE=aeroassist_ci
+          MONGODB_DATABASE=aeroassist_ci
+          MONGODB_URL=
+          DEMO_AUTH_ENABLED=false
+          SEED_ON_STARTUP=false
+          SEED_ENDPOINT_ENABLED=false
+          AUTH_TOKEN_SECRET=$auth_secret
+          DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports
+          CORS_ALLOWED_ORIGINS=https://ci.example.test
+          SECURITY_HEADERS_ENABLED=true
+          SECURITY_HSTS_ENABLED=true
+          READINESS_PUBLIC_MODE=summary
+          READINESS_INTERNAL_ENABLED=false
+          BACKUP_ROOT=${RUNNER_TEMP}/aeroassist-ci-backups
+          BACKUP_RETENTION_DAYS=7
+          BACKUP_MINIMUM_COUNT=2
+          BACKUP_ENVIRONMENT_LABEL=ci
+          EOF
+          chmod 600 "$env_file"
+          echo "CI_MONGO_ENV_FILE=$env_file" >> "$GITHUB_ENV"
+          echo "AEROASSIST_ENV_FILE=$env_file" >> "$GITHUB_ENV"
+          echo "CI_MONGO_BACKUP_ROOT=${RUNNER_TEMP}/aeroassist-ci-backups" >> "$GITHUB_ENV"
+
+      - name: Start authenticated disposable MongoDB and backend
+        run: |
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml up --build --detach mongo backend
+          for attempt in {1..60}; do
+            status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' aeroassist-ci-mongodb-backend-1)"
+            if [[ "$status" == "healthy" ]]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml logs backend mongo
+          exit 1
+
+      - name: Generate, verify, and rehearse authenticated backup
+        run: |
+          docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c '
+            mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "db.ci_backup_records.insertMany([{reference: \"one\"}, {reference: \"two\"}])"
+          '
+          COMPOSE_PROJECT_NAME=aeroassist-ci-mongodb APP_DIR="$GITHUB_WORKSPACE" ENV_FILE="$CI_MONGO_ENV_FILE" BACKUP_ROOT="$CI_MONGO_BACKUP_ROOT" TIMESTAMP=20990101T010101Z BACKUP_ENVIRONMENT_LABEL=ci deploy/hostinger/scripts/backup_mongo.sh
+          archive="$CI_MONGO_BACKUP_ROOT/20990101T010101Z/mongodb-20990101T010101Z.archive.gz"
+          COMPOSE_PROJECT_NAME=aeroassist-ci-mongodb APP_DIR="$GITHUB_WORKSPACE" ENV_FILE="$CI_MONGO_ENV_FILE" deploy/hostinger/scripts/verify_mongodb_backup.sh "$archive"
+          RESTORE_TARGET_ENV=test ALLOW_DESTRUCTIVE_TEST_RESTORE=true APP_DIR="$GITHUB_WORKSPACE" MONGO_DATABASE=aeroassist_ci deploy/hostinger/scripts/test_restore_mongodb_backup.sh --archive "$archive" --target-database aeroassist_ci_restore
+          BACKUP_ROOT="$CI_MONGO_BACKUP_ROOT" BACKUP_ALLOW_TEST_ROOT=true BACKUP_RETENTION_DAYS=7 BACKUP_MINIMUM_COUNT=1 deploy/hostinger/scripts/prune_backups.sh
+
+      - name: Validate authenticated backend after restore rehearsal
+        run: |
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation'; print(payload['phase'])"
 
       - name: Capture Docker diagnostics on failure
         if: failure()
@@ -113,6 +183,11 @@ jobs:
       - name: Clean up Docker resources
         if: always()
         run: |
+          if [[ -n "${CI_MONGO_ENV_FILE:-}" && -f "$CI_MONGO_ENV_FILE" ]]; then
+            AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml down --volumes --remove-orphans || true
+            rm -f "$CI_MONGO_ENV_FILE"
+          fi
+          rm -rf "${CI_MONGO_BACKUP_ROOT:-${RUNNER_TEMP}/aeroassist-ci-backups}"
           if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
             docker rm --force aeroassist-ci-backend
           fi

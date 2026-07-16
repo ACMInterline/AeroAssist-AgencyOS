@@ -63,8 +63,13 @@ Required checks:
 
 - `APP_ENV=production`
 - `AEROASSIST_DB_MODE=mongo`
-- `MONGODB_URL=mongodb://mongo:27017`
+- `MONGO_AUTHENTICATION_ENABLED=true`
+- distinct non-placeholder `MONGO_INITDB_ROOT_PASSWORD` and `MONGO_APP_PASSWORD`
+- `MONGO_AUTH_SOURCE=admin`
+- `MONGO_DATABASE=aeroassist_agencyos`
+- `MONGODB_URL=` remains blank unless an explicit authenticated override is required
 - `MONGODB_DATABASE=aeroassist_agencyos`
+- `BACKUP_RETENTION_DAYS` and `BACKUP_MINIMUM_COUNT` are positive integers
 - `DEMO_AUTH_ENABLED=false`
 - `SEED_ON_STARTUP=false`
 - `SEED_ENDPOINT_ENABLED=false`
@@ -205,7 +210,7 @@ TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_mongo.sh
 TIMESTAMP="$TIMESTAMP" deploy/hostinger/scripts/backup_exports.sh
 ```
 
-Copy backup files off the VPS according to your operational policy.
+Run `deploy/hostinger/scripts/verify_backups.sh`, rehearse the selected archive according to `MONGODB_DISASTER_RECOVERY_RUNBOOK.md`, and copy complete verified backup sets off the VPS according to your operational policy.
 
 ## 12. Record Deployment
 
@@ -232,7 +237,7 @@ UPDATE_GIT=false RUN_PREFLIGHT=true deploy/hostinger/scripts/deploy.sh
 For data rollback, follow:
 
 ```text
-deploy/hostinger/scripts/restore_mongo.md
+deploy/hostinger/MONGODB_DISASTER_RECOVERY_RUNBOOK.md
 ```
 
 Never restore data without a maintenance window and a fresh backup of the current state.

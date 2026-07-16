@@ -2449,3 +2449,16 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 56.5.3 smoke to minimum-phase semantics and makes the Phase 56.5.4 security smoke the sole exact-current release assertion.
 - Adds no OAuth, SSO, identity provider, product route, product workflow, provider operation, booking execution, AI, or commercial behavior.
 - See [Authentication, Security, and HTTP Hardening Foundation](docs/architecture/authentication-security-http-hardening-foundation.md).
+
+## Phase 56.5.5 - MongoDB Security, Backup, and Disaster Recovery Foundation
+
+- Active marker: `phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation`.
+- Supports authenticated MongoDB 7 with separate administrative and least-privilege application credentials and no production host port.
+- Fails production configuration closed when authentication is absent, disabled, incomplete, or uses obvious placeholders.
+- Preserves the existing named volume and requires a manual, backup-first maintenance procedure for established unauthenticated volumes.
+- Produces timestamped `mongodump` archives, SHA-256 files, non-sensitive manifests, collection/document counts, and MongoDB-tool archive inspection.
+- Adds dry-run-first, minimum-count retention and guarded restore planning plus disposable count-verified rehearsals.
+- Coordinates MongoDB and document-export recovery inventory without archiving `.env` or secrets.
+- Adds static and authenticated disposable CI checks without database artifact upload, production restore, deployment, or scheduler installation.
+- Migrates the Phase 56.5.4 security smoke to minimum-phase semantics and makes the Phase 56.5.5 MongoDB recovery smoke the sole exact-current release assertion.
+- See [MongoDB Security, Backup, and Disaster Recovery Foundation](docs/architecture/mongodb-security-backup-disaster-recovery-foundation.md).

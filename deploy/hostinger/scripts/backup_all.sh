@@ -7,6 +7,8 @@ TIMESTAMP="${TIMESTAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+[[ "$TIMESTAMP" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || { echo "FAIL: TIMESTAMP must use YYYYMMDDTHHMMSSZ format." >&2; exit 1; }
+
 verify_artifact() {
   local artifact="$1"
   local checksum="$artifact.sha256"
@@ -33,8 +35,17 @@ echo "Backup directory: $BACKUP_DIR"
 APP_DIR="$APP_DIR" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="$TIMESTAMP" "$SCRIPT_DIR/backup_mongo.sh"
 APP_DIR="$APP_DIR" BACKUP_ROOT="$BACKUP_ROOT" TIMESTAMP="$TIMESTAMP" "$SCRIPT_DIR/backup_exports.sh"
 
-verify_artifact "$BACKUP_DIR/mongo.archive.gz"
+mongo_archive="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'mongodb-*.archive.gz' | sort | tail -n 1)"
+[[ -n "$mongo_archive" ]] || { echo "FAIL: timestamped MongoDB archive is missing." >&2; exit 1; }
+verify_artifact "$mongo_archive"
 verify_artifact "$BACKUP_DIR/document_exports.tar.gz"
+APP_DIR="$APP_DIR" ENV_FILE="${ENV_FILE:-.env.production}" COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}" \
+  "$SCRIPT_DIR/verify_mongodb_backup.sh" "$mongo_archive"
+
+if [[ "${BACKUP_PRUNE_AFTER_SUCCESS:-false}" == "true" ]]; then
+  BACKUP_ROOT="$BACKUP_ROOT" BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}" \
+    BACKUP_MINIMUM_COUNT="${BACKUP_MINIMUM_COUNT:-7}" "$SCRIPT_DIR/prune_backups.sh" --apply
+fi
 
 echo "PASS: combined backup complete."
 echo "MongoDB backup: present and checksum verified."

@@ -25,6 +25,8 @@ WORKFLOW_SPECS = {
         "python3 -m compileall -q backend",
         "validate_smoke_inventory.py",
         "validate_ci_foundation.py",
+        "smoke_mongodb_security_backup_disaster_recovery_foundation.py --static",
+        "bash -n deploy/hostinger",
         "npm run build --prefix frontend",
         "import smoke_inventory, server",
     ),
@@ -68,7 +70,7 @@ ALLOWED_ACTIONS = {
 FORBIDDEN_WORKFLOW_PATTERNS = {
     "continue-on-error": "Required CI checks must not ignore failures.",
     "secrets.": "CI foundation must not consume repository secrets.",
-    "hostinger": "CI foundation must not connect to production hosting.",
+    "avio.my": "CI foundation must not connect to the production domain.",
     "appleboy/": "CI foundation must not use SSH deployment actions.",
     "docker/login-action": "CI foundation must not authenticate to a registry.",
     "docker/build-push-action": "CI foundation must not publish images.",
@@ -122,13 +124,16 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_authentication_security_http_hardening_foundation.py"
+    exact_path = "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py"
+    security_path = "backend/scripts/smoke_authentication_security_http_hardening_foundation.py"
     ci_path = "backend/scripts/smoke_github_actions_continuous_integration_foundation.py"
     legacy_path = "backend/scripts/smoke_legacy_regression_suite_migration.py"
     if len(allowlist) != 1 or allowlist[0].get("script_path") != exact_path:
         errors.append("The active release-registration smoke must be the sole exact-current allowlist entry.")
     if entry_by_path.get(exact_path, {}).get("phase_assertion_mode") != "exact_current":
         errors.append("The active release-registration smoke is not classified as exact_current.")
+    if entry_by_path.get(security_path, {}).get("phase_assertion_mode") != "minimum":
+        errors.append("Phase 56.5.4 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(ci_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.3 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(legacy_path, {}).get("phase_assertion_mode") != "minimum":
@@ -145,6 +150,7 @@ def validate_ci_foundation() -> list[str]:
     }
     required_focused = {
         exact_path,
+        security_path,
         ci_path,
         legacy_path,
         "backend/scripts/smoke_phase_marker_regression_integrity_foundation.py",
@@ -188,6 +194,8 @@ def validate_ci_foundation() -> list[str]:
     server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
     if '"github_actions_continuous_integration_foundation"' not in server_text:
         errors.append("Server readiness does not register the Phase 56.5.3 CI foundation.")
+    if '"mongodb_security_backup_disaster_recovery_foundation"' not in server_text:
+        errors.append("Server readiness does not register the Phase 56.5.5 MongoDB security foundation.")
     return errors
 
 

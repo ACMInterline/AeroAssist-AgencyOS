@@ -22,6 +22,8 @@ Run this after the first deployment and after major operational changes.
 - frontend container is bound to `127.0.0.1:8080`
 - backend port `8000` is not publicly exposed
 - MongoDB port `27017` is not publicly exposed
+- MongoDB authentication is enabled with distinct root and application identities
+- application identity has only required application-database access
 - host firewall allows only required SSH/HTTP/HTTPS access
 
 ## App Checks
@@ -29,7 +31,7 @@ Run this after the first deployment and after major operational changes.
 - `/api/health` returns `ok=true`
 - `/api/readiness` returns `ok=true`
 - readiness output does not include secret values
-- API phase reports `phase_35_trip_dossier_foundation`
+- API phase reports the checked-in canonical build phase
 - platform login verified
 - agency login verified
 - portal login verified
@@ -74,6 +76,9 @@ Run this after the first deployment and after major operational changes.
 - first Mongo backup completed
 - first document export backup completed
 - backup checksums generated
+- credential-free MongoDB manifests generated
+- MongoDB archive dry-run inspection completed
+- disposable restore rehearsal and collection-count comparison completed
 - `deploy/hostinger/scripts/verify_backups.sh` passes for the latest MongoDB backup
 - `deploy/hostinger/scripts/prune_backups.sh` dry-run reviewed before any `--apply`
 - off-server copy policy decided

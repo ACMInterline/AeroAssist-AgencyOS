@@ -15,11 +15,12 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from config import env_float, env_int, get_settings, validate_config
 from database import Database
 from http_security import SAFE_SECURITY_EVENT_FIELDS, security_headers
 from models import AuthIdentity, AuthSession, now_utc
+from phase_assertions import assert_application_phase_at_least
 from security import hash_password, hash_token
 from services.authentication_security_service import (
     clear_login_failures,
@@ -31,6 +32,7 @@ from smoke_booking_pnr_foundation import BASE_URL
 
 
 RELEASE_PHASE = "phase_56_5_4_authentication_security_http_hardening_foundation"
+MINIMUM_PHASE = RELEASE_PHASE
 REQUIRED_SECURITY_HEADERS = {
     "content-security-policy",
     "strict-transport-security",
@@ -138,8 +140,9 @@ async def verify_authentication_state_and_tokens() -> None:
 def verify_http_contract() -> None:
     request_id = "security-smoke-request-0001"
     status_code, health, headers = request("GET", "/api/health", headers={"X-Request-ID": request_id})
-    if status_code != 200 or not isinstance(health, dict) or not phase_is_exact(health.get("phase"), CURRENT_BUILD_PHASE):
+    if status_code != 200 or not isinstance(health, dict):
         raise AssertionError(f"Health phase mismatch: {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     missing = REQUIRED_SECURITY_HEADERS - set(headers)
     if missing:
         raise AssertionError(f"Security headers are missing: {sorted(missing)}")
@@ -215,8 +218,7 @@ def verify_http_contract() -> None:
     readiness_status, readiness, _ = request("GET", "/api/readiness")
     if readiness_status != 200 or not isinstance(readiness, dict):
         raise AssertionError(f"Readiness failed: {readiness}")
-    if not phase_is_exact(readiness.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Readiness phase mismatch: {readiness.get('phase')}")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
     section = readiness.get("authentication_security_http_hardening_foundation") or {}
     for key in (
         "authentication_hardening",
@@ -244,8 +246,7 @@ async def verify_public_projection() -> None:
 
 
 def verify_static_configuration() -> None:
-    if CURRENT_BUILD_PHASE != RELEASE_PHASE:
-        raise AssertionError(f"Canonical phase marker mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     os.environ["AEROASSIST_SECURITY_SMOKE_INT"] = "17"
     os.environ["AEROASSIST_SECURITY_SMOKE_FLOAT"] = "0.25"
     try:

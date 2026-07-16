@@ -41,8 +41,17 @@ set +a
 required_env=(
   APP_ENV
   AEROASSIST_DB_MODE
-  MONGODB_URL
+  MONGO_AUTHENTICATION_ENABLED
+  MONGO_INITDB_ROOT_USERNAME
+  MONGO_INITDB_ROOT_PASSWORD
+  MONGO_APP_USERNAME
+  MONGO_APP_PASSWORD
+  MONGO_AUTH_SOURCE
+  MONGO_DATABASE
   MONGODB_DATABASE
+  BACKUP_RETENTION_DAYS
+  BACKUP_MINIMUM_COUNT
+  BACKUP_ENVIRONMENT_LABEL
   DEMO_AUTH_ENABLED
   SEED_ON_STARTUP
   SEED_ENDPOINT_ENABLED
@@ -63,11 +72,16 @@ pass "required production environment variables are present."
 
 [[ "${APP_ENV}" == "production" ]] || fail "APP_ENV must be production."
 [[ "${AEROASSIST_DB_MODE}" == "mongo" ]] || fail "AEROASSIST_DB_MODE must be mongo."
+[[ "${MONGO_AUTHENTICATION_ENABLED}" == "true" ]] || fail "MONGO_AUTHENTICATION_ENABLED must be true after completing the existing-volume migration runbook."
 [[ "${DEMO_AUTH_ENABLED}" == "false" ]] || fail "DEMO_AUTH_ENABLED must be false."
 [[ "${SEED_ON_STARTUP}" == "false" ]] || fail "SEED_ON_STARTUP must be false."
 [[ "${SEED_ENDPOINT_ENABLED}" == "false" ]] || fail "SEED_ENDPOINT_ENABLED must be false."
 [[ "${AUTH_TOKEN_SECRET}" != "replace-with-a-long-random-production-secret" ]] || fail "AUTH_TOKEN_SECRET still uses the example placeholder."
 [[ "${AUTH_TOKEN_SECRET}" != "replace-with-a-long-random-secret" ]] || fail "AUTH_TOKEN_SECRET still uses a placeholder."
+[[ "${MONGO_INITDB_ROOT_PASSWORD}" != replace-with-* && ${#MONGO_INITDB_ROOT_PASSWORD} -ge 16 ]] || fail "MongoDB root password is a placeholder or too short."
+[[ "${MONGO_APP_PASSWORD}" != replace-with-* && ${#MONGO_APP_PASSWORD} -ge 16 ]] || fail "MongoDB application password is a placeholder or too short."
+[[ "${BACKUP_RETENTION_DAYS}" =~ ^[0-9]+$ && "${BACKUP_RETENTION_DAYS}" -ge 1 ]] || fail "BACKUP_RETENTION_DAYS must be at least 1."
+[[ "${BACKUP_MINIMUM_COUNT}" =~ ^[0-9]+$ && "${BACKUP_MINIMUM_COUNT}" -ge 1 ]] || fail "BACKUP_MINIMUM_COUNT must be at least 1."
 [[ "${CORS_ALLOWED_ORIGINS}" != *"*"* ]] || fail "CORS_ALLOWED_ORIGINS must not include wildcard '*'."
 [[ "${CORS_ALLOWED_ORIGINS}" != *"localhost"* && "${CORS_ALLOWED_ORIGINS}" != *"127.0.0.1"* ]] || fail "CORS_ALLOWED_ORIGINS must not use local development origins in production."
 pass "production safety environment checks passed."
