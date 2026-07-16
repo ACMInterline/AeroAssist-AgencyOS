@@ -162,12 +162,12 @@ def main() -> int:
 
     if not phase_is_at_least(
         CURRENT_BUILD_PHASE,
-        "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation",
+        "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation",
     ):
         errors += 1
-        lines.append(status_line("FAIL", "Build phase does not include the MongoDB security and disaster-recovery foundation."))
+        lines.append(status_line("FAIL", "Build phase does not include the persistence scalability and tenant query hardening foundation."))
     else:
-        lines.append(status_line("PASS", "MongoDB security and disaster-recovery phase marker is current."))
+        lines.append(status_line("PASS", "Persistence scalability and tenant query hardening phase marker is current."))
 
     for line in lines:
         print(line)

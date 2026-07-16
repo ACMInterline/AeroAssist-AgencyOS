@@ -78,6 +78,9 @@ Required checks:
 - `CORS_ALLOWED_ORIGINS=https://your-domain.example`
 - `FRONTEND_URL=https://your-domain.example`
 - `PUBLIC_APP_URL=https://your-domain.example`
+- `QUERY_DEFAULT_LIMIT=50` and `QUERY_MAXIMUM_LIMIT=250`
+- `QUERY_SLOW_THRESHOLD_MS=250` and `QUERY_DIAGNOSTICS_ENABLED=true`
+- `READINESS_DATABASE_TIMEOUT_SECONDS=5`
 - `FRONTEND_HTTP_PORT=127.0.0.1:8080`
 - `VITE_API_BASE_URL=` remains blank when frontend nginx proxies `/api`
 
@@ -88,6 +91,8 @@ openssl rand -hex 32
 ```
 
 Do not commit `.env.production`.
+
+Phase 56.5.6 query controls are operational bounds, not feature settings. Keep the default limit positive, the maximum at or above the default, the maximum no greater than 1000, and the readiness timeout greater than zero and no more than 60 seconds. Query diagnostics contain structural metadata only and must remain free of filter values and passenger data.
 
 ## 5. Preflight
 

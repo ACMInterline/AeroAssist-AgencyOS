@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, status
@@ -17,6 +18,7 @@ from http_security import (
     validation_exception_handler,
 )
 from mongodb_security import mongodb_security_readiness_metadata
+from persistence_query import READINESS_QUERY_LIMIT, bounded_query_context, persistence_readiness_metadata
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
@@ -200,6 +202,7 @@ def delivery_config_status() -> dict:
     }
 
 
+@bounded_query_context(READINESS_QUERY_LIMIT)
 async def internal_readiness_payload() -> dict:
     settings = get_settings()
     config = validate_config(settings, include_storage=False)
@@ -5269,6 +5272,7 @@ async def internal_readiness_payload() -> dict:
         },
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
         "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
+        "persistence_scalability_tenant_query_hardening_foundation": persistence_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7176,7 +7180,13 @@ async def internal_readiness_payload() -> dict:
 async def public_readiness_payload() -> dict:
     settings = get_settings()
     config = validate_config(settings, include_storage=False)
-    database_status = await database.readiness()
+    try:
+        database_status = await asyncio.wait_for(
+            database.readiness(),
+            timeout=settings.readiness_database_timeout_seconds,
+        )
+    except TimeoutError:
+        database_status = {"ok": False, "mode": database.mode, "diagnostic": "Database readiness timed out."}
     inventory = {
         key: value
         for key, value in SMOKE_INVENTORY_SUMMARY.items()
@@ -7200,21 +7210,38 @@ async def public_readiness_payload() -> dict:
         "inventory": inventory,
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
         "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
+        "persistence_scalability_tenant_query_hardening_foundation": persistence_readiness_metadata(),
     }
+
+
+async def bounded_internal_readiness_payload() -> dict:
+    settings = get_settings()
+    try:
+        return await asyncio.wait_for(
+            internal_readiness_payload(),
+            timeout=settings.readiness_database_timeout_seconds,
+        )
+    except TimeoutError:
+        payload = await public_readiness_payload()
+        payload["ok"] = False
+        payload["readiness_mode"] = "degraded_summary"
+        payload["diagnostics"]["detailed_readiness"] = "timeout"
+        payload["persistence_scalability_tenant_query_hardening_foundation"]["detailed_readiness_degraded"] = True
+        return payload
 
 
 @app.get("/api/readiness")
 async def readiness(authorization: str | None = Header(default=None)) -> dict:
     settings = get_settings()
     if settings.readiness_public_mode == "detailed":
-        return await internal_readiness_payload()
+        return await bounded_internal_readiness_payload()
     if settings.readiness_authenticated_detail_enabled and authorization and authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
         result = await validate_auth_token(database, token, update_last_seen=False)
         if result.valid and result.identity:
             user = await database.collection("platform_users").find_one({"email": result.identity.get("email")})
             if user and user.get("status") == "active" and user.get("global_role"):
-                return await internal_readiness_payload()
+                return await bounded_internal_readiness_payload()
     return await public_readiness_payload()
 
 
@@ -7222,12 +7249,18 @@ async def readiness(authorization: str | None = Header(default=None)) -> dict:
 async def system_readiness(x_internal_readiness_key: str | None = Header(default=None)) -> dict:
     if not internal_readiness_authorized(x_internal_readiness_key):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found.")
-    return await internal_readiness_payload()
+    return await bounded_internal_readiness_payload()
 
 
 @app.get("/api/audit-events")
 async def audit_events() -> dict:
-    return {"items": await database.collection("audit_events").find_many()}
+    settings = get_settings()
+    return {
+        "items": await database.collection("audit_events").find_many(
+            sort=[("created_at", -1), ("id", -1)],
+            limit=settings.query_maximum_limit,
+        )
+    }
 
 
 app.include_router(auth.router)

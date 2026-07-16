@@ -4,6 +4,8 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     TravelRequestWorkspace,
     TravelRequestWorkspaceCreate,
@@ -40,8 +42,6 @@ class TravelRequestWorkspaceService:
         include_archived: bool = False,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
-        if agency_id:
-            filters["agency_id"] = agency_id
         if status:
             filters["request_status"] = status
         if request_type:
@@ -52,7 +52,20 @@ class TravelRequestWorkspaceService:
             filters["assigned_agent"] = assigned_agent
         if operational_workspace_id:
             filters["operational_workspace_id"] = operational_workspace_id
-        requests = await self.db.collection(REQUEST_WORKSPACE_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": REQUEST_WORKSPACE_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        requests = page.items
         if not include_archived:
             requests = [item for item in requests if not item.get("deleted_at") and item.get("request_status") != "archived"]
         if departure_date:

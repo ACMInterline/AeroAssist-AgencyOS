@@ -17,6 +17,10 @@ VALID_CORP_POLICIES = {"same-origin", "same-site", "cross-origin"}
 VALID_COOP_POLICIES = {"same-origin", "same-origin-allow-popups", "unsafe-none"}
 VALID_COEP_POLICIES = {"unsafe-none", "require-corp", "credentialless"}
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
+DEFAULT_QUERY_LIMIT = 50
+MAXIMUM_QUERY_LIMIT = 250
+DEFAULT_QUERY_SLOW_THRESHOLD_MS = 250
+DEFAULT_READINESS_DATABASE_TIMEOUT_SECONDS = 5.0
 PLACEHOLDER_AUTH_SECRETS = {
     "",
     "replace-with-a-long-random-secret",
@@ -155,6 +159,11 @@ class AppSettings:
     readiness_authenticated_detail_enabled: bool
     readiness_internal_enabled: bool
     readiness_internal_key: str = field(repr=False)
+    query_default_limit: int
+    query_maximum_limit: int
+    query_slow_threshold_ms: int
+    query_diagnostics_enabled: bool
+    readiness_database_timeout_seconds: float
     invitation_expiry_hours: int
     password_reset_expiry_hours: int
     smtp_secret_refs: list[str]
@@ -234,6 +243,14 @@ def get_settings() -> AppSettings:
         readiness_authenticated_detail_enabled=env_bool("READINESS_AUTHENTICATED_DETAIL_ENABLED", True),
         readiness_internal_enabled=env_bool("READINESS_INTERNAL_ENABLED", not production),
         readiness_internal_key=os.getenv("READINESS_INTERNAL_KEY", ""),
+        query_default_limit=env_int("QUERY_DEFAULT_LIMIT", DEFAULT_QUERY_LIMIT),
+        query_maximum_limit=env_int("QUERY_MAXIMUM_LIMIT", MAXIMUM_QUERY_LIMIT),
+        query_slow_threshold_ms=env_int("QUERY_SLOW_THRESHOLD_MS", DEFAULT_QUERY_SLOW_THRESHOLD_MS),
+        query_diagnostics_enabled=env_bool("QUERY_DIAGNOSTICS_ENABLED", True),
+        readiness_database_timeout_seconds=env_float(
+            "READINESS_DATABASE_TIMEOUT_SECONDS",
+            DEFAULT_READINESS_DATABASE_TIMEOUT_SECONDS,
+        ),
         invitation_expiry_hours=env_int("INVITATION_EXPIRY_HOURS", 72),
         password_reset_expiry_hours=env_int("PASSWORD_RESET_EXPIRY_HOURS", 2),
         smtp_secret_refs=env_list("SMTP_SECRET_REFS"),
@@ -441,6 +458,20 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
         add("pass", "READINESS_AUTHENTICATED_DETAIL_ENABLED", "Detailed readiness is available to active Platform users.")
     else:
         add("pass", "READINESS_AUTHENTICATED_DETAIL_ENABLED", "Authenticated detailed readiness is disabled.")
+
+    if settings.query_default_limit <= 0:
+        add("fail", "QUERY_DEFAULT_LIMIT", "QUERY_DEFAULT_LIMIT must be greater than zero.")
+    elif settings.query_maximum_limit < settings.query_default_limit or settings.query_maximum_limit > 1000:
+        add("fail", "QUERY_MAXIMUM_LIMIT", "QUERY_MAXIMUM_LIMIT must be at least the default and no greater than 1000.")
+    else:
+        add("pass", "QUERY_LIMITS", "Persistence query limits are bounded and ordered.")
+
+    if settings.query_slow_threshold_ms <= 0:
+        add("fail", "QUERY_SLOW_THRESHOLD_MS", "QUERY_SLOW_THRESHOLD_MS must be greater than zero.")
+    elif settings.readiness_database_timeout_seconds <= 0 or settings.readiness_database_timeout_seconds > 60:
+        add("fail", "READINESS_DATABASE_TIMEOUT_SECONDS", "Readiness database timeout must be greater than zero and no more than 60 seconds.")
+    else:
+        add("pass", "QUERY_DIAGNOSTICS", "Query diagnostics and readiness timeout controls are configured.")
 
     if settings.security_hsts_max_age_seconds < 0:
         add("fail", "SECURITY_HSTS_MAX_AGE_SECONDS", "HSTS max age must not be negative.")

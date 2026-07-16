@@ -2462,3 +2462,16 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Adds static and authenticated disposable CI checks without database artifact upload, production restore, deployment, or scheduler installation.
 - Migrates the Phase 56.5.4 security smoke to minimum-phase semantics and makes the Phase 56.5.5 MongoDB recovery smoke the sole exact-current release assertion.
 - See [MongoDB Security, Backup, and Disaster Recovery Foundation](docs/architecture/mongodb-security-backup-disaster-recovery-foundation.md).
+
+## Phase 56.5.6 - Persistence Scalability and Tenant Query Hardening Foundation
+
+- Active marker: `phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation`.
+- Adds one canonical bounded pagination contract with configurable default and maximum limits, optional counts, offset compatibility, and tenant-bound continuation cursors.
+- Adds deterministic allowlisted sorting with stable `id` tie-breaking plus allowlisted filters, bounded operators, and safe projections.
+- Adds separate tenant, platform/global, and mixed-projection repository helpers backed by an explicit collection ownership registry.
+- Adds thirteen stable additive index specifications for high-value operational and knowledge paths; startup never drops indexes.
+- Bounds detailed readiness reads and execution time while preserving the Phase 56.5.4 public readiness contract and exposing explicit degraded state.
+- Migrates the highest-risk Request, Passenger, Trip, Offer, Booking, Document, Timeline, Work Queue, airline coverage, and airline readiness list paths without changing routes or response shapes.
+- Adds redacted query diagnostics, a non-increasing legacy exception inventory, static validation, disposable isolation smoke coverage, and authenticated MongoDB CI index validation.
+- Adds no product surface, provider operation, role, destructive migration, production data change, deployment, or external telemetry.
+- See [Persistence Scalability and Tenant Query Hardening Foundation](docs/architecture/persistence-scalability-tenant-query-hardening-foundation.md).

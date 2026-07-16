@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     OperationalAssignmentEvent,
     OperationalBulkAssignmentRequest,
@@ -253,8 +255,6 @@ class AgentWorkQueueService:
         **_: Any,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
-        if agency_id:
-            filters["agency_id"] = agency_id
         if status:
             filters["status"] = self._norm(status)
         if priority:
@@ -274,7 +274,20 @@ class AgentWorkQueueService:
         if sla_status:
             filters["sla_status"] = self._norm(sla_status)
 
-        items = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": OPERATIONAL_WORK_ITEMS_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "due_at",
+            "sort_direction": "asc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        items = page.items
         if not include_completed:
             items = [item for item in items if item.get("status") not in {"completed", "cancelled"}]
         if queue_code:

@@ -4,6 +4,8 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     AirlineCoverageAssessment,
     AirlineCoverageRemediationPlan,
@@ -226,6 +228,41 @@ class AirlineServiceCoverageGapService:
     def __init__(self, db: Database) -> None:
         self.db = db
 
+    async def _governed_records(
+        self,
+        collection: str,
+        *,
+        agency_id: str | None = None,
+        filters: dict[str, Any] | None = None,
+        include_global: bool = True,
+    ) -> list[dict[str, Any]]:
+        repository = PersistenceRepository(self.db)
+        pagination = PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT)
+        if agency_id is not None and include_global:
+            return (await repository.find_mixed_records(
+                collection_name=collection,
+                agency_id=agency_id,
+                filters=filters,
+                include_historical=True,
+                pagination=pagination,
+            )).items
+        if agency_id is not None:
+            return (await repository.find_agency_records(
+                collection_name=collection,
+                agency_id=agency_id,
+                filters=filters,
+                sort_field="updated_at",
+                sort_direction="desc",
+                pagination=pagination,
+            )).items
+        return (await repository.find_platform_records(
+            collection_name=collection,
+            filters=filters,
+            sort_field="updated_at",
+            sort_direction="desc",
+            pagination=pagination,
+        )).items
+
     def safety_flags(self) -> dict[str, bool]:
         return {
             "deterministic_coverage_scoring_enabled": True,
@@ -293,9 +330,7 @@ class AirlineServiceCoverageGapService:
         return {"phase": PHASE_LABEL, "target": updated, **self.safety_flags()}
 
     async def list_targets(self, agency_id: str | None = None, target_status: str | None = None) -> list[dict[str, Any]]:
-        items = await self.db.collection(COVERAGE_TARGET_COLLECTION).find_many()
-        if agency_id is not None:
-            items = [item for item in items if item.get("agency_id") in {None, agency_id}]
+        items = await self._governed_records(COVERAGE_TARGET_COLLECTION, agency_id=agency_id)
         if target_status:
             items = [item for item in items if item.get("target_status") == self._code(target_status)]
         return sorted(items, key=lambda item: self._sort_time(item.get("updated_at") or item.get("created_at")), reverse=True)
@@ -450,10 +485,10 @@ class AirlineServiceCoverageGapService:
 
     async def get_assessment(self, assessment_id: str) -> dict[str, Any]:
         assessment = await self._require(COVERAGE_ASSESSMENT_COLLECTION, assessment_id, "Coverage assessment")
-        profiles = await self.db.collection(COVERAGE_PROFILE_COLLECTION).find_many({"assessment_id": assessment["id"]})
-        cells = await self.db.collection(COVERAGE_CELL_COLLECTION).find_many({"assessment_id": assessment["id"]})
-        gaps = await self.db.collection(KNOWLEDGE_GAP_COLLECTION).find_many({"assessment_id": assessment["id"]})
-        plans = await self.db.collection(REMEDIATION_PLAN_COLLECTION).find_many({"assessment_id": assessment["id"]})
+        profiles = await self._governed_records(COVERAGE_PROFILE_COLLECTION, filters={"assessment_id": assessment["id"]})
+        cells = await self._governed_records(COVERAGE_CELL_COLLECTION, filters={"assessment_id": assessment["id"]})
+        gaps = await self._governed_records(KNOWLEDGE_GAP_COLLECTION, filters={"assessment_id": assessment["id"]})
+        plans = await self._governed_records(REMEDIATION_PLAN_COLLECTION, filters={"assessment_id": assessment["id"]})
         return {
             "phase": PHASE_LABEL,
             "assessment": assessment,
@@ -465,15 +500,13 @@ class AirlineServiceCoverageGapService:
         }
 
     async def list_assessments(self, agency_id: str | None = None, assessment_status: str | None = None) -> list[dict[str, Any]]:
-        items = await self.db.collection(COVERAGE_ASSESSMENT_COLLECTION).find_many()
-        if agency_id is not None:
-            items = [item for item in items if item.get("agency_id") in {None, agency_id}]
+        items = await self._governed_records(COVERAGE_ASSESSMENT_COLLECTION, agency_id=agency_id)
         if assessment_status:
             items = [item for item in items if item.get("assessment_status") == self._code(assessment_status)]
         return sorted(items, key=lambda item: self._sort_time(item.get("completed_at") or item.get("created_at")), reverse=True)
 
     async def list_cells(self, **filters: Any) -> list[dict[str, Any]]:
-        items = await self.db.collection(COVERAGE_CELL_COLLECTION).find_many()
+        items = await self._governed_records(COVERAGE_CELL_COLLECTION, agency_id=filters.get("agency_id"))
         for key in [
             "assessment_id",
             "agency_id",
@@ -507,7 +540,7 @@ class AirlineServiceCoverageGapService:
         return sorted(items, key=self._cell_priority_key)
 
     async def list_gaps(self, **filters: Any) -> list[dict[str, Any]]:
-        items = await self.db.collection(KNOWLEDGE_GAP_COLLECTION).find_many()
+        items = await self._governed_records(KNOWLEDGE_GAP_COLLECTION, agency_id=filters.get("agency_id"))
         for key in ["assessment_id", "agency_id", "airline_code", "service_family", "service_code", "gap_type", "gap_status", "severity"]:
             value = filters.get(key)
             if value is None:
@@ -533,9 +566,7 @@ class AirlineServiceCoverageGapService:
         return {"phase": PHASE_LABEL, "gap": updated, **self.safety_flags()}
 
     async def list_remediation_plans(self, agency_id: str | None = None, assessment_id: str | None = None, plan_status: str | None = None) -> list[dict[str, Any]]:
-        items = await self.db.collection(REMEDIATION_PLAN_COLLECTION).find_many()
-        if agency_id is not None:
-            items = [item for item in items if item.get("agency_id") == agency_id]
+        items = await self._governed_records(REMEDIATION_PLAN_COLLECTION, agency_id=agency_id, include_global=False)
         if assessment_id:
             items = [item for item in items if item.get("assessment_id") == assessment_id]
         if plan_status:
@@ -568,7 +599,7 @@ class AirlineServiceCoverageGapService:
         cell_filters = {**filters, "assessment_id": assessment_id} if assessment_id else filters
         cells = await self.list_cells(**cell_filters)
         gaps = await self.list_gaps(**{key: value for key, value in filters.items() if key in {"agency_id", "airline_code", "service_family", "service_code", "gap_type", "gap_status", "severity", "critical"}}, assessment_id=assessment_id)
-        profiles = await self.db.collection(COVERAGE_PROFILE_COLLECTION).find_many({"assessment_id": assessment_id}) if assessment_id else []
+        profiles = await self._governed_records(COVERAGE_PROFILE_COLLECTION, filters={"assessment_id": assessment_id}) if assessment_id else []
         plans = await self.list_remediation_plans(filters.get("agency_id"), assessment_id)
         return {
             "phase": PHASE_LABEL,
@@ -585,7 +616,7 @@ class AirlineServiceCoverageGapService:
         }
 
     async def agency_response(self, agency_id: str, **filters: Any) -> dict[str, Any]:
-        cells = await self.list_cells(**{key: value for key, value in filters.items() if key in {"service_family", "service_code", "coverage_status", "route_type", "flight_type", "cabin", "fare_bundle", "distribution_channel", "evidence_freshness"}})
+        cells = await self.list_cells(agency_id=agency_id, **{key: value for key, value in filters.items() if key in {"service_family", "service_code", "coverage_status", "route_type", "flight_type", "cabin", "fare_bundle", "distribution_channel", "evidence_freshness"}})
         scoped = [item for item in cells if item.get("agency_id") in {None, agency_id}]
         latest_all = self._latest_cells(scoped)
         visible_all = [self._agency_cell_projection(item) for item in latest_all if item.get("published") and self._cell_visible_to_agency(item, agency_id)]
@@ -627,11 +658,11 @@ class AirlineServiceCoverageGapService:
         }
 
     async def coverage(self) -> dict[str, Any]:
-        profiles = await self.db.collection(COVERAGE_PROFILE_COLLECTION).find_many()
-        cells = await self.db.collection(COVERAGE_CELL_COLLECTION).find_many()
-        gaps = await self.db.collection(KNOWLEDGE_GAP_COLLECTION).find_many()
-        assessments = await self.db.collection(COVERAGE_ASSESSMENT_COLLECTION).find_many()
-        plans = await self.db.collection(REMEDIATION_PLAN_COLLECTION).find_many()
+        profiles = await self._governed_records(COVERAGE_PROFILE_COLLECTION)
+        cells = await self._governed_records(COVERAGE_CELL_COLLECTION)
+        gaps = await self._governed_records(KNOWLEDGE_GAP_COLLECTION)
+        assessments = await self._governed_records(COVERAGE_ASSESSMENT_COLLECTION)
+        plans = await self._governed_records(REMEDIATION_PLAN_COLLECTION)
         return {
             "coverage_profile_count": len(profiles),
             "coverage_cell_count": len(cells),

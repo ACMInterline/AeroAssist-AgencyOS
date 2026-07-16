@@ -85,12 +85,12 @@ jobs:
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation"
+          expected = "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 137
+          assert section["inventoried_smoke_scripts"] == 138
           assert section["unresolved_scripts"] == 0
           print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
           PY
@@ -159,7 +159,9 @@ jobs:
 
       - name: Validate authenticated backend after restore rehearsal
         run: |
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation'; print(payload['phase'])"
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation'; print(payload['phase'])"
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c 'mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "const names=db.operational_work_items.getIndexes().map(item => item.name); if (!names.includes(\"operational_work_items_agency_status_due_created_id\")) { throw new Error(\"governed work-queue index missing\"); }"'
 
       - name: Capture Docker diagnostics on failure
         if: failure()

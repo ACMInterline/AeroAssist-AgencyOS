@@ -5,6 +5,8 @@ from typing import Any
 
 from database import Database
 from models import OfferWorkspaceV2, OfferWorkspaceV2Create, OfferWorkspaceV2Update, new_id
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
@@ -35,8 +37,6 @@ class OfferWorkspaceService:
         include_archived: bool = False,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
-        if agency_id:
-            filters["agency_id"] = agency_id
         if status:
             filters["offer_status"] = status
         if client_id:
@@ -45,7 +45,20 @@ class OfferWorkspaceService:
             filters["assigned_agent"] = assigned_agent
         if trip_workspace_id:
             filters["trip_workspace_id"] = trip_workspace_id
-        offers = await self.db.collection(OFFER_WORKSPACE_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": OFFER_WORKSPACE_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        offers = page.items
         if not include_archived:
             offers = [item for item in offers if not item.get("deleted_at") and item.get("offer_status") != "archived"]
         if validity:

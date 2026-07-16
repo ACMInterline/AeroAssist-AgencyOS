@@ -8,6 +8,8 @@ from typing import Any, Iterable
 from pydantic import BaseModel
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     AuditEvent,
     JourneyConnectionRepresentation,
@@ -139,7 +141,6 @@ class CanonicalJourneyItineraryService:
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
         for key, value in {
-            "agency_id": agency_id,
             "status": status,
             "presentation_status": presentation_status,
             "source_entity_type": source_entity_type,
@@ -148,7 +149,20 @@ class CanonicalJourneyItineraryService:
         }.items():
             if value not in {None, ""}:
                 filters[key] = value
-        items = await self.db.collection(JOURNEY_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": JOURNEY_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        items = page.items
         if not include_archived:
             items = [item for item in items if item.get("status") != "archived" and not item.get("archived_at")]
         if passenger_id:

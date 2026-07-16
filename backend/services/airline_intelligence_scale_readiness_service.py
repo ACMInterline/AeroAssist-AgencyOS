@@ -4,6 +4,8 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     AirlineIntelligencePopulationWave,
     AirlineIntelligenceReadinessAssessment,
@@ -157,6 +159,19 @@ class AirlineIntelligenceScaleReadinessError(ValueError):
 class AirlineIntelligenceScaleReadinessService:
     def __init__(self, db: Database) -> None:
         self.db = db
+
+    async def _governed_global_records(
+        self,
+        collection: str,
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        return (await PersistenceRepository(self.db).find_global_records(
+            collection_name=collection,
+            filters=filters,
+            sort_field="updated_at",
+            sort_direction="desc",
+            pagination=PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        )).items
 
     def safety_flags(self) -> dict[str, bool]:
         return {
@@ -549,8 +564,8 @@ class AirlineIntelligenceScaleReadinessService:
         waves = await self._list(POPULATION_WAVE_COLLECTION, filters, {"agency_id": "agency_id", "wave_status": "status"})
         issues = await self._list(SCALE_ISSUE_COLLECTION, filters, {"agency_id": "agency_id", "airline_code": "airline_code", "issue_status": "issue_status", "severity": "severity"})
         candidate_ids = {item["id"] for item in candidates}
-        gates = [item for item in await self.db.collection(RELEASE_GATE_COLLECTION).find_many() if item.get("candidate_id") in candidate_ids]
-        decisions = [item for item in await self.db.collection(RELEASE_DECISION_COLLECTION).find_many() if item.get("candidate_id") in candidate_ids]
+        gates = [item for item in await self._governed_global_records(RELEASE_GATE_COLLECTION) if item.get("candidate_id") in candidate_ids]
+        decisions = [item for item in await self._governed_global_records(RELEASE_DECISION_COLLECTION) if item.get("candidate_id") in candidate_ids]
         return {
             "phase": PHASE_LABEL,
             "summary": self._summary(assessments, candidates, gates, waves, issues),
@@ -568,11 +583,11 @@ class AirlineIntelligenceScaleReadinessService:
         }
 
     async def agency_dashboard(self, agency_id: str, **filters: Any) -> dict[str, Any]:
-        candidates = await self.db.collection(RELEASE_CANDIDATE_COLLECTION).find_many({"candidate_status": "released"})
+        candidates = await self._governed_global_records(RELEASE_CANDIDATE_COLLECTION, {"candidate_status": "released"})
         candidates = [item for item in candidates if agency_id in (item.get("assigned_agency_ids") or [])]
         if filters.get("airline_code"):
             candidates = [item for item in candidates if item.get("airline_code") == self._airline(filters["airline_code"])]
-        publications = {item["id"]: item for item in await self.db.collection("airline_knowledge_publications").find_many()}
+        publications = {item["id"]: item for item in await self._governed_global_records("airline_knowledge_publications", {"publication_status": "published"})}
         published_candidates = []
         for item in candidates:
             publication = publications.get(item.get("publication_id"))
@@ -609,8 +624,8 @@ class AirlineIntelligenceScaleReadinessService:
                 if not publication or publication.get("publication_status") != "published":
                     raise AirlineIntelligenceScaleReadinessError("Published airline intelligence was not found for this agency.")
             return {"phase": PHASE_LABEL, "candidate": self._agency_projection(candidate), "read_only": True, **self.safety_flags()}
-        gates = await self.db.collection(RELEASE_GATE_COLLECTION).find_many({"candidate_id": candidate_id})
-        decisions = await self.db.collection(RELEASE_DECISION_COLLECTION).find_many({"candidate_id": candidate_id})
+        gates = await self._governed_global_records(RELEASE_GATE_COLLECTION, {"candidate_id": candidate_id})
+        decisions = await self._governed_global_records(RELEASE_DECISION_COLLECTION, {"candidate_id": candidate_id})
         return {"phase": PHASE_LABEL, "candidate": candidate, "gates": gates, "decisions": decisions, **self.safety_flags()}
 
     async def list_assessments(self, **filters: Any) -> list[dict[str, Any]]:
@@ -813,7 +828,7 @@ class AirlineIntelligenceScaleReadinessService:
         ]
 
     async def _list(self, collection: str, filters: dict[str, Any], mapping: dict[str, str]) -> list[dict[str, Any]]:
-        items = await self.db.collection(collection).find_many()
+        items = await self._governed_global_records(collection)
         for field, filter_key in mapping.items():
             value = filters.get(filter_key)
             if value is not None and value != "":

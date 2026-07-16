@@ -4,6 +4,8 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     BookingCreateFromReadinessRequest,
     BookingProviderTarget,
@@ -152,15 +154,26 @@ class BookingWorkspaceService:
         include_archived: bool = False,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
-        if agency_id:
-            filters["agency_id"] = agency_id
         if booking_status:
             filters["booking_status"] = booking_status
         if booking_owner:
             filters["booking_owner"] = booking_owner
         if supplier:
             filters["supplier_reference"] = supplier
-        workspaces = await self.db.collection(BOOKING_WORKSPACE_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": BOOKING_WORKSPACE_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        workspaces = page.items
         if booking_status:
             workspaces = [
                 item

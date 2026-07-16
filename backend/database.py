@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from config import get_settings
+from persistence_query import current_bounded_query_limit, monotonic_ms, record_query_diagnostic
 
 
 IMMUTABLE_UPDATE_FIELDS = {"id", "_id", "agency_id", "created_at"}
@@ -25,19 +26,87 @@ def serialize_document(document: Dict[str, Any]) -> Dict[str, Any]:
 def matches_filter(document: Dict[str, Any], filters: Optional[Dict[str, Any]]) -> bool:
     if not filters:
         return True
-    return all(document.get(key) == value for key, value in filters.items())
+    for key, expected in filters.items():
+        actual = document.get(key)
+        if not isinstance(expected, dict):
+            if actual != expected:
+                return False
+            continue
+        for operator, operand in expected.items():
+            if operator == "$eq" and actual != operand:
+                return False
+            if operator == "$ne" and actual == operand:
+                return False
+            if operator == "$in" and not (
+                any(value in operand for value in actual) if isinstance(actual, list) else actual in operand
+            ):
+                return False
+            try:
+                if operator == "$gt" and (actual is None or actual <= operand):
+                    return False
+                if operator == "$gte" and (actual is None or actual < operand):
+                    return False
+                if operator == "$lt" and (actual is None or actual >= operand):
+                    return False
+                if operator == "$lte" and (actual is None or actual > operand):
+                    return False
+            except TypeError:
+                return False
+            if operator not in {"$eq", "$ne", "$in", "$gt", "$gte", "$lt", "$lte"}:
+                return False
+    return True
+
+
+def _sortable_value(value: Any) -> tuple[int, Any]:
+    if value is None:
+        return (0, "")
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return (1, value)
+    if isinstance(value, datetime):
+        return (2, value.timestamp())
+    return (3, str(value))
+
+
+def _sort_documents(documents: List[Dict[str, Any]], sort: Optional[List[tuple[str, int]]]) -> None:
+    for field, direction in reversed(sort or []):
+        documents.sort(key=lambda item: _sortable_value(item.get(field)), reverse=direction < 0)
 
 
 class InMemoryCollection:
     def __init__(self) -> None:
         self.documents: Dict[str, Dict[str, Any]] = {}
 
-    async def find_many(self, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        return [
+    async def find_many(
+        self,
+        filters: Optional[Dict[str, Any]] = None,
+        *,
+        sort: Optional[List[tuple[str, int]]] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
+        projection: Optional[Dict[str, int]] = None,
+    ) -> List[Dict[str, Any]]:
+        started = monotonic_ms()
+        documents = [
             serialize_document(document)
             for document in self.documents.values()
             if matches_filter(document, filters)
         ]
+        _sort_documents(documents, sort)
+        effective_limit = limit if limit is not None else current_bounded_query_limit()
+        documents = documents[offset : offset + effective_limit if effective_limit is not None else None]
+        if projection is not None:
+            included = {field for field, enabled in projection.items() if enabled}
+            documents = [{field: value for field, value in item.items() if field in included} for item in documents]
+        record_query_diagnostic(
+            collection_category="legacy_adapter",
+            operation="find_many",
+            duration_ms=monotonic_ms() - started,
+            returned_count=len(documents),
+            requested_limit=effective_limit,
+            tenant_scoped=bool(filters and "agency_id" in filters),
+            query_class="bounded_compatibility" if effective_limit is not None else "legacy_unbounded",
+        )
+        return documents
 
     async def find_one(self, filters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         for document in self.documents.values():
@@ -64,16 +133,42 @@ class InMemoryCollection:
         return None
 
     async def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
-        return len(await self.find_many(filters))
+        return sum(1 for document in self.documents.values() if matches_filter(document, filters))
 
 
 class MongoCollection:
     def __init__(self, collection: Any) -> None:
         self.collection = collection
 
-    async def find_many(self, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
-        cursor = self.collection.find(filters or {})
-        return [serialize_document(document) async for document in cursor]
+    async def find_many(
+        self,
+        filters: Optional[Dict[str, Any]] = None,
+        *,
+        sort: Optional[List[tuple[str, int]]] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
+        projection: Optional[Dict[str, int]] = None,
+    ) -> List[Dict[str, Any]]:
+        started = monotonic_ms()
+        cursor = self.collection.find(filters or {}, projection)
+        if sort:
+            cursor = cursor.sort(sort)
+        if offset:
+            cursor = cursor.skip(offset)
+        effective_limit = limit if limit is not None else current_bounded_query_limit()
+        if effective_limit is not None:
+            cursor = cursor.limit(effective_limit)
+        documents = [serialize_document(document) async for document in cursor]
+        record_query_diagnostic(
+            collection_category="legacy_adapter",
+            operation="find_many",
+            duration_ms=monotonic_ms() - started,
+            returned_count=len(documents),
+            requested_limit=effective_limit,
+            tenant_scoped=bool(filters and "agency_id" in filters),
+            query_class="bounded_compatibility" if effective_limit is not None else "legacy_unbounded",
+        )
+        return documents
 
     async def find_one(self, filters: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         document = await self.collection.find_one(filters)
@@ -4195,3 +4290,14 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         collection = mongo_database[collection_name]
         for spec in index_specs:
             await create_compatible_index(collection, collection_name, spec)
+
+    # Governed indexes are additive, stable, and intentionally never dropped at startup.
+    from persistence_query import GOVERNED_INDEX_SPECS
+
+    for governed_spec in GOVERNED_INDEX_SPECS:
+        collection_name = governed_spec["collection"]
+        await create_compatible_index(
+            mongo_database[collection_name],
+            collection_name,
+            {"keys": list(governed_spec["keys"]), "name": governed_spec["name"]},
+        )

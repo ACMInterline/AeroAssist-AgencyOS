@@ -7,6 +7,8 @@ from hashlib import sha256
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     JourneyCommercialPriceBreakdown,
     JourneyFareBrandChoice,
@@ -216,12 +218,27 @@ class JourneyOptionFareBrandCompositionService:
         return await self.create_from_journey(agency_id, journey["id"], {**payload_dict(payload), "offer_id": offer_id, "offer_workspace_id": offer_id}, user)
 
     async def list_compositions(self, agency_id: str | None = None, **filters: Any) -> list[dict[str, Any]]:
-        records = await self.db.collection(COMPOSITION_COLLECTION).find_many({"agency_id": agency_id} if agency_id else None)
+        governed_filters = {
+            field: filters[field]
+            for field in ["journey_id", "status", "offer_id", "offer_workspace_id"]
+            if filters.get(field)
+        }
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": COMPOSITION_COLLECTION,
+            "filters": governed_filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        records = page.items
         if not filters.get("include_archived"):
             records = [item for item in records if not item.get("archived_at")]
-        for field in ["journey_id", "status", "offer_id", "offer_workspace_id"]:
-            if filters.get(field):
-                records = [item for item in records if item.get(field) == filters[field]]
         records.sort(key=lambda item: str(item.get("updated_at") or item.get("created_at") or ""), reverse=True)
         return records
 

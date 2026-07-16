@@ -18,13 +18,15 @@ ROOT = BACKEND.parent
 SCRIPTS = ROOT / "deploy" / "hostinger" / "scripts"
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from config import get_settings, validate_config
 from mongodb_security import mongodb_security_readiness_metadata, redact_mongodb_uri
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import BASE_URL
 
 
 RELEASE_PHASE = "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundation"
+MINIMUM_PHASE = RELEASE_PHASE
 REQUIRED_SCRIPTS = (
     "backup_mongo.sh",
     "verify_mongodb_backup.sh",
@@ -252,8 +254,7 @@ def verify_readiness(static_only: bool) -> None:
         return
     with urllib.request.urlopen(f"{BASE_URL}/api/readiness", timeout=30) as response:
         payload = json.load(response)
-    if not phase_is_exact(payload.get("phase"), RELEASE_PHASE):
-        raise AssertionError(f"Readiness phase mismatch: {payload.get('phase')}")
+    assert_application_phase_at_least(payload.get("phase"), MINIMUM_PHASE, source="readiness")
     if (payload.get("mongodb_security_backup_disaster_recovery_foundation") or {}).get("production_secrets_exposed") is not False:
         raise AssertionError("Public readiness omitted or exposed unsafe MongoDB metadata.")
 
@@ -278,8 +279,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--static", action="store_true")
     args = parser.parse_args()
-    if not phase_is_exact(CURRENT_BUILD_PHASE, RELEASE_PHASE):
-        raise AssertionError(f"Canonical phase marker mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     verify_config()
     verify_compose_and_scripts()
     verify_manifest_retention_and_restore_guards()

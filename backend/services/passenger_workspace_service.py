@@ -5,6 +5,8 @@ from typing import Any
 
 from database import Database
 from models import PassengerWorkspace, PassengerWorkspaceCreate, PassengerWorkspaceUpdate, new_id
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from services.offer_decision_export_delivery_service import actor_from_user, payload_dict
 
 
@@ -33,8 +35,6 @@ class PassengerWorkspaceService:
         include_archived: bool = False,
     ) -> list[dict[str, Any]]:
         filters: dict[str, Any] = {}
-        if agency_id:
-            filters["agency_id"] = agency_id
         if status:
             filters["passenger_status"] = status
         if nationality:
@@ -43,7 +43,20 @@ class PassengerWorkspaceService:
             filters["citizenship"] = citizenship
         if operational_workspace_id:
             filters["operational_workspace_id"] = operational_workspace_id
-        passengers = await self.db.collection(PASSENGER_WORKSPACE_COLLECTION).find_many(filters or None)
+        repository = PersistenceRepository(self.db)
+        query = {
+            "collection_name": PASSENGER_WORKSPACE_COLLECTION,
+            "filters": filters or None,
+            "sort_field": "updated_at",
+            "sort_direction": "desc",
+            "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        }
+        page = await (
+            repository.find_agency_records(agency_id=agency_id, **query)
+            if agency_id
+            else repository.find_platform_records(**query)
+        )
+        passengers = page.items
         if not include_archived:
             passengers = [item for item in passengers if not item.get("deleted_at") and item.get("passenger_status") != "archived"]
         if assistance_profile:

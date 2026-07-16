@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "production_find_many_call_ceiling": 1009,
+  "production_zero_argument_find_many_ceiling": 268,
+  "documented_hotspots": [
+    {
+      "path": "backend/server.py",
+      "reason": "The historical detailed readiness assembly remains contract-compatible but executes inside a bounded query context and timeout."
+    },
+    {
+      "path": "backend/services/airline_service_coverage_gap_service.py",
+      "reason": "Source assembly used during explicit assessment creation remains a bounded-migration follow-up; user-facing list and readiness paths use governed repositories."
+    },
+    {
+      "path": "backend/services/airline_intelligence_scale_readiness_service.py",
+      "reason": "Airline source graph assembly remains a bounded-migration follow-up; dashboards and release lists use governed global repositories."
+    },
+    {
+      "path": "backend/services/agent_work_queue_service.py",
+      "reason": "Explicit user-triggered idempotent synchronization still reads several tenant-scoped source collections; the queue list itself is governed and bounded."
+    }
+  ]
+}
