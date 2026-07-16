@@ -31,6 +31,10 @@ def summarize_smoke_inventory(payload: dict[str, Any] | None = None) -> dict[str
         for mode in ("minimum", "exact_current", "none")
     }
     unresolved = sum(1 for item in scripts if item.get("phase_assertion_mode") not in mode_counts)
+    ci_tier_counts = {
+        tier: sum(1 for item in scripts if item.get("ci_tier") == tier)
+        for tier in ("static", "focused", "integration", "full_only")
+    }
     return {
         "total_smoke_scripts": len(scripts),
         "inventoried_smoke_scripts": len(scripts),
@@ -39,6 +43,10 @@ def summarize_smoke_inventory(payload: dict[str, Any] | None = None) -> dict[str
         "no_phase_scripts": mode_counts["none"],
         "unresolved_scripts": unresolved,
         "inventory_validation_ready": unresolved == 0,
+        "static_ci_scripts": ci_tier_counts["static"],
+        "focused_ci_scripts": ci_tier_counts["focused"],
+        "integration_ci_scripts": ci_tier_counts["integration"],
+        "full_only_ci_scripts": ci_tier_counts["full_only"],
     }
 
 

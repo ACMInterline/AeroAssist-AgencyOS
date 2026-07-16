@@ -1,11 +1,11 @@
 {
-  "schema_version": 1,
-  "description": "Machine-readable inventory of AeroAssist smoke scripts and their application-phase assertion semantics.",
+  "schema_version": 2,
+  "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_legacy_regression_suite_migration.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.2 build marker in health and readiness.",
-      "exact_reason": "This smoke explicitly tests current release registration; historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_github_actions_continuous_integration_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 56.5.3 build marker and GitHub Actions CI registration.",
+      "exact_reason": "This smoke explicitly tests current CI release registration; all historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -24,7 +24,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8699dccd; legacy phase_28_agency_branding_theme_personalization is comparator-normalized to phase_28_0_agency_branding_theme_personalization without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 8699dccd; legacy phase_28_agency_branding_theme_personalization is comparator-normalized to phase_28_0_agency_branding_theme_personalization without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agency_cms_media_library.py",
@@ -41,7 +43,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit f56033db; legacy phase_31_cms_media_library_public_website_visual_polish is comparator-normalized to phase_31_0_cms_media_library_public_website_visual_polish without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit f56033db; legacy phase_31_cms_media_library_public_website_visual_polish is comparator-normalized to phase_31_0_cms_media_library_public_website_visual_polish without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agency_feature_flag_audit_foundation.py",
@@ -58,7 +62,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit ba869416 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit ba869416 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agency_feature_flag_bundle_foundation.py",
@@ -75,7 +81,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a1868ce0 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a1868ce0 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agency_feature_flags_foundation.py",
@@ -92,7 +100,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 56e34cc5 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 56e34cc5 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agency_website_builder.py",
@@ -109,7 +119,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 99dfbd9a; legacy phase_29_agency_website_builder_cms_foundation is comparator-normalized to phase_29_0_agency_website_builder_cms_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 99dfbd9a; legacy phase_29_agency_website_builder_cms_foundation is comparator-normalized to phase_29_0_agency_website_builder_cms_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_agent_work_queue_assignment_foundation.py",
@@ -125,7 +137,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8a0c706f and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8a0c706f and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_capability_matrix_foundation.py",
@@ -142,7 +156,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a8a2d25b and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a8a2d25b and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_contact_communication_intelligence_foundation.py",
@@ -158,7 +174,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c36e9c13 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c36e9c13 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_distribution_pss_gds_ndc_capability_intelligence_foundation.py",
@@ -175,7 +193,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 1c83dead and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 1c83dead and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_fare_family_rbd_baggage_brand_intelligence_foundation.py",
@@ -192,7 +212,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 0c17b1e8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 0c17b1e8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_intelligence_agency_consumption_bridge.py",
@@ -210,7 +232,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit d63bc1e0 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit d63bc1e0 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_intelligence_data_pack_foundation.py",
@@ -226,7 +250,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 593bf57b and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 593bf57b and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_intelligence_data_pack_review_foundation.py",
@@ -242,7 +268,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5571bfff and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 5571bfff and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_intelligence_knowledge_versioning_foundation.py",
@@ -259,7 +287,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fcac7e32 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fcac7e32 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_intelligence_scale_release_readiness_foundation.py",
@@ -275,7 +305,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit e7147ad1 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit e7147ad1 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_knowledge_acquisition_workspace_foundation.py",
@@ -292,7 +324,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 6f150750 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 6f150750 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_knowledge_governance_foundation.py",
@@ -309,7 +343,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b1f3ae58 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b1f3ae58 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_knowledge_normalisation_foundation.py",
@@ -326,7 +362,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5212b238 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 5212b238 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_knowledge_publishing_foundation.py",
@@ -343,7 +381,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 86dd8031 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 86dd8031 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_knowledge_versioning_change_detection_foundation.py",
@@ -360,7 +400,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fd4cebe8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fd4cebe8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_master_profile_intelligence_foundation.py",
@@ -376,7 +418,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fd3a951f and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fd3a951f and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_operational_intelligence_engine_foundation.py",
@@ -393,7 +437,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 4e2705b7 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 4e2705b7 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_policy_evidence_source_governance_foundation.py",
@@ -410,7 +456,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c8d92597 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c8d92597 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_policy_ingestion_foundation.py",
@@ -427,7 +475,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 19524750 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 19524750 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_recommendation_engine_foundation.py",
@@ -443,7 +493,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 66b7af4c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 66b7af4c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_airline_service_coverage_gap_management_foundation.py",
@@ -460,7 +512,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 81f706ce and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 81f706ce and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_ancillary_pricing_exception_foundation.py",
@@ -477,7 +531,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8820fa6c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8820fa6c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_backend.py",
@@ -492,7 +548,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata."
+      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_blueprint_alignment_foundation.py",
@@ -508,7 +566,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 159bc263; legacy phase_32_blueprint_alignment_canonical_operations_model is comparator-normalized to phase_32_0_blueprint_alignment_canonical_operations_model without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 159bc263; legacy phase_32_blueprint_alignment_canonical_operations_model is comparator-normalized to phase_32_0_blueprint_alignment_canonical_operations_model without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_booking_pnr_foundation.py",
@@ -524,7 +584,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 31628d3a and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 31628d3a and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_booking_workspace_foundation.py",
@@ -540,7 +602,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit e0c5ff12 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit e0c5ff12 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_canonical_journey_itinerary_representation_foundation.py",
@@ -555,7 +619,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 082ee8be and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 082ee8be and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_capability_catalog_foundation.py",
@@ -571,7 +637,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 2f70cd82 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 2f70cd82 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_city_reference_codes.py",
@@ -587,7 +655,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 9eaa8605; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 9eaa8605; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_client_passenger_master_foundation.py",
@@ -603,7 +673,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 22033d73 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 22033d73 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_document_foundation.py",
@@ -619,7 +691,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 06665c1a and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 06665c1a and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_document_storage_lifecycle.py",
@@ -636,7 +710,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c62bd413; legacy phase_25_document_storage_lifecycle_delivery_provider_readiness is comparator-normalized to phase_25_0_document_storage_lifecycle_delivery_provider_readiness without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit c62bd413; legacy phase_25_document_storage_lifecycle_delivery_provider_readiness is comparator-normalized to phase_25_0_document_storage_lifecycle_delivery_provider_readiness without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_document_workspace_foundation.py",
@@ -652,7 +728,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit ef2b986e and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit ef2b986e and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_emd_workspace_foundation.py",
@@ -668,7 +746,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 054fc1c9 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 054fc1c9 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_end_to_end_operational_workflow_maturity_foundation.py",
@@ -685,7 +765,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit ed2b14ad and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit ed2b14ad and the capability registration present in that change.",
+      "ci_tier": "full_only",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_end_to_end_stabilization_pilot_readiness_foundation.py",
@@ -700,7 +782,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8e9af09e and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8e9af09e and the capability registration present in that change.",
+      "ci_tier": "full_only",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_assignment_foundation.py",
@@ -715,7 +799,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 366c38b7 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 366c38b7 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_dependency_foundation.py",
@@ -730,7 +816,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 52702f1c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 52702f1c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_approval_foundation.py",
@@ -745,7 +833,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit cc605499 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit cc605499 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_change_request_foundation.py",
@@ -762,7 +852,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fc334bba and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fc334bba and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_decision_register_foundation.py",
@@ -777,7 +869,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 29c9b658 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 29c9b658 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_issue_log_foundation.py",
@@ -792,7 +886,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 2dd3ee04 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 2dd3ee04 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_plan_foundation.py",
@@ -807,7 +903,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a9bd73e9 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a9bd73e9 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_readiness_foundation.py",
@@ -822,7 +920,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 2f70cd82 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 2f70cd82 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_risk_register_foundation.py",
@@ -837,7 +937,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8db22c10 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8db22c10 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_rollback_plan_foundation.py",
@@ -852,7 +954,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5e3e75e8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 5e3e75e8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_schedule_foundation.py",
@@ -867,7 +971,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit ce1d074b and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit ce1d074b and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_summary_pack_foundation.py",
@@ -882,7 +988,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 05cd083a and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 05cd083a and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_feature_bundle_rollout_timeline_foundation.py",
@@ -897,7 +1005,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a285997f and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a285997f and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_flight_workspace_foundation.py",
@@ -912,7 +1022,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fae27f1b and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fae27f1b and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_form_profiles_field_library.py",
@@ -927,7 +1039,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 3b6e8125 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 3b6e8125 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_gds_parser_foundation.py",
@@ -942,7 +1056,28 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c357223f and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c357223f and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
+    },
+    {
+      "script_path": "backend/scripts/smoke_github_actions_continuous_integration_foundation.py",
+      "capability_name": "GitHub Actions Continuous Integration Foundation",
+      "minimum_application_phase": "phase_56_5_3_github_actions_continuous_integration_foundation",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "deployment",
+        "readiness",
+        "operations"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend",
+      "notes": "Exact-current smoke for Phase 56.5.3 CI workflow, production import, inventory-tier, security, and readiness registration."
     },
     {
       "script_path": "backend/scripts/smoke_intelligent_offer_builder_integration_foundation.py",
@@ -958,7 +1093,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit e0df88d1 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit e0df88d1 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_interline_codeshare_operating_carrier_intelligence_foundation.py",
@@ -973,7 +1110,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b66caf2c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b66caf2c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_journey_comparison_client_presentation_foundation.py",
@@ -988,7 +1127,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 6779f422 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 6779f422 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_journey_option_fare_brand_composition_workspace_foundation.py",
@@ -1005,7 +1146,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 74fcea1b and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 74fcea1b and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_journey_segment_authoring_intelligent_import_workspace_foundation.py",
@@ -1021,7 +1164,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b32219d1 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b32219d1 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_knowledge_import_templates_foundation.py",
@@ -1037,7 +1182,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 0f0acf9d and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 0f0acf9d and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_knowledge_population_toolkit_foundation.py",
@@ -1053,7 +1200,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit edc892de and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit edc892de and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_knowledge_quality_assurance_foundation.py",
@@ -1069,13 +1218,15 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 36910cb6 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 36910cb6 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_legacy_regression_suite_migration.py",
       "capability_name": "Legacy Regression Suite Migration",
       "minimum_application_phase": "phase_56_5_2_legacy_regression_suite_migration",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": false,
@@ -1084,7 +1235,9 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Allowlisted exact current-build assertion for Phase 56.5.2 health, readiness, and canonical marker registration."
+      "notes": "Allowlisted exact current-build assertion for Phase 56.5.2 health, readiness, and canonical marker registration.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_acceptance_booking_readiness.py",
@@ -1101,7 +1254,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a548f4b0 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a548f4b0 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_builder_foundation.py",
@@ -1117,7 +1272,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 973d256c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 973d256c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_explanation_foundation.py",
@@ -1133,7 +1290,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5f48fea8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 5f48fea8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_audit_review_foundation.py",
@@ -1149,7 +1308,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5f461730 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 5f461730 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_compliance_foundation.py",
@@ -1165,7 +1326,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 97b02782 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 97b02782 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_foundation.py",
@@ -1181,7 +1344,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 22413bb1 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 22413bb1 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_governance_foundation.py",
@@ -1197,7 +1362,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 899bb6be and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 899bb6be and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_manual_delivery_handoff_foundation.py",
@@ -1213,7 +1380,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 95975530 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 95975530 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_manual_delivery_outcome_foundation.py",
@@ -1229,7 +1398,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit fe465b5a and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit fe465b5a and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_preview_foundation.py",
@@ -1245,7 +1416,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 80ad6112 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 80ad6112 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_export_release_readiness_foundation.py",
@@ -1261,7 +1434,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit eb4fe1d0 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit eb4fe1d0 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_decision_pack_foundation.py",
@@ -1277,7 +1452,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 6720c410 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 6720c410 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_delivery_client_interaction_foundation.py",
@@ -1293,7 +1470,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8b1e9500 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8b1e9500 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_policy_advisor_integration_foundation.py",
@@ -1311,7 +1490,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 36a276f2 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 36a276f2 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_to_booking_handoff_readiness_foundation.py",
@@ -1328,7 +1509,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit f2816021 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit f2816021 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_offer_workspace_foundation.py",
@@ -1344,7 +1527,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b1a9a425 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b1a9a425 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_constraint_engine_foundation.py",
@@ -1359,7 +1544,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 92afa657 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 92afa657 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_intelligence_pipeline_consolidation.py",
@@ -1374,7 +1561,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit e0cfa550 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit e0cfa550 and the capability registration present in that change.",
+      "ci_tier": "full_only",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_knowledge_evaluation_engine_foundation.py",
@@ -1391,7 +1580,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 760420de and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 760420de and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_request_builder.py",
@@ -1408,7 +1599,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 5aa1322d; legacy phase_27_operational_request_builder_v1 is comparator-normalized to phase_27_0_operational_request_builder_v1 without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 5aa1322d; legacy phase_27_operational_request_builder_v1 is comparator-normalized to phase_27_0_operational_request_builder_v1 without changing historical provenance.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_rule_composer_foundation.py",
@@ -1423,7 +1616,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 4efd9ad7 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 4efd9ad7 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_scenario_testing_foundation.py",
@@ -1438,7 +1633,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 24e36378 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 24e36378 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_timeline_workspace_foundation.py",
@@ -1453,7 +1650,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit bed91f69 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit bed91f69 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_travel_workspace_foundation.py",
@@ -1468,7 +1667,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b41db144 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b41db144 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operational_workflow_orchestration_foundation.py",
@@ -1485,7 +1686,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8bc5e0ff and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8bc5e0ff and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_operations_command_center_foundation.py",
@@ -1502,7 +1705,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit bc98113e and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit bc98113e and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_passenger_service_feasibility_engine_foundation.py",
@@ -1518,7 +1723,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit e116f909 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit e116f909 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_passenger_service_workflow_engine_foundation.py",
@@ -1536,7 +1743,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 0999b301 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 0999b301 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_passenger_workspace_foundation.py",
@@ -1552,7 +1761,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit ac857e3c and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit ac857e3c and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_phase_marker_regression_integrity_foundation.py",
@@ -1567,7 +1778,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 99e2003d and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 99e2003d and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_platform_agency_ux_consolidation.py",
@@ -1584,7 +1797,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 9604c0a7 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 9604c0a7 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_platform_navigation_routes.py",
@@ -1599,7 +1814,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 51ef78cd; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 51ef78cd; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_platform_reference_console.py",
@@ -1615,7 +1832,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c61167df and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c61167df and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_platform_reference_record_save.py",
@@ -1631,7 +1850,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 43b57a37; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 43b57a37; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_policy_comparison_service_advisor_foundation.py",
@@ -1648,7 +1869,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 723a6ec9 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 723a6ec9 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_pricing_formula_builder_foundation.py",
@@ -1664,7 +1887,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 54b00929 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 54b00929 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_product_surface_workspace_governance.py",
@@ -1679,7 +1904,9 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata."
+      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata.",
+      "ci_tier": "static",
+      "execution_isolation": "none"
     },
     {
       "script_path": "backend/scripts/smoke_reference_data_core.py",
@@ -1695,7 +1922,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 99dfb3ec; legacy phase_33_reference_data_core_service_catalogue is comparator-normalized to phase_33_0_reference_data_core_service_catalogue without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 99dfb3ec; legacy phase_33_reference_data_core_service_catalogue is comparator-normalized to phase_33_0_reference_data_core_service_catalogue without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_reference_data_engine_foundation.py",
@@ -1711,7 +1940,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 315c1543 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 315c1543 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_reference_data_governance.py",
@@ -1727,7 +1958,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8cedccb8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8cedccb8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_reference_enrichment_imports.py",
@@ -1743,7 +1976,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c3e05d66 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c3e05d66 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "fresh_backend"
     },
     {
       "script_path": "backend/scripts/smoke_reference_governance_permissions.py",
@@ -1759,7 +1994,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 70b7b173; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 70b7b173; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_reference_service_catalogue_governance.py",
@@ -1776,7 +2013,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 1294c9d7 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 1294c9d7 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_request_intake_conversion.py",
@@ -1792,7 +2031,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 73f3ad0c; legacy phase_26_request_intake_operational_request_stabilization is comparator-normalized to phase_26_0_request_intake_operational_request_stabilization without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 73f3ad0c; legacy phase_26_request_intake_operational_request_stabilization is comparator-normalized to phase_26_0_request_intake_operational_request_stabilization without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_request_segment_service_precision_foundation.py",
@@ -1809,7 +2050,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 33442d5e and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 33442d5e and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_request_to_trip_operational_conversion_foundation.py",
@@ -1827,7 +2070,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 96f233cc and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 96f233cc and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_rollout_dashboard_foundation.py",
@@ -1842,7 +2087,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 32415a99 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 32415a99 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_rules_services_foundation.py",
@@ -1857,7 +2104,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 76cca6e8; legacy phase_36_rules_services_foundation is comparator-normalized to phase_36_0_rules_services_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 76cca6e8; legacy phase_36_rules_services_foundation is comparator-normalized to phase_36_0_rules_services_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_saas_subscription_entitlement_foundation.py",
@@ -1872,7 +2121,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 72edf35a and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 72edf35a and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_segment_scoped_request_services.py",
@@ -1889,7 +2140,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 8cedccb8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 8cedccb8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_service_mechanics_mapping_foundation.py",
@@ -1904,7 +2157,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 66ffb172 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 66ffb172 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_service_parameter_taxonomy_integration_foundation.py",
@@ -1920,7 +2175,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c1f03c78 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c1f03c78 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_service_taxonomy_foundation.py",
@@ -1936,7 +2193,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 70402f99 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 70402f99 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_servicing_after_sales_workflow_foundation.py",
@@ -1953,7 +2212,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 4946fee5 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 4946fee5 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_sla_operational_deadline_engine_foundation.py",
@@ -1968,7 +2229,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 656cd687 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 656cd687 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_ssr_osi_operational_workspace_foundation.py",
@@ -1984,7 +2247,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 888fd35d and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 888fd35d and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_staff_invitations.py",
@@ -1999,7 +2264,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata."
+      "notes": "No application-phase assertion; this smoke validates capability behavior independently of build metadata.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_standalone_change_exchange_foundation.py",
@@ -2014,7 +2281,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 88b91e5d and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 88b91e5d and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_subscription_entitlement_ui_guardrails.py",
@@ -2029,7 +2298,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 895d0d04 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 895d0d04 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_supplementary_blueprint_sync.py",
@@ -2045,7 +2316,9 @@
       ],
       "test_class": "broad",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit b9b828e4 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit b9b828e4 and the capability registration present in that change.",
+      "ci_tier": "full_only",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_task_automation_dependency_orchestration_foundation.py",
@@ -2061,7 +2334,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 2911c4b0 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 2911c4b0 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_ticket_emd_foundation.py",
@@ -2078,7 +2353,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit c1eade9e and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit c1eade9e and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_ticket_workspace_foundation.py",
@@ -2094,7 +2371,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit a6f2c19f and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit a6f2c19f and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_travel_request_workspace_foundation.py",
@@ -2110,7 +2389,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 491bc8e8 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 491bc8e8 and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_trip_dossier_foundation.py",
@@ -2126,7 +2407,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 7d7eeafc; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance."
+      "notes": "Minimum evidenced by introducing commit 7d7eeafc; legacy phase_35_trip_dossier_foundation is comparator-normalized to phase_35_0_trip_dossier_foundation without changing historical provenance.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_trip_workspace_foundation.py",
@@ -2142,7 +2425,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit 48036ae5 and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit 48036ae5 and the capability registration present in that change.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
@@ -2158,7 +2443,9 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Minimum evidenced by introducing commit eaba4aea and the capability registration present in that change."
+      "notes": "Minimum evidenced by introducing commit eaba4aea and the capability registration present in that change.",
+      "ci_tier": "integration",
+      "execution_isolation": "shared_backend"
     }
   ]
 }

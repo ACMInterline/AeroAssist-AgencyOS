@@ -26,10 +26,14 @@ REQUIRED_FIELDS = {
     "scope",
     "test_class",
     "suitable_for_future_ci",
+    "ci_tier",
+    "execution_isolation",
     "notes",
 }
 VALID_MODES = {"minimum", "exact_current", "none"}
 VALID_TEST_CLASSES = {"focused", "integration", "broad"}
+VALID_CI_TIERS = {"static", "focused", "integration", "full_only"}
+VALID_EXECUTION_ISOLATION = {"none", "shared_backend", "fresh_backend"}
 STALE_RUNTIME_PATTERNS = (
     re.compile(r"EXPECTED_PHASE\s*="),
     re.compile(r"(?:\.get\([\"']phase[\"']\)|PHASE_LABEL)\s*(?:==|!=)\s*[\"']phase_56_[34]_"),
@@ -87,6 +91,14 @@ def validate_inventory() -> tuple[dict[str, int | bool], list[str]]:
             errors.append(f"{script_path}: unresolved or invalid phase_assertion_mode {mode!r}")
         if entry.get("test_class") not in VALID_TEST_CLASSES:
             errors.append(f"{script_path}: invalid test_class {entry.get('test_class')!r}")
+        if entry.get("ci_tier") not in VALID_CI_TIERS:
+            errors.append(f"{script_path}: invalid ci_tier {entry.get('ci_tier')!r}")
+        if entry.get("execution_isolation") not in VALID_EXECUTION_ISOLATION:
+            errors.append(f"{script_path}: invalid execution_isolation {entry.get('execution_isolation')!r}")
+        if entry.get("execution_isolation") == "none" and entry.get("requires_running_backend"):
+            errors.append(f"{script_path}: backend-dependent smoke cannot use none execution isolation")
+        if entry.get("execution_isolation") != "none" and not entry.get("requires_running_backend"):
+            errors.append(f"{script_path}: backend-free smoke must use none execution isolation")
         if not isinstance(entry.get("scope"), list) or not entry.get("scope"):
             errors.append(f"{script_path}: scope must be a non-empty array")
         for key in ("requires_running_backend", "requires_mongodb", "mutates_disposable_test_data", "suitable_for_future_ci"):

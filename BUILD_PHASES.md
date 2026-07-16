@@ -2428,3 +2428,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Leaves exactly one current-build smoke allowlisted for Phase 56.5.2 registration; all historical capability smokes remain valid as the application advances.
 - Adds no product behavior, route, schema, collection, migration, provider operation, AI, worker, production-data change, or frontend surface.
 - See [Legacy Regression Suite Migration](docs/architecture/legacy-regression-suite-migration.md).
+
+## Phase 56.5.3 - GitHub Actions Continuous Integration Foundation
+
+- Active marker: `phase_56_5_3_github_actions_continuous_integration_foundation`.
+- Adds four least-privilege GitHub Actions workflows for fast validation, production Docker validation, focused inventory smokes, and manual/scheduled full regression.
+- Extends the canonical smoke inventory with `static`, `focused`, `integration`, and `full_only` CI tiers plus explicit `none`, `shared_backend`, and `fresh_backend` execution isolation.
+- Migrates the Phase 56.5.2 smoke to minimum-phase semantics and leaves the Phase 56.5.3 registration smoke as the sole exact-current assertion.
+- Reproduces the production `/app` image layout and verifies the tracked runtime inventory loader, manifest path, server import, container health, and readiness metadata without publishing an image or deploying.
+- Adds no product route, schema, collection, migration, frontend surface, production secret, provider operation, production-data change, or deployment automation.
+- See [GitHub Actions Continuous Integration Foundation](docs/architecture/github-actions-continuous-integration-foundation.md).

@@ -11,7 +11,8 @@ ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 sys.path.insert(0, str(BACKEND / "scripts"))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
+from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import get
 from smoke_inventory import (
     SMOKE_INVENTORY_PATH,
@@ -22,7 +23,7 @@ from smoke_inventory import (
 from validate_smoke_inventory import validate_inventory
 
 
-EXPECTED_CURRENT_PHASE = "phase_56_5_2_legacy_regression_suite_migration"
+MINIMUM_PHASE = "phase_56_5_2_legacy_regression_suite_migration"
 
 
 def verify_inventory() -> dict[str, int | bool]:
@@ -35,7 +36,7 @@ def verify_inventory() -> dict[str, int | bool]:
     if summary != summarize_smoke_inventory(inventory):
         raise AssertionError("Smoke inventory summary is nondeterministic.")
     allowlist = inventory.get("exact_current_allowlist") or []
-    if len(allowlist) != 1 or allowlist[0].get("script_path") != "backend/scripts/smoke_legacy_regression_suite_migration.py":
+    if len(allowlist) != 1 or allowlist[0].get("script_path") != "backend/scripts/smoke_github_actions_continuous_integration_foundation.py":
         raise AssertionError(f"Exact-current assertion allowlist is invalid: {allowlist}")
     return summary
 
@@ -90,12 +91,9 @@ def verify_historical_provenance() -> None:
 def verify_runtime(summary: dict[str, int | bool]) -> None:
     health = get("/api/health")
     readiness = get("/api/readiness")
-    if not phase_is_exact(health.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Health current phase mismatch: {health.get('phase')}")
-    if not phase_is_exact(readiness.get("phase"), CURRENT_BUILD_PHASE):
-        raise AssertionError(f"Readiness current phase mismatch: {readiness.get('phase')}")
-    if not phase_is_exact(CURRENT_BUILD_PHASE, EXPECTED_CURRENT_PHASE):
-        raise AssertionError(f"Canonical current build phase mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
+    assert_application_phase_at_least(readiness.get("phase"), MINIMUM_PHASE, source="readiness")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build marker")
     section = readiness.get("legacy_regression_suite_migration") or {}
     for key in (
         "total_smoke_scripts",

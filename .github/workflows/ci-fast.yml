@@ -1,0 +1,72 @@
+name: Fast validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-fast-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Compile, inventory, imports, and frontend build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: development
+      AEROASSIST_DB_MODE: memory
+      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: python3 -m pip install -r backend/requirements.txt
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Check repository whitespace
+        run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
+
+      - name: Compile backend Python
+        run: python3 -m compileall -q backend
+
+      - name: Validate build phase ordering
+        run: cd backend && python3 -c "from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least; assert phase_is_at_least(CURRENT_BUILD_PHASE, 'phase_56_5_3_github_actions_continuous_integration_foundation'); assert phase_is_at_least('phase_56_10_example', 'phase_56_9_example')"
+
+      - name: Validate smoke inventory
+        run: python3 backend/scripts/validate_smoke_inventory.py
+
+      - name: Validate CI foundation
+        run: python3 backend/scripts/validate_ci_foundation.py
+
+      - name: Import production runtime modules
+        run: cd backend && python3 -c "import smoke_inventory, server; print(server.app)"
+
+      - name: Run static production readiness checks
+        run: python3 backend/scripts/check_production_readiness.py
+
+      - name: Build frontend
+        run: npm run build --prefix frontend

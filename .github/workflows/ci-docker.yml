@@ -1,0 +1,121 @@
+name: Production Docker validation
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - "docker-compose.production.yml"
+      - ".github/workflows/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "docker-compose.yml"
+      - "docker-compose.production.yml"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-image:
+    name: Build, import, start, and inspect backend image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build production backend image
+        run: docker build --file backend/Dockerfile --tag aeroassist-ci-backend:${{ github.sha }} backend
+
+      - name: Validate runtime files and imports inside image
+        run: |
+          docker run --rm --entrypoint python aeroassist-ci-backend:${{ github.sha }} -c "from pathlib import Path; import smoke_inventory, server; assert Path('/app/smoke_inventory.py').is_file(); assert Path('/app/scripts/smoke_inventory.json').is_file(); assert smoke_inventory.SMOKE_INVENTORY_PATH == Path('/app/scripts/smoke_inventory.json'); assert smoke_inventory.SMOKE_INVENTORY_SUMMARY['unresolved_scripts'] == 0; print(server.app)"
+
+      - name: Start safe backend container
+        run: |
+          docker run --detach --name aeroassist-ci-backend \
+            --publish 127.0.0.1:18080:8000 \
+            --env APP_ENV=development \
+            --env AEROASSIST_DB_MODE=memory \
+            --env DEMO_AUTH_ENABLED=true \
+            --env SEED_ON_STARTUP=true \
+            --env SEED_ENDPOINT_ENABLED=true \
+            --env DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports \
+            aeroassist-ci-backend:${{ github.sha }}
+
+      - name: Wait for healthy backend
+        run: |
+          for attempt in {1..60}; do
+            status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' aeroassist-ci-backend)"
+            if [[ "$status" == "healthy" ]]; then
+              exit 0
+            fi
+            if [[ "$(docker inspect --format '{{.State.Status}}' aeroassist-ci-backend)" != "running" ]]; then
+              docker logs aeroassist-ci-backend
+              exit 1
+            fi
+            sleep 2
+          done
+          docker logs aeroassist-ci-backend
+          exit 1
+
+      - name: Validate health and readiness
+        run: |
+          python3 - <<'PY'
+          import json
+          from urllib.request import urlopen
+
+          health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
+          readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
+          expected = "phase_56_5_3_github_actions_continuous_integration_foundation"
+          assert health["phase"] == expected, health
+          assert readiness["phase"] == expected, readiness["phase"]
+          section = readiness["github_actions_continuous_integration_foundation"]
+          assert section["production_import_validation_enabled"] is True
+          assert section["inventoried_smoke_scripts"] == 135
+          assert section["unresolved_scripts"] == 0
+          print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
+          PY
+
+      - name: Capture Docker diagnostics on failure
+        if: failure()
+        run: |
+          if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
+            docker logs aeroassist-ci-backend > docker-backend.log 2>&1
+            docker inspect aeroassist-ci-backend > docker-container-inspect.json
+          fi
+
+      - name: Upload safe Docker diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-validation-diagnostics
+          path: |
+            docker-backend.log
+            docker-container-inspect.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Clean up Docker resources
+        if: always()
+        run: |
+          if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
+            docker rm --force aeroassist-ci-backend
+          fi
+          if docker image inspect aeroassist-ci-backend:${{ github.sha }} >/dev/null 2>&1; then
+            docker image rm --force aeroassist-ci-backend:${{ github.sha }}
+          fi
