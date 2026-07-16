@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from importlib import import_module
 from pathlib import Path
 
 
@@ -12,7 +13,12 @@ sys.path.insert(0, str(BACKEND / "scripts"))
 
 from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
 from smoke_booking_pnr_foundation import get
-from smoke_inventory import load_smoke_inventory, summarize_smoke_inventory
+from smoke_inventory import (
+    SMOKE_INVENTORY_PATH,
+    SMOKE_INVENTORY_SUMMARY,
+    load_smoke_inventory,
+    summarize_smoke_inventory,
+)
 from validate_smoke_inventory import validate_inventory
 
 
@@ -32,6 +38,42 @@ def verify_inventory() -> dict[str, int | bool]:
     if len(allowlist) != 1 or allowlist[0].get("script_path") != "backend/scripts/smoke_legacy_regression_suite_migration.py":
         raise AssertionError(f"Exact-current assertion allowlist is invalid: {allowlist}")
     return summary
+
+
+def verify_runtime_inventory_module(summary: dict[str, int | bool]) -> None:
+    expected_manifest = BACKEND / "scripts" / "smoke_inventory.json"
+    if SMOKE_INVENTORY_PATH != expected_manifest:
+        raise AssertionError(
+            f"Runtime inventory path is not module-relative: {SMOKE_INVENTORY_PATH} != {expected_manifest}"
+        )
+    if not SMOKE_INVENTORY_PATH.is_file():
+        raise AssertionError(f"Runtime inventory manifest is missing: {SMOKE_INVENTORY_PATH}")
+    if SMOKE_INVENTORY_SUMMARY != summary:
+        raise AssertionError(
+            f"Runtime inventory summary differs from validator counts: {SMOKE_INVENTORY_SUMMARY} != {summary}"
+        )
+
+    loader_path = BACKEND / "smoke_inventory.py"
+    loader_text = loader_path.read_text(encoding="utf-8")
+    server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
+    for text in [
+        "SMOKE_INVENTORY_PATH = Path(__file__).resolve().parent",
+        "@lru_cache(maxsize=1)",
+        "SMOKE_INVENTORY_SUMMARY = summarize_smoke_inventory()",
+    ]:
+        if text not in loader_text:
+            raise AssertionError(f"Runtime inventory loader is missing production-safe behavior: {text}")
+    for forbidden in (".glob(", ".rglob(", "os.walk("):
+        if forbidden in loader_text:
+            raise AssertionError(f"Runtime inventory loader scans the repository filesystem: {forbidden}")
+    if "from smoke_inventory import SMOKE_INVENTORY_SUMMARY" not in server_text:
+        raise AssertionError("Server does not import the canonical runtime inventory summary module.")
+    if "**SMOKE_INVENTORY_SUMMARY" not in server_text:
+        raise AssertionError("Readiness does not expose the cached runtime inventory summary.")
+
+    server_module = import_module("server")
+    if server_module.SMOKE_INVENTORY_SUMMARY != summary:
+        raise AssertionError("Direct server import did not expose the canonical inventory summary.")
 
 
 def verify_historical_provenance() -> None:
@@ -71,6 +113,7 @@ def verify_runtime(summary: dict[str, int | bool]) -> None:
 
 def main() -> None:
     summary = verify_inventory()
+    verify_runtime_inventory_module(summary)
     verify_historical_provenance()
     verify_runtime(summary)
     print("Phase 56.5.2 legacy regression suite migration smoke passed.")

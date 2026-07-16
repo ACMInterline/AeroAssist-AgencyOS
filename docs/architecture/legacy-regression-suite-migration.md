@@ -91,3 +91,11 @@ The final command executes the complete inventory when a safe local backend is r
 ## Files And Limitations
 
 The implementation is concentrated in the canonical build marker, shared smoke helper, migrated smoke scripts, inventory loader/manifest/validator/runner, server readiness metadata, focused smoke, and architecture/build documentation. Inventory attributes are reviewed static metadata and must be updated whenever a smoke is added, renamed, or changes runtime requirements. The runner is intentionally sequential and does not provision MongoDB, start the API, isolate test data between scripts, or implement CI policy.
+
+## Production Hotfix Correction
+
+The initial Phase 56.5.2 production deployment failed during `server` import with `ModuleNotFoundError: No module named 'smoke_inventory'`. The runtime loader existed in the local validation worktree as an untracked `backend/smoke_inventory.py` file, but commit `7da2bdb7` did not contain it. Local smokes and `uvicorn` therefore resolved the untracked sibling module, while the production image built from a clean Git checkout had no `/app/smoke_inventory.py` for `server.py` to import.
+
+The Docker build context and ignore rules were not the cause: production builds use `backend/` as the context and the Dockerfile copies that context into `/app`; no ignore rule excludes `smoke_inventory.py`. The corrective hotfix includes `backend/smoke_inventory.py` as the canonical application-runtime loader. It resolves `scripts/smoke_inventory.json` from `Path(__file__).resolve().parent`, caches the parsed manifest, exposes one module-level summary for readiness, and raises explicit errors for a missing, malformed, or structurally invalid manifest. Validator, runner, focused smoke, and runtime readiness continue to share this implementation.
+
+`compileall` was insufficient because bytecode compilation checks syntax without importing `server` or resolving `smoke_inventory`. Hotfix validation therefore includes a direct `server` import from `backend/`, an import inside the production Docker image where the working directory is `/app`, container startup, Docker health status, and live Phase 56.5.2 health/readiness checks. The focused migration smoke also verifies the canonical module path, cached summary equality, and absence of per-request filesystem discovery.
