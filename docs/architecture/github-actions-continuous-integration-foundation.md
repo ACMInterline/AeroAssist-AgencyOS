@@ -49,7 +49,7 @@ The temporary image and container are removed in an unconditional cleanup step. 
 
 Automatic focused and complete validation use `AEROASSIST_DB_MODE=memory`, demo authentication, startup seed data, loopback-only backend ports, and `runner.temp` document storage. The complete workflow provisions a GitHub Actions `mongo:7` service so future inventory entries explicitly marked `requires_mongodb` have a governed path, but the current suite does not connect to it. No production environment file, credential, database, document export, or external provider is used.
 
-Safe failure artifacts are limited to backend logs, runner result JSON, and Docker container diagnostics. They exclude environment files, database dumps, document exports, credentials, and tokens. Retention is seven days for focused or Docker failures and fourteen days for complete regression evidence.
+Safe failure artifacts are limited to runner result JSON and bounded non-sensitive Docker state. Raw backend logs, environment files, container environment inspection, database dumps, document exports, credentials, and tokens are not uploaded. Retention is seven days for focused or Docker failures and fourteen days for complete regression evidence.
 
 ## Permissions And Caching
 
@@ -63,6 +63,9 @@ Core validation can be reproduced locally with:
 python3 -m compileall -q backend
 python3 backend/scripts/validate_smoke_inventory.py
 python3 backend/scripts/validate_ci_foundation.py
+python3 backend/scripts/validate_persistence_query_foundation.py
+python3 backend/scripts/validate_observability_foundation.py
+python3 backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
 (cd backend && python3 -c "import smoke_inventory, server; print(server.app)")
 npm ci --prefix frontend
 npm run build --prefix frontend
@@ -92,3 +95,5 @@ Phase 56.5.4 keeps all four CI workflows and migrates this phase's smoke to hist
 Phase 56.5.5 preserves least-privilege workflow permissions, advances the inventory to 137 scripts, and moves exact-current ownership to the MongoDB security and disaster-recovery smoke. Fast CI checks shell structure and restore guards; Docker CI uses ephemeral credentials and isolated resources to prove authenticated startup, backup, manifest inspection, count-verified restore rehearsal, and backend health. It uploads no database archive and never deploys or restores production. See [MongoDB Security, Backup, and Disaster Recovery Foundation](mongodb-security-backup-disaster-recovery-foundation.md).
 
 Phase 56.5.6 advances the inventory to 138 scripts and moves exact-current ownership to the persistence scalability smoke. Fast CI runs the persistence static validator and disposable repository smoke. Focused inventory CI covers the same smoke. Docker CI uses authenticated disposable MongoDB startup to exercise normal index registration, verify a stable governed Work Queue index, execute bounded repository tests, and check the new phase marker. Workflow permissions remain `contents: read`; no database content is uploaded and no deployment occurs. See [Persistence Scalability and Tenant Query Hardening Foundation](persistence-scalability-tenant-query-hardening-foundation.md).
+
+Phase 56.5.7 advances the inventory to 139 scripts and moves exact-current ownership to the observability smoke. Fast CI runs the observability validator and static smoke after persistence checks. Focused CI exercises live request correlation, safe errors, public readiness, protected diagnostics, and query telemetry reuse. Docker CI verifies structured application events, authenticated MongoDB startup, credential absence from captured output, current health/readiness, and the existing governed index. Raw backend logs are no longer uploaded as artifacts; bounded smoke result JSON and non-sensitive container state remain eligible. Workflow permissions remain `contents: read`, and no telemetry vendor, production credential, deployment, or production access is introduced. See [Observability, Diagnostics, and Performance Telemetry Foundation](observability-diagnostics-performance-telemetry-foundation.md).

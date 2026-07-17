@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from config import get_settings
+from observability import emit_event, increment_counter
 from persistence_query import current_bounded_query_limit, monotonic_ms, record_query_diagnostic
 
 
@@ -150,15 +151,31 @@ class MongoCollection:
         projection: Optional[Dict[str, int]] = None,
     ) -> List[Dict[str, Any]]:
         started = monotonic_ms()
-        cursor = self.collection.find(filters or {}, projection)
-        if sort:
-            cursor = cursor.sort(sort)
-        if offset:
-            cursor = cursor.skip(offset)
         effective_limit = limit if limit is not None else current_bounded_query_limit()
-        if effective_limit is not None:
-            cursor = cursor.limit(effective_limit)
-        documents = [serialize_document(document) async for document in cursor]
+        try:
+            cursor = self.collection.find(filters or {}, projection)
+            if sort:
+                cursor = cursor.sort(sort)
+            if offset:
+                cursor = cursor.skip(offset)
+            if effective_limit is not None:
+                cursor = cursor.limit(effective_limit)
+            documents = [serialize_document(document) async for document in cursor]
+        except Exception as exc:
+            increment_counter("database_errors", "query")
+            emit_event(
+                "database_query_failed",
+                level="ERROR",
+                outcome="failure",
+                duration_ms=monotonic_ms() - started,
+                metadata={
+                    "exception_class": exc.__class__.__name__,
+                    "retryable": True,
+                    "tenant_scoped": bool(filters and "agency_id" in filters),
+                },
+                logger_name="aeroassist.persistence",
+            )
+            raise
         record_query_diagnostic(
             collection_category="legacy_adapter",
             operation="find_many",
@@ -213,10 +230,27 @@ class Database:
 
         from motor.motor_asyncio import AsyncIOMotorClient
 
-        client = AsyncIOMotorClient(self.mongodb_url)
-        self._mongo_client = client
-        self._mongo_database = client[self.mongodb_database]
-        await ensure_mongo_indexes(self._mongo_database)
+        try:
+            client = AsyncIOMotorClient(self.mongodb_url)
+            self._mongo_client = client
+            self._mongo_database = client[self.mongodb_database]
+            await ensure_mongo_indexes(self._mongo_database)
+        except Exception as exc:
+            increment_counter("database_errors", "connectivity")
+            emit_event(
+                "database_connection_failed",
+                level="ERROR",
+                outcome="failure",
+                metadata={"exception_class": exc.__class__.__name__, "retryable": True},
+                logger_name="aeroassist.persistence",
+            )
+            raise
+
+    async def disconnect(self) -> None:
+        if self._mongo_client is not None:
+            self._mongo_client.close()
+        self._mongo_client = None
+        self._mongo_database = None
 
     async def readiness(self) -> Dict[str, Any]:
         if self.mode != "mongo":
@@ -226,6 +260,14 @@ class Database:
         try:
             await self._mongo_client.admin.command("ping")
         except Exception as exc:
+            increment_counter("database_errors", "connectivity")
+            emit_event(
+                "database_readiness_failed",
+                level="ERROR",
+                outcome="degraded",
+                metadata={"exception_class": exc.__class__.__name__, "retryable": True},
+                logger_name="aeroassist.persistence",
+            )
             return {"ok": False, "mode": self.mode, "diagnostic": f"MongoDB ping failed: {exc.__class__.__name__}"}
         return {"ok": True, "mode": self.mode, "database": self.mongodb_database, "diagnostic": "MongoDB ping succeeded."}
 

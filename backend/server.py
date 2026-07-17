@@ -1,4 +1,5 @@
 import asyncio
+import time
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, status
@@ -19,8 +20,15 @@ from http_security import (
 )
 from mongodb_security import mongodb_security_readiness_metadata
 from persistence_query import READINESS_QUERY_LIMIT, bounded_query_context, persistence_readiness_metadata
+from observability import (
+    emit_event,
+    increment_counter,
+    observability_readiness_metadata,
+    record_timing,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
+from routers import platform_observability
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
@@ -128,7 +136,7 @@ configure_logging(settings)
 app = FastAPI(
     title="AeroAssist AgencyOS API",
     version="0.1.0",
-    description="AeroAssist AgencyOS API foundation through Phase 56.5.5 MongoDB security, backup, and disaster recovery.",
+    description="AeroAssist AgencyOS API foundation through Phase 56.5.7 observability, diagnostics, and performance telemetry.",
 )
 
 app.add_middleware(
@@ -137,7 +145,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Request-ID"],
+    expose_headers=["X-Request-ID", "X-Correlation-ID"],
     max_age=600,
 )
 app.add_middleware(SecurityHttpMiddleware, settings=settings)
@@ -148,10 +156,67 @@ app.add_exception_handler(Exception, unexpected_exception_handler)
 
 @app.on_event("startup")
 async def startup() -> None:
-    assert_startup_safe(get_settings())
+    started = time.perf_counter()
+    active_settings = get_settings()
+    emit_event("application_startup_initiated", metadata={"startup_step": "initiated"})
+    try:
+        assert_startup_safe(active_settings)
+    except Exception as exc:
+        emit_event(
+            "application_configuration_rejected",
+            level="CRITICAL",
+            outcome="failure",
+            metadata={
+                "startup_step": "configuration_validation",
+                "exception_class": exc.__class__.__name__,
+            },
+        )
+        raise
+    emit_event("application_configuration_validated", metadata={"startup_step": "configuration_validated"})
+    database_started = time.perf_counter()
     await database.connect()
-    if get_settings().seed_on_startup:
+    database_duration_ms = (time.perf_counter() - database_started) * 1000
+    emit_event(
+        "database_connected",
+        duration_ms=database_duration_ms,
+        metadata={"startup_step": "database_connected"},
+    )
+    emit_event(
+        "database_indexes_initialized",
+        duration_ms=database_duration_ms,
+        metadata={"startup_step": "indexes_initialized"},
+    )
+    emit_event(
+        "application_routers_registered",
+        metadata={"startup_step": "routers_registered", "count": len(app.router.routes)},
+    )
+    if active_settings.seed_on_startup:
         await seed_core_data(database)
+    duration_ms = (time.perf_counter() - started) * 1000
+    record_timing("startup", duration_ms)
+    emit_event(
+        "application_startup_completed",
+        level="WARNING" if duration_ms >= active_settings.log_slow_startup_threshold_ms else "INFO",
+        duration_ms=duration_ms,
+        metadata={
+            "startup_step": "completed",
+            "slow_operation": duration_ms >= active_settings.log_slow_startup_threshold_ms,
+        },
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown() -> None:
+    started = time.perf_counter()
+    emit_event("application_shutdown_initiated", metadata={"startup_step": "shutdown_initiated"})
+    await database.disconnect()
+    duration_ms = (time.perf_counter() - started) * 1000
+    record_timing("shutdown", duration_ms)
+    emit_event(
+        "application_shutdown_completed",
+        duration_ms=duration_ms,
+        metadata={"startup_step": "shutdown_completed"},
+    )
 
 
 @app.get("/api/health")
@@ -5273,6 +5338,7 @@ async def internal_readiness_payload() -> dict:
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
         "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
         "persistence_scalability_tenant_query_hardening_foundation": persistence_readiness_metadata(),
+        "observability_diagnostics_performance_telemetry_foundation": observability_readiness_metadata(settings),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7178,6 +7244,7 @@ async def internal_readiness_payload() -> dict:
 
 
 async def public_readiness_payload() -> dict:
+    started = time.perf_counter()
     settings = get_settings()
     config = validate_config(settings, include_storage=False)
     try:
@@ -7186,6 +7253,8 @@ async def public_readiness_payload() -> dict:
             timeout=settings.readiness_database_timeout_seconds,
         )
     except TimeoutError:
+        increment_counter("database_errors", "timeout")
+        increment_counter("readiness_degradations", "timeout")
         database_status = {"ok": False, "mode": database.mode, "diagnostic": "Database readiness timed out."}
     inventory = {
         key: value
@@ -7198,7 +7267,7 @@ async def public_readiness_payload() -> dict:
             "inventory_validation_ready",
         }
     }
-    return {
+    payload = {
         "ok": bool(config.get("ok") and database_status.get("ok")),
         "service": "AeroAssist AgencyOS API",
         "phase": CURRENT_BUILD_PHASE,
@@ -7211,17 +7280,72 @@ async def public_readiness_payload() -> dict:
         "authentication_security_http_hardening_foundation": security_readiness_metadata(settings),
         "mongodb_security_backup_disaster_recovery_foundation": mongodb_security_readiness_metadata(settings),
         "persistence_scalability_tenant_query_hardening_foundation": persistence_readiness_metadata(),
+        "observability_diagnostics_performance_telemetry_foundation": observability_readiness_metadata(settings),
     }
+    duration_ms = (time.perf_counter() - started) * 1000
+    degraded = not payload["ok"]
+    record_timing("public_readiness", duration_ms, degraded=degraded)
+    if degraded:
+        increment_counter(
+            "readiness_degradations",
+            "database" if not database_status.get("ok") else "configuration",
+        )
+    if degraded or duration_ms >= settings.log_slow_readiness_threshold_ms:
+        emit_event(
+            "readiness_evaluated",
+            level="WARNING",
+            outcome="degraded" if degraded else "success",
+            duration_ms=duration_ms,
+            metadata={
+                "readiness_section": "public_readiness",
+                "degraded": degraded,
+                "slow_operation": duration_ms >= settings.log_slow_readiness_threshold_ms,
+                "database_classification": "ready" if database_status.get("ok") else "unavailable",
+            },
+        )
+    return payload
 
 
 async def bounded_internal_readiness_payload() -> dict:
+    started = time.perf_counter()
     settings = get_settings()
     try:
-        return await asyncio.wait_for(
+        payload = await asyncio.wait_for(
             internal_readiness_payload(),
             timeout=settings.readiness_database_timeout_seconds,
         )
+        duration_ms = (time.perf_counter() - started) * 1000
+        degraded = not payload.get("ok", True)
+        record_timing("internal_readiness", duration_ms, degraded=degraded)
+        if degraded or duration_ms >= settings.log_slow_readiness_threshold_ms:
+            emit_event(
+                "readiness_evaluated",
+                level="WARNING",
+                outcome="degraded" if degraded else "success",
+                duration_ms=duration_ms,
+                metadata={
+                    "readiness_section": "internal_readiness",
+                    "slow_operation": duration_ms >= settings.log_slow_readiness_threshold_ms,
+                    "degraded": degraded,
+                },
+            )
+        return payload
     except TimeoutError:
+        increment_counter("database_errors", "timeout")
+        increment_counter("readiness_degradations", "timeout")
+        duration_ms = (time.perf_counter() - started) * 1000
+        record_timing("internal_readiness", duration_ms, degraded=True)
+        emit_event(
+            "readiness_evaluated",
+            level="WARNING",
+            outcome="degraded",
+            duration_ms=duration_ms,
+            metadata={
+                "readiness_section": "internal_readiness",
+                "timeout": True,
+                "degraded": True,
+            },
+        )
         payload = await public_readiness_payload()
         payload["ok"] = False
         payload["readiness_mode"] = "degraded_summary"
@@ -7265,6 +7389,7 @@ async def audit_events() -> dict:
 
 app.include_router(auth.router)
 app.include_router(platform.router)
+app.include_router(platform_observability.router)
 app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)

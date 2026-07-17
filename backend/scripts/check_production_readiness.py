@@ -162,12 +162,50 @@ def main() -> int:
 
     if not phase_is_at_least(
         CURRENT_BUILD_PHASE,
-        "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation",
+        "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation",
     ):
         errors += 1
-        lines.append(status_line("FAIL", "Build phase does not include the persistence scalability and tenant query hardening foundation."))
+        lines.append(status_line("FAIL", "Build phase does not include the observability, diagnostics, and performance telemetry foundation."))
     else:
-        lines.append(status_line("PASS", "Persistence scalability and tenant query hardening phase marker is current."))
+        lines.append(status_line("PASS", "Observability, diagnostics, and performance telemetry phase marker is current."))
+
+    if settings.log_format == "json" or not settings.is_production:
+        lines.append(status_line("PASS", "Structured logging format is environment-appropriate."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Production requires LOG_FORMAT=json."))
+
+    if settings.log_request_telemetry_enabled and settings.log_redaction_enabled:
+        lines.append(status_line("PASS", "Request telemetry and centralized sensitive-value redaction are enabled."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Request telemetry and redaction must be enabled for production diagnostics."))
+
+    if settings.is_production and settings.log_error_stacktraces:
+        errors += 1
+        lines.append(status_line("FAIL", "Production stacktrace logging must remain disabled."))
+    else:
+        lines.append(status_line("PASS", "Stacktrace exposure follows the environment-safe policy."))
+
+    if 'max-size: "10m"' in compose_text and 'max-file: "5"' in compose_text:
+        lines.append(status_line("PASS", "Container logs have bounded Docker rotation settings."))
+    elif compose_path.is_file():
+        errors += 1
+        lines.append(status_line("FAIL", "Production Compose is missing bounded container log rotation settings."))
+
+    server_path = root / "backend" / "server.py"
+    server_text = server_path.read_text(encoding="utf-8") if server_path.is_file() else ""
+    router_path = root / "backend" / "routers" / "platform_observability.py"
+    router_text = router_path.read_text(encoding="utf-8") if router_path.is_file() else ""
+    if (
+        '"observability_diagnostics_performance_telemetry_foundation"' in server_text
+        and "require_platform_role" in router_text
+        and "/api/platform/diagnostics/observability" in router_text
+    ):
+        lines.append(status_line("PASS", "Internal observability diagnostics use an existing protected Platform route."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Protected observability diagnostics registration is incomplete."))
 
     for line in lines:
         print(line)

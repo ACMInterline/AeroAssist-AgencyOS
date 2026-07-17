@@ -59,6 +59,8 @@ jobs:
             --env SEED_ON_STARTUP=true \
             --env SEED_ENDPOINT_ENABLED=true \
             --env DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports \
+            --env LOG_FORMAT=json \
+            --env APP_GIT_COMMIT=${{ github.sha }} \
             aeroassist-ci-backend:${{ github.sha }}
 
       - name: Wait for healthy backend
@@ -81,18 +83,44 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          from urllib.error import HTTPError
           from urllib.request import urlopen
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation"
+          expected = "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 138
+          assert section["inventoried_smoke_scripts"] == 139
           assert section["unresolved_scripts"] == 0
+          try:
+              urlopen("http://127.0.0.1:18080/api/observability-ci-not-found", timeout=10)
+          except HTTPError as exc:
+              assert exc.code == 404
           print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
+          PY
+
+      - name: Validate structured container logs
+        run: |
+          docker logs aeroassist-ci-backend > "${RUNNER_TEMP}/backend-structured.log" 2>&1
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          lines = Path(os.environ["RUNNER_TEMP"]).joinpath("backend-structured.log").read_text(encoding="utf-8").splitlines()
+          events = [json.loads(line) for line in lines if line.startswith("{")]
+          assert events, lines[-20:]
+          assert any(event.get("event_type") == "application_startup_completed" for event in events), events
+          assert any(event.get("event_type") == "http_request_completed" for event in events), events
+          required = {"timestamp", "level", "event_type", "service", "environment", "build_phase", "outcome", "metadata"}
+          assert all(required.issubset(event) for event in events), events
+          serialized = json.dumps(events).lower()
+          assert "demopass123!" not in serialized
+          assert "authorization" not in serialized
+          assert "cookie" not in serialized
           PY
 
       - name: Create ephemeral authenticated MongoDB configuration
@@ -127,6 +155,12 @@ jobs:
           BACKUP_RETENTION_DAYS=7
           BACKUP_MINIMUM_COUNT=2
           BACKUP_ENVIRONMENT_LABEL=ci
+          LOG_FORMAT=json
+          LOG_ERROR_STACKTRACES=false
+          LOG_REQUEST_TELEMETRY_ENABLED=true
+          LOG_REDACTION_ENABLED=true
+          LOG_HASH_TENANT_IDENTIFIERS=true
+          APP_DEPLOYMENT_ID=github-actions-docker
           EOF
           chmod 600 "$env_file"
           echo "CI_MONGO_ENV_FILE=$env_file" >> "$GITHUB_ENV"
@@ -159,16 +193,48 @@ jobs:
 
       - name: Validate authenticated backend after restore rehearsal
         run: |
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation'; print(payload['phase'])"
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_7_observability_diagnostics_performance_telemetry_foundation'; print(payload['phase'])"
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c 'mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "const names=db.operational_work_items.getIndexes().map(item => item.name); if (!names.includes(\"operational_work_items_agency_status_due_created_id\")) { throw new Error(\"governed work-queue index missing\"); }"'
+
+      - name: Validate authenticated log redaction
+        run: |
+          docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml logs --no-color backend > "${RUNNER_TEMP}/authenticated-backend.log" 2>&1
+          set -a
+          source "$CI_MONGO_ENV_FILE"
+          set +a
+          if grep -F "$MONGO_APP_PASSWORD" "${RUNNER_TEMP}/authenticated-backend.log" >/dev/null; then
+            echo "Application MongoDB password leaked into backend logs" >&2
+            exit 1
+          fi
+          if grep -F "$AUTH_TOKEN_SECRET" "${RUNNER_TEMP}/authenticated-backend.log" >/dev/null; then
+            echo "Authentication token secret leaked into backend logs" >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          lines = Path(os.environ["RUNNER_TEMP"]).joinpath("authenticated-backend.log").read_text(encoding="utf-8").splitlines()
+          payloads = []
+          for line in lines:
+              candidate = line[line.find("{"):] if "{" in line else ""
+              if candidate:
+                  try:
+                      payloads.append(json.loads(candidate))
+                  except json.JSONDecodeError:
+                      pass
+          assert any(item.get("event_type") == "application_startup_completed" for item in payloads), payloads[-20:]
+          assert all(item.get("build_phase") == "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation" for item in payloads), payloads
+          PY
 
       - name: Capture Docker diagnostics on failure
         if: failure()
         run: |
           if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
-            docker logs aeroassist-ci-backend > docker-backend.log 2>&1
-            docker inspect aeroassist-ci-backend > docker-container-inspect.json
+            docker inspect --format '{"status":"{{.State.Status}}","health":"{{if .State.Health}}{{.State.Health.Status}}{{end}}","exit_code":{{.State.ExitCode}}}' aeroassist-ci-backend > docker-safe-diagnostic.json
           fi
 
       - name: Upload safe Docker diagnostics
@@ -177,8 +243,7 @@ jobs:
         with:
           name: docker-validation-diagnostics
           path: |
-            docker-backend.log
-            docker-container-inspect.json
+            docker-safe-diagnostic.json
           if-no-files-found: ignore
           retention-days: 7
 

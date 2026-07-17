@@ -137,6 +137,10 @@ SERVICE=frontend deploy/hostinger/scripts/logs.sh
 SERVICE=mongo deploy/hostinger/scripts/logs.sh
 ```
 
+Backend application events use JSON in production and include safe request/correlation IDs, normalized operations, duration, outcome, build phase, and optional deployment identifiers. Uvicorn access logs are disabled to avoid duplicate request telemetry. Never paste raw logs into public issues or artifacts; review access and retention according to the agency's operating policy.
+
+For a manual deployment, `APP_GIT_COMMIT` may contain the short checked-out commit and `APP_DEPLOYMENT_ID` may contain a non-sensitive release label. Neither value may contain credentials or client data. The protected `/api/platform/diagnostics/observability` route provides bounded process-local counters to existing Platform operators; it is not durable monitoring.
+
 ## Production Smoke Test
 
 ```bash
@@ -399,6 +403,8 @@ Future HTTPS migration plan:
 7. Confirm disk space.
 8. Confirm certificate validity.
 9. Confirm recent backups exist before any risky action.
+10. Correlate safe events by request ID, correlation ID, deployment ID, and build phase.
+11. Check due-slow and degraded counters through protected Platform diagnostics; remember that counters reset on process restart.
 
 Useful commands:
 
@@ -416,6 +422,7 @@ docker compose --env-file .env.production -f docker-compose.production.yml ps
 - No remote backup storage.
 - No monitoring stack.
 - No alerting.
+- Process counters and timings are non-durable and reset on restart.
 - No migrations framework.
 - No CI/CD.
 - No object storage.

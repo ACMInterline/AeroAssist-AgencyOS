@@ -4,7 +4,6 @@ import base64
 import hashlib
 import hmac
 import json
-import logging
 import time
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -13,9 +12,8 @@ from functools import wraps
 from typing import Any, Awaitable, Callable, Iterable, Mapping, TypeVar
 
 from config import DEFAULT_QUERY_LIMIT, MAXIMUM_QUERY_LIMIT, get_settings
+from observability import current_correlation_id, emit_event, increment_counter
 
-
-LOGGER = logging.getLogger("aeroassist.persistence")
 
 MAXIMUM_IN_VALUES = 100
 SAFE_FILTER_OPERATORS = frozenset({"$eq", "$ne", "$in", "$gt", "$gte", "$lt", "$lte"})
@@ -27,7 +25,15 @@ _T = TypeVar("_T")
 
 
 class QueryValidationError(ValueError):
-    pass
+    def __init__(self, message: str) -> None:
+        emit_event(
+            "query_filter_rejected",
+            level="WARNING",
+            outcome="denied",
+            metadata={"reason": "governed_query_validation"},
+            logger_name="aeroassist.persistence",
+        )
+        super().__init__(message)
 
 
 class CollectionOwnershipType(str, Enum):
@@ -345,8 +351,10 @@ def record_query_diagnostic(
     tenant_scoped: bool,
     query_class: str,
     correlation_id: str | None = None,
+    index_classification: str | None = None,
 ) -> dict[str, Any]:
     settings = get_settings()
+    effective_query_class = query_class if settings.log_include_query_names else "governed_query"
     payload = {
         "collection_category": collection_category,
         "operation": operation,
@@ -354,14 +362,33 @@ def record_query_diagnostic(
         "returned_count": returned_count,
         "requested_limit": requested_limit,
         "tenant_scoped": tenant_scoped,
-        "query_class": query_class,
+        "query_class": effective_query_class,
         "slow_query": duration_ms >= settings.query_slow_threshold_ms,
-        "correlation_id": correlation_id,
+        "correlation_id": correlation_id or current_correlation_id(),
+        "index_classification": index_classification or "unspecified",
     }
     if settings.query_diagnostics_enabled:
         _diagnostic_records.append(payload)
         del _diagnostic_records[:-100]
-        LOGGER.warning("persistence_query %s", json.dumps(payload, sort_keys=True)) if payload["slow_query"] else LOGGER.debug("persistence_query %s", json.dumps(payload, sort_keys=True))
+        if payload["slow_query"]:
+            increment_counter("slow_queries", "slow")
+        emit_event(
+            "database_query_completed",
+            level="WARNING" if payload["slow_query"] else "DEBUG",
+            outcome="success",
+            duration_ms=duration_ms,
+            correlation_id=payload["correlation_id"],
+            metadata={
+                "collection_category": collection_category,
+                "requested_limit": requested_limit,
+                "returned_count": returned_count,
+                "tenant_scoped": tenant_scoped,
+                "query_class": effective_query_class,
+                "slow_operation": payload["slow_query"],
+                "index_classification": payload["index_classification"],
+            },
+            logger_name="aeroassist.persistence",
+        )
     return payload
 
 

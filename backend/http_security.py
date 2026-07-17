@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import json
-import logging
 import re
 import secrets
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -15,17 +14,22 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from config import AppSettings, get_settings
+from observability import (
+    bind_request_context,
+    emit_event,
+    increment_counter,
+    normalize_route,
+    reset_request_context,
+    tenant_context_for_path,
+)
 
 
-SECURITY_LOGGER = logging.getLogger("aeroassist.security")
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$")
 SAFE_SECURITY_EVENT_FIELDS = {
     "event",
     "outcome",
     "reason",
     "request_id",
-    "identity_id",
-    "session_id",
     "status_code",
     "route",
 }
@@ -36,11 +40,29 @@ def correlation_id(request: Request) -> str:
 
 
 def log_security_event(event: str, **metadata: Any) -> None:
-    payload = {"event": event}
-    for key, value in metadata.items():
-        if key in SAFE_SECURITY_EVENT_FIELDS and value is not None:
-            payload[key] = str(value)[:256]
-    SECURITY_LOGGER.warning(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+    safe_metadata = {
+        key: value
+        for key, value in metadata.items()
+        if key in SAFE_SECURITY_EVENT_FIELDS and value is not None
+    }
+    event_name = event.lower()
+    if any(token in event_name for token in ("login", "token", "authentication", "lock")) and safe_metadata.get("outcome") != "success":
+        label = "locked" if "lock" in event_name else "expired" if safe_metadata.get("reason") == "expired_token" else "malformed" if safe_metadata.get("reason") == "malformed_token" else "invalid"
+        increment_counter("authentication_failures", label)
+    if any(token in event_name for token in ("permission", "authorization", "tenant_scope")):
+        increment_counter("authorization_failures", "denied")
+    emit_event(
+        event,
+        level="WARNING" if safe_metadata.get("outcome") != "success" else "INFO",
+        outcome="denied" if safe_metadata.get("outcome") in {"denied", "locked"} else "failure" if safe_metadata.get("outcome") == "error" else "success",
+        operation=normalize_route(str(safe_metadata.get("route") or "")) or None,
+        request_id=str(safe_metadata.get("request_id")) if safe_metadata.get("request_id") else None,
+        metadata={
+            "reason": safe_metadata.get("reason"),
+            "status_code": safe_metadata.get("status_code"),
+        },
+        logger_name="aeroassist.security",
+    )
 
 
 def default_content_security_policy(settings: AppSettings) -> str:
@@ -98,13 +120,111 @@ class SecurityHttpMiddleware(BaseHTTPMiddleware):
         self.headers = security_headers(self.settings)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        supplied = request.headers.get("x-request-id", "")
-        request.state.correlation_id = supplied if REQUEST_ID_PATTERN.fullmatch(supplied) else uuid4().hex
-        response = await call_next(request)
-        response.headers["X-Request-ID"] = request.state.correlation_id
-        for name, value in self.headers.items():
-            response.headers[name] = value
-        return response
+        supplied_request_id = request.headers.get("x-request-id", "")
+        request_id = supplied_request_id if REQUEST_ID_PATTERN.fullmatch(supplied_request_id) else uuid4().hex
+        supplied_correlation_id = request.headers.get("x-correlation-id", "")
+        correlation = supplied_correlation_id if REQUEST_ID_PATTERN.fullmatch(supplied_correlation_id) else request_id
+        tenant_scope, agency_id = tenant_context_for_path(request.url.path)
+        request.state.request_id = request_id
+        request.state.correlation_id = correlation
+        request.state.tenant_scope = tenant_scope
+        context_tokens = bind_request_context(
+            request_id=request_id,
+            correlation_id=correlation,
+            tenant_scope=tenant_scope,
+            agency_id=agency_id,
+        )
+        started = time.perf_counter()
+        response: Response | None = None
+        try:
+            response = await call_next(request)
+            return response
+        except Exception:
+            duration_ms = (time.perf_counter() - started) * 1000
+            increment_counter("http_requests", "5xx")
+            increment_counter("unhandled_errors", "unexpected")
+            if self.settings.log_request_telemetry_enabled:
+                emit_event(
+                    "http_request_completed",
+                    level="ERROR",
+                    outcome="failure",
+                    operation=self._route_name(request),
+                    duration_ms=duration_ms,
+                    metadata={
+                        "method": request.method,
+                        "route": self._route_name(request),
+                        "status_code": 500,
+                        "status_class": "5xx",
+                        "authenticated": self._authentication_state(request),
+                        "slow_operation": duration_ms >= self.settings.log_slow_request_threshold_ms,
+                    },
+                )
+            raise
+        finally:
+            if response is not None:
+                duration_ms = (time.perf_counter() - started) * 1000
+                status_class = f"{max(1, min(5, response.status_code // 100))}xx"
+                increment_counter("http_requests", status_class)
+                slow = duration_ms >= self.settings.log_slow_request_threshold_ms
+                if slow:
+                    increment_counter("slow_requests", "slow")
+                if self.settings.log_request_telemetry_enabled:
+                    health_probe = request.url.path in {"/api/health", "/api/readiness"}
+                    emit_event(
+                        "http_request_completed",
+                        level="WARNING" if slow or response.status_code >= 500 else "DEBUG" if health_probe else "INFO",
+                        outcome="denied" if response.status_code in {401, 403, 429} else "failure" if response.status_code >= 400 else "success",
+                        operation=self._route_name(request),
+                        duration_ms=duration_ms,
+                        metadata={
+                            "method": request.method,
+                            "route": self._route_name(request),
+                            "status_code": response.status_code,
+                            "status_class": status_class,
+                            "response_size_bytes": self._response_size(response),
+                            "authenticated": self._authentication_state(request),
+                            "slow_operation": slow,
+                            "request_telemetry_sampled": not health_probe,
+                        },
+                    )
+                origin = request.headers.get("origin")
+                if origin and origin not in self.settings.cors_allowed_origins and "access-control-allow-origin" not in response.headers:
+                    log_security_event(
+                        "cors_origin_rejected",
+                        outcome="denied",
+                        reason="origin_not_allowlisted",
+                        request_id=request_id,
+                        status_code=response.status_code,
+                        route=self._route_name(request),
+                    )
+                response.headers["X-Request-ID"] = request_id
+                response.headers["X-Correlation-ID"] = correlation
+                for name, value in self.headers.items():
+                    response.headers[name] = value
+            reset_request_context(context_tokens)
+
+    def _route_name(self, request: Request) -> str:
+        if not self.settings.log_include_request_path:
+            return "http_request"
+        route = request.scope.get("route")
+        template = getattr(route, "path", None)
+        return normalize_route(template or request.url.path) or "http_request"
+
+    @staticmethod
+    def _authentication_state(request: Request) -> str:
+        if request.headers.get("authorization"):
+            return "bearer_present"
+        if request.headers.get("x-demo-user-email"):
+            return "demo_header_present"
+        return "anonymous"
+
+    @staticmethod
+    def _response_size(response: Response) -> int | None:
+        value = response.headers.get("content-length")
+        try:
+            return max(0, int(value)) if value is not None else None
+        except ValueError:
+            return None
 
 
 def error_code(status_code: int) -> str:
@@ -141,6 +261,17 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
             status_code=exc.status_code,
             route=request.url.path,
         )
+    emit_event(
+        "http_error_response",
+        level="WARNING" if exc.status_code >= 400 else "INFO",
+        outcome="denied" if exc.status_code in {401, 403, 429} else "failure",
+        operation=normalize_route(request.url.path),
+        metadata={
+            "error_code": error_code(exc.status_code),
+            "status_code": exc.status_code,
+            "retryable": exc.status_code in {408, 429, 503, 504},
+        },
+    )
     body = {
         "detail": detail,
         "error": {"code": error_code(exc.status_code), "message": message, "request_id": request_id},
@@ -163,6 +294,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     }
     if not settings.is_production:
         body["validation_errors"] = exc.errors()
+    emit_event(
+        "validation_error",
+        level="WARNING",
+        outcome="failure",
+        operation=normalize_route(request.url.path),
+        metadata={"error_code": "validation_error", "status_code": 422, "retryable": False},
+    )
     return JSONResponse(body, status_code=422, headers={"X-Request-ID": request_id})
 
 
@@ -177,6 +315,18 @@ async def unexpected_exception_handler(request: Request, exc: Exception) -> JSON
         request_id=request_id,
         status_code=500,
         route=request.url.path,
+    )
+    emit_event(
+        "unhandled_exception",
+        level="ERROR",
+        outcome="failure",
+        operation=normalize_route(request.url.path),
+        metadata={
+            "error_code": "internal_error",
+            "exception_class": exc.__class__.__name__,
+            "status_code": 500,
+            "retryable": False,
+        },
     )
     message = "Internal server error."
     if not settings.is_production:

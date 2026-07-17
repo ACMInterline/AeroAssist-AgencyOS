@@ -75,7 +75,6 @@ jobs:
         with:
           name: focused-smoke-diagnostics
           path: |
-            ${{ runner.temp }}/focused-backend.log
             ${{ runner.temp }}/static-smoke-results.json
             ${{ runner.temp }}/focused-smoke-results.json
           if-no-files-found: ignore

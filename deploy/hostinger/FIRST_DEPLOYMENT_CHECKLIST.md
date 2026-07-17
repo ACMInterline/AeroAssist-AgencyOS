@@ -81,6 +81,12 @@ Required checks:
 - `QUERY_DEFAULT_LIMIT=50` and `QUERY_MAXIMUM_LIMIT=250`
 - `QUERY_SLOW_THRESHOLD_MS=250` and `QUERY_DIAGNOSTICS_ENABLED=true`
 - `READINESS_DATABASE_TIMEOUT_SECONDS=5`
+- `LOG_LEVEL=INFO` and `LOG_FORMAT=json`
+- `LOG_SERVICE_NAME=aeroassist-agencyos-api`
+- `LOG_REQUEST_TELEMETRY_ENABLED=true` and `LOG_REDACTION_ENABLED=true`
+- `LOG_ERROR_STACKTRACES=false` and `LOG_HASH_TENANT_IDENTIFIERS=true`
+- positive HTTP, readiness, startup, and document-render warning thresholds
+- optional `APP_GIT_COMMIT` and `APP_DEPLOYMENT_ID` contain non-sensitive release identifiers only
 - `FRONTEND_HTTP_PORT=127.0.0.1:8080`
 - `VITE_API_BASE_URL=` remains blank when frontend nginx proxies `/api`
 
@@ -93,6 +99,8 @@ openssl rand -hex 32
 Do not commit `.env.production`.
 
 Phase 56.5.6 query controls are operational bounds, not feature settings. Keep the default limit positive, the maximum at or above the default, the maximum no greater than 1000, and the readiness timeout greater than zero and no more than 60 seconds. Query diagnostics contain structural metadata only and must remain free of filter values and passenger data.
+
+Phase 56.5.7 logs structured application events to container stdout. Do not configure an application log-file path, enable production stack traces, disable redaction, or place secrets in deployment identifiers. Docker applies bounded local log rotation; host retention and access remain operator responsibilities.
 
 ## 5. Preflight
 
@@ -126,6 +134,8 @@ Check logs:
 ```bash
 SERVICE=backend deploy/hostinger/scripts/logs.sh
 ```
+
+Confirm backend application events are JSON objects with the expected phase and that output contains no MongoDB password, auth secret, bearer token, email, phone, passport, medical, or payment value. Do not paste raw production logs into tickets or broadly accessible artifacts.
 
 ## 7. Local Readiness Before TLS
 

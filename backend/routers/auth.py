@@ -172,6 +172,12 @@ async def login(payload: LoginRequest, request: Request, db: Database = Depends(
     updated_identity = await clear_login_failures(db, identity["id"])
     session_bundle = await create_session(db, updated_identity or identity, request)
     payload_out = await resolve_auth_payload(db, updated_identity or identity)
+    log_security_event(
+        "login_succeeded",
+        outcome="success",
+        reason="credentials_verified",
+        request_id=correlation_id(request),
+    )
     return safe_auth_response(payload_out, session_bundle["raw_token"], session_bundle["session"])
 
 

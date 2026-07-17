@@ -2475,3 +2475,17 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Adds redacted query diagnostics, a non-increasing legacy exception inventory, static validation, disposable isolation smoke coverage, and authenticated MongoDB CI index validation.
 - Adds no product surface, provider operation, role, destructive migration, production data change, deployment, or external telemetry.
 - See [Persistence Scalability and Tenant Query Hardening Foundation](docs/architecture/persistence-scalability-tenant-query-hardening-foundation.md).
+
+## Phase 56.5.7 - Observability, Diagnostics, and Performance Telemetry Foundation
+
+- Active marker: `phase_56_5_7_observability_diagnostics_performance_telemetry_foundation`.
+- Adds one canonical privacy-safe application-event envelope with UTC timestamps, phase, deployment correlation, request/correlation context, tenant scope, duration, outcome, and allowlisted metadata.
+- Supports production JSON and development human-readable stdout logs without application-managed log files or external telemetry providers.
+- Extends the existing Phase 56.5.4 middleware with single-emission HTTP timing, normalized routes, status classes, safe response size, slow-request detection, and separate request/correlation headers.
+- Integrates safe validation, authentication, authorization, database, timeout, and unexpected error events while preserving response status codes, request IDs, and the legacy `detail` field.
+- Reuses Phase 56.5.6 query diagnostics with request correlation, fixed metadata, bounded history, slow-query counters, and no filters or record values.
+- Adds fixed-cardinality process-local counters, readiness/startup/shutdown timing aggregates, protected Platform diagnostics, and lightweight public readiness flags.
+- Adds centralized key and string redaction, optional non-sensitive deployment identifiers, bounded Docker log rotation, nginx request-ID forwarding, and CI structural/redaction checks.
+- Migrates the Phase 56.5.6 smoke to minimum semantics and makes the Phase 56.5.7 observability smoke the sole exact-current release assertion.
+- Adds no product capability, external monitoring dependency, background worker, provider operation, AI, payment, booking execution, production access, deployment, or data migration.
+- See [Observability, Diagnostics, and Performance Telemetry Foundation](docs/architecture/observability-diagnostics-performance-telemetry-foundation.md).

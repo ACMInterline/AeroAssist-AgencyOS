@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -16,11 +17,17 @@ VALID_FRAME_OPTIONS = {"DENY", "SAMEORIGIN"}
 VALID_CORP_POLICIES = {"same-origin", "same-site", "cross-origin"}
 VALID_COOP_POLICIES = {"same-origin", "same-origin-allow-popups", "unsafe-none"}
 VALID_COEP_POLICIES = {"unsafe-none", "require-corp", "credentialless"}
+VALID_LOG_FORMATS = {"human", "json"}
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173"
 DEFAULT_QUERY_LIMIT = 50
 MAXIMUM_QUERY_LIMIT = 250
 DEFAULT_QUERY_SLOW_THRESHOLD_MS = 250
 DEFAULT_READINESS_DATABASE_TIMEOUT_SECONDS = 5.0
+DEFAULT_LOG_SLOW_REQUEST_THRESHOLD_MS = 1000
+DEFAULT_LOG_SLOW_READINESS_THRESHOLD_MS = 1000
+DEFAULT_LOG_SLOW_STARTUP_THRESHOLD_MS = 5000
+DEFAULT_LOG_SLOW_DOCUMENT_RENDER_THRESHOLD_MS = 2000
+DEPLOYMENT_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 PLACEHOLDER_AUTH_SECRETS = {
     "",
     "replace-with-a-long-random-secret",
@@ -130,6 +137,20 @@ class AppSettings:
     cors_allowed_origins: list[str]
     document_export_storage_dir: Path
     log_level: str
+    log_format: str
+    log_service_name: str
+    log_include_request_path: bool
+    log_include_query_names: bool
+    log_slow_request_threshold_ms: int
+    log_slow_readiness_threshold_ms: int
+    log_slow_startup_threshold_ms: int
+    log_slow_document_render_threshold_ms: int
+    log_error_stacktraces: bool
+    log_hash_tenant_identifiers: bool
+    log_request_telemetry_enabled: bool
+    log_redaction_enabled: bool
+    app_git_commit: str | None
+    app_deployment_id: str | None
     frontend_url: str | None
     public_app_url: str | None
     auth_token_secret: str = field(repr=False)
@@ -203,6 +224,28 @@ def get_settings() -> AppSettings:
         cors_allowed_origins=env_list("CORS_ALLOWED_ORIGINS", DEFAULT_CORS_ORIGINS),
         document_export_storage_dir=configured_storage_root(),
         log_level=os.getenv("LOG_LEVEL", "INFO").strip().upper() or "INFO",
+        log_format=os.getenv("LOG_FORMAT", "json" if production else "human").strip().lower(),
+        log_service_name=os.getenv("LOG_SERVICE_NAME", "aeroassist-agencyos-api").strip(),
+        log_include_request_path=env_bool("LOG_INCLUDE_REQUEST_PATH", True),
+        log_include_query_names=env_bool("LOG_INCLUDE_QUERY_NAMES", True),
+        log_slow_request_threshold_ms=env_int(
+            "LOG_SLOW_REQUEST_THRESHOLD_MS", DEFAULT_LOG_SLOW_REQUEST_THRESHOLD_MS
+        ),
+        log_slow_readiness_threshold_ms=env_int(
+            "LOG_SLOW_READINESS_THRESHOLD_MS", DEFAULT_LOG_SLOW_READINESS_THRESHOLD_MS
+        ),
+        log_slow_startup_threshold_ms=env_int(
+            "LOG_SLOW_STARTUP_THRESHOLD_MS", DEFAULT_LOG_SLOW_STARTUP_THRESHOLD_MS
+        ),
+        log_slow_document_render_threshold_ms=env_int(
+            "LOG_SLOW_DOCUMENT_RENDER_THRESHOLD_MS", DEFAULT_LOG_SLOW_DOCUMENT_RENDER_THRESHOLD_MS
+        ),
+        log_error_stacktraces=env_bool("LOG_ERROR_STACKTRACES", not production),
+        log_hash_tenant_identifiers=env_bool("LOG_HASH_TENANT_IDENTIFIERS", True),
+        log_request_telemetry_enabled=env_bool("LOG_REQUEST_TELEMETRY_ENABLED", True),
+        log_redaction_enabled=env_bool("LOG_REDACTION_ENABLED", True),
+        app_git_commit=os.getenv("APP_GIT_COMMIT", "").strip() or None,
+        app_deployment_id=os.getenv("APP_DEPLOYMENT_ID", "").strip() or None,
         frontend_url=os.getenv("FRONTEND_URL") or None,
         public_app_url=os.getenv("PUBLIC_APP_URL") or None,
         auth_token_secret=os.getenv("AUTH_TOKEN_SECRET", ""),
@@ -530,6 +573,52 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
     else:
         add("pass", "LOG_LEVEL", f"LOG_LEVEL is {settings.log_level}.")
 
+    if settings.log_format not in VALID_LOG_FORMATS:
+        add("fail", "LOG_FORMAT", "LOG_FORMAT must be human or json.")
+    elif settings.is_production and settings.log_format != "json":
+        add("fail", "LOG_FORMAT", "Production requires JSON structured logging.")
+    elif not settings.log_service_name or len(settings.log_service_name) > 80:
+        add("fail", "LOG_SERVICE_NAME", "LOG_SERVICE_NAME must contain between 1 and 80 characters.")
+    else:
+        add("pass", "LOG_FORMAT", f"Logging format {settings.log_format} is configured for stdout collection.")
+
+    threshold_values = (
+        settings.log_slow_request_threshold_ms,
+        settings.log_slow_readiness_threshold_ms,
+        settings.log_slow_startup_threshold_ms,
+        settings.log_slow_document_render_threshold_ms,
+    )
+    if any(value <= 0 or value > 3_600_000 for value in threshold_values):
+        add("fail", "LOG_SLOW_THRESHOLDS", "Observability thresholds must be greater than zero and no more than one hour in milliseconds.")
+    else:
+        add("pass", "LOG_SLOW_THRESHOLDS", "HTTP, readiness, startup, and document-render warning thresholds are bounded.")
+
+    if settings.is_production and settings.log_level in {"DEBUG", "NOTSET"}:
+        add("fail", "LOG_LEVEL", "Production logging must not use DEBUG or NOTSET.")
+    elif settings.is_production and settings.log_error_stacktraces:
+        add("fail", "LOG_ERROR_STACKTRACES", "Production stacktrace logging must be disabled.")
+    elif settings.is_production and not settings.log_request_telemetry_enabled:
+        add("fail", "LOG_REQUEST_TELEMETRY_ENABLED", "Production request telemetry must be enabled.")
+    elif settings.is_production and not settings.log_redaction_enabled:
+        add("fail", "LOG_REDACTION_ENABLED", "Production structured logging redaction must be enabled.")
+    elif settings.is_production and not settings.log_hash_tenant_identifiers:
+        add("fail", "LOG_HASH_TENANT_IDENTIFIERS", "Production tenant identifiers must be hashed when included in telemetry.")
+    else:
+        add("pass", "LOG_PRIVACY", "Request telemetry, redaction, tenant hashing, and stacktrace policy are environment-safe.")
+
+    invalid_deployment_identifiers = [
+        name
+        for name, value in (
+            ("APP_GIT_COMMIT", settings.app_git_commit),
+            ("APP_DEPLOYMENT_ID", settings.app_deployment_id),
+        )
+        if value and DEPLOYMENT_IDENTIFIER_PATTERN.fullmatch(value) is None
+    ]
+    if invalid_deployment_identifiers:
+        add("fail", "DEPLOYMENT_IDENTIFIERS", "Deployment identifiers must use 1-64 alphanumeric, dot, underscore, or hyphen characters.")
+    else:
+        add("pass", "DEPLOYMENT_IDENTIFIERS", "Optional deployment correlation identifiers are syntactically safe.")
+
     failures = [check for check in checks if check["level"] == "fail"]
     warnings = [check for check in checks if check["level"] == "warn"]
     return {
@@ -542,8 +631,9 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
 
 def configure_logging(settings: AppSettings | None = None) -> None:
     settings = settings or get_settings()
-    level = logging._nameToLevel.get(settings.log_level, logging.INFO)
-    logging.basicConfig(level=level, format="%(levelname)s:%(name)s:%(message)s")
+    from observability import configure_observability_logging
+
+    configure_observability_logging(settings)
 
 
 def assert_startup_safe(settings: AppSettings | None = None) -> dict[str, Any]:

@@ -3,8 +3,8 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.6 build marker and persistence scalability, tenant query hardening, bounded readiness, and index-governance registration.",
+      "script_path": "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 56.5.7 build marker and privacy-safe observability, diagnostics, performance telemetry, redaction, and protected operator diagnostics registration.",
       "exact_reason": "This smoke explicitly tests current infrastructure-hardening release registration; all historical capability smokes use minimum semantics."
     }
   ],
@@ -1280,6 +1280,27 @@
       "execution_isolation": "shared_backend"
     },
     {
+      "script_path": "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py",
+      "capability_name": "Observability Diagnostics Performance Telemetry Foundation",
+      "minimum_application_phase": "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "observability",
+        "security",
+        "persistence",
+        "readiness",
+        "infrastructure"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current release-registration smoke validating the structured event envelope, JSON and human formatting, request correlation, HTTP/error/security/query telemetry, redaction, bounded counters, protected diagnostics, lifecycle events, readiness safety, and backwards-compatible errors.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
+    },
+    {
       "script_path": "backend/scripts/smoke_offer_acceptance_booking_readiness.py",
       "capability_name": "Offer Acceptance Booking Readiness",
       "minimum_application_phase": "phase_36_2_offer_acceptance_booking_readiness",
@@ -1826,7 +1847,7 @@
       "script_path": "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py",
       "capability_name": "Persistence Scalability Tenant Query Hardening Foundation",
       "minimum_application_phase": "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": false,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -1838,7 +1859,7 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current release-registration smoke using disposable in-memory records to verify bounded pagination, stable sorting, filter safety, tenant isolation, repository separation, index governance, diagnostics redaction, and readiness registration.",
+      "notes": "Historical minimum-phase smoke using disposable in-memory records to verify bounded pagination, stable sorting, filter safety, tenant isolation, repository separation, index governance, diagnostics redaction, and readiness registration.",
       "ci_tier": "focused",
       "execution_isolation": "none"
     },

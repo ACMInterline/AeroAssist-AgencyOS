@@ -26,7 +26,9 @@ WORKFLOW_SPECS = {
         "validate_smoke_inventory.py",
         "validate_ci_foundation.py",
         "validate_persistence_query_foundation.py",
+        "validate_observability_foundation.py",
         "smoke_persistence_scalability_tenant_query_hardening_foundation.py --static",
+        "smoke_observability_diagnostics_performance_telemetry_foundation.py --static",
         "smoke_mongodb_security_backup_disaster_recovery_foundation.py --static",
         "bash -n deploy/hostinger",
         "npm run build --prefix frontend",
@@ -126,7 +128,8 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py"
+    exact_path = "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py"
+    persistence_path = "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py"
     mongodb_path = "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py"
     security_path = "backend/scripts/smoke_authentication_security_http_hardening_foundation.py"
     ci_path = "backend/scripts/smoke_github_actions_continuous_integration_foundation.py"
@@ -139,6 +142,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Phase 56.5.4 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(mongodb_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.5 smoke did not migrate to minimum-phase semantics.")
+    if entry_by_path.get(persistence_path, {}).get("phase_assertion_mode") != "minimum":
+        errors.append("Phase 56.5.6 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(ci_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.3 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(legacy_path, {}).get("phase_assertion_mode") != "minimum":
@@ -155,6 +160,7 @@ def validate_ci_foundation() -> list[str]:
     }
     required_focused = {
         exact_path,
+        persistence_path,
         mongodb_path,
         security_path,
         ci_path,
@@ -204,6 +210,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Server readiness does not register the Phase 56.5.5 MongoDB security foundation.")
     if '"persistence_scalability_tenant_query_hardening_foundation"' not in server_text:
         errors.append("Server readiness does not register the Phase 56.5.6 persistence foundation.")
+    if '"observability_diagnostics_performance_telemetry_foundation"' not in server_text:
+        errors.append("Server readiness does not register the Phase 56.5.7 observability foundation.")
     return errors
 
 

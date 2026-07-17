@@ -119,8 +119,6 @@ jobs:
             ${{ runner.temp }}/static-results.json
             ${{ runner.temp }}/shared-results.json
             ${{ runner.temp }}/fresh-results.json
-            ${{ runner.temp }}/shared-backend.log
-            ${{ runner.temp }}/fresh-backend.log
           if-no-files-found: ignore
           retention-days: 14
 

@@ -54,7 +54,7 @@ jobs:
         run: python3 -m compileall -q backend
 
       - name: Validate build phase ordering
-        run: cd backend && python3 -c "from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least; assert phase_is_at_least(CURRENT_BUILD_PHASE, 'phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation'); assert phase_is_at_least('phase_56_10_example', 'phase_56_9_example')"
+        run: cd backend && python3 -c "from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least; assert phase_is_at_least(CURRENT_BUILD_PHASE, 'phase_56_5_7_observability_diagnostics_performance_telemetry_foundation'); assert phase_is_at_least('phase_56_10_example', 'phase_56_9_example')"
 
       - name: Validate smoke inventory
         run: python3 backend/scripts/validate_smoke_inventory.py
@@ -65,8 +65,14 @@ jobs:
       - name: Validate persistence query foundation
         run: python3 backend/scripts/validate_persistence_query_foundation.py
 
+      - name: Validate observability foundation
+        run: python3 backend/scripts/validate_observability_foundation.py
+
       - name: Run persistence query foundation static smoke
         run: python3 backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
+
+      - name: Run observability foundation static smoke
+        run: python3 backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
 
       - name: Validate MongoDB backup shell safety
         run: |

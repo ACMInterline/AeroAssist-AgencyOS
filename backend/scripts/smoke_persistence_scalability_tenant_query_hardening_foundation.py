@@ -14,7 +14,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from config import get_settings
 from database import Database
 from persistence_query import (
@@ -27,9 +27,11 @@ from persistence_query import (
     query_diagnostic_records,
 )
 from persistence_repository import PersistenceRepository
+from phase_assertions import assert_application_phase_at_least
 
 
 RELEASE_PHASE = "phase_56_5_6_persistence_scalability_tenant_query_hardening_foundation"
+MINIMUM_PHASE = RELEASE_PHASE
 
 
 def expect_validation_error(function, message: str) -> None:
@@ -237,8 +239,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--static", action="store_true", help="Retained for CI tier compatibility; the smoke uses disposable in-memory data in both modes.")
     parser.parse_args()
-    if not phase_is_exact(CURRENT_BUILD_PHASE, RELEASE_PHASE):
-        raise AssertionError(f"Canonical phase marker mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(
+        CURRENT_BUILD_PHASE,
+        MINIMUM_PHASE,
+        source="canonical build phase",
+    )
     verify_contracts_and_registration()
     asyncio.run(verify_repository_foundation())
     print("Phase 56.5.6 persistence scalability and tenant query hardening foundation smoke passed.")
