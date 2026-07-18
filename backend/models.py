@@ -16278,6 +16278,7 @@ class AfterSalesCase(BaseDocument):
     ticket_workspace_ids: List[str] = Field(default_factory=list)
     emd_workspace_ids: List[str] = Field(default_factory=list)
     passenger_workspace_ids: List[str] = Field(default_factory=list)
+    passenger_service_request_ids: List[str] = Field(default_factory=list)
     document_workspace_ids: List[str] = Field(default_factory=list)
     ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
     invoice_ids: List[str] = Field(default_factory=list)
@@ -16317,6 +16318,8 @@ class AfterSalesCase(BaseDocument):
     client_message_json: Dict[str, Any] = Field(default_factory=dict)
     financial_estimate_json: Dict[str, Any] = Field(default_factory=dict)
     integration_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    canonical_reference_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    link_validation_warnings: List[Dict[str, Any]] = Field(default_factory=list)
     assigned_agent: Optional[str] = None
     assigned_team: Optional[str] = None
     opened_at: Optional[datetime] = None
@@ -16525,6 +16528,7 @@ class AfterSalesCaseCreate(BaseModel):
     ticket_workspace_ids: List[str] = Field(default_factory=list)
     emd_workspace_ids: List[str] = Field(default_factory=list)
     passenger_workspace_ids: List[str] = Field(default_factory=list)
+    passenger_service_request_ids: List[str] = Field(default_factory=list)
     document_workspace_ids: List[str] = Field(default_factory=list)
     ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
     invoice_ids: List[str] = Field(default_factory=list)

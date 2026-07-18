@@ -28,13 +28,13 @@ const defaultForm = {
   ticket_workspace_id: "",
   emd_workspace_id: "",
   passenger_workspace_id: "",
+  passenger_service_request_id: "",
   invoice_id: "",
   payment_record_id: "",
   invoice_line_item_id: "",
   ticket_record_id: "",
   emd_record_id: "",
   accepted_offer_snapshot_id: "",
-  booking_reference: "",
   affected_segment_ref: "",
   residual_value_summary: "",
   penalty_summary: "",
@@ -48,28 +48,49 @@ const defaultForm = {
 const defaultImpact = {
   amount_category: "unknown", amount: "", currency: "EUR", invoice_id: "", invoice_line_item_id: "",
   payment_record_id: "", ticket_record_id: "", emd_record_id: "", approval_state: "not_reviewed",
-  settlement_state: "not_settled", reconciliation_state: "unreconciled", mismatch: "", proposed_notes: "", final_notes: "",
+  accepted_offer_snapshot_id: "", settlement_state: "not_settled", reconciliation_state: "unreconciled",
+  mismatch: "", proposed_notes: "", final_notes: "",
 }
 
 export default function AfterSalesPage() {
   const [state, setState] = useState(null)
-  const [form, setForm] = useState(defaultForm)
+  const query = useMemo(() => new URLSearchParams(window.location.search), [])
+  const [form, setForm] = useState(() => ({
+    ...defaultForm,
+    booking_workspace_id: query.get("booking_workspace_id") || "",
+    ticket_workspace_id: query.get("ticket_workspace_id") || "",
+    emd_workspace_id: query.get("emd_workspace_id") || "",
+    passenger_service_request_id: query.get("passenger_service_request_id") || "",
+    ticket_record_id: query.get("ticket_record_id") || "",
+    emd_record_id: query.get("emd_record_id") || "",
+    invoice_id: query.get("invoice_id") || "",
+  }))
   const [filters, setFilters] = useState({ status: "", case_type: "" })
   const [selectedId, setSelectedId] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [impactForm, setImpactForm] = useState(defaultImpact)
-  const selected = useMemo(() => state?.items?.find((item) => item.id === selectedId) || state?.items?.[0] || null, [state, selectedId])
+  const selected = useMemo(
+    () => state?.selectedCase?.id === selectedId
+      ? state.selectedCase
+      : state?.items?.find((item) => item.id === selectedId) || state?.items?.[0] || null,
+    [state, selectedId],
+  )
+  const linkOptions = state?.linkOptions || {}
+  const caseWarnings = useMemo(() => selectionWarnings(form, linkOptions), [form, linkOptions])
 
-  async function load(nextFilters = filters) {
+  async function load(nextFilters = filters, preferredId = selectedId) {
     const context = await loadCurrentAgency()
-    const [response, invoices, payments] = await Promise.all([
+    const [response, options] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/after-sales${queryString(nextFilters)}`),
-      apiGet(`/api/agencies/${context.agency.id}/invoices`),
-      apiGet(`/api/agencies/${context.agency.id}/payments`),
+      apiGet(`/api/agencies/${context.agency.id}/after-sales/link-options`),
     ])
-    setState({ ...context, ...response, invoices: invoices.items || [], payments: payments.items || [] })
-    if (!selectedId && response.items?.[0]?.id) setSelectedId(response.items[0].id)
+    const caseId = response.items?.some((item) => item.id === preferredId) ? preferredId : response.items?.[0]?.id || ""
+    const detail = caseId
+      ? await apiGet(`/api/agencies/${context.agency.id}/after-sales/${caseId}`)
+      : { case: null }
+    setState({ ...context, ...response, linkOptions: options.items || {}, selectedCase: detail.case })
+    setSelectedId(caseId)
   }
 
   useEffect(() => {
@@ -94,13 +115,13 @@ export default function AfterSalesPage() {
       ticket_workspace_ids: form.ticket_workspace_id ? [form.ticket_workspace_id] : [],
       emd_workspace_ids: form.emd_workspace_id ? [form.emd_workspace_id] : [],
       passenger_workspace_ids: form.passenger_workspace_id ? [form.passenger_workspace_id] : [],
+      passenger_service_request_ids: form.passenger_service_request_id ? [form.passenger_service_request_id] : [],
       invoice_ids: form.invoice_id ? [form.invoice_id] : [],
       invoice_line_item_ids: form.invoice_line_item_id ? [form.invoice_line_item_id] : [],
       payment_record_ids: form.payment_record_id ? [form.payment_record_id] : [],
       ticket_record_ids: form.ticket_record_id ? [form.ticket_record_id] : [],
       emd_record_ids: form.emd_record_id ? [form.emd_record_id] : [],
       accepted_offer_snapshot_id: form.accepted_offer_snapshot_id || undefined,
-      booking_reference: form.booking_reference || undefined,
       affected_segment_refs: form.affected_segment_ref ? [form.affected_segment_ref] : [],
       residual_value_summary: form.residual_value_summary || undefined,
       penalty_summary: form.penalty_summary || undefined,
@@ -117,7 +138,7 @@ export default function AfterSalesPage() {
     setSelectedId(result.case.id)
     setMessage(`After-sales case ${result.case.case_reference} created as metadata only.`)
     setForm(defaultForm)
-    await load()
+    await load(filters, result.case.id)
   }
 
   async function recordFinancialImpact(event) {
@@ -136,6 +157,7 @@ export default function AfterSalesPage() {
         payment_record_ids: impactForm.payment_record_id ? [impactForm.payment_record_id] : [],
         ticket_record_ids: impactForm.ticket_record_id ? [impactForm.ticket_record_id] : [],
         emd_record_ids: impactForm.emd_record_id ? [impactForm.emd_record_id] : [],
+        accepted_offer_snapshot_id: impactForm.accepted_offer_snapshot_id || undefined,
         approval_state: impactForm.approval_state,
         settlement_state: impactForm.settlement_state,
         reconciliation_state: impactForm.reconciliation_state,
@@ -146,7 +168,7 @@ export default function AfterSalesPage() {
       })
       setImpactForm(defaultImpact)
       setMessage("Affected financial records and impact snapshot recorded for manual reconciliation.")
-      await load()
+      await load(filters, selected.id)
     } catch (err) {
       setError(err.message)
     }
@@ -158,7 +180,18 @@ export default function AfterSalesPage() {
     const result = await apiPut(`/api/agencies/${state.agency.id}/after-sales/${selected.id}`, { case_status: caseStatus })
     setSelectedId(result.case.id)
     setMessage(`Case status recorded as ${formatType(caseStatus)}.`)
-    await load()
+    await load(filters, result.case.id)
+  }
+
+  async function selectCase(caseId) {
+    setError("")
+    try {
+      const detail = await apiGet(`/api/agencies/${state.agency.id}/after-sales/${caseId}`)
+      setSelectedId(caseId)
+      setState((current) => ({ ...current, selectedCase: detail.case }))
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   function applyFilters(next) {
@@ -196,25 +229,28 @@ export default function AfterSalesPage() {
           <section className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
             <form className="space-y-3 rounded-lg border border-slate-200 bg-white p-5" onSubmit={createCase}>
               <h3 className="font-semibold text-slate-950">Open case metadata</h3>
+              <p className="text-xs text-slate-500">Search by operational label, review the context preview, then link existing agency records.</p>
               <SelectField label="Case type" value={form.case_type} onChange={(value) => setField("case_type", value)} options={caseTypes} />
               <SelectField label="Priority" value={form.case_priority} onChange={(value) => setField("case_priority", value)} options={["low", "normal", "high", "urgent", "critical"]} />
               <TextField label="Title" value={form.case_title} onChange={(value) => setField("case_title", value)} />
               <TextArea label="Summary" value={form.case_summary} onChange={(value) => setField("case_summary", value)} />
-              <div className="grid gap-3 md:grid-cols-2">
-                <TextField label="Trip workspace id" value={form.trip_workspace_id} onChange={(value) => setField("trip_workspace_id", value)} />
-                <TextField label="Booking workspace id" value={form.booking_workspace_id} onChange={(value) => setField("booking_workspace_id", value)} />
-                <TextField label="Ticket workspace id" value={form.ticket_workspace_id} onChange={(value) => setField("ticket_workspace_id", value)} />
-                <TextField label="EMD workspace id" value={form.emd_workspace_id} onChange={(value) => setField("emd_workspace_id", value)} />
-                <TextField label="Passenger workspace id" value={form.passenger_workspace_id} onChange={(value) => setField("passenger_workspace_id", value)} />
-                <TextField label="Segment reference" value={form.affected_segment_ref} onChange={(value) => setField("affected_segment_ref", value)} />
-                <SelectField label="Invoice" value={form.invoice_id} onChange={(value) => setField("invoice_id", value)} options={[["", "None"], ...(state?.invoices || []).map((item) => [item.id, item.invoice_number || item.id])]} />
-                <SelectField label="Payment" value={form.payment_record_id} onChange={(value) => setField("payment_record_id", value)} options={[["", "None"], ...(state?.payments || []).map((item) => [item.id, item.external_reference || item.id])]} />
-                <TextField label="Invoice line item id" value={form.invoice_line_item_id} onChange={(value) => setField("invoice_line_item_id", value)} />
-                <TextField label="Ticket record id" value={form.ticket_record_id} onChange={(value) => setField("ticket_record_id", value)} />
-                <TextField label="EMD record id" value={form.emd_record_id} onChange={(value) => setField("emd_record_id", value)} />
-                <TextField label="Accepted snapshot id" value={form.accepted_offer_snapshot_id} onChange={(value) => setField("accepted_offer_snapshot_id", value)} />
-                <TextField label="Booking reference" value={form.booking_reference} onChange={(value) => setField("booking_reference", value)} />
+              <div className="grid gap-4">
+                <EntitySelector label="Trip" value={form.trip_workspace_id} onChange={(value) => setField("trip_workspace_id", value)} items={linkOptions.trips} />
+                <EntitySelector label="Booking" value={form.booking_workspace_id} onChange={(value) => setField("booking_workspace_id", value)} items={linkOptions.bookings} />
+                <EntitySelector label="Ticket workspace" value={form.ticket_workspace_id} onChange={(value) => setField("ticket_workspace_id", value)} items={linkOptions.ticket_workspaces} />
+                <EntitySelector label="EMD workspace" value={form.emd_workspace_id} onChange={(value) => setField("emd_workspace_id", value)} items={linkOptions.emd_workspaces} />
+                <EntitySelector label="Passenger" value={form.passenger_workspace_id} onChange={(value) => setField("passenger_workspace_id", value)} items={linkOptions.passengers} />
+                <EntitySelector label="Passenger service" value={form.passenger_service_request_id} onChange={(value) => setField("passenger_service_request_id", value)} items={linkOptions.passenger_services} />
+                <EntitySelector label="Trip segment" value={form.affected_segment_ref} onChange={(value) => setField("affected_segment_ref", value)} items={linkOptions.segments} />
+                <EntitySelector label="Accepted offer" value={form.accepted_offer_snapshot_id} onChange={(value) => setField("accepted_offer_snapshot_id", value)} items={linkOptions.accepted_offer_snapshots} />
+                <EntitySelector label="Invoice" value={form.invoice_id} onChange={(value) => setField("invoice_id", value)} items={linkOptions.invoices} />
+                <EntitySelector label="Invoice line" value={form.invoice_line_item_id} onChange={(value) => setField("invoice_line_item_id", value)} items={contextItems(linkOptions.invoice_lines, "invoice_id", form.invoice_id)} />
+                <EntitySelector label="Payment" value={form.payment_record_id} onChange={(value) => setField("payment_record_id", value)} items={contextItems(linkOptions.payments, "invoice_id", form.invoice_id)} />
+                <EntitySelector label="Ticket" value={form.ticket_record_id} onChange={(value) => setField("ticket_record_id", value)} items={linkOptions.tickets} />
+                <EntitySelector label="EMD" value={form.emd_record_id} onChange={(value) => setField("emd_record_id", value)} items={linkOptions.emds} />
               </div>
+              <SelectionWarnings warnings={caseWarnings} />
+              <SelectionPreview title="Selected operating context" values={selectedOptions(form, linkOptions)} />
               <TextArea label="Financial estimate notes" value={form.refundability_summary} onChange={(value) => setField("refundability_summary", value)} />
               <div className="grid gap-2 text-sm text-slate-700">
                 <label className="flex items-center gap-2"><input type="checkbox" checked={form.client_approval_required} onChange={(event) => setField("client_approval_required", event.target.checked)} /> Client approval required</label>
@@ -235,7 +271,7 @@ export default function AfterSalesPage() {
                 {!state?.items?.length ? <EmptyState title="No after-sales cases" body="Create metadata for a servicing, claim, refund, exchange, amendment, or disruption case." /> : (
                   <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
                     {state.items.map((item) => (
-                      <button className={`grid w-full gap-3 px-4 py-3 text-left text-sm hover:bg-slate-50 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.7fr] ${item.id === selected?.id ? "bg-blue-50" : ""}`} key={item.id} type="button" onClick={() => setSelectedId(item.id)}>
+                      <button className={`grid w-full gap-3 px-4 py-3 text-left text-sm hover:bg-slate-50 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.7fr] ${item.id === selected?.id ? "bg-blue-50" : ""}`} key={item.id} type="button" onClick={() => selectCase(item.id)}>
                         <span className="font-semibold text-slate-950">{item.case_reference}</span>
                         <span>{formatType(item.case_type)}</span>
                         <span>{formatType(item.case_status)}</span>
@@ -246,7 +282,7 @@ export default function AfterSalesPage() {
                 )}
               </section>
 
-              <CaseWorkspace selected={selected} onUpdateStatus={updateStatus} impactForm={impactForm} setImpactForm={setImpactForm} onRecordFinancialImpact={recordFinancialImpact} invoices={state?.invoices || []} payments={state?.payments || []} />
+              <CaseWorkspace selected={selected} onUpdateStatus={updateStatus} impactForm={impactForm} setImpactForm={setImpactForm} onRecordFinancialImpact={recordFinancialImpact} linkOptions={linkOptions} />
             </div>
           </section>
         </div>
@@ -255,7 +291,7 @@ export default function AfterSalesPage() {
   )
 }
 
-function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, onRecordFinancialImpact, invoices, payments }) {
+function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, onRecordFinancialImpact, linkOptions }) {
   if (!selected) return <EmptyState title="No case selected" body="Select a case to review after-sales workspace metadata." />
   return (
     <section className="space-y-4">
@@ -275,7 +311,7 @@ function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, on
       </div>
 
       <Card title="Affected records">
-        <CompactTable rows={selected.items || []} columns={["item_type", "source_entity_type", "source_entity_id", "impact_status"]} />
+        <CompactTable rows={(selected.items || []).map(withSourceLabel)} columns={["item_type", "source_entity_type", "source_label", "impact_status"]} />
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Financial estimate">
@@ -289,11 +325,12 @@ function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, on
         <h3 className="font-semibold text-slate-950">Link affected financial records</h3>
         <p className="mt-1 text-sm text-slate-600">Select existing source records and preserve a proposed impact snapshot. This does not process payment, settle funds, recalculate fares, or mutate issued invoices.</p>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <SelectField label="Invoice" value={impactForm.invoice_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_id: value })} options={[["", "None"], ...invoices.map((item) => [item.id, item.invoice_number || item.id])]} />
-          <SelectField label="Payment" value={impactForm.payment_record_id} onChange={(value) => setImpactForm({ ...impactForm, payment_record_id: value })} options={[["", "None"], ...payments.map((item) => [item.id, item.external_reference || item.id])]} />
-          <TextField label="Invoice line item id" value={impactForm.invoice_line_item_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_line_item_id: value })} />
-          <TextField label="Ticket record id" value={impactForm.ticket_record_id} onChange={(value) => setImpactForm({ ...impactForm, ticket_record_id: value })} />
-          <TextField label="EMD record id" value={impactForm.emd_record_id} onChange={(value) => setImpactForm({ ...impactForm, emd_record_id: value })} />
+          <EntitySelector label="Invoice" value={impactForm.invoice_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_id: value })} items={linkOptions.invoices} compact />
+          <EntitySelector label="Invoice line" value={impactForm.invoice_line_item_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_line_item_id: value })} items={contextItems(linkOptions.invoice_lines, "invoice_id", impactForm.invoice_id)} compact />
+          <EntitySelector label="Payment" value={impactForm.payment_record_id} onChange={(value) => setImpactForm({ ...impactForm, payment_record_id: value })} items={contextItems(linkOptions.payments, "invoice_id", impactForm.invoice_id)} compact />
+          <EntitySelector label="Ticket" value={impactForm.ticket_record_id} onChange={(value) => setImpactForm({ ...impactForm, ticket_record_id: value })} items={linkOptions.tickets} compact />
+          <EntitySelector label="EMD" value={impactForm.emd_record_id} onChange={(value) => setImpactForm({ ...impactForm, emd_record_id: value })} items={linkOptions.emds} compact />
+          <EntitySelector label="Accepted offer" value={impactForm.accepted_offer_snapshot_id} onChange={(value) => setImpactForm({ ...impactForm, accepted_offer_snapshot_id: value })} items={linkOptions.accepted_offer_snapshots} compact />
           <SelectField label="Amount category" value={impactForm.amount_category} onChange={(value) => setImpactForm({ ...impactForm, amount_category: value })} options={["fare_difference", "penalty", "agency_fee", "supplier_fee", "refund", "credit", "residual_value", "commission_adjustment", "tax_adjustment", "unknown"].map((item) => [item, formatType(item)])} />
           <TextField label="Amount" value={impactForm.amount} onChange={(value) => setImpactForm({ ...impactForm, amount: value })} />
           <TextField label="Currency" value={impactForm.currency} onChange={(value) => setImpactForm({ ...impactForm, currency: value.toUpperCase() })} />
@@ -303,6 +340,8 @@ function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, on
           <TextField label="Proposed impact notes" value={impactForm.proposed_notes} onChange={(value) => setImpactForm({ ...impactForm, proposed_notes: value })} />
           <TextField label="Final reconciliation notes" value={impactForm.final_notes} onChange={(value) => setImpactForm({ ...impactForm, final_notes: value })} />
         </div>
+        <SelectionWarnings warnings={selectionWarnings(impactForm, linkOptions)} />
+        <SelectionPreview title="Financial linkage preview" values={selectedOptions(impactForm, linkOptions)} />
         <button className="aa-primary-action mt-4 rounded-md px-3 py-2 text-sm font-semibold" type="submit">Record affected finance metadata</button>
       </form>
       <Card title="Affected financial records">
@@ -383,6 +422,103 @@ function TextArea({ label, value, onChange }) {
 function SelectField({ label, value, onChange, options }) {
   const normalized = options.map((option) => Array.isArray(option) ? option : [option, option ? formatType(option) : "All"])
   return <label className="grid gap-1 text-sm font-medium text-slate-700">{label}<select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)}>{normalized.map(([option, text]) => <option value={option} key={option}>{text}</option>)}</select></label>
+}
+
+function EntitySelector({ label, value, onChange, items = [], compact = false }) {
+  const [search, setSearch] = useState("")
+  const selected = items.find((item) => item.id === value)
+  const filtered = items.filter((item) => item.id === value || `${item.label} ${item.context_preview || ""} ${item.status || ""}`.toLowerCase().includes(search.toLowerCase()))
+  return (
+    <div className={`grid gap-1 text-sm font-medium text-slate-700 ${compact ? "md:col-span-1" : ""}`}>
+      <span>{label}</span>
+      <input className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}`} />
+      <select className="min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Not linked</option>
+        {filtered.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
+      </select>
+      {selected ? <p className="break-words text-xs font-normal text-slate-500">{selected.context_preview || formatType(selected.status)}{selected.immutable_reference ? " · immutable reference" : ""}</p> : null}
+    </div>
+  )
+}
+
+function SelectionWarnings({ warnings }) {
+  if (!warnings.length) return null
+  return (
+    <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+      <p className="font-semibold">Review before linking</p>
+      <ul className="mt-1 list-disc space-y-1 pl-4">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+    </div>
+  )
+}
+
+function SelectionPreview({ title, values }) {
+  if (!values.length) return null
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+      <p className="font-semibold text-slate-900">{title}</p>
+      <div className="mt-2 grid gap-2">{values.map(({ field, item }) => <div key={field}><span className="font-semibold">{formatType(field)}:</span> {item.label}{item.context_preview ? ` · ${item.context_preview}` : ""}</div>)}</div>
+    </div>
+  )
+}
+
+const selectorFields = [
+  ["trip_workspace_id", "trips"],
+  ["booking_workspace_id", "bookings"],
+  ["ticket_workspace_id", "ticket_workspaces"],
+  ["emd_workspace_id", "emd_workspaces"],
+  ["passenger_workspace_id", "passengers"],
+  ["passenger_service_request_id", "passenger_services"],
+  ["affected_segment_ref", "segments"],
+  ["accepted_offer_snapshot_id", "accepted_offer_snapshots"],
+  ["invoice_id", "invoices"],
+  ["invoice_line_item_id", "invoice_lines"],
+  ["payment_record_id", "payments"],
+  ["ticket_record_id", "tickets"],
+  ["emd_record_id", "emds"],
+]
+
+function selectedOptions(values, options) {
+  return selectorFields.flatMap(([field, group]) => {
+    const item = (options[group] || []).find((candidate) => candidate.id === values[field])
+    return item ? [{ field, item }] : []
+  })
+}
+
+function contextItems(items = [], field, value) {
+  if (!value) return items
+  return items.filter((item) => item.context?.[field] === value)
+}
+
+function withSourceLabel(item) {
+  const snapshot = item.snapshot_json || {}
+  const sourceLabel = snapshot.invoice_number || snapshot.ticket_number || snapshot.emd_number || snapshot.booking_reference
+    || snapshot.trip_reference || snapshot.passenger_reference || snapshot.service_label || snapshot.description
+    || formatType(item.item_type)
+  return { ...item, source_label: sourceLabel }
+}
+
+function selectionWarnings(values, options) {
+  const selected = selectedOptions(values, options)
+  const warnings = selected.flatMap(({ item }) => item.warnings || [])
+  if (values.invoice_line_item_id && !values.invoice_id) warnings.push("Select the invoice that owns the invoice line.")
+  if (values.payment_record_id && !values.invoice_id) warnings.push("Select the invoice that owns the payment.")
+  const invoiceLine = (options.invoice_lines || []).find((item) => item.id === values.invoice_line_item_id)
+  const payment = (options.payments || []).find((item) => item.id === values.payment_record_id)
+  if (invoiceLine && values.invoice_id && invoiceLine.context?.invoice_id !== values.invoice_id) warnings.push("Invoice line and invoice contexts do not match.")
+  if (payment && values.invoice_id && payment.context?.invoice_id !== values.invoice_id) warnings.push("Payment and invoice contexts do not match.")
+
+  const trip = (options.trips || []).find((item) => item.id === values.trip_workspace_id)
+  const booking = (options.bookings || []).find((item) => item.id === values.booking_workspace_id)
+  const tripIds = new Set([trip?.id, trip?.context?.trip_id].filter(Boolean))
+  const bookingIds = new Set([booking?.id, booking?.context?.booking_id, booking?.context?.booking_record_id].filter(Boolean))
+  selected.forEach(({ field, item }) => {
+    if (["trip_workspace_id", "booking_workspace_id"].includes(field)) return
+    const itemTripIds = [item.context?.trip_workspace_id, item.context?.trip_id].filter(Boolean)
+    const itemBookingIds = [item.context?.booking_workspace_id, item.context?.booking_record_id, item.context?.booking_id].filter(Boolean)
+    if (tripIds.size && itemTripIds.length && !itemTripIds.some((id) => tripIds.has(id))) warnings.push(`${formatType(field)} belongs to a different trip context.`)
+    if (bookingIds.size && itemBookingIds.length && !itemBookingIds.some((id) => bookingIds.has(id))) warnings.push(`${formatType(field)} belongs to a different booking context.`)
+  })
+  return [...new Set(warnings)]
 }
 
 function queryString(values) {

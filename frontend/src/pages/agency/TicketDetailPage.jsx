@@ -72,6 +72,7 @@ export default function TicketDetailPage({ ticketRecordId }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {ticket?.booking_workspace_id ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${ticket.booking_workspace_id}`}>Booking workspace</a> : null}
+                <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/after-sales?ticket_record_id=${encodeURIComponent(ticketRecordId)}${ticket?.booking_workspace_id ? `&booking_workspace_id=${encodeURIComponent(ticket.booking_workspace_id)}` : ""}`}>Open after-sales case</a>
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Issue ticket</button>
               </div>
             </div>

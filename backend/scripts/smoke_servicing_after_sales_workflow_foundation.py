@@ -175,6 +175,7 @@ def verify_routes_and_docs(paths: dict) -> None:
         "/api/platform/after-sales/{case_id}": {"get"},
         "/api/agencies/{agency_id}/after-sales": {"get", "post"},
         "/api/agencies/{agency_id}/after-sales/summary": {"get"},
+        "/api/agencies/{agency_id}/after-sales/link-options": {"get"},
         "/api/agencies/{agency_id}/after-sales/{case_id}": {"get", "put"},
         "/api/agencies/{agency_id}/after-sales/{case_id}/items": {"get", "post"},
         "/api/agencies/{agency_id}/after-sales/{case_id}/decisions": {"get", "post"},
@@ -193,6 +194,8 @@ def verify_routes_and_docs(paths: dict) -> None:
         (ROOT / "frontend/src/App.jsx", "/platform/after-sales"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "After-Sales"),
         (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "does not mutate tickets or EMDs"),
+        (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "Search by operational label"),
+        (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "Selected operating context"),
         (ROOT / "frontend/src/pages/platform/AfterSalesDiagnosticsPage.jsx", "Read-only platform visibility"),
         (ROOT / "docs/architecture/servicing-after-sales-workflow-foundation.md", "Servicing and After-Sales Workflow Foundation"),
         (ROOT / "README.md", "servicing/after-sales workflow records"),
@@ -273,14 +276,6 @@ def case_payload(case_type: str) -> dict:
         "case_priority": "high" if case_type in {"disruption_irregular_operation", "claim"} else "normal",
         "case_title": f"{case_type.replace('_', ' ').title()} smoke {token}",
         "case_summary": "Metadata-only after-sales servicing case for smoke validation.",
-        "trip_workspace_id": f"trip-{token}",
-        "booking_workspace_id": f"booking-{token}",
-        "ticket_workspace_ids": [f"ticket-{token}"],
-        "emd_workspace_ids": [f"emd-{token}"],
-        "passenger_workspace_ids": [f"passenger-{token}"],
-        "document_workspace_ids": [f"document-{token}"],
-        "ssr_osi_workspace_ids": [f"ssr-{token}"],
-        "affected_segment_refs": ["seg-1"],
         "residual_value_summary": "Residual value placeholder only.",
         "penalty_summary": "Penalty requires manual supplier review.",
         "fare_difference_summary": "Fare difference is not calculated in this phase.",
@@ -301,6 +296,23 @@ def verify_live_api(paths: dict) -> None:
     verify_routes_and_docs(paths)
     verify_readiness()
     primary_agency_id = agency_ids()[0]
+    link_options = get(f"/api/agencies/{primary_agency_id}/after-sales/link-options", AGENCY_AGENT_HEADERS)
+    expected_groups = {"trips", "bookings", "ticket_workspaces", "emd_workspaces", "passengers", "passenger_services", "segments", "accepted_offer_snapshots", "invoices", "invoice_lines", "payments", "tickets", "emds"}
+    if not expected_groups.issubset(set((link_options.get("items") or {}).keys())):
+        raise AssertionError(f"After-sales canonical selector groups are incomplete: {link_options}")
+    if link_options.get("canonical_entities_only") is not True or link_options.get("context_preview_enabled") is not True:
+        raise AssertionError(f"After-sales canonical selector safety metadata is missing: {link_options}")
+    request("GET", "/api/agencies/other-agency/after-sales/link-options", None, AGENCY_AGENT_HEADERS, 404)
+    invalid_link_payload = case_payload("refund")
+    invalid_link_payload["invoice_ids"] = ["missing-canonical-invoice"]
+    invalid_link_payload["idempotency_key"] = f"smoke:invalid-link:{ref('case')}"
+    request(
+        "POST",
+        f"/api/agencies/{primary_agency_id}/after-sales",
+        invalid_link_payload,
+        AGENCY_AGENT_HEADERS,
+        400,
+    )
     created_cases = []
     for case_type in CASE_TYPES:
         response = post(f"/api/agencies/{primary_agency_id}/after-sales", case_payload(case_type), AGENCY_AGENT_HEADERS, 201)

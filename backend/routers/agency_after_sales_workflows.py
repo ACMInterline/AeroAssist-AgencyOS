@@ -94,6 +94,16 @@ async def summarize_agency_after_sales_cases(
     return {"phase": PHASE_LABEL, "summary": await service.summary(agency_id=agency_id), **service.safety_flags()}
 
 
+@router.get("/link-options")
+async def list_agency_after_sales_link_options(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    return await AfterSalesWorkflowService(db).link_options(agency_id)
+
+
 @router.get("/{case_id}")
 async def get_agency_after_sales_case(
     agency_id: str,

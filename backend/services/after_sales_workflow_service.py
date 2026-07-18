@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     AuditEvent,
     AfterSalesCase,
@@ -78,9 +81,14 @@ CASE_ITEM_TYPES = [
     "ticket",
     "emd",
     "passenger",
+    "passenger_service",
     "segment",
     "document",
     "ssr_osi",
+    "accepted_offer",
+    "invoice",
+    "invoice_line_item",
+    "payment",
     "refund_exchange_case",
     "trip_change_operation",
     "ticket_exchange_operation",
@@ -175,11 +183,50 @@ class AfterSalesWorkflowService:
             **self.safety_flags(),
         }
 
+    async def link_options(self, agency_id: str) -> dict[str, Any]:
+        collections = {
+            "trips": "trip_workspaces",
+            "bookings": "booking_workspaces",
+            "passengers": "passenger_workspaces",
+            "passenger_services": "passenger_service_requests",
+            "segments": "trip_segments",
+            "accepted_offer_snapshots": "trip_accepted_offer_snapshots",
+            "ticket_workspaces": "ticket_workspaces",
+            "emd_workspaces": "emd_workspaces",
+            "invoices": "invoices",
+            "invoice_lines": "invoice_line_items",
+            "payments": "payment_records",
+            "tickets": "ticket_records",
+            "emds": "emd_records",
+        }
+        records = await asyncio.gather(
+            *(self._selector_records(agency_id, collection) for collection in collections.values())
+        )
+        items = {
+            key: [self._selector_option(key, record) for record in group]
+            for (key, _), group in zip(collections.items(), records)
+        }
+        return {
+            "phase": PHASE_LABEL,
+            "agency_id": agency_id,
+            "items": items,
+            "selector_count": sum(len(group) for group in items.values()),
+            "canonical_entities_only": True,
+            "labels_preferred_over_ids": True,
+            "context_preview_enabled": True,
+            "warnings_before_linking_enabled": True,
+            "immutable_reference_snapshots_enabled": True,
+            **self.safety_flags(),
+        }
+
     async def create_case(self, payload: AfterSalesCaseCreate | dict[str, Any], user: dict, agency_id: str | None = None) -> dict[str, Any]:
         data = self._payload(payload)
         if agency_id:
             data["agency_id"] = agency_id
         self._validate_case(data)
+        link_validation = await self._validate_canonical_links(data)
+        data["canonical_reference_snapshot_json"] = link_validation["snapshot"]
+        data["link_validation_warnings"] = link_validation["warnings"]
         data.setdefault("case_reference", self._reference("ASC"))
         data["idempotency_key"] = data.get("idempotency_key") or self._idempotency_key(data)
         existing = await self.db.collection(AFTER_SALES_CASES_COLLECTION).find_one({"agency_id": data["agency_id"], "idempotency_key": data["idempotency_key"]})
@@ -466,6 +513,272 @@ class AfterSalesWorkflowService:
     async def list_communications(self, agency_id: str | None = None, case_id: str | None = None, communication_type: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         return await self._list_child(AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION, agency_id=agency_id, case_id=case_id, field="communication_type", value=communication_type, limit=limit)
 
+    async def _selector_records(self, agency_id: str, collection_name: str) -> list[dict[str, Any]]:
+        page = await PersistenceRepository(self.db).find_agency_records(
+            collection_name=collection_name,
+            agency_id=agency_id,
+            pagination=PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+        )
+        return page.items
+
+    def _selector_option(self, group: str, record: dict[str, Any]) -> dict[str, Any]:
+        labels = {
+            "trips": self._join_label(
+                record.get("trip_reference") or "Trip",
+                self._route_label(record),
+                record.get("departure_date"),
+            ),
+            "bookings": self._join_label(
+                record.get("booking_reference") or record.get("airline_pnr") or "Booking",
+                record.get("booking_status") or record.get("status"),
+                record.get("airline_pnr"),
+            ),
+            "passengers": self._join_label(
+                " ".join(value for value in [record.get("first_name"), record.get("last_name")] if value)
+                or record.get("preferred_name")
+                or "Passenger",
+                record.get("passenger_reference"),
+                record.get("passenger_status"),
+            ),
+            "passenger_services": self._join_label(
+                record.get("service_label") or record.get("service_type") or "Passenger service",
+                record.get("service_key") or record.get("ssr_code"),
+                record.get("fulfilment_result") or record.get("status"),
+            ),
+            "segments": self._join_label(
+                self._route_label(record) or "Trip segment",
+                record.get("flight_number"),
+                record.get("departure_date"),
+            ),
+            "accepted_offer_snapshots": self._join_label(
+                "Accepted offer snapshot",
+                (record.get("confirmed_fare_bundle_json") or {}).get("name"),
+                self._money_label(
+                    (record.get("confirmed_pricing_json") or {}).get("total_amount"),
+                    (record.get("confirmed_pricing_json") or {}).get("currency"),
+                ),
+                record.get("created_at"),
+            ),
+            "ticket_workspaces": self._join_label(
+                record.get("ticket_number") or record.get("ticket_reference") or "Ticket workspace",
+                record.get("passenger_name"),
+                record.get("ticket_document_status") or record.get("ticket_status"),
+            ),
+            "emd_workspaces": self._join_label(
+                record.get("emd_number") or record.get("emd_reference") or "EMD workspace",
+                record.get("service_description") or record.get("service_category"),
+                record.get("emd_document_status") or record.get("emd_status"),
+            ),
+            "invoices": self._join_label(
+                record.get("invoice_number") or "Invoice",
+                self._money_label(record.get("total") or record.get("total_amount"), record.get("currency")),
+                record.get("status"),
+            ),
+            "invoice_lines": self._join_label(
+                record.get("description") or record.get("line_item_type") or "Invoice line",
+                self._money_label(
+                    record.get("amount") or record.get("line_total") or record.get("total_amount"),
+                    record.get("currency"),
+                ),
+            ),
+            "payments": self._join_label(
+                record.get("external_reference") or record.get("payment_reference") or "Payment",
+                self._money_label(record.get("amount"), record.get("currency")),
+                record.get("status"),
+            ),
+            "tickets": self._join_label(
+                record.get("ticket_number") or record.get("ticket_reference") or "Ticket record",
+                (record.get("passenger_snapshot_json") or {}).get("display_name") or record.get("passenger_name"),
+                record.get("reconciliation_status") or record.get("issue_status") or record.get("status"),
+            ),
+            "emds": self._join_label(
+                record.get("emd_number") or record.get("emd_reference") or "EMD record",
+                record.get("service_label") or record.get("service_name") or record.get("service_code"),
+                record.get("issue_status") or record.get("status"),
+            ),
+        }
+        status_value = (
+            record.get("reconciliation_status")
+            or record.get("fulfilment_result")
+            or record.get("booking_status")
+            or record.get("trip_status")
+            or record.get("ticket_document_status")
+            or record.get("emd_document_status")
+            or record.get("status")
+            or record.get("issue_status")
+            or "unknown"
+        )
+        warning_states = {"unknown", "unreconciled", "mismatch", "manual_review", "draft", "failed", "blocked"}
+        warnings = []
+        if self._norm(status_value) in warning_states:
+            warnings.append(f"Current state is {self._label(status_value)}; review before linking.")
+        if group == "accepted_offer_snapshots":
+            warnings.append("This immutable accepted-offer snapshot will be referenced without modification.")
+        context = {
+            key: record.get(key)
+            for key in [
+                "trip_id", "trip_workspace_id", "booking_id", "booking_workspace_id", "booking_record_id",
+                "passenger_id", "client_id", "request_id", "invoice_id", "workspace_id", "acceptance_id",
+                "accepted_offer_snapshot_id", "trip_accepted_offer_snapshot_id",
+            ]
+            if record.get(key)
+        }
+        return {
+            "id": record["id"],
+            "label": labels.get(group) or "Operational record",
+            "status": status_value,
+            "context": context,
+            "context_preview": self._join_label(
+                self._route_label(record),
+                record.get("booking_reference"),
+                record.get("airline_pnr"),
+                record.get("passenger_name"),
+            ),
+            "warnings": warnings,
+            "immutable_reference": group == "accepted_offer_snapshots",
+        }
+
+    async def _validate_canonical_links(self, data: dict[str, Any]) -> dict[str, Any]:
+        agency_id = data["agency_id"]
+        list_fields = {
+            "ticket_workspace_ids": "ticket_workspaces",
+            "emd_workspace_ids": "emd_workspaces",
+            "passenger_workspace_ids": "passenger_workspaces",
+            "passenger_service_request_ids": "passenger_service_requests",
+            "document_workspace_ids": "document_workspaces",
+            "ssr_osi_workspace_ids": "ssr_osi_workspaces",
+            "invoice_ids": "invoices",
+            "invoice_line_item_ids": "invoice_line_items",
+            "payment_record_ids": "payment_records",
+            "ticket_record_ids": "ticket_records",
+            "emd_record_ids": "emd_records",
+            "affected_segment_refs": "trip_segments",
+        }
+        single_fields = {
+            "operational_workspace_id": "operational_travel_workspaces",
+            "travel_request_workspace_id": "travel_request_workspaces",
+            "trip_workspace_id": "trip_workspaces",
+            "booking_workspace_id": "booking_workspaces",
+            "accepted_offer_snapshot_id": "trip_accepted_offer_snapshots",
+        }
+        warnings: list[dict[str, Any]] = []
+        references: dict[str, list[dict[str, Any]]] = {}
+
+        for field, collection in list_fields.items():
+            original = [value for value in data.get(field) or [] if value]
+            values = self._present(original)
+            data[field] = values
+            if len(values) != len(original):
+                warnings.append({"code": "duplicate_reference_removed", "field": field, "severity": "warning"})
+            references[field] = []
+            for entity_id in values:
+                references[field].append(await self._require_agency_entity(collection, entity_id, agency_id, field))
+
+        for field, collection in single_fields.items():
+            references[field] = []
+            if data.get(field):
+                references[field].append(
+                    await self._require_agency_entity(collection, data[field], agency_id, field)
+                )
+
+        trip = self._first_reference(references, "trip_workspace_id")
+        booking = self._first_reference(references, "booking_workspace_id")
+        snapshot = self._first_reference(references, "accepted_offer_snapshot_id")
+        trip_ids = self._record_ids(
+            trip,
+            "id", "trip_id", "linked_trip_id",
+            metadata_keys=("canonical_trip_id",),
+        )
+        booking_ids = self._record_ids(booking, "id", "booking_id", "booking_record_id")
+
+        if trip and booking:
+            self._require_context_overlap(
+                "Booking workspace",
+                trip_ids,
+                self._record_ids(booking, "trip_workspace_id", "trip_id"),
+                "trip",
+            )
+        for passenger in references["passenger_workspace_ids"]:
+            if trip:
+                trip_passenger_ids = self._record_ids(trip, "passenger_ids")
+                if trip_passenger_ids and passenger["id"] not in trip_passenger_ids:
+                    raise AfterSalesWorkflowError("Passenger does not belong to the selected trip context.")
+            if booking:
+                booking_passenger_ids = self._record_ids(booking, "passenger_ids")
+                if booking_passenger_ids and passenger["id"] not in booking_passenger_ids:
+                    raise AfterSalesWorkflowError("Passenger does not belong to the selected booking context.")
+        if trip and snapshot:
+            self._require_context_overlap(
+                "Accepted-offer snapshot", trip_ids, self._record_ids(snapshot, "trip_id"), "trip"
+            )
+        if booking and snapshot:
+            snapshot_ids = self._record_ids(
+                booking, "accepted_offer_snapshot_id", "trip_accepted_offer_snapshot_id"
+            )
+            if snapshot_ids and snapshot["id"] not in snapshot_ids:
+                raise AfterSalesWorkflowError("Accepted-offer snapshot does not belong to the selected booking context.")
+
+        for record in references["invoice_line_item_ids"]:
+            if not references["invoice_ids"]:
+                raise AfterSalesWorkflowError("Select the invoice that owns the selected invoice line.")
+            if record.get("invoice_id") not in {item["id"] for item in references["invoice_ids"]}:
+                raise AfterSalesWorkflowError("Selected invoice line does not belong to the selected invoice.")
+        for record in references["payment_record_ids"]:
+            if not references["invoice_ids"]:
+                raise AfterSalesWorkflowError("Select the invoice that owns the selected payment.")
+            if record.get("invoice_id") not in {item["id"] for item in references["invoice_ids"]}:
+                raise AfterSalesWorkflowError("Selected payment does not belong to the selected invoice.")
+
+        for label, field in [
+            ("Invoice", "invoice_ids"),
+            ("Ticket workspace", "ticket_workspace_ids"),
+            ("EMD workspace", "emd_workspace_ids"),
+            ("Ticket", "ticket_record_ids"),
+            ("EMD", "emd_record_ids"),
+            ("Passenger service", "passenger_service_request_ids"),
+        ]:
+            for record in references[field]:
+                if trip:
+                    self._require_context_overlap(
+                        label, trip_ids, self._record_ids(record, "trip_workspace_id", "trip_id"), "trip"
+                    )
+                if booking:
+                    self._require_context_overlap(
+                        label,
+                        booking_ids,
+                        self._record_ids(record, "booking_workspace_id", "booking_record_id", "booking_id"),
+                        "booking",
+                    )
+                selected_passenger_ids = {item["id"] for item in references["passenger_workspace_ids"]}
+                if selected_passenger_ids and record.get("passenger_id") and record["passenger_id"] not in selected_passenger_ids:
+                    raise AfterSalesWorkflowError(f"{label} belongs to a different passenger context.")
+        for segment in references["affected_segment_refs"]:
+            if trip:
+                self._require_context_overlap(
+                    "Trip segment", trip_ids, self._record_ids(segment, "trip_id", "workspace_id"), "trip"
+                )
+
+        if booking:
+            canonical_booking_reference = booking.get("booking_reference") or booking.get("airline_pnr")
+            if data.get("booking_reference") and canonical_booking_reference and data["booking_reference"] != canonical_booking_reference:
+                raise AfterSalesWorkflowError("Booking reference does not match the selected booking workspace.")
+            data["booking_reference"] = canonical_booking_reference or data.get("booking_reference")
+
+        snapshot_payload = {
+            field: [self._reference_snapshot(record) for record in records]
+            for field, records in references.items()
+            if records
+        }
+        return {
+            "snapshot": {
+                "captured_at": self._now().isoformat(),
+                "agency_id": agency_id,
+                "immutable_reference_evidence": True,
+                "references": snapshot_payload,
+            },
+            "warnings": warnings,
+        }
+
     async def _resolve_context(self, data: dict[str, Any]) -> dict[str, Any]:
         linked: list[dict[str, Any]] = []
         warnings: list[dict[str, Any]] = []
@@ -519,10 +832,44 @@ class AfterSalesWorkflowService:
             else:
                 warnings.append({"code": "linked_emd_workspace_not_found", "entity_type": "emd_workspace", "entity_id": emd_id, "severity": "warning"})
 
+        for ticket_id in data.get("ticket_record_ids") or []:
+            record = await self.db.collection("ticket_records").find_one(
+                {"id": ticket_id, "agency_id": data["agency_id"]}
+            )
+            if record:
+                linked.append({"item_type": "ticket", "source_entity_type": "ticket_record", "source_entity_id": ticket_id, "snapshot": self._compact_snapshot(record)})
+                coupon_snapshots.append(
+                    {
+                        "ticket_record_id": ticket_id,
+                        "ticket_status": record.get("issue_status") or record.get("status"),
+                        "reconciliation_status": record.get("reconciliation_status") or "unknown",
+                        "coupon_details": record.get("coupons_json") or [],
+                    }
+                )
+
+        for emd_id in data.get("emd_record_ids") or []:
+            record = await self.db.collection("emd_records").find_one(
+                {"id": emd_id, "agency_id": data["agency_id"]}
+            )
+            if record:
+                linked.append({"item_type": "emd", "source_entity_type": "emd_record", "source_entity_id": emd_id, "snapshot": self._compact_snapshot(record)})
+                coupon_snapshots.append(
+                    {
+                        "emd_record_id": emd_id,
+                        "emd_status": record.get("issue_status") or record.get("status"),
+                        "service_code": record.get("service_code"),
+                        "associated_segment_ids": record.get("associated_segment_ids") or [],
+                    }
+                )
+
         list_links = [
             ("passenger_workspaces", "passenger_workspace", "passenger_workspace_ids", "passenger"),
+            ("passenger_service_requests", "passenger_service_request", "passenger_service_request_ids", "passenger_service"),
             ("document_workspaces", "document_workspace", "document_workspace_ids", "document"),
             ("ssr_osi_workspaces", "ssr_osi_workspace", "ssr_osi_workspace_ids", "ssr_osi"),
+            ("invoices", "invoice", "invoice_ids", "invoice"),
+            ("invoice_line_items", "invoice_line_item", "invoice_line_item_ids", "invoice_line_item"),
+            ("payment_records", "payment_record", "payment_record_ids", "payment"),
         ]
         for collection, entity_type, field, item_type in list_links:
             for entity_id in data.get(field) or []:
@@ -532,8 +879,26 @@ class AfterSalesWorkflowService:
                 else:
                     warnings.append({"code": f"linked_{entity_type}_not_found", "entity_type": entity_type, "entity_id": entity_id, "severity": "warning"})
 
+        if data.get("accepted_offer_snapshot_id"):
+            snapshot = await self.db.collection("trip_accepted_offer_snapshots").find_one(
+                {"id": data["accepted_offer_snapshot_id"], "agency_id": data["agency_id"]}
+            )
+            if snapshot:
+                linked.append(
+                    {
+                        "item_type": "accepted_offer",
+                        "source_entity_type": "trip_accepted_offer_snapshot",
+                        "source_entity_id": snapshot["id"],
+                        "snapshot": self._reference_snapshot(snapshot),
+                    }
+                )
+
         for segment_ref in data.get("affected_segment_refs") or []:
-            linked.append({"item_type": "segment", "source_entity_type": "segment_reference", "source_entity_id": segment_ref, "snapshot": {"segment_reference": segment_ref}})
+            segment = await self.db.collection("trip_segments").find_one(
+                {"id": segment_ref, "agency_id": data["agency_id"]}
+            )
+            if segment:
+                linked.append({"item_type": "segment", "source_entity_type": "trip_segment", "source_entity_id": segment_ref, "snapshot": self._compact_snapshot(segment)})
 
         return {
             "linked_records": linked,
@@ -545,8 +910,15 @@ class AfterSalesWorkflowService:
                 "ticket_workspace_ids": data.get("ticket_workspace_ids") or [],
                 "emd_workspace_ids": data.get("emd_workspace_ids") or [],
                 "passenger_workspace_ids": data.get("passenger_workspace_ids") or [],
+                "passenger_service_request_ids": data.get("passenger_service_request_ids") or [],
                 "document_workspace_ids": data.get("document_workspace_ids") or [],
                 "ssr_osi_workspace_ids": data.get("ssr_osi_workspace_ids") or [],
+                "invoice_ids": data.get("invoice_ids") or [],
+                "invoice_line_item_ids": data.get("invoice_line_item_ids") or [],
+                "payment_record_ids": data.get("payment_record_ids") or [],
+                "ticket_record_ids": data.get("ticket_record_ids") or [],
+                "emd_record_ids": data.get("emd_record_ids") or [],
+                "accepted_offer_snapshot_id": data.get("accepted_offer_snapshot_id"),
                 "affected_segment_refs": data.get("affected_segment_refs") or [],
                 "metadata_only": True,
             },
@@ -932,11 +1304,11 @@ class AfterSalesWorkflowService:
                 "financial_impact_ids": [item["id"] for item in impacts],
                 "resolution_ids": [item["id"] for item in resolutions],
                 "communication_ids": [item["id"] for item in communications],
-                "invoice_ids": self._present([item_id for impact in impacts for item_id in (impact.get("invoice_ids") or [])]),
-                "invoice_line_item_ids": self._present([item_id for impact in impacts for item_id in (impact.get("invoice_line_item_ids") or [])]),
-                "payment_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("payment_record_ids") or [])]),
-                "ticket_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("ticket_record_ids") or [])]),
-                "emd_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("emd_record_ids") or [])]),
+                "invoice_ids": self._present((case.get("invoice_ids") or []) + [item_id for impact in impacts for item_id in (impact.get("invoice_ids") or [])]),
+                "invoice_line_item_ids": self._present((case.get("invoice_line_item_ids") or []) + [item_id for impact in impacts for item_id in (impact.get("invoice_line_item_ids") or [])]),
+                "payment_record_ids": self._present((case.get("payment_record_ids") or []) + [item_id for impact in impacts for item_id in (impact.get("payment_record_ids") or [])]),
+                "ticket_record_ids": self._present((case.get("ticket_record_ids") or []) + [item_id for impact in impacts for item_id in (impact.get("ticket_record_ids") or [])]),
+                "emd_record_ids": self._present((case.get("emd_record_ids") or []) + [item_id for impact in impacts for item_id in (impact.get("emd_record_ids") or [])]),
                 "updated_by": user.get("id"),
             },
         )
@@ -1035,11 +1407,15 @@ class AfterSalesWorkflowService:
         invoice_ids = set(resolved["invoice_ids"])
         for line_id in resolved["invoice_line_item_ids"]:
             line = raw[("invoice_line_items", line_id)]
-            if invoice_ids and line.get("invoice_id") not in invoice_ids:
+            if not invoice_ids:
+                raise AfterSalesWorkflowError("Select the invoice that owns the selected invoice line item.")
+            if line.get("invoice_id") not in invoice_ids:
                 raise AfterSalesWorkflowError("Invoice line item does not belong to a selected invoice.")
         for payment_id in resolved["payment_record_ids"]:
             payment = raw[("payment_records", payment_id)]
-            if invoice_ids and payment.get("invoice_id") not in invoice_ids:
+            if not invoice_ids:
+                raise AfterSalesWorkflowError("Select the invoice that owns the selected payment record.")
+            if payment.get("invoice_id") not in invoice_ids:
                 raise AfterSalesWorkflowError("Payment record does not belong to a selected invoice.")
         for collection, field in [("ticket_records", "ticket_record_ids"), ("emd_records", "emd_record_ids")]:
             for entity_id in resolved[field]:
@@ -1213,6 +1589,75 @@ class AfterSalesWorkflowService:
         source = data.get("source_entity_id") or data.get("booking_workspace_id") or data.get("trip_workspace_id") or data.get("case_title")
         return f"{data['agency_id']}:{self._norm(data['case_type'])}:{source}"
 
+    async def _require_agency_entity(
+        self, collection: str, entity_id: str, agency_id: str, field: str
+    ) -> dict[str, Any]:
+        record = await self.db.collection(collection).find_one({"agency_id": agency_id, "id": entity_id})
+        if not record:
+            raise AfterSalesWorkflowError(
+                f"Selected {field.replace('_', ' ')} record was not found for this agency."
+            )
+        return record
+
+    def _first_reference(
+        self, references: dict[str, list[dict[str, Any]]], field: str
+    ) -> dict[str, Any] | None:
+        return (references.get(field) or [None])[0]
+
+    def _record_ids(
+        self,
+        record: dict[str, Any] | None,
+        *fields: str,
+        metadata_keys: tuple[str, ...] = (),
+    ) -> set[str]:
+        if not record:
+            return set()
+        values: set[str] = set()
+        for field in fields:
+            value = record.get(field)
+            if isinstance(value, list):
+                values.update(str(item) for item in value if item)
+            elif value:
+                values.add(str(value))
+        metadata = record.get("metadata") or {}
+        values.update(str(metadata[key]) for key in metadata_keys if metadata.get(key))
+        return values
+
+    def _require_context_overlap(
+        self, label: str, expected: set[str], actual: set[str], context_name: str
+    ) -> None:
+        if expected and actual and expected.isdisjoint(actual):
+            raise AfterSalesWorkflowError(
+                f"{label} belongs to a different {context_name} context."
+            )
+
+    def _reference_snapshot(self, record: dict[str, Any]) -> dict[str, Any]:
+        return {
+            **self._compact_snapshot(record),
+            "trip_id": record.get("trip_id"),
+            "trip_workspace_id": record.get("trip_workspace_id"),
+            "booking_id": record.get("booking_id"),
+            "booking_workspace_id": record.get("booking_workspace_id"),
+            "booking_record_id": record.get("booking_record_id"),
+            "passenger_id": record.get("passenger_id"),
+            "invoice_id": record.get("invoice_id"),
+            "acceptance_id": record.get("acceptance_id"),
+            "immutable_reference": True,
+        }
+
+    def _join_label(self, *values: Any) -> str:
+        return " · ".join(str(value) for value in values if value is not None and value != "")
+
+    def _route_label(self, record: dict[str, Any]) -> str | None:
+        origin = record.get("origin_airport_code") or record.get("origin_airport") or record.get("departure_city")
+        destination = record.get("destination_airport_code") or record.get("destination_airport") or record.get("destination_city")
+        return f"{origin} to {destination}" if origin and destination else None
+
+    def _money_label(self, amount: Any, currency: Any) -> str | None:
+        if amount is None or amount == "":
+            return None
+        return self._join_label(currency, amount)
+
     def _reference(self, prefix: str) -> str:
         return f"{prefix}-{new_id()[:8].upper()}"
 
@@ -1239,6 +1684,18 @@ class AfterSalesWorkflowService:
             "passenger_name",
             "airline_pnr",
             "gds_record_locator",
+            "invoice_number",
+            "external_reference",
+            "ticket_number",
+            "emd_number",
+            "service_label",
+            "service_type",
+            "fulfilment_result",
+            "reconciliation_status",
+            "invoice_id",
+            "amount",
+            "currency",
+            "description",
             "created_at",
             "updated_at",
         ]

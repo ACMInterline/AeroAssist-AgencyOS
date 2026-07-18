@@ -128,6 +128,7 @@ export default function PassengerServicesPage() {
                   <div className="flex flex-wrap gap-2">
                     <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/document-workspaces?related_service=${encodeURIComponent(selected.id)}`}>Document requirements</a>
                     <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/documents?document_type=service_confirmation&source_context_type=service_request&source_context_id=${encodeURIComponent(selected.id)}`}>Render service document</a>
+                    <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/after-sales?passenger_service_request_id=${encodeURIComponent(selected.id)}${selected.booking_workspace_id ? `&booking_workspace_id=${encodeURIComponent(selected.booking_workspace_id)}` : ""}`}>Open after-sales case</a>
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

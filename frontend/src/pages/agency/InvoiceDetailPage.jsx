@@ -97,6 +97,7 @@ export default function InvoiceDetailPage({ invoiceId }) {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <InvoiceStatusBadge status={state.invoice.status} />
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" href={`/agency/after-sales?invoice_id=${encodeURIComponent(invoiceId)}`}>Open after-sales case</a>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={renderInvoiceSummary}>Render invoice summary</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium" onClick={issue}>Issue</button>
               <button className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700" onClick={voidInvoice}>Void</button>

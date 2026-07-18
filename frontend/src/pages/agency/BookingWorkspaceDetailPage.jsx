@@ -143,6 +143,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               </div>
               <div className="flex flex-wrap gap-2">
                 {workspace?.trip_id ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/trips/${workspace.trip_id}`}>Open trip</a> : null}
+                <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/after-sales?booking_workspace_id=${encodeURIComponent(workspace?.id || "")}`}>Open after-sales case</a>
                 <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={rebuildRecord}>Rebuild mirror</button>
                 <button className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" type="button" onClick={cancelWorkspace}>Cancel</button>
               </div>

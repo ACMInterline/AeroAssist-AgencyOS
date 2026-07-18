@@ -678,6 +678,29 @@ async def run_golden_path() -> None:
         ),
     )
     after_sales_service = AfterSalesWorkflowService(db)
+    link_options = await after_sales_service.link_options(AGENCY_ID)
+    option_groups = link_options["items"]
+    isolated_options = await after_sales_service.link_options(OTHER_AGENCY_ID)
+    require(
+        all(
+            booking_workspace["id"] not in {item["id"] for item in group}
+            for group in isolated_options["items"].values()
+        ),
+        "Cross-tenant canonical options leaked into another agency.",
+    )
+    for group, entity_id in [
+        ("bookings", booking_workspace["id"]),
+        ("passenger_services", service_case["id"]),
+        ("accepted_offer_snapshots", trip_snapshot["id"]),
+        ("invoices", invoice["id"]),
+        ("invoice_lines", invoice_line["id"]),
+        ("payments", payment["id"]),
+        ("tickets", ticket["id"]),
+    ]:
+        option = next((item for item in option_groups[group] if item["id"] == entity_id), None)
+        require(option is not None and option.get("label"), f"Canonical selector option missing for {group}.")
+        require("context" in option and "warnings" in option, f"Canonical selector context missing for {group}.")
+    require(link_options.get("immutable_reference_snapshots_enabled") is True, "Selector contract does not preserve immutable references.")
     after_sales_result = await after_sales_service.create_case(
         AfterSalesCaseCreate(
             agency_id=AGENCY_ID,
@@ -693,6 +716,7 @@ async def run_golden_path() -> None:
             invoice_line_item_ids=[invoice_line["id"]],
             payment_record_ids=[payment["id"]],
             ticket_record_ids=[ticket["id"]],
+            passenger_service_request_ids=[service_case["id"], service_case["id"]],
             accepted_offer_snapshot_id=trip_snapshot["id"],
             booking_reference=booking_workspace.get("booking_reference") or booking_workspace.get("workspace_number"),
             idempotency_key=f"{CORRELATION}:after-sales",
@@ -705,6 +729,48 @@ async def run_golden_path() -> None:
     after_sales_case = after_sales_result["case"]
     require(after_sales_case["affected_financial_records"]["invoice_ids"] == [invoice["id"]], "After Sales did not retain invoice linkage.")
     require(after_sales_case["affected_financial_records"]["payment_record_ids"] == [payment["id"]], "After Sales did not retain payment linkage.")
+    require(after_sales_case["passenger_service_request_ids"] == [service_case["id"]], "After Sales did not prevent duplicate passenger-service linkage.")
+    require((after_sales_case.get("canonical_reference_snapshot_json") or {}).get("immutable_reference_evidence") is True, "After Sales did not preserve canonical reference evidence.")
+    require(any(item.get("source_entity_type") == "passenger_service_request" for item in after_sales_case.get("items") or []), "After Sales did not preserve passenger-service context.")
+    captured_ticket = after_sales_case["canonical_reference_snapshot_json"]["references"]["ticket_record_ids"][0]
+    await db.collection("ticket_records").update_one(
+        {"agency_id": AGENCY_ID, "id": ticket["id"]},
+        {"reconciliation_status": "source_changed_after_link"},
+    )
+    immutable_case = await after_sales_service.get_case(after_sales_case["id"], agency_id=AGENCY_ID)
+    require(
+        immutable_case["canonical_reference_snapshot_json"]["references"]["ticket_record_ids"][0] == captured_ticket,
+        "Canonical reference evidence changed when the source record changed.",
+    )
+    mismatched_invoice = await insert(
+        db,
+        "invoices",
+        Invoice(
+            agency_id=AGENCY_ID,
+            invoice_number="INV-V1-OTHER",
+            client_id=context["client"]["id"],
+            status="draft",
+            currency="EUR",
+            subtotal_amount=10.0,
+            total_amount=10.0,
+        ),
+    )
+    await expect_error(
+        after_sales_service.create_case(
+            AfterSalesCaseCreate(
+                agency_id=AGENCY_ID,
+                case_type="refund",
+                case_title="Reject mismatched invoice context",
+                invoice_ids=[mismatched_invoice["id"]],
+                invoice_line_item_ids=[invoice_line["id"]],
+                idempotency_key=f"{CORRELATION}:mismatched-invoice",
+            ),
+            user,
+            agency_id=AGENCY_ID,
+        ),
+        AfterSalesWorkflowError,
+        "invoice-line ownership mismatch",
+    )
     mismatch_payload = AfterSalesFinancialImpactCreate(
         impact_type="fare_difference",
         amount_category="fare_difference",
@@ -817,6 +883,21 @@ def verify_static_contracts() -> None:
     offer_page = (ROOT / "frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx").read_text(encoding="utf-8")
     require("/agency/booking-handoffs" in offer_page, "Primary offer UI does not use booking handoff.")
     require("booking-workspaces/from-readiness" not in offer_page, "Primary offer UI still bypasses booking handoff.")
+    after_sales_page = (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx").read_text(encoding="utf-8")
+    for manual_label in [
+        "Trip workspace id", "Booking workspace id", "Ticket workspace id", "EMD workspace id",
+        "Passenger workspace id", "Invoice line item id", "Ticket record id", "EMD record id",
+        "Accepted snapshot id", "Booking reference",
+    ]:
+        require(manual_label not in after_sales_page, f"After Sales still exposes manual canonical entry: {manual_label}.")
+    for selector_label in [
+        'label="Booking"', 'label="Passenger service"', 'label="Accepted offer"',
+        'label="Invoice line"', 'label="Ticket"', 'label="EMD"',
+    ]:
+        require(selector_label in after_sales_page, f"After Sales selector is missing: {selector_label}.")
+    for source_page in ["TicketDetailPage.jsx", "EmdDetailPage.jsx", "PassengerServicesPage.jsx", "InvoiceDetailPage.jsx", "BookingWorkspaceDetailPage.jsx"]:
+        source_text = (ROOT / "frontend/src/pages/agency" / source_page).read_text(encoding="utf-8")
+        require("/agency/after-sales?" in source_text, f"{source_page} has no canonical After Sales entry point.")
     require((ROOT / "docs/master-review/V1_CANONICAL_OPERATING_SEQUENCE.md").exists(), "Canonical operating sequence is missing.")
     require((ROOT / "docs/master-review/V1_TRANSITION_OWNERSHIP_CONTRACT.md").exists(), "Transition ownership contract is missing.")
 
