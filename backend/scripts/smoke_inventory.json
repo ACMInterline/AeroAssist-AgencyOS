@@ -2552,6 +2552,26 @@
       "execution_isolation": "shared_backend"
     },
     {
+      "script_path": "backend/scripts/smoke_v1_golden_path_integration.py",
+      "capability_name": "V1 Canonical Golden Path Integration",
+      "minimum_application_phase": "phase_54_7_servicing_after_sales_workflow_foundation",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "operations",
+        "finance",
+        "end_to_end"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Persisted process-local integration smoke for the V1 consolidation sprint. It uses an isolated in-memory database and does not change the active application phase marker.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
       "capability_name": "Visual Policy Editor Foundation",
       "minimum_application_phase": "phase_52_3_visual_policy_editor_foundation",

@@ -9,6 +9,7 @@ from models import (
     ManualTicketCreate,
     TicketCreateFromBookingRequest,
     TicketRecordUpdate,
+    TicketResultReconciliationRequest,
 )
 from services.tenant_service import assert_agency_access, require_any_agency_role
 from services.ticket_emd_service import TicketEmdError, TicketEmdService
@@ -126,6 +127,24 @@ async def update_ticket_record(
     await require_write(db, agency_id, user)
     service = TicketEmdService(db)
     result = await service.update_ticket_record(agency_id, ticket_record_id, payload, user)
+    if result is None:
+        raise not_found("Ticket record not found.")
+    return result
+
+
+@router.post("/tickets/{ticket_record_id}/reconcile")
+async def reconcile_external_ticket_result(
+    agency_id: str,
+    ticket_record_id: str,
+    payload: TicketResultReconciliationRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        result = await TicketEmdService(db).reconcile_ticket_result(agency_id, ticket_record_id, payload, user)
+    except TicketEmdError as exc:
+        raise bad_request(exc)
     if result is None:
         raise not_found("Ticket record not found.")
     return result

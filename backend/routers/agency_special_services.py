@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from auth import get_current_user
 from database import Database, get_database
-from models import PassengerServiceRequestCreate
+from models import (
+    PassengerServiceConfirmationRequest,
+    PassengerServiceFulfilmentLinkRequest,
+    PassengerServiceOutcomeRequest,
+    PassengerServiceReconciliationRequest,
+    PassengerServiceRequestCreate,
+)
 from services.special_services_service import SpecialServicesService
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -143,6 +149,95 @@ async def generate_trip_special_services_ssr_osi(
     await ensure_trip(db, agency_id, trip_id)
     service = SpecialServicesService(db)
     return await service.generate_ssr_osi_for_trip(agency_id, trip_id, user["id"])
+
+
+@router.get("/passenger-services")
+async def list_passenger_service_fulfilment_cases(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    return {
+        "agency_id": agency_id,
+        "items": await SpecialServicesService(db).list_fulfilment_cases(agency_id),
+        "manual_external_status_only": True,
+        "provider_execution_disabled": True,
+    }
+
+
+@router.get("/passenger-services/{service_id}")
+async def get_passenger_service_fulfilment_case(
+    agency_id: str,
+    service_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    service = await SpecialServicesService(db).get_service_or_none(agency_id, service_id)
+    if not service:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passenger-service request not found.")
+    return {"agency_id": agency_id, "service": service, "provider_execution_disabled": True}
+
+
+@router.post("/passenger-services/{service_id}/fulfilment/links")
+async def link_passenger_service_fulfilment_records(
+    agency_id: str,
+    service_id: str,
+    payload: PassengerServiceFulfilmentLinkRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await SpecialServicesService(db).link_fulfilment_records(agency_id, service_id, payload, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/passenger-services/{service_id}/fulfilment/confirmations")
+async def record_passenger_service_confirmation(
+    agency_id: str,
+    service_id: str,
+    payload: PassengerServiceConfirmationRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await SpecialServicesService(db).record_confirmation(agency_id, service_id, payload, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/passenger-services/{service_id}/fulfilment/reconcile")
+async def reconcile_passenger_service_fulfilment(
+    agency_id: str,
+    service_id: str,
+    payload: PassengerServiceReconciliationRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await SpecialServicesService(db).reconcile_fulfilment(agency_id, service_id, payload, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.post("/passenger-services/{service_id}/fulfilment/outcome")
+async def record_passenger_service_fulfilment_outcome(
+    agency_id: str,
+    service_id: str,
+    payload: PassengerServiceOutcomeRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await SpecialServicesService(db).record_fulfilment_outcome(agency_id, service_id, payload, user)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.post("/bookings/{booking_id}/special-services/from-parsed-pnr")

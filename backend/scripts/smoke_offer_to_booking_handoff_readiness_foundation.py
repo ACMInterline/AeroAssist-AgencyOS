@@ -153,6 +153,17 @@ def verify_static_contracts() -> None:
             raise AssertionError(f"Model missing metadata-only handoff flags: {dumped}")
     assert_status_calculation()
     assert_no_forbidden_execution_text()
+    offer_detail_text = (ROOT / "frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx").read_text(encoding="utf-8")
+    if "booking-workspaces/from-readiness" in offer_detail_text:
+        raise AssertionError("Primary Offer UI still bypasses the canonical booking handoff.")
+    if "/agency/booking-handoffs" not in offer_detail_text or "Continue to booking handoff" not in offer_detail_text:
+        raise AssertionError("Primary Offer UI does not direct accepted offers through the booking handoff.")
+    booking_router_text = (ROOT / "backend/routers/agency_booking_workspaces.py").read_text(encoding="utf-8")
+    if "compatibility_only" not in booking_router_text:
+        raise AssertionError("Legacy readiness-to-booking endpoint is not marked compatibility-only.")
+    booking_service_text = (ROOT / "backend/services/booking_workspace_service.py").read_text(encoding="utf-8")
+    if "Booking creation requires the immutable accepted-offer snapshot" not in booking_service_text:
+        raise AssertionError("Compatibility booking creation does not require immutable acceptance evidence.")
 
 
 def verify_routes_and_docs(paths: dict) -> None:

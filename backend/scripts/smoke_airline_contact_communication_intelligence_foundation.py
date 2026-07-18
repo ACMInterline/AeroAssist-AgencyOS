@@ -76,6 +76,11 @@ def assert_agency_safe(value: object) -> None:
 
 
 def verify_models_collections_indexes_and_taxonomies() -> None:
+    service_text = (ROOT / "backend/services/airline_contact_communication_intelligence_service.py").read_text(encoding="utf-8")
+    if '"ssr_osi_workspace_id": "ssr_osi_operational_workspaces"' in service_text:
+        raise AssertionError("Airline contact integration uses the stale SSR/OSI collection name.")
+    if '"ssr_osi_workspace_id": "ssr_osi_workspaces"' not in service_text:
+        raise AssertionError("Airline contact integration is not mapped to the canonical SSR/OSI collection.")
     if CAPABILITY_PHASE != MINIMUM_PHASE:
         raise AssertionError(f"Unexpected Phase 55.8 capability provenance: {CAPABILITY_PHASE}")
     assert_application_phase_at_least(PHASE_LABEL, MINIMUM_PHASE, source="Phase 55.8 service")

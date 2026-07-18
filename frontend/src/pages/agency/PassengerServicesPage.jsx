@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const needCategories = ["mobility", "medical", "visual_impairment", "hearing_impairment", "cognitive", "unaccompanied_minor", "infant", "pet", "assistance_animal", "sports_equipment", "musical_instrument", "oversized_baggage", "dangerous_goods", "religious", "dietary", "seating", "security", "immigration", "documentation", "vip", "disruption", "other"]
@@ -20,23 +20,38 @@ const defaultFilters = {
   rfisc: "",
 }
 
+const defaultFulfilment = {
+  booking_workspace_id: "", booking_record_id: "", ticket_record_ids: "", ticket_coupon_ids: "",
+  emd_record_ids: "", emd_coupon_ids: "", document_workspace_ids: "", ssr_osi_workspace_id: "",
+  airline_confirmation_status: "unknown", airline_confirmation_evidence_reference: "",
+  airport_handling_confirmation_status: "unknown", airport_handling_evidence_reference: "",
+  external_manual_status: "unknown", fulfilment_result: "unknown", mismatches: "", next_action: "",
+}
+
 export default function PassengerServicesPage() {
   const [state, setState] = useState(null)
   const [filters, setFilters] = useState(defaultFilters)
   const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const [selectedId, setSelectedId] = useState("")
+  const [fulfilment, setFulfilment] = useState(defaultFulfilment)
+  const selected = useMemo(() => state?.serviceCases?.find((item) => item.id === selectedId) || state?.serviceCases?.[0] || null, [state, selectedId])
 
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
     const query = queryString(nextFilters)
-    const [workspaces, summary] = await Promise.all([
+    const [workspaces, summary, serviceCases] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/ssr-osi-workspaces${query}`),
       apiGet(`/api/agencies/${context.agency.id}/ssr-osi-workspaces/summary`),
+      apiGet(`/api/agencies/${context.agency.id}/passenger-services`),
     ])
     setState({
       ...context,
       workspaces: workspaces.items || [],
       summary: workspaces.summary || summary.summary || {},
+      serviceCases: serviceCases.items || [],
     })
+    if (!selectedId && serviceCases.items?.[0]?.id) setSelectedId(serviceCases.items[0].id)
   }
 
   useEffect(() => {
@@ -44,11 +59,30 @@ export default function PassengerServicesPage() {
   }, [filters.need_category, filters.airline, filters.approval_status, filters.readiness_status, filters.passenger, filters.priority, filters.rfic, filters.rfisc])
 
   const metrics = [
-    ["Services", state?.workspaces?.length || 0],
+    ["Service cases", state?.serviceCases?.length || 0],
     ["Ready", state?.summary?.by_readiness_status?.ready || 0],
     ["Awaiting airline", state?.summary?.by_readiness_status?.awaiting_airline || 0],
     ["Blocked", state?.summary?.by_readiness_status?.blocked || 0],
   ]
+
+  function setFulfilmentField(field, value) {
+    setFulfilment((current) => ({ ...current, [field]: value }))
+  }
+
+  async function recordAction(action, payload) {
+    if (!selected?.id) return
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/passenger-services/${selected.id}/fulfilment/${action}`, payload)
+      setMessage(`Passenger-service ${action.replaceAll("_", " ")} metadata recorded.`)
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const splitIds = (value) => value.split(",").map((item) => item.trim()).filter(Boolean)
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -58,19 +92,89 @@ export default function PassengerServicesPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Daily Work</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-950">Passenger Services</h2>
-              <p className="mt-1 text-sm text-slate-600">Read-only SSR / OSI operational workspace metadata. These records show passenger needs, service requirements, SSR/OSI handling, documents, EMD references, tasks, timeline references, communications, and AOIE readiness context without live transmission, provider calls, airline APIs, AI recommendation, automatic approval, EMD issuance, or workers.</p>
+              <p className="mt-1 text-sm text-slate-600">One continuous passenger-service fulfilment thread from request or trip need through booking, manual airline or airport confirmation, documents, EMD when applicable, and final outcome. External results are recorded and reconciled; AeroAssist does not transmit SSR/OSI, confirm airline approval, issue EMDs, or call providers.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Agency read-only</span>
+              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Manual reconciliation</span>
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Metadata only</span>
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">No SSR/OSI transmission</span>
             </div>
           </div>
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
 
           <section className="grid gap-3 md:grid-cols-4">
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+            <div className="rounded-lg border border-slate-200 bg-white p-5">
+              <h3 className="font-semibold text-slate-950">Passenger-service cases</h3>
+              <div className="mt-4 divide-y divide-slate-100 border-y border-slate-200">
+                {(state?.serviceCases || []).map((item) => (
+                  <button className={`grid w-full gap-1 px-3 py-3 text-left text-sm ${item.id === selected?.id ? "bg-blue-50" : "hover:bg-slate-50"}`} key={item.id} type="button" onClick={() => setSelectedId(item.id)}>
+                    <span className="font-semibold text-slate-950">{item.service_label || item.service_type}</span>
+                    <span className="text-xs text-slate-600">{item.request_id || item.trip_id || "Source pending"} · {formatType(item.fulfilment_result || "unknown")}</span>
+                  </button>
+                ))}
+              </div>
+              {!state?.serviceCases?.length ? <EmptyState title="No service cases" body="Passenger service requirements originate from request or trip passenger need." /> : null}
+            </div>
+            {selected ? (
+              <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div><h3 className="font-semibold text-slate-950">{selected.service_label || selected.service_type}</h3><p className="mt-1 text-sm text-slate-600">External status: {formatType(selected.external_manual_status || "unknown")} · Outcome: {formatType(selected.fulfilment_result || "unknown")}</p></div>
+                  <div className="flex flex-wrap gap-2">
+                    <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/document-workspaces?related_service=${encodeURIComponent(selected.id)}`}>Document requirements</a>
+                    <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/documents?document_type=service_confirmation&source_context_type=service_request&source_context_id=${encodeURIComponent(selected.id)}`}>Render service document</a>
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {["booking_workspace_id", "booking_record_id", "ticket_record_ids", "ticket_coupon_ids", "emd_record_ids", "emd_coupon_ids", "document_workspace_ids", "ssr_osi_workspace_id"].map((field) => <Field label={formatType(field)} value={fulfilment[field]} onChange={(value) => setFulfilmentField(field, value)} key={field} />)}
+                </div>
+                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => recordAction("links", {
+                  booking_workspace_id: fulfilment.booking_workspace_id || undefined,
+                  booking_record_id: fulfilment.booking_record_id || undefined,
+                  ssr_osi_workspace_id: fulfilment.ssr_osi_workspace_id || undefined,
+                  ticket_record_ids: splitIds(fulfilment.ticket_record_ids), ticket_coupon_ids: splitIds(fulfilment.ticket_coupon_ids),
+                  emd_record_ids: splitIds(fulfilment.emd_record_ids), emd_coupon_ids: splitIds(fulfilment.emd_coupon_ids),
+                  document_workspace_ids: splitIds(fulfilment.document_workspace_ids), next_action: fulfilment.next_action || undefined,
+                })}>Link selected records</button>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <SelectField label="Airline confirmation" value={fulfilment.airline_confirmation_status} onChange={(value) => setFulfilmentField("airline_confirmation_status", value)} options={confirmationOptions()} />
+                  <Field label="Airline evidence reference" value={fulfilment.airline_confirmation_evidence_reference} onChange={(value) => setFulfilmentField("airline_confirmation_evidence_reference", value)} />
+                  <SelectField label="Airport confirmation" value={fulfilment.airport_handling_confirmation_status} onChange={(value) => setFulfilmentField("airport_handling_confirmation_status", value)} options={confirmationOptions()} />
+                  <Field label="Airport evidence reference" value={fulfilment.airport_handling_evidence_reference} onChange={(value) => setFulfilmentField("airport_handling_evidence_reference", value)} />
+                  <SelectField label="External/manual status" value={fulfilment.external_manual_status} onChange={(value) => setFulfilmentField("external_manual_status", value)} options={confirmationOptions()} />
+                  <Field label="Next action" value={fulfilment.next_action} onChange={(value) => setFulfilmentField("next_action", value)} />
+                </div>
+                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => recordAction("confirmations", {
+                  airline_confirmation_status: fulfilment.airline_confirmation_status,
+                  airline_confirmation_evidence_reference: fulfilment.airline_confirmation_evidence_reference || undefined,
+                  airport_handling_confirmation_status: fulfilment.airport_handling_confirmation_status,
+                  airport_handling_evidence_reference: fulfilment.airport_handling_evidence_reference || undefined,
+                  external_manual_status: fulfilment.external_manual_status, next_action: fulfilment.next_action || undefined,
+                })}>Record manual confirmation</button>
+                <div className="grid gap-3 md:grid-cols-3">
+                  <SelectField label="Fulfilment result" value={fulfilment.fulfilment_result} onChange={(value) => setFulfilmentField("fulfilment_result", value)} options={["pending", "confirmed", "conditionally_confirmed", "fulfilled", "failed", "cancelled", "unknown"].map((item) => [item, formatType(item)])} />
+                  <Field label="Mismatch notes" value={fulfilment.mismatches} onChange={(value) => setFulfilmentField("mismatches", value)} />
+                  <Field label="Next action" value={fulfilment.next_action} onChange={(value) => setFulfilmentField("next_action", value)} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => recordAction("reconcile", { external_manual_status: fulfilment.external_manual_status, fulfilment_result: fulfilment.fulfilment_result, unresolved_mismatches_json: fulfilment.mismatches ? [{ code: "manual_mismatch", message: fulfilment.mismatches }] : [], next_action: fulfilment.next_action || undefined })}>Reconcile result</button>
+                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => recordAction("outcome", { fulfilment_result: fulfilment.fulfilment_result, unresolved_mismatches_json: fulfilment.mismatches ? [{ code: "manual_mismatch", message: fulfilment.mismatches }] : [], next_action: fulfilment.next_action || undefined })}>Record final outcome</button>
+                </div>
+                <div className="grid gap-3 text-sm md:grid-cols-3">
+                  <Info label="Booking" value={selected.booking_record_id || selected.booking_workspace_id || "Not linked"} />
+                  <Info label="Tickets" value={formatList(selected.ticket_record_ids)} />
+                  <Info label="EMDs" value={formatList(selected.emd_record_ids)} />
+                  <Info label="Documents" value={formatList(selected.document_workspace_ids)} />
+                  <Info label="Last reconciled" value={selected.last_reconciled_at || "Not reconciled"} />
+                  <Info label="Work item" value={selected.work_item_id || "Not synchronized"} />
+                </div>
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-lg border border-slate-200 bg-white p-5">
@@ -213,6 +317,14 @@ function ReferenceLine({ label, items }) {
 
 function StatusBadge({ status }) {
   return <span className="inline-flex rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">{formatType(status || "pending")}</span>
+}
+
+function Info({ label, value }) {
+  return <div><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 break-words text-slate-800">{value}</p></div>
+}
+
+function confirmationOptions() {
+  return ["pending", "requested", "awaiting_external_confirmation", "confirmed", "conditionally_confirmed", "rejected", "cancelled", "not_required", "unknown"].map((item) => [item, formatType(item)])
 }
 
 function queryString(values) {

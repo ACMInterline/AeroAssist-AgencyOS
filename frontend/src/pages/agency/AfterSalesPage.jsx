@@ -28,6 +28,13 @@ const defaultForm = {
   ticket_workspace_id: "",
   emd_workspace_id: "",
   passenger_workspace_id: "",
+  invoice_id: "",
+  payment_record_id: "",
+  invoice_line_item_id: "",
+  ticket_record_id: "",
+  emd_record_id: "",
+  accepted_offer_snapshot_id: "",
+  booking_reference: "",
   affected_segment_ref: "",
   residual_value_summary: "",
   penalty_summary: "",
@@ -38,6 +45,12 @@ const defaultForm = {
   supplier_communication_required: false,
 }
 
+const defaultImpact = {
+  amount_category: "unknown", amount: "", currency: "EUR", invoice_id: "", invoice_line_item_id: "",
+  payment_record_id: "", ticket_record_id: "", emd_record_id: "", approval_state: "not_reviewed",
+  settlement_state: "not_settled", reconciliation_state: "unreconciled", mismatch: "", proposed_notes: "", final_notes: "",
+}
+
 export default function AfterSalesPage() {
   const [state, setState] = useState(null)
   const [form, setForm] = useState(defaultForm)
@@ -45,12 +58,17 @@ export default function AfterSalesPage() {
   const [selectedId, setSelectedId] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
+  const [impactForm, setImpactForm] = useState(defaultImpact)
   const selected = useMemo(() => state?.items?.find((item) => item.id === selectedId) || state?.items?.[0] || null, [state, selectedId])
 
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
-    const response = await apiGet(`/api/agencies/${context.agency.id}/after-sales${queryString(nextFilters)}`)
-    setState({ ...context, ...response })
+    const [response, invoices, payments] = await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/after-sales${queryString(nextFilters)}`),
+      apiGet(`/api/agencies/${context.agency.id}/invoices`),
+      apiGet(`/api/agencies/${context.agency.id}/payments`),
+    ])
+    setState({ ...context, ...response, invoices: invoices.items || [], payments: payments.items || [] })
     if (!selectedId && response.items?.[0]?.id) setSelectedId(response.items[0].id)
   }
 
@@ -76,6 +94,13 @@ export default function AfterSalesPage() {
       ticket_workspace_ids: form.ticket_workspace_id ? [form.ticket_workspace_id] : [],
       emd_workspace_ids: form.emd_workspace_id ? [form.emd_workspace_id] : [],
       passenger_workspace_ids: form.passenger_workspace_id ? [form.passenger_workspace_id] : [],
+      invoice_ids: form.invoice_id ? [form.invoice_id] : [],
+      invoice_line_item_ids: form.invoice_line_item_id ? [form.invoice_line_item_id] : [],
+      payment_record_ids: form.payment_record_id ? [form.payment_record_id] : [],
+      ticket_record_ids: form.ticket_record_id ? [form.ticket_record_id] : [],
+      emd_record_ids: form.emd_record_id ? [form.emd_record_id] : [],
+      accepted_offer_snapshot_id: form.accepted_offer_snapshot_id || undefined,
+      booking_reference: form.booking_reference || undefined,
       affected_segment_refs: form.affected_segment_ref ? [form.affected_segment_ref] : [],
       residual_value_summary: form.residual_value_summary || undefined,
       penalty_summary: form.penalty_summary || undefined,
@@ -93,6 +118,38 @@ export default function AfterSalesPage() {
     setMessage(`After-sales case ${result.case.case_reference} created as metadata only.`)
     setForm(defaultForm)
     await load()
+  }
+
+  async function recordFinancialImpact(event) {
+    event.preventDefault()
+    if (!selected?.id) return
+    setError("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/after-sales/${selected.id}/financial-impacts`, {
+        impact_type: impactForm.amount_category,
+        amount_category: impactForm.amount_category,
+        estimate_status: "manual_review",
+        amount: impactForm.amount === "" ? undefined : Number(impactForm.amount),
+        currency: impactForm.currency || undefined,
+        invoice_ids: impactForm.invoice_id ? [impactForm.invoice_id] : [],
+        invoice_line_item_ids: impactForm.invoice_line_item_id ? [impactForm.invoice_line_item_id] : [],
+        payment_record_ids: impactForm.payment_record_id ? [impactForm.payment_record_id] : [],
+        ticket_record_ids: impactForm.ticket_record_id ? [impactForm.ticket_record_id] : [],
+        emd_record_ids: impactForm.emd_record_id ? [impactForm.emd_record_id] : [],
+        approval_state: impactForm.approval_state,
+        settlement_state: impactForm.settlement_state,
+        reconciliation_state: impactForm.reconciliation_state,
+        unresolved_mismatches_json: impactForm.mismatch ? [{ code: "manual_financial_mismatch", message: impactForm.mismatch }] : [],
+        proposed_financial_impact_snapshot_json: { operator_notes: impactForm.proposed_notes, manual_metadata: true },
+        final_reconciled_financial_snapshot_json: impactForm.reconciliation_state === "reconciled" && impactForm.final_notes ? { operator_notes: impactForm.final_notes, reviewed_metadata: true } : {},
+        calculation_basis: "Manual affected-record review; no payment, settlement, fare recalculation, or ledger mutation performed.",
+      })
+      setImpactForm(defaultImpact)
+      setMessage("Affected financial records and impact snapshot recorded for manual reconciliation.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   async function updateStatus(caseStatus) {
@@ -150,6 +207,13 @@ export default function AfterSalesPage() {
                 <TextField label="EMD workspace id" value={form.emd_workspace_id} onChange={(value) => setField("emd_workspace_id", value)} />
                 <TextField label="Passenger workspace id" value={form.passenger_workspace_id} onChange={(value) => setField("passenger_workspace_id", value)} />
                 <TextField label="Segment reference" value={form.affected_segment_ref} onChange={(value) => setField("affected_segment_ref", value)} />
+                <SelectField label="Invoice" value={form.invoice_id} onChange={(value) => setField("invoice_id", value)} options={[["", "None"], ...(state?.invoices || []).map((item) => [item.id, item.invoice_number || item.id])]} />
+                <SelectField label="Payment" value={form.payment_record_id} onChange={(value) => setField("payment_record_id", value)} options={[["", "None"], ...(state?.payments || []).map((item) => [item.id, item.external_reference || item.id])]} />
+                <TextField label="Invoice line item id" value={form.invoice_line_item_id} onChange={(value) => setField("invoice_line_item_id", value)} />
+                <TextField label="Ticket record id" value={form.ticket_record_id} onChange={(value) => setField("ticket_record_id", value)} />
+                <TextField label="EMD record id" value={form.emd_record_id} onChange={(value) => setField("emd_record_id", value)} />
+                <TextField label="Accepted snapshot id" value={form.accepted_offer_snapshot_id} onChange={(value) => setField("accepted_offer_snapshot_id", value)} />
+                <TextField label="Booking reference" value={form.booking_reference} onChange={(value) => setField("booking_reference", value)} />
               </div>
               <TextArea label="Financial estimate notes" value={form.refundability_summary} onChange={(value) => setField("refundability_summary", value)} />
               <div className="grid gap-2 text-sm text-slate-700">
@@ -182,7 +246,7 @@ export default function AfterSalesPage() {
                 )}
               </section>
 
-              <CaseWorkspace selected={selected} onUpdateStatus={updateStatus} />
+              <CaseWorkspace selected={selected} onUpdateStatus={updateStatus} impactForm={impactForm} setImpactForm={setImpactForm} onRecordFinancialImpact={recordFinancialImpact} invoices={state?.invoices || []} payments={state?.payments || []} />
             </div>
           </section>
         </div>
@@ -191,7 +255,7 @@ export default function AfterSalesPage() {
   )
 }
 
-function CaseWorkspace({ selected, onUpdateStatus }) {
+function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, onRecordFinancialImpact, invoices, payments }) {
   if (!selected) return <EmptyState title="No case selected" body="Select a case to review after-sales workspace metadata." />
   return (
     <section className="space-y-4">
@@ -215,12 +279,35 @@ function CaseWorkspace({ selected, onUpdateStatus }) {
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Financial estimate">
-          <CompactTable rows={selected.financial_impacts || []} columns={["impact_type", "estimate_status", "direction", "placeholder_notes"]} />
+          <CompactTable rows={selected.financial_impacts || []} columns={["amount_category", "estimate_status", "reconciliation_state", "manual_unreconciled", "currency", "amount"]} />
         </Card>
         <Card title="Decisions and approvals">
           <CompactTable rows={selected.decisions || []} columns={["decision_type", "decision_status", "client_approval_status", "decision_summary"]} />
         </Card>
       </div>
+      <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={onRecordFinancialImpact}>
+        <h3 className="font-semibold text-slate-950">Link affected financial records</h3>
+        <p className="mt-1 text-sm text-slate-600">Select existing source records and preserve a proposed impact snapshot. This does not process payment, settle funds, recalculate fares, or mutate issued invoices.</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <SelectField label="Invoice" value={impactForm.invoice_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_id: value })} options={[["", "None"], ...invoices.map((item) => [item.id, item.invoice_number || item.id])]} />
+          <SelectField label="Payment" value={impactForm.payment_record_id} onChange={(value) => setImpactForm({ ...impactForm, payment_record_id: value })} options={[["", "None"], ...payments.map((item) => [item.id, item.external_reference || item.id])]} />
+          <TextField label="Invoice line item id" value={impactForm.invoice_line_item_id} onChange={(value) => setImpactForm({ ...impactForm, invoice_line_item_id: value })} />
+          <TextField label="Ticket record id" value={impactForm.ticket_record_id} onChange={(value) => setImpactForm({ ...impactForm, ticket_record_id: value })} />
+          <TextField label="EMD record id" value={impactForm.emd_record_id} onChange={(value) => setImpactForm({ ...impactForm, emd_record_id: value })} />
+          <SelectField label="Amount category" value={impactForm.amount_category} onChange={(value) => setImpactForm({ ...impactForm, amount_category: value })} options={["fare_difference", "penalty", "agency_fee", "supplier_fee", "refund", "credit", "residual_value", "commission_adjustment", "tax_adjustment", "unknown"].map((item) => [item, formatType(item)])} />
+          <TextField label="Amount" value={impactForm.amount} onChange={(value) => setImpactForm({ ...impactForm, amount: value })} />
+          <TextField label="Currency" value={impactForm.currency} onChange={(value) => setImpactForm({ ...impactForm, currency: value.toUpperCase() })} />
+          <SelectField label="Approval" value={impactForm.approval_state} onChange={(value) => setImpactForm({ ...impactForm, approval_state: value })} options={["not_reviewed", "pending", "approved", "rejected"].map((item) => [item, formatType(item)])} />
+          <SelectField label="Reconciliation" value={impactForm.reconciliation_state} onChange={(value) => setImpactForm({ ...impactForm, reconciliation_state: value })} options={["unreconciled", "manual_review", "partially_reconciled", "reconciled", "unknown"].map((item) => [item, formatType(item)])} />
+          <TextField label="Mismatch" value={impactForm.mismatch} onChange={(value) => setImpactForm({ ...impactForm, mismatch: value })} />
+          <TextField label="Proposed impact notes" value={impactForm.proposed_notes} onChange={(value) => setImpactForm({ ...impactForm, proposed_notes: value })} />
+          <TextField label="Final reconciliation notes" value={impactForm.final_notes} onChange={(value) => setImpactForm({ ...impactForm, final_notes: value })} />
+        </div>
+        <button className="aa-primary-action mt-4 rounded-md px-3 py-2 text-sm font-semibold" type="submit">Record affected finance metadata</button>
+      </form>
+      <Card title="Affected financial records">
+        <JsonPreview label="Read-only source summary" value={selected.affected_financial_records} />
+      </Card>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Communications">
           <CompactTable rows={selected.communications || []} columns={["communication_type", "audience", "channel", "summary"]} />

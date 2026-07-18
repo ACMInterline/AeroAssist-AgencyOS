@@ -5,6 +5,7 @@ from typing import Any
 
 from database import Database
 from models import (
+    AuditEvent,
     EMDRecord,
     EmdSourceContext,
     EmdCoupon,
@@ -16,17 +17,21 @@ from models import (
     BookingProviderTarget,
     ManualEmdCreate,
     ManualTicketCreate,
+    OperationalWorkItemActionRequest,
+    OperationalWorkItemGenerateRequest,
     TicketCoupon,
     TicketCouponStatus,
     TicketCreateFromBookingRequest,
     TicketEmdTimelineEvent,
     TicketRecord,
+    TicketResultReconciliationRequest,
     TicketRecordUpdate,
     TicketSourceContext,
     TicketStatus,
     TicketType,
     TripTimelineEvent,
 )
+from services.agent_work_queue_service import AgentWorkQueueService
 
 
 PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
@@ -194,6 +199,7 @@ def _emd_applicability(service: dict[str, Any]) -> str | None:
 class TicketEmdService:
     def __init__(self, db: Database) -> None:
         self.db = db
+        self.work_queue = AgentWorkQueueService(db)
 
     async def create_ticket_from_booking_record(
         self,
@@ -444,8 +450,15 @@ class TicketEmdService:
             segments_snapshot_json=segments,
             warnings_json=[],
             internal_notes=payload.internal_notes,
+            client_visible_notes=payload.client_visible_notes,
+            external_evidence_reference=payload.external_evidence_reference,
+            external_result_status=payload.external_result_status,
+            reconciliation_status="unreconciled",
+            transition_correlation_id=f"booking:{(booking_record or {}).get('id') or payload.booking_record_id or booking_workspace_id or trip_id or 'standalone'}:ticket-result",
             created_by_user_id=user.get("id"),
         )
+        if _enum_value(payload.issue_status) == TicketStatus.ISSUED.value and not payload.external_evidence_reference:
+            ticket.warnings_json.append({"code": "external_ticket_evidence_missing", "severity": "warning", "message": "Externally issued ticket evidence requires manual review."})
         created = await self.db.collection("ticket_records").insert_one(ticket.model_dump(mode="json"))
         coupons = []
         if payload.create_coupons:
@@ -500,7 +513,78 @@ class TicketEmdService:
                 created.get("ticket_number") or created["id"],
                 {"ticket_record_id": created["id"], "source_context": source_context, "provider_ticketing_disabled": True},
             )
+        evidence = self._ticket_transition_evidence(
+            created,
+            user,
+            "booking_record" if created.get("booking_record_id") else "booking_workspace",
+            created.get("booking_record_id") or created.get("booking_workspace_id"),
+            "external_result_recorded",
+            created.get("warnings_json") or [],
+        )
+        await self._write_ticket_audit(created, user, "ticket.external_result_recorded", evidence)
+        await self._sync_ticket_work_item(created, user, evidence)
         return await self.get_ticket_detail(agency_id, created["id"])
+
+    async def reconcile_ticket_result(
+        self,
+        agency_id: str,
+        ticket_record_id: str,
+        payload: TicketResultReconciliationRequest,
+        user: dict,
+    ) -> dict[str, Any] | None:
+        ticket = await self.db.collection("ticket_records").find_one({"agency_id": agency_id, "id": ticket_record_id})
+        if ticket is None:
+            return None
+        data = payload.model_dump(mode="json", exclude_none=True)
+        allowed = {"unreconciled", "matched", "mismatch", "manual_review", "unknown"}
+        if data["reconciliation_status"] not in allowed:
+            raise TicketEmdError("Unsupported ticket reconciliation status.")
+        evidence_reference = data.get("external_evidence_reference") or ticket.get("external_evidence_reference")
+        mismatches = data.get("unresolved_mismatches_json") or []
+        if data["reconciliation_status"] == "matched" and not evidence_reference:
+            raise TicketEmdError("Matched ticket reconciliation requires external evidence metadata.")
+        if data["reconciliation_status"] == "matched" and mismatches:
+            raise TicketEmdError("A matched ticket cannot retain unresolved mismatches.")
+        now = datetime.now(timezone.utc)
+        updates = {
+            "reconciliation_status": data["reconciliation_status"],
+            "external_result_status": data.get("external_result_status", "unknown"),
+            "external_evidence_reference": evidence_reference,
+            "unresolved_mismatches_json": mismatches,
+            "last_reconciled_at": now,
+            "reconciled_by_user_id": user.get("id"),
+            "updated_by_user_id": user.get("id"),
+        }
+        if data.get("internal_notes") is not None:
+            updates["internal_notes"] = data["internal_notes"]
+        if data.get("client_visible_notes") is not None:
+            updates["client_visible_notes"] = data["client_visible_notes"]
+        updated = await self.db.collection("ticket_records").update_one(
+            {"agency_id": agency_id, "id": ticket_record_id}, updates
+        )
+        evidence = self._ticket_transition_evidence(
+            updated or {**ticket, **updates},
+            user,
+            "ticket_record",
+            ticket_record_id,
+            data["reconciliation_status"],
+            mismatches,
+        )
+        await self._write_timeline(
+            agency_id,
+            "ticket.external_result_reconciled",
+            "External ticket result reconciled",
+            user.get("id"),
+            ticket_record_id=ticket_record_id,
+            booking_record_id=ticket.get("booking_record_id"),
+            booking_workspace_id=ticket.get("booking_workspace_id"),
+            trip_id=ticket.get("trip_id"),
+            description="Recorded manual reconciliation of an externally obtained ticket result; no ticket was issued or changed.",
+            payload_json=evidence,
+        )
+        await self._write_ticket_audit(updated or ticket, user, "ticket.external_result_reconciled", evidence)
+        await self._sync_ticket_work_item(updated or {**ticket, **updates}, user, evidence)
+        return await self.get_ticket_detail(agency_id, ticket_record_id)
 
     async def create_manual_emd(
         self,
@@ -660,6 +744,11 @@ class TicketEmdService:
         timeline.sort(key=lambda item: str(item.get("created_at") or ""))
         return {
             "ticket": ticket,
+            "client_safe_ticket": {
+                key: value
+                for key, value in ticket.items()
+                if key not in {"internal_notes", "provider_payload_json", "provider_response_json", "warnings_json"}
+            },
             "coupons": coupons,
             "booking_record_summary": _record_summary(booking_record),
             "booking_workspace_summary": _workspace_summary(workspace),
@@ -1017,6 +1106,95 @@ class TicketEmdService:
             "osi_mapping": service.get("osi_mapping_json") or mapping.get("osi_mapping_json") or mapping.get("osi_mapping"),
             "required_documents": service.get("required_documents_json") or mapping.get("required_documents_json") or mapping.get("required_documents"),
         }
+
+    def _ticket_transition_evidence(
+        self,
+        ticket: dict[str, Any],
+        user: dict,
+        source_type: str,
+        source_id: str | None,
+        result: str,
+        warnings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return {
+            "agency_id": ticket["agency_id"],
+            "actor_user_id": user.get("id"),
+            "source_entity_type": source_type,
+            "source_entity_id": source_id,
+            "target_entity_type": "ticket_record",
+            "target_entity_id": ticket["id"],
+            "correlation_id": ticket.get("transition_correlation_id") or f"booking:{ticket.get('booking_record_id') or ticket.get('booking_workspace_id') or 'standalone'}:ticket-result",
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "result": result,
+            "warnings": warnings,
+            "internal_only": True,
+            "client_visible_summary": ticket.get("client_visible_notes"),
+            "external_ticketing_performed": False,
+            "manual_external_result": True,
+        }
+
+    async def _write_ticket_audit(
+        self,
+        ticket: dict[str, Any],
+        user: dict,
+        event_type: str,
+        evidence: dict[str, Any],
+    ) -> None:
+        audit = AuditEvent(
+            agency_id=ticket["agency_id"],
+            actor_user_id=user.get("id"),
+            event_type=event_type,
+            entity_type="ticket_record",
+            entity_id=ticket["id"],
+            summary=f"Ticket external-result state recorded as {evidence['result']}.",
+            metadata=evidence,
+        )
+        await self.db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
+
+    async def _sync_ticket_work_item(
+        self,
+        ticket: dict[str, Any],
+        user: dict,
+        evidence: dict[str, Any],
+    ) -> dict[str, Any]:
+        reconciliation_status = ticket.get("reconciliation_status") or "unreconciled"
+        generated = await self.work_queue.generate_work_item(
+            OperationalWorkItemGenerateRequest(
+                agency_id=ticket["agency_id"],
+                work_item_type="booking_awaiting_ticketing",
+                source_entity_type="ticket_record",
+                source_entity_id=ticket["id"],
+                title=f"Reconcile external ticket {ticket.get('ticket_number') or ticket['id']}",
+                summary=f"External ticket result reconciliation: {reconciliation_status}.",
+                priority="high" if reconciliation_status in {"mismatch", "manual_review", "unknown"} else "normal",
+                severity="high" if reconciliation_status == "mismatch" else "medium",
+                queue_code="urgent_critical" if reconciliation_status == "mismatch" else "unassigned",
+                blocker_status="manual_review" if reconciliation_status != "matched" else "not_blocked",
+                generation_reason="external_ticket_result_reconciliation",
+                source_snapshot_json=evidence,
+                compatibility_mapping_json={
+                    "ticket_record_id": ticket["id"],
+                    "booking_record_id": ticket.get("booking_record_id"),
+                    "booking_workspace_id": ticket.get("booking_workspace_id"),
+                },
+            ),
+            user,
+            agency_id=ticket["agency_id"],
+        )
+        work_item = generated.get("work_item") or {}
+        if work_item.get("id"):
+            if reconciliation_status == "matched" and work_item.get("status") != "completed":
+                await self.work_queue.apply_action(
+                    work_item["id"], "complete", OperationalWorkItemActionRequest(reason="External ticket result matched reviewed evidence."), user, agency_id=ticket["agency_id"]
+                )
+            elif reconciliation_status in {"mismatch", "manual_review", "unknown"} and work_item.get("status") != "blocked":
+                await self.work_queue.apply_action(
+                    work_item["id"], "block", OperationalWorkItemActionRequest(reason="External ticket result requires manual reconciliation.", blocker_status="manual_review"), user, agency_id=ticket["agency_id"]
+                )
+            await self.db.collection("ticket_records").update_one(
+                {"agency_id": ticket["agency_id"], "id": ticket["id"]}, {"work_item_id": work_item["id"]}
+            )
+        return work_item
 
     async def _write_timeline(
         self,

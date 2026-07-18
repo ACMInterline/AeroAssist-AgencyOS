@@ -7,13 +7,20 @@ from database import Database
 from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
 from persistence_repository import PersistenceRepository
 from models import (
+    AuditEvent,
     DocumentWorkspace,
     DocumentWorkspaceCreate,
+    DocumentWorkspaceOutputReconciliationRequest,
     DocumentWorkspaceStatus,
     DocumentWorkspaceType,
     DocumentWorkspaceUpdate,
+    OperationalTimelineCreate,
+    OperationalWorkItemActionRequest,
+    OperationalWorkItemGenerateRequest,
     new_id,
 )
+from services.agent_work_queue_service import AgentWorkQueueService
+from services.timeline_workspace_service import OperationalTimelineService
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -32,6 +39,8 @@ class DocumentWorkspaceError(ValueError):
 class DocumentWorkspaceService:
     def __init__(self, db: Database) -> None:
         self.db = db
+        self.work_queue = AgentWorkQueueService(db)
+        self.timelines = OperationalTimelineService(db)
 
     async def list_platform_workspaces(
         self,
@@ -204,9 +213,10 @@ class DocumentWorkspaceService:
             "document_workspace_count": len(items),
             "summary": self.summarize_counts(items),
             "filters": self.filter_metadata(),
-            "read_only": True,
+            "read_only": False,
+            "metadata_review_actions_only": True,
             "metadata_only": True,
-            "notice": "Agency Documents show read-only operational document workspace metadata. No delivery, e-signature, public link, PDF generation, payment or invoice generation, storage integration, worker, or AI generation is available.",
+            "notice": "Agency Documents support explicit metadata review and reconciliation of existing render outputs. Rendering alone does not verify a requirement, and no delivery, e-signature, public link, payment, storage integration, worker, or AI generation is available.",
             **self.safety_flags(),
         }
 
@@ -295,6 +305,161 @@ class DocumentWorkspaceService:
             "archived": True,
             "read_only": False,
             "metadata_only": True,
+            **self.safety_flags(),
+        }
+
+    async def reconcile_output(
+        self,
+        agency_id: str,
+        workspace_id: str,
+        payload: DocumentWorkspaceOutputReconciliationRequest,
+        user: dict,
+    ) -> dict[str, Any]:
+        workspace = await self._require_workspace(workspace_id, agency_id=agency_id)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        status_value = data["document_status"]
+        allowed = {
+            "requested", "received", "generated", "under_review", "verified",
+            "rejected", "expired", "not_required", "unknown",
+        }
+        if status_value not in allowed:
+            raise DocumentWorkspaceError("Unsupported document reconciliation status.")
+        if not data.get("render_job_id") and not data.get("rendered_document_id"):
+            raise DocumentWorkspaceError("Choose a render job or rendered document output to reconcile.")
+        if status_value == "rejected" and not data.get("rejection_reason"):
+            raise DocumentWorkspaceError("A rejection reason is required for rejected document output.")
+
+        render_job = await self._require_linked_output(
+            "document_render_jobs", data.get("render_job_id"), agency_id, "render job"
+        )
+        rendered_document = await self._require_linked_output(
+            "rendered_documents", data.get("rendered_document_id"), agency_id, "rendered document"
+        )
+        source = render_job or rendered_document or {}
+        source_context_type = source.get("source_context_type")
+        source_context_id = source.get("source_context_id")
+        service_id = workspace.get("passenger_service_request_id") or workspace.get("related_service_requirement")
+        if source_context_type in {"service_request", "passenger_service_request"} and service_id and source_context_id != service_id:
+            raise DocumentWorkspaceError("Document output belongs to a different passenger-service requirement.")
+
+        now = self._now()
+        correlation_id = data.get("correlation_id") or f"document:{workspace['id']}:output:{data.get('render_job_id') or data.get('rendered_document_id')}"
+        render_job_ids = self._deduplicate([*(workspace.get("render_job_ids") or []), data.get("render_job_id")])
+        rendered_document_ids = self._deduplicate([*(workspace.get("rendered_document_ids") or []), data.get("rendered_document_id")])
+        updates: dict[str, Any] = {
+            "document_status": status_value,
+            "verification_status": status_value,
+            "render_job_ids": render_job_ids,
+            "rendered_document_ids": rendered_document_ids,
+            "rejection_reason": data.get("rejection_reason"),
+            "last_reconciled_at": now,
+            "reconciled_by": user.get("id"),
+            "reconciliation_reference": correlation_id,
+            "updated_by": user.get("id"),
+            "metadata": {
+                **(workspace.get("metadata") or {}),
+                "last_output_review_notes": data.get("review_notes"),
+                "rendering_does_not_imply_verification": True,
+            },
+        }
+        if status_value == "generated":
+            updates["generated_at"] = now
+        if status_value in {"under_review", "verified", "rejected"}:
+            updates.update({"reviewed_by": user.get("id"), "reviewed_at": now})
+        if status_value == "verified":
+            updates.update({"verified_by": user.get("id"), "verified_at": now})
+        if status_value == "rejected":
+            updates.update({"rejected_by": user.get("id"), "rejected_at": now})
+
+        updated = await self.db.collection(DOCUMENT_WORKSPACE_COLLECTION).update_one(
+            {"agency_id": agency_id, "id": workspace["id"]}, updates
+        )
+        if not updated:
+            raise DocumentWorkspaceError("Document output reconciliation could not be recorded.")
+        evidence = self._transition_evidence(
+            workspace,
+            user,
+            source_context_type or "document_output",
+            source_context_id or data.get("render_job_id") or data.get("rendered_document_id"),
+            correlation_id,
+            status_value,
+        )
+        audit = AuditEvent(
+            agency_id=agency_id,
+            actor_user_id=user.get("id"),
+            event_type="document_workspace.output_reconciled",
+            entity_type="document_workspace",
+            entity_id=workspace["id"],
+            summary=f"Document output reconciled as {status_value}.",
+            metadata=evidence,
+        )
+        await self.db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
+        timeline_result = await self.timelines.create_entry(
+            OperationalTimelineCreate(
+                agency_id=agency_id,
+                timeline_reference=f"DOC-TL-{new_id()[:8].upper()}",
+                created_by=user.get("id"),
+                passenger_workspace_id=workspace.get("passenger_workspace_id"),
+                travel_request_workspace_id=workspace.get("travel_request_workspace_id"),
+                trip_workspace_id=workspace.get("trip_workspace_id"),
+                booking_workspace_id=workspace.get("booking_workspace_id"),
+                ticket_workspace_id=workspace.get("ticket_workspace_id"),
+                emd_workspace_id=workspace.get("emd_workspace_id"),
+                ssr_osi_workspace_id=workspace.get("ssr_osi_workspace_id"),
+                document_workspace_id=workspace["id"],
+                event_type="document_output_reconciled",
+                event_category="passenger_service_document",
+                event_source="document_workspace",
+                event_status=status_value,
+                operational_result=status_value,
+                summary=f"Document output reconciled as {status_value}.",
+                internal_only=True,
+                passenger_visible=False,
+                airline_visible=False,
+                operational_notes="Manual metadata reconciliation only; no document was sent, signed, or externally stored.",
+                metadata=evidence,
+            ),
+            user,
+        )
+        work_item_result = await self.work_queue.generate_work_item(
+            OperationalWorkItemGenerateRequest(
+                agency_id=agency_id,
+                work_item_type="document_missing_or_expiring",
+                source_entity_type="document_workspace",
+                source_entity_id=workspace["id"],
+                timeline_entry_id=(timeline_result.get("timeline_entry") or {}).get("id"),
+                title=workspace.get("document_title") or workspace.get("document_reference") or "Document requirement",
+                summary=f"Document review state: {status_value}.",
+                priority="high" if workspace.get("required_for_travel") else "normal",
+                severity="high" if status_value in {"rejected", "expired"} else "medium",
+                queue_code="waiting_documents",
+                blocker_status="waiting_documents" if status_value not in {"verified", "not_required"} else "not_blocked",
+                generation_reason="document_output_reconciliation",
+                source_snapshot_json=evidence,
+                compatibility_mapping_json={
+                    "document_workspace_id": workspace["id"],
+                    "passenger_service_request_id": workspace.get("passenger_service_request_id"),
+                },
+            ),
+            user,
+            agency_id=agency_id,
+        )
+        work_item = work_item_result.get("work_item") or {}
+        if work_item.get("id"):
+            if status_value in {"verified", "not_required"} and work_item.get("status") != "completed":
+                await self.work_queue.apply_action(
+                    work_item["id"], "complete", OperationalWorkItemActionRequest(reason="Document requirement reconciled."), user, agency_id=agency_id
+                )
+            elif status_value in {"rejected", "expired"} and work_item.get("status") != "blocked":
+                await self.work_queue.apply_action(
+                    work_item["id"], "block", OperationalWorkItemActionRequest(reason=data.get("rejection_reason") or status_value, blocker_status="waiting_documents"), user, agency_id=agency_id
+                )
+        return {
+            "phase": PHASE_LABEL,
+            "document_workspace": self._agency_projection(await self._platform_projection(updated)),
+            "timeline_entry": timeline_result.get("timeline_entry"),
+            "work_item": work_item,
+            "rendering_does_not_imply_verification": True,
             **self.safety_flags(),
         }
 
@@ -392,7 +557,8 @@ class DocumentWorkspaceService:
 
     def _agency_projection(self, item: dict[str, Any]) -> dict[str, Any]:
         projected = dict(item)
-        projected["read_only"] = True
+        projected["read_only"] = False
+        projected["metadata_review_actions_only"] = True
         projected.update(self.safety_flags())
         return projected
 
@@ -409,6 +575,44 @@ class DocumentWorkspaceService:
         if not item:
             raise DocumentWorkspaceError("Document workspace metadata was not found.")
         return item
+
+    async def _require_linked_output(
+        self, collection: str, output_id: str | None, agency_id: str, label: str
+    ) -> dict[str, Any] | None:
+        if not output_id:
+            return None
+        output = await self.db.collection(collection).find_one({"agency_id": agency_id, "id": output_id})
+        if not output:
+            raise DocumentWorkspaceError(f"Selected {label} was not found for this agency.")
+        return output
+
+    def _transition_evidence(
+        self,
+        workspace: dict[str, Any],
+        user: dict,
+        source_type: str,
+        source_id: str | None,
+        correlation_id: str,
+        result: str,
+    ) -> dict[str, Any]:
+        return {
+            "agency_id": workspace["agency_id"],
+            "actor_user_id": user.get("id"),
+            "source_entity_type": source_type,
+            "source_entity_id": source_id,
+            "target_entity_type": "document_workspace",
+            "target_entity_id": workspace["id"],
+            "correlation_id": correlation_id,
+            "occurred_at": self._now().isoformat(),
+            "result": result,
+            "warnings": [],
+            "internal_only": True,
+            "client_visible_summary": f"Document review status: {result}.",
+            "metadata_only": True,
+        }
+
+    def _deduplicate(self, values: list[str | None]) -> list[str]:
+        return list(dict.fromkeys(value for value in values if value))
 
     async def _agency_context(self, agency_id: str | None) -> dict[str, Any]:
         if not agency_id:

@@ -5,6 +5,7 @@ from typing import Any
 
 from database import Database
 from models import (
+    AuditEvent,
     AfterSalesCase,
     AfterSalesCaseCreate,
     AfterSalesCaseItem,
@@ -95,6 +96,11 @@ FINANCIAL_IMPACT_TYPES = [
     "service_fee",
     "refundability",
     "supplier_fee",
+    "agency_fee",
+    "refund",
+    "commission_adjustment",
+    "tax_adjustment",
+    "unknown",
     "tax_refund",
     "credit",
     "claim_amount",
@@ -229,6 +235,8 @@ class AfterSalesWorkflowService:
                 **self.safety_flags(),
             },
         ) or created
+        if financial:
+            await self._record_financial_transition(updated, financial, user)
         return {
             "phase": PHASE_LABEL,
             "case": await self.get_case(updated["id"], agency_id=updated["agency_id"]),
@@ -275,6 +283,7 @@ class AfterSalesWorkflowService:
             "financial_impacts": await self.list_financial_impacts(agency_id=case["agency_id"], case_id=case["id"]),
             "resolutions": await self.list_resolutions(agency_id=case["agency_id"], case_id=case["id"]),
             "communications": await self.list_communications(agency_id=case["agency_id"], case_id=case["id"]),
+            "affected_financial_records": await self._affected_financial_summary(case),
             **self.safety_flags(),
         }
 
@@ -342,9 +351,86 @@ class AfterSalesWorkflowService:
 
     async def create_financial_impact(self, case_id: str, payload: AfterSalesFinancialImpactCreate | dict[str, Any], user: dict, agency_id: str | None = None) -> dict[str, Any]:
         case = await self._require_case(case_id, agency_id=agency_id)
-        impact = await self._create_financial_impact(case, self._payload(payload), user)
+        data = self._payload(payload)
+        correlation_id = data.get("correlation_id") or self._financial_correlation_id(case, data)
+        existing = await self.db.collection(AFTER_SALES_FINANCIAL_IMPACTS_COLLECTION).find_one(
+            {"agency_id": case["agency_id"], "case_id": case["id"], "correlation_id": correlation_id}
+        )
+        if existing:
+            return {
+                "phase": PHASE_LABEL,
+                "financial_impact": existing,
+                "idempotent_reused": True,
+                **self.safety_flags(),
+            }
+        data["correlation_id"] = correlation_id
+        impact = await self._create_financial_impact(case, data, user)
         await self._refresh_case_child_links(case["id"], user)
+        await self._record_financial_transition(case, impact, user)
         return {"phase": PHASE_LABEL, "financial_impact": impact, **self.safety_flags()}
+
+    async def _record_financial_transition(self, case: dict[str, Any], impact: dict[str, Any], user: dict) -> None:
+        evidence = self._transition_evidence(
+            case,
+            user,
+            "financial_records",
+            ",".join(impact.get("invoice_ids") or impact.get("payment_record_ids") or [impact["id"]]),
+            "after_sales_financial_impact",
+            impact["id"],
+            impact.get("correlation_id") or f"after-sales:{case['id']}:financial-impact:{impact['id']}",
+            impact.get("reconciliation_state") or "unreconciled",
+            impact.get("unresolved_mismatches_json") or [],
+        )
+        await self._record_case_timeline(
+            case,
+            "after_sales_financial_impact_recorded",
+            "Affected financial records and impact snapshots recorded.",
+            user,
+            evidence,
+        )
+        audit = AuditEvent(
+            agency_id=case["agency_id"],
+            actor_user_id=user.get("id"),
+            event_type="after_sales.financial_impact_recorded",
+            entity_type="after_sales_case",
+            entity_id=case["id"],
+            summary="After-sales financial linkage and impact metadata recorded.",
+            metadata=evidence,
+        )
+        await self.db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
+        if case.get("workflow_instance_id"):
+            workflow_event = OperationalWorkflowEvent(
+                agency_id=case["agency_id"],
+                workflow_instance_id=case["workflow_instance_id"],
+                event_type="after_sales_financial_impact_recorded",
+                event_code=f"after_sales_financial_impact:{impact['id']}",
+                source_module="after_sales_workflow",
+                source_entity_type="after_sales_financial_impact",
+                source_entity_id=impact["id"],
+                payload_json=evidence,
+                metadata={"metadata_only": True},
+            )
+            await self.db.collection("operational_workflow_events").insert_one(workflow_event.model_dump(mode="json"))
+        await self.work_queue.generate_work_item(
+            OperationalWorkItemGenerateRequest(
+                agency_id=case["agency_id"],
+                work_item_type=self._work_item_type(case),
+                source_entity_type="after_sales_case",
+                source_entity_id=case["id"],
+                workflow_instance_id=case.get("workflow_instance_id"),
+                title=case.get("case_title") or "After-sales case",
+                summary=f"Financial reconciliation state: {impact.get('reconciliation_state') or 'unreconciled'}.",
+                priority=case.get("case_priority") or "normal",
+                severity="high" if impact.get("unresolved_mismatches_json") else "medium",
+                queue_code=self._queue_code(case),
+                blocker_status="manual_review" if impact.get("manual_unreconciled") or impact.get("unresolved_mismatches_json") else self._blocker_status(case),
+                generation_reason="after_sales_financial_linkage",
+                source_snapshot_json=evidence,
+                compatibility_mapping_json={"after_sales_case_id": case["id"], "financial_impact_id": impact["id"]},
+            ),
+            user,
+            agency_id=case["agency_id"],
+        )
 
     async def create_resolution(self, case_id: str, payload: AfterSalesResolutionCreate | dict[str, Any], user: dict, agency_id: str | None = None) -> dict[str, Any]:
         case = await self._require_case(case_id, agency_id=agency_id)
@@ -514,6 +600,13 @@ class AfterSalesWorkflowService:
                 ]
             ),
             "metadata": {"financial_estimate_json": data.get("financial_estimate_json") or {}},
+            "invoice_ids": data.get("invoice_ids") or [],
+            "invoice_line_item_ids": data.get("invoice_line_item_ids") or [],
+            "payment_record_ids": data.get("payment_record_ids") or [],
+            "ticket_record_ids": data.get("ticket_record_ids") or [],
+            "emd_record_ids": data.get("emd_record_ids") or [],
+            "accepted_offer_snapshot_id": data.get("accepted_offer_snapshot_id"),
+            "booking_reference": data.get("booking_reference"),
         }
         return await self._create_financial_impact(case, payload, user)
 
@@ -730,11 +823,54 @@ class AfterSalesWorkflowService:
         data = {**payload}
         data.setdefault("impact_reference", self._reference("ASF"))
         data["impact_type"] = self._norm(data.get("impact_type") or "other")
+        data["amount_category"] = self._norm(data.get("amount_category") or data["impact_type"] or "unknown")
         data["estimate_status"] = self._norm(data.get("estimate_status") or "placeholder")
         if data["impact_type"] not in FINANCIAL_IMPACT_TYPES:
             raise AfterSalesWorkflowError(f"Unsupported after-sales financial impact type metadata: {data['impact_type']}.")
         if data["estimate_status"] not in FINANCIAL_ESTIMATE_STATUSES:
             raise AfterSalesWorkflowError(f"Unsupported after-sales financial estimate status metadata: {data['estimate_status']}.")
+        allowed_categories = {
+            "fare_difference", "penalty", "agency_fee", "supplier_fee", "refund", "credit",
+            "residual_value", "commission_adjustment", "tax_adjustment", "unknown", "service_fee",
+            "refundability", "tax_refund", "claim_amount", "other",
+        }
+        if data["amount_category"] not in allowed_categories:
+            raise AfterSalesWorkflowError(f"Unsupported after-sales amount category: {data['amount_category']}.")
+        bundle = await self._resolve_financial_records(case, data)
+        linked = bool(bundle["records"])
+        data["invoice_ids"] = bundle["invoice_ids"]
+        data["invoice_line_item_ids"] = bundle["invoice_line_item_ids"]
+        data["payment_record_ids"] = bundle["payment_record_ids"]
+        data["ticket_record_ids"] = bundle["ticket_record_ids"]
+        data["emd_record_ids"] = bundle["emd_record_ids"]
+        data["accepted_offer_snapshot_id"] = bundle["accepted_offer_snapshot_id"]
+        data["booking_reference"] = data.get("booking_reference") or case.get("booking_reference")
+        data["original_financial_snapshot_json"] = data.get("original_financial_snapshot_json") or {
+            "records": bundle["records"], "captured_at": self._now().isoformat(), "immutable_source_snapshot": True
+        }
+        data["proposed_financial_impact_snapshot_json"] = data.get("proposed_financial_impact_snapshot_json") or {
+            key: data.get(key)
+            for key in ["amount_category", "amount", "currency", "direction", "residual_value", "penalty_amount", "fare_difference_amount", "service_fee_amount", "refundable_amount", "supplier_fee_amount"]
+            if data.get(key) is not None
+        }
+        data["linked_financial_records"] = linked
+        data["manual_unreconciled"] = not linked
+        data["correlation_id"] = data.get("correlation_id") or self._financial_correlation_id(case, data)
+        if data.get("final_reconciled_financial_snapshot_json") and data.get("reconciliation_state") != "reconciled":
+            raise AfterSalesWorkflowError("A final reconciled snapshot requires reconciliation_state=reconciled.")
+        if data.get("settlement_state") == "settled" and not linked:
+            raise AfterSalesWorkflowError("An unlinked manual estimate cannot be recorded as settled.")
+        if data.get("settlement_state") == "settled" and data.get("estimate_status") in {"placeholder", "manual_review"}:
+            raise AfterSalesWorkflowError("A manual estimate cannot claim financial settlement.")
+        if data.get("reconciliation_state") == "reconciled":
+            if not linked:
+                raise AfterSalesWorkflowError("A manual unlinked estimate cannot be recorded as reconciled.")
+            if not data.get("final_reconciled_financial_snapshot_json"):
+                raise AfterSalesWorkflowError("Reconciled financial impact requires a final reviewed snapshot.")
+            if data.get("unresolved_mismatches_json"):
+                raise AfterSalesWorkflowError("Reconciled financial impact cannot retain unresolved mismatches.")
+            data["reconciled_at"] = data.get("reconciled_at") or self._now()
+            data["reconciled_by"] = user.get("id")
         impact = AfterSalesFinancialImpact(
             agency_id=case["agency_id"],
             case_id=case["id"],
@@ -796,11 +932,16 @@ class AfterSalesWorkflowService:
                 "financial_impact_ids": [item["id"] for item in impacts],
                 "resolution_ids": [item["id"] for item in resolutions],
                 "communication_ids": [item["id"] for item in communications],
+                "invoice_ids": self._present([item_id for impact in impacts for item_id in (impact.get("invoice_ids") or [])]),
+                "invoice_line_item_ids": self._present([item_id for impact in impacts for item_id in (impact.get("invoice_line_item_ids") or [])]),
+                "payment_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("payment_record_ids") or [])]),
+                "ticket_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("ticket_record_ids") or [])]),
+                "emd_record_ids": self._present([item_id for impact in impacts for item_id in (impact.get("emd_record_ids") or [])]),
                 "updated_by": user.get("id"),
             },
         )
 
-    async def _record_case_timeline(self, case: dict[str, Any], event_type: str, summary: str, user: dict) -> None:
+    async def _record_case_timeline(self, case: dict[str, Any], event_type: str, summary: str, user: dict, evidence: dict[str, Any] | None = None) -> None:
         timeline = await self.timelines.create_entry(
             OperationalTimelineCreate(
                 agency_id=case["agency_id"],
@@ -820,7 +961,7 @@ class AfterSalesWorkflowService:
                 summary=summary,
                 internal_only=True,
                 operational_notes="Metadata-only after-sales timeline entry.",
-                metadata={"after_sales_case_id": case["id"], "phase": PHASE_LABEL, "metadata_only": True},
+                metadata={"after_sales_case_id": case["id"], "phase": PHASE_LABEL, "metadata_only": True, **(evidence or {})},
             ),
             user,
         )
@@ -841,6 +982,146 @@ class AfterSalesWorkflowService:
         records = await self.db.collection(collection).find_many(filters)
         records.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
         return [{**record, **self.safety_flags()} for record in records[:limit]]
+
+    async def _resolve_financial_records(self, case: dict[str, Any], data: dict[str, Any]) -> dict[str, Any]:
+        agency_id = case["agency_id"]
+        id_groups = {
+            "invoice_ids": ("invoices", data.get("invoice_ids") or case.get("invoice_ids") or []),
+            "invoice_line_item_ids": ("invoice_line_items", data.get("invoice_line_item_ids") or case.get("invoice_line_item_ids") or []),
+            "payment_record_ids": ("payment_records", data.get("payment_record_ids") or case.get("payment_record_ids") or []),
+            "ticket_record_ids": ("ticket_records", data.get("ticket_record_ids") or case.get("ticket_record_ids") or []),
+            "emd_record_ids": ("emd_records", data.get("emd_record_ids") or case.get("emd_record_ids") or []),
+        }
+        accepted_snapshot_id = data.get("accepted_offer_snapshot_id") or case.get("accepted_offer_snapshot_id")
+        if not accepted_snapshot_id and not any(self._present(ids) for _, ids in id_groups.values()):
+            return {
+                **{field: [] for field in id_groups},
+                "accepted_offer_snapshot_id": None,
+                "records": [],
+            }
+        valid_trip_ids = {
+            value
+            for value in [
+                case.get("source_entity_id") if case.get("source_entity_type") in {"trip", "trip_dossier"} else None,
+                (case.get("source_snapshot_json") or {}).get("trip_id"),
+            ]
+            if value
+        }
+        if case.get("trip_workspace_id"):
+            trip_workspace = await self.db.collection("trip_workspaces").find_one(
+                {"agency_id": agency_id, "id": case["trip_workspace_id"]}
+            )
+            if not trip_workspace:
+                raise AfterSalesWorkflowError("After-sales trip workspace was not found for this agency.")
+            for value in [
+                trip_workspace.get("trip_id"),
+                trip_workspace.get("linked_trip_id"),
+                (trip_workspace.get("metadata") or {}).get("canonical_trip_id"),
+            ]:
+                if value:
+                    valid_trip_ids.add(value)
+        resolved: dict[str, list[str]] = {key: [] for key in id_groups}
+        records: list[dict[str, Any]] = []
+        raw: dict[tuple[str, str], dict[str, Any]] = {}
+        for field, (collection, ids) in id_groups.items():
+            for entity_id in self._present(ids):
+                record = await self.db.collection(collection).find_one({"agency_id": agency_id, "id": entity_id})
+                if not record:
+                    raise AfterSalesWorkflowError(f"Referenced {collection} record {entity_id} was not found for this agency.")
+                resolved[field].append(entity_id)
+                raw[(collection, entity_id)] = record
+                records.append({"entity_type": collection, "snapshot": self._financial_snapshot(record)})
+
+        invoice_ids = set(resolved["invoice_ids"])
+        for line_id in resolved["invoice_line_item_ids"]:
+            line = raw[("invoice_line_items", line_id)]
+            if invoice_ids and line.get("invoice_id") not in invoice_ids:
+                raise AfterSalesWorkflowError("Invoice line item does not belong to a selected invoice.")
+        for payment_id in resolved["payment_record_ids"]:
+            payment = raw[("payment_records", payment_id)]
+            if invoice_ids and payment.get("invoice_id") not in invoice_ids:
+                raise AfterSalesWorkflowError("Payment record does not belong to a selected invoice.")
+        for collection, field in [("ticket_records", "ticket_record_ids"), ("emd_records", "emd_record_ids")]:
+            for entity_id in resolved[field]:
+                record = raw[(collection, entity_id)]
+                if valid_trip_ids and record.get("trip_id") and record.get("trip_id") not in valid_trip_ids:
+                    raise AfterSalesWorkflowError(f"Referenced {collection} record belongs to a different trip context.")
+                if case.get("booking_workspace_id") and record.get("booking_workspace_id") and record.get("booking_workspace_id") != case["booking_workspace_id"]:
+                    raise AfterSalesWorkflowError(f"Referenced {collection} record belongs to a different booking context.")
+
+        if accepted_snapshot_id:
+            snapshot = await self.db.collection("trip_accepted_offer_snapshots").find_one({"agency_id": agency_id, "id": accepted_snapshot_id})
+            if not snapshot:
+                raise AfterSalesWorkflowError("Accepted-offer snapshot was not found for this agency.")
+            if valid_trip_ids and snapshot.get("trip_id") and snapshot.get("trip_id") not in valid_trip_ids:
+                raise AfterSalesWorkflowError("Accepted-offer snapshot belongs to a different trip context.")
+            records.append({"entity_type": "trip_accepted_offer_snapshot", "snapshot": self._financial_snapshot(snapshot)})
+        return {**resolved, "accepted_offer_snapshot_id": accepted_snapshot_id, "records": records}
+
+    async def _affected_financial_summary(self, case: dict[str, Any]) -> dict[str, Any]:
+        bundle = await self._resolve_financial_records(case, case)
+        return {
+            "invoice_ids": bundle["invoice_ids"],
+            "invoice_line_item_ids": bundle["invoice_line_item_ids"],
+            "payment_record_ids": bundle["payment_record_ids"],
+            "ticket_record_ids": bundle["ticket_record_ids"],
+            "emd_record_ids": bundle["emd_record_ids"],
+            "accepted_offer_snapshot_id": bundle["accepted_offer_snapshot_id"],
+            "booking_reference": case.get("booking_reference"),
+            "records": bundle["records"],
+            "read_only": True,
+        }
+
+    def _financial_snapshot(self, record: dict[str, Any]) -> dict[str, Any]:
+        keys = [
+            "id", "invoice_id", "invoice_number", "booking_id", "offer_id", "ticket_id", "emd_id",
+            "ticket_number", "emd_number", "status", "issue_status", "reconciliation_status", "line_type",
+            "description", "currency", "subtotal_amount", "tax_amount", "total_amount", "paid_amount",
+            "due_amount", "amount", "external_reference", "created_at", "updated_at",
+        ]
+        return {key: record.get(key) for key in keys if key in record}
+
+    def _transition_evidence(
+        self,
+        case: dict[str, Any],
+        user: dict,
+        source_type: str,
+        source_id: str,
+        target_type: str,
+        target_id: str,
+        correlation_id: str,
+        result: str,
+        warnings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return {
+            "agency_id": case["agency_id"],
+            "actor_user_id": user.get("id"),
+            "source_entity_type": source_type,
+            "source_entity_id": source_id,
+            "target_entity_type": target_type,
+            "target_entity_id": target_id,
+            "correlation_id": correlation_id,
+            "occurred_at": self._now().isoformat(),
+            "result": result,
+            "warnings": warnings,
+            "internal_only": True,
+            "client_visible_summary": (case.get("client_message_json") or {}).get("summary"),
+            "financial_commitment_performed": False,
+            "metadata_only": True,
+        }
+
+    def _financial_correlation_id(self, case: dict[str, Any], data: dict[str, Any]) -> str:
+        linked_ids = self._present(
+            [
+                *(data.get("invoice_ids") or []),
+                *(data.get("payment_record_ids") or []),
+                *(data.get("ticket_record_ids") or []),
+                *(data.get("emd_record_ids") or []),
+            ]
+        )
+        scope = ",".join(linked_ids or ["manual"])
+        category = self._norm(data.get("amount_category") or data.get("impact_type") or "unknown")
+        return f"after-sales:{case['id']}:finance:{category}:{scope}"
 
     async def _require_case(self, case_id: str, agency_id: str | None = None) -> dict[str, Any]:
         filters = {"id": case_id}

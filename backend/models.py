@@ -14471,12 +14471,14 @@ class DocumentWorkspaceStatus(str, Enum):
     REQUIRED = "required"
     REQUESTED = "requested"
     RECEIVED = "received"
+    GENERATED = "generated"
     UNDER_REVIEW = "under_review"
     VERIFIED = "verified"
     REJECTED = "rejected"
     EXPIRED = "expired"
     WAIVED = "waived"
     NOT_REQUIRED = "not_required"
+    UNKNOWN = "unknown"
     ARCHIVED = "archived"
 
 
@@ -14514,6 +14516,7 @@ class DocumentWorkspace(BaseDocument):
     ticket_workspace_id: Optional[str] = None
     emd_workspace_id: Optional[str] = None
     ssr_osi_workspace_id: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     operational_intelligence_record_ids: List[str] = Field(default_factory=list)
     document_reference: str
     document_status: DocumentWorkspaceStatus = DocumentWorkspaceStatus.DRAFT_METADATA
@@ -14547,12 +14550,23 @@ class DocumentWorkspace(BaseDocument):
     storage_reference: Optional[str] = None
     document_package_ids: List[str] = Field(default_factory=list)
     render_job_ids: List[str] = Field(default_factory=list)
+    rendered_document_ids: List[str] = Field(default_factory=list)
     share_record_ids: List[str] = Field(default_factory=list)
     customer_visible: bool = False
     airline_visible: bool = False
     internal_only: bool = True
     missing_reason: Optional[str] = None
     rejection_reason: Optional[str] = None
+    generated_at: Optional[datetime] = None
+    reviewed_by: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    verified_by: Optional[str] = None
+    verified_at: Optional[datetime] = None
+    rejected_by: Optional[str] = None
+    rejected_at: Optional[datetime] = None
+    last_reconciled_at: Optional[datetime] = None
+    reconciled_by: Optional[str] = None
+    reconciliation_reference: Optional[str] = None
     operational_notes: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -14586,6 +14600,7 @@ class DocumentWorkspaceCreate(BaseModel):
     ticket_workspace_id: Optional[str] = None
     emd_workspace_id: Optional[str] = None
     ssr_osi_workspace_id: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     operational_intelligence_record_ids: List[str] = Field(default_factory=list)
     document_reference: Optional[str] = None
     document_status: DocumentWorkspaceStatus = DocumentWorkspaceStatus.DRAFT_METADATA
@@ -14619,6 +14634,7 @@ class DocumentWorkspaceCreate(BaseModel):
     storage_reference: Optional[str] = None
     document_package_ids: List[str] = Field(default_factory=list)
     render_job_ids: List[str] = Field(default_factory=list)
+    rendered_document_ids: List[str] = Field(default_factory=list)
     share_record_ids: List[str] = Field(default_factory=list)
     customer_visible: bool = False
     airline_visible: bool = False
@@ -14641,6 +14657,7 @@ class DocumentWorkspaceUpdate(BaseModel):
     ticket_workspace_id: Optional[str] = None
     emd_workspace_id: Optional[str] = None
     ssr_osi_workspace_id: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     operational_intelligence_record_ids: Optional[List[str]] = None
     document_reference: Optional[str] = None
     document_status: Optional[DocumentWorkspaceStatus] = None
@@ -14674,6 +14691,7 @@ class DocumentWorkspaceUpdate(BaseModel):
     storage_reference: Optional[str] = None
     document_package_ids: Optional[List[str]] = None
     render_job_ids: Optional[List[str]] = None
+    rendered_document_ids: Optional[List[str]] = None
     share_record_ids: Optional[List[str]] = None
     customer_visible: Optional[bool] = None
     airline_visible: Optional[bool] = None
@@ -14682,6 +14700,17 @@ class DocumentWorkspaceUpdate(BaseModel):
     rejection_reason: Optional[str] = None
     operational_notes: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+
+
+class DocumentWorkspaceOutputReconciliationRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    render_job_id: Optional[str] = None
+    rendered_document_id: Optional[str] = None
+    document_status: DocumentWorkspaceStatus
+    rejection_reason: Optional[str] = None
+    review_notes: Optional[str] = None
+    correlation_id: Optional[str] = None
 
 
 class OperationalTimeline(BaseDocument):
@@ -14834,6 +14863,7 @@ class PassengerServiceWorkflow(BaseDocument):
     workflow_status: str = "draft_metadata"
     workflow_type: Optional[str] = None
     workflow_version: str = "1.0"
+    passenger_service_request_id: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
     trip_workspace_id: Optional[str] = None
@@ -14887,6 +14917,7 @@ class PassengerServiceWorkflowCreate(BaseModel):
     workflow_status: str = "draft_metadata"
     workflow_type: Optional[str] = None
     workflow_version: str = "1.0"
+    passenger_service_request_id: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
     trip_workspace_id: Optional[str] = None
@@ -14922,6 +14953,7 @@ class PassengerServiceWorkflowUpdate(BaseModel):
     workflow_status: Optional[str] = None
     workflow_type: Optional[str] = None
     workflow_version: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
     trip_workspace_id: Optional[str] = None
@@ -16248,6 +16280,13 @@ class AfterSalesCase(BaseDocument):
     passenger_workspace_ids: List[str] = Field(default_factory=list)
     document_workspace_ids: List[str] = Field(default_factory=list)
     ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    invoice_line_item_ids: List[str] = Field(default_factory=list)
+    payment_record_ids: List[str] = Field(default_factory=list)
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    accepted_offer_snapshot_id: Optional[str] = None
+    booking_reference: Optional[str] = None
     affected_segment_refs: List[str] = Field(default_factory=list)
     timeline_entry_ids: List[str] = Field(default_factory=list)
     task_ids: List[str] = Field(default_factory=list)
@@ -16362,6 +16401,7 @@ class AfterSalesFinancialImpact(BaseDocument):
     case_id: str
     impact_reference: str
     impact_type: str = "other"
+    amount_category: str = "unknown"
     estimate_status: str = "placeholder"
     amount: Optional[float] = None
     currency: Optional[str] = None
@@ -16376,6 +16416,25 @@ class AfterSalesFinancialImpact(BaseDocument):
     supplier_fee_amount: Optional[float] = None
     calculation_basis: Optional[str] = None
     placeholder_notes: Optional[str] = None
+    invoice_ids: List[str] = Field(default_factory=list)
+    invoice_line_item_ids: List[str] = Field(default_factory=list)
+    payment_record_ids: List[str] = Field(default_factory=list)
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    accepted_offer_snapshot_id: Optional[str] = None
+    booking_reference: Optional[str] = None
+    original_financial_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    proposed_financial_impact_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    final_reconciled_financial_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    approval_state: str = "not_reviewed"
+    settlement_state: str = "not_settled"
+    reconciliation_state: str = "unreconciled"
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    linked_financial_records: bool = False
+    manual_unreconciled: bool = True
+    reconciled_at: Optional[datetime] = None
+    reconciled_by: Optional[str] = None
+    correlation_id: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -16468,6 +16527,13 @@ class AfterSalesCaseCreate(BaseModel):
     passenger_workspace_ids: List[str] = Field(default_factory=list)
     document_workspace_ids: List[str] = Field(default_factory=list)
     ssr_osi_workspace_ids: List[str] = Field(default_factory=list)
+    invoice_ids: List[str] = Field(default_factory=list)
+    invoice_line_item_ids: List[str] = Field(default_factory=list)
+    payment_record_ids: List[str] = Field(default_factory=list)
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    accepted_offer_snapshot_id: Optional[str] = None
+    booking_reference: Optional[str] = None
     affected_segment_refs: List[str] = Field(default_factory=list)
     residual_value_summary: Optional[str] = None
     penalty_summary: Optional[str] = None
@@ -16558,6 +16624,7 @@ class AfterSalesFinancialImpactCreate(BaseModel):
 
     impact_reference: Optional[str] = None
     impact_type: str = "other"
+    amount_category: str = "unknown"
     estimate_status: str = "placeholder"
     amount: Optional[float] = None
     currency: Optional[str] = None
@@ -16572,6 +16639,24 @@ class AfterSalesFinancialImpactCreate(BaseModel):
     supplier_fee_amount: Optional[float] = None
     calculation_basis: Optional[str] = None
     placeholder_notes: Optional[str] = None
+    invoice_ids: List[str] = Field(default_factory=list)
+    invoice_line_item_ids: List[str] = Field(default_factory=list)
+    payment_record_ids: List[str] = Field(default_factory=list)
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    accepted_offer_snapshot_id: Optional[str] = None
+    booking_reference: Optional[str] = None
+    original_financial_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    proposed_financial_impact_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    final_reconciled_financial_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    approval_state: str = "not_reviewed"
+    settlement_state: str = "not_settled"
+    reconciliation_state: str = "unreconciled"
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    linked_financial_records: bool = False
+    manual_unreconciled: bool = True
+    reconciled_at: Optional[datetime] = None
+    correlation_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -20659,6 +20744,14 @@ class TicketRecord(BaseDocument):
     warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    external_evidence_reference: Optional[str] = None
+    external_result_status: str = "unknown"
+    reconciliation_status: str = "unreconciled"
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    last_reconciled_at: Optional[datetime] = None
+    reconciled_by_user_id: Optional[str] = None
+    transition_correlation_id: Optional[str] = None
+    work_item_id: Optional[str] = None
     issued_at: Optional[datetime] = None
     voided_at: Optional[datetime] = None
     refunded_at: Optional[datetime] = None
@@ -20748,11 +20841,25 @@ class ManualTicketCreate(BaseModel):
     taxes_amount: Optional[float] = None
     total_amount: Optional[float] = None
     internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
+    external_evidence_reference: Optional[str] = None
+    external_result_status: str = "unknown"
     create_coupons: bool = True
     source_context: TicketSourceContext = TicketSourceContext.STANDALONE_MANUAL
     original_ticket_record_id: Optional[str] = None
     exchange_operation_id: Optional[str] = None
     import_draft_id: Optional[str] = None
+
+
+class TicketResultReconciliationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reconciliation_status: str
+    external_result_status: str = "unknown"
+    external_evidence_reference: Optional[str] = None
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    internal_notes: Optional[str] = None
+    client_visible_notes: Optional[str] = None
 
 
 class EMDRecord(BaseDocument):
@@ -21568,6 +21675,16 @@ class PassengerServiceRequestStatus(str, Enum):
     CONFIRMED = "confirmed"
     REJECTED = "rejected"
     CANCELLED = "cancelled"
+
+
+class PassengerServiceFulfilmentResult(str, Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CONDITIONALLY_CONFIRMED = "conditionally_confirmed"
+    FULFILLED = "fulfilled"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    UNKNOWN = "unknown"
 
 
 class AirlineIntelligenceProfile(BaseDocument):
@@ -23942,6 +24059,15 @@ class PassengerServiceRequest(BaseDocument):
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    passenger_service_workflow_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    ticket_coupon_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    emd_coupon_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
@@ -23961,6 +24087,21 @@ class PassengerServiceRequest(BaseDocument):
     generated_ssr_json: List[Dict[str, Any]] = Field(default_factory=list)
     generated_osi_json: List[Dict[str, Any]] = Field(default_factory=list)
     evaluation_result_json: Dict[str, Any] = Field(default_factory=dict)
+    airline_confirmation_status: str = "unknown"
+    airline_confirmation_evidence_reference: Optional[str] = None
+    airport_handling_confirmation_status: str = "unknown"
+    airport_handling_evidence_reference: Optional[str] = None
+    external_manual_status: str = "unknown"
+    fulfilment_result: PassengerServiceFulfilmentResult = PassengerServiceFulfilmentResult.UNKNOWN
+    last_reconciled_at: Optional[datetime] = None
+    reconciled_by_user_id: Optional[str] = None
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    next_action: Optional[str] = None
+    due_at: Optional[datetime] = None
+    departure_deadline: Optional[datetime] = None
+    fulfilment_correlation_id: Optional[str] = None
+    timeline_entry_ids: List[str] = Field(default_factory=list)
+    work_item_id: Optional[str] = None
     status: PassengerServiceRequestStatus = PassengerServiceRequestStatus.REQUESTED
 
 
@@ -23970,6 +24111,8 @@ class PassengerServiceRequestCreate(BaseModel):
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
@@ -23998,6 +24141,8 @@ class PassengerServiceRequestUpdate(BaseModel):
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     passenger_id: Optional[str] = None
     segment_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
@@ -24018,6 +24163,55 @@ class PassengerServiceRequestUpdate(BaseModel):
     generated_osi_json: Optional[List[Dict[str, Any]]] = None
     evaluation_result_json: Optional[Dict[str, Any]] = None
     status: Optional[PassengerServiceRequestStatus] = None
+
+
+class PassengerServiceFulfilmentLinkRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
+    ssr_osi_workspace_id: Optional[str] = None
+    ticket_record_ids: List[str] = Field(default_factory=list)
+    ticket_coupon_ids: List[str] = Field(default_factory=list)
+    emd_record_ids: List[str] = Field(default_factory=list)
+    emd_coupon_ids: List[str] = Field(default_factory=list)
+    document_workspace_ids: List[str] = Field(default_factory=list)
+    next_action: Optional[str] = None
+    due_at: Optional[datetime] = None
+    departure_deadline: Optional[datetime] = None
+
+
+class PassengerServiceConfirmationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    airline_confirmation_status: str = "unknown"
+    airline_confirmation_evidence_reference: Optional[str] = None
+    airport_handling_confirmation_status: str = "unknown"
+    airport_handling_evidence_reference: Optional[str] = None
+    external_manual_status: str = "unknown"
+    next_action: Optional[str] = None
+
+
+class PassengerServiceReconciliationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    external_manual_status: str = "unknown"
+    fulfilment_result: PassengerServiceFulfilmentResult = PassengerServiceFulfilmentResult.UNKNOWN
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    next_action: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_summary: Optional[str] = None
+
+
+class PassengerServiceOutcomeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    fulfilment_result: PassengerServiceFulfilmentResult
+    evidence_reference: Optional[str] = None
+    unresolved_mismatches_json: List[Dict[str, Any]] = Field(default_factory=list)
+    next_action: Optional[str] = None
+    internal_notes: Optional[str] = None
+    client_visible_summary: Optional[str] = None
 
 
 class RulesServicesSimulationRequest(BaseModel):

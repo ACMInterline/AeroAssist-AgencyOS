@@ -2,11 +2,11 @@ import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const documentTypes = ["itinerary", "booking_confirmation", "ticket_receipt", "emd_receipt", "invoice", "voucher", "medif", "medical_certificate", "veterinary_certificate", "pet_passport", "battery_declaration", "mobility_aid_form", "unaccompanied_minor_form", "consent_form", "visa_document", "passport_copy", "assistance_confirmation", "airline_approval", "airport_handling_confirmation", "service_instruction", "other"]
-const documentStatuses = ["draft_metadata", "required", "requested", "received", "under_review", "verified", "rejected", "expired", "waived", "not_required", "archived"]
+const documentStatuses = ["draft_metadata", "required", "requested", "received", "generated", "under_review", "verified", "rejected", "expired", "waived", "not_required", "unknown", "archived"]
 
 const defaultFilters = {
   document_type: "",
@@ -21,20 +21,24 @@ const defaultFilters = {
 
 export default function DocumentWorkspacesPage() {
   const [state, setState] = useState(null)
-  const [filters, setFilters] = useState(defaultFilters)
+  const [filters, setFilters] = useState(() => ({ ...defaultFilters, related_service: new URLSearchParams(window.location.search).get("related_service") || "" }))
   const [error, setError] = useState("")
+  const [message, setMessage] = useState("")
+  const [reconcile, setReconcile] = useState({ workspace_id: "", render_job_id: "", document_status: "generated", rejection_reason: "", review_notes: "" })
 
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
     const query = queryString(nextFilters)
-    const [workspaces, summary] = await Promise.all([
+    const [workspaces, summary, renderJobs] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/document-workspaces${query}`),
       apiGet(`/api/agencies/${context.agency.id}/document-workspaces/summary`),
+      apiGet(`/api/agencies/${context.agency.id}/documents/render-jobs`),
     ])
     setState({
       ...context,
       workspaces: workspaces.items || [],
       summary: workspaces.summary || summary.summary || {},
+      renderJobs: renderJobs.items || [],
     })
   }
 
@@ -49,6 +53,24 @@ export default function DocumentWorkspacesPage() {
     ["Rejected", state?.summary?.by_document_status?.rejected || 0],
   ]
 
+  async function reconcileOutput(event) {
+    event.preventDefault()
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/document-workspaces/${reconcile.workspace_id}/reconcile-output`, {
+        render_job_id: reconcile.render_job_id,
+        document_status: reconcile.document_status,
+        rejection_reason: reconcile.rejection_reason || undefined,
+        review_notes: reconcile.review_notes || undefined,
+      })
+      setMessage(`Document output reconciled as ${formatType(reconcile.document_status)}. Rendering alone did not verify it.`)
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -57,20 +79,36 @@ export default function DocumentWorkspacesPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Documents</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-950">Documents</h2>
-              <p className="mt-1 text-sm text-slate-600">Read-only operational document workspace metadata. These records show passenger, booking, ticket, EMD, SSR / OSI, requirement, verification, validity, storage reference, package, render job, share record, visibility, and operational note context without delivery, e-signature, public links, PDF generation, payment or invoice generation, external storage integration, workers, or AI generation.</p>
+              <p className="mt-1 text-sm text-slate-600">Operational document requirements and explicit output review. Rendering or attaching output does not verify a requirement; an authorized operator records generated, review, verification, rejection, expiry, or unknown state separately.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Agency read-only</span>
+              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Explicit review</span>
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Metadata only</span>
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">No public links</span>
             </div>
           </div>
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
 
           <section className="grid gap-3 md:grid-cols-4">
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
           </section>
+
+          <form className="rounded-lg border border-slate-200 bg-white p-5" onSubmit={reconcileOutput}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div><h3 className="font-semibold text-slate-950">Reconcile document output</h3><p className="mt-1 text-sm text-slate-600">Choose an existing requirement and render job. Verification requires this explicit operator action and is recorded with actor and time.</p></div>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/documents">Open document rendering</a>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-5">
+              <SelectField label="Requirement" value={reconcile.workspace_id} onChange={(value) => setReconcile({ ...reconcile, workspace_id: value })} options={(state?.workspaces || []).map((item) => [item.id, item.document_display_name || item.document_reference])} placeholder="Select requirement" />
+              <SelectField label="Render job" value={reconcile.render_job_id} onChange={(value) => setReconcile({ ...reconcile, render_job_id: value })} options={(state?.renderJobs || []).map((item) => [item.id, `${formatType(item.document_type)} · ${item.source_context_id || item.id}`])} placeholder="Select output" />
+              <SelectField label="Review state" value={reconcile.document_status} onChange={(value) => setReconcile({ ...reconcile, document_status: value })} options={["requested", "received", "generated", "under_review", "verified", "rejected", "expired", "not_required", "unknown"].map((item) => [item, formatType(item)])} />
+              <Field label="Rejection reason" value={reconcile.rejection_reason} onChange={(value) => setReconcile({ ...reconcile, rejection_reason: value })} />
+              <Field label="Review notes" value={reconcile.review_notes} onChange={(value) => setReconcile({ ...reconcile, review_notes: value })} />
+            </div>
+            <button className="aa-primary-action mt-4 rounded-md px-3 py-2 text-sm font-semibold" type="submit" disabled={!reconcile.workspace_id || !reconcile.render_job_id}>Record output review</button>
+          </form>
 
           <section className="rounded-lg border border-slate-200 bg-white p-5">
             <h3 className="font-semibold text-slate-950">Document filters</h3>
@@ -157,6 +195,7 @@ function DocumentTable({ workspaces }) {
                 <p>Storage: {workspace.storage_reference || "Unset"}</p>
                 <ReferenceLine label="Packages" items={workspace.document_package_ids} />
                 <ReferenceLine label="Render jobs" items={workspace.render_job_ids} />
+                <ReferenceLine label="Rendered outputs" items={workspace.rendered_document_ids} />
                 <ReferenceLine label="Share records" items={workspace.share_record_ids} />
                 <ReferenceLine label="AOIE" items={workspace.operational_intelligence_record_ids} />
               </td>

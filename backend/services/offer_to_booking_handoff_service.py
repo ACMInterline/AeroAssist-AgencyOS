@@ -5,6 +5,7 @@ from typing import Any
 
 from database import Database
 from models import (
+    AuditEvent,
     BookingCreateFromReadinessRequest,
     BookingExecutionInstruction,
     OfferBookingHandoff,
@@ -184,6 +185,17 @@ class OfferToBookingHandoffService:
         mapping_records = await self._store_mappings(created, context, user)
         instruction_records = await self._store_instructions(created, context, data, mapping_records, user)
         integrations = await self._emit_handoff_integrations(created, context, checks, user)
+        transition = self._transition_evidence(
+            created,
+            user,
+            "accepted_offer",
+            created.get("acceptance_id"),
+            "offer_booking_handoff",
+            created["id"],
+            created.get("handoff_status") or "assessed",
+            [check for check in checks if check["status"] in {"warning", "blocked"}],
+        )
+        await self._write_transition_audit(created, user, "offer_booking_handoff.created", transition)
 
         updated = await self.db.collection(OFFER_BOOKING_HANDOFFS_COLLECTION).update_one(
             {"id": created["id"]},
@@ -234,10 +246,14 @@ class OfferToBookingHandoffService:
         if handoff.get("handoff_status") == "conditional" and not data.get("allow_conditional", True):
             raise OfferToBookingHandoffError("Conditional handoff metadata requires explicit allow_conditional=true.")
         if handoff.get("booking_workspace_id"):
+            booking_detail = await self.booking_workspaces.get_booking_workspace(
+                handoff["agency_id"], handoff["booking_workspace_id"]
+            )
             return {
                 "phase": PHASE_LABEL,
                 "handoff": await self.get_handoff(handoff["id"], agency_id=handoff["agency_id"]),
-                "booking_workspace": await self.booking_workspaces.get_booking_workspace(handoff["agency_id"], handoff["booking_workspace_id"]),
+                "booking_workspace": booking_detail.get("booking_workspace") or {},
+                "booking_result": booking_detail,
                 "idempotent_reused": True,
                 "metadata_only": True,
                 **self.safety_flags(),
@@ -261,6 +277,17 @@ class OfferToBookingHandoffService:
         booking_workspace = booking_result.get("booking_workspace") or {}
         await self._store_booking_mapping(handoff, booking_workspace, user)
         integrations = await self._emit_booking_created_integrations(handoff, booking_workspace, user)
+        transition = self._transition_evidence(
+            handoff,
+            user,
+            "offer_booking_handoff",
+            handoff["id"],
+            "booking_workspace",
+            booking_workspace["id"],
+            "booking_created",
+            [],
+        )
+        await self._write_transition_audit(handoff, user, "offer_booking_handoff.booking_created", transition)
         updated = await self.db.collection(OFFER_BOOKING_HANDOFFS_COLLECTION).update_one(
             {"id": handoff["id"]},
             {
@@ -731,7 +758,20 @@ class OfferToBookingHandoffService:
                 summary="Offer-to-booking handoff readiness metadata was assessed.",
                 internal_only=True,
                 operational_notes="No booking, provider, payment, ticketing, messaging, or external execution occurred.",
-                metadata={"handoff_id": handoff["id"], "workflow_instance_id": workflow_record["id"]},
+                metadata={
+                    "handoff_id": handoff["id"],
+                    "workflow_instance_id": workflow_record["id"],
+                    **self._transition_evidence(
+                        handoff,
+                        user,
+                        "accepted_offer",
+                        handoff.get("acceptance_id"),
+                        "offer_booking_handoff",
+                        handoff["id"],
+                        handoff.get("handoff_status") or "assessed",
+                        [check for check in checks if check["status"] in {"warning", "blocked"}],
+                    ),
+                },
             ),
             user,
         )
@@ -793,7 +833,20 @@ class OfferToBookingHandoffService:
                 summary="Booking workspace metadata was created from offer-to-booking handoff.",
                 internal_only=True,
                 operational_notes="No live booking, provider call, ticket issuance, payment, or external execution occurred.",
-                metadata={"handoff_id": handoff["id"], "booking_workspace_id": booking_workspace["id"]},
+                metadata={
+                    "handoff_id": handoff["id"],
+                    "booking_workspace_id": booking_workspace["id"],
+                    **self._transition_evidence(
+                        handoff,
+                        user,
+                        "offer_booking_handoff",
+                        handoff["id"],
+                        "booking_workspace",
+                        booking_workspace["id"],
+                        "booking_created",
+                        [],
+                    ),
+                },
             ),
             user,
         )
@@ -820,6 +873,54 @@ class OfferToBookingHandoffService:
             "mutable_offer_reconstruction_disabled": True,
             "metadata_only": True,
         }
+
+    def _transition_evidence(
+        self,
+        handoff: dict[str, Any],
+        user: dict,
+        source_type: str,
+        source_id: str | None,
+        target_type: str,
+        target_id: str,
+        result: str,
+        warnings: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        return {
+            "agency_id": handoff["agency_id"],
+            "actor_user_id": user.get("id"),
+            "source_entity_type": source_type,
+            "source_entity_id": source_id,
+            "target_entity_type": target_type,
+            "target_entity_id": target_id,
+            "correlation_id": f"accepted-offer:{handoff.get('acceptance_id') or 'unknown'}:handoff:{handoff['id']}",
+            "occurred_at": self._now().isoformat(),
+            "result": result,
+            "warnings": warnings,
+            "internal_only": True,
+            "client_visible_summary": {
+                "handoff_reference": handoff.get("handoff_reference"),
+                "status": result,
+            },
+            "provider_execution_performed": False,
+        }
+
+    async def _write_transition_audit(
+        self,
+        handoff: dict[str, Any],
+        user: dict,
+        event_type: str,
+        evidence: dict[str, Any],
+    ) -> None:
+        audit = AuditEvent(
+            agency_id=handoff["agency_id"],
+            actor_user_id=user.get("id"),
+            event_type=event_type,
+            entity_type="offer_booking_handoff",
+            entity_id=handoff["id"],
+            summary=f"Offer-to-booking handoff transition recorded as {evidence['result']}.",
+            metadata=evidence,
+        )
+        await self.db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
 
     def _readiness_snapshot(self, context: dict[str, Any]) -> dict[str, Any]:
         readiness = context.get("readiness") or {}

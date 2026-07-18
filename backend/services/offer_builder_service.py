@@ -22,12 +22,14 @@ from models import (
     OfferWorkspace,
     OfferWorkspaceCreate,
     OfferWorkspaceUpdate,
+    OperationalTimelineCreate,
 )
 from services.exception_engine_service import ExceptionEngineService
 from services.rules_and_services_registry import normalize_code
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.special_services_service import category_for_service_type
 from services.ssr_osi_generator_service import SsrOsiGeneratorService
+from services.timeline_workspace_service import OperationalTimelineService
 
 
 def clean_update_payload(payload: Any) -> dict[str, Any]:
@@ -83,6 +85,7 @@ class OfferBuilderService:
         self.db = db
         self.exception_engine = ExceptionEngineService(db)
         self.ssr_osi_generator = SsrOsiGeneratorService(db)
+        self.timelines = OperationalTimelineService(db)
 
     async def get_request_or_none(self, agency_id: str, request_id: str | None) -> dict[str, Any] | None:
         if not request_id:
@@ -211,6 +214,25 @@ class OfferBuilderService:
             **data,
         )
         created = await self.db.collection("offer_workspaces").insert_one(workspace.model_dump(mode="json"))
+        source_type = "trip" if created.get("trip_id") else "travel_request"
+        source_id = created.get("trip_id") or created.get("request_id")
+        transition = {
+            "agency_id": agency_id,
+            "actor_user_id": actor_user_id,
+            "source_entity_type": source_type,
+            "source_entity_id": source_id,
+            "target_entity_type": "offer_workspace",
+            "target_entity_id": created["id"],
+            "correlation_id": f"{source_type}:{source_id}:offer-workspace:{created['id']}",
+            "occurred_at": str(created.get("created_at") or datetime.utcnow().isoformat()),
+            "result": "created",
+            "warnings": [],
+            "internal_only": True,
+            "client_visible_summary": {
+                "offer_workspace_id": created["id"],
+                "title": created.get("title"),
+            },
+        }
         await write_offer_builder_audit(
             self.db,
             agency_id,
@@ -219,8 +241,27 @@ class OfferBuilderService:
             "offer_workspace",
             created["id"],
             f"Created offer workspace {created['title']}.",
-            {"request_id": created.get("request_id"), "trip_id": created.get("trip_id")},
+            {"request_id": created.get("request_id"), "trip_id": created.get("trip_id"), **transition},
         )
+        if created.get("trip_id"):
+            await self.timelines.create_entry(
+                OperationalTimelineCreate(
+                    agency_id=agency_id,
+                    created_by=actor_user_id,
+                    trip_workspace_id=created["trip_id"],
+                    event_type="Offer created",
+                    event_category="offer_preparation",
+                    event_source="offer_builder",
+                    event_status="recorded",
+                    event_priority="normal",
+                    operational_stage="offer_preparation",
+                    summary="Offer workspace created from the canonical trip record.",
+                    internal_only=True,
+                    operational_notes="No live fare search, availability confirmation, or provider action occurred.",
+                    metadata=transition,
+                ),
+                {"id": actor_user_id},
+            )
         return created
 
     async def update_workspace(self, agency_id: str, workspace_id: str, payload: OfferWorkspaceUpdate, actor_user_id: str | None) -> dict[str, Any] | None:

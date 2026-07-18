@@ -164,7 +164,7 @@ INTEGRATION_COLLECTIONS = {
     "booking_workspace_id": "booking_workspaces",
     "ticket_workspace_id": "ticket_workspaces",
     "emd_workspace_id": "emd_workspaces",
-    "ssr_osi_workspace_id": "ssr_osi_operational_workspaces",
+    "ssr_osi_workspace_id": "ssr_osi_workspaces",
     "document_workspace_id": "document_workspaces",
 }
 

@@ -100,6 +100,7 @@ async def create_booking_workspace_from_readiness(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
+    """Compatibility-only route; the primary agency flow uses OfferBookingHandoff."""
     await require_write(db, agency_id, user)
     service = BookingWorkspaceService(db)
     try:
@@ -108,7 +109,11 @@ async def create_booking_workspace_from_readiness(
         raise bad_request(exc)
     if result is None:
         raise not_found("Booking readiness package not found.")
-    return result
+    return {
+        **result,
+        "compatibility_only": True,
+        "canonical_route": "/api/agencies/{agency_id}/booking-handoffs/{handoff_id}/create-booking-workspace",
+    }
 
 
 @router.post("/booking-workspaces/manual", status_code=status.HTTP_201_CREATED)

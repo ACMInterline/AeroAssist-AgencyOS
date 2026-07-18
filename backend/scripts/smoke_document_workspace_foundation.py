@@ -27,6 +27,7 @@ DOCUMENT_STATUSES = {
     "not_required",
     "archived",
 }
+OUTPUT_RECONCILIATION_STATUSES = {"generated", "unknown"}
 DOCUMENT_TYPES = {
     "itinerary",
     "booking_confirmation",
@@ -165,8 +166,11 @@ def document_payload(agency_id: str, reference: str = "DOCW-SMOKE-ENDPOINT") -> 
 
 
 def verify_model_and_collection_registration() -> None:
-    if {item.value for item in DocumentWorkspaceStatus} != DOCUMENT_STATUSES:
-        raise AssertionError("Document workspace status enum values changed unexpectedly.")
+    actual_statuses = {item.value for item in DocumentWorkspaceStatus}
+    if not DOCUMENT_STATUSES.issubset(actual_statuses):
+        raise AssertionError("Historical document workspace status values changed unexpectedly.")
+    if not OUTPUT_RECONCILIATION_STATUSES.issubset(actual_statuses):
+        raise AssertionError("Document output reconciliation status values are missing.")
     if {item.value for item in DocumentWorkspaceType} != DOCUMENT_TYPES:
         raise AssertionError("Document workspace type enum values changed unexpectedly.")
 
@@ -219,6 +223,7 @@ def verify_routes(paths: dict) -> None:
         "/api/agencies/{agency_id}/document-workspaces": {"get"},
         "/api/agencies/{agency_id}/document-workspaces/summary": {"get"},
         "/api/agencies/{agency_id}/document-workspaces/{workspace_id}": {"get"},
+        "/api/agencies/{agency_id}/document-workspaces/{workspace_id}/reconcile-output": {"post"},
     }
     for path, methods in expected_methods.items():
         for method in methods:
@@ -240,7 +245,8 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/App.jsx", "/agency/document-workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "Document Workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "No duplicate render layer"),
-        (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Read-only operational document workspace metadata"),
+        (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Rendering or attaching output does not verify a requirement"),
+        (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Record output review"),
         (ROOT / "docs/architecture/document-workspace-foundation.md", "Document Workspace Foundation"),
         (ROOT / "docs/architecture/document-workspace-foundation.md", "Phase 36.5"),
         (ROOT / "README.md", "Phase 42.0 Includes"),
@@ -262,7 +268,6 @@ def verify_frontend_and_docs() -> None:
             reject_text(path, text)
     for path in [
         ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx",
-        ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx",
     ]:
         reject_text(path, "<button")
         reject_text(path, "apiPost")
@@ -462,8 +467,8 @@ def verify_endpoint_behavior() -> None:
         OWNER_HEADERS,
     )
     assert_disabled_response(agency_list)
-    if agency_list.get("read_only") is not True:
-        raise AssertionError(f"Agency document list should be read-only: {agency_list}")
+    if agency_list.get("read_only") is not False or agency_list.get("metadata_review_actions_only") is not True:
+        raise AssertionError(f"Agency document list should expose metadata review actions only: {agency_list}")
     agency_item = next((item for item in agency_list.get("items") or [] if item.get("id") == workspace_id), None)
     if not agency_item:
         raise AssertionError(f"Agency document list missing created record: {agency_list}")
@@ -476,8 +481,8 @@ def verify_endpoint_behavior() -> None:
 
     agency_detail = get(f"/api/agencies/{agency_id}/document-workspaces/{workspace_id}", OWNER_HEADERS)
     assert_disabled_response(agency_detail)
-    if agency_detail.get("read_only") is not True:
-        raise AssertionError(f"Agency document detail should be read-only: {agency_detail}")
+    if agency_detail.get("read_only") is not False or agency_detail.get("metadata_review_actions_only") is not True:
+        raise AssertionError(f"Agency document detail should expose metadata review actions only: {agency_detail}")
     assert_workspace_shape(agency_detail.get("document_workspace") or {}, agency_view=True)
 
     deleted = request("DELETE", f"/api/platform/document-workspaces/{workspace_id}", {}, OWNER_HEADERS)[1]
@@ -566,8 +571,10 @@ def assert_workspace_shape(workspace: dict, *, agency_view: bool = False) -> Non
         raise AssertionError(f"Render job link missing: {workspace}")
     if not {"share-smoke"}.issubset(set(workspace.get("share_record_ids") or [])):
         raise AssertionError(f"Share record link missing: {workspace}")
-    if agency_view and workspace.get("read_only") is not True:
-        raise AssertionError(f"Agency document workspace item should be read-only: {workspace}")
+    if agency_view and (
+        workspace.get("read_only") is not False or workspace.get("metadata_review_actions_only") is not True
+    ):
+        raise AssertionError(f"Agency document workspace item should expose metadata review actions only: {workspace}")
     for flag in disabled_flags():
         if workspace.get(flag) is not True:
             raise AssertionError(f"Document workspace missing disabled flag {flag}: {workspace}")

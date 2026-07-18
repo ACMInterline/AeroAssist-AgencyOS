@@ -105,28 +105,6 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
     await load()
   }
 
-  async function createOrOpenBookingWorkspace() {
-    try {
-      const existing = state?.bookingWorkspaces?.[0]
-      if (existing) {
-        window.location.href = `/agency/booking-workspaces/${existing.id}`
-        return
-      }
-      const readinessId = state?.acceptance?.booking_readiness?.id
-      if (!readinessId) {
-        setError("Booking readiness package is required before creating a booking workspace.")
-        return
-      }
-      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
-        booking_readiness_package_id: readinessId,
-        create_draft_record: true,
-      })
-      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -160,7 +138,7 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
           <OfferLifecycleNavigation workspaceId={workspaceId} active={section} />
 
           {section === "delivery" ? <OfferDeliveryPanel agency={state?.agency} offerId={workspaceId} clientId={state?.workspace?.client_summary_json?.client_id || ""} presentationId={query.get("presentation_id") || ""} showHeader={false} /> : section === "client" ? <ClientPassengerContext state={state} /> : section === "suitability" ? <AirlineSuitability options={state?.options || []} /> : section === "history" ? <OfferHistory state={state} /> : <>
-          <AcceptancePanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
+          <AcceptancePanel state={state} />
 
           <section className="grid gap-4 md:grid-cols-5">
             <Metric label="Options" value={childCounts.options} />
@@ -264,7 +242,7 @@ function contextLabel(state) {
   return parts.length ? parts.join(" | ") : "Manual workspace"
 }
 
-function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
+function AcceptancePanel({ state }) {
   const acceptance = state?.acceptance?.acceptance
   const readiness = state?.acceptance?.booking_readiness
   const history = state?.acceptance?.history || []
@@ -303,8 +281,8 @@ function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
             </span>
           ) : null}
           {readiness ? (
-            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${acceptance.id}&booking_readiness_package_id=${readiness.id}`}>
-              Handoff readiness
+            <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${acceptance.id}&booking_readiness_package_id=${readiness.id}&trip_id=${acceptance.trip_id || ""}&offer_workspace_id=${state?.workspace?.id || ""}`}>
+              Review booking handoff
             </a>
           ) : null}
           <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_comparison", "offer_workspace", state?.workspace?.id)}>
@@ -314,11 +292,11 @@ function AcceptancePanel({ state, onCreateOrOpenBookingWorkspace }) {
             <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>
               Open booking workspace
             </a>
-          ) : (
-            <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateOrOpenBookingWorkspace} disabled={!readiness}>
-              Create booking workspace
-            </button>
-          )}
+          ) : readiness ? (
+            <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${acceptance.id}&booking_readiness_package_id=${readiness.id}&trip_id=${acceptance.trip_id || ""}&offer_workspace_id=${state?.workspace?.id || ""}`}>
+              Continue to booking handoff
+            </a>
+          ) : null}
         </div>
       </div>
     </section>

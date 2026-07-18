@@ -442,6 +442,17 @@ class BookingWorkspaceService:
         }:
             raise BookingWorkspaceError("Booking readiness package is not eligible for workspace creation.")
 
+        acceptance_id = readiness.get("acceptance_id")
+        if not acceptance_id:
+            raise BookingWorkspaceError("Booking creation requires an accepted-offer reference.")
+        accepted_snapshot = await self.db.collection("trip_accepted_offer_snapshots").find_one(
+            {"agency_id": agency_id, "acceptance_id": acceptance_id}
+        )
+        if accepted_snapshot is None:
+            raise BookingWorkspaceError(
+                "Booking creation requires the immutable accepted-offer snapshot. Rebuild the canonical booking handoff first."
+            )
+
         existing = await self._existing_active_workspace(agency_id, readiness["id"])
         if existing:
             detail = await self.get_booking_workspace(agency_id, existing["id"])
@@ -465,6 +476,7 @@ class BookingWorkspaceService:
         provider_target = _as_value(payload.provider_target or readiness.get("provider_target") or BookingProviderTarget.MANUAL.value)
         workspace_status = self._status_from_readiness(readiness)
         source_snapshot = await self._source_snapshot(agency_id, readiness, acceptance, trip)
+        source_snapshot["trip_accepted_offer_snapshot"] = accepted_snapshot
         workspace = BookingWorkspace(
             agency_id=agency_id,
             source_context=BookingSourceContext.OFFER_READINESS,

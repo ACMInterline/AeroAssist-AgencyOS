@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from auth import get_current_user
 from database import Database, get_database
+from models import DocumentWorkspaceOutputReconciliationRequest
 from services.document_workspace_service import PHASE_LABEL, DocumentWorkspaceError, DocumentWorkspaceService
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -9,12 +10,19 @@ from services.tenant_service import assert_agency_access, require_any_agency_rol
 router = APIRouter(prefix="/api/agencies/{agency_id}/document-workspaces", tags=["agency-document-workspaces"])
 
 READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
+WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
 
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
     if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
         await require_any_agency_role(db, agency_id, user, READ_ROLES)
+
+
+async def require_write(db: Database, agency_id: str, user: dict) -> None:
+    await assert_agency_access(db, agency_id, user)
+    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
+        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
 
 
 def not_found(detail: str) -> HTTPException:
@@ -76,7 +84,23 @@ async def get_agency_document_workspace(
         "phase": PHASE_LABEL,
         "agency_id": agency_id,
         "document_workspace": document_workspace,
-        "read_only": True,
+        "read_only": False,
+        "metadata_review_actions_only": True,
         "metadata_only": True,
         **service.safety_flags(),
     }
+
+
+@router.post("/{workspace_id}/reconcile-output")
+async def reconcile_agency_document_output(
+    agency_id: str,
+    workspace_id: str,
+    payload: DocumentWorkspaceOutputReconciliationRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await DocumentWorkspaceService(db).reconcile_output(agency_id, workspace_id, payload, user)
+    except DocumentWorkspaceError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
