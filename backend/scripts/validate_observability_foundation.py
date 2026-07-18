@@ -12,7 +12,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE
+from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least
 from observability import COUNTER_LABELS, SAFE_METADATA_FIELDS, SENSITIVE_KEY_FRAGMENTS, TIMING_LABELS
 
 
@@ -84,8 +84,8 @@ def validate_source_file(path: Path) -> list[str]:
 
 def validate_observability_foundation() -> tuple[list[str], dict[str, int]]:
     errors: list[str] = []
-    if CURRENT_BUILD_PHASE != RELEASE_PHASE:
-        errors.append(f"Current build phase is {CURRENT_BUILD_PHASE!r}, expected {RELEASE_PHASE!r}")
+    if not phase_is_at_least(CURRENT_BUILD_PHASE, RELEASE_PHASE):
+        errors.append(f"Current build phase is {CURRENT_BUILD_PHASE!r}, expected at least {RELEASE_PHASE!r}")
 
     files = production_python_files()
     for path in files:

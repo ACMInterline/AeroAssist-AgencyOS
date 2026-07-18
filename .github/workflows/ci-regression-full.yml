@@ -16,7 +16,7 @@ jobs:
   complete-inventory:
     name: Complete inventory with governed isolation
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     services:
       mongo:
         image: mongo:7
@@ -34,7 +34,7 @@ jobs:
       SEED_ON_STARTUP: "true"
       SEED_ENDPOINT_ENABLED: "true"
       DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
-      AEROASSIST_SMOKE_BASE_URL: http://127.0.0.1:18082
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -46,90 +46,27 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Install backend dependencies
         run: python3 -m pip install -r backend/requirements.txt
 
-      - name: Validate inventory and CI structure
-        run: |
-          python3 backend/scripts/validate_smoke_inventory.py
-          python3 backend/scripts/validate_ci_foundation.py
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
 
-      - name: Run backend-free inventory entries
-        run: python3 backend/scripts/run_smoke_inventory.py --ci-suitable-only --isolation none --result-json "${{ runner.temp }}/static-results.json"
+      - name: Run full pilot release validation orchestrator
+        run: python3 backend/scripts/run_pilot_release_validation.py --profile full --output "${{ runner.temp }}/pilot-release-validation.json"
 
-      - name: Start shared-state backend
-        run: |
-          mkdir -p "$DOCUMENT_EXPORT_STORAGE_DIR"
-          cd backend
-          python3 -m uvicorn server:app --host 127.0.0.1 --port 18082 > "${{ runner.temp }}/shared-backend.log" 2>&1 &
-          echo "$!" > "${{ runner.temp }}/shared-backend.pid"
-
-      - name: Wait for shared backend health
-        run: |
-          for attempt in {1..60}; do
-            if python3 -c "from urllib.request import urlopen; urlopen('$AEROASSIST_SMOKE_BASE_URL/api/health', timeout=3)"; then
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Run shared-backend inventory entries
-        run: python3 backend/scripts/run_smoke_inventory.py --ci-suitable-only --isolation shared_backend --result-json "${{ runner.temp }}/shared-results.json"
-
-      - name: Stop shared-state backend
-        run: |
-          pid="$(cat "${{ runner.temp }}/shared-backend.pid")"
-          if kill -0 "$pid" 2>/dev/null; then
-            kill "$pid"
-          fi
-          for attempt in {1..30}; do
-            if ! kill -0 "$pid" 2>/dev/null; then
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Start fresh-state backend
-        run: |
-          cd backend
-          python3 -m uvicorn server:app --host 127.0.0.1 --port 18082 > "${{ runner.temp }}/fresh-backend.log" 2>&1 &
-          echo "$!" > "${{ runner.temp }}/fresh-backend.pid"
-
-      - name: Wait for fresh backend health
-        run: |
-          for attempt in {1..60}; do
-            if python3 -c "from urllib.request import urlopen; urlopen('$AEROASSIST_SMOKE_BASE_URL/api/health', timeout=3)"; then
-              exit 0
-            fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Run fresh-backend inventory entries
-        run: python3 backend/scripts/run_smoke_inventory.py --ci-suitable-only --isolation fresh_backend --result-json "${{ runner.temp }}/fresh-results.json"
-
-      - name: Upload complete regression results
+      - name: Upload sanitized full regression summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: complete-smoke-regression-results
-          path: |
-            ${{ runner.temp }}/static-results.json
-            ${{ runner.temp }}/shared-results.json
-            ${{ runner.temp }}/fresh-results.json
-          if-no-files-found: ignore
+          path: ${{ runner.temp }}/pilot-release-validation.json
+          if-no-files-found: error
           retention-days: 14
-
-      - name: Stop temporary backend processes
-        if: always()
-        run: |
-          for pid_file in "${{ runner.temp }}/shared-backend.pid" "${{ runner.temp }}/fresh-backend.pid"; do
-            if [[ -f "$pid_file" ]]; then
-              pid="$(cat "$pid_file")"
-              if kill -0 "$pid" 2>/dev/null; then
-                kill "$pid"
-              fi
-            fi
-          done

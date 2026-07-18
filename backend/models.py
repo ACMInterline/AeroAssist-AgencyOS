@@ -28019,3 +28019,148 @@ class JourneyOfferDeliveryAuditEvent(BaseDocument):
     occurred_at: datetime = Field(default_factory=now_utc)
     metadata_only: bool = True
     append_only: bool = True
+
+
+class PilotReleaseEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    evidence_key: str
+    environment_scope: str
+    verification_type: str
+    status: str
+    reference: str
+    diagnostic: str
+
+
+class PilotReleaseDimension(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    key: str
+    status: str
+    required_for_pilot: bool
+    environment_scope: str
+    evidence_source: tuple[str, ...] = ()
+    diagnostic: str
+    remediation: str
+
+
+class PilotReleaseAssessment(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    assessment_id: str
+    build_phase: str
+    git_commit: Optional[str] = None
+    assessment_status: str
+    generated_at: datetime
+    environment_scope: str
+    dimensions: tuple[PilotReleaseDimension, ...]
+    blocking_items: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+    evidence: tuple[PilotReleaseEvidence, ...] = ()
+    recommended_next_action: str
+    assessment_hash: str
+    immutable: bool = True
+    production_evidence_supplied: bool = False
+    production_deployment_verified: bool = False
+    pilot_release_ready: bool = False
+    human_sign_off_required: bool = True
+    automatic_approval_disabled: bool = True
+    automatic_deployment_disabled: bool = True
+    automatic_migration_disabled: bool = True
+
+
+class PilotReleaseProductionEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    production_git_commit: Optional[str] = Field(default=None, max_length=64)
+    production_phase: Optional[str] = Field(default=None, max_length=160)
+    mongodb_authentication_verified: Optional[bool] = None
+    backup_manifest_verified: Optional[bool] = None
+    off_host_copy_verified: Optional[bool] = None
+    restore_rehearsal_verified: Optional[bool] = None
+    public_health_verified: Optional[bool] = None
+    public_readiness_verified: Optional[bool] = None
+    internal_diagnostics_verified: Optional[bool] = None
+    github_actions_verified: Optional[bool] = None
+    complete_regression_verified: Optional[bool] = None
+    tenant_isolation_verified: Optional[bool] = None
+    frontend_build_verified: Optional[bool] = None
+    docker_build_verified: Optional[bool] = None
+    production_configuration_verified: Optional[bool] = None
+    rollback_procedure_verified: Optional[bool] = None
+    operator_credentials_verified: Optional[bool] = None
+    synthetic_pilot_fixture_verified: Optional[bool] = None
+    dependency_risk_triaged: Optional[bool] = None
+    frontend_chunk_risk_acknowledged: Optional[bool] = None
+    telemetry_limit_acknowledged: Optional[bool] = None
+    rpo_rto_risk_acknowledged: Optional[bool] = None
+    verified_at: datetime
+    verified_by_role: str = Field(max_length=64)
+    evidence_references: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_safe_attestation(self) -> "PilotReleaseProductionEvidence":
+        if self.verified_by_role not in {"platform_owner", "platform_admin", "platform_support"}:
+            raise ValueError("verified_by_role must use an existing Platform role")
+        if self.production_git_commit and not all(
+            character.isalnum() or character in {"-", "_", "."}
+            for character in self.production_git_commit
+        ):
+            raise ValueError("production_git_commit contains unsupported characters")
+        if self.production_phase and not self.production_phase.startswith("phase_"):
+            raise ValueError("production_phase must use the canonical phase identifier format")
+        if self.production_phase and not all(
+            character.isalnum() or character == "_" for character in self.production_phase
+        ):
+            raise ValueError("production_phase contains unsupported characters")
+        if len(self.evidence_references) > 20:
+            raise ValueError("evidence_references is limited to 20 entries")
+        forbidden_fragments = (
+            "password=",
+            "token=",
+            "authorization:",
+            "bearer ",
+            "mongodb://",
+            "mongodb+srv://",
+            "secret=",
+            "cookie=",
+        )
+        for reference in self.evidence_references:
+            if len(reference) > 200:
+                raise ValueError("evidence references are limited to 200 characters")
+            if any(fragment in reference.lower() for fragment in forbidden_fragments):
+                raise ValueError("evidence references must not contain credentials or connection details")
+            if not reference or not all(
+                character.isalnum() or character in {"-", "_", "."}
+                for character in reference
+            ):
+                raise ValueError("evidence references must use bounded identifier syntax")
+        return self
+
+
+class PilotReleaseSignOff(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    release_id: str = Field(max_length=120)
+    target_phase: str = Field(max_length=160)
+    decision: str
+    decision_reason: str = Field(max_length=1000)
+    approved_by_role: str = Field(max_length=64)
+    approved_at: datetime
+    assessment_hash: str = Field(min_length=64, max_length=64)
+    conditions: tuple[str, ...] = ()
+    rollback_reference: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=1000)
+    human_approved: bool
+
+    @model_validator(mode="after")
+    def validate_human_sign_off(self) -> "PilotReleaseSignOff":
+        if self.decision not in {"approved", "approved_with_conditions", "rejected"}:
+            raise ValueError("decision must be approved, approved_with_conditions, or rejected")
+        if self.approved_by_role not in {"platform_owner", "platform_admin"}:
+            raise ValueError("approved_by_role must be platform_owner or platform_admin")
+        if not self.human_approved:
+            raise ValueError("release sign-off requires explicit human approval")
+        if len(self.conditions) > 20 or any(len(item) > 300 for item in self.conditions):
+            raise ValueError("sign-off conditions exceed bounded limits")
+        return self

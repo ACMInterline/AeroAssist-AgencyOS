@@ -27,8 +27,11 @@ WORKFLOW_SPECS = {
         "validate_ci_foundation.py",
         "validate_persistence_query_foundation.py",
         "validate_observability_foundation.py",
+        "validate_final_stabilization_pilot_release_gate.py",
         "smoke_persistence_scalability_tenant_query_hardening_foundation.py --static",
         "smoke_observability_diagnostics_performance_telemetry_foundation.py --static",
+        "smoke_final_stabilization_pilot_release_gate.py --static",
+        "assess_pilot_release_readiness.py",
         "smoke_mongodb_security_backup_disaster_recovery_foundation.py --static",
         "bash -n deploy/hostinger",
         "npm run build --prefix frontend",
@@ -44,6 +47,9 @@ WORKFLOW_SPECS = {
         "import smoke_inventory, server",
         "/api/health",
         "/api/readiness",
+        "final_stabilization_pilot_release_gate",
+        "smoke_final_stabilization_pilot_release_gate.py --static",
+        "assess_pilot_release_readiness.py",
     ),
     ".github/workflows/ci-smoke-focused.yml": (
         "pull_request:",
@@ -58,11 +64,9 @@ WORKFLOW_SPECS = {
         "workflow_dispatch:",
         "schedule:",
         "mongo:7",
-        "run_smoke_inventory.py",
-        "--isolation none",
-        "--isolation shared_backend",
-        "--isolation fresh_backend",
-        "--result-json",
+        "run_pilot_release_validation.py",
+        "--profile full",
+        "pilot-release-validation.json",
     ),
 }
 ALLOWED_ACTIONS = {
@@ -128,7 +132,8 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py"
+    exact_path = "backend/scripts/smoke_final_stabilization_pilot_release_gate.py"
+    observability_path = "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py"
     persistence_path = "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py"
     mongodb_path = "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py"
     security_path = "backend/scripts/smoke_authentication_security_http_hardening_foundation.py"
@@ -144,6 +149,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Phase 56.5.5 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(persistence_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.6 smoke did not migrate to minimum-phase semantics.")
+    if entry_by_path.get(observability_path, {}).get("phase_assertion_mode") != "minimum":
+        errors.append("Phase 56.5.7 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(ci_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.3 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(legacy_path, {}).get("phase_assertion_mode") != "minimum":
@@ -160,6 +167,7 @@ def validate_ci_foundation() -> list[str]:
     }
     required_focused = {
         exact_path,
+        observability_path,
         persistence_path,
         mongodb_path,
         security_path,
@@ -212,6 +220,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Server readiness does not register the Phase 56.5.6 persistence foundation.")
     if '"observability_diagnostics_performance_telemetry_foundation"' not in server_text:
         errors.append("Server readiness does not register the Phase 56.5.7 observability foundation.")
+    if '"final_stabilization_pilot_release_gate"' not in server_text:
+        errors.append("Server readiness does not register the Phase 56.5.8 final release gate.")
     return errors
 
 

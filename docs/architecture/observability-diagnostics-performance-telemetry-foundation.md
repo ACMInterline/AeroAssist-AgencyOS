@@ -88,9 +88,9 @@ Counters contain no user, passenger, request, raw route, or tenant identifiers. 
 
 ## Readiness and Operator Diagnostics
 
-Public `/api/readiness` preserves its lightweight response and adds only non-sensitive capability flags under `observability_diagnostics_performance_telemetry_foundation`.
+Public `/api/readiness`, including development detailed mode, adds only non-sensitive capability flags under `observability_diagnostics_performance_telemetry_foundation`. It never includes process counters, timing aggregates, uptime, startup timestamps, or deployment diagnostics.
 
-Bounded internal readiness includes cached process counters, timing aggregates, uptime, startup timestamp, phase, and safe deployment identifiers. The same bounded aggregate is available at `/api/platform/diagnostics/observability` to existing `platform_owner`, `platform_admin`, and `platform_support` roles.
+The bounded aggregate is available only at `/api/platform/diagnostics/observability` to existing `platform_owner`, `platform_admin`, and `platform_support` roles.
 
 No endpoint exposes logs, arbitrary log search, environment variables, stack traces, credentials, raw paths, collection data, or tenant data.
 
@@ -125,3 +125,7 @@ This foundation does not assert legal or regulatory compliance. Operators remain
 ## Future Integrations
 
 Future work may add an external metrics, log, or trace backend only through explicit architecture, privacy, retention, tenancy, cost, and credential review. The canonical envelope, bounded labels, and protected diagnostics contract should remain the integration boundary.
+
+## Phase 56.5.8 Release-Gate Integration
+
+The final pilot release gate treats observability implementation, public readiness privacy, and protected diagnostics as separate required dimensions. Repository registration does not prove deployed behavior; production verification remains an operator attestation tied to the candidate assessment. Process-local telemetry durability remains an explicit warning rather than an invented monitoring guarantee.

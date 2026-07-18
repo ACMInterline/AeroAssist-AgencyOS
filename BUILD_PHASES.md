@@ -2489,3 +2489,15 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 56.5.6 smoke to minimum semantics and makes the Phase 56.5.7 observability smoke the sole exact-current release assertion.
 - Adds no product capability, external monitoring dependency, background worker, provider operation, AI, payment, booking execution, production access, deployment, or data migration.
 - See [Observability, Diagnostics, and Performance Telemetry Foundation](docs/architecture/observability-diagnostics-performance-telemetry-foundation.md).
+
+## Phase 56.5.8 - Final Stabilization and Pilot Release Gate
+
+- Active marker: `phase_56_5_8_final_stabilization_pilot_release_gate`.
+- Consolidates repository, GitHub-hosted CI, disposable-environment, migration, and production evidence without treating one scope as proof of another.
+- Adds deterministic release dimensions, hard-blocker precedence, warning governance, bounded operator attestations, immutable assessment hashes, and mandatory human sign-off metadata.
+- Adds a read-only assessment CLI, higher-level release validation orchestration, protected Platform diagnostics, and a public-safe readiness summary that defaults production evidence to unverified.
+- Governs synthetic pilot fixtures through `PILOT_TEST_`, `DEMO_SYNTHETIC_`, and `CI_FIXTURE_` references and never seeds production automatically.
+- Adds the controlled pilot release runbook covering backup, off-host copy, MongoDB authentication migration, sequential deployment validation, restore rehearsal, rollback, and sign-off.
+- Migrates the Phase 56.5.7 smoke to minimum semantics and makes the Phase 56.5.8 release-gate smoke the sole exact-current release assertion.
+- Adds no product workflow, provider operation, automatic migration, deployment, approval, production access, or production-data mutation.
+- See [Final Stabilization and Pilot Release Gate](docs/architecture/final-stabilization-pilot-release-gate.md).

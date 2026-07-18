@@ -14,5 +14,7 @@
   "manifest_verification_required": true,
   "dry_run_restore_default": true,
   "production_confirmation_required": true,
-  "automatic_production_restore_disabled": true
+  "automatic_production_restore_disabled": true,
+  "frontend_loopback_binding_required": true,
+  "pilot_release_runbook_packaged": true
 }

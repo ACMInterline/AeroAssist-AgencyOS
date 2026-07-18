@@ -99,3 +99,7 @@ RPO depends on backup frequency, successful verification, and off-host replicati
 - Logical backups are not point-in-time oplog recovery.
 - Credential rotation and restore cutover require human authorization.
 - The foundation does not install timers, deploy, restore production, or claim disaster-recovery certification.
+
+## Phase 56.5.8 Pilot Release Gate
+
+MongoDB authentication, current backup verification, off-host copy, and restore rehearsal are separate hard release dimensions. Repository tooling and disposable CI prove mechanisms only; production remains `not_verified` until authorized operators complete the existing-volume migration and attest each result. The release service never invokes backup, restore, migration, or production connectivity. Follow `deploy/hostinger/PILOT_RELEASE_RUNBOOK.md` for the manually approved sequence.

@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.7 build marker and privacy-safe observability, diagnostics, performance telemetry, redaction, and protected operator diagnostics registration.",
-      "exact_reason": "This smoke explicitly tests current infrastructure-hardening release registration; all historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_final_stabilization_pilot_release_gate.py",
+      "assertion_purpose": "Validate the canonical Phase 56.5.8 build marker and evidence-aware final stabilization and pilot release-gate registration.",
+      "exact_reason": "This smoke explicitly tests current release-gate registration; all historical capability and infrastructure smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -1050,6 +1050,26 @@
       "execution_isolation": "shared_backend"
     },
     {
+      "script_path": "backend/scripts/smoke_final_stabilization_pilot_release_gate.py",
+      "capability_name": "Final Stabilization Pilot Release Gate",
+      "minimum_application_phase": "phase_56_5_8_final_stabilization_pilot_release_gate",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "security",
+        "readiness",
+        "infrastructure",
+        "release_governance"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current release-registration smoke validating environment-separated evidence, hard blockers, warnings, safe operator attestations, immutable assessment hashing, human sign-off, CLI reports, public readiness safety, and protected Platform diagnostics.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
+    },
+    {
       "script_path": "backend/scripts/smoke_flight_workspace_foundation.py",
       "capability_name": "Flight Workspace Foundation",
       "minimum_application_phase": "phase_41_3_flight_workspace_foundation",
@@ -1283,7 +1303,7 @@
       "script_path": "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py",
       "capability_name": "Observability Diagnostics Performance Telemetry Foundation",
       "minimum_application_phase": "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": false,
@@ -1296,7 +1316,7 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current release-registration smoke validating the structured event envelope, JSON and human formatting, request correlation, HTTP/error/security/query telemetry, redaction, bounded counters, protected diagnostics, lifecycle events, readiness safety, and backwards-compatible errors.",
+      "notes": "Historical minimum-phase smoke validating the structured event envelope, JSON and human formatting, request correlation, HTTP/error/security/query telemetry, redaction, bounded counters, protected diagnostics, lifecycle events, readiness safety, and backwards-compatible errors.",
       "ci_tier": "focused",
       "execution_isolation": "shared_backend"
     },

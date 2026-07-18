@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least
 from config import get_settings, validate_config
 from services.pdf_rendering_service import pdf_capabilities
 from services.secret_service import check_secret, mask_secret_ref
+from services.final_stabilization_pilot_release_gate_service import release_gate_readiness_metadata
 
 
 def status_line(level: str, message: str) -> str:
@@ -109,8 +111,11 @@ def main() -> int:
     scripts_root = root / "deploy" / "hostinger" / "scripts"
     if scripts_root.is_dir():
         if not settings.mongo_root_username or not settings.mongo_root_password:
-            errors += 1
-            lines.append(status_line("FAIL", "Host deployment checks require MongoDB administrative credentials for initialization and guarded recovery."))
+            if settings.is_production:
+                errors += 1
+                lines.append(status_line("FAIL", "Host deployment checks require MongoDB administrative credentials for initialization and guarded recovery."))
+            else:
+                lines.append(status_line("WARN", "Host-only MongoDB administrative credentials are not required for non-production validation."))
         else:
             lines.append(status_line("PASS", "Host deployment has protected MongoDB administrative credentials available to operator tooling."))
     elif packaged_inventory.get("application_root_credentials_excluded") is True:
@@ -162,12 +167,12 @@ def main() -> int:
 
     if not phase_is_at_least(
         CURRENT_BUILD_PHASE,
-        "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation",
+        "phase_56_5_8_final_stabilization_pilot_release_gate",
     ):
         errors += 1
-        lines.append(status_line("FAIL", "Build phase does not include the observability, diagnostics, and performance telemetry foundation."))
+        lines.append(status_line("FAIL", "Build phase does not include the final stabilization and pilot release gate."))
     else:
-        lines.append(status_line("PASS", "Observability, diagnostics, and performance telemetry phase marker is current."))
+        lines.append(status_line("PASS", "Final stabilization and pilot release-gate phase marker is current."))
 
     if settings.log_format == "json" or not settings.is_production:
         lines.append(status_line("PASS", "Structured logging format is environment-appropriate."))
@@ -206,6 +211,35 @@ def main() -> int:
     else:
         errors += 1
         lines.append(status_line("FAIL", "Protected observability diagnostics registration is incomplete."))
+
+    frontend_binding = os.getenv("FRONTEND_HTTP_PORT", "")
+    if settings.is_production and compose_path.is_file() and not frontend_binding.startswith("127.0.0.1:"):
+        errors += 1
+        lines.append(status_line("FAIL", "Production frontend must bind to loopback when host nginx terminates TLS."))
+    elif frontend_binding.startswith("127.0.0.1:") or packaged_inventory.get("frontend_loopback_binding_required") is True:
+        lines.append(status_line("PASS", "Production frontend loopback binding is represented."))
+    else:
+        lines.append(status_line("WARN", "Frontend loopback binding must be verified on the deployment host."))
+
+    release_gate = release_gate_readiness_metadata()
+    if (
+        release_gate.get("repository_gate_available") is True
+        and release_gate.get("production_evidence_supplied") is False
+        and release_gate.get("production_deployment_verified") is False
+        and release_gate.get("pilot_release_ready") is False
+        and release_gate.get("human_sign_off_required") is True
+    ):
+        lines.append(status_line("PASS", "Pilot release gate defaults production evidence to unverified and requires human sign-off."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Pilot release gate does not fail closed without production evidence."))
+
+    pilot_runbook = root / "deploy" / "hostinger" / "PILOT_RELEASE_RUNBOOK.md"
+    if pilot_runbook.is_file() or packaged_inventory.get("pilot_release_runbook_packaged") is True:
+        lines.append(status_line("PASS", "Pilot release and rollback procedure is represented."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Pilot release runbook is missing."))
 
     for line in lines:
         print(line)

@@ -129,3 +129,7 @@ The migration intentionally does not alter hundreds of unrelated service reads b
 The phase smoke uses disposable in-memory records to prove deterministic pages, stable tie-breaking, tenant injection, override prevention, bounded operators, allowlisted sorts, scoped counts, cursor isolation, platform/global separation, mixed precedence, index safety, diagnostic redaction, and readiness metadata. Docker CI additionally starts authenticated disposable MongoDB, creates indexes through normal startup, checks a governed index, and runs the foundation smoke without exporting database content.
 
 Future service migrations should proceed from measured query evidence, register ownership before use, retain route contracts, add endpoint pagination only where callers can consume it, and replace each documented legacy exception as its business semantics are understood.
+
+## Phase 56.5.8 Release-Gate Integration
+
+The final pilot release gate records persistence scalability, query governance, and tenant isolation as distinct dimensions. Static registry validation is repository evidence; disposable tenant fixtures are disposable evidence; neither verifies the deployed production database. Remaining generic compatibility reads stay visible as a warning and are not silently presented as completed migration work.

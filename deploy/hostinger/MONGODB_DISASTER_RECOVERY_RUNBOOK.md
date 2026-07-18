@@ -1,5 +1,7 @@
 # MongoDB Security and Disaster Recovery Runbook
 
+Phase 56.5.8 treats authenticated production migration, verified backup, off-host copy, and restore rehearsal as separate hard pilot-release gates. Completing one does not satisfy the others. Record only bounded attestation metadata and continue with `PILOT_RELEASE_RUNBOOK.md`; never place credentials, archive contents, or host details in release evidence.
+
 ## Safety Rules
 
 - Never test against the production database or volume.

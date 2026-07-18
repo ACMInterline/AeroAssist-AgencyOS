@@ -4,6 +4,8 @@ This runbook is for operating the Phase 18 Docker Compose deployment and Phase 2
 
 It does not add product functionality, monitoring services, CI/CD, background workers, provider webhooks, public links, uploads, payment links, or airline integrations.
 
+For a controlled pilot release after Phase 56.5.8, follow `PILOT_RELEASE_RUNBOOK.md`. Repository validation, CI, disposable testing, MongoDB migration readiness, and deployed production state are separate evidence scopes. The release gate never deploys or performs the migration.
+
 ## Folder Layout
 
 Recommended VPS layout:

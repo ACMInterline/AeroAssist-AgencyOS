@@ -18,7 +18,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from config import get_settings, validate_config
 from http_security import SecurityHttpMiddleware, unexpected_exception_handler
 from observability import (
@@ -31,11 +31,13 @@ from observability import (
     structured_event,
 )
 from persistence_query import query_diagnostic_records, record_query_diagnostic
+from phase_assertions import assert_application_phase_at_least
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 
 RELEASE_PHASE = "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation"
+MINIMUM_PHASE = RELEASE_PHASE
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 PROTECTED_PUBLIC_READINESS_KEYS = {
     "operational_diagnostics",
@@ -296,8 +298,11 @@ async def verify_unhandled_error_safety() -> None:
 
 
 def verify_static_registration() -> None:
-    if not phase_is_exact(CURRENT_BUILD_PHASE, RELEASE_PHASE):
-        raise AssertionError(f"Canonical phase marker mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(
+        CURRENT_BUILD_PHASE,
+        MINIMUM_PHASE,
+        source="canonical build phase",
+    )
     settings = get_settings()
     config = validate_config(settings, include_storage=False)
     if not config.get("ok"):
@@ -331,8 +336,9 @@ def verify_live_contracts() -> None:
         "/api/health?token=must-not-log",
         headers={"X-Request-ID": request_id, "X-Correlation-ID": correlation_id},
     )
-    if status_code != 200 or not isinstance(health, dict) or health.get("phase") != RELEASE_PHASE:
+    if status_code != 200 or not isinstance(health, dict):
         raise AssertionError(f"Live health phase mismatch: {status_code} {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
     if headers.get("x-request-id") != request_id or headers.get("x-correlation-id") != correlation_id:
         raise AssertionError("Live request/correlation headers were not propagated.")
 

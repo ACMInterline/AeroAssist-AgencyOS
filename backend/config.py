@@ -383,6 +383,18 @@ def validate_config(settings: AppSettings | None = None, include_storage: bool =
                 "MONGO_AUTHENTICATION_CREDENTIALS",
                 "The production MongoDB administrative password must be a non-placeholder value of at least 16 characters when present.",
             )
+        elif settings.mongo_root_username and settings.mongo_root_username == settings.mongo_app_username:
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "MongoDB application and administrative usernames must be distinct.",
+            )
+        elif settings.mongo_root_password and settings.mongo_root_password == settings.mongo_app_password:
+            add(
+                "fail",
+                "MONGO_AUTHENTICATION_CREDENTIALS",
+                "MongoDB application and administrative passwords must be distinct.",
+            )
         elif not settings.mongo_host or not settings.mongo_auth_source or settings.mongo_port < 1 or settings.mongo_port > 65535:
             add("fail", "MONGO_AUTHENTICATION_CONFIGURATION", "MongoDB auth source and port must be valid.")
         elif not urlparse(settings.mongodb_url).username:

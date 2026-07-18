@@ -88,13 +88,19 @@ jobs:
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation"
+          expected = "phase_56_5_8_final_stabilization_pilot_release_gate"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 139
+          assert section["inventoried_smoke_scripts"] == 140
           assert section["unresolved_scripts"] == 0
+          release_gate = readiness["final_stabilization_pilot_release_gate"]
+          assert release_gate["assessment_status"] == "blocked"
+          assert release_gate["production_evidence_supplied"] is False
+          assert release_gate["production_deployment_verified"] is False
+          assert release_gate["pilot_release_ready"] is False
+          assert "dimensions" not in release_gate and "evidence" not in release_gate
           try:
               urlopen("http://127.0.0.1:18080/api/observability-ci-not-found", timeout=10)
           except HTTPError as exc:
@@ -193,10 +199,20 @@ jobs:
 
       - name: Validate authenticated backend after restore rehearsal
         run: |
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_7_observability_diagnostics_performance_telemetry_foundation'; print(payload['phase'])"
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_8_final_stabilization_pilot_release_gate'; print(payload['phase'])"
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_final_stabilization_pilot_release_gate.py --static
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c 'mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "const names=db.operational_work_items.getIndexes().map(item => item.name); if (!names.includes(\"operational_work_items_agency_status_due_created_id\")) { throw new Error(\"governed work-queue index missing\"); }"'
+
+      - name: Validate disposable release assessment remains production-blocked
+        run: |
+          set +e
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python scripts/assess_pilot_release_readiness.py --format json --output /tmp/pilot-release-assessment.json > /dev/null
+          status=$?
+          set -e
+          test "$status" -eq 1
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json; data=json.load(open('/tmp/pilot-release-assessment.json', encoding='utf-8')); assert data['assessment_status'] == 'blocked'; assert data['production_evidence_supplied'] is False; assert data['production_deployment_verified'] is False; assert data['pilot_release_ready'] is False; serialized=json.dumps(data).lower(); assert 'mongodb://' not in serialized and 'authorization' not in serialized and 'cookie' not in serialized"
 
       - name: Validate authenticated log redaction
         run: |
@@ -227,7 +243,7 @@ jobs:
                   except json.JSONDecodeError:
                       pass
           assert any(item.get("event_type") == "application_startup_completed" for item in payloads), payloads[-20:]
-          assert all(item.get("build_phase") == "phase_56_5_7_observability_diagnostics_performance_telemetry_foundation" for item in payloads), payloads
+          assert all(item.get("build_phase") == "phase_56_5_8_final_stabilization_pilot_release_gate" for item in payloads), payloads
           PY
 
       - name: Capture Docker diagnostics on failure

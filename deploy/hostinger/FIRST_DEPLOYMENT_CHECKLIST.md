@@ -4,6 +4,8 @@ Use this as the linear first-deploy path. It assumes a Hostinger managed VPS and
 
 No real secrets, domain values, or certificate files belong in this repository.
 
+Before a Phase 56.5.8 controlled pilot, complete `PILOT_RELEASE_RUNBOOK.md`. Do not treat this checklist, local Docker success, or workflow definitions as proof that production MongoDB authentication, off-host backup, restore rehearsal, deployment alignment, and human sign-off are complete.
+
 ## 1. VPS Access
 
 SSH into the VPS:
