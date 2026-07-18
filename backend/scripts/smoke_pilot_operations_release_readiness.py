@@ -18,7 +18,7 @@ ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
 from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
-from database import Database
+from database import Database, ensure_mongo_indexes
 from models import (
     PilotAgencyInvitationCreate,
     PilotHealthTimelineEventCreate,
@@ -39,6 +39,33 @@ from services.pilot_operations_release_readiness_service import (
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+
+
+class IndexRegressionCollection:
+    def __init__(self) -> None:
+        self.indexes: dict[str, dict] = {}
+        self.create_calls: list[tuple[list[tuple[str, object]], dict]] = []
+
+    async def index_information(self) -> dict[str, dict]:
+        return {name: {**value, "key": list(value.get("key") or [])} for name, value in self.indexes.items()}
+
+    async def create_index(self, keys: list[tuple[str, object]], **options: object) -> str:
+        index_keys = list(keys)
+        name = str(options.get("name") or "_".join(f"{field}_{direction}" for field, direction in index_keys))
+        stored_options = {key: value for key, value in options.items() if key != "name"}
+        self.indexes[name] = {"key": index_keys, **stored_options}
+        self.create_calls.append((index_keys, dict(options)))
+        return name
+
+
+class IndexRegressionDatabase:
+    def __init__(self) -> None:
+        self.collections: dict[str, IndexRegressionCollection] = {}
+
+    def __getitem__(self, collection_name: str) -> IndexRegressionCollection:
+        if collection_name not in self.collections:
+            self.collections[collection_name] = IndexRegressionCollection()
+        return self.collections[collection_name]
 
 
 def request(path: str, *, headers: dict[str, str] | None = None) -> tuple[int, object]:
@@ -110,6 +137,8 @@ def verify_static_registration() -> None:
     for collection in PILOT_OPERATIONS_COLLECTIONS:
         if collection not in database_text:
             raise AssertionError(f"Mongo collection/index registration is missing: {collection}")
+    if "pilot_agency_enrollments_agency_unique" in database_text:
+        raise AssertionError("Pilot enrollment startup still requests incompatible agency-only uniqueness.")
     if '"pilot_operations_release_readiness"' not in server_text or "platform_pilot_operations_release_readiness.router" not in server_text:
         raise AssertionError("Phase 57.0 readiness or router registration is missing.")
     if "OWNER_ONLY = [\"platform_owner\"]" not in router_text or "require_platform_role" not in router_text:
@@ -129,7 +158,24 @@ def verify_static_registration() -> None:
         raise AssertionError(f"Pilot operations service contains forbidden execution calls: {found}")
 
 
+async def verify_existing_agency_index_compatibility() -> None:
+    mongo = IndexRegressionDatabase()
+    enrollments = mongo["pilot_agency_enrollments"]
+    enrollments.indexes["agency_id_1"] = {"key": [("agency_id", 1)]}
+
+    await ensure_mongo_indexes(mongo)
+
+    existing = enrollments.indexes.get("agency_id_1")
+    if not existing or existing.get("key") != [("agency_id", 1)] or existing.get("unique", False):
+        raise AssertionError("Phase 57.0 index initialization mutated the existing non-unique agency lookup.")
+    if any(keys == [("agency_id", 1)] and options.get("unique") for keys, options in enrollments.create_calls):
+        raise AssertionError("Phase 57.0 index initialization attempted to replace agency_id_1 with a unique index.")
+    if "pilot_agency_enrollments_status_updated_lookup" not in enrollments.indexes:
+        raise AssertionError("Pilot enrollment status/update lookup index was not initialized.")
+
+
 async def verify_service_contracts() -> None:
+    await verify_existing_agency_index_compatibility()
     db = Database()
     db.mode = "memory"
     service = PilotOperationsReleaseReadinessService(db)

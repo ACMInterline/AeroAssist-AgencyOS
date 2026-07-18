@@ -1173,7 +1173,6 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("occurred_at", ASCENDING)], "name": "pilot_operational_evidence_agency_occurred_lookup"},
         ],
         "pilot_agency_enrollments": [
-            {"keys": [("agency_id", ASCENDING)], "name": "pilot_agency_enrollments_agency_unique", "unique": True},
             {"keys": [("enrollment_status", ASCENDING), ("updated_at", ASCENDING)], "name": "pilot_agency_enrollments_status_updated_lookup"},
         ],
         "pilot_synthetic_datasets": [
