@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 
 
-CURRENT_BUILD_PHASE = "phase_56_5_8_final_stabilization_pilot_release_gate"
+CURRENT_BUILD_PHASE = "phase_57_0_pilot_operations_release_readiness"
 
 _PHASE_PATTERN = re.compile(
     r"^phase_(?P<numeric>\d+(?:_\d+)+)_(?P<label>[a-z][a-z0-9]*(?:_[a-z0-9]+)*)$"

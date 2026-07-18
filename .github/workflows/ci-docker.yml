@@ -88,16 +88,19 @@ jobs:
 
           health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
           readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_56_5_8_final_stabilization_pilot_release_gate"
+          expected = "phase_57_0_pilot_operations_release_readiness"
           assert health["phase"] == expected, health
           assert readiness["phase"] == expected, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 140
+          assert section["inventoried_smoke_scripts"] == 141
           assert section["unresolved_scripts"] == 0
           release_gate = readiness["final_stabilization_pilot_release_gate"]
           assert release_gate["assessment_status"] == "blocked"
           assert release_gate["production_evidence_supplied"] is False
+          pilot_operations = readiness["pilot_operations_release_readiness"]
+          assert pilot_operations["automatic_release_approval_disabled"] is True
+          assert pilot_operations["automatic_production_migration_disabled"] is True
           assert release_gate["production_deployment_verified"] is False
           assert release_gate["pilot_release_ready"] is False
           assert "dimensions" not in release_gate and "evidence" not in release_gate
@@ -199,10 +202,11 @@ jobs:
 
       - name: Validate authenticated backend after restore rehearsal
         run: |
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_56_5_8_final_stabilization_pilot_release_gate'; print(payload['phase'])"
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_57_0_pilot_operations_release_readiness'; print(payload['phase'])"
           docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
           docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
           docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_final_stabilization_pilot_release_gate.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_pilot_operations_release_readiness.py --static
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c 'mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "const names=db.operational_work_items.getIndexes().map(item => item.name); if (!names.includes(\"operational_work_items_agency_status_due_created_id\")) { throw new Error(\"governed work-queue index missing\"); }"'
 
       - name: Validate disposable release assessment remains production-blocked
@@ -243,7 +247,7 @@ jobs:
                   except json.JSONDecodeError:
                       pass
           assert any(item.get("event_type") == "application_startup_completed" for item in payloads), payloads[-20:]
-          assert all(item.get("build_phase") == "phase_56_5_8_final_stabilization_pilot_release_gate" for item in payloads), payloads
+          assert all(item.get("build_phase") == "phase_57_0_pilot_operations_release_readiness" for item in payloads), payloads
           PY
 
       - name: Capture Docker diagnostics on failure

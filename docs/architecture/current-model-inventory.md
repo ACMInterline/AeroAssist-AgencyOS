@@ -370,3 +370,10 @@ These records project and coordinate canonical sources; they do not duplicate Jo
 Offer Workspace remains the primary Agency commercial owner. Phase 56.4 records are subordinate delivery/version/interaction records rendered under its Delivery & Responses context; internal `JourneyOffer*` names are retained for compatibility with the uncommitted implementation's collection contract.
 
 These records are agency-scoped projections and governance metadata. They do not replace canonical Journey, operational workspaces, accepted Offer snapshots, Documents, or issued records and perform no publication, messaging, rendering, or provider execution.
+## Phase 57.0 Pilot Operations Models
+
+- `PilotOperationalEvidenceRecord` and `PilotOperationalEvidenceCreate` govern immutable deployment, smoke, backup, restore, production validation, release assessment, and sign-off evidence in `pilot_operational_evidence`.
+- `PilotAgencyEnrollment`, `PilotAgencyInvitationCreate`, and `PilotAgencyStatusChange` govern existing-agency pilot invitation, enablement, activation, and disablement in `pilot_agency_enrollments`.
+- `PilotSyntheticDataset`, `PilotSyntheticDatasetCreate`, and `PilotSyntheticDatasetRemoval` govern bounded prefixed metadata fixtures and audited soft removal in `pilot_synthetic_datasets`.
+- `PilotHealthTimelineEvent` and `PilotHealthTimelineEventCreate` govern append-only deployment, health, readiness, smoke, incident, backup, restore, and pilot history in `pilot_health_timeline_events`.
+- Phase 57.0 reuses `PilotReleaseAssessment`, `PilotReleaseProductionEvidence`, `PilotReleaseSignOff`, and `AuditEvent`; it creates no parallel release-assessment, agency, identity, or audit model.

@@ -7,6 +7,7 @@ export const platformModuleGroups = [
     safety: "Metadata only",
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
+      { label: "Pilot Operations", description: "Release evidence, pilot agencies, health history, and protected diagnostics", href: "/platform/pilot-operations", icon: "shield", badge: "Owner governed", metadata_only: true },
       { label: "Operational Travel Workspaces", description: "Travel workspace metadata", href: "/platform/operational-travel-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Travel Request Workspaces", description: "Request workspace metadata", href: "/platform/travel-request-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Passenger Workspaces", description: "Passenger workspace metadata", href: "/platform/passenger-workspaces", icon: "user", badge: "Metadata only", metadata_only: true },

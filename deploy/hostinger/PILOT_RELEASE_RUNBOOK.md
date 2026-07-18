@@ -72,6 +72,12 @@ Deploy the approved observability checkpoint. Verify JSON events, request correl
 
 Deploy the final gate only after prior checkpoints pass. Record the deployed commit and exact phase. Phase 56.5.8 does not itself execute or approve deployment.
 
+## 9A. Phase 57.0 Pilot Operations Evidence
+
+**PRODUCTION-MUTATING only when an authorized operator explicitly records metadata**
+
+Deploy the approved Phase 57.0 source, then use `/platform/pilot-operations` to record bounded deployment, smoke, backup, restore, and production-validation evidence. Pilot agency enrollment and synthetic fixture actions require Platform Owner authority. Record release assessment and sign-off only after independent evidence review. The console does not deploy, approve, migrate, back up, restore, send invitations, or activate features automatically.
+
 ## 10. Tenant-Isolation Verification
 
 **DISPOSABLE** or carefully scoped **READ-ONLY** production verification
@@ -129,4 +135,3 @@ Generate the final assessment from reviewed metadata. Confirm every required dim
 ## Post-Pilot Review
 
 Review incidents, workload, tenant boundaries, readiness warnings, dependency findings, frontend performance, backup verification, restore evidence, and operator feedback. Corrections create a superseding assessment or sign-off record; historical evidence is never edited.
-

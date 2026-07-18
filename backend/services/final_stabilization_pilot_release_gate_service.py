@@ -20,7 +20,8 @@ from persistence_query import persistence_readiness_metadata
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 
 
-RELEASE_PHASE = "phase_56_5_8_final_stabilization_pilot_release_gate"
+CAPABILITY_PHASE = "phase_56_5_8_final_stabilization_pilot_release_gate"
+RELEASE_PHASE = CURRENT_BUILD_PHASE
 ENVIRONMENT_SCOPES = {"repository", "ci", "disposable", "production"}
 PILOT_FIXTURE_PREFIXES = ("PILOT_TEST_", "DEMO_SYNTHETIC_", "CI_FIXTURE_")
 

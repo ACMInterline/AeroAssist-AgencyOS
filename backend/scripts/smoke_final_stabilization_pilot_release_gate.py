@@ -18,16 +18,21 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from models import PilotReleaseProductionEvidence, PilotReleaseSignOff
 from services.final_stabilization_pilot_release_gate_service import (
     PILOT_FIXTURE_PREFIXES,
+    CAPABILITY_PHASE,
     RELEASE_DIMENSIONS,
     RELEASE_PHASE,
     FinalStabilizationPilotReleaseGateService,
     release_gate_readiness_metadata,
     validate_pilot_fixture_reference,
 )
+from phase_assertions import assert_application_phase_at_least
+
+
+MINIMUM_PHASE = CAPABILITY_PHASE
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
@@ -295,8 +300,7 @@ def verify_cli() -> None:
 
 
 def verify_static_registration() -> None:
-    if not phase_is_exact(CURRENT_BUILD_PHASE, RELEASE_PHASE):
-        raise AssertionError(f"Canonical Phase 56.5.8 marker mismatch: {CURRENT_BUILD_PHASE}")
+    assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     readiness = release_gate_readiness_metadata()
     if readiness.get("pilot_release_ready") is not False:
         raise AssertionError("Public readiness marked the pilot ready without production evidence.")
@@ -326,8 +330,9 @@ def verify_static_registration() -> None:
 
 def verify_live_contracts() -> None:
     health_status, health = request("GET", "/api/health")
-    if health_status != 200 or not isinstance(health, dict) or health.get("phase") != RELEASE_PHASE:
+    if health_status != 200 or not isinstance(health, dict):
         raise AssertionError(f"Health does not report Phase 56.5.8: {health}")
+    assert_application_phase_at_least(health.get("phase"), MINIMUM_PHASE, source="health")
 
     readiness_status, readiness = request("GET", "/api/readiness")
     if readiness_status != 200 or not isinstance(readiness, dict):

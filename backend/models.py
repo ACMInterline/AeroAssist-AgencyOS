@@ -28164,3 +28164,125 @@ class PilotReleaseSignOff(BaseModel):
         if len(self.conditions) > 20 or any(len(item) > 300 for item in self.conditions):
             raise ValueError("sign-off conditions exceed bounded limits")
         return self
+
+
+class PilotOperationalEvidenceCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    evidence_type: str
+    status: str
+    title: str = Field(min_length=1, max_length=160)
+    summary: str = Field(min_length=1, max_length=1200)
+    environment_scope: str = Field(default="production", max_length=32)
+    reference: str = Field(min_length=1, max_length=200)
+    agency_id: Optional[str] = Field(default=None, max_length=120)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    expires_at: Optional[datetime] = None
+    evidence_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotOperationalEvidenceRecord(BaseDocument):
+    evidence_type: str
+    status: str
+    title: str
+    summary: str
+    environment_scope: str = "production"
+    reference: str
+    agency_id: Optional[str] = None
+    build_phase: str
+    occurred_at: datetime = Field(default_factory=now_utc)
+    expires_at: Optional[datetime] = None
+    evidence_metadata: Dict[str, Any] = Field(default_factory=dict)
+    recorded_by_user_id: str
+    recorded_by_role: str
+    immutable: bool = True
+    metadata_only: bool = True
+
+
+class PilotAgencyEnrollment(BaseDocument):
+    agency_id: str
+    enrollment_status: str = "invited"
+    invited_by_user_id: str
+    invited_at: datetime = Field(default_factory=now_utc)
+    enabled_at: Optional[datetime] = None
+    activated_at: Optional[datetime] = None
+    disabled_at: Optional[datetime] = None
+    last_action_by_user_id: str
+    action_reason: str = ""
+    synthetic_data_allowed: bool = False
+    metadata_only: bool = True
+
+
+class PilotAgencyInvitationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    agency_id: str = Field(min_length=1, max_length=120)
+    reason: str = Field(default="", max_length=600)
+
+
+class PilotAgencyStatusChange(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=600)
+
+
+class PilotSyntheticDatasetCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    agency_id: str = Field(min_length=1, max_length=120)
+    dataset_reference: str = Field(min_length=1, max_length=120)
+    dataset_type: str = Field(default="operational_readiness", max_length=80)
+    record_count: int = Field(default=5, ge=1, le=50)
+    notes: str = Field(default="", max_length=800)
+
+
+class PilotSyntheticDataset(BaseDocument):
+    agency_id: str
+    dataset_reference: str
+    dataset_type: str
+    dataset_status: str = "active"
+    synthetic_records: List[Dict[str, Any]] = Field(default_factory=list)
+    record_count: int = 0
+    notes: str = ""
+    created_by_user_id: str
+    removed_by_user_id: Optional[str] = None
+    removed_at: Optional[datetime] = None
+    removal_reason: str = ""
+    isolated_metadata_only: bool = True
+    contains_real_identity_data: bool = False
+    provider_connectivity_enabled: bool = False
+    metadata_only: bool = True
+
+
+class PilotSyntheticDatasetRemoval(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=600)
+
+
+class PilotHealthTimelineEventCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    event_type: str
+    status: str
+    title: str = Field(min_length=1, max_length=160)
+    summary: str = Field(min_length=1, max_length=1200)
+    reference: str = Field(min_length=1, max_length=200)
+    agency_id: Optional[str] = Field(default=None, max_length=120)
+    occurred_at: datetime = Field(default_factory=now_utc)
+    event_metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class PilotHealthTimelineEvent(BaseDocument):
+    event_type: str
+    status: str
+    title: str
+    summary: str
+    reference: str
+    agency_id: Optional[str] = None
+    build_phase: str
+    occurred_at: datetime = Field(default_factory=now_utc)
+    event_metadata: Dict[str, Any] = Field(default_factory=dict)
+    recorded_by_user_id: str
+    immutable: bool = True
+    metadata_only: bool = True

@@ -31,6 +31,7 @@ WORKFLOW_SPECS = {
         "smoke_persistence_scalability_tenant_query_hardening_foundation.py --static",
         "smoke_observability_diagnostics_performance_telemetry_foundation.py --static",
         "smoke_final_stabilization_pilot_release_gate.py --static",
+        "smoke_pilot_operations_release_readiness.py --static",
         "assess_pilot_release_readiness.py",
         "smoke_mongodb_security_backup_disaster_recovery_foundation.py --static",
         "bash -n deploy/hostinger",
@@ -49,6 +50,7 @@ WORKFLOW_SPECS = {
         "/api/readiness",
         "final_stabilization_pilot_release_gate",
         "smoke_final_stabilization_pilot_release_gate.py --static",
+        "smoke_pilot_operations_release_readiness.py --static",
         "assess_pilot_release_readiness.py",
     ),
     ".github/workflows/ci-smoke-focused.yml": (
@@ -132,7 +134,8 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_final_stabilization_pilot_release_gate.py"
+    exact_path = "backend/scripts/smoke_pilot_operations_release_readiness.py"
+    release_gate_path = "backend/scripts/smoke_final_stabilization_pilot_release_gate.py"
     observability_path = "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py"
     persistence_path = "backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py"
     mongodb_path = "backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py"
@@ -151,6 +154,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Phase 56.5.6 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(observability_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.7 smoke did not migrate to minimum-phase semantics.")
+    if entry_by_path.get(release_gate_path, {}).get("phase_assertion_mode") != "minimum":
+        errors.append("Phase 56.5.8 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(ci_path, {}).get("phase_assertion_mode") != "minimum":
         errors.append("Phase 56.5.3 smoke did not migrate to minimum-phase semantics.")
     if entry_by_path.get(legacy_path, {}).get("phase_assertion_mode") != "minimum":
@@ -167,6 +172,7 @@ def validate_ci_foundation() -> list[str]:
     }
     required_focused = {
         exact_path,
+        release_gate_path,
         observability_path,
         persistence_path,
         mongodb_path,
@@ -222,6 +228,8 @@ def validate_ci_foundation() -> list[str]:
         errors.append("Server readiness does not register the Phase 56.5.7 observability foundation.")
     if '"final_stabilization_pilot_release_gate"' not in server_text:
         errors.append("Server readiness does not register the Phase 56.5.8 final release gate.")
+    if '"pilot_operations_release_readiness"' not in server_text:
+        errors.append("Server readiness does not register the Phase 57.0 pilot operations foundation.")
     return errors
 
 

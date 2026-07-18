@@ -2501,3 +2501,15 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 56.5.7 smoke to minimum semantics and makes the Phase 56.5.8 release-gate smoke the sole exact-current release assertion.
 - Adds no product workflow, provider operation, automatic migration, deployment, approval, production access, or production-data mutation.
 - See [Final Stabilization and Pilot Release Gate](docs/architecture/final-stabilization-pilot-release-gate.md).
+
+## Phase 57.0 - Pilot Operations and Release Readiness
+
+- Active marker: `phase_57_0_pilot_operations_release_readiness`.
+- Adds the Platform-only `/platform/pilot-operations` console and protected `/api/platform/pilot-operations/*` API.
+- Persists immutable deployment, smoke, backup, restore, validation, assessment, and human sign-off evidence with additive indexes and existing audit events.
+- Adds owner-governed pilot agency enrollment and bounded prefixed synthetic metadata datasets with audited soft removal.
+- Groups the Phase 56.5.8 deterministic release dimensions into infrastructure, security, database, frontend, backend, observability, backups, and tenant-isolation assessments.
+- Adds newest-first health history and protected bounded logs, telemetry, slow-query metadata, and request statistics while keeping public health/readiness safe.
+- Migrates the Phase 56.5.8 smoke to minimum semantics and makes the Phase 57.0 pilot operations smoke the sole exact-current assertion.
+- Adds no provider connectivity, GDS/payment/ticket execution, automatic approval, deployment, migration, backup, restore, or production seeding.
+- See [Pilot Operations and Release Readiness](docs/architecture/pilot-operations-release-readiness.md).

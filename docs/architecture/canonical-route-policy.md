@@ -346,3 +346,9 @@ Client routes extend the existing authenticated portal family and resolve author
 The permanent [Product Surface Review Gate](product-surface-workspace-governance.md) requires engines and supporting tools to preserve the route context of their owning primary workspace. Phase 56 authoring, options, comparison, and delivery routes are contextual tools; only Offer Workspace owns the Agency commercial lifecycle.
 
 Agency APIs expose tenant-checked presentation projection, wording, preview, explicit preference, snapshot, review, and metadata-only handoff operations. Platform APIs expose read-only counts, dimensions, validation metadata, and summarized diagnostics. Phase 56.3 introduces no `/admin/*`, `/agent/*`, public share route, unauthenticated mutation, parallel Offer/Document/Journey domain, provider endpoint, or direct frontend database access.
+## Phase 57.0 Pilot Operations Routes
+
+- Canonical Platform UI: `/platform/pilot-operations`.
+- Canonical protected API root: `/api/platform/pilot-operations`.
+- Evidence, assessments, sign-offs, pilot agencies, synthetic datasets, health timeline, and production diagnostics are subresources of that root.
+- There is no `/admin/*`, Agency, portal, or public pilot-operations route. Public `/api/health` and `/api/readiness` expose only static, non-sensitive Phase 57.0 capability metadata.

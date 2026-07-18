@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_final_stabilization_pilot_release_gate.py",
-      "assertion_purpose": "Validate the canonical Phase 56.5.8 build marker and evidence-aware final stabilization and pilot release-gate registration.",
-      "exact_reason": "This smoke explicitly tests current release-gate registration; all historical capability and infrastructure smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
+      "assertion_purpose": "Validate the canonical Phase 57.0 build marker and pilot operations release-readiness registration.",
+      "exact_reason": "This smoke explicitly tests the current Pilot Operations release-readiness surface; historical capability and infrastructure smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -1053,7 +1053,7 @@
       "script_path": "backend/scripts/smoke_final_stabilization_pilot_release_gate.py",
       "capability_name": "Final Stabilization Pilot Release Gate",
       "minimum_application_phase": "phase_56_5_8_final_stabilization_pilot_release_gate",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": false,
@@ -1065,7 +1065,7 @@
       ],
       "test_class": "focused",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current release-registration smoke validating environment-separated evidence, hard blockers, warnings, safe operator attestations, immutable assessment hashing, human sign-off, CLI reports, public readiness safety, and protected Platform diagnostics.",
+      "notes": "Historical minimum-phase release-gate smoke validating environment-separated evidence, hard blockers, warnings, safe operator attestations, immutable assessment hashing, human sign-off, CLI reports, public readiness safety, and protected Platform diagnostics.",
       "ci_tier": "focused",
       "execution_isolation": "shared_backend"
     },
@@ -1882,6 +1882,27 @@
       "notes": "Historical minimum-phase smoke using disposable in-memory records to verify bounded pagination, stable sorting, filter safety, tenant isolation, repository separation, index governance, diagnostics redaction, and readiness registration.",
       "ci_tier": "focused",
       "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
+      "capability_name": "Pilot Operations Release Readiness",
+      "minimum_application_phase": "phase_57_0_pilot_operations_release_readiness",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": true,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "security",
+        "readiness",
+        "infrastructure",
+        "release_governance",
+        "platform"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current Phase 57.0 smoke covering persisted evidence, deterministic assessment groups, explicit sign-off, owner-governed pilot agencies, isolated synthetic datasets, health history, protected diagnostics, public-safe readiness, and audit integration.",
+      "ci_tier": "focused",
+      "execution_isolation": "shared_backend"
     },
     {
       "script_path": "backend/scripts/smoke_platform_agency_ux_consolidation.py",

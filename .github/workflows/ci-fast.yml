@@ -80,6 +80,9 @@ jobs:
       - name: Run final stabilization release-gate static smoke
         run: python3 backend/scripts/smoke_final_stabilization_pilot_release_gate.py --static
 
+      - name: Run pilot operations release-readiness static smoke
+        run: python3 backend/scripts/smoke_pilot_operations_release_readiness.py --static
+
       - name: Verify release assessment is blocked without production evidence
         run: |
           set +e

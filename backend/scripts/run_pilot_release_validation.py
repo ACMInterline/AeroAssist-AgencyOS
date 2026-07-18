@@ -164,6 +164,7 @@ class ValidationOrchestrator:
             ("observability_validator", [python, "backend/scripts/validate_observability_foundation.py"]),
             ("release_gate_validator", [python, "backend/scripts/validate_final_stabilization_pilot_release_gate.py"]),
             ("release_gate_static_smoke", [python, "backend/scripts/smoke_final_stabilization_pilot_release_gate.py", "--static"]),
+            ("pilot_operations_static_smoke", [python, "backend/scripts/smoke_pilot_operations_release_readiness.py", "--static"]),
         )
         for name, command in stages:
             self.run_stage(name, command)

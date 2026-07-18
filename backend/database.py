@@ -405,6 +405,10 @@ AGENCY_OWNED_COLLECTIONS = [
     "pilot_golden_path_cases",
     "pilot_golden_path_runs",
     "pilot_readiness_issues",
+    "pilot_operational_evidence",
+    "pilot_agency_enrollments",
+    "pilot_synthetic_datasets",
+    "pilot_health_timeline_events",
     "operational_workflow_definitions",
     "operational_workflow_instances",
     "operational_workflow_transitions",
@@ -1162,6 +1166,24 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("critical_blocker_count", ASCENDING)], "name": "pilot_readiness_assessments_critical_lookup"},
             {"keys": [("generated_at", ASCENDING)], "name": "pilot_readiness_assessments_generated_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "pilot_readiness_assessments_created_lookup"},
+        ],
+        "pilot_operational_evidence": [
+            {"keys": [("evidence_type", ASCENDING), ("reference", ASCENDING)], "name": "pilot_operational_evidence_type_reference_unique", "unique": True},
+            {"keys": [("status", ASCENDING), ("occurred_at", ASCENDING)], "name": "pilot_operational_evidence_status_occurred_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("occurred_at", ASCENDING)], "name": "pilot_operational_evidence_agency_occurred_lookup"},
+        ],
+        "pilot_agency_enrollments": [
+            {"keys": [("agency_id", ASCENDING)], "name": "pilot_agency_enrollments_agency_unique", "unique": True},
+            {"keys": [("enrollment_status", ASCENDING), ("updated_at", ASCENDING)], "name": "pilot_agency_enrollments_status_updated_lookup"},
+        ],
+        "pilot_synthetic_datasets": [
+            {"keys": [("dataset_reference", ASCENDING)], "name": "pilot_synthetic_datasets_reference_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("dataset_status", ASCENDING)], "name": "pilot_synthetic_datasets_agency_status_lookup"},
+        ],
+        "pilot_health_timeline_events": [
+            {"keys": [("reference", ASCENDING)], "name": "pilot_health_timeline_reference_unique", "unique": True},
+            {"keys": [("event_type", ASCENDING), ("occurred_at", ASCENDING)], "name": "pilot_health_timeline_type_occurred_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("occurred_at", ASCENDING)], "name": "pilot_health_timeline_agency_occurred_lookup"},
         ],
         "pilot_readiness_checks": [
             {"keys": [("check_reference", ASCENDING)], "name": "pilot_readiness_checks_reference_unique", "unique": True},

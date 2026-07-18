@@ -182,6 +182,7 @@ import PlatformAirlineKnowledgePublishingPage from "./pages/platform/AirlineKnow
 import PlatformOperationalScenarioTestingPage from "./pages/platform/OperationalScenarioTestingPage"
 import PlatformKnowledgePopulationToolkitPage from "./pages/platform/KnowledgePopulationToolkitPage"
 import PlatformPilotReadinessPage from "./pages/platform/PilotReadinessPage"
+import PlatformPilotOperationsReadinessPage from "./pages/platform/PilotOperationsReadinessPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -371,6 +372,7 @@ const routes = {
   "/platform/operational-scenario-testing": PlatformOperationalScenarioTestingPage,
   "/platform/knowledge-population-toolkit": PlatformKnowledgePopulationToolkitPage,
   "/platform/pilot-readiness": PlatformPilotReadinessPage,
+  "/platform/pilot-operations": PlatformPilotOperationsReadinessPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
