@@ -7,11 +7,12 @@ WORKDIR /app
 
 RUN addgroup --system aeroassist && adduser --system --ingroup aeroassist aeroassist
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ .
+COPY data/reference_packs /data/reference_packs
 
 RUN mkdir -p /var/lib/aeroassist/document_exports \
     && chown -R aeroassist:aeroassist /app /var/lib/aeroassist
