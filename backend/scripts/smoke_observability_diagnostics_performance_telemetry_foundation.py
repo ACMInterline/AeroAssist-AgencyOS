@@ -310,6 +310,7 @@ def verify_static_registration() -> None:
     server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
     security_text = (BACKEND / "http_security.py").read_text(encoding="utf-8")
     router_text = (BACKEND / "routers" / "platform_observability.py").read_text(encoding="utf-8")
+    production_readiness_text = (BACKEND / "scripts" / "check_production_readiness.py").read_text(encoding="utf-8")
     requirements_text = (BACKEND / "requirements.txt").read_text(encoding="utf-8").lower()
     for token in (
         "application_startup_initiated",
@@ -324,6 +325,13 @@ def verify_static_registration() -> None:
         raise AssertionError("HTTP telemetry accesses request or response bodies.")
     if "/api/platform/diagnostics/observability" not in router_text or "require_platform_role" not in router_text:
         raise AssertionError("Internal diagnostics are not protected by existing Platform authorization.")
+    for token in (
+        "backend_root = Path(__file__).resolve().parents[1]",
+        "from routers import platform_observability",
+        "app.include_router(platform_observability.router)",
+    ):
+        if token not in production_readiness_text:
+            raise AssertionError(f"Packaged production diagnostics registration check is missing {token!r}.")
     if any(provider in requirements_text for provider in ("sentry", "datadog", "newrelic", "opentelemetry", "prometheus")):
         raise AssertionError("An external telemetry provider dependency was introduced.")
 

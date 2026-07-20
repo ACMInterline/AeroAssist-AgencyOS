@@ -3,6 +3,12 @@ set -euo pipefail
 
 APP_BASE_URL="${APP_BASE_URL:-https://agencyos.example.com}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-15}"
+LOGIN_RESPONSE_FILE="$(mktemp /tmp/aeroassist-login-smoke.XXXXXX)"
+
+cleanup() {
+  rm -f "$LOGIN_RESPONSE_FILE"
+}
+trap cleanup EXIT
 
 pass() {
   echo "PASS: $1"
@@ -35,23 +41,24 @@ if echo "$readiness_body" | grep -Eiq 'AUTH_TOKEN_SECRET|AEROASSIST_SMTP_PASSWOR
 fi
 pass "/api/readiness reports ok without obvious secret output"
 
+login_email="aeroassist-smoke-$(date -u +%Y%m%dT%H%M%SZ)-$$@example.com"
+login_payload="$(printf '{"email":"%s","password":"production-smoke-invalid-password"}' "$login_email")"
 login_body="$(curl --silent --show-error --max-time "$TIMEOUT_SECONDS" \
-  -o /tmp/aeroassist-login-smoke-body \
+  -o "$LOGIN_RESPONSE_FILE" \
   -w '%{http_code}' \
   -H 'Content-Type: application/json' \
   -X POST \
-  -d '{"email":"smoke@example.invalid","password":"not-a-real-password"}' \
+  -d "$login_payload" \
   "$APP_BASE_URL/api/auth/login")" || fail "/api/auth/login request failed"
 
 case "$login_body" in
-  401|403)
+  401)
     pass "/api/auth/login is reachable and rejects fake credentials"
     ;;
   *)
-    cat /tmp/aeroassist-login-smoke-body >&2 || true
+    cat "$LOGIN_RESPONSE_FILE" >&2 || true
     fail "/api/auth/login returned unexpected HTTP $login_body"
     ;;
 esac
 
-rm -f /tmp/aeroassist-login-smoke-body
 echo "PASS: production smoke completed."

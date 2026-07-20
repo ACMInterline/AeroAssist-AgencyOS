@@ -79,7 +79,8 @@ def main() -> int:
 
     lines.append(status_line("INFO", "Frontend production builds should set VITE_API_BASE_URL or serve the API from the same origin."))
 
-    root = Path(__file__).resolve().parents[2]
+    backend_root = Path(__file__).resolve().parents[1]
+    root = backend_root.parent
     compose_path = root / "docker-compose.production.yml"
     compose_text = compose_path.read_text(encoding="utf-8") if compose_path.is_file() else ""
     mongo_block = mongo_compose_block(compose_text)
@@ -198,12 +199,14 @@ def main() -> int:
         errors += 1
         lines.append(status_line("FAIL", "Production Compose is missing bounded container log rotation settings."))
 
-    server_path = root / "backend" / "server.py"
+    server_path = backend_root / "server.py"
     server_text = server_path.read_text(encoding="utf-8") if server_path.is_file() else ""
-    router_path = root / "backend" / "routers" / "platform_observability.py"
+    router_path = backend_root / "routers" / "platform_observability.py"
     router_text = router_path.read_text(encoding="utf-8") if router_path.is_file() else ""
     if (
         '"observability_diagnostics_performance_telemetry_foundation"' in server_text
+        and "from routers import platform_observability" in server_text
+        and "app.include_router(platform_observability.router)" in server_text
         and "require_platform_role" in router_text
         and "/api/platform/diagnostics/observability" in router_text
     ):

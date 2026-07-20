@@ -270,6 +270,12 @@ def verify_static_configuration() -> None:
     server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
     if any(pattern in server_text for pattern in (".glob(", ".rglob(", "os.walk(")):
         raise AssertionError("Server readiness performs runtime filesystem scanning.")
+    production_smoke_text = (ROOT / "deploy" / "hostinger" / "scripts" / "smoke_production.sh").read_text(encoding="utf-8")
+    if "@example.invalid" in production_smoke_text or "401|403" in production_smoke_text:
+        raise AssertionError("Production login smoke permits an invalid email schema or ambiguous rejection status.")
+    for token in ('@example.com', '-d "$login_payload"', '  401)'):
+        if token not in production_smoke_text:
+            raise AssertionError(f"Production login smoke is missing the valid safe-probe contract {token!r}.")
 
 
 def main() -> None:
