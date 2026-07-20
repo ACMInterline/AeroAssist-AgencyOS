@@ -11,6 +11,7 @@ const approvalStatuses = ["not_required", "pending", "approved", "rejected", "ex
 const readinessStatuses = ["ready", "pending", "awaiting_airline", "awaiting_documents", "awaiting_payment", "awaiting_emd", "awaiting_medif", "awaiting_customer", "blocked"]
 const initialParams = new URLSearchParams(window.location.search)
 const incomingTicketRecordId = initialParams.get("ticket_record_id") || ""
+const incomingEmdRecordId = initialParams.get("emd_record_id") || ""
 const incomingBookingWorkspaceId = initialParams.get("booking_workspace_id") || ""
 const incomingBookingRecordId = initialParams.get("booking_record_id") || ""
 
@@ -75,7 +76,7 @@ export default function PassengerServicesPage() {
       booking_record_id: selected.booking_record_id || incomingBookingRecordId,
       ticket_record_ids: uniqueValues([...(selected.ticket_record_ids || []), incomingTicketRecordId]),
       ticket_coupon_ids: selected.ticket_coupon_ids || [],
-      emd_record_ids: selected.emd_record_ids || [],
+      emd_record_ids: uniqueValues([...(selected.emd_record_ids || []), incomingEmdRecordId]),
       emd_coupon_ids: selected.emd_coupon_ids || [],
       document_workspace_ids: selected.document_workspace_ids || [],
       ssr_osi_workspace_id: selected.ssr_osi_workspace_id || "",

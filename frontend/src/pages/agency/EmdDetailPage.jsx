@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -15,8 +16,11 @@ export default function EmdDetailPage({ emdRecordId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const detail = await apiGet(`/api/agencies/${context.agency.id}/emds/${emdRecordId}`)
-    setState({ ...context, ...detail })
+    const [detail, serviceCases] = await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/emds/${emdRecordId}`),
+      apiGet(`/api/agencies/${context.agency.id}/passenger-services`),
+    ])
+    setState({ ...context, ...detail, serviceCases: serviceCases.items || [] })
     setForm({
       emd_number: detail.emd?.emd_number || "",
       emd_type: detail.emd?.emd_type || "manual_mirror",
@@ -61,6 +65,12 @@ export default function EmdDetailPage({ emdRecordId }) {
 
   const emd = state?.emd
   const passenger = emd?.passenger_snapshot_json || {}
+  const serviceCase = state?.serviceCases?.find((item) => (item.emd_record_ids || []).includes(emdRecordId))
+    || state?.serviceCases?.find((item) => emd?.service_key && item.trip_id === emd?.trip_id && item.passenger_id === emd?.passenger_id && (item.service_key === emd.service_key || item.service_type === emd.service_key))
+    || null
+  const serviceHref = serviceCase
+    ? `/agency/passenger-services?service_id=${encodeURIComponent(serviceCase.id)}&emd_record_id=${encodeURIComponent(emdRecordId)}${emd?.booking_workspace_id ? `&booking_workspace_id=${encodeURIComponent(emd.booking_workspace_id)}` : ""}${emd?.booking_record_id ? `&booking_record_id=${encodeURIComponent(emd.booking_record_id)}` : ""}`
+    : "/agency/passenger-services"
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -81,6 +91,27 @@ export default function EmdDetailPage({ emdRecordId }) {
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[
+              { label: "Tickets & EMDs", href: "/agency/tickets-emds" },
+              ...(emd?.booking_workspace_id ? [{ label: "Booking", href: `/agency/booking-workspaces/${emd.booking_workspace_id}` }] : []),
+            ]}
+            currentLabel={emd?.emd_number || "Draft EMD mirror"}
+            status={emd?.issue_status || emd?.status}
+            validation={serviceCase
+              ? { state: "ready", label: "Passenger service linked", reason: "Continue with the canonical service fulfilment record." }
+              : { state: "warning", label: "Service link needs review", reason: "Select the matching passenger service before continuing." }}
+            previous={emd?.booking_workspace_id
+              ? { label: "Back to booking", href: `/agency/booking-workspaces/${emd.booking_workspace_id}` }
+              : { label: "Back to Tickets & EMDs", href: "/agency/tickets-emds" }}
+            next={{ label: serviceCase ? "Continue to passenger service" : "Review passenger services", href: serviceHref }}
+            relatedRecords={[
+              { label: "Booking", value: emd?.booking_workspace_id || "none", href: emd?.booking_workspace_id ? `/agency/booking-workspaces/${emd.booking_workspace_id}` : undefined },
+              { label: "Coupons", value: state?.coupons?.length || 0 },
+              { label: "Passenger service", value: serviceCase?.service_label || serviceCase?.service_key || "not linked", href: serviceCase ? serviceHref : undefined },
+            ]}
+          />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}
