@@ -13,6 +13,7 @@ TIMESTAMP="${TIMESTAMP:-$(date -u +%Y%m%dT%H%M%SZ)}"
 DEPLOYMENT_ID="v1-${RELEASE_SHORT}-${TIMESTAMP}"
 
 ROLLBACK_COMMIT=""
+REPOSITORY_HEAD=""
 ORIGINAL_APP_GIT_COMMIT=""
 ORIGINAL_APP_DEPLOYMENT_ID=""
 ORIGINAL_APP_GIT_COMMIT_PRESENT=false
@@ -178,21 +179,24 @@ export AEROASSIST_ENV_FILE="$ENV_FILE"
 [[ -z "$(git status --porcelain)" ]] || fail "Production worktree is not clean."
 [[ "$TIMESTAMP" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || fail "TIMESTAMP must use YYYYMMDDTHHMMSSZ format."
 
-ROLLBACK_COMMIT="$(git rev-parse --verify HEAD)"
-[[ "$ROLLBACK_COMMIT" =~ ^[0-9a-f]{40}$ ]] || fail "Rollback commit is invalid."
-[[ "$ROLLBACK_COMMIT" != "$RELEASE_COMMIT" ]] || fail "Release commit is already deployed."
+REPOSITORY_HEAD="$(git rev-parse --verify HEAD)"
+[[ "$REPOSITORY_HEAD" =~ ^[0-9a-f]{40}$ ]] || fail "Repository HEAD is invalid."
 
 CURRENT_DEPLOYED_COMMIT="$(compose exec -T backend printenv APP_GIT_COMMIT | tr -d '\r\n')"
 [[ "$CURRENT_DEPLOYED_COMMIT" =~ ^[0-9a-f]{8,40}$ ]] || fail "Running backend commit is missing or invalid."
-[[ "$CURRENT_DEPLOYED_COMMIT" == "$ROLLBACK_COMMIT" \
-   || "${ROLLBACK_COMMIT:0:${#CURRENT_DEPLOYED_COMMIT}}" == "$CURRENT_DEPLOYED_COMMIT" ]] \
-  || fail "Repository HEAD does not match the running backend commit."
+git cat-file -e "$CURRENT_DEPLOYED_COMMIT^{commit}" \
+  || fail "Running backend commit is not available in the production repository."
+ROLLBACK_COMMIT="$(git rev-parse --verify "$CURRENT_DEPLOYED_COMMIT^{commit}")"
+[[ "$ROLLBACK_COMMIT" =~ ^[0-9a-f]{40}$ ]] || fail "Rollback commit is invalid."
+[[ "${ROLLBACK_COMMIT:0:${#CURRENT_DEPLOYED_COMMIT}}" == "$CURRENT_DEPLOYED_COMMIT" ]] \
+  || fail "Running backend commit could not be resolved safely."
+[[ "$ROLLBACK_COMMIT" != "$RELEASE_COMMIT" ]] || fail "Release commit is already deployed."
 
 git fetch --no-tags origin main
 git cat-file -e "$RELEASE_COMMIT^{commit}"
 [[ "$(git rev-parse "$RELEASE_COMMIT^{commit}")" == "$RELEASE_COMMIT" ]] \
   || fail "Approved release commit is unavailable."
-[[ "$(git rev-parse HEAD)" == "$ROLLBACK_COMMIT" ]] \
+[[ "$(git rev-parse HEAD)" == "$REPOSITORY_HEAD" ]] \
   || fail "Production worktree changed while fetching the release commit."
 
 TEMP_RELEASE_TOOLS_DIR="$(mktemp -d /tmp/aeroassist-release-backup-tools.XXXXXX)"
@@ -245,7 +249,7 @@ BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 printf '%s\n' "$ROLLBACK_COMMIT" > "$BACKUP_DIR/rollback-commit.txt"
 chmod 600 "$BACKUP_DIR/rollback-commit.txt"
 
-[[ "$(git rev-parse HEAD)" == "$ROLLBACK_COMMIT" ]] \
+[[ "$(git rev-parse HEAD)" == "$REPOSITORY_HEAD" ]] \
   || fail "Production worktree changed before backup validation completed."
 
 ROLLBACK_ARMED=true
