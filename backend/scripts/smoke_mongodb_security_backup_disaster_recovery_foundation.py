@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -10,6 +11,7 @@ import sys
 import tempfile
 import urllib.request
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 
@@ -29,6 +31,7 @@ RELEASE_PHASE = "phase_56_5_5_mongodb_security_backup_disaster_recovery_foundati
 MINIMUM_PHASE = RELEASE_PHASE
 REQUIRED_SCRIPTS = (
     "backup_mongo.sh",
+    "verify_backups.sh",
     "verify_mongodb_backup.sh",
     "restore_mongodb_backup.sh",
     "test_restore_mongodb_backup.sh",
@@ -171,6 +174,62 @@ def create_test_manifest(directory: Path, stamp: str, status: str = "archive_ins
     return archive
 
 
+def write_checksum(artifact: Path) -> None:
+    digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+    artifact.with_name(f"{artifact.name}.sha256").write_text(f"{digest}  {artifact.name}\n", encoding="utf-8")
+
+
+def verify_canonical_latest_backup_selection() -> None:
+    with tempfile.TemporaryDirectory(prefix="aeroassist-backup-selection-") as temporary:
+        root = Path(temporary)
+        now = datetime.now(timezone.utc)
+        older_stamp = (now - timedelta(hours=2)).strftime("%Y%m%dT%H%M%SZ")
+        newest_stamp = (now - timedelta(hours=1)).strftime("%Y%m%dT%H%M%SZ")
+        noncanonical_stamp = f"pre-auth-migration-{now.strftime('%Y%m%dT%H%M%SZ')}"
+
+        for stamp in (older_stamp, newest_stamp):
+            backup_dir = root / stamp
+            backup_dir.mkdir()
+            mongo_archive = backup_dir / f"mongodb-{stamp}.archive.gz"
+            mongo_archive.write_bytes(f"canonical mongo {stamp}".encode())
+            export_archive = backup_dir / "document_exports.tar.gz"
+            export_archive.write_bytes(f"canonical exports {stamp}".encode())
+            write_checksum(export_archive)
+
+        noncanonical_dir = root / noncanonical_stamp
+        noncanonical_dir.mkdir()
+        noncanonical_mongo = noncanonical_dir / f"mongodb-{now.strftime('%Y%m%dT%H%M%SZ')}.archive.gz"
+        noncanonical_mongo.write_bytes(b"noncanonical mongo")
+        noncanonical_export = noncanonical_dir / "document_exports.tar.gz"
+        noncanonical_export.write_bytes(b"noncanonical exports")
+        write_checksum(noncanonical_export)
+
+        scripts = root / "scripts"
+        scripts.mkdir()
+        verifier = scripts / "verify_backups.sh"
+        verifier.write_text((SCRIPTS / "verify_backups.sh").read_text(encoding="utf-8"), encoding="utf-8")
+        mongo_verifier = scripts / "verify_mongodb_backup.sh"
+        mongo_verifier.write_text("#!/usr/bin/env bash\nset -euo pipefail\n[[ -s \"$1\" ]]\n", encoding="utf-8")
+        mongo_verifier.chmod(0o755)
+
+        result = run(
+            ["bash", str(verifier)],
+            env={
+                "BACKUP_ROOT": str(root),
+                "MAX_MONGO_AGE_HOURS": "30",
+                "MAX_EXPORT_AGE_HOURS": "30",
+            },
+        )
+        expected_mongo = root / newest_stamp / f"mongodb-{newest_stamp}.archive.gz"
+        expected_export = root / newest_stamp / "document_exports.tar.gz"
+        if f"Latest MongoDB backup: {expected_mongo}" not in result.stdout:
+            raise AssertionError(f"Verifier did not select the newest canonical MongoDB backup: {result.stdout}")
+        if f"Latest document export backup: {expected_export}" not in result.stdout:
+            raise AssertionError(f"Verifier did not select the newest canonical document backup: {result.stdout}")
+        if noncanonical_stamp in result.stdout:
+            raise AssertionError("A noncanonical backup directory overrode canonical timestamp backups.")
+
+
 def verify_manifest_retention_and_restore_guards() -> None:
     with tempfile.TemporaryDirectory(prefix="aeroassist-mongodb-smoke-") as temporary:
         root = Path(temporary)
@@ -282,6 +341,7 @@ def main() -> int:
     assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     verify_config()
     verify_compose_and_scripts()
+    verify_canonical_latest_backup_selection()
     verify_manifest_retention_and_restore_guards()
     verify_readiness(args.static)
     verify_docs_and_secret_hygiene()

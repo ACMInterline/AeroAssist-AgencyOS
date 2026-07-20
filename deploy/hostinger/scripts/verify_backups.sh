@@ -23,14 +23,42 @@ fail() {
 timestamp_epoch() {
   local stamp="$1"
   local iso="${stamp:0:4}-${stamp:4:2}-${stamp:6:2} ${stamp:9:2}:${stamp:11:2}:${stamp:13:2} UTC"
-  date -u -d "$iso" +%s 2>/dev/null
+  local epoch
+
+  if epoch="$(date -u -d "$iso" +%s 2>/dev/null)"; then
+    printf '%s\n' "$epoch"
+    return 0
+  fi
+
+  date -j -u -f '%Y%m%dT%H%M%SZ' "$stamp" +%s 2>/dev/null
 }
 
 latest_for() {
-  local artifact="$1"
-  find "$BACKUP_ROOT" -mindepth 2 -maxdepth 2 -type f -name "$artifact" \
-    -path "$BACKUP_ROOT/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z/$artifact" \
-    2>/dev/null | sort | tail -n 1
+  local artifact_template="$1"
+  local directory
+  local stamp
+  local artifact
+  local latest_stamp=""
+  local latest_artifact=""
+
+  while IFS= read -r -d '' directory; do
+    stamp="$(basename "$directory")"
+    if [[ ! "$stamp" =~ ^[0-9]{8}T[0-9]{6}Z$ ]] || ! timestamp_epoch "$stamp" >/dev/null; then
+      continue
+    fi
+
+    artifact="$directory/${artifact_template//\{timestamp\}/$stamp}"
+    if [[ ! -f "$artifact" ]]; then
+      continue
+    fi
+
+    if [[ -z "$latest_stamp" || "$stamp" > "$latest_stamp" ]]; then
+      latest_stamp="$stamp"
+      latest_artifact="$artifact"
+    fi
+  done < <(find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null)
+
+  printf '%s\n' "$latest_artifact"
 }
 
 verify_checksum() {
@@ -66,7 +94,7 @@ if [[ ! -d "$BACKUP_ROOT" ]]; then
   exit "$STATUS"
 fi
 
-mongo_backup="$(find "$BACKUP_ROOT" -mindepth 2 -maxdepth 2 -type f -name 'mongodb-*.archive.gz' 2>/dev/null | sort | tail -n 1)"
+mongo_backup="$(latest_for "mongodb-{timestamp}.archive.gz")"
 if [[ -z "$mongo_backup" ]]; then
   fail "latest MongoDB backup is missing."
 else
