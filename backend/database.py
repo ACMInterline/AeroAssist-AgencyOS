@@ -3750,7 +3750,7 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("captured_at", ASCENDING)], "name": "rollout_dashboard_snapshots_agency_captured_lookup"},
             {"keys": [("source", ASCENDING), ("captured_at", ASCENDING)], "name": "rollout_dashboard_snapshots_source_captured_lookup"},
         ],
-        "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)]],
+        "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_workspace_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],
         "refund_exchange_cases": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],

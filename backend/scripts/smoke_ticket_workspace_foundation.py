@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys
+import time
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -368,7 +369,15 @@ def verify_readiness() -> None:
     health = get("/api/health")
     if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected health phase: {health.get('phase')}")
-    readiness = get("/api/readiness")
+    readiness = {}
+    for attempt in range(3):
+        readiness = get("/api/readiness")
+        if readiness.get("readiness_mode") != "degraded_summary":
+            break
+        if attempt < 2:
+            time.sleep(0.25 * (attempt + 1))
+    if readiness.get("readiness_mode") == "degraded_summary":
+        raise AssertionError(f"Detailed readiness remained unavailable after bounded retries: {readiness.get('diagnostics')}")
     if not application_phase_is_at_least(readiness.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected readiness phase: {readiness.get('phase')}")
     section = readiness.get("ticket_workspace_foundation") or {}

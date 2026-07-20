@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -199,6 +200,14 @@ export default function AfterSalesPage() {
     load(next).catch((err) => setError(err.message))
   }
 
+  const previousRecord = selected?.invoice_ids?.[0]
+    ? { label: "Previous: finance", href: `/agency/invoices/${selected.invoice_ids[0]}` }
+    : selected?.passenger_service_request_ids?.[0] ? { label: "Previous: passenger service", href: `/agency/passenger-services?service_id=${encodeURIComponent(selected.passenger_service_request_ids[0])}` }
+      : selected?.ticket_record_ids?.[0] ? { label: "Previous: ticket", href: `/agency/tickets/${selected.ticket_record_ids[0]}` }
+        : selected?.booking_workspace_id ? { label: "Previous: booking", href: `/agency/booking-workspaces/${selected.booking_workspace_id}` }
+          : { label: "Operations", href: "/agency/operations-command-center" }
+  const caseResolved = ["resolved", "rejected", "cancelled", "archived"].includes(selected?.case_status)
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -214,6 +223,23 @@ export default function AfterSalesPage() {
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Human authority final</span>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Finance", href: "/agency/invoices" }, { label: "After Sales", href: "/agency/after-sales" }]}
+            currentLabel={selected?.case_reference || "After-Sales Case"}
+            status={selected?.case_status || "not opened"}
+            validation={!selected
+              ? { state: "warning", label: "Case not opened", reason: "Select canonical affected records before creating a case." }
+              : caseResolved ? { state: "ready", label: "Operational resolution recorded", reason: "The case is complete and source records remain immutable." }
+                : { state: "warning", label: "Resolution pending", reason: "Complete decisions, approvals, communications, and resolution before closing the workflow." }}
+            previous={previousRecord}
+            next={{ label: "Complete workflow", href: caseResolved ? (selected?.trip_workspace_id ? `/agency/trips/${selected.trip_workspace_id}` : "/agency/operations-command-center") : undefined, enabled: caseResolved, reason: "Record a terminal case resolution first." }}
+            relatedRecords={[
+              { label: "Affected records", value: selected?.items?.length || 0 },
+              { label: "Invoices", value: selected?.invoice_ids?.length || 0, href: selected?.invoice_ids?.[0] ? `/agency/invoices/${selected.invoice_ids[0]}` : undefined },
+              { label: "Workflow", value: selected?.workflow_instance_id || "not linked" },
+            ]}
+          />
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}

@@ -8,9 +8,11 @@ import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 export default function PassengersPage() {
+  const query = new URLSearchParams(window.location.search)
+  const sourceClientId = query.get("client_id") || ""
   const [state, setState] = useState(null)
   const [filters, setFilters] = useState({ search: "", passenger_type: "", status: "" })
-  const [showCreate, setShowCreate] = useState(false)
+  const [showCreate, setShowCreate] = useState(query.get("create") === "1")
   const [error, setError] = useState("")
 
   async function load() {
@@ -35,9 +37,20 @@ export default function PassengersPage() {
 
   async function createPassenger(payload) {
     const cleanPayload = Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== ""))
-    await apiPost(`/api/agencies/${state.agency.id}/passengers`, cleanPayload)
+    const result = await apiPost(`/api/agencies/${state.agency.id}/passengers`, cleanPayload)
+    if (sourceClientId) {
+      await apiPost(`/api/agencies/${state.agency.id}/client-passenger-relationships`, {
+        client_id: sourceClientId,
+        passenger_id: result.passenger.id,
+        relationship_type: "self",
+        can_view: true,
+        can_request_travel: true,
+        consent_status: "pending",
+        notes: "Created from the canonical Client to Passenger workflow.",
+      })
+    }
     setShowCreate(false)
-    await load()
+    window.location.href = `/agency/passengers/${result.passenger.id}`
   }
 
   return (
@@ -48,7 +61,7 @@ export default function PassengersPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">CRM Foundation</p>
               <h2 className="text-2xl font-semibold text-slate-950">Passengers</h2>
-              <p className="mt-1 text-sm text-slate-600">Traveler profiles with PTC, documents, assistance needs, and client relationships.</p>
+              <p className="mt-1 text-sm text-slate-600">Traveler profiles with PTC, documents, assistance needs, and client relationships.{sourceClientId ? " The new passenger will be linked to the source client." : ""}</p>
             </div>
             <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" onClick={() => setShowCreate((value) => !value)}>
               {showCreate ? "Close form" : "Create passenger"}

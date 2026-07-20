@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RequestStatusBadge from "../../components/RequestStatusBadge"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -116,16 +117,6 @@ export default function RequestDetailPage({ requestId }) {
     window.location.href = `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`
   }
 
-  async function createOrOpenOfferWorkspace() {
-    try {
-      const existing = await apiGet(`/api/agencies/${state.agency.id}/offer-workspaces?request_id=${encodeURIComponent(requestId)}`)
-      const workspace = existing.items?.[0] || (await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/offer-workspace`)).workspace
-      window.location.href = `/agency/offers/${workspace.id}/builder`
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
   async function unlinkTripDossier() {
     if (!state.linked_trip) return
     await apiPost(`/api/agencies/${state.agency.id}/trips/${state.linked_trip.id}/unlink-request/${requestId}`)
@@ -133,6 +124,16 @@ export default function RequestDetailPage({ requestId }) {
   }
 
   const allowedRelationships = (state?.agencyRelationships || []).filter((relationship) => relationship.client_id === state?.request?.client_id && relationship.passenger_id === forms.passenger_id && relationship.status === "active")
+  const requestReady = Boolean(state?.passengers?.length && state?.segments?.length)
+  const requestClosed = ["cancelled", "archived"].includes(state?.request?.status)
+
+  if (!state) {
+    return (
+      <AgencyLayout>
+        <ProtectedRoute loading={!error} error={error} />
+      </AgencyLayout>
+    )
+  }
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -148,18 +149,29 @@ export default function RequestDetailPage({ requestId }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <RequestStatusBadge status={state?.request?.status} />
-              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenOfferWorkspace}>
-                Create / open offer workspace
-              </button>
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/request-trip-conversion?request_id=${requestId}`}>
-                Conversion wizard
-              </a>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.request?.status === "archived" ? "Restore" : "Archive"}
               </button>
             </div>
             </div>
           </div>
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Clients", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }, { label: "Requests", href: "/agency/requests" }]}
+            currentLabel={state?.request?.request_reference || "Request"}
+            status={state?.request?.status}
+            validation={requestReady && !requestClosed
+              ? { state: "ready", label: "Conversion structure ready", reason: "Passenger and segment context are present for conversion review." }
+              : { state: requestClosed ? "blocked" : "warning", label: requestClosed ? "Request closed" : "Conversion data incomplete", reason: requestClosed ? "Restore the request before continuing." : "Add at least one passenger and one segment before conversion." }}
+            previous={state?.passengers?.[0]?.passenger_id ? { label: "Previous: passenger", href: `/agency/passengers/${state.passengers[0].passenger_id}` } : { label: "Previous: client", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }}
+            next={state?.linked_trip
+              ? { label: "Continue to trip", href: `/agency/trips/${state.linked_trip.id}` }
+              : { label: "Continue to conversion", href: `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`, enabled: requestReady && !requestClosed, reason: "Passenger and segment context are required." }}
+            relatedRecords={[
+              { label: "Client", value: state?.client?.display_name, href: state?.client?.id ? `/agency/clients/${state.client.id}` : undefined },
+              { label: "Passengers", value: state?.passengers?.length || 0 },
+              { label: "Trip", value: state?.linked_trip?.trip_reference || "not converted", href: state?.linked_trip ? `/agency/trips/${state.linked_trip.id}` : undefined },
+            ]}
+          />
           <section className="grid gap-4 lg:grid-cols-3">
             <InfoCard title="Overview" rows={[
               ["Client", state?.client?.display_name],

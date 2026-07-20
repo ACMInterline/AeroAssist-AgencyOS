@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -20,12 +21,13 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     const context = await loadCurrentAgency()
     const detail = await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces/${bookingWorkspaceId}`)
     const bookingRecordId = detail.booking_record?.id
-    const [tickets, emds, ticketEmdReadiness] = bookingRecordId ? await Promise.all([
-      apiGet(`/api/agencies/${context.agency.id}/tickets?booking_record_id=${encodeURIComponent(bookingRecordId)}`),
-      apiGet(`/api/agencies/${context.agency.id}/emds?booking_record_id=${encodeURIComponent(bookingRecordId)}`),
-      apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`),
-    ]) : [{ items: [] }, { items: [] }, null]
-    setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness })
+    const [tickets, emds, ticketEmdReadiness, invoices] = await Promise.all([
+      bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/tickets?booking_record_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ items: [] }),
+      bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/emds?booking_record_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ items: [] }),
+      bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`) : Promise.resolve(null),
+      apiGet(`/api/agencies/${context.agency.id}/invoices?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}`),
+    ])
+    setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness, invoices: invoices.items || [] })
     setStatusForm({ status: detail.booking_workspace?.status || "draft" })
     setRecordForm({
       pnr_locator: detail.booking_record?.pnr_locator || "",
@@ -124,10 +126,28 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     }
   }
 
+  async function createOrOpenInvoice() {
+    const existing = state?.invoices?.[0]
+    if (existing) {
+      window.location.href = `/agency/invoices/${existing.id}`
+      return
+    }
+    setError("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/invoice`)
+      window.location.href = `/agency/invoices/${result.invoice.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   const workspace = state?.booking_workspace
   const record = state?.booking_record
   const source = workspace?.source_snapshot_json || {}
   const readiness = source.booking_readiness_package || {}
+  const ticket = state?.tickets?.[0]
+  const invoice = state?.invoices?.[0]
+  const canContinueToTicket = Boolean(record && !["cancelled", "blocked"].includes(workspace?.status))
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -149,6 +169,23 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Booking handoffs", href: "/agency/booking-handoffs" }, { label: "Bookings", href: "/agency/booking-workspaces" }]}
+            currentLabel={workspace?.workspace_number || "Booking"}
+            status={workspace?.status}
+            validation={canContinueToTicket ? { state: "ready", label: "Ticket mirror available", reason: "A canonical booking record is linked; external issuance remains separate." } : { state: "blocked", label: "Booking record required", reason: "Resolve booking readiness or rebuild the canonical record before ticketing." }}
+            previous={workspace?.offer_workspace_id ? { label: "Previous: accepted offer", href: `/agency/offers/${workspace.offer_workspace_id}` } : workspace?.trip_id ? { label: "Previous: trip", href: `/agency/trips/${workspace.trip_id}` } : { label: "Booking handoffs", href: "/agency/booking-handoffs" }}
+            next={ticket
+              ? { label: "Continue to ticket", href: `/agency/tickets/${ticket.id}` }
+              : { label: "Create draft ticket mirror", onClick: createDraftTicket, enabled: canContinueToTicket, reason: "A non-blocked booking record is required." }}
+            relatedRecords={[
+              { label: "Trip", value: state?.trip_summary?.trip_reference || workspace?.trip_id || "none", href: workspace?.trip_id ? `/agency/trips/${workspace.trip_id}` : undefined },
+              { label: "Accepted offer", value: state?.accepted_offer_summary?.id || workspace?.offer_acceptance_id || "none", href: workspace?.offer_workspace_id ? `/agency/offers/${workspace.offer_workspace_id}` : undefined },
+              { label: "Tickets", value: state?.tickets?.length || 0 },
+              { label: "Invoice", value: invoice?.invoice_number || "none", href: invoice ? `/agency/invoices/${invoice.id}` : undefined },
+            ]}
+          />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}
@@ -213,6 +250,11 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 </div>
                 <p className="text-xs text-slate-500">Live issuance is not implemented in this phase.</p>
               </Panel>
+
+              <Panel title="Finance">
+                <button className="aa-primary-action w-full rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-50" type="button" onClick={createOrOpenInvoice} disabled={!record}>{invoice ? "Open linked invoice" : "Create linked invoice"}</button>
+                <p className="text-xs text-slate-500">Creates or opens one agency-scoped invoice linked to this canonical booking workspace and record. Payment remains manually recorded.</p>
+              </Panel>
             </div>
 
             <div className="space-y-4">
@@ -248,7 +290,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               <Panel title="Source Summary">
                 <div className="grid gap-3 md:grid-cols-3">
                   <Summary label="Readiness" value={label(state?.readiness_summary?.status)} />
-                  <Summary label="Accepted offer" value={state?.accepted_offer_summary?.id || "Not linked"} />
+                  <Summary label="Accepted offer" value={state?.accepted_offer_summary?.id || workspace?.offer_acceptance_id || "Not linked"} />
                   <Summary label="Trip" value={state?.trip_summary?.trip_reference || workspace?.trip_id} />
                 </div>
               </Panel>

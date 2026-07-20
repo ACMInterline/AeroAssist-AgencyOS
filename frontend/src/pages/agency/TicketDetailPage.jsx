@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -15,8 +16,11 @@ export default function TicketDetailPage({ ticketRecordId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const detail = await apiGet(`/api/agencies/${context.agency.id}/tickets/${ticketRecordId}`)
-    setState({ ...context, ...detail })
+    const [detail, serviceCases] = await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/tickets/${ticketRecordId}`),
+      apiGet(`/api/agencies/${context.agency.id}/passenger-services`),
+    ])
+    setState({ ...context, ...detail, serviceCases: serviceCases.items || [] })
     setForm({
       ticket_number: detail.ticket?.ticket_number || "",
       validating_carrier: detail.ticket?.validating_carrier || detail.ticket?.validating_airline_code || "",
@@ -57,6 +61,9 @@ export default function TicketDetailPage({ ticketRecordId }) {
 
   const ticket = state?.ticket
   const passenger = ticket?.passenger_snapshot_json || {}
+  const serviceCase = state?.serviceCases?.find((item) => (item.ticket_record_ids || []).includes(ticketRecordId))
+    || state?.serviceCases?.find((item) => item.trip_id && item.trip_id === ticket?.trip_id && (!item.passenger_id || !ticket?.passenger_id || item.passenger_id === ticket.passenger_id))
+  const ticketReady = Boolean(ticket?.ticket_number || ticket?.external_evidence_reference || ticket?.issue_status === "issued")
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -77,6 +84,20 @@ export default function TicketDetailPage({ ticketRecordId }) {
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Bookings", href: ticket?.booking_workspace_id ? `/agency/booking-workspaces/${ticket.booking_workspace_id}` : "/agency/booking-workspaces" }, { label: "Tickets", href: "/agency/tickets-emds" }]}
+            currentLabel={ticket?.ticket_number || "Draft ticket mirror"}
+            status={ticket?.issue_status || ticket?.status}
+            validation={serviceCase ? { state: ticketReady ? "ready" : "warning", label: "Passenger service linked", reason: "Continue the existing passenger need; the ticket is supporting evidence only." } : { state: "blocked", label: "No originating service case", reason: "Passenger service must originate from Request or Trip and cannot be created from a ticket." }}
+            previous={ticket?.booking_workspace_id ? { label: "Previous: booking", href: `/agency/booking-workspaces/${ticket.booking_workspace_id}` } : { label: "Tickets", href: "/agency/tickets-emds" }}
+            next={{ label: "Continue to passenger service", href: serviceCase ? `/agency/passenger-services?service_id=${encodeURIComponent(serviceCase.id)}&ticket_record_id=${encodeURIComponent(ticketRecordId)}${ticket?.booking_workspace_id ? `&booking_workspace_id=${encodeURIComponent(ticket.booking_workspace_id)}` : ""}${ticket?.booking_record_id ? `&booking_record_id=${encodeURIComponent(ticket.booking_record_id)}` : ""}` : undefined, enabled: Boolean(serviceCase), reason: "Create the passenger-service need from its Request or Trip first." }}
+            relatedRecords={[
+              { label: "Booking", value: state?.booking_record_summary?.pnr_locator || ticket?.booking_record_id || "none", href: ticket?.booking_workspace_id ? `/agency/booking-workspaces/${ticket.booking_workspace_id}` : undefined },
+              { label: "Coupons", value: state?.coupons?.length || 0 },
+              { label: "Passenger service", value: serviceCase?.service_label || serviceCase?.service_type || "none" },
+            ]}
+          />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}

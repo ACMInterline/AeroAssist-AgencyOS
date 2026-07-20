@@ -5,6 +5,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from uuid import uuid4
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://localhost:8000")
@@ -69,9 +70,10 @@ def main() -> int:
     post("/api/platform/reference/enrichment/dry-run", {"domain": "countries", "csv_text": template["csv_text"]}, AGENCY_HEADERS, 403)
 
     now = int(time.time())
-    letter = chr(65 + (now % 26))
-    second_letter = chr(65 + ((now // 26) % 26))
-    code = f"X{letter}"
+    unique_token = uuid4().hex[:10].upper()
+    letter = chr(65 + (int(unique_token[:2], 16) % 26))
+    second_letter = chr(65 + (int(unique_token[2:4], 16) % 26))
+    code = f"X{letter}{unique_token}"
     dry = post(
         "/api/platform/reference/enrichment/dry-run",
         {"domain": "countries", "csv_text": enrichment_csv(code), "update_mode": "insert_only", "dry_run": True},
@@ -119,7 +121,7 @@ def main() -> int:
     if repeated["skipped"] != 1:
         raise AssertionError("Repeated insert_only import did not skip existing record.")
 
-    verified_code = f"Y{second_letter}"
+    verified_code = f"Y{second_letter}{unique_token}"
     post(
         "/api/platform/reference/records",
         {
@@ -150,8 +152,11 @@ def main() -> int:
             f"{airline_code},Smoke Air,{airline_code},ZZA,{code[:2].upper()},TST,{code},scheduled,true,true,Smoke Airways,draft,Smoke enrichment",
         ]
     )
-    currency_csv = "code,label,currency_iso_code,currency_name,numeric_code,minor_unit,symbol,aliases,data_quality_status,source_notes\nXTS,Test Credit,XTS,Test Credit,999,2,¤,Test money,draft,Smoke enrichment"
-    language_csv = "code,label,iso639_1,iso639_2,name,native_name,aliases,data_quality_status,source_notes\nzz,Testish,zz,zzz,Testish,Testish,Test language,draft,Smoke enrichment"
+    currency_code = f"X{letter}{second_letter}"
+    language_code = f"q{letter.lower()}"
+    language_iso3 = f"q{letter.lower()}{second_letter.lower()}"
+    currency_csv = f"code,label,currency_iso_code,currency_name,numeric_code,minor_unit,symbol,aliases,data_quality_status,source_notes\n{currency_code},Test Credit,{currency_code},Test Credit,999,2,¤,Test money,draft,Smoke enrichment"
+    language_csv = f"code,label,iso639_1,iso639_2,name,native_name,aliases,data_quality_status,source_notes\n{language_code},Testish,{language_code},{language_iso3},Testish,Testish,Test language,draft,Smoke enrichment"
     for domain, csv_text in [("airports", airport_csv), ("airlines", airline_csv), ("currencies", currency_csv), ("languages", language_csv)]:
         report = post("/api/platform/reference/enrichment/import", {"domain": domain, "csv_text": csv_text, "update_mode": "insert_only", "dry_run": False}, OWNER_HEADERS)["report"]
         if report["inserted"] != 1:

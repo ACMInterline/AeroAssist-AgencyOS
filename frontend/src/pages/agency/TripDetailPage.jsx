@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -105,28 +106,6 @@ export default function TripDetailPage({ tripId }) {
     }
   }
 
-  async function createOrOpenBookingWorkspace() {
-    try {
-      const existing = state?.bookingWorkspaces?.[0]
-      if (existing) {
-        window.location.href = `/agency/booking-workspaces/${existing.id}`
-        return
-      }
-      const readinessId = state?.bookingReadiness?.booking_readiness?.id
-      if (!readinessId) {
-        setError("Booking readiness package is required before creating a booking workspace.")
-        return
-      }
-      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
-        booking_readiness_package_id: readinessId,
-        create_draft_record: true,
-      })
-      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
   async function startTripChange(event) {
     event.preventDefault()
     try {
@@ -218,6 +197,14 @@ export default function TripDetailPage({ tripId }) {
   }
 
   const unlinkedRequests = (state?.requests || []).filter((request) => !request.trip_id || request.trip_id === tripId)
+  const acceptance = state?.acceptedOffer?.acceptance
+  const bookingReadiness = state?.bookingReadiness?.booking_readiness
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const tripReady = Boolean(state?.passengers?.length && state?.segments?.length)
+  const tripClosed = ["cancelled", "archived"].includes(state?.trip?.trip_status)
+  const handoffHref = acceptance && bookingReadiness
+    ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(acceptance.id)}&booking_readiness_package_id=${encodeURIComponent(bookingReadiness.id)}&trip_id=${encodeURIComponent(tripId)}&offer_workspace_id=${encodeURIComponent(acceptance.workspace_id || acceptance.offer_workspace_id || "")}`
+    : ""
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -238,6 +225,28 @@ export default function TripDetailPage({ tripId }) {
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Trips", href: "/agency/trips" }]}
+            currentLabel={state?.trip?.trip_reference || "Trip"}
+            status={state?.trip?.trip_status}
+            validation={tripClosed
+              ? { state: "blocked", label: "Trip closed", reason: "Restore active operational work before continuing." }
+              : bookingWorkspace ? { state: "ready", label: "Booking linked", reason: "Continue with the canonical booking workspace." }
+                : acceptance && bookingReadiness ? { state: "ready", label: "Accepted offer ready for handoff", reason: "Booking must proceed through the assessed handoff." }
+                  : tripReady ? { state: "ready", label: "Offer context ready", reason: "Passenger and segment context can seed an offer workspace." }
+                    : { state: "warning", label: "Trip context incomplete", reason: "Add passenger and segment context before preparing an offer." }}
+            previous={state?.linked_requests?.[0] ? { label: "Previous: request", href: `/agency/requests/${state.linked_requests[0].id}` } : { label: "Trips", href: "/agency/trips" }}
+            next={bookingWorkspace
+              ? { label: "Continue to booking", href: `/agency/booking-workspaces/${bookingWorkspace.id}` }
+              : handoffHref ? { label: "Continue to handoff", href: handoffHref }
+                : { label: "Continue to offer", onClick: createOrOpenOfferWorkspace, enabled: tripReady && !tripClosed, reason: "Passenger and segment context are required." }}
+            relatedRecords={[
+              { label: "Requests", value: state?.linked_requests?.length || 0 },
+              { label: "Accepted offer", value: acceptance ? "accepted" : "none" },
+              { label: "Booking", value: bookingWorkspace?.workspace_number || "none", href: bookingWorkspace ? `/agency/booking-workspaces/${bookingWorkspace.id}` : undefined },
+            ]}
+          />
 
           <section className="grid gap-4 lg:grid-cols-4">
             <Metric label="Status" value={state?.trip?.trip_status?.replaceAll("_", " ")} />
@@ -289,7 +298,7 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
-          <AcceptedOfferPanel state={state} onCreateOrOpenBookingWorkspace={createOrOpenBookingWorkspace} />
+          <AcceptedOfferPanel state={state} />
 
           <TicketsEmdsTripPanel state={state} />
 
@@ -305,9 +314,14 @@ export default function TripDetailPage({ tripId }) {
             state={state}
           />
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {["Bookings", "Tickets / EMDs", "Invoices / Payments"].map((title) => <FuturePanel title={title} key={title} />)}
-          </section>
+          <Panel title="Related operational records">
+            <div className="flex flex-wrap gap-2">
+              {state?.bookingWorkspaces?.[0] ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${state.bookingWorkspaces[0].id}`}>Booking workspace</a> : null}
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/tickets-emds?trip_id=${encodeURIComponent(tripId)}`}>Tickets and EMDs</a>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/document-workspaces?booking_reference=${encodeURIComponent(state?.bookingWorkspaces?.[0]?.booking_reference || "")}`}>Documents</a>
+              {state?.bookingWorkspaces?.[0] ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/invoices?booking_workspace_id=${encodeURIComponent(state.bookingWorkspaces[0].id)}`}>Finance</a> : null}
+            </div>
+          </Panel>
 
           <Panel title="Timeline"><List items={state?.timeline} empty="No trip timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>
         </div>
@@ -324,11 +338,7 @@ function Panel({ title, children }) {
   return <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-950">{title}</h3>{children}</section>
 }
 
-function FuturePanel({ title }) {
-  return <section className="rounded-lg border border-dashed border-slate-300 bg-white p-4"><h3 className="text-sm font-semibold text-slate-950">{title}</h3><p className="mt-2 text-xs text-slate-500">Future phase. This dossier can anchor the workflow later, but no functionality is active here yet.</p></section>
-}
-
-function AcceptedOfferPanel({ state, onCreateOrOpenBookingWorkspace }) {
+function AcceptedOfferPanel({ state }) {
   const snapshot = state?.acceptedOffer?.accepted_offer
   const acceptance = state?.acceptedOffer?.acceptance
   const readiness = state?.bookingReadiness?.booking_readiness
@@ -422,11 +432,9 @@ function AcceptedOfferPanel({ state, onCreateOrOpenBookingWorkspace }) {
             <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${bookingWorkspace.id}`}>
               Open Booking Workspace
             </a>
-          ) : (
-            <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onCreateOrOpenBookingWorkspace} disabled={!readiness}>
-              Create Booking Workspace
-            </button>
-          )}
+          ) : readiness && acceptance ? (
+            <a className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${encodeURIComponent(acceptance.id)}&booking_readiness_package_id=${encodeURIComponent(readiness.id)}&trip_id=${encodeURIComponent(state?.trip?.id || "")}&offer_workspace_id=${encodeURIComponent(acceptance.workspace_id || acceptance.offer_workspace_id || "")}`}>Review Booking Handoff</a>
+          ) : null}
           <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>
             Create Live Booking
           </button>

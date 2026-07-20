@@ -4,6 +4,7 @@ import PassengerForm from "../../components/PassengerForm"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RelationshipEditor from "../../components/RelationshipEditor"
 import StatusBadge from "../../components/StatusBadge"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -82,6 +83,8 @@ export default function PassengerDetailPage({ passengerId }) {
 
   const clientById = Object.fromEntries((state?.clients || []).map((client) => [client.id, client]))
   const mergeOptions = (state?.allPassengers || []).filter((passenger) => passenger.id !== passengerId && passenger.status !== "duplicate_merged")
+  const firstRelationship = state?.relationships?.find((relationship) => relationship.status === "active")
+  const passengerActive = !["archived", "duplicate_merged"].includes(state?.passenger?.status)
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -95,13 +98,28 @@ export default function PassengerDetailPage({ passengerId }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <StatusBadge status={state?.passenger?.status} />
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/offers">Offers</a>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={() => setShowEdit((value) => !value)}>Edit</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
                 {state?.passenger?.status === "archived" ? "Restore" : "Archive"}
               </button>
             </div>
           </div>
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Passengers", href: "/agency/passengers" }]}
+            currentLabel={state?.passenger?.display_name || "Passenger"}
+            status={state?.passenger?.status}
+            validation={firstRelationship && passengerActive
+              ? { state: "ready", label: "Request context ready", reason: "Client ownership and passenger relationship are available." }
+              : { state: passengerActive ? "warning" : "blocked", label: passengerActive ? "Client relationship required" : "Passenger unavailable", reason: passengerActive ? "Link this traveler to a client before creating a request." : "Restore or use the retained passenger identity before continuing." }}
+            previous={firstRelationship ? { label: "Previous: client", href: `/agency/clients/${firstRelationship.client_id}` } : { label: "Passengers", href: "/agency/passengers" }}
+            next={{
+              label: "Continue to request",
+              href: firstRelationship ? `/agency/requests/new?client_id=${encodeURIComponent(firstRelationship.client_id)}&passenger_id=${encodeURIComponent(passengerId)}` : undefined,
+              enabled: Boolean(firstRelationship && passengerActive),
+              reason: "An active client relationship is required.",
+            }}
+            relatedRecords={[{ label: "Clients", value: state?.relationships?.length || 0 }]}
+          />
           {showEdit ? <PassengerForm initial={state.passenger} onSubmit={savePassenger} /> : null}
           <section className="grid gap-4 lg:grid-cols-3">
             <InfoCard title="Overview" rows={[

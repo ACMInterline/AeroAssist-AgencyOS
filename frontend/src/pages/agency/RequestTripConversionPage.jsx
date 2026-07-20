@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import { Field, Metric, RecordCard, formatType, queryString } from "../../components/ClientPassengerMasterRecordList"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -26,13 +27,17 @@ export default function RequestTripConversionPage() {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const response = await apiGet(`/api/agencies/${context.agency.id}/request-trip-conversion${queryString({ request_id: form.request_id })}`)
-    setState({ ...context, ...response })
+    const [response, requests, trips] = await Promise.all([
+      apiGet(`/api/agencies/${context.agency.id}/request-trip-conversion${queryString({ request_id: form.request_id })}`),
+      apiGet(`/api/agencies/${context.agency.id}/requests`),
+      apiGet(`/api/agencies/${context.agency.id}/trips`),
+    ])
+    setState({ ...context, ...response, requests: requests.items || [], trips: trips.items || [] })
   }
 
   useEffect(() => {
     load().catch((err) => setError(err.message))
-  }, [])
+  }, [form.request_id])
 
   function payload() {
     return {
@@ -61,6 +66,9 @@ export default function RequestTripConversionPage() {
   const mappings = result?.mappings || []
   const issues = result?.issues || [...(validation.critical_issues || []), ...(validation.warnings || [])]
   const runs = state?.recent_runs || []
+  const selectedRequest = state?.requests?.find((item) => item.id === form.request_id)
+  const selectedTrip = state?.trips?.find((item) => item.id === form.existing_trip_id)
+  const resultTrip = result?.trip || (result?.run?.trip_id ? { id: result.run.trip_id, trip_reference: result.run.trip_id } : null)
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -77,6 +85,25 @@ export default function RequestTripConversionPage() {
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Never request id as trip id</span>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Requests", href: "/agency/requests" }, { label: "Conversion", href: "/agency/request-trip-conversion" }]}
+            currentLabel={selectedRequest?.request_reference || "Request-to-Trip Conversion"}
+            status={result?.run?.run_status || (form.request_id ? "reviewing" : "draft")}
+            validation={resultTrip
+              ? { state: "ready", label: "Trip created", reason: "The immutable request remains linked to the new operational trip." }
+              : form.request_id ? { state: "warning", label: "Conversion review required", reason: "Preview or validate the canonical request before execution." }
+                : { state: "blocked", label: "Canonical request required", reason: "Choose an agency request before continuing." }}
+            previous={form.request_id ? { label: "Previous: request", href: `/agency/requests/${form.request_id}` } : { label: "Requests", href: "/agency/requests" }}
+            next={resultTrip
+              ? { label: "Continue to trip", href: `/agency/trips/${resultTrip.id}` }
+              : { label: "Execute conversion", onClick: () => action("execute"), enabled: Boolean(form.request_id), reason: "A canonical request is required." }}
+            relatedRecords={[
+              { label: "Request", value: selectedRequest?.request_reference || "not selected", href: form.request_id ? `/agency/requests/${form.request_id}` : undefined },
+              { label: "Passengers", value: selectedRequest?.passenger_count || 0 },
+              { label: "Trip", value: resultTrip?.trip_reference || selectedTrip?.trip_reference || "not created", href: resultTrip ? `/agency/trips/${resultTrip.id}` : undefined },
+            ]}
+          />
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
 
@@ -99,8 +126,16 @@ export default function RequestTripConversionPage() {
               ))}
             </div>
             <div className="mt-5 grid gap-3 lg:grid-cols-3">
-              <Field label="Request id" value={form.request_id} onChange={(value) => setForm({ ...form, request_id: value })} />
-              <Field label="Existing trip id" value={form.existing_trip_id} onChange={(value) => setForm({ ...form, existing_trip_id: value })} />
+              {initialRequestId ? (
+                <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Canonical request</p>
+                  <p className="mt-1 font-semibold">{selectedRequest?.request_reference || "Loading request"}</p>
+                  <p className="mt-1 truncate text-xs">{selectedRequest?.title || "Request source is locked from Request Detail."}</p>
+                </div>
+              ) : (
+                <SelectField label="Request" value={form.request_id} onChange={(value) => setForm({ ...form, request_id: value })} options={(state?.requests || []).map((item) => [item.id, `${item.request_reference} - ${item.title}`])} placeholder="Select request" />
+              )}
+              <SelectField label="Existing trip (optional)" value={form.existing_trip_id} onChange={(value) => setForm({ ...form, existing_trip_id: value })} options={(state?.trips || []).map((item) => [item.id, `${item.trip_reference} - ${item.trip_title}`])} placeholder="Create a new trip" />
               <Field label="Idempotency key" value={form.idempotency_key} onChange={(value) => setForm({ ...form, idempotency_key: value })} />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -144,6 +179,18 @@ export default function RequestTripConversionPage() {
         </div>
       </ProtectedRoute>
     </AgencyLayout>
+  )
+}
+
+function SelectField({ label, value, onChange, options, placeholder }) {
+  return (
+    <label className="text-sm text-slate-700">
+      <span className="mb-1 block font-medium">{label}</span>
+      <select className="w-full rounded-md border border-slate-300 px-3 py-2" value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">{placeholder}</option>
+        {options.map(([optionValue, optionLabel]) => <option value={optionValue} key={optionValue}>{optionLabel}</option>)}
+      </select>
+    </label>
   )
 }
 

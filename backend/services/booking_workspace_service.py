@@ -477,9 +477,18 @@ class BookingWorkspaceService:
         workspace_status = self._status_from_readiness(readiness)
         source_snapshot = await self._source_snapshot(agency_id, readiness, acceptance, trip)
         source_snapshot["trip_accepted_offer_snapshot"] = accepted_snapshot
+        passenger_ids = list(
+            dict.fromkeys(
+                passenger_id
+                for passenger in readiness.get("passengers_snapshot_json") or []
+                if (passenger_id := passenger.get("passenger_id") or passenger.get("passenger_profile_id"))
+            )
+        )
         workspace = BookingWorkspace(
             agency_id=agency_id,
             source_context=BookingSourceContext.OFFER_READINESS,
+            client_id=(trip or {}).get("primary_client_id"),
+            passenger_ids=passenger_ids,
             trip_id=readiness["trip_id"],
             request_id=readiness.get("request_id"),
             offer_workspace_id=readiness.get("workspace_id"),
@@ -1454,6 +1463,8 @@ class BookingWorkspaceService:
             agency_id=workspace["agency_id"],
             booking_workspace_id=workspace["id"],
             source_context=BookingSourceContext.OFFER_READINESS,
+            client_id=workspace.get("client_id"),
+            passenger_ids=workspace.get("passenger_ids") or [],
             trip_id=workspace["trip_id"],
             request_id=workspace.get("request_id"),
             booking_readiness_package_id=readiness["id"],

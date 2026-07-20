@@ -8,6 +8,8 @@ from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
 from persistence_repository import PersistenceRepository
 from models import (
     AuditEvent,
+    DocumentWorkspaceCreate,
+    DocumentWorkspaceType,
     OperationalTimelineCreate,
     OperationalWorkItemActionRequest,
     OperationalWorkItemGenerateRequest,
@@ -181,6 +183,43 @@ class SpecialServicesService:
         items.sort(key=lambda item: str(item.get("last_reconciled_at") or item.get("updated_at") or item.get("created_at") or ""), reverse=True)
         return [self._client_separated_projection(item) for item in items]
 
+    async def fulfilment_link_options(self, agency_id: str, service_request_id: str) -> dict[str, Any]:
+        service = await self._require_service(agency_id, service_request_id)
+        collections = {
+            "booking_workspaces": "booking_workspaces",
+            "booking_records": "booking_records",
+            "tickets": "ticket_records",
+            "ticket_coupons": "ticket_coupons",
+            "emds": "emd_records",
+            "emd_coupons": "emd_coupons",
+            "documents": "document_workspaces",
+            "ssr_osi_workspaces": "ssr_osi_workspaces",
+        }
+        repository = PersistenceRepository(self.db)
+        records = {}
+        for key, collection in collections.items():
+            page = await repository.find_agency_records(
+                collection_name=collection,
+                agency_id=agency_id,
+                pagination=PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+            )
+            records[key] = page.items
+        return {
+            "agency_id": agency_id,
+            "service_request_id": service_request_id,
+            "service_context": {
+                "request_id": service.get("request_id"),
+                "trip_id": service.get("trip_id"),
+                "passenger_id": service.get("passenger_id"),
+                "booking_workspace_id": service.get("booking_workspace_id"),
+                "booking_record_id": service.get("booking_record_id"),
+            },
+            "items": {
+                key: [self._fulfilment_option(service, key, record) for record in values]
+                for key, values in records.items()
+            },
+        }
+
     async def link_fulfilment_records(
         self,
         agency_id: str,
@@ -197,7 +236,8 @@ class SpecialServicesService:
         }
         for field, (collection, entity_id) in links.items():
             if entity_id:
-                await self._require_agency_record(collection, entity_id, agency_id, field)
+                record = await self._require_agency_record(collection, entity_id, agency_id, field)
+                self._validate_service_context(service, record, field)
 
         list_links = {
             "ticket_record_ids": "ticket_records",
@@ -260,6 +300,120 @@ class SpecialServicesService:
             "linked",
             [],
         )
+
+    async def ensure_document_requirement(
+        self,
+        agency_id: str,
+        service_request_id: str,
+        user: dict,
+    ) -> dict[str, Any]:
+        service = await self._require_service(agency_id, service_request_id)
+        existing = await self.db.collection("document_workspaces").find_one(
+            {"agency_id": agency_id, "passenger_service_request_id": service_request_id}
+        ) or await self.db.collection("document_workspaces").find_one(
+            {"agency_id": agency_id, "related_service_requirement": service_request_id}
+        )
+        if existing and existing.get("document_status") == "archived":
+            existing = None
+        created_new = False
+
+        booking_workspace = None
+        if service.get("booking_workspace_id"):
+            booking_workspace = await self._require_agency_record(
+                "booking_workspaces", service["booking_workspace_id"], agency_id, "booking workspace"
+            )
+        if not booking_workspace and service.get("ticket_record_ids"):
+            ticket = await self._require_agency_record(
+                "ticket_records", service["ticket_record_ids"][0], agency_id, "ticket record"
+            )
+            if ticket.get("booking_workspace_id"):
+                booking_workspace = await self._require_agency_record(
+                    "booking_workspaces", ticket["booking_workspace_id"], agency_id, "booking workspace"
+                )
+
+        if existing is None:
+            from services.document_workspace_service import DocumentWorkspaceService
+
+            requirements = service.get("required_documents_json") or []
+            requirement = requirements[0] if requirements and isinstance(requirements[0], dict) else {}
+            candidate_type = normalize_code(
+                requirement.get("document_type") or requirement.get("code") or "service_instruction"
+            ).lower()
+            allowed_types = {item.value for item in DocumentWorkspaceType}
+            document_type = candidate_type if candidate_type in allowed_types else DocumentWorkspaceType.SERVICE_INSTRUCTION.value
+            passenger = None
+            if service.get("passenger_id"):
+                passenger = await self.db.collection("passenger_workspaces").find_one(
+                    {"agency_id": agency_id, "id": service["passenger_id"]}
+                )
+            passenger_name = " ".join(
+                value for value in [
+                    (passenger or {}).get("first_name"),
+                    (passenger or {}).get("last_name"),
+                ] if value
+            ) or None
+            document_result = await DocumentWorkspaceService(self.db).create_workspace(
+                DocumentWorkspaceCreate(
+                    agency_id=agency_id,
+                    passenger_service_request_id=service_request_id,
+                    passenger_workspace_id=service.get("passenger_id"),
+                    trip_workspace_id=service.get("trip_id"),
+                    booking_workspace_id=(booking_workspace or {}).get("id"),
+                    ticket_workspace_id=(service.get("ticket_record_ids") or [None])[0],
+                    emd_workspace_id=(service.get("emd_record_ids") or [None])[0],
+                    ssr_osi_workspace_id=service.get("ssr_osi_workspace_id"),
+                    document_status="required" if requirements else "requested",
+                    document_type=document_type,
+                    document_category="passenger_service_evidence",
+                    document_title=f"{service.get('service_label') or service.get('service_type') or 'Passenger service'} document requirement",
+                    passenger_id=service.get("passenger_id"),
+                    passenger_name=passenger_name,
+                    booking_reference=(booking_workspace or {}).get("booking_reference") or (booking_workspace or {}).get("workspace_number"),
+                    airline_pnr=(booking_workspace or {}).get("airline_pnr"),
+                    gds_record_locator=(booking_workspace or {}).get("gds_record_locator"),
+                    related_service_requirement=service_request_id,
+                    related_ssr_code=service.get("ssr_code") or service.get("service_type"),
+                    required_for_travel=bool(requirements),
+                    required_by_airline=bool(requirements),
+                    verification_status="requested",
+                    internal_only=True,
+                    operational_notes="Created from the canonical passenger-service workflow; no delivery or external action occurred.",
+                    metadata={
+                        "source": "v1_golden_path",
+                        "passenger_service_request_id": service_request_id,
+                        "idempotent_requirement": True,
+                    },
+                ),
+                user,
+            )
+            existing = document_result["document_workspace"]
+            created_new = True
+
+        link_result = await self.link_fulfilment_records(
+            agency_id,
+            service_request_id,
+            PassengerServiceFulfilmentLinkRequest(
+                booking_workspace_id=(booking_workspace or {}).get("id") or service.get("booking_workspace_id"),
+                booking_record_id=(booking_workspace or {}).get("booking_record_id") or service.get("booking_record_id"),
+                ticket_record_ids=service.get("ticket_record_ids") or [],
+                ticket_coupon_ids=service.get("ticket_coupon_ids") or [],
+                emd_record_ids=service.get("emd_record_ids") or [],
+                emd_coupon_ids=service.get("emd_coupon_ids") or [],
+                document_workspace_ids=self._deduplicate(
+                    [*(service.get("document_workspace_ids") or []), existing["id"]]
+                ),
+                ssr_osi_workspace_id=service.get("ssr_osi_workspace_id"),
+                next_action="Review the passenger-service document requirement.",
+            ),
+            user,
+        )
+        return {
+            "document_workspace": existing,
+            "service": link_result.get("service"),
+            "created": created_new,
+            "idempotent": True,
+            "external_execution_performed": False,
+        }
 
     async def record_confirmation(
         self,
@@ -553,6 +707,56 @@ class SpecialServicesService:
         for expected, actual, context in checks:
             if expected and actual and expected != actual:
                 raise ValueError(f"{label.replace('_', ' ').title()} belongs to a different {context} context.")
+
+    def _fulfilment_option(self, service: dict[str, Any], group: str, record: dict[str, Any]) -> dict[str, Any]:
+        context = {
+            "trip_id": record.get("trip_id") or record.get("trip_workspace_id"),
+            "booking_workspace_id": record.get("booking_workspace_id"),
+            "booking_record_id": record.get("booking_record_id"),
+            "passenger_id": record.get("passenger_id") or record.get("passenger_workspace_id"),
+            "ticket_record_id": record.get("ticket_record_id"),
+            "emd_record_id": record.get("emd_record_id"),
+        }
+        labels = {
+            "booking_workspaces": record.get("workspace_number") or record.get("booking_reference") or record.get("title"),
+            "booking_records": record.get("pnr_locator") or record.get("booking_reference"),
+            "tickets": record.get("ticket_number"),
+            "ticket_coupons": f"Coupon {record.get('coupon_number')} - {record.get('origin_airport_code') or '?'} to {record.get('destination_airport_code') or '?'}",
+            "emds": record.get("emd_number") or record.get("service_label") or record.get("service_key"),
+            "emd_coupons": f"Coupon {record.get('coupon_number')} - {record.get('service_label') or record.get('service_key') or 'service'}",
+            "documents": record.get("document_display_name") or record.get("document_title") or record.get("document_reference"),
+            "ssr_osi_workspaces": record.get("workspace_display_name") or record.get("workspace_reference") or record.get("service_type"),
+        }
+        status = (
+            record.get("booking_status") or record.get("status") or record.get("issue_status")
+            or record.get("coupon_status") or record.get("document_status") or record.get("readiness_status")
+            or record.get("operational_status") or "unknown"
+        )
+        warnings: list[str] = []
+        for expected, actual, name in [
+            (service.get("trip_id"), context["trip_id"], "trip"),
+            (service.get("passenger_id"), context["passenger_id"], "passenger"),
+            (service.get("booking_record_id"), context["booking_record_id"], "booking"),
+        ]:
+            if expected and actual and expected != actual:
+                warnings.append(f"Different {name} context; linking will be rejected.")
+        label = labels.get(group) or record.get("id")
+        preview = " | ".join(
+            part for part in [
+                str(status).replace("_", " "),
+                f"trip {context['trip_id']}" if context["trip_id"] else None,
+                f"passenger {context['passenger_id']}" if context["passenger_id"] else None,
+            ] if part
+        )
+        return {
+            "id": record["id"],
+            "label": str(label),
+            "status": status,
+            "context_preview": preview,
+            "context": context,
+            "warnings": warnings,
+            "immutable_reference": group in {"tickets", "ticket_coupons", "emds", "emd_coupons"},
+        }
 
     def _link_target(self, updates: dict[str, Any]) -> tuple[str, str | None]:
         for field, target_type in [

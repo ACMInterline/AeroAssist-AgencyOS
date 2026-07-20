@@ -56,6 +56,7 @@ const blankPet = () => ({ pet_name: "", species: "dog", breed: "", breed_free_te
 const blankSpecialItem = () => ({ item_category_code: "other", item_name: "", description: "", quantity: 1, weight_kg: "", transport_location: "checked_baggage", documentation_status: "pending_information", segment_keys: ["1"], notes: "" })
 
 export default function RequestCreatePage() {
+  const initialParams = new URLSearchParams(window.location.search)
   const [state, setState] = useState(null)
   const [form, setForm] = useState({
     client_mode: "existing",
@@ -100,7 +101,13 @@ export default function RequestCreatePage() {
       const adminProfile = (profileList.items || []).find((profile) => profile.form_context === "admin_request" && profile.is_default) || (profileList.items || []).find((profile) => profile.form_context === "admin_request")
       const formProfile = adminProfile ? await fetchEffectiveAgencyFormProfile(context.agency.id, adminProfile.id).catch(() => null) : null
       setState({ ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], petSpecies: petSpecies.items || [], specialItemCategories: specialItemCategories.items || [], formProfile })
-      setForm((current) => ({ ...current, client_id: clients.items[0]?.id || "" }))
+      const clientId = initialParams.get("client_id") || clients.items[0]?.id || ""
+      const passengerId = initialParams.get("passenger_id") || ""
+      setForm((current) => ({
+        ...current,
+        client_id: clientId,
+        passengers: passengerId ? [{ ...blankPassenger(), passenger_id: passengerId }] : current.passengers,
+      }))
     }
     load().catch((err) => setError(err.message))
   }, [])

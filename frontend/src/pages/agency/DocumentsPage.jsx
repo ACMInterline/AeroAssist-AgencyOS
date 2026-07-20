@@ -57,6 +57,8 @@ const packageTypes = [
   "custom",
 ]
 
+const initialSourceContextId = new URLSearchParams(window.location.search).get("source_context_id") || ""
+
 function defaultForm() {
   const params = new URLSearchParams(window.location.search)
   return {
@@ -245,7 +247,7 @@ export default function DocumentsPage() {
               <div className="grid gap-3 md:grid-cols-2">
                 <Select label="Document type" value={form.document_type} options={documentTypes.map((value) => [value, label(value)])} onChange={(value) => setForm((current) => ({ ...current, document_type: value, template_id: "" }))} />
                 <Select label="Source context type" value={form.source_context_type} options={sourceTypes} onChange={(value) => setForm((current) => ({ ...current, source_context_type: value }))} />
-                <Field label="Source record id" value={form.source_context_id} onChange={(value) => setForm((current) => ({ ...current, source_context_id: value }))} />
+                {initialSourceContextId ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"><span className="block font-semibold">Canonical source locked</span><span className="block truncate text-xs">{form.source_context_type} · {form.source_context_id}</span></div> : <Field label="Source record id" value={form.source_context_id} onChange={(value) => setForm((current) => ({ ...current, source_context_id: value }))} />}
                 <Select label="Template optional" value={form.template_id} options={[["", "Default template"], ...matchingTemplates.map((template) => [template.id, template.title || template.name || template.template_key])]} onChange={(value) => setForm((current) => ({ ...current, template_id: value }))} />
                 <Select label="Render format" value={form.render_format} options={[["html", "HTML"], ["markdown", "Markdown"], ["json", "JSON"], ["pdf", "PDF planned"]]} onChange={(value) => setForm((current) => ({ ...current, render_format: value }))} />
                 <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">

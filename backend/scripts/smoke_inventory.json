@@ -2567,7 +2567,7 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Persisted process-local integration smoke for the V1 consolidation program. It uses an isolated in-memory database and verifies Golden Path handoffs plus Sprint 2 canonical After Sales selector discovery, context validation, immutable reference evidence, and duplicate prevention without changing the active phase marker.",
+      "notes": "Persisted process-local integration smoke for the V1 consolidation program. It uses an isolated in-memory database and verifies Golden Path handoffs, Sprint 2 canonical After Sales selectors, and Sprint 3 UI continuity guards, passenger-service fulfilment selectors, canonical Documents-to-Finance bridging, immutable reference evidence, agency isolation, and idempotency without changing the active phase marker.",
       "ci_tier": "integration",
       "execution_isolation": "none"
     },

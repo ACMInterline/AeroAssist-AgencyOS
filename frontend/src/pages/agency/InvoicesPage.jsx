@@ -7,6 +7,7 @@ import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 export default function InvoicesPage() {
+  const bookingWorkspaceId = new URLSearchParams(window.location.search).get("booking_workspace_id") || ""
   const [state, setState] = useState(null)
   const [filters, setFilters] = useState({ search: "", status: "" })
   const [error, setError] = useState("")
@@ -14,7 +15,8 @@ export default function InvoicesPage() {
   useEffect(() => {
     async function load() {
       const context = await loadCurrentAgency()
-      const invoices = await apiGet(`/api/agencies/${context.agency.id}/invoices`)
+      const query = bookingWorkspaceId ? `?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}` : ""
+      const invoices = await apiGet(`/api/agencies/${context.agency.id}/invoices${query}`)
       setState({ ...context, invoices: invoices.items })
     }
     load().catch((err) => setError(err.message))
@@ -23,7 +25,7 @@ export default function InvoicesPage() {
   const filtered = useMemo(() => {
     const search = filters.search.toLowerCase()
     return (state?.invoices || []).filter((invoice) => {
-      const matchesSearch = !search || [invoice.invoice_number, invoice.client?.display_name, invoice.booking?.booking_reference].some((value) => String(value || "").toLowerCase().includes(search))
+      const matchesSearch = !search || [invoice.invoice_number, invoice.client?.display_name, invoice.booking?.booking_reference, invoice.booking?.workspace_number].some((value) => String(value || "").toLowerCase().includes(search))
       return matchesSearch && (!filters.status || invoice.status === filters.status)
     })
   }, [filters, state])
@@ -52,7 +54,7 @@ export default function InvoicesPage() {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{invoice.invoice_number}</p>
                       <h3 className="mt-1 font-semibold text-slate-950">{invoice.client?.display_name || "Client"}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{invoice.booking?.booking_reference || "No booking linked"}</p>
+                      <p className="mt-1 text-sm text-slate-600">{invoice.booking?.booking_reference || invoice.booking?.workspace_number || "No booking linked"}</p>
                     </div>
                     <InvoiceStatusBadge status={invoice.status} />
                   </div>

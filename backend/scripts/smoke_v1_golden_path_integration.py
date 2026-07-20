@@ -24,7 +24,6 @@ from models import (
     ClientPassengerRelationship,
     ClientProfile,
     DocumentRenderJob,
-    DocumentWorkspaceCreate,
     DocumentWorkspaceOutputReconciliationRequest,
     Invoice,
     InvoiceLineItem,
@@ -60,6 +59,7 @@ from services.offer_to_booking_handoff_service import OfferToBookingHandoffError
 from services.request_to_trip_conversion_service import RequestToTripConversionError, RequestToTripConversionService
 from services.special_services_service import SpecialServicesService
 from services.ticket_emd_service import TicketEmdService
+from routers.finance import create_invoice_from_booking_workspace
 from build_phase import CURRENT_BUILD_PHASE
 from phase_assertions import application_phase_is_at_least
 
@@ -407,6 +407,10 @@ async def run_golden_path() -> None:
     booking_workspace = booking_result.get("booking_workspace") or {}
     booking_record = (booking_result.get("booking_result") or {}).get("booking_record") or {}
     require(booking_workspace.get("id") and booking_record.get("id"), "Handoff did not create booking workspace and record metadata.")
+    require(booking_workspace.get("offer_acceptance_id") == acceptance["id"], "Booking workspace lost the accepted-offer relationship.")
+    require(booking_workspace.get("client_id") == context["client"]["id"], "Booking workspace lost the canonical client link.")
+    require(context["passenger"]["id"] in booking_workspace.get("passenger_ids", []), "Booking workspace lost the canonical passenger link.")
+    require(booking_record.get("client_id") == context["client"]["id"], "Booking record lost the canonical client link.")
     booking_retry = await handoff_service.create_booking_workspace(
         handoff["id"], OfferBookingHandoffBookingCreateRequest(), user, agency_id=AGENCY_ID
     )
@@ -481,28 +485,23 @@ async def run_golden_path() -> None:
         ),
         USER_ID,
     )
-    document_service = DocumentWorkspaceService(db)
-    document_result = await document_service.create_workspace(
-        DocumentWorkspaceCreate(
-            agency_id=AGENCY_ID,
-            passenger_service_request_id=service_case["id"],
-            passenger_workspace_id=context["passenger"]["id"],
-            trip_workspace_id=trip["id"],
+    await passenger_service.link_fulfilment_records(
+        AGENCY_ID,
+        service_case["id"],
+        PassengerServiceFulfilmentLinkRequest(
             booking_workspace_id=booking_workspace["id"],
-            document_status="requested",
-            document_type="medical_certificate",
-            document_category="passenger_service_evidence",
-            document_title="WCHC supporting document",
-            related_service_requirement=service_case["id"],
-            required_for_travel=True,
-            required_by_airline=True,
-            verification_status="requested",
-            internal_only=True,
-            operational_notes="Synthetic integration evidence only.",
+            booking_record_id=booking_record["id"],
+            ticket_record_ids=[ticket["id"]],
         ),
         user,
     )
+    document_result = await passenger_service.ensure_document_requirement(AGENCY_ID, service_case["id"], user)
+    document_retry = await passenger_service.ensure_document_requirement(AGENCY_ID, service_case["id"], user)
     document_workspace = document_result["document_workspace"]
+    require(document_result["created"] is True, "Canonical passenger-service document requirement was not created.")
+    require(document_retry["created"] is False and document_retry["document_workspace"]["id"] == document_workspace["id"], "Document requirement retry was not idempotent.")
+    require(document_workspace["booking_workspace_id"] == booking_workspace["id"], "Document requirement did not retain canonical booking context.")
+    document_service = DocumentWorkspaceService(db)
     render_job = await insert(
         db,
         "document_render_jobs",
@@ -540,6 +539,22 @@ async def run_golden_path() -> None:
     require(linked_service["ticket_record_ids"] == [ticket["id"]], "Ticket mapping duplicated on retry.")
     require(linked_service["document_workspace_ids"] == [document_workspace["id"]], "Document mapping duplicated on retry.")
     require("metadata_json" not in linked_service["client_safe_projection"], "Passenger-service client-safe projection leaked internal metadata.")
+    fulfilment_options = await passenger_service.fulfilment_link_options(AGENCY_ID, service_case["id"])
+    for group, entity_id in [
+        ("booking_workspaces", booking_workspace["id"]),
+        ("booking_records", booking_record["id"]),
+        ("tickets", ticket["id"]),
+        ("ticket_coupons", coupons[0]["id"]),
+        ("documents", document_workspace["id"]),
+    ]:
+        option = next((item for item in fulfilment_options["items"][group] if item["id"] == entity_id), None)
+        require(option is not None and option.get("label"), f"Passenger-service canonical option missing for {group}.")
+        require("context" in option and "warnings" in option, f"Passenger-service context missing for {group}.")
+    await expect_error(
+        passenger_service.fulfilment_link_options(OTHER_AGENCY_ID, service_case["id"]),
+        ValueError,
+        "cross-tenant passenger-service selector discovery",
+    )
     await expect_error(
         passenger_service.link_fulfilment_records(OTHER_AGENCY_ID, service_case["id"], link_payload, user),
         ValueError,
@@ -625,24 +640,26 @@ async def run_golden_path() -> None:
     )
     require(fulfilled["service"]["fulfilment_result"] == "fulfilled", "Passenger-service outcome did not resolve.")
 
-    invoice = await insert(
-        db,
-        "invoices",
-        Invoice(
-            agency_id=AGENCY_ID,
-            invoice_number="INV-V1-001",
-            client_id=context["client"]["id"],
-            booking_id=booking_record["id"],
-            offer_id=offer_workspace["id"],
-            status="issued",
-            currency="EUR",
-            subtotal_amount=305.0,
-            total_amount=305.0,
-            paid_amount=305.0,
-            due_amount=0.0,
-            internal_notes="Internal invoice note.",
-            client_visible_notes="Paid in full.",
-        ),
+    invoice_result = await create_invoice_from_booking_workspace(AGENCY_ID, booking_workspace["id"], user=user, db=db)
+    invoice = invoice_result["invoice"]
+    require(
+        invoice.get("booking_workspace_id") == booking_workspace["id"]
+        and invoice.get("booking_record_id") == booking_record["id"],
+        "Documents-to-Finance bridge did not preserve canonical booking links.",
+    )
+    invoice_retry = await create_invoice_from_booking_workspace(AGENCY_ID, booking_workspace["id"], user=user, db=db)
+    require(invoice_retry.get("idempotent_reused") is True and invoice_retry["invoice"]["id"] == invoice["id"], "Finance bridge retry duplicated the invoice.")
+    invoice = await db.collection("invoices").update_one(
+        {"agency_id": AGENCY_ID, "id": invoice["id"]},
+        {
+            "status": "issued",
+            "subtotal_amount": 305.0,
+            "total_amount": 305.0,
+            "paid_amount": 305.0,
+            "due_amount": 0.0,
+            "internal_notes": "Internal invoice note.",
+            "client_visible_notes": "Paid in full.",
+        },
     )
     invoice_line = await insert(
         db,
@@ -883,6 +900,38 @@ def verify_static_contracts() -> None:
     offer_page = (ROOT / "frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx").read_text(encoding="utf-8")
     require("/agency/booking-handoffs" in offer_page, "Primary offer UI does not use booking handoff.")
     require("booking-workspaces/from-readiness" not in offer_page, "Primary offer UI still bypasses booking handoff.")
+    trip_page = (ROOT / "frontend/src/pages/agency/TripDetailPage.jsx").read_text(encoding="utf-8")
+    offer_builder_page = (ROOT / "frontend/src/pages/agency/OfferBuilderPage.jsx").read_text(encoding="utf-8")
+    request_page = (ROOT / "frontend/src/pages/agency/RequestDetailPage.jsx").read_text(encoding="utf-8")
+    conversion_page = (ROOT / "frontend/src/pages/agency/RequestTripConversionPage.jsx").read_text(encoding="utf-8")
+    require("booking-workspaces/from-readiness" not in trip_page + offer_builder_page, "Trip or Offer Builder UI still bypasses booking handoff.")
+    require("/offer-workspace" not in request_page, "Request UI still bypasses the canonical request-to-trip conversion.")
+    require("if (!state)" in request_page, "Request Detail does not guard asynchronous state before rendering operational records.")
+    require('label="Request id"' not in conversion_page and "Canonical request" in conversion_page, "Request conversion still exposes its canonical source as a raw ID field.")
+    require("WorkflowContinuityPanel" in conversion_page and "Continue to trip" in conversion_page, "Request conversion lacks contextual Trip continuation.")
+    handoff_page = (ROOT / "frontend/src/pages/agency/BookingHandoffsPage.jsx").read_text(encoding="utf-8")
+    require("Canonical source required" in handoff_page and "Return to an accepted offer" in handoff_page, "Booking Handoff does not guard its accepted-offer source.")
+    require("Acceptance id" not in handoff_page and "Booking readiness package id" not in handoff_page, "Booking Handoff still exposes canonical source IDs for manual entry.")
+    passenger_services_page = (ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx").read_text(encoding="utf-8")
+    require("/link-options" in passenger_services_page and "CanonicalSelector" in passenger_services_page, "Passenger Services does not use canonical fulfilment selectors.")
+    require("persistLinks(true)" in passenger_services_page, "Passenger Services does not persist canonical context before continuing to Documents.")
+    document_page = (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx").read_text(encoding="utf-8")
+    require("Create document requirement" in document_page and "/document-requirement" in document_page, "Documents lacks the canonical passenger-service requirement action.")
+    special_services_router = (ROOT / "backend/routers/agency_special_services.py").read_text(encoding="utf-8")
+    require('passenger-services/{service_id}/document-requirement' in special_services_router, "Passenger-service document bridge route is missing.")
+    finance_router = (ROOT / "backend/routers/finance.py").read_text(encoding="utf-8")
+    require('booking-workspaces/{booking_workspace_id}/invoice' in finance_router, "Canonical Booking-to-Finance bridge is missing.")
+    continuity_component = ROOT / "frontend/src/components/WorkflowContinuityPanel.jsx"
+    require(continuity_component.exists(), "Shared workflow continuity panel is missing.")
+    continuity_pages = [
+        "ClientDetailPage.jsx", "PassengerDetailPage.jsx", "RequestDetailPage.jsx", "RequestTripConversionPage.jsx", "TripDetailPage.jsx",
+        "OfferBuilderPage.jsx", "OfferWorkspaceDetailPage.jsx", "BookingHandoffsPage.jsx",
+        "BookingWorkspaceDetailPage.jsx", "TicketDetailPage.jsx", "PassengerServicesPage.jsx",
+        "DocumentWorkspacesPage.jsx", "InvoiceDetailPage.jsx", "AfterSalesPage.jsx",
+    ]
+    for page_name in continuity_pages:
+        page_text = (ROOT / "frontend/src/pages/agency" / page_name).read_text(encoding="utf-8")
+        require("WorkflowContinuityPanel" in page_text, f"{page_name} lacks canonical workflow continuity controls.")
     after_sales_page = (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx").read_text(encoding="utf-8")
     for manual_label in [
         "Trip workspace id", "Booking workspace id", "Ticket workspace id", "EMD workspace id",

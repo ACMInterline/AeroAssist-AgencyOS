@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -29,16 +30,25 @@ export default function DocumentWorkspacesPage() {
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
     const query = queryString(nextFilters)
-    const [workspaces, summary, renderJobs] = await Promise.all([
+    const [workspaces, summary, renderJobs, serviceResponse] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/document-workspaces${query}`),
       apiGet(`/api/agencies/${context.agency.id}/document-workspaces/summary`),
       apiGet(`/api/agencies/${context.agency.id}/documents/render-jobs`),
+      nextFilters.related_service
+        ? apiGet(`/api/agencies/${context.agency.id}/passenger-services/${encodeURIComponent(nextFilters.related_service)}`)
+        : Promise.resolve({ service: null }),
     ])
+    const bookingWorkspaceId = nextFilters.related_service
+      ? workspaces.items?.find((item) => item.booking_workspace_id)?.booking_workspace_id || serviceResponse.service?.booking_workspace_id
+      : null
+    const invoices = bookingWorkspaceId ? await apiGet(`/api/agencies/${context.agency.id}/invoices?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}`) : { items: [] }
     setState({
       ...context,
       workspaces: workspaces.items || [],
       summary: workspaces.summary || summary.summary || {},
       renderJobs: renderJobs.items || [],
+      invoices: invoices.items || [],
+      service: serviceResponse.service || null,
     })
   }
 
@@ -71,6 +81,39 @@ export default function DocumentWorkspacesPage() {
     }
   }
 
+  async function createOrOpenInvoice() {
+    const existing = state?.invoices?.[0]
+    if (existing) {
+      window.location.href = `/agency/invoices/${existing.id}`
+      return
+    }
+    if (!bookingWorkspaceId) return
+    setError("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/invoice`)
+      window.location.href = `/agency/invoices/${result.invoice.id}`
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function createDocumentRequirement() {
+    if (!filters.related_service) return
+    setError("")
+    setMessage("")
+    try {
+      const result = await apiPost(`/api/agencies/${state.agency.id}/passenger-services/${encodeURIComponent(filters.related_service)}/document-requirement`)
+      setMessage(result.created ? "Passenger-service document requirement created and linked." : "Existing passenger-service document requirement opened.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const sourceDocument = state?.workspaces?.find((item) => item.booking_workspace_id) || state?.workspaces?.[0]
+  const bookingWorkspaceId = filters.related_service ? sourceDocument?.booking_workspace_id || state?.service?.booking_workspace_id : null
+  const documentsVerified = Boolean(state?.workspaces?.length) && state.workspaces.every((item) => !item.required_for_travel || ["verified", "not_required", "waived"].includes(item.document_status))
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -87,6 +130,27 @@ export default function DocumentWorkspacesPage() {
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">No public links</span>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Passenger services", href: filters.related_service ? `/agency/passenger-services?service_id=${encodeURIComponent(filters.related_service)}` : "/agency/passenger-services" }, { label: "Documents", href: "/agency/document-workspaces" }]}
+            currentLabel={sourceDocument?.document_display_name || sourceDocument?.document_reference || "Document Workspace"}
+            status={sourceDocument?.document_status || "unknown"}
+            validation={!filters.related_service
+              ? { state: "blocked", label: "Passenger service context required", reason: "Open Documents from a passenger service to continue the canonical workflow." }
+              : !sourceDocument
+              ? { state: "blocked", label: "Document requirement missing", reason: "Create the required document metadata from passenger service context." }
+              : documentsVerified ? { state: "ready", label: "Required documents reviewed", reason: "Finance can continue without documents changing financial state." }
+                : { state: "warning", label: "Document review incomplete", reason: "Unverified requirements remain visible; an authorized operator decides whether finance may continue." }}
+            previous={filters.related_service ? { label: "Previous: passenger service", href: `/agency/passenger-services?service_id=${encodeURIComponent(filters.related_service)}` } : { label: "Passenger services", href: "/agency/passenger-services" }}
+            next={!sourceDocument
+              ? { label: "Create document requirement", onClick: createDocumentRequirement, enabled: Boolean(filters.related_service), reason: "A canonical passenger-service context is required." }
+              : { label: state?.invoices?.[0] ? "Continue to finance" : "Create linked invoice", onClick: createOrOpenInvoice, enabled: Boolean(bookingWorkspaceId), reason: "A canonical booking workspace link is required before invoice creation." }}
+            relatedRecords={[
+              { label: "Passenger service", value: filters.related_service || sourceDocument?.passenger_service_request_id || "none" },
+              { label: "Booking", value: sourceDocument?.booking_reference || bookingWorkspaceId || "none", href: bookingWorkspaceId ? `/agency/booking-workspaces/${bookingWorkspaceId}` : undefined },
+              { label: "Invoice", value: state?.invoices?.[0]?.invoice_number || "none", href: state?.invoices?.[0] ? `/agency/invoices/${state.invoices[0].id}` : undefined },
+            ]}
+          />
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
@@ -117,7 +181,9 @@ export default function DocumentWorkspacesPage() {
               <SelectField label="Status" value={filters.document_status} onChange={(value) => setFilters({ ...filters, document_status: value })} options={documentStatuses.map((item) => [item, formatType(item)])} placeholder="All statuses" />
               <Field label="Passenger" value={filters.passenger} onChange={(value) => setFilters({ ...filters, passenger: value })} />
               <Field label="Booking" value={filters.booking_reference} onChange={(value) => setFilters({ ...filters, booking_reference: value })} />
-              <Field label="Service" value={filters.related_service} onChange={(value) => setFilters({ ...filters, related_service: value })} />
+              {filters.related_service
+                ? <ContextValue label="Service context" value={state?.service?.service_label || state?.service?.service_type || filters.related_service} />
+                : <Field label="Service" value={filters.related_service} onChange={(value) => setFilters({ ...filters, related_service: value })} />}
               <SelectField label="Travel required" value={filters.required_for_travel} onChange={(value) => setFilters({ ...filters, required_for_travel: value })} options={[["true", "Required"], ["false", "Not required"]]} placeholder="Any" />
               <Field label="Verification" value={filters.verification_status} onChange={(value) => setFilters({ ...filters, verification_status: value })} />
               <Field label="Deadline" type="date" value={filters.deadline} onChange={(value) => setFilters({ ...filters, deadline: value })} />
@@ -232,6 +298,15 @@ function Field({ label, value, onChange, type = "text" }) {
       <span className="font-medium text-slate-700">{label}</span>
       <input type={type} className="rounded-md border border-slate-300 px-3 py-2" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
+  )
+}
+
+function ContextValue({ label, value }) {
+  return (
+    <div className="grid gap-1 text-sm">
+      <span className="font-medium text-slate-700">{label}</span>
+      <span className="min-h-10 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-slate-700">{value}</span>
+    </div>
   )
 }
 

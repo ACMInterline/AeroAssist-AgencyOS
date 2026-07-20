@@ -274,7 +274,8 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/pages/platform/SsrOsiWorkspacesPage.jsx", "without live transmission"),
         (ROOT / "frontend/src/pages/platform/SsrOsiWorkspacesPage.jsx", "Missing"),
         (ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "Passenger Services"),
-        (ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "Read-only SSR / OSI operational workspace metadata"),
+        (ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "One continuous passenger-service fulfilment thread"),
+        (ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "No SSR/OSI transmission"),
         (ROOT / "docs/architecture/ssr-osi-operational-workspace-foundation.md", "SSR / OSI Operational Workspace Foundation"),
         (ROOT / "docs/architecture/ssr-osi-operational-workspace-foundation.md", AOIE_PATH),
         (ROOT / "docs/architecture/passenger-service-operations-principle.md", AOIE_PATH),
@@ -294,13 +295,12 @@ def verify_frontend_and_docs() -> None:
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)
-    for path in [
-        ROOT / "frontend/src/pages/platform/SsrOsiWorkspacesPage.jsx",
-        ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx",
-    ]:
+    for path in [ROOT / "frontend/src/pages/platform/SsrOsiWorkspacesPage.jsx"]:
         reject_text(path, "<button")
         reject_text(path, "apiPost")
         reject_text(path, "apiPut")
+    require_text(ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "Link selected records")
+    require_text(ROOT / "frontend/src/pages/agency/PassengerServicesPage.jsx", "call providers")
 
 
 def verify_blueprint_adoption() -> None:

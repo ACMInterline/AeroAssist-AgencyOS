@@ -7,6 +7,7 @@ import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
 import OfferDeliveryPanel from "../../components/offers/OfferDeliveryPanel"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -47,6 +48,9 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
       warnings: (state?.options || []).reduce((sum, option) => sum + (option.warnings_json?.length || 0), 0),
     }
   }, [state])
+  const accepted = state?.acceptance?.acceptance
+  const readiness = state?.acceptance?.booking_readiness
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
 
   function setField(name, value) {
     setForm((current) => ({ ...current, [name]: value }))
@@ -132,6 +136,18 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Trips", href: state?.trip?.id ? `/agency/trips/${state.trip.id}` : "/agency/trips" }, { label: "Offers", href: "/agency/offers" }]}
+            currentLabel={state?.workspace?.title || "Offer"}
+            status={accepted ? "accepted" : state?.workspace?.status}
+            validation={accepted && readiness ? { state: "ready", label: "Accepted snapshot ready", reason: "Continue through the canonical booking handoff." } : { state: state?.options?.length ? "warning" : "blocked", label: state?.options?.length ? "Acceptance pending" : "Option required", reason: state?.options?.length ? "Accept one reviewed option before booking." : "Build an offer option first." }}
+            previous={state?.trip?.id ? { label: "Previous: trip", href: `/agency/trips/${state.trip.id}` } : { label: "Offers", href: "/agency/offers" }}
+            next={bookingWorkspace
+              ? { label: "Continue to booking", href: `/agency/booking-workspaces/${bookingWorkspace.id}` }
+              : { label: "Continue to handoff", href: accepted && readiness ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(accepted.id)}&booking_readiness_package_id=${encodeURIComponent(readiness.id)}&trip_id=${encodeURIComponent(accepted.trip_id || state?.trip?.id || "")}&offer_workspace_id=${encodeURIComponent(workspaceId)}` : undefined, enabled: Boolean(accepted && readiness), reason: "Accepted snapshot and readiness are required." }}
+            relatedRecords={[{ label: "Trip", value: state?.trip?.trip_reference || "none", href: state?.trip?.id ? `/agency/trips/${state.trip.id}` : undefined }, { label: "Options", value: state?.options?.length || 0 }, { label: "Readiness", value: readiness?.status || "not created" }]}
+          />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
 

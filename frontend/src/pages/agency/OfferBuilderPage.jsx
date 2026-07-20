@@ -8,6 +8,7 @@ import Save from "lucide-react/dist/esm/icons/save.js"
 import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -195,30 +196,12 @@ export default function OfferBuilderPage({ workspaceId }) {
     }
   }
 
-  async function createOrOpenBookingWorkspace() {
-    try {
-      const existing = state?.bookingWorkspaces?.[0]
-      if (existing) {
-        window.location.href = `/agency/booking-workspaces/${existing.id}`
-        return
-      }
-      const readinessId = state?.acceptance?.booking_readiness?.id
-      if (!readinessId) {
-        setError("Booking readiness package is required before creating a booking workspace.")
-        return
-      }
-      const created = await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/from-readiness`, {
-        booking_readiness_package_id: readinessId,
-        create_draft_record: true,
-      })
-      window.location.href = `/agency/booking-workspaces/${created.booking_workspace.id}`
-    } catch (err) {
-      setError(err.message)
-    }
-  }
-
   const pricing = selectedOption?.pricing_summary_json || {}
   const acceptedOptionId = state?.acceptance?.acceptance?.option_id
+  const accepted = state?.acceptance?.acceptance
+  const readiness = state?.acceptance?.booking_readiness
+  const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const handoffHref = accepted && readiness ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(accepted.id)}&booking_readiness_package_id=${encodeURIComponent(readiness.id)}&trip_id=${encodeURIComponent(accepted.trip_id || state?.trip?.id || "")}&offer_workspace_id=${encodeURIComponent(workspaceId)}` : ""
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -262,17 +245,34 @@ export default function OfferBuilderPage({ workspaceId }) {
                 </button>
                 {state?.acceptance?.booking_readiness ? (
                   <>
-                    <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${state.acceptance.acceptance?.id || ""}&booking_readiness_package_id=${state.acceptance.booking_readiness.id}`}>
+                    <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${state.acceptance.acceptance?.id || ""}&booking_readiness_package_id=${state.acceptance.booking_readiness.id}&trip_id=${state.acceptance.acceptance?.trip_id || state?.trip?.id || ""}&offer_workspace_id=${workspaceId}`}>
                       Booking Handoff
                     </a>
-                    <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createOrOpenBookingWorkspace}>
-                      Booking Workspace
-                    </button>
                   </>
                 ) : null}
               </div>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Trips", href: state?.trip?.id ? `/agency/trips/${state.trip.id}` : "/agency/trips" }, { label: "Offers", href: "/agency/offers" }]}
+            currentLabel={state?.workspace?.title || "Offer"}
+            status={accepted ? "accepted" : state?.workspace?.status}
+            validation={bookingWorkspace
+              ? { state: "ready", label: "Booking linked", reason: "The accepted snapshot has completed the handoff." }
+              : accepted && readiness ? { state: "ready", label: "Acceptance frozen", reason: "Continue through booking handoff; direct readiness booking is not allowed." }
+                : selectedOption ? { state: "warning", label: "Explicit acceptance required", reason: "Review and accept an option before booking handoff." }
+                  : { state: "blocked", label: "Offer option required", reason: "Add at least one option before continuing." }}
+            previous={state?.trip?.id ? { label: "Previous: trip", href: `/agency/trips/${state.trip.id}` } : { label: "Offers", href: "/agency/offers" }}
+            next={bookingWorkspace
+              ? { label: "Continue to booking", href: `/agency/booking-workspaces/${bookingWorkspace.id}` }
+              : { label: "Continue to handoff", href: handoffHref || undefined, enabled: Boolean(handoffHref), reason: "Accept an offer option and generate booking readiness first." }}
+            relatedRecords={[
+              { label: "Options", value: state?.options?.length || 0 },
+              { label: "Accepted offer", value: accepted ? "frozen" : "pending" },
+              { label: "Readiness", value: readiness?.status || "not created" },
+            ]}
+          />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
 

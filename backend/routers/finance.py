@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from auth import get_current_user
 from database import Database, get_database
+from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
+from persistence_repository import PersistenceRepository
 from models import (
     AuditEvent,
     BookingTimelineEvent,
@@ -119,17 +121,20 @@ async def recalc_invoice(db: Database, agency_id: str, invoice_id: str) -> dict:
 
 async def invoice_detail(db: Database, agency_id: str, invoice_id: str) -> dict:
     invoice = await get_invoice_or_404(db, agency_id, invoice_id)
+    booking_record_id = invoice.get("booking_record_id") or invoice.get("booking_id")
     return {
         "invoice": invoice,
         "client": await get_client_or_404(db, agency_id, invoice["client_id"]),
         "line_items": await db.collection("invoice_line_items").find_many({"agency_id": agency_id, "invoice_id": invoice_id}),
         "payments": await db.collection("payment_records").find_many({"agency_id": agency_id, "invoice_id": invoice_id}),
         "booking": await db.collection("bookings").find_one({"agency_id": agency_id, "id": invoice["booking_id"]}) if invoice.get("booking_id") else None,
+        "booking_workspace": await db.collection("booking_workspaces").find_one({"agency_id": agency_id, "id": invoice["booking_workspace_id"]}) if invoice.get("booking_workspace_id") else None,
+        "booking_record": await db.collection("booking_records").find_one({"agency_id": agency_id, "id": booking_record_id}) if booking_record_id else None,
     }
 
 
 @router.get("/invoices")
-async def list_invoices(agency_id: str, status_filter: Optional[str] = Query(default=None, alias="status"), client_id: Optional[str] = None, booking_id: Optional[str] = None, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+async def list_invoices(agency_id: str, status_filter: Optional[str] = Query(default=None, alias="status"), client_id: Optional[str] = None, booking_id: Optional[str] = None, booking_workspace_id: Optional[str] = None, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     filters = {"agency_id": agency_id}
     if status_filter:
@@ -138,19 +143,50 @@ async def list_invoices(agency_id: str, status_filter: Optional[str] = Query(def
         filters["client_id"] = client_id
     if booking_id:
         filters["booking_id"] = booking_id
+    if booking_workspace_id:
+        filters["booking_workspace_id"] = booking_workspace_id
     items = await db.collection("invoices").find_many(filters)
     clients = {client["id"]: client for client in await db.collection("client_profiles").find_many({"agency_id": agency_id})}
     bookings = {booking["id"]: booking for booking in await db.collection("bookings").find_many({"agency_id": agency_id})}
+    booking_workspaces = {}
+    for item in items:
+        workspace_id = item.get("booking_workspace_id")
+        if workspace_id and workspace_id not in booking_workspaces:
+            workspace = await db.collection("booking_workspaces").find_one({"agency_id": agency_id, "id": workspace_id})
+            if workspace:
+                booking_workspaces[workspace_id] = workspace
     items.sort(key=lambda item: item.get("updated_at", ""), reverse=True)
-    return {"items": [{**item, "client": clients.get(item["client_id"]), "booking": bookings.get(item.get("booking_id"))} for item in items]}
+    return {
+        "items": [
+            {
+                **item,
+                "client": clients.get(item["client_id"]),
+                "booking": bookings.get(item.get("booking_id")) or booking_workspaces.get(item.get("booking_workspace_id")),
+            }
+            for item in items
+        ]
+    }
 
 
 @router.post("/invoices", status_code=status.HTTP_201_CREATED)
 async def create_invoice(agency_id: str, payload: InvoiceCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     await get_client_or_404(db, agency_id, payload.client_id)
-    if payload.booking_id and not await db.collection("bookings").find_one({"agency_id": agency_id, "id": payload.booking_id, "client_id": payload.client_id}):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking must belong to the selected client.")
+    if payload.booking_workspace_id:
+        workspace = await db.collection("booking_workspaces").find_one({"agency_id": agency_id, "id": payload.booking_workspace_id})
+        workspace_record = await db.collection("booking_records").find_one({"agency_id": agency_id, "id": workspace.get("booking_record_id")}) if workspace and workspace.get("booking_record_id") else None
+        if not workspace or (workspace.get("client_id") or (workspace_record or {}).get("client_id")) != payload.client_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking workspace must belong to the selected client.")
+        expected_record_id = workspace.get("booking_record_id")
+        if payload.booking_record_id and expected_record_id and payload.booking_record_id != expected_record_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking record does not belong to the selected booking workspace.")
+    if payload.booking_record_id and not await db.collection("booking_records").find_one({"agency_id": agency_id, "id": payload.booking_record_id, "client_id": payload.client_id}):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking record must belong to the selected client.")
+    if payload.booking_id:
+        legacy_booking = await db.collection("bookings").find_one({"agency_id": agency_id, "id": payload.booking_id, "client_id": payload.client_id})
+        canonical_booking = await db.collection("booking_records").find_one({"agency_id": agency_id, "id": payload.booking_id, "client_id": payload.client_id})
+        if not legacy_booking and not canonical_booking:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking must belong to the selected client.")
     if payload.offer_id and not await db.collection("offers").find_one({"agency_id": agency_id, "id": payload.offer_id, "client_id": payload.client_id}):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Offer must belong to the selected client.")
     invoice = Invoice(agency_id=agency_id, invoice_number=payload.invoice_number or await next_invoice_number(db, agency_id), **payload.model_dump(exclude={"invoice_number"}, mode="json"))
@@ -158,6 +194,41 @@ async def create_invoice(agency_id: str, payload: InvoiceCreate, user: dict = De
     await write_booking_timeline(db, agency_id, invoice.booking_id, user["id"], "finance.invoice_created", "Invoice created", invoice.invoice_number)
     await write_audit(db, agency_id, user["id"], "invoice.created", "invoice", invoice.id, f"Created invoice {invoice.invoice_number}.")
     return {"invoice": created}
+
+
+@router.post("/booking-workspaces/{booking_workspace_id}/invoice", status_code=status.HTTP_201_CREATED)
+async def create_invoice_from_booking_workspace(agency_id: str, booking_workspace_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
+    await require_write(db, agency_id, user)
+    workspace = await db.collection("booking_workspaces").find_one({"agency_id": agency_id, "id": booking_workspace_id})
+    if not workspace:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking workspace not found.")
+    booking_record = await db.collection("booking_records").find_one({"agency_id": agency_id, "id": workspace.get("booking_record_id")}) if workspace.get("booking_record_id") else None
+    client_id = workspace.get("client_id") or (booking_record or {}).get("client_id")
+    if not client_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Booking workspace requires a canonical client before finance can continue.")
+    existing_invoices = await PersistenceRepository(db).find_agency_records(
+        collection_name="invoices",
+        agency_id=agency_id,
+        filters={"booking_workspace_id": booking_workspace_id},
+        pagination=PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
+    )
+    existing = next((item for item in existing_invoices.items if item.get("status") != "archived"), None)
+    if existing:
+        return {"invoice": existing, "idempotent_reused": True}
+    invoice = Invoice(
+        agency_id=agency_id,
+        invoice_number=await next_invoice_number(db, agency_id),
+        client_id=client_id,
+        booking_id=(booking_record or {}).get("id"),
+        booking_workspace_id=booking_workspace_id,
+        booking_record_id=(booking_record or {}).get("id"),
+        offer_id=workspace.get("offer_workspace_id"),
+        currency=(workspace.get("pricing_snapshot_json") or {}).get("currency") or "EUR",
+    )
+    created = await db.collection("invoices").insert_one(invoice.model_dump(mode="json"))
+    await write_booking_timeline(db, agency_id, (booking_record or {}).get("id"), user["id"], "finance.invoice_created", "Invoice created", invoice.invoice_number, {"booking_workspace_id": booking_workspace_id})
+    await write_audit(db, agency_id, user["id"], "invoice.created", "invoice", invoice.id, f"Created invoice {invoice.invoice_number} from booking workspace.", {"booking_workspace_id": booking_workspace_id})
+    return {"invoice": created, "idempotent_reused": False}
 
 
 @router.get("/invoices/{invoice_id}")

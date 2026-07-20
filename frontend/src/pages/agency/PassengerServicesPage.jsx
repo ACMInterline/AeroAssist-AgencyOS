@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -8,6 +9,10 @@ import { loadCurrentAgency } from "../../lib/agency"
 const needCategories = ["mobility", "medical", "visual_impairment", "hearing_impairment", "cognitive", "unaccompanied_minor", "infant", "pet", "assistance_animal", "sports_equipment", "musical_instrument", "oversized_baggage", "dangerous_goods", "religious", "dietary", "seating", "security", "immigration", "documentation", "vip", "disruption", "other"]
 const approvalStatuses = ["not_required", "pending", "approved", "rejected", "expired"]
 const readinessStatuses = ["ready", "pending", "awaiting_airline", "awaiting_documents", "awaiting_payment", "awaiting_emd", "awaiting_medif", "awaiting_customer", "blocked"]
+const initialParams = new URLSearchParams(window.location.search)
+const incomingTicketRecordId = initialParams.get("ticket_record_id") || ""
+const incomingBookingWorkspaceId = initialParams.get("booking_workspace_id") || ""
+const incomingBookingRecordId = initialParams.get("booking_record_id") || ""
 
 const defaultFilters = {
   need_category: "",
@@ -21,8 +26,8 @@ const defaultFilters = {
 }
 
 const defaultFulfilment = {
-  booking_workspace_id: "", booking_record_id: "", ticket_record_ids: "", ticket_coupon_ids: "",
-  emd_record_ids: "", emd_coupon_ids: "", document_workspace_ids: "", ssr_osi_workspace_id: "",
+  booking_workspace_id: "", booking_record_id: "", ticket_record_ids: [], ticket_coupon_ids: [],
+  emd_record_ids: [], emd_coupon_ids: [], document_workspace_ids: [], ssr_osi_workspace_id: "",
   airline_confirmation_status: "unknown", airline_confirmation_evidence_reference: "",
   airport_handling_confirmation_status: "unknown", airport_handling_evidence_reference: "",
   external_manual_status: "unknown", fulfilment_result: "unknown", mismatches: "", next_action: "",
@@ -33,9 +38,13 @@ export default function PassengerServicesPage() {
   const [filters, setFilters] = useState(defaultFilters)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
-  const [selectedId, setSelectedId] = useState("")
+  const [selectedId, setSelectedId] = useState(initialParams.get("service_id") || "")
   const [fulfilment, setFulfilment] = useState(defaultFulfilment)
-  const selected = useMemo(() => state?.serviceCases?.find((item) => item.id === selectedId) || state?.serviceCases?.[0] || null, [state, selectedId])
+  const [linkOptions, setLinkOptions] = useState({})
+  const selected = useMemo(
+    () => state?.serviceCases?.find((item) => item.id === selectedId) || (!selectedId ? state?.serviceCases?.[0] : null) || null,
+    [state, selectedId],
+  )
 
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
@@ -57,6 +66,31 @@ export default function PassengerServicesPage() {
   useEffect(() => {
     load(filters).catch((err) => setError(err.message))
   }, [filters.need_category, filters.airline, filters.approval_status, filters.readiness_status, filters.passenger, filters.priority, filters.rfic, filters.rfisc])
+
+  useEffect(() => {
+    if (!state?.agency?.id || !selected?.id) return
+    setFulfilment({
+      ...defaultFulfilment,
+      booking_workspace_id: selected.booking_workspace_id || incomingBookingWorkspaceId,
+      booking_record_id: selected.booking_record_id || incomingBookingRecordId,
+      ticket_record_ids: uniqueValues([...(selected.ticket_record_ids || []), incomingTicketRecordId]),
+      ticket_coupon_ids: selected.ticket_coupon_ids || [],
+      emd_record_ids: selected.emd_record_ids || [],
+      emd_coupon_ids: selected.emd_coupon_ids || [],
+      document_workspace_ids: selected.document_workspace_ids || [],
+      ssr_osi_workspace_id: selected.ssr_osi_workspace_id || "",
+      airline_confirmation_status: selected.airline_confirmation_status || "unknown",
+      airline_confirmation_evidence_reference: selected.airline_confirmation_evidence_reference || "",
+      airport_handling_confirmation_status: selected.airport_handling_confirmation_status || "unknown",
+      airport_handling_evidence_reference: selected.airport_handling_evidence_reference || "",
+      external_manual_status: selected.external_manual_status || "unknown",
+      fulfilment_result: selected.fulfilment_result || "unknown",
+      next_action: selected.next_action || "",
+    })
+    apiGet(`/api/agencies/${state.agency.id}/passenger-services/${selected.id}/link-options`)
+      .then((response) => setLinkOptions(response.items || {}))
+      .catch((err) => setError(err.message))
+  }, [state?.agency?.id, selected?.id])
 
   const metrics = [
     ["Service cases", state?.serviceCases?.length || 0],
@@ -82,7 +116,35 @@ export default function PassengerServicesPage() {
     }
   }
 
-  const splitIds = (value) => value.split(",").map((item) => item.trim()).filter(Boolean)
+  async function persistLinks(continueToDocuments = false) {
+    if (!selected?.id || selectedWarnings.length) return
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/passenger-services/${selected.id}/fulfilment/links`, {
+        booking_workspace_id: fulfilment.booking_workspace_id || undefined,
+        booking_record_id: fulfilment.booking_record_id || undefined,
+        ssr_osi_workspace_id: fulfilment.ssr_osi_workspace_id || undefined,
+        ticket_record_ids: fulfilment.ticket_record_ids,
+        ticket_coupon_ids: fulfilment.ticket_coupon_ids,
+        emd_record_ids: fulfilment.emd_record_ids,
+        emd_coupon_ids: fulfilment.emd_coupon_ids,
+        document_workspace_ids: fulfilment.document_workspace_ids,
+        next_action: fulfilment.next_action || undefined,
+      })
+      if (continueToDocuments) {
+        window.location.href = `/agency/document-workspaces?related_service=${encodeURIComponent(selected.id)}`
+        return
+      }
+      setMessage("Canonical passenger-service links recorded.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const selectedWarnings = selectionWarnings(fulfilment, linkOptions)
+  const documentsReady = Boolean(selected?.document_workspace_ids?.length)
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -100,6 +162,27 @@ export default function PassengerServicesPage() {
               <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">No SSR/OSI transmission</span>
             </div>
           </div>
+
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Passenger services", href: "/agency/passenger-services" }]}
+            currentLabel={selected?.service_label || selected?.service_type || "Passenger Service"}
+            status={selected?.fulfilment_result || selected?.status || "unknown"}
+            validation={!selected
+              ? { state: "blocked", label: "Service case required", reason: "Passenger service must originate from Request or Trip." }
+              : selectedWarnings.length ? { state: "warning", label: "Link context requires review", reason: selectedWarnings[0] }
+                : { state: documentsReady ? "ready" : "warning", label: documentsReady ? "Document context linked" : "Document requirement pending", reason: documentsReady ? "Continue to explicit document review." : "Create or link the required document metadata before continuing." }}
+            previous={selected?.ticket_record_ids?.[0] || incomingTicketRecordId
+              ? { label: "Previous: ticket", href: `/agency/tickets/${selected?.ticket_record_ids?.[0] || incomingTicketRecordId}` }
+              : selected?.booking_workspace_id ? { label: "Previous: booking", href: `/agency/booking-workspaces/${selected.booking_workspace_id}` }
+                : selected?.trip_id ? { label: "Previous: trip", href: `/agency/trips/${selected.trip_id}` }
+                  : selected?.request_id ? { label: "Previous: request", href: `/agency/requests/${selected.request_id}` } : { label: "Passenger services", href: "/agency/passenger-services" }}
+            next={{ label: "Continue to documents", onClick: () => persistLinks(true), enabled: Boolean(selected) && selectedWarnings.length === 0, reason: selectedWarnings[0] || "Select a passenger-service case first." }}
+            relatedRecords={[
+              { label: "Booking", value: selected?.booking_record_id || selected?.booking_workspace_id || "none", href: selected?.booking_workspace_id ? `/agency/booking-workspaces/${selected.booking_workspace_id}` : undefined },
+              { label: "Tickets", value: selected?.ticket_record_ids?.length || 0 },
+              { label: "Documents", value: selected?.document_workspace_ids?.length || 0 },
+            ]}
+          />
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
@@ -132,16 +215,17 @@ export default function PassengerServicesPage() {
                   </div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  {["booking_workspace_id", "booking_record_id", "ticket_record_ids", "ticket_coupon_ids", "emd_record_ids", "emd_coupon_ids", "document_workspace_ids", "ssr_osi_workspace_id"].map((field) => <Field label={formatType(field)} value={fulfilment[field]} onChange={(value) => setFulfilmentField(field, value)} key={field} />)}
+                  <CanonicalSelector label="Booking workspace" value={fulfilment.booking_workspace_id} onChange={(value) => setFulfilmentField("booking_workspace_id", value)} items={linkOptions.booking_workspaces} />
+                  <CanonicalSelector label="Booking record" value={fulfilment.booking_record_id} onChange={(value) => setFulfilmentField("booking_record_id", value)} items={linkOptions.booking_records} />
+                  <CanonicalMultiSelector label="Tickets" value={fulfilment.ticket_record_ids} onChange={(value) => setFulfilmentField("ticket_record_ids", value)} items={linkOptions.tickets} />
+                  <CanonicalMultiSelector label="Ticket coupons" value={fulfilment.ticket_coupon_ids} onChange={(value) => setFulfilmentField("ticket_coupon_ids", value)} items={(linkOptions.ticket_coupons || []).filter((item) => !fulfilment.ticket_record_ids.length || fulfilment.ticket_record_ids.includes(item.context?.ticket_record_id))} />
+                  <CanonicalMultiSelector label="EMDs" value={fulfilment.emd_record_ids} onChange={(value) => setFulfilmentField("emd_record_ids", value)} items={linkOptions.emds} />
+                  <CanonicalMultiSelector label="EMD coupons" value={fulfilment.emd_coupon_ids} onChange={(value) => setFulfilmentField("emd_coupon_ids", value)} items={(linkOptions.emd_coupons || []).filter((item) => !fulfilment.emd_record_ids.length || fulfilment.emd_record_ids.includes(item.context?.emd_record_id))} />
+                  <CanonicalMultiSelector label="Documents" value={fulfilment.document_workspace_ids} onChange={(value) => setFulfilmentField("document_workspace_ids", value)} items={linkOptions.documents} />
+                  <CanonicalSelector label="SSR / OSI workspace" value={fulfilment.ssr_osi_workspace_id} onChange={(value) => setFulfilmentField("ssr_osi_workspace_id", value)} items={linkOptions.ssr_osi_workspaces} />
                 </div>
-                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => recordAction("links", {
-                  booking_workspace_id: fulfilment.booking_workspace_id || undefined,
-                  booking_record_id: fulfilment.booking_record_id || undefined,
-                  ssr_osi_workspace_id: fulfilment.ssr_osi_workspace_id || undefined,
-                  ticket_record_ids: splitIds(fulfilment.ticket_record_ids), ticket_coupon_ids: splitIds(fulfilment.ticket_coupon_ids),
-                  emd_record_ids: splitIds(fulfilment.emd_record_ids), emd_coupon_ids: splitIds(fulfilment.emd_coupon_ids),
-                  document_workspace_ids: splitIds(fulfilment.document_workspace_ids), next_action: fulfilment.next_action || undefined,
-                })}>Link selected records</button>
+                <SelectionWarnings warnings={selectedWarnings} />
+                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => persistLinks(false)} disabled={selectedWarnings.length > 0}>Link selected records</button>
                 <div className="grid gap-3 md:grid-cols-3">
                   <SelectField label="Airline confirmation" value={fulfilment.airline_confirmation_status} onChange={(value) => setFulfilmentField("airline_confirmation_status", value)} options={confirmationOptions()} />
                   <Field label="Airline evidence reference" value={fulfilment.airline_confirmation_evidence_reference} onChange={(value) => setFulfilmentField("airline_confirmation_evidence_reference", value)} />
@@ -312,6 +396,63 @@ function SelectField({ label, value, onChange, options, placeholder }) {
   )
 }
 
+function CanonicalSelector({ label, value, onChange, items = [] }) {
+  const [search, setSearch] = useState("")
+  const selected = items.find((item) => item.id === value)
+  const filtered = items.filter((item) => item.id === value || `${item.label} ${item.context_preview || ""}`.toLowerCase().includes(search.toLowerCase()))
+  return (
+    <div className="grid gap-1 text-sm">
+      <span className="font-medium text-slate-700">{label}</span>
+      <input className="rounded-md border border-slate-300 px-3 py-2" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}`} />
+      <select className="min-w-0 rounded-md border border-slate-300 px-3 py-2" value={value} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Not linked</option>
+        {filtered.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
+      </select>
+      {selected ? <p className="text-xs text-slate-500">{selected.context_preview || formatType(selected.status)}{selected.immutable_reference ? " · immutable reference" : ""}</p> : null}
+    </div>
+  )
+}
+
+function CanonicalMultiSelector({ label, value = [], onChange, items = [] }) {
+  const [search, setSearch] = useState("")
+  const filtered = items.filter((item) => value.includes(item.id) || `${item.label} ${item.context_preview || ""}`.toLowerCase().includes(search.toLowerCase()))
+  function toggle(itemId) {
+    onChange(value.includes(itemId) ? value.filter((id) => id !== itemId) : [...value, itemId])
+  }
+  return (
+    <div className="grid gap-1 text-sm">
+      <span className="font-medium text-slate-700">{label} <span className="text-xs font-normal text-slate-500">({value.length} selected)</span></span>
+      <input className="rounded-md border border-slate-300 px-3 py-2" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={`Search ${label.toLowerCase()}`} />
+      <div className="max-h-32 overflow-auto rounded-md border border-slate-200 p-2">
+        {filtered.length ? filtered.map((item) => (
+          <label className="flex gap-2 border-b border-slate-100 py-2 last:border-0" key={item.id}>
+            <input type="checkbox" checked={value.includes(item.id)} onChange={() => toggle(item.id)} />
+            <span className="min-w-0"><span className="block truncate font-medium text-slate-800">{item.label}</span><span className="block truncate text-xs text-slate-500">{item.context_preview || formatType(item.status)}</span></span>
+          </label>
+        )) : <span className="text-xs text-slate-500">No matching canonical records.</span>}
+      </div>
+    </div>
+  )
+}
+
+function SelectionWarnings({ warnings }) {
+  if (!warnings.length) return null
+  return <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900"><p className="font-semibold">Review before linking</p><ul className="mt-1 list-disc space-y-1 pl-4">{warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></div>
+}
+
+function selectionWarnings(values, options) {
+  const groups = [
+    ["booking_workspace_id", "booking_workspaces"], ["booking_record_id", "booking_records"],
+    ["ticket_record_ids", "tickets"], ["ticket_coupon_ids", "ticket_coupons"],
+    ["emd_record_ids", "emds"], ["emd_coupon_ids", "emd_coupons"],
+    ["document_workspace_ids", "documents"], ["ssr_osi_workspace_id", "ssr_osi_workspaces"],
+  ]
+  return [...new Set(groups.flatMap(([field, group]) => {
+    const ids = Array.isArray(values[field]) ? values[field] : [values[field]].filter(Boolean)
+    return ids.flatMap((id) => (options[group] || []).find((item) => item.id === id)?.warnings || [])
+  }))]
+}
+
 function ReferenceLine({ label, items }) {
   return <p className="mt-1"><span className="font-semibold text-slate-700">{label}:</span> {formatList(items)}</p>
 }
@@ -347,4 +488,8 @@ function formatDate(value) {
 
 function formatList(items) {
   return (items || []).length ? items.join(", ") : "None"
+}
+
+function uniqueValues(items) {
+  return [...new Set((items || []).filter(Boolean))]
 }

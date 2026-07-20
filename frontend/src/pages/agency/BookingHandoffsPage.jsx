@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -23,6 +24,8 @@ export default function BookingHandoffsPage() {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const selected = useMemo(() => state?.items?.find((item) => item.id === selectedId) || state?.items?.[0] || null, [state, selectedId])
+  const canonicalSourceReady = Boolean(form.acceptance_id && form.booking_readiness_package_id)
+  const canCreateSelected = Boolean(selected && ["ready", "conditional", "handed_off", "booking_created"].includes(selected.handoff_status))
 
   async function load(nextForm = form) {
     const context = await loadCurrentAgency()
@@ -43,6 +46,10 @@ export default function BookingHandoffsPage() {
     event.preventDefault()
     setError("")
     setMessage("")
+    if (!canonicalSourceReady) {
+      setError("Open Booking Handoff from an accepted offer with a booking readiness package.")
+      return
+    }
     const payload = Object.fromEntries(Object.entries(form).filter(([, value]) => value !== ""))
     const result = await apiPost(`/api/agencies/${state.agency.id}/booking-handoffs`, {
       ...payload,
@@ -84,6 +91,24 @@ export default function BookingHandoffsPage() {
             </div>
           </div>
 
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Offers", href: "/agency/offers" }, { label: "Booking handoffs", href: "/agency/booking-handoffs" }]}
+            currentLabel={selected?.handoff_reference || "Booking Handoff"}
+            status={selected?.handoff_status || "draft"}
+            validation={selected
+              ? { state: selected.blocker_count ? "blocked" : selected.warning_count ? "warning" : "ready", label: selected.blocker_count ? "Handoff blocked" : selected.warning_count ? "Conditional review" : "Booking handoff ready", reason: selected.blocker_count ? "Resolve readiness blockers before creating a booking workspace." : "The accepted snapshot and mappings remain the source." }
+              : { state: canonicalSourceReady ? "warning" : "blocked", label: canonicalSourceReady ? "Assessment required" : "Canonical source required", reason: canonicalSourceReady ? "Build the assessed handoff from this accepted offer." : "Return to an accepted offer; IDs cannot be entered manually here." }}
+            previous={(form.offer_workspace_id || selected?.offer_workspace_id) ? { label: "Previous: accepted offer", href: `/agency/offers/${form.offer_workspace_id || selected.offer_workspace_id}` } : { label: "Offers", href: "/agency/offers" }}
+            next={selected?.booking_workspace_id
+              ? { label: "Continue to booking", href: `/agency/booking-workspaces/${selected.booking_workspace_id}` }
+              : { label: "Create booking workspace", onClick: createBookingWorkspace, enabled: canCreateSelected, reason: "A ready or explicitly conditional handoff is required." }}
+            relatedRecords={[
+              { label: "Acceptance", value: form.acceptance_id ? "frozen" : "missing" },
+              { label: "Readiness", value: selected?.readiness_status || (form.booking_readiness_package_id ? "linked" : "missing") },
+              { label: "Trip", value: form.trip_id || selected?.trip_id || "missing", href: (form.trip_id || selected?.trip_id) ? `/agency/trips/${form.trip_id || selected.trip_id}` : undefined },
+            ]}
+          />
+
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">{message}</div> : null}
 
@@ -98,13 +123,14 @@ export default function BookingHandoffsPage() {
           <section className="grid gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
             <form className="space-y-3 rounded-lg border border-slate-200 bg-white p-5" onSubmit={buildHandoff}>
               <h3 className="font-semibold text-slate-950">Build handoff</h3>
-              <TextField label="Acceptance id" value={form.acceptance_id} onChange={(value) => setField("acceptance_id", value)} />
-              <TextField label="Booking readiness package id" value={form.booking_readiness_package_id} onChange={(value) => setField("booking_readiness_package_id", value)} />
-              <TextField label="Trip id" value={form.trip_id} onChange={(value) => setField("trip_id", value)} />
-              <TextField label="Offer workspace id" value={form.offer_workspace_id} onChange={(value) => setField("offer_workspace_id", value)} />
+              <div className={`rounded-md border p-3 text-sm ${canonicalSourceReady ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-800"}`}>
+                <p className="font-semibold">Accepted-offer source</p>
+                <p className="mt-1">{canonicalSourceReady ? "Frozen acceptance and booking readiness are locked from the source Offer." : "No accepted-offer source is present. Open this workspace from an accepted Offer."}</p>
+                {form.offer_workspace_id ? <a className="mt-2 inline-flex font-semibold text-blue-700 underline" href={`/agency/offers/${form.offer_workspace_id}`}>Review source offer</a> : null}
+              </div>
               <SelectField label="Booking mode" value={form.booking_mode} onChange={(value) => setField("booking_mode", value)} options={["manual", "pnr_import", "imported_gds", "imported_confirmation", "supplier_reference"]} />
               <SelectField label="Provider target" value={form.provider_target} onChange={(value) => setField("provider_target", value)} options={["manual", "travelport", "amadeus", "ndc", "supplier", "other"]} />
-              <button className="aa-primary-action w-full rounded-md px-3 py-2 text-sm font-semibold" type="submit">Build readiness handoff</button>
+              <button className="aa-primary-action w-full rounded-md px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50" type="submit" disabled={!canonicalSourceReady}>Build readiness handoff</button>
             </form>
 
             <div className="space-y-4">
@@ -238,10 +264,6 @@ function Card({ title, children }) {
 
 function Metric({ label, value }) {
   return <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p></div>
-}
-
-function TextField({ label, value, onChange }) {
-  return <label className="grid gap-1 text-sm font-medium text-slate-700">{label}<input className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)} /></label>
 }
 
 function SelectField({ label, value, onChange, options }) {

@@ -21053,6 +21053,8 @@ class Invoice(BaseDocument):
     invoice_number: str
     client_id: str
     booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"
@@ -21075,6 +21077,8 @@ class InvoiceCreate(BaseModel):
     invoice_number: Optional[str] = None
     client_id: str
     booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"

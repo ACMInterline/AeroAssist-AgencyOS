@@ -3,6 +3,7 @@ import EmptyState from "../../components/EmptyState"
 import InvoiceStatusBadge from "../../components/InvoiceStatusBadge"
 import PaymentStatusBadge from "../../components/PaymentStatusBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -84,6 +85,9 @@ export default function InvoiceDetailPage({ invoiceId }) {
     window.location.href = `/agency/documents/${result.document.id}`
   }
 
+  const invoiceReady = Boolean(state?.line_items?.length)
+  const bookingWorkspaceId = state?.invoice?.booking_workspace_id || state?.booking_workspace?.id
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -103,6 +107,19 @@ export default function InvoiceDetailPage({ invoiceId }) {
               <button className="rounded-md border border-rose-200 px-3 py-2 text-sm font-medium text-rose-700" onClick={voidInvoice}>Void</button>
             </div>
           </div>
+          <WorkflowContinuityPanel
+            breadcrumbs={[{ label: "Documents", href: state?.booking_workspace?.booking_reference ? `/agency/document-workspaces?booking_reference=${encodeURIComponent(state.booking_workspace.booking_reference)}` : "/agency/document-workspaces" }, { label: "Finance", href: "/agency/invoices" }]}
+            currentLabel={state?.invoice?.invoice_number || "Invoice"}
+            status={state?.invoice?.status}
+            validation={invoiceReady ? { state: state?.invoice?.due_amount > 0 ? "warning" : "ready", label: state?.invoice?.due_amount > 0 ? "Balance outstanding" : "Financial record ready", reason: state?.invoice?.due_amount > 0 ? "Outstanding balance remains visible before servicing decisions." : "Invoice lines and payment state are available for after-sales review." } : { state: "blocked", label: "Invoice line required", reason: "Add at least one reviewed line before continuing to after sales." }}
+            previous={{ label: "Previous: documents", href: state?.booking_workspace?.booking_reference ? `/agency/document-workspaces?booking_reference=${encodeURIComponent(state.booking_workspace.booking_reference)}` : "/agency/document-workspaces" }}
+            next={{ label: "Continue to after sales", href: invoiceReady ? `/agency/after-sales?invoice_id=${encodeURIComponent(invoiceId)}${bookingWorkspaceId ? `&booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}` : ""}` : undefined, enabled: invoiceReady, reason: "A reviewed invoice line is required." }}
+            relatedRecords={[
+              { label: "Booking", value: state?.booking_workspace?.workspace_number || state?.booking_record?.pnr_locator || state?.booking?.booking_reference || "none", href: bookingWorkspaceId ? `/agency/booking-workspaces/${bookingWorkspaceId}` : undefined },
+              { label: "Lines", value: state?.line_items?.length || 0 },
+              { label: "Payments", value: state?.payments?.length || 0 },
+            ]}
+          />
           <section className="grid gap-4 md:grid-cols-4">
             <Metric label="Subtotal" value={`${state.invoice.subtotal_amount} ${state.invoice.currency}`} />
             <Metric label="Tax lines" value={`${state.invoice.tax_amount} ${state.invoice.currency}`} />
