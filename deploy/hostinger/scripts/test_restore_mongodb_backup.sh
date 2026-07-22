@@ -7,6 +7,9 @@ ARCHIVE_PATH=""
 TARGET_DATABASE=""
 MONGO_IMAGE="${MONGO_IMAGE:-mongo:7}"
 PRESERVE_DISPOSABLE_RESTORE="${PRESERVE_DISPOSABLE_RESTORE:-false}"
+RESTORE_MONGO_NOFILE_SOFT="${RESTORE_MONGO_NOFILE_SOFT:-64000}"
+RESTORE_MONGO_NOFILE_HARD="${RESTORE_MONGO_NOFILE_HARD:-64000}"
+MINIMUM_RESTORE_MONGO_NOFILE=64000
 CONTAINER_NAME="aeroassist-restore-rehearsal-${$}"
 VOLUME_NAME="${CONTAINER_NAME}-data"
 
@@ -26,6 +29,10 @@ done
 [[ -n "$ARCHIVE_PATH" && -n "$TARGET_DATABASE" ]] || { usage; exit 2; }
 [[ "${RESTORE_TARGET_ENV:-}" == "test" ]] || { echo "FAIL: rehearsal requires RESTORE_TARGET_ENV=test." >&2; exit 1; }
 [[ "${ALLOW_DESTRUCTIVE_TEST_RESTORE:-false}" == "true" ]] || { echo "FAIL: rehearsal requires ALLOW_DESTRUCTIVE_TEST_RESTORE=true." >&2; exit 1; }
+[[ "$RESTORE_MONGO_NOFILE_SOFT" =~ ^[1-9][0-9]*$ ]] || { echo "FAIL: RESTORE_MONGO_NOFILE_SOFT must be a positive integer." >&2; exit 1; }
+[[ "$RESTORE_MONGO_NOFILE_HARD" =~ ^[1-9][0-9]*$ ]] || { echo "FAIL: RESTORE_MONGO_NOFILE_HARD must be a positive integer." >&2; exit 1; }
+(( RESTORE_MONGO_NOFILE_SOFT >= MINIMUM_RESTORE_MONGO_NOFILE )) || { echo "FAIL: disposable MongoDB soft nofile limit must be at least $MINIMUM_RESTORE_MONGO_NOFILE." >&2; exit 1; }
+(( RESTORE_MONGO_NOFILE_HARD >= RESTORE_MONGO_NOFILE_SOFT )) || { echo "FAIL: disposable MongoDB hard nofile limit must be greater than or equal to the soft limit." >&2; exit 1; }
 
 cd "$APP_DIR"
 python3 "$SCRIPT_DIR/mongodb_backup_manifest.py" verify --archive "$ARCHIVE_PATH" >/dev/null
@@ -71,6 +78,7 @@ ROOT_USERNAME="restore_rehearsal_admin"
 ROOT_PASSWORD="$(openssl rand -hex 24)"
 docker volume create "$VOLUME_NAME" >/dev/null
 docker run --detach --name "$CONTAINER_NAME" \
+  --ulimit "nofile=${RESTORE_MONGO_NOFILE_SOFT}:${RESTORE_MONGO_NOFILE_HARD}" \
   --volume "$VOLUME_NAME:/data/db" \
   --env MONGO_INITDB_ROOT_USERNAME="$ROOT_USERNAME" \
   --env MONGO_INITDB_ROOT_PASSWORD="$ROOT_PASSWORD" \
@@ -83,6 +91,13 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 docker exec "$CONTAINER_NAME" sh -eu -c 'mongosh --quiet --username "$MONGO_INITDB_ROOT_USERNAME" --password "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand(\"ping\").ok"' >/dev/null
+
+APPLIED_NOFILE_SOFT="$(docker exec "$CONTAINER_NAME" sh -eu -c 'ulimit -Sn')"
+APPLIED_NOFILE_HARD="$(docker exec "$CONTAINER_NAME" sh -eu -c 'ulimit -Hn')"
+[[ "$APPLIED_NOFILE_SOFT" =~ ^[0-9]+$ && "$APPLIED_NOFILE_HARD" =~ ^[0-9]+$ ]] || { echo "FAIL: disposable MongoDB nofile limits could not be verified." >&2; exit 1; }
+(( APPLIED_NOFILE_SOFT >= RESTORE_MONGO_NOFILE_SOFT )) || { echo "FAIL: disposable MongoDB soft nofile limit was not applied." >&2; exit 1; }
+(( APPLIED_NOFILE_HARD >= RESTORE_MONGO_NOFILE_HARD )) || { echo "FAIL: disposable MongoDB hard nofile limit was not applied." >&2; exit 1; }
+echo "PASS: disposable MongoDB nofile limits verified (${APPLIED_NOFILE_SOFT}:${APPLIED_NOFILE_HARD})."
 
 docker exec -i -e RESTORE_SOURCE_DATABASE="$SOURCE_DATABASE" -e RESTORE_TARGET_DATABASE="$TARGET_DATABASE" \
   "$CONTAINER_NAME" sh -eu -c '

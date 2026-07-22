@@ -27,6 +27,8 @@ def mongodb_security_readiness_metadata(settings: AppSettings) -> dict[str, Any]
         "retention_controls_enabled": True,
         "dry_run_restore_enabled": True,
         "disposable_restore_rehearsal_enabled": True,
+        "disposable_restore_nofile_governed": True,
+        "disposable_restore_nofile_minimum": 64000,
         "automatic_production_restore_disabled": True,
         "credential_redaction_enabled": True,
         "existing_volume_migration_documented": True,

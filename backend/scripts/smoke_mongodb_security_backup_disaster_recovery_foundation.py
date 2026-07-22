@@ -6,9 +6,11 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
@@ -22,6 +24,7 @@ sys.path.insert(0, str(BACKEND))
 
 from build_phase import CURRENT_BUILD_PHASE
 from config import get_settings, validate_config
+from database import AGENCY_OWNED_COLLECTIONS
 from mongodb_security import mongodb_security_readiness_metadata, redact_mongodb_uri
 from phase_assertions import assert_application_phase_at_least
 from smoke_booking_pnr_foundation import BASE_URL
@@ -149,6 +152,16 @@ def verify_compose_and_scripts() -> None:
     rehearsal_text = (SCRIPTS / "test_restore_mongodb_backup.sh").read_text(encoding="utf-8")
     if not all(token in rehearsal_text for token in ("ALLOW_DESTRUCTIVE_TEST_RESTORE", "RESTORE_TARGET_ENV", "docker volume", "collection_counts")):
         raise AssertionError("Disposable restore rehearsal guards are incomplete.")
+    nofile_tokens = (
+        'RESTORE_MONGO_NOFILE_SOFT="${RESTORE_MONGO_NOFILE_SOFT:-64000}"',
+        'RESTORE_MONGO_NOFILE_HARD="${RESTORE_MONGO_NOFILE_HARD:-64000}"',
+        'MINIMUM_RESTORE_MONGO_NOFILE=64000',
+        '--ulimit "nofile=${RESTORE_MONGO_NOFILE_SOFT}:${RESTORE_MONGO_NOFILE_HARD}"',
+        "ulimit -Sn",
+        "ulimit -Hn",
+    )
+    if not all(token in rehearsal_text for token in nofile_tokens):
+        raise AssertionError("Disposable restore rehearsal does not govern or verify MongoDB file-descriptor limits.")
     deploy_text = (SCRIPTS / "deploy.sh").read_text(encoding="utf-8")
     systemd_text = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "deploy/hostinger/systemd").glob("*"))
     if "restore_mongodb_backup.sh" in deploy_text or "restore_mongodb_backup.sh" in systemd_text:
@@ -284,6 +297,140 @@ def verify_manifest_retention_and_restore_guards() -> None:
         )
         if "production-configured MongoDB cluster" not in cluster_refusal.stderr:
             raise AssertionError("A test guard was accepted for a production-configured MongoDB cluster.")
+        low_nofile_refusal = run(
+            [
+                str(SCRIPTS / "test_restore_mongodb_backup.sh"),
+                "--archive", str(archives[-1]),
+                "--target-database", "aeroassist_restore_low_nofile",
+            ],
+            env={
+                "APP_DIR": str(ROOT),
+                "RESTORE_TARGET_ENV": "test",
+                "ALLOW_DESTRUCTIVE_TEST_RESTORE": "true",
+                "RESTORE_MONGO_NOFILE_SOFT": "1024",
+                "RESTORE_MONGO_NOFILE_HARD": "1024",
+            },
+            expect_success=False,
+        )
+        if "must be at least 64000" not in low_nofile_refusal.stderr:
+            raise AssertionError("Disposable restore accepted an unsafe MongoDB nofile limit.")
+
+
+def verify_disposable_restore_at_repository_scale() -> None:
+    image = os.getenv("MONGO_IMAGE", "mongo:7")
+    source_container = f"aeroassist-restore-source-{os.getpid()}"
+    source_database = "aeroassist_restore_scale_source"
+    target_database = "aeroassist_restore_scale_target"
+    root_username = "restore_scale_admin"
+    root_password = secrets.token_hex(24)
+    collection_names = sorted(set(AGENCY_OWNED_COLLECTIONS))
+    if len(collection_names) < 350:
+        raise AssertionError("Restore scale regression no longer represents the governed production collection footprint.")
+
+    def docker(command: list[str], *, input_text: str | None = None, expect_success: bool = True) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run(
+            ["docker", *command],
+            cwd=ROOT,
+            text=True,
+            input=input_text,
+            capture_output=True,
+            check=False,
+        )
+        if expect_success and result.returncode != 0:
+            raise AssertionError(f"Docker restore regression failed: docker {' '.join(command)}\n{result.stdout}\n{result.stderr}")
+        return result
+
+    docker(["info", "--format", "{{.ServerVersion}}"])
+    try:
+        docker([
+            "run", "--detach", "--name", source_container,
+            "--ulimit", "nofile=64000:64000",
+            "--env", f"MONGO_INITDB_ROOT_USERNAME={root_username}",
+            "--env", f"MONGO_INITDB_ROOT_PASSWORD={root_password}",
+            image,
+        ])
+        for _ in range(90):
+            ping = docker([
+                "exec", source_container, "mongosh", "--quiet",
+                "--username", root_username, "--password", root_password,
+                "--authenticationDatabase", "admin",
+                "--eval", 'db.adminCommand("ping").ok',
+            ], expect_success=False)
+            if ping.returncode == 0:
+                break
+            time.sleep(1)
+        else:
+            raise AssertionError("Scale regression MongoDB source container did not become ready.")
+
+        setup_script = (
+            f"const target=db.getSiblingDB({json.dumps(source_database)});"
+            f"const names={json.dumps(collection_names)};"
+            "for (const name of names) {"
+            "target.createCollection(name);"
+            "const collection=target.getCollection(name);"
+            "collection.insertOne({id:name+'-record',agency_id:'restore-scale-agency',updated_at:new Date()});"
+            "collection.createIndex({id:1},{name:'id_1'});"
+            "collection.createIndex({agency_id:1},{name:'agency_id_1'});"
+            "collection.createIndex({agency_id:1,updated_at:-1},{name:'agency_updated_at_1'});"
+            "}"
+        )
+        docker([
+            "exec", "-i", source_container, "mongosh", "--quiet",
+            "--username", root_username, "--password", root_password,
+            "--authenticationDatabase", "admin",
+        ], input_text=setup_script)
+
+        with tempfile.TemporaryDirectory(prefix="aeroassist-restore-scale-") as temporary:
+            root = Path(temporary)
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+            archive = root / f"mongodb-{stamp}.archive.gz"
+            with archive.open("wb") as output:
+                dump = subprocess.run(
+                    [
+                        "docker", "exec", source_container, "mongodump", "--quiet",
+                        "--username", root_username, "--password", root_password,
+                        "--authenticationDatabase", "admin", "--db", source_database,
+                        "--archive", "--gzip",
+                    ],
+                    cwd=ROOT,
+                    stdout=output,
+                    stderr=subprocess.PIPE,
+                    check=False,
+                )
+            if dump.returncode != 0 or not archive.is_file() or archive.stat().st_size == 0:
+                raise AssertionError(f"Scale regression mongodump failed: {dump.stderr.decode(errors='replace')}")
+
+            counts = {name: 1 for name in collection_names}
+            run([
+                "python3", str(SCRIPTS / "mongodb_backup_manifest.py"), "create",
+                "--archive", str(archive), "--timestamp", stamp,
+                "--database", source_database, "--git-commit", "unknown",
+                "--phase", CURRENT_BUILD_PHASE, "--mongodb-version", "MongoDB 7",
+                "--tool-version", "mongodump", "--environment-label", "disposable-regression",
+                "--collection-counts", json.dumps(counts, sort_keys=True),
+            ])
+            restored = run(
+                [
+                    str(SCRIPTS / "test_restore_mongodb_backup.sh"),
+                    "--archive", str(archive), "--target-database", target_database,
+                ],
+                env={
+                    "APP_DIR": str(ROOT),
+                    "RESTORE_TARGET_ENV": "test",
+                    "ALLOW_DESTRUCTIVE_TEST_RESTORE": "true",
+                    "MONGO_IMAGE": image,
+                },
+            )
+            if "PASS: disposable restore rehearsal completed" not in restored.stdout:
+                raise AssertionError(f"Scale restore rehearsal did not complete: {restored.stdout}")
+            if "PASS: disposable MongoDB nofile limits verified (64000:64000)" not in restored.stdout:
+                raise AssertionError("Scale restore rehearsal did not verify the governed nofile limits.")
+            manifest = archive.with_name(archive.name.removesuffix(".archive.gz") + ".manifest.json")
+            payload = json.loads(manifest.read_text(encoding="utf-8"))
+            if payload.get("verification_status") != "restore_rehearsed" or payload.get("collection_count") != len(collection_names):
+                raise AssertionError("Scale restore rehearsal did not retain verified manifest evidence.")
+    finally:
+        docker(["rm", "--force", "--volumes", source_container], expect_success=False)
 
 
 def verify_readiness(static_only: bool) -> None:
@@ -298,6 +445,7 @@ def verify_readiness(static_only: bool) -> None:
         "retention_controls_enabled",
         "dry_run_restore_enabled",
         "disposable_restore_rehearsal_enabled",
+        "disposable_restore_nofile_governed",
         "automatic_production_restore_disabled",
         "credential_redaction_enabled",
         "existing_volume_migration_documented",
@@ -306,6 +454,8 @@ def verify_readiness(static_only: bool) -> None:
     )
     if any(section.get(key) is not True for key in required_true) or section.get("production_secrets_exposed") is not False:
         raise AssertionError(f"MongoDB readiness metadata is incomplete: {section}")
+    if section.get("disposable_restore_nofile_minimum") != 64000:
+        raise AssertionError("MongoDB readiness does not report the governed disposable restore nofile minimum.")
     server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
     if '"mongodb_security_backup_disaster_recovery_foundation"' not in server_text:
         raise AssertionError("Server readiness does not register Phase 56.5.5.")
@@ -337,12 +487,15 @@ def verify_docs_and_secret_hygiene() -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--static", action="store_true")
+    parser.add_argument("--docker-restore-regression", action="store_true")
     args = parser.parse_args()
     assert_application_phase_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE, source="canonical build phase")
     verify_config()
     verify_compose_and_scripts()
     verify_canonical_latest_backup_selection()
     verify_manifest_retention_and_restore_guards()
+    if args.docker_restore_regression:
+        verify_disposable_restore_at_repository_scale()
     verify_readiness(args.static)
     verify_docs_and_secret_hygiene()
     print("Phase 56.5.5 MongoDB security, backup, and disaster recovery foundation smoke passed.")

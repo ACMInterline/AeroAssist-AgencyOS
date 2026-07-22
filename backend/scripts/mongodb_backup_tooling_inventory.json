@@ -13,6 +13,7 @@
   "strict_shell_mode_required": true,
   "manifest_verification_required": true,
   "dry_run_restore_default": true,
+  "disposable_restore_nofile_minimum": 64000,
   "production_confirmation_required": true,
   "automatic_production_restore_disabled": true,
   "frontend_loopback_binding_required": true,

@@ -144,6 +144,23 @@ def main() -> int:
         errors += 1
         lines.append(status_line("FAIL", "MongoDB backup and restore tooling inventory is incomplete."))
 
+    rehearsal_path = scripts_root / "test_restore_mongodb_backup.sh"
+    rehearsal_text = rehearsal_path.read_text(encoding="utf-8") if rehearsal_path.is_file() else ""
+    rehearsal_nofile_governed = (
+        'MINIMUM_RESTORE_MONGO_NOFILE=64000' in rehearsal_text
+        and '--ulimit "nofile=${RESTORE_MONGO_NOFILE_SOFT}:${RESTORE_MONGO_NOFILE_HARD}"' in rehearsal_text
+        and "ulimit -Sn" in rehearsal_text
+        and "ulimit -Hn" in rehearsal_text
+    )
+    packaged_nofile_minimum = packaged_inventory.get("disposable_restore_nofile_minimum")
+    if rehearsal_nofile_governed or (
+        type(packaged_nofile_minimum) is int and packaged_nofile_minimum >= 64000
+    ):
+        lines.append(status_line("PASS", "Disposable MongoDB restore rehearsals enforce and verify safe file-descriptor limits."))
+    else:
+        errors += 1
+        lines.append(status_line("FAIL", "Disposable MongoDB restore rehearsal file-descriptor limits are not governed."))
+
     restore_path = scripts_root / "restore_mongodb_backup.sh"
     restore_text = restore_path.read_text(encoding="utf-8") if restore_path.is_file() else ""
     required_restore_guards = (

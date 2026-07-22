@@ -138,6 +138,15 @@ deploy/hostinger/scripts/test_restore_mongodb_backup.sh \
 ```
 
 The script refuses the configured production/source names and deletes its temporary container and volume unless preservation is explicitly requested.
+The disposable MongoDB container is launched with verified soft and hard `nofile` limits of at least `64000`. This prevents WiredTiger file-descriptor exhaustion while rebuilding the current governed collection and index footprint. `RESTORE_MONGO_NOFILE_SOFT` and `RESTORE_MONGO_NOFILE_HARD` may be raised for a larger rehearsal, but the script refuses values below the safe minimum and does not change production MongoDB configuration.
+
+The repository-scale Docker regression creates a disposable archive with the current governed collection footprint and multiple indexes per collection, then restores and count-verifies it:
+
+```bash
+python3 backend/scripts/smoke_mongodb_security_backup_disaster_recovery_foundation.py \
+  --static \
+  --docker-restore-regression
+```
 
 ## Restore Planning
 
