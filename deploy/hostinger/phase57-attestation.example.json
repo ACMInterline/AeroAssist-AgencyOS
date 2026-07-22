@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "operational_evidence": [],
+  "production_evidence": {
+    "production_git_commit": "REPLACE_WITH_DEPLOYED_COMMIT",
+    "production_phase": "phase_57_0_pilot_operations_release_readiness",
+    "mongodb_authentication_verified": null,
+    "backup_manifest_verified": null,
+    "off_host_copy_verified": null,
+    "restore_rehearsal_verified": null,
+    "public_health_verified": null,
+    "public_readiness_verified": null,
+    "internal_diagnostics_verified": null,
+    "github_actions_verified": null,
+    "complete_regression_verified": null,
+    "tenant_isolation_verified": null,
+    "frontend_build_verified": null,
+    "docker_build_verified": null,
+    "production_configuration_verified": null,
+    "rollback_procedure_verified": null,
+    "operator_credentials_verified": null,
+    "synthetic_pilot_fixture_verified": null,
+    "dependency_risk_triaged": null,
+    "frontend_chunk_risk_acknowledged": null,
+    "telemetry_limit_acknowledged": null,
+    "rpo_rto_risk_acknowledged": null,
+    "evidence_references": []
+  },
+  "sign_off_context": {
+    "release_id": "REPLACE_WITH_RELEASE_ID",
+    "rollback_reference": "REPLACE_WITH_ROLLBACK_COMMIT_OR_REFERENCE"
+  }
+}

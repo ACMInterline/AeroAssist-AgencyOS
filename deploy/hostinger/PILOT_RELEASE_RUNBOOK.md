@@ -78,6 +78,18 @@ Deploy the final gate only after prior checkpoints pass. Record the deployed com
 
 Deploy the approved Phase 57.0 source, then use `/platform/pilot-operations` to record bounded deployment, smoke, backup, restore, and production-validation evidence. Pilot agency enrollment and synthetic fixture actions require Platform Owner authority. Record release assessment and sign-off only after independent evidence review. The console does not deploy, approve, migrate, back up, restore, send invitations, or activate features automatically.
 
+The guided CLI at `deploy/hostinger/scripts/phase57_pilot_release_attestation.py` uses only the existing Phase 57 governance APIs. Start from `deploy/hostinger/phase57-attestation.example.json`, copy it to protected operator storage, and replace placeholders with reviewed evidence. Keep unverified booleans as `null`; never infer or manufacture missing verification. Use a unique release ID because sign-offs are immutable.
+
+```bash
+python3 deploy/hostinger/scripts/phase57_pilot_release_attestation.py \
+  --base-url https://avio.my \
+  --email platform-owner@example.com \
+  --evidence-file /protected/operator-input/phase57-attestation.json \
+  --output-dir /protected/operator-reports/phase57
+```
+
+The password is requested without echo. The CLI displays the current persisted assessment, records only the supplied bounded evidence, submits the canonical assessment, and then prompts for the human decision, rationale, conditions, notes, and explicit confirmation. Approval options are unavailable unless the persisted assessment is `ready`. It re-reads immutable evidence, assessment, sign-off, and dashboard state before exporting owner-readable JSON and Markdown reports. The CLI does not deploy, back up, restore, migrate, activate a pilot, or approve automatically.
+
 ## 10. Tenant-Isolation Verification
 
 **DISPOSABLE** or carefully scoped **READ-ONLY** production verification
