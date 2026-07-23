@@ -3,6 +3,7 @@ import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
 import FilterBar from "../../components/FilterBar"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PrimaryButton from "../../components/PrimaryButton"
 import PriorityBadge from "../../components/PriorityBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
@@ -47,6 +48,7 @@ export default function RequestsPage() {
             description="Capture what the client needs, who is travelling, and the services required before preparing a trip or offer."
             actions={<PrimaryButton href="/agency/requests/new" icon={Plus}>Create request</PrimaryButton>}
           />
+          <PilotGuidance area="requests" />
           <FilterBar
             onClear={() => setFilters({ search: "", status: "", priority: "", source: "" })}
             resultCount={filtered.length}

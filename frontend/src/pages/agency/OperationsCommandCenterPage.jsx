@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import ConfirmationDialog from "../../components/ConfirmationDialog"
 import OperationalAlert from "../../components/OperationalAlert"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import OperationsAlerts from "../../components/operations/OperationsAlerts"
 import OperationsFilters from "../../components/operations/OperationsFilters"
@@ -97,6 +98,7 @@ export default function OperationsCommandCenterPage() {
               description="Here’s what needs attention and the next action for each item."
               actions={<OperationsFilters metadata={state?.filter_metadata} value={filters} onChange={applyFilters} />}
             />
+            <PilotGuidance area="operations" />
 
             {error ? <OperationalAlert title="The operations view could not be refreshed" tone="error">{error}</OperationalAlert> : null}
 

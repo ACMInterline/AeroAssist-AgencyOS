@@ -28641,3 +28641,99 @@ class PilotHealthTimelineEvent(BaseDocument):
     recorded_by_user_id: str
     immutable: bool = True
     metadata_only: bool = True
+
+
+class CommercialPilotFeedbackCategory(str, Enum):
+    USABILITY = "usability"
+    WORKFLOW = "workflow"
+    DATA = "data"
+    DOCUMENTATION = "documentation"
+    DEFECT = "defect"
+    SUGGESTION = "suggestion"
+    OTHER = "other"
+
+
+class CommercialPilotFeedbackUrgency(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class CommercialPilotFeedbackStatus(str, Enum):
+    SUBMITTED = "submitted"
+    REVIEWING = "reviewing"
+    PLANNED = "planned"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class CommercialPilotFeedbackCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    category: CommercialPilotFeedbackCategory
+    title: str = Field(min_length=3, max_length=160)
+    description: str = Field(min_length=8, max_length=4000)
+    affected_area: str = Field(min_length=2, max_length=80)
+    urgency: CommercialPilotFeedbackUrgency = CommercialPilotFeedbackUrgency.NORMAL
+    related_record_type: Optional[str] = Field(default=None, max_length=80)
+    related_record_id: Optional[str] = Field(default=None, max_length=160)
+
+
+class CommercialPilotFeedbackReviewUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: CommercialPilotFeedbackStatus
+    review_notes: str = Field(default="", max_length=2000)
+
+
+class CommercialPilotFeedback(BaseDocument):
+    agency_id: str
+    category: CommercialPilotFeedbackCategory
+    title: str
+    description: str
+    affected_area: str
+    urgency: CommercialPilotFeedbackUrgency = CommercialPilotFeedbackUrgency.NORMAL
+    related_record_type: Optional[str] = None
+    related_record_id: Optional[str] = None
+    related_record_label: Optional[str] = None
+    submitted_by: str
+    submitted_by_name: str
+    submitted_at: datetime = Field(default_factory=now_utc)
+    status: CommercialPilotFeedbackStatus = CommercialPilotFeedbackStatus.SUBMITTED
+    review_notes: str = ""
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_by_name: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class CommercialPilotReadinessStatus(str, Enum):
+    READY = "ready"
+    CONDITIONALLY_READY = "conditionally_ready"
+    BLOCKED = "blocked"
+
+
+class CommercialPilotReadinessCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str
+    label: str
+    status: str
+    critical: bool = False
+    summary: str
+    remediation: Optional[str] = None
+
+
+class CommercialPilotReadinessAssessment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phase: str
+    status: CommercialPilotReadinessStatus
+    agency_id: Optional[str] = None
+    assessed_at: datetime = Field(default_factory=now_utc)
+    checks: List[CommercialPilotReadinessCheck] = Field(default_factory=list)
+    blocker_count: int = 0
+    warning_count: int = 0
+    phase_57_release_gate_preserved: bool = True
+    automatic_release_approval_enabled: bool = False

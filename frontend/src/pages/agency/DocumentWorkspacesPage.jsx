@@ -3,6 +3,7 @@ import EmptyState from "../../components/EmptyState"
 import FilterBar from "../../components/FilterBar"
 import OperationalAlert from "../../components/OperationalAlert"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
@@ -127,6 +128,7 @@ export default function DocumentWorkspacesPage() {
             title="Documents"
             description="See what each passenger needs, what has been received, and what still requires review before travel."
           />
+          <PilotGuidance area="documents" />
 
           <WorkflowContinuityPanel
             breadcrumbs={[{ label: "Passenger services", href: filters.related_service ? `/agency/passenger-services?service_id=${encodeURIComponent(filters.related_service)}` : "/agency/passenger-services" }, { label: "Documents", href: "/agency/document-workspaces" }]}

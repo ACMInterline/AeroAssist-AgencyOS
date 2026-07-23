@@ -4,6 +4,7 @@ import EmptyState from "../../components/EmptyState"
 import FilterBar from "../../components/FilterBar"
 import OfferStatusBadge from "../../components/OfferStatusBadge"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -47,6 +48,7 @@ export default function OffersPage() {
             description="Prepare and compare travel choices, then keep the client response and accepted option together."
             actions={<PrimaryButton href="/agency/offers/new" icon={Plus}>Create offer</PrimaryButton>}
           />
+          <PilotGuidance area="offers" />
           <FilterBar onClear={() => setFilters({ search: "", status: "", source: "", client_id: "" })} resultCount={filtered.length} title="Filter offers">
             <div className="grid gap-3 md:grid-cols-4">
               <label className="grid gap-1 text-sm font-medium text-slate-700">

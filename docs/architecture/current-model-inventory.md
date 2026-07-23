@@ -405,3 +405,17 @@ Phase 58.3 adds no domain model or collection. It additively extends `AgencyOnbo
 Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
 
 Phase 58.4 adds no Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation and product-language refinement over existing Agency workspaces. The shared React components do not own domain state; Requests, Offers, Bookings, Passengers, Documents, tasks, timelines, and onboarding continue to use their existing canonical models and persistence services.
+
+## Phase 58.5 Commercial Pilot Readiness
+
+Active marker: `phase_58_5_commercial_pilot_readiness`.
+
+| Model | Collection | Ownership and purpose |
+|---|---|---|
+| `CommercialPilotFeedback` | `commercial_pilot_feedback` | Agency-owned feedback metadata with immutable agency, submitter, source text, and optional validated canonical related-record reference. Platform review may update only governed status and review metadata. |
+| `CommercialPilotFeedbackCreate` | none | Tenant-scoped Agency submission contract. |
+| `CommercialPilotFeedbackReviewUpdate` | none | Platform review lifecycle contract. |
+| `CommercialPilotReadinessCheck` | none | Computed product-readiness check; not persisted and not a release approval. |
+| `CommercialPilotReadinessAssessment` | none | Computed `ready`, `conditionally_ready`, or `blocked` view that preserves Phase 57 governance. |
+
+`commercial_pilot_feedback` is registered as agency-owned in the persistence query registry and uses additive agency/status/category/related-record and Platform review indexes. It does not duplicate tasks, support tickets, incidents, operational records, or Phase 57 evidence.

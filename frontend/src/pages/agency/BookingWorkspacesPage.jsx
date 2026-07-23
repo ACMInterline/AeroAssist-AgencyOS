@@ -6,6 +6,7 @@ import FilterBar from "../../components/FilterBar"
 import FormSection from "../../components/FormSection"
 import LoadingState from "../../components/LoadingState"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
@@ -241,6 +242,7 @@ export default function BookingWorkspacesPage() {
             description="Prepare and track bookings from accepted offers, imported confirmations, or details entered by your team."
             actions={<><PrimaryButton icon={Plus} onClick={openCreateModal}>Prepare booking</PrimaryButton><SecondaryButton href="/agency/bookings">Booking history</SecondaryButton></>}
           />
+          <PilotGuidance area="booking" />
 
           <FilterBar onClear={() => setFilters({ status: "", provider_target: "", search: "" })} resultCount={filtered.length} title="Filter bookings">
             <div className="grid gap-3 md:grid-cols-3">

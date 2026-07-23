@@ -2554,3 +2554,16 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Adds source-level terminology, accessibility-control, shared-component, canonical-route, readiness, and registration validation.
 - Adds no route, model, collection, provider action, workflow editor, operational automation, deployment, or production-data change.
 - See [AeroAssist Product Standards](docs/product/aeroassist-product-standards.md).
+
+## Phase 58.5 - Commercial Pilot Readiness
+
+- Active marker: `phase_58_5_commercial_pilot_readiness`.
+- Adds the controlled `docs/pilot/` package covering supported scope, known limitations, onboarding, Agency administration, consultant operations, first-day and daily checklists, synthetic demo use, backup/recovery, incidents, feedback, acceptance, and exit.
+- Adds tenant-owned `CommercialPilotFeedback` metadata with canonical related-record validation, Agency isolation, permission-aware submission, read-only Agency history, governed Platform lifecycle review, and existing audit events.
+- Adds `/agency/pilot-feedback`, `/platform/pilot-feedback`, and `/platform/commercial-pilot-readiness` using canonical route families and Phase 58.4 shared product components.
+- Adds concise, non-intrusive pilot guidance to onboarding, Operations, Requests, Offers, Booking, Passengers, Documents, and Tasks.
+- Computes `ready`, `conditionally_ready`, or `blocked` from Phase 58 capability registration, pilot documents, configuration/database readiness, smoke inventory, selected-agency context, and disabled execution boundaries.
+- Preserves Phase 57 production evidence, backup, rollback, tenant-isolation evidence, assessment, and human sign-off as the authoritative release gate.
+- Migrates the Phase 58.4 product-standards smoke to minimum semantics and makes the Phase 58.5 Commercial Pilot readiness smoke the sole exact-current assertion.
+- Adds no anonymous/public feedback, external support integration, provider or payment execution, ticketing, messaging, production seeding, deployment, backup/restore action, or automatic approval.
+- See [Commercial Pilot Package](docs/pilot/README.md).

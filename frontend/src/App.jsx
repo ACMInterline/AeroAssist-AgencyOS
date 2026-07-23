@@ -1,5 +1,6 @@
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AgencyOnboardingPage from "./pages/agency/AgencyOnboardingPage"
+import PilotFeedbackPage from "./pages/agency/PilotFeedbackPage"
 import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
 import BundleRolloutReadinessPage from "./pages/agency/BundleRolloutReadinessPage"
 import BundleDependenciesPage from "./pages/agency/BundleDependenciesPage"
@@ -183,6 +184,8 @@ import PlatformOperationalScenarioTestingPage from "./pages/platform/Operational
 import PlatformKnowledgePopulationToolkitPage from "./pages/platform/KnowledgePopulationToolkitPage"
 import PlatformPilotReadinessPage from "./pages/platform/PilotReadinessPage"
 import PlatformPilotOperationsReadinessPage from "./pages/platform/PilotOperationsReadinessPage"
+import CommercialPilotReadinessPage from "./pages/platform/CommercialPilotReadinessPage"
+import PilotFeedbackReviewPage from "./pages/platform/PilotFeedbackReviewPage"
 import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
 import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
 import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
@@ -373,6 +376,8 @@ const routes = {
   "/platform/knowledge-population-toolkit": PlatformKnowledgePopulationToolkitPage,
   "/platform/pilot-readiness": PlatformPilotReadinessPage,
   "/platform/pilot-operations": PlatformPilotOperationsReadinessPage,
+  "/platform/commercial-pilot-readiness": CommercialPilotReadinessPage,
+  "/platform/pilot-feedback": PilotFeedbackReviewPage,
   "/platform/service-parameter-taxonomies": PlatformServiceParameterTaxonomiesPage,
   "/platform/request-segment-services": PlatformRequestSegmentServicesPage,
   "/platform/client-master": PlatformClientMasterPage,
@@ -401,6 +406,7 @@ const routes = {
   "/platform/offer-decision-export-compliance": PlatformOfferDecisionExportCompliancePage,
   "/agency": OperationsCommandCenterPage,
   "/agency/onboarding": AgencyOnboardingPage,
+  "/agency/pilot-feedback": PilotFeedbackPage,
   "/agency/saas-subscription": SaaSSubscriptionPage,
   "/agency/feature-availability": FeatureAvailabilityPage,
   "/agency/feature-readiness": FeatureReadinessPage,

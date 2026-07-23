@@ -386,3 +386,13 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Platform, Agency, Client Portal, and public route ownership remains unchanged.
 - Travel-first labels do not rename internal route paths, model symbols, or compatibility identifiers.
 - No `/admin/*`, `/agent/*`, parallel workflow root, public mutation, or direct frontend persistence access is introduced.
+
+## Phase 58.5 Commercial Pilot Readiness Routes
+
+- Agency help and feedback UI: `/agency/pilot-feedback`.
+- Tenant-scoped Agency API: `GET|POST /api/agencies/{agency_id}/pilot-feedback` and `GET /api/agencies/{agency_id}/pilot-feedback/{feedback_id}`.
+- Platform feedback review UI: `/platform/pilot-feedback`.
+- Protected Platform feedback API: `GET /api/platform/pilot-feedback`, `GET /api/platform/pilot-feedback/{feedback_id}`, and `PATCH /api/platform/pilot-feedback/{feedback_id}`.
+- Platform Commercial Pilot readiness UI: `/platform/commercial-pilot-readiness`.
+- Protected computed assessment API: `GET /api/platform/commercial-pilot-readiness`, optionally scoped with `agency_id`.
+- Phase 58.5 adds no public or anonymous feedback route, `/admin/*`, `/agent/*`, external support endpoint, parallel incident/ticketing system, or Phase 57 release mutation.

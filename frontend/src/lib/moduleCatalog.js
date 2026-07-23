@@ -8,6 +8,8 @@ export const platformModuleGroups = [
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
       { label: "Pilot Operations", description: "Release evidence, pilot agencies, health history, and protected diagnostics", href: "/platform/pilot-operations", icon: "shield", badge: "Owner governed", metadata_only: true },
+      { label: "Commercial Pilot Readiness", description: "Product, guidance, feedback, and safety readiness", href: "/platform/commercial-pilot-readiness", icon: "check", badge: "Read-only", metadata_only: true },
+      { label: "Pilot Feedback Review", description: "Tenant-scoped pilot feedback governance", href: "/platform/pilot-feedback", icon: "clipboard", badge: "Platform review", metadata_only: true },
       { label: "Operational Travel Workspaces", description: "Travel workspace metadata", href: "/platform/operational-travel-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Travel Request Workspaces", description: "Request workspace metadata", href: "/platform/travel-request-workspaces", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Passenger Workspaces", description: "Passenger workspace metadata", href: "/platform/passenger-workspaces", icon: "user", badge: "Metadata only", metadata_only: true },
@@ -169,6 +171,7 @@ export const agencyModuleGroups = [
     safety: "Manual operations",
     items: [
       { label: "Operations", description: "Today’s work, queues, deadlines, and follow-ups", href: "/agency", icon: "rows", entitlementKey: "dashboard" },
+      { label: "Pilot Help & Feedback", description: "Operating guides and tenant-scoped feedback", href: "/agency/pilot-feedback", icon: "clipboard", badge: "Pilot" },
       { label: "Create request", description: "Start a staff request", href: "/agency/requests/new", icon: "plus", entitlementKey: "requests" },
       { label: "Intakes", description: "Public and portal queue", href: "/agency/request-intakes", icon: "inbox", entitlementKey: "request_intakes" },
       { label: "Travel Workspaces", description: "Operational travel workspace metadata", href: "/agency/travel-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "requests", metadata_only: true },

@@ -3,6 +3,7 @@ import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw.js"
 import EmptyState from "../../components/EmptyState"
 import FilterBar from "../../components/FilterBar"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PrimaryButton from "../../components/PrimaryButton"
 import PriorityBadge from "../../components/PriorityBadge"
 import { Field, Metric, SelectField, formatType, queryString } from "../../components/ClientPassengerMasterRecordList"
@@ -104,6 +105,7 @@ export default function AgentWorkQueuePage() {
             description="See what needs attention, who is responsible, and which client, trip, booking, or service it belongs to."
             actions={<PrimaryButton icon={RefreshCw} onClick={syncQueue}>Refresh tasks</PrimaryButton>}
           />
+          <PilotGuidance area="tasks" />
 
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</div> : null}
 

@@ -11,7 +11,8 @@ ROOT = BACKEND.parent
 FRONTEND = ROOT / "frontend/src"
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
+from scripts.phase_assertions import application_phase_is_at_least
 from services.aeroassist_product_standards_service import (
     PHASE_LABEL,
     aeroassist_product_standards_readiness_metadata,
@@ -36,6 +37,8 @@ COMPONENTS = {
     "OperationalAlert": "frontend/src/components/OperationalAlert.jsx",
     "FormSection": "frontend/src/components/FormSection.jsx",
 }
+
+MINIMUM_PHASE = PHASE_LABEL
 
 SURFACES = {
     "onboarding": "frontend/src/pages/agency/AgencyOnboardingPage.jsx",
@@ -68,8 +71,7 @@ def require_markers(relative_path: str, markers: list[str]) -> None:
 
 
 def verify_phase_and_readiness() -> None:
-    assert phase_is_exact(CURRENT_BUILD_PHASE, CURRENT_BUILD_PHASE)
-    assert CURRENT_BUILD_PHASE == PHASE_LABEL
+    assert application_phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE)
     metadata = aeroassist_product_standards_readiness_metadata()
     for key in [
         "travel_first_terminology_enabled",

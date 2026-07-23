@@ -372,6 +372,7 @@ AGENCY_OWNED_COLLECTIONS = [
     "agency_staff_memberships",
     "agency_workspaces",
     "agency_onboarding_profiles",
+    "commercial_pilot_feedback",
     "agency_dashboard_preferences",
     "agency_notification_preferences",
     "agency_branding_settings",
@@ -3826,6 +3827,24 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("profile_key", ASCENDING)], "name": "agency_onboarding_profiles_agency_profile_unique", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("onboarding_status", ASCENDING)], "name": "agency_onboarding_profiles_agency_status_lookup"},
             {"keys": [("updated_at", -1)], "name": "agency_onboarding_profiles_updated_lookup"},
+        ],
+        "commercial_pilot_feedback": [
+            {
+                "keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_agency_status_submitted_lookup",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("category", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_agency_category_submitted_lookup",
+            },
+            {
+                "keys": [("status", ASCENDING), ("urgency", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_platform_review_lookup",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("related_record_type", ASCENDING), ("related_record_id", ASCENDING)],
+                "name": "commercial_pilot_feedback_related_record_lookup",
+            },
         ],
         "agency_dashboard_preferences": [
             {"keys": [("agency_id", ASCENDING), ("preference_key", ASCENDING)], "name": "agency_dashboard_preferences_agency_key_unique", "unique": True},

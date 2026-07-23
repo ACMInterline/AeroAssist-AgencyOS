@@ -3,6 +3,7 @@ import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
 import FilterBar from "../../components/FilterBar"
 import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PassengerForm from "../../components/PassengerForm"
 import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
@@ -71,6 +72,7 @@ export default function PassengersPage() {
               ? <SecondaryButton onClick={() => setShowCreate(false)}>Close form</SecondaryButton>
               : <PrimaryButton icon={Plus} onClick={() => setShowCreate(true)}>Create passenger</PrimaryButton>}
           />
+          <PilotGuidance area="passengers" />
           {showCreate ? <PassengerForm onSubmit={createPassenger} submitLabel="Create passenger" /> : null}
           <FilterBar onClear={() => setFilters({ search: "", passenger_type: "", status: "" })} resultCount={filteredPassengers.length} title="Filter passengers">
             <div className="grid gap-3 md:grid-cols-3">
