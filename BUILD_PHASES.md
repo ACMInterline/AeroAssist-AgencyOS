@@ -2513,3 +2513,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 56.5.8 smoke to minimum semantics and makes the Phase 57.0 pilot operations smoke the sole exact-current assertion.
 - Adds no provider connectivity, GDS/payment/ticket execution, automatic approval, deployment, migration, backup, restore, or production seeding.
 - See [Pilot Operations and Release Readiness](docs/architecture/pilot-operations-release-readiness.md).
+
+## Phase 58.1 - Commercial Pilot Foundation: Agency Onboarding
+
+- Active marker: `phase_58_1_commercial_pilot_agency_onboarding_foundation`.
+- Adds a resumable first-time wizard only for newly created agencies; historical agencies without a profile remain explicitly exempt.
+- Persists canonical agency identity, contact, address, time-zone, currency, working-hours, logo, email-configuration state, dashboard preferences, notification preferences, branding, and document templates.
+- Creates one deterministic, idempotent synthetic travel workspace across existing Client, Passenger, Request, Flight, Trip, Offer, and Booking workspace collections.
+- Exposes completion progress, audited saves, validation, safe retry, tenant isolation, and an explicit completion gate before normal Agency workspace entry.
+- Performs no provider, airline, GDS, NDC, payment, ticketing, messaging, AI, background, deployment, or production-data operation.
+- See [Commercial Pilot Agency Onboarding Foundation](docs/architecture/commercial-pilot-agency-onboarding-foundation.md).

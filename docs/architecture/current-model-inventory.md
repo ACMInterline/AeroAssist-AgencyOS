@@ -377,3 +377,15 @@ These records are agency-scoped projections and governance metadata. They do not
 - `PilotSyntheticDataset`, `PilotSyntheticDatasetCreate`, and `PilotSyntheticDatasetRemoval` govern bounded prefixed metadata fixtures and audited soft removal in `pilot_synthetic_datasets`.
 - `PilotHealthTimelineEvent` and `PilotHealthTimelineEventCreate` govern append-only deployment, health, readiness, smoke, incident, backup, restore, and pilot history in `pilot_health_timeline_events`.
 - Phase 57.0 reuses `PilotReleaseAssessment`, `PilotReleaseProductionEvidence`, `PilotReleaseSignOff`, and `AuditEvent`; it creates no parallel release-assessment, agency, identity, or audit model.
+
+## Phase 58.1 Commercial Pilot Agency Onboarding Models
+
+| Model | Collection | Ownership and purpose |
+|---|---|---|
+| `AgencyOnboardingProfile` | `agency_onboarding_profiles` | Agency-owned resumable progress, completion, and deterministic seed manifest for newly created agencies. It does not duplicate canonical agency or travel data. |
+| `AgencyDashboardPreferences` | `agency_dashboard_preferences` | Agency-owned default landing page, density, and operational widget selection. |
+| `AgencyNotificationPreferences` | `agency_notification_preferences` | Agency-owned in-app/email and operational notification preferences; it does not send notifications. |
+| `Agency` additive fields | `agencies` | Canonical contact, address, and working-hours data collected by onboarding. |
+| `AgencyEmailSettings.configuration_status` | `agency_email_settings` | Additive readiness state for disabled, pending, unverified, verified, or not-required email configuration. |
+
+Phase 58.1 also seeds canonical `agency_workspaces`, `agency_branding_settings`, `document_templates`, `client_profiles`, `passenger_profiles`, `client_passenger_relationships`, `operational_travel_workspaces`, `travel_request_workspaces`, `passenger_workspaces`, `flight_workspaces`, `trip_workspaces`, `offer_workspaces_v2`, and `booking_workspaces`. These remain owned by their existing domains and are tagged as synthetic onboarding data where metadata is available.

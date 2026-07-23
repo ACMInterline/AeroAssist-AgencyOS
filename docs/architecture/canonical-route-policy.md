@@ -352,3 +352,11 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Canonical protected API root: `/api/platform/pilot-operations`.
 - Evidence, assessments, sign-offs, pilot agencies, synthetic datasets, health timeline, and production diagnostics are subresources of that root.
 - There is no `/admin/*`, Agency, portal, or public pilot-operations route. Public `/api/health` and `/api/readiness` expose only static, non-sensitive Phase 57.0 capability metadata.
+
+## Phase 58.1 Commercial Pilot Agency Onboarding Routes
+
+- Canonical Agency UI: `/agency/onboarding`.
+- Canonical API root: `/api/agencies/{agency_id}/onboarding`.
+- Newly created incomplete agencies are redirected through the shared Agency loader; completed and legacy-exempt agencies retain existing canonical routes.
+- Platform agency detail links to the same Agency route and API under existing Platform authorization; no parallel Platform onboarding API is introduced.
+- Phase 58.1 adds no `/admin/*`, `/agent/*`, public mutation, provider route, or duplicate agency/travel route family.

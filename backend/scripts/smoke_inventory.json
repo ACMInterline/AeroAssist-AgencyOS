@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
-      "assertion_purpose": "Validate the canonical Phase 57.0 build marker and pilot operations release-readiness registration.",
-      "exact_reason": "This smoke explicitly tests the current Pilot Operations release-readiness surface; historical capability and infrastructure smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_commercial_pilot_agency_onboarding_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 58.1 build marker and commercial pilot onboarding registration.",
+      "exact_reason": "This smoke explicitly tests the current newly-created-agency onboarding surface; historical capability and infrastructure smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -1887,7 +1887,7 @@
       "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
       "capability_name": "Pilot Operations Release Readiness",
       "minimum_application_phase": "phase_57_0_pilot_operations_release_readiness",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -2588,6 +2588,26 @@
       "test_class": "integration",
       "suitable_for_future_ci": true,
       "notes": "Persisted process-local acceptance smoke for the V1 integration program. It uses an isolated in-memory database and verifies the complete Golden Path including Ticket and EMD metadata, validation failure and recovery, mismatch reconciliation, duplicate prevention, cross-agency rejection, After Sales financial linkage, canonical UI continuity, immutable reference evidence, and audit, timeline, queue, and workflow persistence without changing the active phase marker.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_commercial_pilot_agency_onboarding_foundation.py",
+      "capability_name": "Commercial Pilot Agency Onboarding Foundation",
+      "minimum_application_phase": "phase_58_1_commercial_pilot_agency_onboarding_foundation",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current in-memory smoke for resumable newly-created-agency onboarding, legacy exemption, canonical defaults, deterministic synthetic travel records, completion gating, tenant isolation, audit evidence, UI/API registration, and no-execution safety boundaries.",
       "ci_tier": "integration",
       "execution_isolation": "none"
     },

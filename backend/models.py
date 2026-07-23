@@ -726,6 +726,15 @@ class Agency(BaseDocument):
     default_currency: str = "EUR"
     country: str = "SK"
     timezone: str = "Europe/Bratislava"
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    working_hours: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class AgencyCreate(BaseModel):
@@ -752,6 +761,119 @@ class AgencyUpdate(BaseModel):
     default_currency: Optional[str] = None
     country: Optional[str] = None
     timezone: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    working_hours: Optional[List[Dict[str, Any]]] = None
+
+
+class AgencyOnboardingStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class AgencyEmailConfigurationStatus(str, Enum):
+    NOT_CONFIGURED = "not_configured"
+    CONFIGURATION_PENDING = "configuration_pending"
+    CONFIGURED_UNVERIFIED = "configured_unverified"
+    VERIFIED = "verified"
+    NOT_REQUIRED = "not_required"
+
+
+class AgencyOnboardingWorkingDay(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    day: str
+    enabled: bool = True
+    open_time: Optional[str] = None
+    close_time: Optional[str] = None
+
+
+class AgencyOnboardingProfile(BaseDocument):
+    agency_id: str
+    profile_key: str = "commercial_pilot"
+    onboarding_status: AgencyOnboardingStatus = AgencyOnboardingStatus.NOT_STARTED
+    current_step: str = "agency_profile"
+    completed_steps: List[str] = Field(default_factory=list)
+    progress_percent: int = 0
+    logo_status: str = "pending"
+    defaults_seeded: bool = False
+    demo_workspace_seeded: bool = False
+    seeded_record_ids: Dict[str, Any] = Field(default_factory=dict)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_saved_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    completed_by_user_id: Optional[str] = None
+    resumable: bool = True
+
+
+class AgencyOnboardingProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = None
+    legal_name: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    timezone: Optional[str] = None
+    default_currency: Optional[str] = None
+    working_hours: Optional[List[AgencyOnboardingWorkingDay]] = None
+    current_step: Optional[str] = None
+
+
+class AgencyOnboardingEmailStatusUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    configuration_status: AgencyEmailConfigurationStatus
+    sender_name: Optional[str] = None
+    sender_email: Optional[EmailStr] = None
+    reply_to_email: Optional[EmailStr] = None
+
+
+class AgencyOnboardingPreferencesUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    landing_page: str = "/agency"
+    compact_mode: bool = False
+    dashboard_widgets: List[str] = Field(default_factory=list)
+    in_app_notifications: bool = True
+    email_notifications: bool = False
+    assignment_notifications: bool = True
+    deadline_notifications: bool = True
+    service_notifications: bool = True
+
+
+class AgencyDashboardPreferences(BaseDocument):
+    agency_id: str
+    preference_key: str = "default"
+    landing_page: str = "/agency"
+    compact_mode: bool = False
+    dashboard_widgets: List[str] = Field(default_factory=list)
+    seeded_by_onboarding: bool = False
+
+
+class AgencyNotificationPreferences(BaseDocument):
+    agency_id: str
+    preference_key: str = "default"
+    in_app_notifications: bool = True
+    email_notifications: bool = False
+    assignment_notifications: bool = True
+    deadline_notifications: bool = True
+    service_notifications: bool = True
+    seeded_by_onboarding: bool = False
 
 
 class AgencyWorkspace(BaseDocument):
@@ -24772,6 +24894,7 @@ class AgencyEmailSettings(BaseDocument):
     status: AgencyEmailSettingsStatus = AgencyEmailSettingsStatus.ACTIVE
     verified_at: Optional[datetime] = None
     last_validation_error: Optional[str] = None
+    configuration_status: AgencyEmailConfigurationStatus = AgencyEmailConfigurationStatus.NOT_CONFIGURED
 
 
 class AgencyEmailSettingsUpdate(BaseModel):
@@ -24788,6 +24911,7 @@ class AgencyEmailSettingsUpdate(BaseModel):
     smtp_use_tls: Optional[bool] = None
     mode: Optional[AgencyEmailMode] = None
     status: Optional[AgencyEmailSettingsStatus] = None
+    configuration_status: Optional[AgencyEmailConfigurationStatus] = None
 
 
 class ReferenceRecordScope(str, Enum):

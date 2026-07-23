@@ -17,7 +17,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE, phase_is_at_least
 from database import Database, ensure_mongo_indexes
 from models import (
     PilotAgencyInvitationCreate,
@@ -39,6 +39,11 @@ from services.pilot_operations_release_readiness_service import (
 
 
 BASE_URL = os.getenv("AEROASSIST_SMOKE_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+MINIMUM_PHASE = PHASE_LABEL
+
+
+def application_phase_is_at_least(actual: str) -> bool:
+    return phase_is_at_least(actual, MINIMUM_PHASE)
 
 
 class IndexRegressionCollection:
@@ -81,7 +86,7 @@ def request(path: str, *, headers: dict[str, str] | None = None) -> tuple[int, o
 def full_evidence(role: str = "platform_owner") -> PilotReleaseProductionEvidence:
     return PilotReleaseProductionEvidence(
         production_git_commit="phase570smoke",
-        production_phase=PHASE_LABEL,
+        production_phase=CURRENT_BUILD_PHASE,
         mongodb_authentication_verified=True,
         backup_manifest_verified=True,
         off_host_copy_verified=True,
@@ -109,7 +114,7 @@ def full_evidence(role: str = "platform_owner") -> PilotReleaseProductionEvidenc
 
 
 def verify_static_registration() -> None:
-    if not phase_is_exact(CURRENT_BUILD_PHASE, PHASE_LABEL):
+    if not application_phase_is_at_least(CURRENT_BUILD_PHASE):
         raise AssertionError(f"Phase 57.0 marker mismatch: {CURRENT_BUILD_PHASE}")
     if set(CATEGORY_DIMENSIONS) != {"infrastructure", "security", "database", "frontend", "backend", "observability", "backups", "tenant_isolation"}:
         raise AssertionError("Release assessment groups are incomplete.")
@@ -245,7 +250,7 @@ async def verify_service_contracts() -> None:
         raise AssertionError(f"Complete explicit release evidence was not assessed ready: {assessment.get('blocking_items')}")
     sign_off = PilotReleaseSignOff(
         release_id="PILOT_TEST_PHASE57_RELEASE",
-        target_phase=PHASE_LABEL,
+        target_phase=CURRENT_BUILD_PHASE,
         decision="approved",
         decision_reason="Explicit synthetic smoke sign-off.",
         approved_by_role="platform_owner",
@@ -276,7 +281,7 @@ async def verify_service_contracts() -> None:
 
 def verify_live_contracts() -> None:
     health_status, health = request("/api/health")
-    if health_status != 200 or not isinstance(health, dict) or health.get("phase") != PHASE_LABEL:
+    if health_status != 200 or not isinstance(health, dict) or not application_phase_is_at_least(str(health.get("phase"))):
         raise AssertionError(f"Health does not report Phase 57.0: {health}")
     if health.get("pilot_operations_release_readiness") is not True:
         raise AssertionError("Health does not expose the public-safe Phase 57.0 capability flag.")
