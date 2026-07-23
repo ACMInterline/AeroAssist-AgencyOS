@@ -1,23 +1,30 @@
 import { useEffect, useMemo, useState } from "react"
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw.js"
 import EmptyState from "../../components/EmptyState"
+import FilterBar from "../../components/FilterBar"
+import PageHeader from "../../components/PageHeader"
+import PrimaryButton from "../../components/PrimaryButton"
+import PriorityBadge from "../../components/PriorityBadge"
 import { Field, Metric, SelectField, formatType, queryString } from "../../components/ClientPassengerMasterRecordList"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SectionHeader from "../../components/SectionHeader"
+import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const queueTabs = [
   ["unassigned", "Unassigned"],
-  ["my_work", "My Work"],
-  ["team_queue", "Team"],
+  ["my_work", "My work"],
+  ["team_queue", "Team work"],
   ["urgent_critical", "Urgent"],
-  ["due_soon", "Due Soon"],
+  ["due_soon", "Due soon"],
   ["overdue", "Overdue"],
   ["blocked", "Blocked"],
-  ["waiting_client", "Waiting Client"],
-  ["waiting_documents", "Documents"],
-  ["knowledge_gap_queue", "Knowledge"],
-  ["workflow_blocker_queue", "Workflow Blockers"],
+  ["waiting_client", "Waiting for client"],
+  ["waiting_documents", "Waiting for documents"],
+  ["knowledge_gap_queue", "Knowledge follow-up"],
+  ["workflow_blocker_queue", "Blocked follow-ups"],
 ]
 
 const defaultFilters = {
@@ -89,28 +96,22 @@ export default function AgentWorkQueuePage() {
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
-      <ProtectedRoute loading={!state && !error} error={error}>
+      <ProtectedRoute loading={!state && !error} error={!state ? error : ""}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Agent Work Queue</h2>
-              <p className="mt-1 text-sm text-slate-600">Canonical agency queue for actionable operational work. It links to existing requests, workflows, tasks, timelines, documents, bookings, and readiness issues without creating bookings, sending messages, calling providers, or replacing human authority.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button className="rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white" type="button" onClick={syncQueue}>Sync work</button>
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Metadata only</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Agency scoped</span>
-            </div>
-          </div>
+          <PageHeader
+            eyebrow="Daily work"
+            title="Tasks and follow-ups"
+            description="See what needs attention, who is responsible, and which client, trip, booking, or service it belongs to."
+            actions={<PrimaryButton icon={RefreshCw} onClick={syncQueue}>Refresh tasks</PrimaryButton>}
+          />
 
-          {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</div> : null}
 
           <section className="grid gap-3 md:grid-cols-5">
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
+          <FilterBar title="Choose work to show">
             <div className="flex flex-wrap gap-2">
               {queueTabs.map(([code, label]) => (
                 <button key={code} type="button" onClick={() => setFilters({ ...filters, queue_code: code })} className={`rounded-md px-3 py-2 text-sm font-semibold ${filters.queue_code === code ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}>
@@ -126,12 +127,13 @@ export default function AgentWorkQueuePage() {
               <Field label="Type" value={filters.work_item_type} onChange={(value) => setFilters({ ...filters, work_item_type: value })} />
               <Field label="Team" value={filters.assigned_team_code} onChange={(value) => setFilters({ ...filters, assigned_team_code: value })} />
             </div>
-          </section>
+          </FilterBar>
 
           <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <SectionHeader title="Assign selected tasks" description="A reason is kept with every assignment change." />
             <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-              <Field label="Action reason" value={reason} onChange={setReason} />
-              <button className="self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" type="button" disabled={!selectedIds.length} onClick={bulkAssignSelf}>Bulk assign to me</button>
+              <Field label="Reason for assignment" value={reason} onChange={setReason} />
+              <button className="self-end rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" type="button" disabled={!selectedIds.length} onClick={bulkAssignSelf}>Assign selected to me</button>
             </div>
           </section>
 
@@ -147,7 +149,7 @@ export default function AgentWorkQueuePage() {
                 />
               ))}
             </section>
-          ) : <EmptyState title="No work items" body="Use Sync work to create idempotent queue metadata from existing operational records." />}
+          ) : <EmptyState title="Nothing needs attention here" body="Try another queue or refresh tasks to include the latest requests, bookings, documents, and follow-ups." />}
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -156,40 +158,41 @@ export default function AgentWorkQueuePage() {
 
 function WorkItemCard({ item, selected, onSelect, onAction }) {
   return (
-    <details className="rounded-lg border border-slate-200 bg-white p-4" open>
+    <details className="rounded-lg border border-slate-200 bg-white p-4">
       <summary className="cursor-pointer list-none">
         <div className="grid gap-3 lg:grid-cols-[24px_1fr_180px_180px_200px]">
-          <input className="mt-1" type="checkbox" checked={selected} onChange={(event) => onSelect(event.target.checked)} />
+          <input aria-label={`Select ${item.title}`} className="mt-1" type="checkbox" checked={selected} onChange={(event) => onSelect(event.target.checked)} />
           <div>
             <p className="font-semibold text-slate-950">{item.title}</p>
-            <p className="mt-1 text-sm text-slate-600">{item.summary || item.work_item_code}</p>
-            <p className="mt-2 text-xs text-slate-500">{formatType(item.work_item_type)} · {formatType(item.source_entity_type)} {item.source_entity_id}</p>
+            <p className="mt-1 text-sm text-slate-600">{item.summary || "No summary provided"}</p>
+            <p className="mt-2 text-xs text-slate-500">{formatType(item.work_item_type)} · {formatType(item.source_entity_type)}</p>
           </div>
           <div className="text-xs text-slate-600">
-            <p>Status: {formatType(item.status)}</p>
-            <p className="mt-1">Priority: {formatType(item.priority)}</p>
-            <p className="mt-1">Severity: {formatType(item.severity)}</p>
+            <StatusBadge status={item.status} />
+            <p className="mt-2"><PriorityBadge priority={item.priority} /></p>
+            <p className="mt-2">Impact: {formatType(item.severity)}</p>
           </div>
           <div className="text-xs text-slate-600">
-            <p>Assigned: {item.assigned_user_id || "Unassigned"}</p>
+            <p>Assigned consultant: {item.assigned_user_name || item.assigned_user_label || (item.assigned_user_id ? "Assigned" : "Unassigned")}</p>
             <p className="mt-1">Team: {item.assigned_team_code || "No team"}</p>
             <p className="mt-1">Due: {formatDateTime(item.due_at)}</p>
           </div>
           <div className="text-xs text-slate-600">
-            <p>SLA: {formatType(item.sla_status)}</p>
-            <p className="mt-1">Blocker: {formatType(item.blocker_status)}</p>
-            <p className="mt-1">{item.source_route || "No route link"}</p>
+            <p>Deadline status: {formatType(item.sla_status)}</p>
+            <p className="mt-1">Blocked: {formatType(item.blocker_status)}</p>
+            <p className="mt-1 font-medium text-blue-700">Open for details and actions</p>
           </div>
         </div>
       </summary>
       <div className="mt-4 grid gap-4 text-xs text-slate-600 lg:grid-cols-3">
-        <DetailBlock title="Source linkage" lines={[
-          `Workflow: ${item.workflow_instance_id || "None"}`,
-          `Workflow event: ${item.workflow_event_id || "None"}`,
+        <DetailBlock title="Related work" lines={[
+          `Process reference: ${item.workflow_instance_id || "None"}`,
+          `Update reference: ${item.workflow_event_id || "None"}`,
           `Request task: ${item.request_task_id || "None"}`,
-          `Timeline: ${item.timeline_entry_id || "None"}`,
+          `History reference: ${item.timeline_entry_id || "None"}`,
+          `Source reference: ${item.source_entity_id || "None"}`,
         ]} />
-        <DetailBlock title="Compact history" lines={(item.assignment_events || []).length ? item.assignment_events.map((event) => `${formatType(event.event_type)} by ${event.actor_user_id || "unknown"}: ${event.reason || "No reason"}`) : ["No assignment history yet"]} />
+        <DetailBlock title="Assignment history" lines={(item.assignment_events || []).length ? item.assignment_events.map((event) => `${formatType(event.event_type)}: ${event.reason || "No reason recorded"}`) : ["No assignment history yet"]} />
         <div>
           <p className="font-semibold uppercase tracking-wide text-slate-500">Assignment actions</p>
           <div className="mt-2 flex flex-wrap gap-2">

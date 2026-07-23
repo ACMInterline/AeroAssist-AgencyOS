@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react"
+import BookOpen from "lucide-react/dist/esm/icons/book-open.js"
+import FileText from "lucide-react/dist/esm/icons/file-text.js"
+import ConfirmationDialog from "../../components/ConfirmationDialog"
 import EmptyState from "../../components/EmptyState"
 import OfferStatusBadge from "../../components/OfferStatusBadge"
+import OperationalAlert from "../../components/OperationalAlert"
+import PageHeader from "../../components/PageHeader"
+import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SecondaryButton from "../../components/SecondaryButton"
+import Timeline from "../../components/Timeline"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 export default function OfferDetailPage({ offerId }) {
   const [state, setState] = useState(null)
+  const [confirmSend, setConfirmSend] = useState(false)
   const [forms, setForms] = useState({
     passenger_id: "",
     route_title: "",
@@ -135,6 +144,7 @@ export default function OfferDetailPage({ offerId }) {
 
   async function sendOffer() {
     await apiPost(`/api/agencies/${state.agency.id}/offers/${offerId}/send`)
+    setConfirmSend(false)
     await load()
   }
 
@@ -150,25 +160,19 @@ export default function OfferDetailPage({ offerId }) {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <a className="text-sm font-medium text-blue-700" href="/agency/offers">Back to offers</a>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state.offer.offer_reference}</p>
-              <h2 className="text-2xl font-semibold text-slate-950">{state.offer.title}</h2>
-              <p className="mt-1 text-sm text-slate-600">Manually researched option. Price must be verified before ticketing.</p>
-            </div>
-            <OfferStatusBadge status={state.offer.status} />
-          </div>
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-blue-950">Post-offer operations</h3>
-                <p className="mt-1 text-sm text-blue-800">Create a manual booking tracking record from this offer. No reservation or ticketing integration is connected.</p>
-              </div>
-              <a className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/agency/bookings/new">Create booking</a>
-              <button className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700" onClick={renderOfferSummary}>Render offer summary</button>
-            </div>
-          </div>
+          <PageHeader
+            breadcrumbs={[{ label: "Offers", href: "/agency/offers" }, { label: state.offer.offer_reference }]}
+            eyebrow={state.offer.offer_reference}
+            title={state.offer.title}
+            description="Review the travel choices, pricing, passenger needs, and client-ready summary before recording a response."
+            status={<OfferStatusBadge status={state.offer.status} />}
+          />
+          <OperationalAlert
+            title="Next action"
+            actions={<><PrimaryButton href="/agency/bookings/new" icon={BookOpen}>Prepare booking</PrimaryButton><SecondaryButton icon={FileText} onClick={renderOfferSummary}>Create offer summary</SecondaryButton></>}
+          >
+            Verify the selected price and client response before preparing the booking. AeroAssist will not contact an airline or issue a ticket from this page.
+          </OperationalAlert>
           <AirlineIntelLinkPanel
             title="Search policy/service notes"
             airlineCode={state.segments.find((segment) => segment.marketing_airline_code)?.marketing_airline_code}
@@ -273,20 +277,28 @@ export default function OfferDetailPage({ offerId }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Send Panel">
+          <Panel title="Client delivery status">
             <ul className="space-y-2 text-sm text-slate-600">
-              <li>Route alternative present: {state.routes.length ? "yes" : "no"}</li>
-              <li>Fare option present: {state.fare_options.length ? "yes" : "no"}</li>
-              <li>Send marks offer as sent and snapshots current content.</li>
-              <li>Actual email/client portal delivery is not implemented yet.</li>
+              <li>Travel choice included: {state.routes.length ? "Yes" : "No"}</li>
+              <li>Price included: {state.fare_options.length ? "Yes" : "No"}</li>
+              <li>Recording the offer as sent preserves the current version.</li>
+              <li>This action does not send an email or client message.</li>
             </ul>
-            <button disabled={!validToSend || state.offer.status === "sent"} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" onClick={sendOffer}>
-              Send and snapshot
+            <button disabled={!validToSend || state.offer.status === "sent"} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:bg-slate-300" onClick={() => setConfirmSend(true)}>
+              Record as sent
             </button>
           </Panel>
-          <Panel title="Timeline">
-            <List items={state.timeline} empty="No offer timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} />
+          <Panel title="Activity history">
+            <Timeline items={state.timeline} emptyTitle="No offer activity yet" />
           </Panel>
+          <ConfirmationDialog
+            confirmLabel="Record as sent"
+            message="This preserves the current offer version and changes its status. It does not send an email or portal message."
+            onCancel={() => setConfirmSend(false)}
+            onConfirm={sendOffer}
+            open={confirmSend}
+            title="Record this offer as sent?"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

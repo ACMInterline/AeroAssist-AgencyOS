@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react"
+import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
+import ErrorState from "../../components/ErrorState"
+import FilterBar from "../../components/FilterBar"
+import FormSection from "../../components/FormSection"
+import LoadingState from "../../components/LoadingState"
+import PageHeader from "../../components/PageHeader"
+import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SecondaryButton from "../../components/SecondaryButton"
+import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { productLabel } from "../../lib/productLanguage"
 
 const statuses = ["draft", "ready_to_book", "booking_in_progress", "booked", "blocked", "cancelled"]
 const providers = ["manual", "travelport", "amadeus", "ndc", "supplier", "other"]
@@ -225,36 +235,42 @@ export default function BookingWorkspacesPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
-              <h2 className="text-2xl font-semibold text-slate-950">Booking Workspaces</h2>
-              <p className="mt-1 text-sm text-slate-600">PNR mirrors from accepted offers, manual entry, imports, and existing-trip changes.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={openCreateModal}>Create booking workspace</button>
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/bookings">Legacy bookings</a>
-            </div>
-          </div>
+          <PageHeader
+            eyebrow="Booking preparation"
+            title="Booking workspace"
+            description="Prepare and track bookings from accepted offers, imported confirmations, or details entered by your team."
+            actions={<><PrimaryButton icon={Plus} onClick={openCreateModal}>Prepare booking</PrimaryButton><SecondaryButton href="/agency/bookings">Booking history</SecondaryButton></>}
+          />
 
-          <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
-            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search workspace, trip, PNR" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
-              <option value="">All statuses</option>
-              {statuses.map((value) => <option value={value} key={value}>{label(value)}</option>)}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.provider_target} onChange={(event) => setFilters({ ...filters, provider_target: event.target.value })}>
-              <option value="">All providers</option>
-              {providers.map((value) => <option value={value} key={value}>{label(value)}</option>)}
-            </select>
-          </section>
+          <FilterBar onClear={() => setFilters({ status: "", provider_target: "", search: "" })} resultCount={filtered.length} title="Filter bookings">
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Search
+                <input className="field" placeholder="Trip, booking reference, or PNR" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Current status
+                <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                  <option value="">All statuses</option>
+                  {statuses.map((value) => <option value={value} key={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Booking source
+                <select className="field" value={filters.provider_target} onChange={(event) => setFilters({ ...filters, provider_target: event.target.value })}>
+                  <option value="">All sources</option>
+                  {providers.map((value) => <option value={value} key={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+            </div>
+          </FilterBar>
 
           {filtered.length ? (
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-              <div className="grid grid-cols-[1.2fr_1.3fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+              <div className="grid min-w-[900px] grid-cols-[1.2fr_1.3fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 text-xs font-semibold text-slate-500">
                 <span>Workspace</span>
                 <span>Trip / request</span>
-                <span>Provider</span>
+                <span>Booking source</span>
                 <span>Status</span>
                 <span>Booking</span>
                 <span>Warnings</span>
@@ -262,7 +278,7 @@ export default function BookingWorkspacesPage() {
               </div>
               <div className="divide-y divide-slate-100">
                 {filtered.map((workspace) => (
-                  <a className="grid grid-cols-[1.2fr_1.3fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" href={`/agency/booking-workspaces/${workspace.id}`} key={workspace.id}>
+                  <a className="grid min-w-[900px] grid-cols-[1.2fr_1.3fr_0.9fr_0.9fr_0.8fr_0.8fr_0.8fr] gap-3 px-4 py-4 text-sm text-slate-700 hover:bg-blue-50/60" href={`/agency/booking-workspaces/${workspace.id}`} key={workspace.id}>
                     <span>
                       <span className="block font-semibold text-slate-950">{workspace.workspace_number}</span>
                       <span className="block truncate text-xs text-slate-500">{workspace.title}</span>
@@ -271,8 +287,8 @@ export default function BookingWorkspacesPage() {
                       <span className="block font-medium text-slate-900">{workspace.trip_summary?.trip_reference || workspace.trip_id}</span>
                       <span className="block truncate text-xs text-slate-500">{workspace.request_id || "No request link"}</span>
                     </span>
-                    <span>{label(workspace.provider_target)}</span>
-                    <span>{label(workspace.status)}</span>
+                    <span>{productLabel(workspace.provider_target)}</span>
+                    <span><StatusBadge status={workspace.status} /></span>
                     <span>
                       <span className="block">{label(workspace.booking_record?.booking_status || "draft")}</span>
                       <span className="block text-xs text-slate-500">{workspace.booking_record?.pnr_locator || "PNR pending"}</span>
@@ -284,8 +300,8 @@ export default function BookingWorkspacesPage() {
               </div>
             </div>
           ) : (
-            <EmptyState title="No booking workspaces found" body="Create a booking workspace from an accepted offer readiness package, manual entry, or an import draft.">
-              <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={openCreateModal}>Create booking workspace</button>
+            <EmptyState title="No bookings match these filters" body="Clear the filters or prepare a booking from an accepted offer, confirmation, or details from your team.">
+              <PrimaryButton icon={Plus} onClick={openCreateModal}>Prepare booking</PrimaryButton>
             </EmptyState>
           )}
 
@@ -314,32 +330,32 @@ export default function BookingWorkspacesPage() {
 }
 
 function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mode, onClose, onManualChange, onManualSubmit, onModeChange, onSelect, onSubmit, packages, selectedPackage, selectedPackageId }) {
-  const actionLabel = selectedPackage?.booking_workspace_already_exists ? "Open booking workspace" : "Create booking workspace"
+  const actionLabel = selectedPackage?.booking_workspace_already_exists ? "Open booking" : "Prepare booking"
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <section className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+      <section aria-labelledby="create-booking-title" aria-modal="true" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl" role="dialog">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Booking workspace</p>
-            <h3 className="text-xl font-semibold text-slate-950">Create booking workspace</h3>
-            <p className="mt-1 text-sm text-slate-600">Create an internal mirror only. No live booking or provider action will run.</p>
+            <p className="text-sm font-semibold text-blue-700">Booking preparation</p>
+            <h3 className="text-xl font-semibold text-slate-950" id="create-booking-title">Prepare a booking</h3>
+            <p className="mt-1 text-sm text-slate-600">AeroAssist records the booking details here. It does not contact the airline or supplier.</p>
             {selectedPackage ? (
               <a className="mt-2 inline-flex rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-handoffs?acceptance_id=${selectedPackage.acceptance_id || ""}&booking_readiness_package_id=${selectedPackage.id}&trip_id=${selectedPackage.trip_id || ""}`}>
-                Review booking handoff first
+                Review booking readiness
               </a>
             ) : null}
           </div>
           <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClose}>Close</button>
         </div>
         <div className="overflow-y-auto p-5">
-          {error ? <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
           <div className="mb-4 grid gap-2 md:grid-cols-3">
-            <ModeButton active={mode === "readiness"} label="From accepted offer readiness package" onClick={() => onModeChange("readiness")} />
-            <ModeButton active={mode === "manual"} label="Manual booking" onClick={() => onModeChange("manual")} />
-            <ModeButton active={mode === "import"} label="Import from GDS / confirmation text" onClick={() => onModeChange("import")} />
+            <ModeButton active={mode === "readiness"} label="From an accepted offer" onClick={() => onModeChange("readiness")} />
+            <ModeButton active={mode === "manual"} label="Enter booking details" onClick={() => onModeChange("manual")} />
+            <ModeButton active={mode === "import"} label="Review imported booking text" onClick={() => onModeChange("import")} />
           </div>
 
-          {mode === "readiness" && loading ? <p className="text-sm text-slate-600">Loading booking readiness packages...</p> : null}
+          {error ? <ErrorState message={error} title="The booking could not be prepared" /> : null}
+          {mode === "readiness" && loading ? <LoadingState label="Opening accepted offers" /> : null}
           {mode === "readiness" && !loading && packages.length ? (
             <div className="space-y-3">
               {packages.map((item) => (
@@ -351,15 +367,15 @@ function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mod
                 >
                   <div className="grid gap-3 lg:grid-cols-[1.2fr_1.2fr_0.8fr_0.8fr_0.7fr_0.8fr]">
                     <SummaryBlock label="Trip" value={tripLabel(item)} subvalue={item.trip_summary?.trip_title || item.trip_id || "No trip summary"} />
-                    <SummaryBlock label="Accepted offer / workspace" value={offerLabel(item)} subvalue={item.accepted_offer_summary?.id || item.acceptance_id || "No acceptance summary"} />
-                    <SummaryBlock label="Provider" value={label(item.provider_target || "manual")} />
+                    <SummaryBlock label="Accepted offer" value={offerLabel(item)} subvalue={item.accepted_offer_summary?.offer_reference || "Client choice recorded"} />
+                    <SummaryBlock label="Booking source" value={label(item.provider_target || "manual")} />
                     <SummaryBlock label="Status" value={label(item.status)} />
                     <SummaryBlock label="Warnings" value={String(item.warning_count || 0)} subvalue={`${item.policy_violation_count || 0} policy`} />
                     <SummaryBlock label="Created" value={dateLabel(item.created_at)} />
                   </div>
                   {item.booking_workspace_already_exists ? (
                     <div className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
-                      Booking workspace already exists: {item.booking_workspace_summary?.workspace_number || item.booking_workspace_id}
+                      Booking already prepared: {item.booking_workspace_summary?.workspace_number || "Open the existing booking"}
                     </div>
                   ) : null}
                 </button>
@@ -367,29 +383,29 @@ function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mod
             </div>
           ) : null}
           {mode === "readiness" && !loading && !packages.length ? (
-            <EmptyState title="No booking readiness packages found" body="Accept an offer option first so AgencyOS can create a booking readiness package." />
+            <EmptyState title="No accepted offer is ready" body="Record the client’s accepted offer first, then return here to prepare the booking." />
           ) : null}
           {mode === "manual" ? (
             <ManualBookingForm form={manualForm} onChange={onManualChange} />
           ) : null}
           {mode === "import" ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
-              <p className="text-sm font-semibold text-slate-950">Import from GDS / confirmation text</p>
-              <p className="mt-1 text-sm text-slate-600">Create an import draft, parse a conservative preview, then import it into internal booking/ticket/EMD mirrors only.</p>
-              <a className="mt-4 inline-flex rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold" href="/agency/booking-imports">Open booking imports</a>
+              <p className="text-sm font-semibold text-slate-950">Review booking confirmation text</p>
+              <p className="mt-1 text-sm text-slate-600">Check the detected booking, ticket, and service details before adding them to AeroAssist.</p>
+              <a className="mt-4 inline-flex rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold" href="/agency/booking-imports">Open booking import</a>
             </div>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-5">
-          <p className="text-sm text-slate-600">{mode === "readiness" ? (selectedPackage ? selectedPackage.id : "No package selected") : "Provider execution disabled"}</p>
+          <p className="text-sm text-slate-600">{mode === "readiness" ? (selectedPackage ? `Selected: ${offerLabel(selectedPackage)}` : "No accepted offer selected") : "No airline or supplier is contacted"}</p>
           {mode === "readiness" ? (
             <button className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-60" type="button" onClick={onSubmit} disabled={!selectedPackage || creating}>
-              {creating ? "Working..." : actionLabel}
+              {creating ? "Preparing booking..." : actionLabel}
             </button>
           ) : null}
           {mode === "manual" ? (
             <button className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold disabled:opacity-60" type="button" onClick={onManualSubmit} disabled={creating}>
-              {creating ? "Working..." : "Create manual booking"}
+              {creating ? "Preparing booking..." : "Create booking"}
             </button>
           ) : null}
         </div>
@@ -552,8 +568,8 @@ function ManualBookingForm({ form, onChange }) {
       </FormSection>
 
       <details className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced raw snapshots</summary>
-        <p className="mt-2 text-sm text-slate-600">Advanced only. Structured fields above are used unless a raw override is provided.</p>
+        <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced import details</summary>
+        <p className="mt-2 text-sm text-slate-600">Use only when the booking confirmation contains details that cannot be entered above.</p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
           {Object.entries(form.raw_overrides).map(([key, value]) => (
             <TextArea
@@ -566,15 +582,6 @@ function ManualBookingForm({ form, onChange }) {
         </div>
       </details>
     </div>
-  )
-}
-
-function FormSection({ title, children }) {
-  return (
-    <section className="space-y-3 border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
-      <h4 className="text-sm font-semibold text-slate-950">{title}</h4>
-      {children}
-    </section>
   )
 }
 
@@ -804,7 +811,7 @@ function asArray(value, labelText) {
 function asObject(value, labelText) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value
   if (Array.isArray(value) && labelText === "Services") return { items: value }
-  throw new Error(`${labelText} must be a JSON object.`)
+  throw new Error(`${labelText} must contain valid JSON details.`)
 }
 
 function tripLabel(item) {

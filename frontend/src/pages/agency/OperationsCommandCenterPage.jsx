@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
+import ConfirmationDialog from "../../components/ConfirmationDialog"
+import OperationalAlert from "../../components/OperationalAlert"
+import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import OperationsAlerts from "../../components/operations/OperationsAlerts"
 import OperationsFilters from "../../components/operations/OperationsFilters"
@@ -18,6 +21,7 @@ export default function OperationsCommandCenterPage() {
   const [selectedDate, setSelectedDate] = useState("")
   const [error, setError] = useState("")
   const [busyAction, setBusyAction] = useState("")
+  const [pendingConfirmation, setPendingConfirmation] = useState(null)
 
   async function load(nextFilters = filters, nextDate = selectedDate, suppliedContext = context) {
     const activeContext = suppliedContext || await loadCurrentAgency()
@@ -52,15 +56,19 @@ export default function OperationsCommandCenterPage() {
     await load(filters, date)
   }
 
-  async function runWorkAction(item, action, assigneeId) {
+  async function runWorkAction(item, action, assigneeId, confirmed = false) {
     if (!action.api_path) return
-    if (action.confirmation_required && !window.confirm(`Complete “${item.reason}”?`)) return
+    if (action.confirmation_required && !confirmed) {
+      setPendingConfirmation({ item, action, assigneeId })
+      return
+    }
     setBusyAction(`${item.id}:${action.key}`)
     try {
       await apiPost(action.api_path, {
         to_user_id: assigneeId || undefined,
         reason: `${action.label} from Operations Command Centre`,
       })
+      setPendingConfirmation(null)
       await load(filters, selectedDate)
     } catch (err) {
       setError(err.message)
@@ -80,19 +88,17 @@ export default function OperationsCommandCenterPage() {
 
   return (
     <AgencyLayout user={context?.me?.user} agency={context?.agency}>
-      <ProtectedRoute loading={!state && !error && !context?.onboardingRedirect} error={error}>
+      <ProtectedRoute loading={!state && !error && !context?.onboardingRedirect} error={!state ? error : ""}>
         {!context?.agency ? null : (
           <main className="space-y-6">
-            <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-              <div>
-                <p className="text-sm font-semibold text-blue-700">Operations</p>
-                <h1 className="mt-1 text-2xl font-semibold text-slate-950">{greeting}, {name}.</h1>
-                <p className="mt-1 text-sm text-slate-600">Here’s what needs attention.</p>
-              </div>
-              <OperationsFilters metadata={state?.filter_metadata} value={filters} onChange={applyFilters} />
-            </header>
+            <PageHeader
+              eyebrow="Operations"
+              title={`${greeting}, ${name}.`}
+              description="Here’s what needs attention and the next action for each item."
+              actions={<OperationsFilters metadata={state?.filter_metadata} value={filters} onChange={applyFilters} />}
+            />
 
-            {error ? <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+            {error ? <OperationalAlert title="The operations view could not be refreshed" tone="error">{error}</OperationalAlert> : null}
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
               <div className="space-y-6">
@@ -109,6 +115,14 @@ export default function OperationsCommandCenterPage() {
                 {visibleSections.includes("quick_actions") ? <OperationsAlerts quickActions={state?.quick_actions || []} /> : null}
               </aside>
             </div>
+            <ConfirmationDialog
+              confirmLabel={pendingConfirmation?.action?.label || "Confirm"}
+              message={`Confirm “${pendingConfirmation?.item?.reason || "this action"}”. The update will be added to the work history.`}
+              onCancel={() => setPendingConfirmation(null)}
+              onConfirm={() => runWorkAction(pendingConfirmation.item, pendingConfirmation.action, pendingConfirmation.assigneeId, true)}
+              open={Boolean(pendingConfirmation)}
+              title="Confirm this update?"
+            />
           </main>
         )}
       </ProtectedRoute>

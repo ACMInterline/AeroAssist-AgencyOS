@@ -18,6 +18,10 @@
   .secondary-button {
     @apply inline-flex items-center justify-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
   }
+
+  .destructive-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
 }
 
 :root {
@@ -31,9 +35,7 @@
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32rem),
-    #f8fafc;
+  background: #f8fafc;
 }
 
 a {
@@ -64,9 +66,7 @@ textarea:focus-visible {
 }
 
 .aa-themed {
-  background:
-    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--aa-primary), transparent 88%), transparent 30rem),
-    linear-gradient(180deg, color-mix(in srgb, var(--aa-bg), #fff 6%), var(--aa-bg));
+  background: var(--aa-bg);
 }
 
 .aa-shell-grid {
@@ -198,5 +198,16 @@ textarea:focus-visible {
     display: block;
     max-width: 100%;
     overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

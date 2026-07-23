@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react"
+import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
+import FilterBar from "../../components/FilterBar"
 import OfferStatusBadge from "../../components/OfferStatusBadge"
+import PageHeader from "../../components/PageHeader"
+import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { productLabel } from "../../lib/productLanguage"
 
 export default function OffersPage() {
   const [state, setState] = useState(null)
@@ -36,29 +41,41 @@ export default function OffersPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Manual Offer Builder</p>
-              <h2 className="text-2xl font-semibold text-slate-950">Offers</h2>
-              <p className="mt-1 text-sm text-slate-600">Manually researched options. No live fare search or booking automation.</p>
+          <PageHeader
+            eyebrow="Client proposals"
+            title="Offers"
+            description="Prepare and compare travel choices, then keep the client response and accepted option together."
+            actions={<PrimaryButton href="/agency/offers/new" icon={Plus}>Create offer</PrimaryButton>}
+          />
+          <FilterBar onClear={() => setFilters({ search: "", status: "", source: "", client_id: "" })} resultCount={filtered.length} title="Filter offers">
+            <div className="grid gap-3 md:grid-cols-4">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Search
+                <input className="field" placeholder="Client, title, or offer reference" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Current status
+                <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                  <option value="">All statuses</option>
+                  {["draft", "ready_to_send", "sent", "viewed", "accepted", "rejected", "expired", "withdrawn", "archived"].map((value) => <option key={value} value={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Started from
+                <select className="field" value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })}>
+                  <option value="">All sources</option>
+                  {["request", "client_profile", "passenger_profile", "airline_research", "manual", "imported_gds_text", "other"].map((value) => <option key={value} value={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Client
+                <select className="field" value={filters.client_id} onChange={(event) => setFilters({ ...filters, client_id: event.target.value })}>
+                  <option value="">All clients</option>
+                  {state?.clients?.map((client) => <option key={client.id} value={client.id}>{client.display_name}</option>)}
+                </select>
+              </label>
             </div>
-            <a className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" href="/agency/offers/new">Create offer</a>
-          </div>
-          <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
-            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search offers" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
-              <option value="">All statuses</option>
-              {["draft", "ready_to_send", "sent", "viewed", "accepted", "rejected", "expired", "withdrawn", "archived"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })}>
-              <option value="">All sources</option>
-              {["request", "client_profile", "passenger_profile", "airline_research", "manual", "imported_gds_text", "other"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.client_id} onChange={(event) => setFilters({ ...filters, client_id: event.target.value })}>
-              <option value="">All clients</option>
-              {state?.clients?.map((client) => <option key={client.id} value={client.id}>{client.display_name}</option>)}
-            </select>
-          </section>
+          </FilterBar>
           {filtered.length ? (
             <div className="grid gap-4">
               {filtered.map((offer) => (
@@ -67,7 +84,7 @@ export default function OffersPage() {
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{offer.offer_reference}</p>
                       <h3 className="mt-1 font-semibold text-slate-950">{offer.title}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{offer.client?.display_name || "Client"} · {offer.source.replaceAll("_", " ")}</p>
+                      <p className="mt-1 text-sm text-slate-600">{offer.client?.display_name || "Client"} · {productLabel(offer.source)}</p>
                     </div>
                     <OfferStatusBadge status={offer.status} />
                   </div>
@@ -81,7 +98,9 @@ export default function OffersPage() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No offers found" body="Create a manual offer from a request, client profile, passenger profile, or staff research." />
+            <EmptyState title="No offers match these filters" body="Clear the filters or create an offer when travel choices are ready to prepare.">
+              <PrimaryButton href="/agency/offers/new" icon={Plus}>Create offer</PrimaryButton>
+            </EmptyState>
           )}
         </div>
       </ProtectedRoute>

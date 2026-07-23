@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
+import ErrorState from "../../components/ErrorState"
+import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
@@ -238,12 +240,13 @@ export default function RequestCreatePage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={!state ? error : ""}>
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <a className="text-sm font-medium text-blue-700" href="/agency/requests">Back to requests</a>
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">Operational Request Builder V1</h2>
-            <p className="mt-1 text-sm text-slate-600">Build a structured assistance case with client, passengers, itinerary, services, and notes before offers or bookings exist.</p>
-          </div>
-          {error ? <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
+          <PageHeader
+            breadcrumbs={[{ label: "Requests", href: "/agency/requests" }, { label: "New request" }]}
+            eyebrow="Client request"
+            title="New travel request"
+            description="Add the client, passengers, journey details, and special-service needs. You can review everything before creating the request."
+          />
+          {error ? <ErrorState message={error} title="Check the request details" /> : null}
           <div className="grid gap-6 xl:grid-cols-[220px_1fr]">
             <aside className="hidden xl:block">
               <div className="sticky top-24 rounded-lg border border-slate-200 bg-white p-3">
@@ -256,7 +259,7 @@ export default function RequestCreatePage() {
             <Section id="builder-1" eyebrow="Client context" title="1. Client">
               <div className="flex gap-3 text-sm">
                 <label><input type="radio" checked={form.client_mode === "existing"} onChange={() => setField("client_mode", "existing")} /> Existing client</label>
-                <label><input type="radio" checked={form.client_mode === "inline"} onChange={() => setField("client_mode", "inline")} /> Create inline</label>
+                <label><input type="radio" checked={form.client_mode === "inline"} onChange={() => setField("client_mode", "inline")} /> Add a new client</label>
               </div>
               {form.client_mode === "existing" ? (
                 <Select label="Client" value={form.client_id} onChange={(value) => setField("client_id", value)} options={(state?.clients || []).map((client) => [client.id, client.display_name])} required />
@@ -276,7 +279,7 @@ export default function RequestCreatePage() {
               {form.passengers.map((passenger, index) => (
                 <div className="rounded-md border border-slate-100 p-3" key={index}>
                   <div className="grid gap-3 md:grid-cols-3">
-                    <Select label="Existing passenger" value={passenger.passenger_id} onChange={(value) => updateArray("passengers", index, { passenger_id: value })} options={[["", "Create inline"], ...(state?.passengers || []).map((item) => [item.id, item.display_name])]} />
+                    <Select label="Passenger profile" value={passenger.passenger_id} onChange={(value) => updateArray("passengers", index, { passenger_id: value })} options={[["", "Add a new passenger"], ...(state?.passengers || []).map((item) => [item.id, item.display_name])]} />
                     <Field label="First name" value={passenger.first_name} onChange={(value) => updateArray("passengers", index, { first_name: value })} />
                     <Field label="Display name" value={passenger.display_name} onChange={(value) => updateArray("passengers", index, { display_name: value })} />
                     <Field label="Last name" value={passenger.last_name} onChange={(value) => updateArray("passengers", index, { last_name: value })} />

@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
+import OperationalAlert from "../../components/OperationalAlert"
+import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SecondaryButton from "../../components/SecondaryButton"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -214,42 +217,37 @@ export default function DocumentsPage() {
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
-      <ProtectedRoute loading={!state && !error} error={error}>
+      <ProtectedRoute loading={!state && !error} error={!state ? error : ""}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Documents</p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Document Foundation</h2>
-              <p className="mt-1 text-sm text-slate-600">Generate internal HTML previews from operational records. Live delivery, e-signature, payment, invoice, and provider execution stay disabled.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/document-templates">Legacy templates</a>
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/document-storage">Storage</a>
-            </div>
-          </div>
+          <PageHeader
+            eyebrow="Document preparation"
+            title="Prepare documents"
+            description="Create a reviewed internal document from existing trip, booking, ticket, service, or offer details."
+            actions={<><SecondaryButton href="/agency/document-templates">Document templates</SecondaryButton><SecondaryButton href="/agency/document-storage">File storage</SecondaryButton></>}
+          />
 
-          {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+          {error ? <OperationalAlert title="The document action could not be completed" tone="error">{error}</OperationalAlert> : null}
 
           <section className="grid gap-4 md:grid-cols-5">
-            <Metric label="Render jobs" value={state?.jobs?.length || 0} />
+            <Metric label="Prepared documents" value={state?.jobs?.length || 0} />
             <Metric label="Packages" value={state?.packages?.length || 0} />
             <Metric label="Templates" value={state?.templates?.length || 0} />
-            <Metric label="Share records" value={state?.readiness?.document_share_record_count || 0} />
-            <Metric label="Legacy rendered" value={state?.oldDocuments?.length || 0} />
+            <Metric label="Share references" value={state?.readiness?.document_share_record_count || 0} />
+            <Metric label="Earlier documents" value={state?.oldDocuments?.length || 0} />
           </section>
 
           <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
             <form className="space-y-4 rounded-lg border border-slate-200 bg-white p-5" onSubmit={renderDocument}>
               <div>
                 <h3 className="font-semibold text-slate-950">Generate document</h3>
-                <p className="mt-1 text-sm text-slate-600">Choose a document type and source record. Context preview is structured; raw JSON stays in Advanced.</p>
+                <p className="mt-1 text-sm text-slate-600">Choose the document and the related work. Advanced source details remain available when needed.</p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <Select label="Document type" value={form.document_type} options={documentTypes.map((value) => [value, label(value)])} onChange={(value) => setForm((current) => ({ ...current, document_type: value, template_id: "" }))} />
-                <Select label="Source context type" value={form.source_context_type} options={sourceTypes} onChange={(value) => setForm((current) => ({ ...current, source_context_type: value }))} />
-                {initialSourceContextId ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"><span className="block font-semibold">Canonical source locked</span><span className="block truncate text-xs">{form.source_context_type} · {form.source_context_id}</span></div> : <Field label="Source record id" value={form.source_context_id} onChange={(value) => setForm((current) => ({ ...current, source_context_id: value }))} />}
-                <Select label="Template optional" value={form.template_id} options={[["", "Default template"], ...matchingTemplates.map((template) => [template.id, template.title || template.name || template.template_key])]} onChange={(value) => setForm((current) => ({ ...current, template_id: value }))} />
-                <Select label="Render format" value={form.render_format} options={[["html", "HTML"], ["markdown", "Markdown"], ["json", "JSON"], ["pdf", "PDF planned"]]} onChange={(value) => setForm((current) => ({ ...current, render_format: value }))} />
+                <Select label="Related work" value={form.source_context_type} options={sourceTypes} onChange={(value) => setForm((current) => ({ ...current, source_context_type: value }))} />
+                {initialSourceContextId ? <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"><span className="block font-semibold">Related work selected</span><span className="block truncate text-xs">{form.source_context_type} · {form.source_context_id}</span></div> : <Field label="Related reference" value={form.source_context_id} onChange={(value) => setForm((current) => ({ ...current, source_context_id: value }))} />}
+                <Select label="Template" value={form.template_id} options={[["", "Default template"], ...matchingTemplates.map((template) => [template.id, template.title || template.name || template.template_key])]} onChange={(value) => setForm((current) => ({ ...current, template_id: value }))} />
+                <Select label="Document format" value={form.render_format} options={[["html", "Web document"], ["markdown", "Plain text"], ["json", "Structured details"], ["pdf", "PDF planned"]]} onChange={(value) => setForm((current) => ({ ...current, render_format: value }))} />
                 <label className="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700">
                   <input type="checkbox" checked={form.client_facing} onChange={(event) => setForm((current) => ({ ...current, client_facing: event.target.checked }))} />
                   Client-facing language
@@ -257,11 +255,11 @@ export default function DocumentsPage() {
                 <TextArea label="Notes" value={form.notes} onChange={(value) => setForm((current) => ({ ...current, notes: value }))} />
               </div>
               <div className="flex flex-wrap gap-2">
-                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-60" type="button" onClick={previewContext} disabled={working === "preview"}>{working === "preview" ? "Previewing..." : "Preview context"}</button>
-                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-60" type="submit" disabled={working === "render"}>{working === "render" ? "Rendering..." : "Render document"}</button>
+                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:opacity-60" type="button" onClick={previewContext} disabled={working === "preview"}>{working === "preview" ? "Checking..." : "Review source details"}</button>
+                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-60" type="submit" disabled={working === "render"}>{working === "render" ? "Preparing..." : "Prepare document"}</button>
               </div>
               <details className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced context preview JSON</summary>
+                <summary className="cursor-pointer text-sm font-semibold text-slate-950">Advanced source details</summary>
                 <pre className="mt-3 max-h-72 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(contextPreview || {}, null, 2)}</pre>
               </details>
             </form>
@@ -269,19 +267,19 @@ export default function DocumentsPage() {
             <form className="space-y-4 rounded-lg border border-slate-200 bg-white p-5" onSubmit={createPackage}>
               <div>
                 <h3 className="font-semibold text-slate-950">Document package</h3>
-                <p className="mt-1 text-sm text-slate-600">Group rendered jobs into an internal operational package.</p>
+                <p className="mt-1 text-sm text-slate-600">Group prepared documents for one trip, booking, or service case.</p>
               </div>
               <Select label="Package type" value={packageForm.package_type} options={packageTypes.map((value) => [value, label(value)])} onChange={(value) => setPackageForm((current) => ({ ...current, package_type: value }))} />
               <Field label="Title" value={packageForm.title} onChange={(value) => setPackageForm((current) => ({ ...current, title: value }))} />
-              <Select label="Source context type" value={packageForm.source_context_type} options={sourceTypes} onChange={(value) => setPackageForm((current) => ({ ...current, source_context_type: value }))} />
-              <Field label="Source record id" value={packageForm.source_context_id} onChange={(value) => setPackageForm((current) => ({ ...current, source_context_id: value }))} />
+              <Select label="Related work" value={packageForm.source_context_type} options={sourceTypes} onChange={(value) => setPackageForm((current) => ({ ...current, source_context_type: value }))} />
+              <Field label="Related reference" value={packageForm.source_context_id} onChange={(value) => setPackageForm((current) => ({ ...current, source_context_id: value }))} />
               <div className="max-h-56 space-y-2 overflow-auto rounded-md border border-slate-200 p-3">
                 {state?.jobs?.length ? state.jobs.map((job) => (
                   <label className="flex gap-2 text-sm" key={job.id}>
                     <input type="checkbox" checked={packageForm.document_render_job_ids.includes(job.id)} onChange={() => togglePackageJob(job.id)} />
                     <span>{label(job.document_type)} · {job.source_context_id || "mixed"}</span>
                   </label>
-                )) : <p className="text-sm text-slate-500">Render jobs appear here.</p>}
+                )) : <p className="text-sm text-slate-500">Prepared documents appear here.</p>}
               </div>
               <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-60" type="submit" disabled={working === "package" || !packageForm.title}>{working === "package" ? "Creating..." : "Create package"}</button>
             </form>
@@ -289,7 +287,7 @@ export default function DocumentsPage() {
 
           <section className="rounded-lg border border-slate-200 bg-white">
             <div className="border-b border-slate-100 px-5 py-4">
-              <h3 className="font-semibold text-slate-950">Render jobs</h3>
+              <h3 className="font-semibold text-slate-950">Prepared documents</h3>
             </div>
             {state?.jobs?.length ? (
               <div className="divide-y divide-slate-100">
@@ -305,13 +303,13 @@ export default function DocumentsPage() {
                     <span className="flex flex-wrap gap-2">
                       <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => setSelectedJob(job)}>Open preview</button>
                       <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => rerender(job.id)} disabled={working === job.id}>{working === job.id ? "Working..." : "Rerender"}</button>
-                      <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => createShare(job.id)} disabled={working === `share-${job.id}`}>Share record</button>
+                      <button className="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold" type="button" onClick={() => createShare(job.id)} disabled={working === `share-${job.id}`}>Create share reference</button>
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <EmptyState title="No document render jobs" body="Render a document from a supported operational source." />
+              <EmptyState title="No prepared documents" body="Choose related work above and prepare the first document." />
             )}
           </section>
 
@@ -331,7 +329,7 @@ export default function DocumentsPage() {
                 ))}
               </div>
             ) : (
-              <EmptyState title="No document packages" body="Select render jobs and create a package." />
+              <EmptyState title="No document packages" body="Select prepared documents and create a package." />
             )}
           </section>
 

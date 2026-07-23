@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from "react"
+import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
+import FilterBar from "../../components/FilterBar"
+import PageHeader from "../../components/PageHeader"
+import PrimaryButton from "../../components/PrimaryButton"
+import PriorityBadge from "../../components/PriorityBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RequestStatusBadge from "../../components/RequestStatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { productLabel } from "../../lib/productLanguage"
 
 export default function RequestsPage() {
   const [state, setState] = useState(null)
@@ -35,34 +41,45 @@ export default function RequestsPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Request Intake</p>
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">Requests</h2>
-              <p className="mt-1 text-sm text-slate-600">Inquiry/case records before offers or bookings exist.</p>
+          <PageHeader
+            eyebrow="Client requests"
+            title="Requests"
+            description="Capture what the client needs, who is travelling, and the services required before preparing a trip or offer."
+            actions={<PrimaryButton href="/agency/requests/new" icon={Plus}>Create request</PrimaryButton>}
+          />
+          <FilterBar
+            onClear={() => setFilters({ search: "", status: "", priority: "", source: "" })}
+            resultCount={filtered.length}
+            title="Filter requests"
+          >
+            <div className="grid gap-3 md:grid-cols-4">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Search
+                <input className="field" placeholder="Client, route, or request reference" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Current status
+                <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                  <option value="">All statuses</option>
+                  {["draft", "new", "triage", "waiting_for_client", "in_progress", "ready_for_offer", "offer_created", "closed", "cancelled", "archived"].map((value) => <option key={value} value={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Priority
+                <select className="field" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value })}>
+                  <option value="">All priorities</option>
+                  {["low", "normal", "high", "urgent"].map((value) => <option key={value} value={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Received through
+                <select className="field" value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })}>
+                  <option value="">All sources</option>
+                  {["staff_created", "website_form", "public_website", "client_portal", "phone", "email", "whatsapp", "walk_in", "imported", "internal"].map((value) => <option key={value} value={value}>{productLabel(value)}</option>)}
+                </select>
+              </label>
             </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{filtered.length} shown</span>
-                <a className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold" href="/agency/requests/new">Create request</a>
-              </div>
-            </div>
-          </div>
-          <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-4">
-            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search requests" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
-              <option value="">All statuses</option>
-              {["draft", "new", "triage", "waiting_for_client", "in_progress", "ready_for_offer", "offer_created", "closed", "cancelled", "archived"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.priority} onChange={(event) => setFilters({ ...filters, priority: event.target.value })}>
-              <option value="">All priorities</option>
-              {["low", "normal", "high", "urgent"].map((value) => <option key={value} value={value}>{value}</option>)}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.source} onChange={(event) => setFilters({ ...filters, source: event.target.value })}>
-              <option value="">All sources</option>
-              {["staff_created", "website_form", "public_website", "client_portal", "phone", "email", "whatsapp", "walk_in", "imported", "internal"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
-            </select>
-          </section>
+          </FilterBar>
           {filtered.length ? (
             <div className="grid gap-4">
               {filtered.map((request) => (
@@ -74,11 +91,14 @@ export default function RequestsPage() {
                       <p className="mt-1 text-sm text-slate-600">{request.client?.display_name || "Client"} · {request.route_summary || "Route not set"}</p>
                       {request.linked_trip ? <span className="mt-2 inline-flex rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">{request.linked_trip.trip_reference}</span> : null}
                     </div>
-                    <RequestStatusBadge status={request.status} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <PriorityBadge priority={request.priority} />
+                      <RequestStatusBadge status={request.status} />
+                    </div>
                   </div>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600 md:grid-cols-4">
-                    <span>Priority: {request.priority}</span>
-                    <span>Source: {request.source.replaceAll("_", " ")}</span>
+                    <span>Assigned priority: {productLabel(request.priority)}</span>
+                    <span>Received through: {productLabel(request.source)}</span>
                     <span>Passengers: {request.passenger_count}</span>
                     <span>Services: {request.service_count}</span>
                   </div>
@@ -87,12 +107,9 @@ export default function RequestsPage() {
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8">
-              <EmptyState title="No requests found" body="Create a request from a client and link passengers, intended segments, services, messages, and tasks." />
-              <div className="mt-4 text-center">
-                <a className="aa-primary-action inline-flex rounded-md px-4 py-2 text-sm font-semibold" href="/agency/requests/new">Create request</a>
-              </div>
-            </div>
+            <EmptyState title="No requests match these filters" body="Clear the filters or create a request when a client needs travel support.">
+              <PrimaryButton href="/agency/requests/new" icon={Plus}>Create request</PrimaryButton>
+            </EmptyState>
           )}
         </div>
       </ProtectedRoute>
