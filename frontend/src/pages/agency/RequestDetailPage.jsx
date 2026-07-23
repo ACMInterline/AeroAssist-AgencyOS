@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react"
+import DetailSummary from "../../components/DetailSummary"
 import EmptyState from "../../components/EmptyState"
+import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RequestStatusBadge from "../../components/RequestStatusBadge"
+import SecondaryButton from "../../components/SecondaryButton"
+import Timeline from "../../components/Timeline"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
@@ -139,52 +143,42 @@ export default function RequestDetailPage({ requestId }) {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <a className="text-sm font-medium text-blue-700" href="/agency/requests">Back to requests</a>
-              <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.request?.request_reference}</p>
-              <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{state?.request?.title}</h2>
-              <p className="mt-1 text-sm text-slate-600">Request is an inquiry/case. Intended segments are not booked services.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <RequestStatusBadge status={state?.request?.status} />
-              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
-                {state?.request?.status === "archived" ? "Restore" : "Archive"}
-              </button>
-            </div>
-            </div>
-          </div>
+          <PageHeader
+            breadcrumbs={[{ label: "Requests", href: "/agency/requests" }, { label: state?.request?.request_reference || "Request" }]}
+            eyebrow={state?.request?.request_reference}
+            title={state?.request?.title}
+            description="The client’s requested journey and services. Flight details remain planned until a booking is confirmed."
+            status={<RequestStatusBadge status={state?.request?.status} />}
+            actions={<SecondaryButton onClick={archiveOrRestore}>{state?.request?.status === "archived" ? "Restore request" : "Archive request"}</SecondaryButton>}
+          />
           <WorkflowContinuityPanel
             breadcrumbs={[{ label: "Clients", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }, { label: "Requests", href: "/agency/requests" }]}
             currentLabel={state?.request?.request_reference || "Request"}
             status={state?.request?.status}
             validation={requestReady && !requestClosed
-              ? { state: "ready", label: "Conversion structure ready", reason: "Passenger and segment context are present for conversion review." }
-              : { state: requestClosed ? "blocked" : "warning", label: requestClosed ? "Request closed" : "Conversion data incomplete", reason: requestClosed ? "Restore the request before continuing." : "Add at least one passenger and one segment before conversion." }}
+              ? { state: "ready", label: "Ready to prepare the trip", reason: "Passenger and flight details are available for review." }
+              : { state: requestClosed ? "blocked" : "warning", label: requestClosed ? "Request closed" : "More trip details needed", reason: requestClosed ? "Restore the request before continuing." : "Add at least one passenger and one flight segment before preparing the trip." }}
             previous={state?.passengers?.[0]?.passenger_id ? { label: "Previous: passenger", href: `/agency/passengers/${state.passengers[0].passenger_id}` } : { label: "Previous: client", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }}
             next={state?.linked_trip
               ? { label: "Continue to trip", href: `/agency/trips/${state.linked_trip.id}` }
-              : { label: "Continue to conversion", href: `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`, enabled: requestReady && !requestClosed, reason: "Passenger and segment context are required." }}
+              : { label: "Prepare trip", href: `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`, enabled: requestReady && !requestClosed, reason: "Passenger and flight details are required." }}
             relatedRecords={[
               { label: "Client", value: state?.client?.display_name, href: state?.client?.id ? `/agency/clients/${state.client.id}` : undefined },
               { label: "Passengers", value: state?.passengers?.length || 0 },
               { label: "Trip", value: state?.linked_trip?.trip_reference || "not converted", href: state?.linked_trip ? `/agency/trips/${state.linked_trip.id}` : undefined },
             ]}
           />
+          <DetailSummary title="Request summary" columns={4} items={[
+            { label: "Client", value: state?.client?.display_name },
+            { label: "Priority", value: state?.request?.priority },
+            { label: "Received through", value: state?.request?.source?.replaceAll("_", " ") },
+            { label: "Route", value: state?.request?.route_summary || "Not set" },
+            { label: "Passengers", value: state?.request?.passenger_count ?? 0 },
+            { label: "Pets", value: state?.request?.pet_count ?? 0 },
+            { label: "Special services", value: state?.request?.special_service_count ?? 0 },
+            { label: "Journey type", value: state?.request?.trip_type?.replaceAll("_", " ") || "Unknown" },
+          ]} />
           <section className="grid gap-4 lg:grid-cols-3">
-            <InfoCard title="Overview" rows={[
-              ["Client", state?.client?.display_name],
-              ["Priority", state?.request?.priority],
-              ["Source", state?.request?.source?.replaceAll("_", " ")],
-              ["Route", state?.request?.route_summary || "Not set"],
-              ["Passengers", state?.request?.passenger_count ?? 0],
-              ["Pets", state?.request?.pet_count ?? 0],
-              ["Special services", state?.request?.special_service_count ?? 0],
-              ["Trip type", state?.request?.trip_type?.replaceAll("_", " ") || "unknown"],
-              ["Services", state?.request?.service_summary || "Not set"],
-              ["Source intake", state?.request?.source_intake_id ? <a className="text-blue-700 underline" href={`/agency/request-intakes/${state.request.source_intake_id}`}>Open intake</a> : "None"],
-            ]} />
             <InfoCard title="Operational flags" rows={[
               ["Medical review", state?.request?.requires_medical_review ? "Required" : "No"],
               ["Policy review", state?.request?.requires_airline_policy_review ? "Required" : "No"],
@@ -207,13 +201,13 @@ export default function RequestDetailPage({ requestId }) {
               ["Client-visible", state?.request?.client_visible_notes || "None"],
             ]} />
           </section>
-          <Panel title="Trip Dossier">
+          <Panel title="Trip">
             {state?.linked_trip ? (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-950">{state.linked_trip.trip_reference} · {state.linked_trip.trip_title}</p>
                   <p className="mt-1 text-sm text-slate-600">{state.linked_trip.trip_status.replaceAll("_", " ")} · {state.linked_trip.route_summary || "Route pending"}</p>
-                  <p className="mt-1 text-xs text-slate-500">This request is linked to a trip dossier. The request remains an independent intake/case record.</p>
+                  <p className="mt-1 text-xs text-slate-500">This request remains the original client brief while the linked trip holds day-to-day travel work.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/trips/${state.linked_trip.id}`}>Open trip</a>
@@ -223,10 +217,10 @@ export default function RequestDetailPage({ requestId }) {
             ) : (
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-950">No trip dossier linked</p>
-                  <p className="mt-1 text-sm text-slate-600">Create an operational shell when this request becomes active trip work. The original request will not be replaced.</p>
+                  <p className="text-sm font-semibold text-slate-950">No trip prepared yet</p>
+                  <p className="mt-1 text-sm text-slate-600">Prepare a trip when this request is ready for active travel work. The original request stays unchanged.</p>
                 </div>
-                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createTripDossier}>Open Conversion Wizard</button>
+                <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createTripDossier}>Prepare trip</button>
               </div>
             )}
           </Panel>
@@ -244,8 +238,8 @@ export default function RequestDetailPage({ requestId }) {
               <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/requests/${requestId}/special-services`}>Open Special Services</a>
             </div>
           </Panel>
-          <Panel title="Case flags">
-            <List items={state.case_flags} empty="No derived case flags yet" render={(item) => `${item.flag_label} · ${item.severity} · ${item.source}`} />
+          <Panel title="Attention needed">
+            <List items={state.case_flags} empty="Nothing needs attention" render={(item) => `${item.flag_label} · ${item.severity} · ${item.source}`} />
           </Panel>
           <Panel title="Passengers">
             <form className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={addPassenger}>
@@ -278,8 +272,8 @@ export default function RequestDetailPage({ requestId }) {
             </form>
             <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.service_category, item.detail_payload)}` : ""}`} />
           </Panel>
-          <Panel title="Passenger-segment services">
-            <List items={state.passenger_segment_services} empty="No normalized passenger-segment services yet" render={(item) => {
+          <Panel title="Services by passenger and flight">
+            <List items={state.passenger_segment_services} empty="No passenger and flight service details yet" render={(item) => {
               const passenger = state.passengers.find((entry) => entry.id === item.request_passenger_id)
               const segment = state.segments.find((entry) => entry.id === item.request_segment_id)
               return `${passenger?.snapshot_display_name || "Passenger"} · ${segment ? `${segment.origin_text} → ${segment.destination_text}` : "Segment"} · ${item.service_code} · ${item.applicability_status.replaceAll("_", " ")}${item.service_family_code ? ` · ${item.service_family_code.replaceAll("_", " ")}` : ""}`
@@ -303,9 +297,12 @@ export default function RequestDetailPage({ requestId }) {
               }} />
             </Panel>
           </section>
-          <Panel title="Source payload / snapshot">
-            {Object.keys(state.request?.builder_payload_snapshot || {}).length ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.builder_payload_snapshot, null, 2)}</pre> : state.request?.intake_payload_snapshot ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.intake_payload_snapshot, null, 2)}</pre> : <EmptyState title="No source snapshot" body="Legacy requests may not have a builder or intake snapshot." />}
-          </Panel>
+          <details className="rounded-lg border border-slate-200 bg-white p-5">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Advanced source details</summary>
+            <div className="mt-4">
+              {Object.keys(state.request?.builder_payload_snapshot || {}).length ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.builder_payload_snapshot, null, 2)}</pre> : state.request?.intake_payload_snapshot ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.intake_payload_snapshot, null, 2)}</pre> : <EmptyState title="No original request details" body="Older requests may not include the original submitted details." />}
+            </div>
+          </details>
           <section className="grid gap-4 lg:grid-cols-2">
             <Panel title="Messages">
               <form className="flex gap-2" onSubmit={addMessage}>
@@ -322,8 +319,8 @@ export default function RequestDetailPage({ requestId }) {
               <List items={state.tasks} empty="No tasks yet" render={(item) => `${item.status.replaceAll("_", " ")} · ${item.title}`} />
             </Panel>
           </section>
-          <Panel title="Timeline">
-            <List items={state.timeline} empty="No timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} />
+          <Panel title="Activity history">
+            <Timeline items={state.timeline} emptyTitle="No request activity yet" />
           </Panel>
         </div>
       </ProtectedRoute>

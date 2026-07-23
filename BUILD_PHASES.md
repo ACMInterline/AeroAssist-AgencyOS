@@ -2513,3 +2513,57 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 56.5.8 smoke to minimum semantics and makes the Phase 57.0 pilot operations smoke the sole exact-current assertion.
 - Adds no provider connectivity, GDS/payment/ticket execution, automatic approval, deployment, migration, backup, restore, or production seeding.
 - See [Pilot Operations and Release Readiness](docs/architecture/pilot-operations-release-readiness.md).
+
+## Phase 58.1 - Commercial Pilot Foundation: Agency Onboarding
+
+- Active marker: `phase_58_1_commercial_pilot_agency_onboarding_foundation`.
+- Adds a resumable first-time wizard only for newly created agencies; historical agencies without a profile remain explicitly exempt.
+- Persists canonical agency identity, contact, address, time-zone, currency, working-hours, logo, email-configuration state, dashboard preferences, notification preferences, branding, and document templates.
+- Creates one deterministic, idempotent synthetic travel workspace across existing Client, Passenger, Request, Flight, Trip, Offer, and Booking workspace collections.
+- Exposes completion progress, audited saves, validation, safe retry, tenant isolation, and an explicit completion gate before normal Agency workspace entry.
+- Performs no provider, airline, GDS, NDC, payment, ticketing, messaging, AI, background, deployment, or production-data operation.
+- See [Commercial Pilot Agency Onboarding Foundation](docs/architecture/commercial-pilot-agency-onboarding-foundation.md).
+
+## Phase 58.2 - Operations Command Centre Foundation
+
+- Active marker: `phase_58_2_commercial_pilot_operations_command_centre_foundation`.
+- Makes `/agency` the primary operational home after Phase 58.1 onboarding while preserving `/agency/operations-command-center` as a compatibility route.
+- Reuses the canonical work queue, deadlines, requests, offers, booking handoffs, passenger services, documents, finance, timeline, audit, and staff records; no command-centre collection or parallel workflow is created.
+- Adds bounded, tenant-scoped, deterministic summaries for My Work Today, operational queues, the selected-day timeline, actionable alerts, permission-aware quick actions, and recent activity.
+- Reuses existing guarded work-queue APIs for assign-to-self, reassign, and complete actions. The command-centre API does not invent state transitions or provider operations.
+- Consumes Phase 58.1 dashboard preferences with safe defaults for legacy agencies and keeps incomplete newly created agencies behind the existing onboarding redirect.
+- See [Commercial Pilot Operations Command Centre Foundation](docs/architecture/commercial-pilot-operations-command-centre-foundation.md).
+
+## Phase 58.3 - Complete Pilot Agency Experience
+
+- Active marker: `phase_58_3_complete_pilot_agency_experience`.
+- Extends the existing Phase 58.1 `Create Demo Workspace` action with Small, Medium, Corporate, and Luxury Leisure Agency profiles; no parallel onboarding or demo API is created.
+- Generates a bounded, deterministic, idempotent, tenant-owned network of canonical operational records covering clients, associated passengers, requests, multi-segment trips, offer comparison and acceptance, booking readiness and handoff, booking timelines, Ticket/EMD mirrors, passenger services, documents/packages, finance, work queue, deadlines, workflow, timeline, disruption, and after-sales examples.
+- Stores the selected profile, original anchor date, stable record manifest, generated counts, scenarios, safety flags, progress state, and completion summary on the existing `AgencyOnboardingProfile`.
+- Naturally populates Phase 58.2 My Work Today, operational queues, timeline, alerts, recent activity, quick actions, and operational KPI summaries.
+- Performs no provider, airline, GDS/NDC, booking, payment, ticket/EMD issuance, communication, rendering/delivery, AI, background, deployment, or production-seeding operation.
+- See [Complete Pilot Agency Experience](docs/architecture/complete-pilot-agency-experience.md).
+
+## Phase 58.4 - AeroAssist Product Standards and UX Refinement
+
+- Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+- Establishes permanent travel-first terminology, page structure, interaction, accessibility, responsive, customization, and destructive-action standards.
+- Reuses and consolidates shared headers, buttons, empty/loading/error states, status and priority badges, filters, confirmations, summaries, timelines, alerts, and form sections.
+- Refines Agency onboarding, Operations, Requests, Offers, Booking workspace, Passenger profiles, Documents, and Tasks and follow-ups without changing their canonical APIs or domain ownership.
+- Places source details and rarely used controls behind explicit progressive disclosure while keeping blockers, status, and next actions visible.
+- Adds source-level terminology, accessibility-control, shared-component, canonical-route, readiness, and registration validation.
+- Adds no route, model, collection, provider action, workflow editor, operational automation, deployment, or production-data change.
+- See [AeroAssist Product Standards](docs/product/aeroassist-product-standards.md).
+
+## Phase 58.5 - Commercial Pilot Readiness
+
+- Active marker: `phase_58_5_commercial_pilot_readiness`.
+- Adds the controlled `docs/pilot/` package covering supported scope, known limitations, onboarding, Agency administration, consultant operations, first-day and daily checklists, synthetic demo use, backup/recovery, incidents, feedback, acceptance, and exit.
+- Adds tenant-owned `CommercialPilotFeedback` metadata with canonical related-record validation, Agency isolation, permission-aware submission, read-only Agency history, governed Platform lifecycle review, and existing audit events.
+- Adds `/agency/pilot-feedback`, `/platform/pilot-feedback`, and `/platform/commercial-pilot-readiness` using canonical route families and Phase 58.4 shared product components.
+- Adds concise, non-intrusive pilot guidance to onboarding, Operations, Requests, Offers, Booking, Passengers, Documents, and Tasks.
+- Computes `ready`, `conditionally_ready`, or `blocked` from Phase 58 capability registration, pilot documents, configuration/database readiness, smoke inventory, selected-agency context, and disabled execution boundaries.
+- Preserves Phase 57 production evidence, backup, rollback, tenant-isolation evidence, assessment, and human sign-off as the authoritative release gate.
+- Migrates the Phase 58.4 product-standards smoke to minimum semantics and makes the Phase 58.5 Commercial Pilot readiness smoke the sole exact-current assertion.
+- Adds no anonymous/public feedback, external support integration, provider or payment execution, ticketing, messaging, production seeding, deployment, backup/restore action, or automatic approval.
+- See [Commercial Pilot Package](docs/pilot/README.md).

@@ -23,7 +23,8 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
     const workspaces = await apiGet(`/api/agencies/${agencyId}/workspaces`)
     const staff = await apiGet(`/api/agencies/${agencyId}/staff`)
     const invitations = await apiGet(`/api/agencies/${agencyId}/staff/invitations`)
-    setState({ summary, agency: agency.agency, workspaces: workspaces.items, staff: staff.items, invitations: invitations.items })
+    const onboarding = await apiGet(`/api/agencies/${agencyId}/onboarding`)
+    setState({ summary, agency: agency.agency, workspaces: workspaces.items, staff: staff.items, invitations: invitations.items, onboarding })
     setAgencyForm({
       name: agency.agency.name,
       legal_name: agency.agency.legal_name,
@@ -116,6 +117,11 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
     window.location.href = `/agency?agency_id=${agencyId}`
   }
 
+  function continueOnboarding() {
+    rememberSelectedAgency(agencyId)
+    window.location.href = `/agency/onboarding?agency_id=${agencyId}`
+  }
+
   const hasWorkspace = Boolean(state?.workspaces?.length)
 
   return (
@@ -131,6 +137,11 @@ export default function PlatformAgencyDetailPage({ agencyId }) {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={state?.agency?.status} />
+                {state?.onboarding?.required ? (
+                  <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700" type="button" onClick={continueOnboarding}>
+                    Continue onboarding ({state.onboarding.progress_percent}%)
+                  </button>
+                ) : null}
                 <button className="rounded-md border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" type="button" onClick={enterWorkspace} disabled={!hasWorkspace}>
                   Enter workspace
                 </button>

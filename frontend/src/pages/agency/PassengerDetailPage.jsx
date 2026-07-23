@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react"
+import Archive from "lucide-react/dist/esm/icons/archive.js"
+import Pencil from "lucide-react/dist/esm/icons/pencil.js"
+import ConfirmationDialog from "../../components/ConfirmationDialog"
+import DestructiveButton from "../../components/DestructiveButton"
 import EmptyState from "../../components/EmptyState"
+import PageHeader from "../../components/PageHeader"
 import PassengerForm from "../../components/PassengerForm"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RelationshipEditor from "../../components/RelationshipEditor"
+import SecondaryButton from "../../components/SecondaryButton"
 import StatusBadge from "../../components/StatusBadge"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -15,6 +21,7 @@ export default function PassengerDetailPage({ passengerId }) {
   const [showLink, setShowLink] = useState(false)
   const [mergeTarget, setMergeTarget] = useState("")
   const [mergeReason, setMergeReason] = useState("")
+  const [confirmation, setConfirmation] = useState("")
   const [error, setError] = useState("")
 
   async function load() {
@@ -60,8 +67,18 @@ export default function PassengerDetailPage({ passengerId }) {
   }
 
   async function archiveOrRestore() {
+    if (state.passenger.status !== "archived") {
+      setConfirmation("archive")
+      return
+    }
     const action = state.passenger.status === "archived" ? "restore" : "archive"
     await apiPost(`/api/agencies/${state.agency.id}/passengers/${passengerId}/${action}`)
+    await load()
+  }
+
+  async function confirmArchive() {
+    await apiPost(`/api/agencies/${state.agency.id}/passengers/${passengerId}/archive`)
+    setConfirmation("")
     await load()
   }
 
@@ -73,11 +90,16 @@ export default function PassengerDetailPage({ passengerId }) {
 
   async function mergePassenger(event) {
     event.preventDefault()
+    setConfirmation("merge")
+  }
+
+  async function confirmMerge() {
     await apiPost(`/api/agencies/${state.agency.id}/passengers/${passengerId}/merge`, {
       target_passenger_id: mergeTarget,
       reason: mergeReason || "Duplicate passenger record",
       retained_fields_summary: { retained_profile: mergeTarget },
     })
+    setConfirmation("")
     await load()
   }
 
@@ -90,20 +112,14 @@ export default function PassengerDetailPage({ passengerId }) {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <a className="text-sm font-medium text-blue-700" href="/agency/passengers">Back to passengers</a>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">{state?.passenger?.display_name}</h2>
-              <p className="mt-1 text-sm text-slate-600">Traveler profile. Access is granted through client/passenger relationships.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge status={state?.passenger?.status} />
-              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={() => setShowEdit((value) => !value)}>Edit</button>
-              <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" onClick={archiveOrRestore}>
-                {state?.passenger?.status === "archived" ? "Restore" : "Archive"}
-              </button>
-            </div>
-          </div>
+          <PageHeader
+            breadcrumbs={[{ label: "Passengers", href: "/agency/passengers" }, { label: state?.passenger?.display_name || "Passenger" }]}
+            eyebrow="Passenger profile"
+            title={state?.passenger?.display_name}
+            description="Identity, travel documents, assistance needs, preferences, and linked clients."
+            status={<StatusBadge status={state?.passenger?.status} />}
+            actions={<><SecondaryButton icon={Pencil} onClick={() => setShowEdit((value) => !value)}>{showEdit ? "Close edit form" : "Edit passenger"}</SecondaryButton><SecondaryButton icon={Archive} onClick={archiveOrRestore}>{state?.passenger?.status === "archived" ? "Restore passenger" : "Archive passenger"}</SecondaryButton></>}
+          />
           <WorkflowContinuityPanel
             breadcrumbs={[{ label: "Passengers", href: "/agency/passengers" }]}
             currentLabel={state?.passenger?.display_name || "Passenger"}
@@ -123,8 +139,8 @@ export default function PassengerDetailPage({ passengerId }) {
           {showEdit ? <PassengerForm initial={state.passenger} onSubmit={savePassenger} /> : null}
           <section className="grid gap-4 lg:grid-cols-3">
             <InfoCard title="Overview" rows={[
-              ["DOB", state?.passenger?.date_of_birth],
-              ["PTC", state?.passenger?.passenger_type],
+              ["Date of birth", state?.passenger?.date_of_birth],
+              ["Passenger type", state?.passenger?.passenger_type],
               ["Nationality", state?.passenger?.nationality || "Not set"],
               ["Residence", state?.passenger?.residence_country || "Not set"],
             ]} />
@@ -134,7 +150,7 @@ export default function PassengerDetailPage({ passengerId }) {
               ["Passport expiry", state?.passenger?.passport_expiry || "Not set"],
               ["Notes", state?.passenger?.travel_document_notes || "None"],
             ]} />
-            <InfoCard title="Assistance / Preferences" rows={[
+            <InfoCard title="Assistance and preferences" rows={[
               ["Assistance", state?.passenger?.known_assistance_needs || "None"],
               ["Medical internal", state?.passenger?.medical_notes_internal || "None"],
               ["Meals", state?.passenger?.meal_preferences || "None"],
@@ -166,12 +182,12 @@ export default function PassengerDetailPage({ passengerId }) {
                 })}
               </div>
             ) : (
-              <EmptyState title="No clients linked" body="Passenger access must be granted through explicit relationship permissions." />
+              <EmptyState title="No client linked" body="Link this passenger to the client who can view or request travel for them." />
             )}
           </section>
-          <section className="rounded-lg border border-slate-200 bg-white p-5">
-            <h3 className="font-semibold text-slate-950">Merge duplicate passenger</h3>
-            <p className="mt-2 text-sm text-slate-600">Merge is non-destructive. This profile becomes duplicate_merged and future records should follow merged_into_passenger_id.</p>
+          <details className="rounded-lg border border-slate-200 bg-white p-5">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Resolve a duplicate passenger</summary>
+            <p className="mt-3 text-sm text-slate-600">Choose the passenger profile to keep. This profile will be archived as a duplicate and its history will remain available.</p>
             {mergeOptions.length && state?.passenger?.status !== "duplicate_merged" ? (
               <form className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={mergePassenger}>
                 <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={mergeTarget} onChange={(event) => setMergeTarget(event.target.value)}>
@@ -180,12 +196,30 @@ export default function PassengerDetailPage({ passengerId }) {
                   ))}
                 </select>
                 <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Merge reason" value={mergeReason} onChange={(event) => setMergeReason(event.target.value)} />
-                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="submit">Merge</button>
+                <DestructiveButton type="submit">Merge profiles</DestructiveButton>
               </form>
             ) : (
               <p className="mt-3 text-sm text-slate-500">No merge targets available.</p>
             )}
-          </section>
+          </details>
+          <ConfirmationDialog
+            confirmLabel="Archive passenger"
+            destructive
+            message="The passenger will no longer appear in active work. Their history and linked travel details will remain available."
+            onCancel={() => setConfirmation("")}
+            onConfirm={confirmArchive}
+            open={confirmation === "archive"}
+            title="Archive this passenger?"
+          />
+          <ConfirmationDialog
+            confirmLabel="Merge profiles"
+            destructive
+            message="This profile will be marked as a duplicate and future work should use the selected passenger profile. Existing history will not be deleted."
+            onCancel={() => setConfirmation("")}
+            onConfirm={confirmMerge}
+            open={confirmation === "merge"}
+            title="Merge these passenger profiles?"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

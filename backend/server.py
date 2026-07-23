@@ -28,11 +28,25 @@ from observability import (
 )
 from services.final_stabilization_pilot_release_gate_service import release_gate_readiness_metadata
 from services.pilot_operations_release_readiness_service import pilot_operations_readiness_metadata
+from services.agency_onboarding_service import (
+    agency_onboarding_readiness_metadata,
+    complete_pilot_agency_experience_readiness_metadata,
+)
+from services.commercial_pilot_operations_command_centre_service import (
+    commercial_pilot_operations_command_centre_readiness_metadata,
+)
+from services.aeroassist_product_standards_service import (
+    aeroassist_product_standards_readiness_metadata,
+)
+from services.commercial_pilot_readiness_service import (
+    commercial_pilot_readiness_metadata,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import platform_observability
 from routers import platform_final_stabilization_pilot_release_gate
 from routers import platform_pilot_operations_release_readiness
+from routers import agency_pilot_feedback, platform_commercial_pilot_readiness, platform_pilot_feedback
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
 from routers import agency_feature_bundle_dependencies, agency_feature_bundle_rollout_approvals, agency_feature_bundle_rollout_change_requests, agency_feature_bundle_rollout_decisions, agency_feature_bundle_rollout_issues, agency_feature_bundle_rollout_plans, agency_feature_bundle_rollout_readiness, agency_feature_bundle_rollout_risks, agency_feature_bundle_rollout_rollback_plans, agency_feature_bundle_rollout_schedule, agency_feature_bundle_rollout_summary_packs, agency_feature_bundle_rollout_timeline, agency_rollout_dashboard, platform_feature_bundle_dependencies, platform_feature_bundle_rollout_approvals, platform_feature_bundle_rollout_change_requests, platform_feature_bundle_rollout_decisions, platform_feature_bundle_rollout_issues, platform_feature_bundle_rollout_plans, platform_feature_bundle_rollout_readiness, platform_feature_bundle_rollout_risks, platform_feature_bundle_rollout_rollback_plans, platform_feature_bundle_rollout_schedule, platform_feature_bundle_rollout_summary_packs, platform_feature_bundle_rollout_timeline, platform_rollout_dashboard
@@ -43,7 +57,7 @@ from routers import agency_airline_master_profiles, platform_airline_master_prof
 from routers import agency_airline_contact_directory, agency_airline_distribution_capabilities, agency_airline_fare_brand_intelligence, agency_airline_intelligence_readiness, agency_airline_knowledge_versioning, agency_airline_policy_evidence_governance, agency_airline_service_coverage, agency_interline_codeshare_intelligence, platform_airline_contact_intelligence, platform_airline_distribution_capabilities, platform_airline_fare_brand_intelligence, platform_airline_intelligence_readiness, platform_airline_knowledge_versioning, platform_airline_policy_evidence_governance, platform_airline_service_coverage, platform_interline_codeshare_intelligence
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
-from routers import agencies, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_onboarding, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -231,6 +245,11 @@ async def root_health() -> dict:
         "service": "AeroAssist AgencyOS API",
         "phase": CURRENT_BUILD_PHASE,
         "pilot_operations_release_readiness": True,
+        "commercial_pilot_agency_onboarding_foundation": True,
+        "commercial_pilot_operations_command_centre_foundation": True,
+        "complete_pilot_agency_experience": True,
+        "aeroassist_product_standards_ux_refinement": True,
+        "commercial_pilot_readiness": True,
     }
     if not settings.is_production:
         payload["app_env"] = settings.app_env
@@ -5350,6 +5369,11 @@ async def internal_readiness_payload() -> dict:
         "observability_diagnostics_performance_telemetry_foundation": observability_readiness_metadata(settings),
         "final_stabilization_pilot_release_gate": release_gate_readiness_metadata(),
         "pilot_operations_release_readiness": pilot_operations_readiness_metadata(),
+        "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
+        "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
+        "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
+        "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
+        "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7293,6 +7317,11 @@ async def public_readiness_payload() -> dict:
         "persistence_scalability_tenant_query_hardening_foundation": persistence_readiness_metadata(),
         "observability_diagnostics_performance_telemetry_foundation": observability_readiness_metadata(settings),
         "final_stabilization_pilot_release_gate": release_gate_readiness_metadata(),
+        "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
+        "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
+        "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
+        "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
+        "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]
@@ -7404,6 +7433,8 @@ app.include_router(platform.router)
 app.include_router(platform_observability.router)
 app.include_router(platform_final_stabilization_pilot_release_gate.router)
 app.include_router(platform_pilot_operations_release_readiness.router)
+app.include_router(platform_pilot_feedback.router)
+app.include_router(platform_commercial_pilot_readiness.router)
 app.include_router(platform_blueprint.router)
 app.include_router(platform_airline_intelligence.router)
 app.include_router(platform_rules_services.router)
@@ -7510,6 +7541,8 @@ app.include_router(platform_documents.router)
 app.include_router(platform_gds_parser.router)
 app.include_router(platform_airline_policy_ingestion.router)
 app.include_router(agencies.router)
+app.include_router(agency_onboarding.router)
+app.include_router(agency_pilot_feedback.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
 app.include_router(request_intakes.public_router)

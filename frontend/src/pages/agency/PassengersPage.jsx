@@ -1,11 +1,18 @@
 import { useEffect, useMemo, useState } from "react"
+import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
+import FilterBar from "../../components/FilterBar"
+import PageHeader from "../../components/PageHeader"
+import PilotGuidance from "../../components/PilotGuidance"
 import PassengerForm from "../../components/PassengerForm"
+import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SecondaryButton from "../../components/SecondaryButton"
 import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { passengerTypeLabel } from "../../lib/productLanguage"
 
 export default function PassengersPage() {
   const query = new URLSearchParams(window.location.search)
@@ -57,33 +64,43 @@ export default function PassengersPage() {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">CRM Foundation</p>
-              <h2 className="text-2xl font-semibold text-slate-950">Passengers</h2>
-              <p className="mt-1 text-sm text-slate-600">Traveler profiles with PTC, documents, assistance needs, and client relationships.{sourceClientId ? " The new passenger will be linked to the source client." : ""}</p>
-            </div>
-            <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white" onClick={() => setShowCreate((value) => !value)}>
-              {showCreate ? "Close form" : "Create passenger"}
-            </button>
-          </div>
+          <PageHeader
+            eyebrow="Passenger profiles"
+            title="Passengers"
+            description={`Keep identity, travel documents, preferences, and assistance needs together.${sourceClientId ? " The new passenger will be linked to the selected client." : ""}`}
+            actions={showCreate
+              ? <SecondaryButton onClick={() => setShowCreate(false)}>Close form</SecondaryButton>
+              : <PrimaryButton icon={Plus} onClick={() => setShowCreate(true)}>Create passenger</PrimaryButton>}
+          />
+          <PilotGuidance area="passengers" />
           {showCreate ? <PassengerForm onSubmit={createPassenger} submitLabel="Create passenger" /> : null}
-          <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
-            <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search passengers" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.passenger_type} onChange={(event) => setFilters({ ...filters, passenger_type: event.target.value })}>
-              <option value="">All PTCs</option>
-              {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-            <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="archived">Archived</option>
-              <option value="duplicate_merged">Duplicate merged</option>
-            </select>
-          </section>
+          <FilterBar onClear={() => setFilters({ search: "", passenger_type: "", status: "" })} resultCount={filteredPassengers.length} title="Filter passengers">
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Search
+                <input className="field" placeholder="Passenger name or nationality" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Passenger type
+                <select className="field" value={filters.passenger_type} onChange={(event) => setFilters({ ...filters, passenger_type: event.target.value })}>
+                  <option value="">All passenger types</option>
+                  {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => (
+                    <option key={value} value={value}>{passengerTypeLabel(value)}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-medium text-slate-700">
+                Current status
+                <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
+                  <option value="">All statuses</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="archived">Archived</option>
+                  <option value="duplicate_merged">Merged duplicate</option>
+                </select>
+              </label>
+            </div>
+          </FilterBar>
           {filteredPassengers.length ? (
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {filteredPassengers.map((passenger) => (
@@ -91,7 +108,7 @@ export default function PassengersPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-slate-950">{passenger.display_name}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{passenger.passenger_type} · born {passenger.date_of_birth}</p>
+                      <p className="mt-1 text-sm text-slate-600">{passengerTypeLabel(passenger.passenger_type)} · born {passenger.date_of_birth}</p>
                     </div>
                     <StatusBadge status={passenger.status} />
                   </div>
@@ -100,7 +117,9 @@ export default function PassengersPage() {
               ))}
             </div>
           ) : (
-            <EmptyState title="No passengers found" body="Create traveler profiles separately from client account records." />
+            <EmptyState title="No passengers match these filters" body="Clear the filters or create a passenger profile for the person who will travel.">
+              <PrimaryButton icon={Plus} onClick={() => setShowCreate(true)}>Create passenger</PrimaryButton>
+            </EmptyState>
           )}
         </div>
       </ProtectedRoute>

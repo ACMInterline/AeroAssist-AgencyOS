@@ -352,3 +352,47 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Canonical protected API root: `/api/platform/pilot-operations`.
 - Evidence, assessments, sign-offs, pilot agencies, synthetic datasets, health timeline, and production diagnostics are subresources of that root.
 - There is no `/admin/*`, Agency, portal, or public pilot-operations route. Public `/api/health` and `/api/readiness` expose only static, non-sensitive Phase 57.0 capability metadata.
+
+## Phase 58.1 Commercial Pilot Agency Onboarding Routes
+
+- Canonical Agency UI: `/agency/onboarding`.
+- Canonical API root: `/api/agencies/{agency_id}/onboarding`.
+- Newly created incomplete agencies are redirected through the shared Agency loader; completed and legacy-exempt agencies retain existing canonical routes.
+- Platform agency detail links to the same Agency route and API under existing Platform authorization; no parallel Platform onboarding API is introduced.
+- Phase 58.1 adds no `/admin/*`, `/agent/*`, public mutation, provider route, or duplicate agency/travel route family.
+
+## Phase 58.2 Commercial Pilot Operations Command Centre Routes
+
+- Canonical Agency home: `/agency`.
+- Compatibility Agency route: `/agency/operations-command-center`.
+- Canonical tenant-scoped read API: `GET /api/agencies/{agency_id}/operations-command-center`.
+- Supported assignment and completion mutations remain under `/api/agencies/{agency_id}/work-queue/work-items/{work_item_id}/*` and are not duplicated by the command-centre router.
+- Incomplete newly created agencies continue through the Phase 58.1 redirect before either Agency operations route is rendered.
+- Phase 58.2 adds no `/admin/*`, `/agent/*`, public mutation, provider route, parallel queue API, or parallel workflow route.
+
+## Phase 58.3 Complete Pilot Agency Experience Routes
+
+- The canonical Agency UI remains `/agency/onboarding`.
+- Profile preview uses `GET /api/agencies/{agency_id}/onboarding/demo-workspace/profiles`.
+- Profile generation continues to use `POST /api/agencies/{agency_id}/onboarding/demo-workspace`, with an optional validated `demo_profile` body.
+- Generation remains restricted by the existing onboarding Agency authorization and reuses all downstream canonical UI/API route families.
+- Phase 58.3 adds no separate demo UI route, `/admin/*`, `/agent/*`, public mutation, fake operational API, provider route, or alternate workflow route.
+
+## Phase 58.4 Product Standards and UX Refinement Routes
+
+- Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+- Phase 58.4 adds no frontend or API route.
+- Shared components refine existing `/agency/*` workspaces and continue to call their existing `/api/agencies/{agency_id}/*` contracts.
+- Platform, Agency, Client Portal, and public route ownership remains unchanged.
+- Travel-first labels do not rename internal route paths, model symbols, or compatibility identifiers.
+- No `/admin/*`, `/agent/*`, parallel workflow root, public mutation, or direct frontend persistence access is introduced.
+
+## Phase 58.5 Commercial Pilot Readiness Routes
+
+- Agency help and feedback UI: `/agency/pilot-feedback`.
+- Tenant-scoped Agency API: `GET|POST /api/agencies/{agency_id}/pilot-feedback` and `GET /api/agencies/{agency_id}/pilot-feedback/{feedback_id}`.
+- Platform feedback review UI: `/platform/pilot-feedback`.
+- Protected Platform feedback API: `GET /api/platform/pilot-feedback`, `GET /api/platform/pilot-feedback/{feedback_id}`, and `PATCH /api/platform/pilot-feedback/{feedback_id}`.
+- Platform Commercial Pilot readiness UI: `/platform/commercial-pilot-readiness`.
+- Protected computed assessment API: `GET /api/platform/commercial-pilot-readiness`, optionally scoped with `agency_id`.
+- Phase 58.5 adds no public or anonymous feedback route, `/admin/*`, `/agent/*`, external support endpoint, parallel incident/ticketing system, or Phase 57 release mutation.

@@ -726,6 +726,15 @@ class Agency(BaseDocument):
     default_currency: str = "EUR"
     country: str = "SK"
     timezone: str = "Europe/Bratislava"
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    working_hours: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class AgencyCreate(BaseModel):
@@ -752,6 +761,148 @@ class AgencyUpdate(BaseModel):
     default_currency: Optional[str] = None
     country: Optional[str] = None
     timezone: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    working_hours: Optional[List[Dict[str, Any]]] = None
+
+
+class AgencyOnboardingStatus(str, Enum):
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+
+class AgencyDemoWorkspaceProfile(str, Enum):
+    SMALL_AGENCY = "small_agency"
+    MEDIUM_AGENCY = "medium_agency"
+    CORPORATE_AGENCY = "corporate_agency"
+    LUXURY_LEISURE_AGENCY = "luxury_leisure_agency"
+
+
+class AgencyEmailConfigurationStatus(str, Enum):
+    NOT_CONFIGURED = "not_configured"
+    CONFIGURATION_PENDING = "configuration_pending"
+    CONFIGURED_UNVERIFIED = "configured_unverified"
+    VERIFIED = "verified"
+    NOT_REQUIRED = "not_required"
+
+
+class AgencyOnboardingWorkingDay(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    day: str
+    enabled: bool = True
+    open_time: Optional[str] = None
+    close_time: Optional[str] = None
+
+
+class AgencyOnboardingProfile(BaseDocument):
+    agency_id: str
+    profile_key: str = "commercial_pilot"
+    onboarding_status: AgencyOnboardingStatus = AgencyOnboardingStatus.NOT_STARTED
+    current_step: str = "agency_profile"
+    completed_steps: List[str] = Field(default_factory=list)
+    progress_percent: int = 0
+    logo_status: str = "pending"
+    defaults_seeded: bool = False
+    demo_workspace_seeded: bool = False
+    demo_workspace_profile: Optional[AgencyDemoWorkspaceProfile] = None
+    demo_generation_status: str = "not_started"
+    demo_anchor_date: Optional[date] = None
+    demo_generation_summary: Dict[str, Any] = Field(default_factory=dict)
+    seeded_record_ids: Dict[str, Any] = Field(default_factory=dict)
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
+    last_saved_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    completed_by_user_id: Optional[str] = None
+    resumable: bool = True
+
+
+class AgencyDemoWorkspaceGenerateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    demo_profile: AgencyDemoWorkspaceProfile = AgencyDemoWorkspaceProfile.SMALL_AGENCY
+
+
+class AgencyOnboardingProfileUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = None
+    legal_name: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
+    city: Optional[str] = None
+    region: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    timezone: Optional[str] = None
+    default_currency: Optional[str] = None
+    working_hours: Optional[List[AgencyOnboardingWorkingDay]] = None
+    current_step: Optional[str] = None
+
+
+class AgencyOnboardingEmailStatusUpdate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    configuration_status: AgencyEmailConfigurationStatus
+    sender_name: Optional[str] = None
+    sender_email: Optional[EmailStr] = None
+    reply_to_email: Optional[EmailStr] = None
+
+
+class AgencyOnboardingPreferencesUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    landing_page: str = "/agency"
+    compact_mode: bool = False
+    dashboard_widgets: List[str] = Field(default_factory=list)
+    preferred_starting_view: str = "my_work"
+    visible_operations_sections: List[str] = Field(
+        default_factory=lambda: ["my_work", "queues", "timeline", "alerts", "quick_actions", "recent_activity"]
+    )
+    default_assignment_filter: str = "my_work"
+    default_urgency_filter: str = "all"
+    in_app_notifications: bool = True
+    email_notifications: bool = False
+    assignment_notifications: bool = True
+    deadline_notifications: bool = True
+    service_notifications: bool = True
+
+
+class AgencyDashboardPreferences(BaseDocument):
+    agency_id: str
+    preference_key: str = "default"
+    landing_page: str = "/agency"
+    compact_mode: bool = False
+    dashboard_widgets: List[str] = Field(default_factory=list)
+    preferred_starting_view: str = "my_work"
+    visible_operations_sections: List[str] = Field(
+        default_factory=lambda: ["my_work", "queues", "timeline", "alerts", "quick_actions", "recent_activity"]
+    )
+    default_assignment_filter: str = "my_work"
+    default_urgency_filter: str = "all"
+    seeded_by_onboarding: bool = False
+
+
+class AgencyNotificationPreferences(BaseDocument):
+    agency_id: str
+    preference_key: str = "default"
+    in_app_notifications: bool = True
+    email_notifications: bool = False
+    assignment_notifications: bool = True
+    deadline_notifications: bool = True
+    service_notifications: bool = True
+    seeded_by_onboarding: bool = False
 
 
 class AgencyWorkspace(BaseDocument):
@@ -24772,6 +24923,7 @@ class AgencyEmailSettings(BaseDocument):
     status: AgencyEmailSettingsStatus = AgencyEmailSettingsStatus.ACTIVE
     verified_at: Optional[datetime] = None
     last_validation_error: Optional[str] = None
+    configuration_status: AgencyEmailConfigurationStatus = AgencyEmailConfigurationStatus.NOT_CONFIGURED
 
 
 class AgencyEmailSettingsUpdate(BaseModel):
@@ -24788,6 +24940,7 @@ class AgencyEmailSettingsUpdate(BaseModel):
     smtp_use_tls: Optional[bool] = None
     mode: Optional[AgencyEmailMode] = None
     status: Optional[AgencyEmailSettingsStatus] = None
+    configuration_status: Optional[AgencyEmailConfigurationStatus] = None
 
 
 class ReferenceRecordScope(str, Enum):
@@ -28488,3 +28641,99 @@ class PilotHealthTimelineEvent(BaseDocument):
     recorded_by_user_id: str
     immutable: bool = True
     metadata_only: bool = True
+
+
+class CommercialPilotFeedbackCategory(str, Enum):
+    USABILITY = "usability"
+    WORKFLOW = "workflow"
+    DATA = "data"
+    DOCUMENTATION = "documentation"
+    DEFECT = "defect"
+    SUGGESTION = "suggestion"
+    OTHER = "other"
+
+
+class CommercialPilotFeedbackUrgency(str, Enum):
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class CommercialPilotFeedbackStatus(str, Enum):
+    SUBMITTED = "submitted"
+    REVIEWING = "reviewing"
+    PLANNED = "planned"
+    RESOLVED = "resolved"
+    CLOSED = "closed"
+
+
+class CommercialPilotFeedbackCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    category: CommercialPilotFeedbackCategory
+    title: str = Field(min_length=3, max_length=160)
+    description: str = Field(min_length=8, max_length=4000)
+    affected_area: str = Field(min_length=2, max_length=80)
+    urgency: CommercialPilotFeedbackUrgency = CommercialPilotFeedbackUrgency.NORMAL
+    related_record_type: Optional[str] = Field(default=None, max_length=80)
+    related_record_id: Optional[str] = Field(default=None, max_length=160)
+
+
+class CommercialPilotFeedbackReviewUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: CommercialPilotFeedbackStatus
+    review_notes: str = Field(default="", max_length=2000)
+
+
+class CommercialPilotFeedback(BaseDocument):
+    agency_id: str
+    category: CommercialPilotFeedbackCategory
+    title: str
+    description: str
+    affected_area: str
+    urgency: CommercialPilotFeedbackUrgency = CommercialPilotFeedbackUrgency.NORMAL
+    related_record_type: Optional[str] = None
+    related_record_id: Optional[str] = None
+    related_record_label: Optional[str] = None
+    submitted_by: str
+    submitted_by_name: str
+    submitted_at: datetime = Field(default_factory=now_utc)
+    status: CommercialPilotFeedbackStatus = CommercialPilotFeedbackStatus.SUBMITTED
+    review_notes: str = ""
+    reviewed_by_user_id: Optional[str] = None
+    reviewed_by_name: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    metadata_only: bool = True
+
+
+class CommercialPilotReadinessStatus(str, Enum):
+    READY = "ready"
+    CONDITIONALLY_READY = "conditionally_ready"
+    BLOCKED = "blocked"
+
+
+class CommercialPilotReadinessCheck(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    key: str
+    label: str
+    status: str
+    critical: bool = False
+    summary: str
+    remediation: Optional[str] = None
+
+
+class CommercialPilotReadinessAssessment(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    phase: str
+    status: CommercialPilotReadinessStatus
+    agency_id: Optional[str] = None
+    assessed_at: datetime = Field(default_factory=now_utc)
+    checks: List[CommercialPilotReadinessCheck] = Field(default_factory=list)
+    blocker_count: int = 0
+    warning_count: int = 0
+    phase_57_release_gate_preserved: bool = True
+    automatic_release_approval_enabled: bool = False

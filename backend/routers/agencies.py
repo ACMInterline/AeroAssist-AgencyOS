@@ -31,6 +31,7 @@ from models import (
 )
 from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import require_any_agency_role
+from services.agency_onboarding_service import AgencyOnboardingService
 
 router = APIRouter(prefix="/api/agencies", tags=["agencies"])
 
@@ -538,6 +539,7 @@ async def create_agency(
 
     agency = Agency(**payload.model_dump(mode="json"))
     agency_doc = await db.collection("agencies").insert_one(agency.model_dump(mode="json"))
+    await AgencyOnboardingService(db).initialize_for_new_agency(agency.id, user["id"])
     await write_audit(
         db,
         event_type="agency.created",

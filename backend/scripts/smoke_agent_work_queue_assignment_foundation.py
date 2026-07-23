@@ -315,7 +315,7 @@ def verify_router_ui_docs_registration() -> None:
         (ROOT / "frontend/src/App.jsx", "/platform/work-queues"),
         (ROOT / "frontend/src/App.jsx", "/agency/work-queue"),
         (ROOT / "frontend/src/pages/platform/WorkQueueGovernancePage.jsx", "Platform governance only"),
-        (ROOT / "frontend/src/pages/agency/AgentWorkQueuePage.jsx", "Bulk assign to me"),
+        (ROOT / "frontend/src/pages/agency/AgentWorkQueuePage.jsx", "Assign selected to me"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Agent Work Queue"),
         (ROOT / "backend/services/saas_subscription_service.py", "work_queue"),
         (ROOT / "backend/services/blueprint_adoption_service.py", "Agent Work Queue and Assignment"),

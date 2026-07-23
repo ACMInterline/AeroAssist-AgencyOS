@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react"
+import ArchiveX from "lucide-react/dist/esm/icons/archive-x.js"
+import RefreshCw from "lucide-react/dist/esm/icons/refresh-cw.js"
+import ConfirmationDialog from "../../components/ConfirmationDialog"
+import DestructiveButton from "../../components/DestructiveButton"
+import DetailSummary from "../../components/DetailSummary"
 import EmptyState from "../../components/EmptyState"
+import OperationalAlert from "../../components/OperationalAlert"
+import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import SecondaryButton from "../../components/SecondaryButton"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
@@ -14,6 +22,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   const [state, setState] = useState(null)
   const [statusForm, setStatusForm] = useState({ status: "draft" })
   const [recordForm, setRecordForm] = useState({ pnr_locator: "", provider_status: "draft", booking_status: "draft", internal_notes: "" })
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
@@ -84,11 +93,16 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   }
 
   async function cancelWorkspace() {
+    setConfirmCancel(true)
+  }
+
+  async function confirmCancelWorkspace() {
     setError("")
     setMessage("")
     try {
       await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/cancel`)
-      setMessage("Booking workspace cancelled.")
+      setConfirmCancel(false)
+      setMessage("Booking cancelled.")
       await load()
     } catch (err) {
       setError(err.message)
@@ -153,32 +167,23 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <a className="text-sm font-medium text-blue-700" href="/agency/booking-workspaces">Back to booking workspaces</a>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{workspace?.workspace_number} · {label(workspace?.provider_target)}</p>
-                <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{workspace?.title}</h2>
-                <p className="mt-1 text-sm text-slate-600">Manual PNR mirror. Provider execution is disabled.</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {workspace?.trip_id ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/trips/${workspace.trip_id}`}>Open trip</a> : null}
-                <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/after-sales?booking_workspace_id=${encodeURIComponent(workspace?.id || "")}`}>Open after-sales case</a>
-                <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={rebuildRecord}>Rebuild mirror</button>
-                <button className="rounded-md border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" type="button" onClick={cancelWorkspace}>Cancel</button>
-              </div>
-            </div>
-          </div>
+          <PageHeader
+            breadcrumbs={[{ label: "Bookings", href: "/agency/booking-workspaces" }, { label: workspace?.workspace_number || "Booking" }]}
+            eyebrow={`${workspace?.workspace_number || "Booking"} · ${label(workspace?.provider_target)}`}
+            title={workspace?.title}
+            description="Track the confirmed booking details, passengers, flights, tickets, services, and next action in one place."
+            actions={<>{workspace?.trip_id ? <SecondaryButton href={`/agency/trips/${workspace.trip_id}`}>Open trip</SecondaryButton> : null}<SecondaryButton href={`/agency/after-sales?booking_workspace_id=${encodeURIComponent(workspace?.id || "")}`}>Start after-sales case</SecondaryButton><SecondaryButton icon={RefreshCw} onClick={rebuildRecord}>Refresh booking details</SecondaryButton><DestructiveButton icon={ArchiveX} onClick={cancelWorkspace}>Cancel booking</DestructiveButton></>}
+          />
 
           <WorkflowContinuityPanel
             breadcrumbs={[{ label: "Booking handoffs", href: "/agency/booking-handoffs" }, { label: "Bookings", href: "/agency/booking-workspaces" }]}
             currentLabel={workspace?.workspace_number || "Booking"}
             status={workspace?.status}
-            validation={canContinueToTicket ? { state: "ready", label: "Ticket mirror available", reason: "A canonical booking record is linked; external issuance remains separate." } : { state: "blocked", label: "Booking record required", reason: "Resolve booking readiness or rebuild the canonical record before ticketing." }}
+            validation={canContinueToTicket ? { state: "ready", label: "Ready for ticket details", reason: "Booking details are present. Ticket issue remains a separate authorized action." } : { state: "blocked", label: "Booking details required", reason: "Resolve the booking checks or refresh the booking details before continuing." }}
             previous={workspace?.offer_workspace_id ? { label: "Previous: accepted offer", href: `/agency/offers/${workspace.offer_workspace_id}` } : workspace?.trip_id ? { label: "Previous: trip", href: `/agency/trips/${workspace.trip_id}` } : { label: "Booking handoffs", href: "/agency/booking-handoffs" }}
             next={ticket
               ? { label: "Continue to ticket", href: `/agency/tickets/${ticket.id}` }
-              : { label: "Create draft ticket mirror", onClick: createDraftTicket, enabled: canContinueToTicket, reason: "A non-blocked booking record is required." }}
+              : { label: "Add ticket details", onClick: createDraftTicket, enabled: canContinueToTicket, reason: "An active booking is required." }}
             relatedRecords={[
               { label: "Trip", value: state?.trip_summary?.trip_reference || workspace?.trip_id || "none", href: workspace?.trip_id ? `/agency/trips/${workspace.trip_id}` : undefined },
               { label: "Accepted offer", value: state?.accepted_offer_summary?.id || workspace?.offer_acceptance_id || "none", href: workspace?.offer_workspace_id ? `/agency/offers/${workspace.offer_workspace_id}` : undefined },
@@ -190,16 +195,16 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
           {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div> : null}
 
-          <section className="grid gap-4 lg:grid-cols-4">
-            <Metric label="Workspace" value={label(workspace?.status)} />
-            <Metric label="Record" value={label(record?.booking_status || "draft")} />
-            <Metric label="Provider" value={label(record?.provider_status || "draft")} />
-            <Metric label="PNR" value={record?.pnr_locator || "Pending"} />
-          </section>
+          <DetailSummary title="Booking summary" columns={4} items={[
+            { label: "Current status", value: label(workspace?.status) },
+            { label: "Booking status", value: label(record?.booking_status || "draft") },
+            { label: "Airline or supplier status", value: label(record?.provider_status || "draft") },
+            { label: "PNR", value: record?.pnr_locator || "Pending" },
+          ]} />
 
           <section className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
             <div className="space-y-4">
-              <Panel title="Workspace Status">
+              <Panel title="Current status">
                 <form className="space-y-3" onSubmit={updateStatus}>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">
                     Status
@@ -211,26 +216,23 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 </form>
               </Panel>
 
-              <Panel title="Manual PNR Mirror">
+              <Panel title="Booking details">
                 {record ? (
                   <form className="space-y-3" onSubmit={updateRecord}>
                     <Field label="PNR locator" value={recordForm.pnr_locator} onChange={(value) => setRecordForm({ ...recordForm, pnr_locator: value.toUpperCase() })} />
                     <Select label="Provider status" value={recordForm.provider_status} options={providerStatuses} onChange={(value) => setRecordForm({ ...recordForm, provider_status: value })} />
                     <Select label="Booking status" value={recordForm.booking_status} options={bookingStatuses} onChange={(value) => setRecordForm({ ...recordForm, booking_status: value })} />
                     <Textarea label="Internal notes" value={recordForm.internal_notes} onChange={(value) => setRecordForm({ ...recordForm, internal_notes: value })} />
-                    <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Update record</button>
+                    <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Save booking details</button>
                   </form>
                 ) : (
-                  <EmptyState title="No booking record" body="Rebuild the mirror to create a draft booking record." />
+                  <EmptyState title="No booking details yet" body="Refresh the booking details to prepare this booking for ticket information." />
                 )}
               </Panel>
 
-              <Panel title="Provider Actions">
-                <div className="grid gap-2">
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Send to Provider</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Create Live Booking</button>
-                </div>
-              </Panel>
+              <OperationalAlert title="Airline and supplier actions">
+                AeroAssist records the outcome here. Your team continues to use the authorized airline or supplier channel for the booking itself.
+              </OperationalAlert>
 
               <Panel title="Documents">
                 <div className="grid gap-2">
@@ -243,10 +245,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
 
               <Panel title="Tickets & EMDs">
                 <div className="grid gap-2">
-                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!record}>Create draft ticket mirror</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftEmd} disabled={!record}>Create draft EMD mirror from service</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Issue ticket</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-400" type="button" disabled>Issue EMD</button>
+                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!record}>Add ticket details</button>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftEmd} disabled={!record}>Add EMD details</button>
                 </div>
                 <p className="text-xs text-slate-500">Live issuance is not implemented in this phase.</p>
               </Panel>
@@ -336,6 +336,15 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               </Panel>
             </div>
           </section>
+          <ConfirmationDialog
+            confirmLabel="Cancel booking"
+            destructive
+            message="The booking will be marked as cancelled in AeroAssist. Existing trip, passenger, ticket, and activity history will remain available."
+            onCancel={() => setConfirmCancel(false)}
+            onConfirm={confirmCancelWorkspace}
+            open={confirmCancel}
+            title="Cancel this booking?"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -344,10 +353,6 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
 
 function Panel({ title, children }) {
   return <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-950">{title}</h3>{children}</section>
-}
-
-function Metric({ label, value }) {
-  return <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p></div>
 }
 
 function Summary({ label, value }) {

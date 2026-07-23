@@ -245,7 +245,7 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/App.jsx", "/agency/document-workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "Document Workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "No duplicate render layer"),
-        (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Rendering or attaching output does not verify a requirement"),
+        (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Match the prepared document to its requirement, then record the review outcome"),
         (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Record output review"),
         (ROOT / "docs/architecture/document-workspace-foundation.md", "Document Workspace Foundation"),
         (ROOT / "docs/architecture/document-workspace-foundation.md", "Phase 36.5"),

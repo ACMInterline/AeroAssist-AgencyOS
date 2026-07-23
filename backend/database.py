@@ -371,6 +371,10 @@ async def create_compatible_index(collection: Any, collection_name: str, index_s
 AGENCY_OWNED_COLLECTIONS = [
     "agency_staff_memberships",
     "agency_workspaces",
+    "agency_onboarding_profiles",
+    "commercial_pilot_feedback",
+    "agency_dashboard_preferences",
+    "agency_notification_preferences",
     "agency_branding_settings",
     "agency_branding_assets",
     "agency_form_profiles",
@@ -3819,6 +3823,35 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("created_at", ASCENDING)],
         ],
         "agency_email_settings": [[("agency_id", ASCENDING), ("status", ASCENDING)]],
+        "agency_onboarding_profiles": [
+            {"keys": [("agency_id", ASCENDING), ("profile_key", ASCENDING)], "name": "agency_onboarding_profiles_agency_profile_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("onboarding_status", ASCENDING)], "name": "agency_onboarding_profiles_agency_status_lookup"},
+            {"keys": [("updated_at", -1)], "name": "agency_onboarding_profiles_updated_lookup"},
+        ],
+        "commercial_pilot_feedback": [
+            {
+                "keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_agency_status_submitted_lookup",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("category", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_agency_category_submitted_lookup",
+            },
+            {
+                "keys": [("status", ASCENDING), ("urgency", ASCENDING), ("submitted_at", -1)],
+                "name": "commercial_pilot_feedback_platform_review_lookup",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("related_record_type", ASCENDING), ("related_record_id", ASCENDING)],
+                "name": "commercial_pilot_feedback_related_record_lookup",
+            },
+        ],
+        "agency_dashboard_preferences": [
+            {"keys": [("agency_id", ASCENDING), ("preference_key", ASCENDING)], "name": "agency_dashboard_preferences_agency_key_unique", "unique": True},
+        ],
+        "agency_notification_preferences": [
+            {"keys": [("agency_id", ASCENDING), ("preference_key", ASCENDING)], "name": "agency_notification_preferences_agency_key_unique", "unique": True},
+        ],
         "portal_action_events": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("status", ASCENDING)]],
         "document_acknowledgements": [[("agency_id", ASCENDING), ("rendered_document_id", ASCENDING), ("client_id", ASCENDING)]],
         "audit_events": [[("agency_id", ASCENDING), ("entity_type", ASCENDING), ("entity_id", ASCENDING)]],

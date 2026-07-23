@@ -377,3 +377,45 @@ These records are agency-scoped projections and governance metadata. They do not
 - `PilotSyntheticDataset`, `PilotSyntheticDatasetCreate`, and `PilotSyntheticDatasetRemoval` govern bounded prefixed metadata fixtures and audited soft removal in `pilot_synthetic_datasets`.
 - `PilotHealthTimelineEvent` and `PilotHealthTimelineEventCreate` govern append-only deployment, health, readiness, smoke, incident, backup, restore, and pilot history in `pilot_health_timeline_events`.
 - Phase 57.0 reuses `PilotReleaseAssessment`, `PilotReleaseProductionEvidence`, `PilotReleaseSignOff`, and `AuditEvent`; it creates no parallel release-assessment, agency, identity, or audit model.
+
+## Phase 58.1 Commercial Pilot Agency Onboarding Models
+
+| Model | Collection | Ownership and purpose |
+|---|---|---|
+| `AgencyOnboardingProfile` | `agency_onboarding_profiles` | Agency-owned resumable progress, completion, and deterministic seed manifest for newly created agencies. It does not duplicate canonical agency or travel data. |
+| `AgencyDashboardPreferences` | `agency_dashboard_preferences` | Agency-owned default landing page, density, and operational widget selection. |
+| `AgencyNotificationPreferences` | `agency_notification_preferences` | Agency-owned in-app/email and operational notification preferences; it does not send notifications. |
+| `Agency` additive fields | `agencies` | Canonical contact, address, and working-hours data collected by onboarding. |
+| `AgencyEmailSettings.configuration_status` | `agency_email_settings` | Additive readiness state for disabled, pending, unverified, verified, or not-required email configuration. |
+
+Phase 58.1 also seeds canonical `agency_workspaces`, `agency_branding_settings`, `document_templates`, `client_profiles`, `passenger_profiles`, `client_passenger_relationships`, `operational_travel_workspaces`, `travel_request_workspaces`, `passenger_workspaces`, `flight_workspaces`, `trip_workspaces`, `offer_workspaces_v2`, and `booking_workspaces`. These remain owned by their existing domains and are tagged as synthetic onboarding data where metadata is available.
+
+## Phase 58.2 Commercial Pilot Operations Command Centre
+
+Phase 58.2 adds no model or collection. `CommercialPilotOperationsCommandCentreService` is a bounded tenant-scoped read model over canonical work queue, SLA, workflow, request, offer, booking, ticket, EMD, passenger-service, document, finance, timeline, audit, and staff records. It extends `AgencyDashboardPreferences` with optional operations-home display and filter defaults; existing records use safe application defaults without migration. Work-item mutations continue to be owned by `OperationalWorkItem` and `OperationalAssignmentEvent` through `AgentWorkQueueService`.
+
+## Phase 58.3 Complete Pilot Agency Experience
+
+Phase 58.3 adds no domain model or collection. It additively extends `AgencyOnboardingProfile` in `agency_onboarding_profiles` with `demo_workspace_profile`, `demo_generation_status`, `demo_anchor_date`, and `demo_generation_summary`. `AgencyDemoWorkspaceGenerateRequest` validates the four supported profile choices.
+
+`AgencyDemoWorkspaceGenerator` validates and upserts existing canonical Client, Passenger, relationship, Request, operational workspace, Trip, Flight, Offer/option/acceptance/snapshot, booking-readiness/handoff/Booking, Ticket, EMD, SSR/OSI, passenger-service, Document/package/delivery, Invoice/line/payment, workflow, work-item, deadline, task, timeline, audit, and After Sales records. Collection ownership remains with those existing domains; no demo collection, shared airline-knowledge copy, or alternate operational model is introduced.
+
+## Phase 58.4 AeroAssist Product Standards and UX Refinement
+
+Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+
+Phase 58.4 adds no Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation and product-language refinement over existing Agency workspaces. The shared React components do not own domain state; Requests, Offers, Bookings, Passengers, Documents, tasks, timelines, and onboarding continue to use their existing canonical models and persistence services.
+
+## Phase 58.5 Commercial Pilot Readiness
+
+Active marker: `phase_58_5_commercial_pilot_readiness`.
+
+| Model | Collection | Ownership and purpose |
+|---|---|---|
+| `CommercialPilotFeedback` | `commercial_pilot_feedback` | Agency-owned feedback metadata with immutable agency, submitter, source text, and optional validated canonical related-record reference. Platform review may update only governed status and review metadata. |
+| `CommercialPilotFeedbackCreate` | none | Tenant-scoped Agency submission contract. |
+| `CommercialPilotFeedbackReviewUpdate` | none | Platform review lifecycle contract. |
+| `CommercialPilotReadinessCheck` | none | Computed product-readiness check; not persisted and not a release approval. |
+| `CommercialPilotReadinessAssessment` | none | Computed `ready`, `conditionally_ready`, or `blocked` view that preserves Phase 57 governance. |
+
+`commercial_pilot_feedback` is registered as agency-owned in the persistence query registry and uses additive agency/status/category/related-record and Platform review indexes. It does not duplicate tasks, support tickets, incidents, operational records, or Phase 57 evidence.

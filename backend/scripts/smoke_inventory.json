@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
-      "assertion_purpose": "Validate the canonical Phase 57.0 build marker and pilot operations release-readiness registration.",
-      "exact_reason": "This smoke explicitly tests the current Pilot Operations release-readiness surface; historical capability and infrastructure smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_commercial_pilot_readiness.py",
+      "assertion_purpose": "Validate the canonical Phase 58.5 build marker and Commercial Pilot readiness registration.",
+      "exact_reason": "This smoke explicitly tests the current tenant-scoped pilot feedback, governed Platform review, deterministic Commercial Pilot assessment, pilot package, contextual guidance, safety boundaries, readiness, and phase registration; historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -1887,7 +1887,7 @@
       "script_path": "backend/scripts/smoke_pilot_operations_release_readiness.py",
       "capability_name": "Pilot Operations Release Readiness",
       "minimum_application_phase": "phase_57_0_pilot_operations_release_readiness",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": true,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -2589,6 +2589,110 @@
       "suitable_for_future_ci": true,
       "notes": "Persisted process-local acceptance smoke for the V1 integration program. It uses an isolated in-memory database and verifies the complete Golden Path including Ticket and EMD metadata, validation failure and recovery, mismatch reconciliation, duplicate prevention, cross-agency rejection, After Sales financial linkage, canonical UI continuity, immutable reference evidence, and audit, timeline, queue, and workflow persistence without changing the active phase marker.",
       "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_commercial_pilot_agency_onboarding_foundation.py",
+      "capability_name": "Commercial Pilot Agency Onboarding Foundation",
+      "minimum_application_phase": "phase_58_1_commercial_pilot_agency_onboarding_foundation",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Minimum-phase in-memory smoke for resumable newly-created-agency onboarding, legacy exemption, canonical defaults, deterministic synthetic travel records, completion gating, tenant isolation, audit evidence, UI/API registration, and no-execution safety boundaries.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_commercial_pilot_operations_command_centre_foundation.py",
+      "capability_name": "Commercial Pilot Operations Command Centre Foundation",
+      "minimum_application_phase": "phase_58_2_commercial_pilot_operations_command_centre_foundation",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Minimum-phase in-memory smoke for the Agency operations home, bounded aggregation, deterministic priorities, queues, timeline, actionable alerts, role-aware work-queue actions, Phase 58.1 preferences, legacy defaults, tenant isolation, registration, and safety boundaries.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_complete_pilot_agency_experience.py",
+      "capability_name": "Complete Pilot Agency Experience",
+      "minimum_application_phase": "phase_58_3_complete_pilot_agency_experience",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness",
+        "end_to_end"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Minimum-phase in-memory smoke for selectable Phase 58.3 demo profiles, deterministic and idempotent canonical generation, profile locking, referential integrity, tenant isolation, linked booking/offer/document/service/finance/timeline records, Operations Command Centre population, frontend/docs registration, and no-execution safety boundaries.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_aeroassist_product_standards_ux_refinement.py",
+      "capability_name": "AeroAssist Product Standards And UX Refinement",
+      "minimum_application_phase": "phase_58_4_aeroassist_product_standards_ux_refinement",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "agency",
+        "frontend",
+        "accessibility",
+        "readiness",
+        "governance"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Minimum-phase source-level validation for the Phase 58.4 product standards, shared components, eight priority Agency workflows, travel-first terminology, understandable states, permission-aware actions, accessible controls, canonical routes, documentation, and readiness. It does not claim browser or assistive-technology testing.",
+      "ci_tier": "static",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_commercial_pilot_readiness.py",
+      "capability_name": "Commercial Pilot Readiness",
+      "minimum_application_phase": "phase_58_5_commercial_pilot_readiness",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "platform",
+        "tenancy",
+        "frontend",
+        "readiness",
+        "governance"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current in-memory and source-level validation for tenant-scoped Agency pilot feedback, related-record validation, permission boundaries, Platform lifecycle review, audit preservation, deterministic ready/conditionally-ready/blocked assessment, Phase 57 separation, pilot documents, contextual guidance, UI/API/module registration, safety boundaries, and legacy Agency compatibility.",
+      "ci_tier": "focused",
       "execution_isolation": "none"
     },
     {

@@ -140,8 +140,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     for path, text in [
         (ROOT / "frontend/src/App.jsx", "/agency/operations-command-center"),
         (ROOT / "frontend/src/App.jsx", "/platform/operations-governance"),
-        (ROOT / "frontend/src/lib/moduleCatalog.js", "Operations Command Center"),
-        (ROOT / "frontend/src/pages/agency/OperationsCommandCenterPage.jsx", "uncontrolled drag-and-drop is disabled"),
+        (ROOT / "frontend/src/lib/moduleCatalog.js", "Operations Command Centre"),
+        (ROOT / "frontend/src/components/operations/OperationsWorkList.jsx", "My Work Today"),
         (ROOT / "frontend/src/pages/platform/OperationsGovernancePage.jsx", "Read-only platform command center"),
         (ROOT / "backend/services/saas_subscription_service.py", "operations_command_center"),
         (ROOT / "docs/architecture/operations-command-center-foundation.md", "Operations Command Center Foundation"),
