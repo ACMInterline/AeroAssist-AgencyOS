@@ -4,6 +4,7 @@ import OperationalAlert from "../../components/OperationalAlert"
 import PageHeader from "../../components/PageHeader"
 import PilotGuidance from "../../components/PilotGuidance"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkspacePage from "../../components/WorkspacePage"
 import OperationsAlerts from "../../components/operations/OperationsAlerts"
 import OperationsFilters from "../../components/operations/OperationsFilters"
 import OperationsQueues from "../../components/operations/OperationsQueues"
@@ -91,7 +92,7 @@ export default function OperationsCommandCenterPage() {
     <AgencyLayout user={context?.me?.user} agency={context?.agency}>
       <ProtectedRoute loading={!state && !error && !context?.onboardingRedirect} error={!state ? error : ""}>
         {!context?.agency ? null : (
-          <main className="space-y-6">
+          <WorkspacePage as="main" variant="wide" className="space-y-6">
             <PageHeader
               eyebrow="Operations"
               title={`${greeting}, ${name}.`}
@@ -125,7 +126,7 @@ export default function OperationsCommandCenterPage() {
               open={Boolean(pendingConfirmation)}
               title="Confirm this update?"
             />
-          </main>
+          </WorkspacePage>
         )}
       </ProtectedRoute>
     </AgencyLayout>

@@ -41,6 +41,9 @@ from services.aeroassist_product_standards_service import (
 from services.commercial_pilot_readiness_service import (
     commercial_pilot_readiness_metadata,
 )
+from services.product_experience_recovery_service import (
+    product_experience_recovery_readiness_metadata,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import platform_observability
@@ -250,6 +253,7 @@ async def root_health() -> dict:
         "complete_pilot_agency_experience": True,
         "aeroassist_product_standards_ux_refinement": True,
         "commercial_pilot_readiness": True,
+        "product_experience_recovery": True,
     }
     if not settings.is_production:
         payload["app_env"] = settings.app_env
@@ -5374,6 +5378,7 @@ async def internal_readiness_payload() -> dict:
         "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
         "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
+        "product_experience_recovery": product_experience_recovery_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7322,6 +7327,7 @@ async def public_readiness_payload() -> dict:
         "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
         "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
+        "product_experience_recovery": product_experience_recovery_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]

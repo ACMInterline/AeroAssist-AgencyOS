@@ -107,6 +107,41 @@ textarea:focus-visible {
 
 .aa-main-frame {
   min-height: calc(100vh - 4rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.aa-workspace-standard,
+.aa-workspace-wide,
+.aa-workspace-focused,
+.aa-workspace-reading {
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.aa-workspace-standard {
+  max-width: 96rem;
+}
+
+.aa-workspace-wide {
+  max-width: none;
+}
+
+.aa-workspace-focused {
+  max-width: 48rem;
+}
+
+.aa-workspace-reading {
+  max-width: 68rem;
+}
+
+.aa-advanced-navigation > summary {
+  list-style: none;
+}
+
+.aa-advanced-navigation > summary::-webkit-details-marker {
+  display: none;
 }
 
 .aa-themed section,

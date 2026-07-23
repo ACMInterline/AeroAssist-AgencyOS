@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkspacePage from "../../components/WorkspacePage"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
 const entityTypes = ["request", "trip", "booking", "service", "offer", "ticket", "emd"]
+const optionalDiagnosticNotFound = "Operational workflow instance metadata not found."
 
 const defaultFilters = {
   entity_type: "",
@@ -21,22 +23,44 @@ export default function OperationalWorkflowsPage() {
 
   async function load(nextFilters = filters) {
     const context = await loadCurrentAgency()
+    if (context.onboardingRedirect || !context.agency) {
+      setState(context)
+      return
+    }
     const query = queryString(nextFilters)
-    const dashboard = await apiGet(`/api/agencies/${context.agency.id}/operational-workflows${query}`)
+    let dashboard
+    try {
+      dashboard = await apiGet(`/api/agencies/${context.agency.id}/operational-workflows${query}`)
+    } catch (err) {
+      if (err.message !== optionalDiagnosticNotFound) throw err
+      setState(emptyDiagnosticState(context))
+      setError("")
+      return
+    }
     const instances = dashboard.instances || []
     const transitionPairs = await Promise.all(
       instances.slice(0, 8).map(async (instance) => {
-        const response = await apiGet(`/api/agencies/${context.agency.id}/operational-workflows/instances/${instance.id}/available-transitions`)
-        return [instance.id, response.available_transitions || []]
+        try {
+          const response = await apiGet(`/api/agencies/${context.agency.id}/operational-workflows/instances/${instance.id}/available-transitions`)
+          return [instance.id, response.available_transitions || [], false]
+        } catch (err) {
+          if (err.message === optionalDiagnosticNotFound) return [instance.id, [], true]
+          throw err
+        }
       })
     )
+    const unavailableIds = new Set(transitionPairs.filter(([, , unavailable]) => unavailable).map(([id]) => id))
+    const availableInstances = instances.filter((instance) => !unavailableIds.has(instance.id))
     setState({
       ...context,
-      instances,
+      instances: availableInstances,
       summary: dashboard.summary || {},
       maps: dashboard.state_transition_maps || {},
-      transitionsByInstance: Object.fromEntries(transitionPairs),
+      transitionsByInstance: Object.fromEntries(transitionPairs.map(([id, transitions]) => [id, transitions])),
+      unavailableDiagnosticCount: unavailableIds.size,
+      diagnosticsUnavailable: instances.length > 0 && availableInstances.length === 0,
     })
+    setError("")
   }
 
   useEffect(() => {
@@ -53,17 +77,16 @@ export default function OperationalWorkflowsPage() {
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
-        <div className="space-y-6">
+        <WorkspacePage variant="wide" className="space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Operational Workflows</h2>
-              <p className="mt-1 text-sm text-slate-600">Shared metadata-only workflow-state and transition metadata around existing operational records. Transitions only update orchestration metadata and immutable history; they do not book, ticket, issue EMDs, message, call providers, run AI, automate work, or overwrite linked workspace statuses.</p>
+              <p className="text-sm font-semibold uppercase text-blue-700">Advanced diagnostics</p>
+              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Workflow diagnostics</h2>
+              <p className="mt-1 text-sm text-slate-600">Review recorded workflow states and guarded next actions. This page explains system behavior and does not perform booking, ticketing, messaging, or provider actions.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Metadata-only</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Guarded transitions</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">No execution</span>
+              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">System details</span>
+              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Planning only</span>
             </div>
           </div>
 
@@ -73,15 +96,17 @@ export default function OperationalWorkflowsPage() {
             {metrics.map(([label, value]) => <Metric label={label} value={value} key={label} />)}
           </section>
 
-          <section className="rounded-lg border border-slate-200 bg-white p-5">
+          <section className="rounded-md border border-slate-200 bg-white p-5">
             <h3 className="font-semibold text-slate-950">Workflow filters</h3>
             <div className="mt-4 grid gap-3 lg:grid-cols-4">
-              <SelectField label="Entity type" value={filters.entity_type} onChange={(value) => setFilters({ ...filters, entity_type: value })} options={entityTypes.map((item) => [item, formatType(item)])} placeholder="All entities" />
-              <Field label="Entity id" value={filters.entity_id} onChange={(value) => setFilters({ ...filters, entity_id: value })} />
+              <SelectField label="Related item type" value={filters.entity_type} onChange={(value) => setFilters({ ...filters, entity_type: value })} options={entityTypes.map((item) => [item, formatType(item)])} placeholder="All related items" />
+              <Field label="Related item reference" value={filters.entity_id} onChange={(value) => setFilters({ ...filters, entity_id: value })} />
               <Field label="Workflow status" value={filters.workflow_status} onChange={(value) => setFilters({ ...filters, workflow_status: value })} />
               <Field label="Current state" value={filters.current_state} onChange={(value) => setFilters({ ...filters, current_state: value })} />
             </div>
           </section>
+
+          {state?.unavailableDiagnosticCount && !state?.diagnosticsUnavailable ? <p className="border-y border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Some older workflow diagnostics are no longer available. Current records remain visible below.</p> : null}
 
           {state?.instances?.length ? (
             <section className="space-y-3">
@@ -89,13 +114,14 @@ export default function OperationalWorkflowsPage() {
                 <WorkflowCard key={instance.id} instance={instance} transitions={state.transitionsByInstance?.[instance.id] || []} />
               ))}
             </section>
-          ) : <EmptyState title="No operational workflows" body="Workflow orchestration metadata will appear here after instances are started for this agency." />}
+          ) : <EmptyState title="No workflow diagnostics are available for this agency yet." body="These system details appear after operational workflows have been recorded." />}
 
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <p className="font-semibold text-slate-950">State Maps</p>
+          <details className="rounded-md border border-slate-200 bg-white p-4">
+            <summary className="cursor-pointer font-semibold text-slate-950">Advanced system details</summary>
+            <p className="mt-2 text-sm text-slate-600">Technical workflow-state reference for specialist troubleshooting.</p>
             <pre className="mt-3 max-h-80 overflow-auto rounded-md bg-slate-50 p-3 text-xs text-slate-700">{JSON.stringify(state?.maps || {}, null, 2)}</pre>
-          </section>
-        </div>
+          </details>
+        </WorkspacePage>
       </ProtectedRoute>
     </AgencyLayout>
   )
@@ -103,7 +129,7 @@ export default function OperationalWorkflowsPage() {
 
 function WorkflowCard({ instance, transitions }) {
   return (
-    <details className="rounded-lg border border-slate-200 bg-white p-4" open>
+    <details className="rounded-md border border-slate-200 bg-white p-4">
       <summary className="cursor-pointer list-none">
         <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
           <div>
@@ -196,4 +222,16 @@ function formatType(value) {
 
 function formatDateTime(value) {
   return value ? String(value).replace("T", " ").slice(0, 16) : "Unset"
+}
+
+function emptyDiagnosticState(context) {
+  return {
+    ...context,
+    instances: [],
+    summary: {},
+    maps: {},
+    transitionsByInstance: {},
+    unavailableDiagnosticCount: 0,
+    diagnosticsUnavailable: true,
+  }
 }

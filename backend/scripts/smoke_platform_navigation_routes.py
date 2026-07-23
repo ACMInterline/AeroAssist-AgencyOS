@@ -82,11 +82,11 @@ def main() -> int:
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",
     ], "App platform routes")
-    require_text(layout, ["Platform Console", "platformModuleGroups", "PlatformModuleGroup", "PlatformModuleLink"], "Platform header")
+    require_text(layout, ["Platform Console", "platformModuleGroups", "platformProductNavigation", "productNavigationForRole", "PlatformArea", "PlatformNavItem"], "Platform navigation")
     require_text(platform_catalog, ["Platform Console", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", "Service Mechanics", 'href: "/platform/agencies"', 'href: "/platform/airlines"', 'href: "/platform/airline-policy-ingestion"', 'href: "/platform/service-taxonomy"', 'href: "/platform/service-mechanics"'], "Platform module catalog")
     reject_text(layout, ["Agency Workspace", 'href="/agency"'], "Platform header")
     reject_text(platform_catalog, ["Agency Workspace", 'href: "/agency"'], "Platform module catalog")
-    require_text(dashboard, ['href="/platform/agencies"', "Manage agencies"], "Platform dashboard")
+    require_text(dashboard, ['href="/platform/agencies"', "Attention required", "Knowledge readiness", "Pilot status", "System health", "Recent activity", "Quick actions"], "Platform dashboard")
     require_text(agencies, ["Agencies", "Create Agency", "Promise.allSettled", "agencies = state?.agencies || []"], "Platform agencies defensive route")
     require_text(agency_detail, ["Enter workspace", "`/agency?agency_id=${agencyId}`"], "Contextual agency workspace entry")
     require_text(airlines, ["Airline Knowledge", "Promise.allSettled", "airlines = state?.airlines || []", "Platform owners will manage airline policy"], "Platform airlines defensive route")
@@ -97,6 +97,10 @@ def main() -> int:
     for key in ["agencies", "workspaces", "airlines", "airline_knowledge"]:
         if key not in counts:
             raise AssertionError(f"Platform summary missing count: {key}")
+    overview = summary.get("product_overview") or {}
+    for key in ["agency_count", "onboarding_attention_count", "legacy_agency_count", "open_operational_request_count", "recent_activity"]:
+        if key not in overview:
+            raise AssertionError(f"Platform summary missing product overview field: {key}")
     get("/api/agencies", OWNER_HEADERS)
     get("/api/platform/airlines", OWNER_HEADERS)
 

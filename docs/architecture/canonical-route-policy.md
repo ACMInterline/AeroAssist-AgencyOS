@@ -396,3 +396,12 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Platform Commercial Pilot readiness UI: `/platform/commercial-pilot-readiness`.
 - Protected computed assessment API: `GET /api/platform/commercial-pilot-readiness`, optionally scoped with `agency_id`.
 - Phase 58.5 adds no public or anonymous feedback route, `/admin/*`, `/agent/*`, external support endpoint, parallel incident/ticketing system, or Phase 57 release mutation.
+
+## Phase 59.0 Product Experience Recovery Routes
+
+- Phase 59.0 adds no frontend route, API route, alias, router, or mutation.
+- Task-based navigation projects existing module-catalogue entries into Platform and Agency product areas.
+- Canonical `/platform/*`, `/agency/*`, `/api/platform/*`, and `/api/agencies/{agency_id}/*` ownership remains unchanged.
+- `/platform` continues to resolve to the Platform Overview and `/agency` continues to resolve to the Phase 58.2 Operations Command Centre after the existing onboarding check.
+- Specialist deep links remain valid in collapsed Advanced navigation; contextual tools remain owned by their existing primary workspaces.
+- No `/admin/*`, `/agent/*`, parallel workflow root, or direct frontend persistence path is introduced.

@@ -4,6 +4,8 @@ from auth import get_current_user, require_platform_role
 from config import get_settings
 from database import Database, get_database
 from services.saas_subscription_service import PHASE_LABEL
+from persistence_query import PaginationRequest
+from persistence_repository import PersistenceRepository
 
 router = APIRouter(prefix="/api/platform", tags=["platform"])
 
@@ -37,8 +39,33 @@ async def summary(
         for item in await db.collection("travel_requests").find_many()
         if item.get("status") not in {"closed", "cancelled", "archived"}
     ]
+    onboarding_profile_count = await db.collection("agency_onboarding_profiles").count()
+    onboarding_attention_count = await db.collection("agency_onboarding_profiles").count(
+        {"onboarding_status": {"$ne": "completed"}}
+    )
+    recent_activity_page = await PersistenceRepository(db).find_platform_records(
+        collection_name="audit_events",
+        sort_field="created_at",
+        sort_direction="desc",
+        pagination=PaginationRequest.build(limit=6),
+    )
+    recent_platform_activity = [
+        {
+            "event_type": item.get("event_type"),
+            "summary": item.get("summary"),
+            "created_at": item.get("created_at"),
+        }
+        for item in recent_activity_page.items
+    ]
     return {
         "current_user": user,
+        "product_overview": {
+            "agency_count": agency_count,
+            "onboarding_attention_count": onboarding_attention_count,
+            "legacy_agency_count": max(agency_count - onboarding_profile_count, 0),
+            "open_operational_request_count": len(open_operational_requests),
+            "recent_activity": recent_platform_activity,
+        },
         "counts": {
             "agencies": agency_count,
             "workspaces": workspace_count,

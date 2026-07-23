@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_commercial_pilot_readiness.py",
-      "assertion_purpose": "Validate the canonical Phase 58.5 build marker and Commercial Pilot readiness registration.",
-      "exact_reason": "This smoke explicitly tests the current tenant-scoped pilot feedback, governed Platform review, deterministic Commercial Pilot assessment, pilot package, contextual guidance, safety boundaries, readiness, and phase registration; historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_product_experience_recovery.py",
+      "assertion_purpose": "Validate the canonical Phase 59.0 build marker and Product Experience Recovery registration.",
+      "exact_reason": "This smoke explicitly tests the current task-based navigation, workspace layout, diagnostic recovery, product language, permission projection, documentation, safety boundaries, readiness, and phase registration; historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -2677,7 +2677,7 @@
       "script_path": "backend/scripts/smoke_commercial_pilot_readiness.py",
       "capability_name": "Commercial Pilot Readiness",
       "minimum_application_phase": "phase_58_5_commercial_pilot_readiness",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": false,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -2693,6 +2693,28 @@
       "suitable_for_future_ci": true,
       "notes": "Exact-current in-memory and source-level validation for tenant-scoped Agency pilot feedback, related-record validation, permission boundaries, Platform lifecycle review, audit preservation, deterministic ready/conditionally-ready/blocked assessment, Phase 57 separation, pilot documents, contextual guidance, UI/API/module registration, safety boundaries, and legacy Agency compatibility.",
       "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_product_experience_recovery.py",
+      "capability_name": "Product Experience Recovery",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "agency",
+        "platform",
+        "frontend",
+        "accessibility",
+        "readiness",
+        "governance"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current source-level and module-level validation for task-based Platform and workflow-ordered Agency navigation, catalogue projection metadata, role-aware visibility, collapsed Advanced areas, practical home routes, onboarding compatibility, optional workflow diagnostic recovery, layout primitives, canonical deep links, readiness registration, documentation, and unchanged execution boundaries.",
+      "ci_tier": "static",
       "execution_isolation": "none"
     },
     {

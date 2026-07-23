@@ -81,12 +81,13 @@ def verify_frontend_source() -> None:
 
     for path, text in [
         (platform_layout, "Platform Console"),
-        (platform_layout, "Platform Console modules"),
-        (platform_layout, "platformModuleGroups"),
+        (platform_layout, "platformProductNavigation"),
+        (platform_layout, "productNavigationForRole"),
         (agency_layout, "Agency Workspace"),
-        (agency_layout, "agencyModuleGroups"),
-        (platform_dashboard, "Platform Console"),
-        (platform_dashboard, "platformModuleGroups"),
+        (agency_layout, "agencyProductNavigation"),
+        (agency_layout, "productNavigationForRole"),
+        (platform_dashboard, "Platform overview"),
+        (platform_dashboard, "Attention required"),
         (agency_dashboard, "Agency Workspace"),
         (agency_dashboard, "agencyModuleGroups"),
     ]:

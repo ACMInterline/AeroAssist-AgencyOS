@@ -2567,3 +2567,16 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 58.4 product-standards smoke to minimum semantics and makes the Phase 58.5 Commercial Pilot readiness smoke the sole exact-current assertion.
 - Adds no anonymous/public feedback, external support integration, provider or payment execution, ticketing, messaging, production seeding, deployment, backup/restore action, or automatic approval.
 - See [Commercial Pilot Package](docs/pilot/README.md).
+
+## Phase 59.0 - Product Experience Recovery
+
+- Active marker: `phase_59_0_product_experience_recovery`.
+- Replaces the Platform module dump with eight task-based, permission-aware areas and a practical Overview covering attention, agencies, airline knowledge, Commercial Pilot status, system health, recent activity, and quick actions.
+- Reorders Agency navigation around Operations, Requests, Clients & Passengers, Trips, Offers, Bookings, Tickets & EMDs, Special Services, Documents, Tasks & Follow-ups, Reports, Settings, and a collapsed Advanced area.
+- Keeps the existing module catalogue as the internal source of truth and projects product labels, purposes, audiences, priorities, and Advanced placement onto existing routes.
+- Preserves `/agency` as the Phase 58.2 Operations Command Centre, the Phase 58.1 onboarding redirect and legacy exemption, existing canonical deep links, tenant isolation, and backend authorization.
+- Adds standard, wide, focused, and reading workspace layout primitives and removes shell-level fixed content maxima.
+- Treats missing optional workflow diagnostics as an empty state while preserving real authorization, tenancy, validation, and required-data failures; raw workflow state details are collapsed by default.
+- Adds source-level UX governance, terminology, navigation, route, permission, readiness, documentation, and safety-boundary validation.
+- Adds no model, collection, index, router, provider action, workflow automation, payment, ticket issuance, messaging, deployment, or production-data change.
+- See [Platform Information Architecture](docs/product/platform-information-architecture.md), [Agency Information Architecture](docs/product/agency-information-architecture.md), and [Navigation and Layout Standards](docs/product/navigation-and-layout-standards.md).

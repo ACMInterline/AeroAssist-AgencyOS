@@ -231,6 +231,7 @@ export const agencyModuleGroups = [
       { label: "Booking Mirrors", description: "Internal PNR mirror records", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "booking_workspaces", metadata_only: true },
       { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: "files", badge: "Review only", entitlementKey: "booking_imports" },
       { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: "files", badge: "No issuance", entitlementKey: "tickets_emds" },
+      { label: "Invoices", description: "Invoices, payment status, and financial follow-up", href: "/agency/invoices", icon: "clipboard", entitlementKey: "finance" },
       { label: "Refunds & Exchanges", description: "Service cases", href: "/agency/refunds-exchanges", icon: "clipboard", badge: "Manual only", entitlementKey: "refunds_exchanges" },
     ],
   },
@@ -349,6 +350,303 @@ export const agencyModuleGroups = [
 
 export function flattenModuleGroups(groups) {
   return groups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title })))
+}
+
+const platformProductAreaDefinitions = [
+  {
+    title: "Overview",
+    description: "Current priorities across agencies, airline knowledge, pilot operations, and system health.",
+    icon: "shield",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_support"],
+    items: [
+      { href: "/platform", preferred_label: "Platform overview", preferred_description: "What needs attention across AeroAssist today" },
+    ],
+  },
+  {
+    title: "Agencies",
+    description: "Agency setup, subscriptions, feature access, and account activity.",
+    icon: "building",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_support"],
+    items: [
+      { href: "/platform/agencies", preferred_label: "Agencies", preferred_description: "Manage agency workspaces and onboarding" },
+      { href: "/platform/saas-subscriptions", preferred_label: "Subscriptions & entitlements", preferred_description: "Review assigned plans and access" },
+      { href: "/platform/feature-flags", preferred_label: "Feature access", preferred_description: "Review agency feature visibility" },
+    ],
+  },
+  {
+    title: "Airline Knowledge",
+    description: "Governed airline policies, evidence, coverage, distribution, and operational guidance.",
+    icon: "plane",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"],
+    items: [
+      { href: "/platform/airlines", preferred_label: "Airlines", preferred_description: "Airline records and knowledge" },
+      { href: "/platform/airline-master-profiles", preferred_label: "Airline profiles", preferred_description: "Identity and operational summaries" },
+      { href: "/platform/visual-policy-editor", preferred_label: "Policies", preferred_description: "Maintain structured service policies" },
+      { href: "/platform/airline-evidence", preferred_label: "Evidence", preferred_description: "Review sources, freshness, and conflicts" },
+      { href: "/platform/airline-service-coverage", preferred_label: "Service coverage", preferred_description: "Find knowledge gaps by airline and service" },
+      { href: "/platform/airline-distribution-capabilities", preferred_label: "Distribution capabilities", preferred_description: "Review documented booking and servicing channels" },
+      { href: "/platform/interline-codeshare-intelligence", preferred_label: "Interline & codeshare", preferred_description: "Review carrier responsibilities and exceptions" },
+      { href: "/platform/fare-brand-intelligence", preferred_label: "Fare brands", preferred_description: "Compare brands, booking classes, and baggage" },
+      { href: "/platform/airline-contact-intelligence", preferred_label: "Airline contacts", preferred_description: "Find governed airline support channels" },
+      { href: "/platform/airline-knowledge-releases", preferred_label: "Knowledge releases", preferred_description: "Review grouped airline knowledge releases" },
+    ],
+  },
+  {
+    title: "Services & Pricing",
+    description: "Service meaning, handling guidance, prices, rules, exceptions, and safe simulations.",
+    icon: "tags",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_knowledge_editor"],
+    items: [
+      { href: "/platform/rules-services", preferred_label: "Service catalogue", preferred_description: "Shared services used across requests and offers" },
+      { href: "/platform/service-taxonomy", preferred_label: "Service taxonomy", preferred_description: "Consistent service names and meanings" },
+      { href: "/platform/service-mechanics", preferred_label: "SSR & OSI guidance", preferred_description: "Operational handling guidance" },
+      { href: "/platform/ancillary-pricing", preferred_label: "Ancillary pricing", preferred_description: "Non-binding service price references" },
+      { href: "/platform/policy-comparison", preferred_label: "Policy comparison", preferred_description: "Compare airline service policies" },
+      { href: "/platform/operational-rule-composer", preferred_label: "Rules & exceptions", preferred_description: "Compose governed operational rules" },
+      { href: "/platform/operational-scenario-testing", preferred_label: "Simulation", preferred_description: "Review passenger service scenarios" },
+    ],
+  },
+  {
+    title: "Product Configuration",
+    description: "Reference data, templates, offer settings, and agency defaults.",
+    icon: "layers",
+    allowed_roles: ["platform_owner", "platform_admin"],
+    items: [
+      { href: "/platform/reference", preferred_label: "Reference data", preferred_description: "Maintain shared product lookups" },
+      { href: "/platform/document-templates", preferred_label: "Document templates", preferred_description: "Maintain reusable document layouts" },
+      { href: "/platform/feature-flag-bundles", preferred_label: "Feature access", preferred_description: "Configure reusable feature bundles" },
+      { href: "/platform/offer-policy-advisor", preferred_label: "Offer configuration", preferred_description: "Review offer policy behavior" },
+    ],
+  },
+  {
+    title: "Pilot & Support",
+    description: "Commercial Pilot readiness, agency feedback, and operating guidance.",
+    icon: "check",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_support"],
+    items: [
+      { href: "/platform/commercial-pilot-readiness", preferred_label: "Commercial Pilot readiness", preferred_description: "Review product readiness and limitations" },
+      { href: "/platform/pilot-feedback", preferred_label: "Pilot feedback", preferred_description: "Review agency feedback and follow-up" },
+      { href: "/platform/pilot-readiness", preferred_label: "Pilot guidance", preferred_description: "Review stabilization checks and operating guidance" },
+    ],
+  },
+  {
+    title: "System Health",
+    description: "Release evidence, health, readiness, backups, and operational alerts.",
+    icon: "shield",
+    allowed_roles: ["platform_owner", "platform_admin", "platform_support"],
+    items: [
+      { href: "/platform/pilot-operations", preferred_label: "Health & release evidence", preferred_description: "Review health, readiness, backups, and release evidence" },
+      { href: "/platform/operations-governance", preferred_label: "Operational alerts", preferred_description: "Review agency workload and urgent exceptions" },
+    ],
+  },
+]
+
+const agencyProductAreaDefinitions = [
+  {
+    title: "Operations",
+    description: "Today’s workload, deadlines, and priorities.",
+    icon: "rows",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [{ href: "/agency", preferred_label: "Operations", preferred_description: "See today’s work and next actions" }],
+  },
+  {
+    title: "Requests",
+    description: "New and active travel requests.",
+    icon: "clipboard",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"],
+    items: [
+      { href: "/agency/requests", preferred_label: "Requests", preferred_description: "Review and progress travel requests" },
+      { href: "/agency/request-intakes", preferred_label: "New intakes", preferred_description: "Review website and portal submissions" },
+    ],
+  },
+  {
+    title: "Clients & Passengers",
+    description: "Client relationships and traveler profiles.",
+    icon: "users",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [
+      { href: "/agency/clients", preferred_label: "Clients", preferred_description: "Manage client accounts and relationships" },
+      { href: "/agency/passengers", preferred_label: "Passengers", preferred_description: "Manage traveler profiles and requirements" },
+    ],
+  },
+  {
+    title: "Trips",
+    description: "Operational trip dossiers and itineraries.",
+    icon: "plane",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"],
+    items: [{ href: "/agency/trips", preferred_label: "Trips", preferred_description: "Open active trip dossiers" }],
+  },
+  {
+    title: "Offers",
+    description: "Prepare and review travel offers.",
+    icon: "sparkles",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"],
+    items: [{ href: "/agency/offers", preferred_label: "Offers", preferred_description: "Prepare, compare, and follow up offers" }],
+  },
+  {
+    title: "Bookings",
+    description: "Booking preparation and accepted-offer handoffs.",
+    icon: "building",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [
+      { href: "/agency/booking-workspaces", preferred_label: "Bookings", preferred_description: "Review booking details and status" },
+      { href: "/agency/booking-handoffs", preferred_label: "Booking readiness", preferred_description: "Review accepted-offer handoffs" },
+    ],
+  },
+  {
+    title: "Tickets & EMDs",
+    description: "Ticket and ancillary document records.",
+    icon: "files",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [{ href: "/agency/tickets-emds", preferred_label: "Tickets & EMDs", preferred_description: "Review ticket and EMD records" }],
+  },
+  {
+    title: "Special Services",
+    description: "Passenger assistance, SSR, and OSI requirements.",
+    icon: "user",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"],
+    items: [{ href: "/agency/passenger-services", preferred_label: "Special services", preferred_description: "Review assistance and airline service requirements" }],
+  },
+  {
+    title: "Documents",
+    description: "Travel documents and prepared files.",
+    icon: "files",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [
+      { href: "/agency/document-workspaces", preferred_label: "Document checklist", preferred_description: "Review required and received travel documents" },
+      { href: "/agency/documents", preferred_label: "Prepared documents", preferred_description: "Review files prepared for manual delivery" },
+    ],
+  },
+  {
+    title: "Tasks & Follow-ups",
+    description: "Assigned work, due dates, and follow-ups.",
+    icon: "clipboard",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"],
+    items: [
+      { href: "/agency/work-queue", preferred_label: "Tasks & follow-ups", preferred_description: "Review assigned and unassigned work" },
+      { href: "/agency/deadlines", preferred_label: "Deadlines", preferred_description: "Review due-soon and overdue work" },
+    ],
+  },
+  {
+    title: "Reports",
+    description: "Financial status and operational reporting.",
+    icon: "clipboard",
+    allowed_roles: ["agency_owner", "agency_admin", "agency_accountant", "agency_readonly"],
+    items: [{ href: "/agency/invoices", preferred_label: "Finance & reports", preferred_description: "Review invoices and payment status" }],
+  },
+  {
+    title: "Settings",
+    description: "Agency preferences, forms, branding, and subscription information.",
+    icon: "settings",
+    allowed_roles: ["agency_owner", "agency_admin"],
+    items: [
+      { href: "/agency/settings", preferred_label: "Agency settings", preferred_description: "Manage branding and workspace preferences" },
+      { href: "/agency/settings/forms", preferred_label: "Form settings", preferred_description: "Manage request field profiles" },
+      { href: "/agency/saas-subscription", preferred_label: "Subscription", preferred_description: "Review assigned plan and access" },
+    ],
+  },
+]
+
+function catalogueIndex(groups) {
+  const index = new Map()
+  flattenModuleGroups(groups).forEach((item) => {
+    if (!index.has(item.href) || index.get(item.href)?.navigation_visibility === "contextual") {
+      index.set(item.href, item)
+    }
+  })
+  return index
+}
+
+function productItem(source, area, definition, priority, advancedOnly = false) {
+  return {
+    ...source,
+    primary_area: area.title,
+    user_purpose: definition.user_purpose || definition.preferred_description || source.description,
+    audience: area.audience,
+    navigation_priority: priority,
+    advanced_only: advancedOnly,
+    hidden_from_primary_navigation: advancedOnly,
+    preferred_label: definition.preferred_label || source.user_facing_label || source.label,
+    preferred_description: definition.preferred_description || source.description,
+    allowed_roles: definition.allowed_roles || area.allowed_roles,
+  }
+}
+
+function buildProductNavigation(groups, definitions, advancedDefinition, primaryAudience) {
+  const index = catalogueIndex(groups)
+  const primaryHrefs = new Set()
+  const primaryAreas = definitions.map((area, areaIndex) => ({
+    ...area,
+    audience: area.audience || primaryAudience,
+    navigation_priority: areaIndex + 1,
+    advanced_only: false,
+    items: area.items.map((definition, itemIndex) => {
+      const source = index.get(definition.href)
+      if (!source) {
+        throw new Error(`Product navigation references a missing module-catalogue route: ${definition.href}`)
+      }
+      primaryHrefs.add(definition.href)
+      return productItem(source, area, definition, itemIndex + 1)
+    }),
+  }))
+
+  const seen = new Set()
+  const advancedItems = flattenModuleGroups(groups)
+    .filter((item) => item.navigation_visibility !== "contextual" && !primaryHrefs.has(item.href))
+    .filter((item) => {
+      if (seen.has(item.href)) return false
+      seen.add(item.href)
+      return true
+    })
+    .map((source, indexValue) => productItem(source, advancedDefinition, {}, indexValue + 1, true))
+
+  return [
+    ...primaryAreas,
+    {
+      ...advancedDefinition,
+      navigation_priority: primaryAreas.length + 1,
+      advanced_only: true,
+      hidden_from_primary_navigation: true,
+      items: advancedItems,
+    },
+  ]
+}
+
+export const platformProductNavigation = buildProductNavigation(
+  platformModuleGroups,
+  platformProductAreaDefinitions,
+  {
+    title: "Advanced",
+    description: "Technical diagnostics, detailed registers, rollout planning, and implementation references.",
+    icon: "database",
+    audience: "Platform technical users",
+    allowed_roles: ["platform_owner", "platform_admin"],
+  },
+  "Platform operators",
+)
+
+export const agencyProductNavigation = buildProductNavigation(
+  agencyModuleGroups,
+  agencyProductAreaDefinitions,
+  {
+    title: "Advanced",
+    description: "System details, planning registers, and specialist diagnostic views.",
+    icon: "database",
+    audience: "Agency administrators",
+    allowed_roles: ["agency_owner", "agency_admin"],
+  },
+  "Agency staff",
+)
+
+export function productNavigationForRole(navigation, role) {
+  if (!role) return []
+  return navigation
+    .filter((area) => area.allowed_roles.includes(role))
+    .map((area) => ({
+      ...area,
+      items: area.items.filter((item) => item.allowed_roles.includes(role)),
+    }))
+    .filter((area) => area.items.length)
 }
 
 export const entitlementVisibilityLabels = {
