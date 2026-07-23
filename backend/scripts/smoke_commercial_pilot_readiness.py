@@ -27,6 +27,7 @@ from services.commercial_pilot_readiness_service import (
     CommercialPilotReadinessService,
     commercial_pilot_readiness_metadata,
 )
+from services.agency_onboarding_service import AgencyOnboardingService
 
 
 async def verify_feedback_and_readiness() -> None:
@@ -43,6 +44,8 @@ async def verify_feedback_and_readiness() -> None:
         {"id": "membership-readonly", "agency_id": "pilot-agency-a", "user_id": "agency-reader", "agency_role": "agency_readonly", "status": "active"},
     ):
         await database.collection("agency_staff_memberships").insert_one(membership)
+    onboarding_service = AgencyOnboardingService(database)
+    await onboarding_service.initialize_for_new_agency("pilot-agency-a", "platform-reviewer")
 
     await authorize_agency_feedback(
         database,
@@ -242,6 +245,37 @@ async def verify_feedback_and_readiness() -> None:
     assert legacy_check["status"] == "pass"
     assert legacy["phase_57_release_gate"]["preserved"] is True
     assert legacy["phase_57_release_gate"]["replaced_by_commercial_assessment"] is False
+
+    incomplete = await service.assess("pilot-agency-a")
+    incomplete_check = next(
+        item for item in incomplete["checks"] if item["key"] == "selected_agency_onboarding"
+    )
+    demo_check = next(
+        item for item in incomplete["checks"] if item["key"] == "selected_agency_demo"
+    )
+    assert incomplete_check["status"] == "warning"
+    assert demo_check["status"] == "warning"
+    assert incomplete["status"] == "conditionally_ready"
+
+    await database.collection("agency_onboarding_profiles").update_one(
+        {"agency_id": "pilot-agency-a", "profile_key": "commercial_pilot"},
+        {"onboarding_status": "completed", "demo_workspace_seeded": True},
+    )
+    completed = await service.assess("pilot-agency-a")
+    completed_check = next(
+        item for item in completed["checks"] if item["key"] == "selected_agency_onboarding"
+    )
+    completed_demo_check = next(
+        item for item in completed["checks"] if item["key"] == "selected_agency_demo"
+    )
+    assert completed_check["status"] == "pass"
+    assert completed_demo_check["status"] == "pass"
+    assert completed["status"] in {"ready", "conditionally_ready"}
+    assert not any(
+        item["key"] in {"selected_agency_onboarding", "selected_agency_demo"}
+        and item["status"] != "pass"
+        for item in completed["checks"]
+    )
 
 
 def verify_registration_and_safety() -> None:

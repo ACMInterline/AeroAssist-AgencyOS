@@ -173,6 +173,16 @@ def verify_registration() -> None:
         for needle in needles:
             assert needle in text, f"Missing {needle!r} in {path.relative_to(ROOT)}"
 
+    ungated_agency_pages = [
+        path.relative_to(ROOT)
+        for path in (ROOT / "frontend/src/pages/agency").glob("*.jsx")
+        if "loadCurrentAgency" not in path.read_text(encoding="utf-8")
+    ]
+    assert not ungated_agency_pages, (
+        "Agency pages bypass the canonical onboarding and agency-selection gate: "
+        f"{ungated_agency_pages}"
+    )
+
 
 async def main() -> None:
     verify_registration()

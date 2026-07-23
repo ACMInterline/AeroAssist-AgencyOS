@@ -3,17 +3,20 @@ import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
+import { loadCurrentAgency } from "../../lib/agency"
 
 export default function PortalActionsPage() {
   const [state, setState] = useState(null)
   const [error, setError] = useState("")
 
   async function load() {
-    const me = await apiGet("/api/auth/me")
-    const agencies = await apiGet("/api/agencies")
-    const agency = agencies.items[0]
-    const actions = agency ? await apiGet(`/api/agencies/${agency.id}/portal-actions`) : { items: [] }
-    setState({ me, agency, actions: actions.items })
+    const context = await loadCurrentAgency()
+    if (context.onboardingRedirect || !context.agency) {
+      setState({ ...context, actions: [] })
+      return
+    }
+    const actions = await apiGet(`/api/agencies/${context.agency.id}/portal-actions`)
+    setState({ ...context, actions: actions.items })
   }
 
   useEffect(() => { load().catch((err) => setError(err.message)) }, [])

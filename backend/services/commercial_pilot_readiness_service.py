@@ -22,6 +22,7 @@ from services.aeroassist_product_standards_service import (
     aeroassist_product_standards_readiness_metadata,
 )
 from services.agency_onboarding_service import (
+    PROFILE_KEY as AGENCY_ONBOARDING_PROFILE_KEY,
     agency_onboarding_readiness_metadata,
     complete_pilot_agency_experience_readiness_metadata,
 )
@@ -311,7 +312,7 @@ class CommercialPilotReadinessService:
         if agency_id:
             agency = await self._require_agency(agency_id)
             onboarding_profile = await self.db.collection("agency_onboarding_profiles").find_one(
-                {"agency_id": agency_id, "profile_key": "first_time_setup"}
+                {"agency_id": agency_id, "profile_key": AGENCY_ONBOARDING_PROFILE_KEY}
             )
 
         config = validate_config(include_storage=False)

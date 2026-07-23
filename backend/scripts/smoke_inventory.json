@@ -2692,7 +2692,7 @@
       "test_class": "integration",
       "suitable_for_future_ci": true,
       "notes": "Exact-current in-memory and source-level validation for tenant-scoped Agency pilot feedback, related-record validation, permission boundaries, Platform lifecycle review, audit preservation, deterministic ready/conditionally-ready/blocked assessment, Phase 57 separation, pilot documents, contextual guidance, UI/API/module registration, safety boundaries, and legacy Agency compatibility.",
-      "ci_tier": "integration",
+      "ci_tier": "focused",
       "execution_isolation": "none"
     },
     {
