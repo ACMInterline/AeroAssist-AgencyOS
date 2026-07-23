@@ -5,6 +5,9 @@ These principles guide future AeroAssist implementation. They are architectural 
 ## Rules
 
 - Never duplicate operational models.
+- Do not expand the feature or metadata surface while the P0 product-kernel freeze is active; first approve one canonical ownership map and simplify the operator workflow.
+- Unconfirmed traveler claims belong to `RequestPassenger`; only explicit human identity confirmation may create or link a canonical `PassengerProfile`.
+- Never invent identity fields, dates of birth, passenger types, relationships, or master records to satisfy downstream schemas.
 - Prefer canonical taxonomy over free text.
 - Passenger Need is always the root object.
 - Capability is not Policy.
@@ -34,6 +37,8 @@ These principles guide future AeroAssist implementation. They are architectural 
 ## Model Discipline
 
 Future features must extend the existing operational chain instead of creating replacement objects. Passenger, request, trip, offer, booking, ticket, EMD, SSR / OSI, document, timeline, workflow, and AOIE records each have distinct responsibilities.
+
+Until the product-kernel freeze exits, “future feature” work is limited to security, integrity, consolidation, pilot-blocking corrections, test coverage, documentation, and simplification. A new metadata collection or page is not an acceptable substitute for resolving ownership in the existing chain.
 
 When a future phase needs new metadata, it should first ask:
 

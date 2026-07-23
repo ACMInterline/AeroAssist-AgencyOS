@@ -26,6 +26,10 @@ Before implementing future phases, Codex should read and follow:
 - `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
 - `GLOSSARY.md`
 
+## Corrective Product Kernel Gate
+
+The [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architecture/p0-security-integrity-product-kernel-freeze.md) is active and is not a new roadmap phase. Audit access is protected, unconfirmed travelers remain request-owned until explicit identity confirmation, and proven legacy intake placeholders have a non-destructive quarantine utility. Do not add metadata foundations or top-level product surfaces until the canonical product-kernel ownership map and simplified operator workflow are approved. Security fixes, integrity repairs, canonical consolidation, pilot blockers, tests, documentation, and UI simplification remain allowed.
+
 ## Current Implementation State
 
 The repository currently contains:

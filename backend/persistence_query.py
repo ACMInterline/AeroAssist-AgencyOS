@@ -198,6 +198,13 @@ COLLECTION_OWNERSHIP_REGISTRY: dict[str, CollectionOwnership] = {
     for item in (
         _agency("travel_requests", filters=("status", "request_status", "client_id", "trip_id", "purpose"), sorts=("status", "request_status", "deadline"), recommended_indexes=("travel_requests_agency_updated_id",)),
         _agency("travel_request_workspaces", filters=("request_status", "request_type", "request_priority", "assigned_agent", "operational_workspace_id", "requested_departure_date"), sorts=("request_status", "request_priority", "requested_departure_date", "deadline"), recommended_indexes=("travel_request_workspaces_agency_status_updated_id",)),
+        _agency("passenger_profiles", filters=("first_name", "last_name", "date_of_birth", "status", "identity_integrity_status"), sorts=("last_name", "status")),
+        _agency("request_passengers", filters=("request_id", "passenger_id", "status", "identity_status"), sorts=("request_id", "status")),
+        _agency("client_passenger_relationships", filters=("client_id", "passenger_id", "status"), sorts=("client_id", "status")),
+        _agency("request_passenger_segment_services", filters=("request_id", "request_passenger_id", "passenger_id", "status"), sorts=("request_id", "request_passenger_id")),
+        _agency("request_pets", filters=("request_id", "request_passenger_id", "passenger_id", "status"), sorts=("request_id", "status")),
+        _agency("request_special_items", filters=("request_id", "request_passenger_id", "owner_passenger_id", "status"), sorts=("request_id", "status")),
+        _agency("requested_services", filters=("request_id", "passenger_id", "status"), sorts=("request_id", "status")),
         _agency("trip_dossiers", filters=("request_id", "client_id", "trip_status", "trip_reference"), sorts=("trip_status", "departure_date"), recommended_indexes=("trip_dossiers_agency_updated_id",)),
         _agency("trip_workspaces", filters=("trip_status", "departure_country", "destination_country", "assigned_agent", "operational_priority", "departure_date", "operational_workspace_id"), sorts=("trip_status", "departure_date", "operational_priority"), recommended_indexes=("trip_workspaces_agency_status_updated_id",)),
         _agency("trip_segments", filters=("trip_id", "source_request_segment_id", "segment_type", "status"), sorts=("trip_id", "departure_at", "sequence")),
@@ -277,7 +284,7 @@ COLLECTION_OWNERSHIP_REGISTRY: dict[str, CollectionOwnership] = {
         _agency("journey_option_compositions", filters=("journey_id", "trip_id", "status", "offer_id", "offer_workspace_id"), sorts=("status",)),
         _agency("journey_offer_deliveries", filters=("journey_id", "offer_id", "status"), sorts=("status",)),
         _agency("journey_offer_acceptance_handoffs", filters=("journey_id", "offer_id", "status"), sorts=("status",), ownership=CollectionOwnershipType.IMMUTABLE_SNAPSHOT, historical_reads=True),
-        _agency("audit_events", filters=("entity_type", "entity_id", "action"), sorts=("action",), ownership=CollectionOwnershipType.AUDIT_SECURITY, historical_reads=True),
+        _agency("audit_events", filters=("entity_type", "entity_id", "event_type", "action"), sorts=("event_type", "action"), ownership=CollectionOwnershipType.AUDIT_SECURITY, historical_reads=True),
     )
 }
 

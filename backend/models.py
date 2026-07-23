@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic_core import PydanticCustomError
 
 
 def now_utc() -> datetime:
@@ -318,6 +319,18 @@ class PassengerStatus(str, Enum):
     INACTIVE = "inactive"
     ARCHIVED = "archived"
     DUPLICATE_MERGED = "duplicate_merged"
+    QUARANTINED = "quarantined"
+
+
+class PassengerIdentityIntegrityStatus(str, Enum):
+    CANONICAL = "canonical"
+    QUARANTINED_INTAKE_PLACEHOLDER = "quarantined_intake_placeholder"
+
+
+class RequestPassengerIdentityStatus(str, Enum):
+    UNRESOLVED = "unresolved"
+    CONFIRMED = "confirmed"
+    SOURCE_QUARANTINED = "source_quarantined"
 
 
 class RelationshipType(str, Enum):
@@ -1307,6 +1320,11 @@ class PassengerProfile(BaseDocument):
     loyalty_numbers: List[Dict[str, str]] = Field(default_factory=list)
     status: PassengerStatus = PassengerStatus.ACTIVE
     merged_into_passenger_id: Optional[str] = None
+    identity_integrity_status: PassengerIdentityIntegrityStatus = PassengerIdentityIntegrityStatus.CANONICAL
+    source_intake_id: Optional[str] = None
+    quarantined_at: Optional[datetime] = None
+    quarantined_by_user_id: Optional[str] = None
+    quarantine_reason: Optional[str] = None
 
 
 class PassengerProfileCreate(BaseModel):
@@ -2809,8 +2827,16 @@ class RequestPassenger(BaseDocument):
     is_primary_traveler: bool = False
     service_needs_summary: Optional[str] = None
     snapshot_display_name: str
-    snapshot_date_of_birth: date
+    snapshot_date_of_birth: Optional[date] = None
     snapshot_passenger_type: str
+    identity_status: RequestPassengerIdentityStatus = RequestPassengerIdentityStatus.CONFIRMED
+    identity_source: Optional[str] = None
+    proposed_identity_json: Dict[str, Any] = Field(default_factory=dict)
+    identity_confirmed_at: Optional[datetime] = None
+    identity_confirmed_by_user_id: Optional[str] = None
+    identity_confirmation_reason: Optional[str] = None
+    source_intake_id: Optional[str] = None
+    quarantined_passenger_profile_id: Optional[str] = None
     status: str = "active"
 
 
@@ -2833,6 +2859,55 @@ class RequestPassengerUpdate(BaseModel):
     role_in_request: Optional[RequestPassengerRole] = None
     is_primary_traveler: Optional[bool] = None
     service_needs_summary: Optional[str] = None
+
+
+class RequestPassengerIdentityConfirm(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    existing_passenger_id: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    display_name: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    passenger_type: PassengerType = PassengerType.ADT
+    gender: Optional[str] = None
+    nationality: Optional[str] = None
+    residence_country: Optional[str] = None
+    primary_language: str = "en"
+    relationship_type: RelationshipType = RelationshipType.OTHER
+    confirmation_reason: str = Field(min_length=3, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_identity_source(self):
+        supplied_identity_fields = [
+            self.first_name,
+            self.middle_name,
+            self.last_name,
+            self.display_name,
+            self.date_of_birth,
+            self.gender,
+            self.nationality,
+            self.residence_country,
+        ]
+        if self.existing_passenger_id:
+            if any(value is not None for value in supplied_identity_fields):
+                raise PydanticCustomError(
+                    "identity_source_conflict",
+                    "Existing passenger confirmation cannot include replacement identity fields.",
+                )
+            return self
+        if not self.first_name or not self.last_name or not self.date_of_birth:
+            raise PydanticCustomError(
+                "identity_fields_required",
+                "New passenger confirmation requires first name, last name, and date of birth.",
+            )
+        if self.first_name.startswith("Passenger ") and self.last_name == "Details pending":
+            raise PydanticCustomError(
+                "placeholder_identity_forbidden",
+                "Placeholder identity values cannot create a passenger profile.",
+            )
+        return self
 
 
 class RequestSegment(BaseDocument):

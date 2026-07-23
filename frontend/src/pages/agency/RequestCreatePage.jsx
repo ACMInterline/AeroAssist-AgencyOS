@@ -179,7 +179,7 @@ export default function RequestCreatePage() {
         organization: form.client_organization || undefined,
         notes: form.client_notes || undefined,
       },
-      passengers: form.passengers.filter((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name || passenger.passenger_link_mode === "unresolved").map((passenger, index) => cleanObject({ ...passenger, request_passenger_key: `inline-${index}`, passenger_link_mode: passenger.passenger_id ? "existing" : (passenger.first_name || passenger.display_name ? "new_inline" : "unresolved") })),
+      passengers: form.passengers.filter((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name || passenger.passenger_link_mode === "unresolved").map((passenger, index) => cleanObject({ ...passenger, request_passenger_key: `inline-${index}`, passenger_link_mode: passenger.passenger_id ? "existing" : "unresolved" })),
       trip_type: form.trip_type,
       origin: form.origin || undefined,
       destination: form.destination || undefined,
@@ -276,13 +276,14 @@ export default function RequestCreatePage() {
 
             <Section id="builder-2" eyebrow="Travelers" title="2. Passengers">
               {!form.passengers.some((passenger) => passenger.passenger_id || passenger.first_name || passenger.display_name) ? <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">No passengers yet. You can save with client-only context, but add at least one passenger when possible.</p> : null}
+              <p className="rounded-md bg-blue-50 p-3 text-sm text-blue-900">New traveler details stay on this request as unresolved until staff explicitly confirms identity. This form never creates a master passenger profile.</p>
               {form.passengers.map((passenger, index) => (
                 <div className="rounded-md border border-slate-100 p-3" key={index}>
                   <div className="grid gap-3 md:grid-cols-3">
-                    <Select label="Passenger profile" value={passenger.passenger_id} onChange={(value) => updateArray("passengers", index, { passenger_id: value })} options={[["", "Add a new passenger"], ...(state?.passengers || []).map((item) => [item.id, item.display_name])]} />
-                    <Field label="First name" value={passenger.first_name} onChange={(value) => updateArray("passengers", index, { first_name: value })} />
-                    <Field label="Display name" value={passenger.display_name} onChange={(value) => updateArray("passengers", index, { display_name: value })} />
-                    <Field label="Last name" value={passenger.last_name} onChange={(value) => updateArray("passengers", index, { last_name: value })} />
+                    <Select label="Existing passenger profile" value={passenger.passenger_id} onChange={(value) => updateArray("passengers", index, { passenger_id: value })} options={[["", "Unresolved traveler"], ...(state?.passengers || []).map((item) => [item.id, item.display_name])]} />
+                    <Field label="Proposed first name" value={passenger.first_name} onChange={(value) => updateArray("passengers", index, { first_name: value })} />
+                    <Field label="Proposed display name" value={passenger.display_name} onChange={(value) => updateArray("passengers", index, { display_name: value })} />
+                    <Field label="Proposed last name" value={passenger.last_name} onChange={(value) => updateArray("passengers", index, { last_name: value })} />
                     {fieldVisible("passengers.date_of_birth") ? <Field label="Date of birth" type="date" value={passenger.date_of_birth} onChange={(value) => updateArray("passengers", index, { date_of_birth: value })} /> : null}
                     {fieldVisible("passengers.passenger_type") ? <Select label="Passenger type" value={passenger.passenger_type} onChange={(value) => updateArray("passengers", index, { passenger_type: value })} options={["adult", "child", "infant", "senior", "unaccompanied_minor"].map((item) => [item, item.replaceAll("_", " ")])} /> : null}
                   </div>

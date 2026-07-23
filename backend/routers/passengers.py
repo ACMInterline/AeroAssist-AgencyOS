@@ -92,6 +92,11 @@ async def list_passengers(
     passengers = [
         passenger
         for passenger in passengers
+        if status_filter or passenger.get("status") != "quarantined"
+    ]
+    passengers = [
+        passenger
+        for passenger in passengers
         if includes_search(
             passenger,
             search,
@@ -212,8 +217,11 @@ async def restore_passenger(
 ) -> dict:
     await require_write(db, agency_id, user)
     passenger = await get_passenger_or_404(db, agency_id, passenger_id)
-    if passenger.get("status") == "duplicate_merged":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Merged duplicate passengers cannot be restored.")
+    if passenger.get("status") in {"duplicate_merged", "quarantined"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Merged or integrity-quarantined passengers cannot be restored.",
+        )
     restored = await db.collection("passenger_profiles").update_one(
         {"agency_id": agency_id, "id": passenger_id},
         {"status": "active"},
@@ -245,8 +253,11 @@ async def merge_passenger(
     target = await get_passenger_or_404(db, agency_id, payload.target_passenger_id)
     if source["id"] == target["id"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source and target passenger must differ.")
-    if source.get("status") == "duplicate_merged":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source passenger is already merged.")
+    if source.get("status") in {"duplicate_merged", "quarantined"} or target.get("status") == "quarantined":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Merged or integrity-quarantined passengers cannot participate in a merge.",
+        )
 
     existing_target_relationships = await db.collection("client_passenger_relationships").find_many(
         {"agency_id": agency_id, "passenger_id": target["id"]}

@@ -42,7 +42,8 @@ This document defines the target canonical operations model for AgencyOS. It tra
 - `source_entry_path` identifies the UX/API entry route where the request began.
 - `submission_channel` identifies whether data came from public site, agency website, portal, staff console, import, or API.
 - `account_origin_at_submission` records whether the submitter was existing, new public contact, portal account, staff-created, imported, or unknown.
-- Passenger link modes are `existing`, `new_inline`, or `unresolved`.
+- Passenger link modes are `existing` or `unresolved`. The legacy `new_inline` input value is accepted only for compatibility and is normalized to an unresolved request passenger; it must not create a master profile.
+- `PassengerProfile` is created or linked only after an explicit staff identity-confirmation action with complete identity data or a selected existing profile.
 - Segment records are canonical for itinerary shape; summary fields are display conveniences.
 - Requested services should use passenger and segment scoping rather than unstructured notes whenever possible.
 - Mobility/medical/pet/special-item details use Phase 33 Reference Data and Phase 34 normalized child records while deeper airline policy checks are implemented separately.

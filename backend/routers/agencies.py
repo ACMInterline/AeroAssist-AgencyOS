@@ -6,7 +6,7 @@ from pathlib import PurePath
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import get_current_agency_context, get_current_user, require_platform_role
+from auth import get_current_agency_context, get_current_user, require_agency_role, require_platform_role
 from config import get_settings as get_app_settings
 from database import Database, get_database
 from models import (
@@ -30,8 +30,9 @@ from models import (
     now_utc,
 )
 from security import hash_token, new_raw_token, normalize_email
-from services.tenant_service import require_any_agency_role
 from services.agency_onboarding_service import AgencyOnboardingService
+from services.audit_event_access_service import AGENCY_AUDIT_READ_ROLES, AuditEventAccessService
+from services.tenant_service import require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies", tags=["agencies"])
 
@@ -564,6 +565,27 @@ async def get_agency(context: dict = Depends(get_current_agency_context), db: Da
         },
         "membership": context["membership"],
     }
+
+
+@router.get("/{agency_id}/audit-events")
+async def list_agency_audit_events(
+    agency_id: str,
+    entity_type: str | None = Query(default=None),
+    entity_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1),
+    cursor: str | None = Query(default=None),
+    membership: dict = Depends(require_agency_role("agency_id", AGENCY_AUDIT_READ_ROLES)),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await AuditEventAccessService(db).list_agency_events(
+        agency_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        event_type=event_type,
+        limit=limit,
+        cursor=cursor,
+    )
 
 
 @router.put("/{agency_id}")

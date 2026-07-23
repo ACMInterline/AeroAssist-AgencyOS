@@ -13,6 +13,9 @@ import { loadCurrentAgency } from "../../lib/agency"
 
 export default function RequestDetailPage({ requestId }) {
   const [state, setState] = useState(null)
+  const [identityDrafts, setIdentityDrafts] = useState({})
+  const [confirmingIdentity, setConfirmingIdentity] = useState("")
+  const [identityError, setIdentityError] = useState({ id: "", message: "" })
   const [forms, setForms] = useState({
     status: "triage",
     passenger_id: "",
@@ -34,6 +37,22 @@ export default function RequestDetailPage({ requestId }) {
     const passengers = await apiGet(`/api/agencies/${context.agency.id}/passengers`)
     const relationships = await apiGet(`/api/agencies/${context.agency.id}/client-passenger-relationships`)
     setState({ ...context, ...detail, agencyPassengers: passengers.items, agencyRelationships: relationships.items })
+    setIdentityDrafts((current) => Object.fromEntries(
+      (detail.passengers || []).filter((passenger) => !passenger.passenger_id).map((passenger) => {
+        const proposed = passenger.proposed_identity_json || {}
+        return [passenger.id, current[passenger.id] || {
+          existing_passenger_id: "",
+          first_name: proposed.first_name || "",
+          middle_name: proposed.middle_name || "",
+          last_name: proposed.last_name || "",
+          display_name: proposed.display_name || "",
+          date_of_birth: proposed.date_of_birth || "",
+          passenger_type: proposed.passenger_type || passenger.snapshot_passenger_type || "ADT",
+          relationship_type: "other",
+          confirmation_reason: "",
+        }]
+      }),
+    ))
     setForms((current) => ({
       ...current,
       status: detail.request.status,
@@ -51,6 +70,13 @@ export default function RequestDetailPage({ requestId }) {
     setForms((current) => ({ ...current, [name]: value }))
   }
 
+  function setIdentityField(requestPassengerId, name, value) {
+    setIdentityDrafts((current) => ({
+      ...current,
+      [requestPassengerId]: { ...(current[requestPassengerId] || {}), [name]: value },
+    }))
+  }
+
   async function changeStatus(event) {
     event.preventDefault()
     await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/status`, { status: forms.status, summary: `Status changed to ${forms.status}` })
@@ -63,6 +89,37 @@ export default function RequestDetailPage({ requestId }) {
     if (forms.relationship_id) payload.client_passenger_relationship_id = forms.relationship_id
     await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/passengers`, payload)
     await load()
+  }
+
+  async function confirmIdentity(event, requestPassenger) {
+    event.preventDefault()
+    const draft = identityDrafts[requestPassenger.id] || {}
+    const payload = draft.existing_passenger_id
+      ? {
+          existing_passenger_id: draft.existing_passenger_id,
+          relationship_type: draft.relationship_type || "other",
+          confirmation_reason: draft.confirmation_reason,
+        }
+      : {
+          first_name: draft.first_name,
+          middle_name: draft.middle_name || undefined,
+          last_name: draft.last_name,
+          display_name: draft.display_name || undefined,
+          date_of_birth: draft.date_of_birth,
+          passenger_type: draft.passenger_type || "ADT",
+          relationship_type: draft.relationship_type || "other",
+          confirmation_reason: draft.confirmation_reason,
+        }
+    setIdentityError({ id: "", message: "" })
+    setConfirmingIdentity(requestPassenger.id)
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/passengers/${requestPassenger.id}/confirm-identity`, payload)
+      await load()
+    } catch (err) {
+      setIdentityError({ id: requestPassenger.id, message: err.message })
+    } finally {
+      setConfirmingIdentity("")
+    }
   }
 
   async function addSegment(event) {
@@ -129,6 +186,8 @@ export default function RequestDetailPage({ requestId }) {
 
   const allowedRelationships = (state?.agencyRelationships || []).filter((relationship) => relationship.client_id === state?.request?.client_id && relationship.passenger_id === forms.passenger_id && relationship.status === "active")
   const requestReady = Boolean(state?.passengers?.length && state?.segments?.length)
+  const unresolvedPassengerCount = (state?.passengers || []).filter((passenger) => !passenger.passenger_id || ["unresolved", "source_quarantined"].includes(passenger.identity_status)).length
+  const identitiesConfirmed = requestReady && unresolvedPassengerCount === 0
   const requestClosed = ["cancelled", "archived"].includes(state?.request?.status)
 
   if (!state) {
@@ -155,8 +214,10 @@ export default function RequestDetailPage({ requestId }) {
             breadcrumbs={[{ label: "Clients", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }, { label: "Requests", href: "/agency/requests" }]}
             currentLabel={state?.request?.request_reference || "Request"}
             status={state?.request?.status}
-            validation={requestReady && !requestClosed
-              ? { state: "ready", label: "Ready to prepare the trip", reason: "Passenger and flight details are available for review." }
+            validation={identitiesConfirmed && !requestClosed
+              ? { state: "ready", label: "Ready to prepare the trip", reason: "Passenger identities and flight details are available for review." }
+              : requestReady && !requestClosed
+                ? { state: "warning", label: "Passenger identity confirmation needed", reason: "The trip may be prepared for planning, but an offer cannot be created until every traveler is confirmed." }
               : { state: requestClosed ? "blocked" : "warning", label: requestClosed ? "Request closed" : "More trip details needed", reason: requestClosed ? "Restore the request before continuing." : "Add at least one passenger and one flight segment before preparing the trip." }}
             previous={state?.passengers?.[0]?.passenger_id ? { label: "Previous: passenger", href: `/agency/passengers/${state.passengers[0].passenger_id}` } : { label: "Previous: client", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }}
             next={state?.linked_trip
@@ -164,7 +225,7 @@ export default function RequestDetailPage({ requestId }) {
               : { label: "Prepare trip", href: `/agency/request-trip-conversion?request_id=${encodeURIComponent(requestId)}`, enabled: requestReady && !requestClosed, reason: "Passenger and flight details are required." }}
             relatedRecords={[
               { label: "Client", value: state?.client?.display_name, href: state?.client?.id ? `/agency/clients/${state.client.id}` : undefined },
-              { label: "Passengers", value: state?.passengers?.length || 0 },
+              { label: "Passengers", value: unresolvedPassengerCount ? `${state?.passengers?.length || 0} (${unresolvedPassengerCount} unresolved)` : state?.passengers?.length || 0 },
               { label: "Trip", value: state?.linked_trip?.trip_reference || "not converted", href: state?.linked_trip ? `/agency/trips/${state.linked_trip.id}` : undefined },
             ]}
           />
@@ -252,7 +313,62 @@ export default function RequestDetailPage({ requestId }) {
               </select>
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add passenger</button>
             </form>
-            <List items={state.passengers} empty="No passengers linked yet" render={(item) => `${item.snapshot_display_name} · ${item.snapshot_passenger_type} · ${item.role_in_request.replaceAll("_", " ")}`} />
+            {!state.passengers.length ? <p className="text-sm text-slate-500">No passengers linked yet</p> : null}
+            <div className="space-y-3">
+              {state.passengers.map((item) => {
+                const unresolved = !item.passenger_id || ["unresolved", "source_quarantined"].includes(item.identity_status)
+                const draft = identityDrafts[item.id] || {}
+                return (
+                  <div className="rounded-md border border-slate-200 p-4" key={item.id}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">{item.snapshot_display_name}</p>
+                        <p className="mt-1 text-xs text-slate-600">{item.snapshot_passenger_type} · {item.role_in_request.replaceAll("_", " ")} · {unresolved ? "identity unresolved" : "identity confirmed"}</p>
+                      </div>
+                      {!unresolved ? <a className="text-sm font-semibold text-blue-700" href={`/agency/passengers/${item.passenger_id}`}>Open passenger</a> : null}
+                    </div>
+                    {unresolved ? (
+                      <form className="mt-4 space-y-3 border-t border-slate-100 pt-4" onSubmit={(event) => confirmIdentity(event, item)}>
+                        {identityError.id === item.id ? <p className="rounded-md bg-rose-50 p-3 text-sm text-rose-800">{identityError.message}</p> : null}
+                        {item.identity_status === "source_quarantined" ? <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">A legacy synthetic profile was quarantined. Confirm the real traveler before continuing to an offer.</p> : null}
+                        <p className="text-sm text-slate-700">Choose an existing passenger or enter confirmed identity details. A new master profile is created only by this action.</p>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          <label className="text-sm font-medium text-slate-700">Existing passenger
+                            <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.existing_passenger_id || ""} onChange={(event) => setIdentityField(item.id, "existing_passenger_id", event.target.value)}>
+                              <option value="">Create from confirmed details</option>
+                              {state.agencyPassengers.map((passenger) => <option key={passenger.id} value={passenger.id}>{passenger.display_name}</option>)}
+                            </select>
+                          </label>
+                          <label className="text-sm font-medium text-slate-700">Relationship
+                            <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.relationship_type || "other"} onChange={(event) => setIdentityField(item.id, "relationship_type", event.target.value)}>
+                              {["self", "spouse", "child", "parent", "guardian", "employee", "assistant", "company_traveler", "other"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+                            </select>
+                          </label>
+                          <label className="text-sm font-medium text-slate-700">Confirmation reason
+                            <input required minLength={3} className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.confirmation_reason || ""} onChange={(event) => setIdentityField(item.id, "confirmation_reason", event.target.value)} />
+                          </label>
+                        </div>
+                        {!draft.existing_passenger_id ? (
+                          <div className="grid gap-3 md:grid-cols-3">
+                            <label className="text-sm font-medium text-slate-700">First name<input required className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.first_name || ""} onChange={(event) => setIdentityField(item.id, "first_name", event.target.value)} /></label>
+                            <label className="text-sm font-medium text-slate-700">Middle name<input className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.middle_name || ""} onChange={(event) => setIdentityField(item.id, "middle_name", event.target.value)} /></label>
+                            <label className="text-sm font-medium text-slate-700">Last name<input required className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.last_name || ""} onChange={(event) => setIdentityField(item.id, "last_name", event.target.value)} /></label>
+                            <label className="text-sm font-medium text-slate-700">Display name<input className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.display_name || ""} onChange={(event) => setIdentityField(item.id, "display_name", event.target.value)} /></label>
+                            <label className="text-sm font-medium text-slate-700">Date of birth<input required type="date" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.date_of_birth || ""} onChange={(event) => setIdentityField(item.id, "date_of_birth", event.target.value)} /></label>
+                            <label className="text-sm font-medium text-slate-700">Passenger type
+                              <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.passenger_type || "ADT"} onChange={(event) => setIdentityField(item.id, "passenger_type", event.target.value)}>
+                                {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => <option key={value} value={value}>{value}</option>)}
+                              </select>
+                            </label>
+                          </div>
+                        ) : null}
+                        <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={confirmingIdentity === item.id} type="submit">{confirmingIdentity === item.id ? "Confirming..." : "Confirm identity"}</button>
+                      </form>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
           </Panel>
           <Panel title="Intended itinerary">
             <form className="grid gap-3 md:grid-cols-[80px_1fr_1fr_auto]" onSubmit={addSegment}>

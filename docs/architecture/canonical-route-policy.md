@@ -12,6 +12,21 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/api/agencies/{agency_id}/*` | Agency operational APIs |
 | `/api/reference/*` | Shared consume APIs |
 
+## Audit Event Access
+
+- Canonical Platform review: `GET /api/platform/audit-events`, limited to Platform Owner and Platform Admin.
+- Canonical Agency review: `GET /api/agencies/{agency_id}/audit-events`, limited to Agency Owner and Agency Admin for their own agency.
+- Legacy `GET /api/audit-events` remains only as a deprecated Platform Owner/Admin compatibility alias and identifies the canonical replacement in its response.
+- All audit reads are bounded, ordered newest first, and return a recursively redacted projection. Portal identities, Platform Support, unauthorized agency roles, anonymous callers, and cross-agency reads are rejected.
+- Audit writes and stored source records are unchanged; read-time redaction never mutates audit history.
+
+## Request Passenger Identity
+
+- Unconfirmed traveler information remains on the agency-scoped `RequestPassenger` record.
+- Explicit confirmation uses `POST /api/agencies/{agency_id}/requests/{request_id}/passengers/{request_passenger_id}/confirm-identity`.
+- The route is limited to existing Agency write roles and Platform Owner/Admin override, enforces agency ownership for request and existing passenger selections, and records audit plus request-timeline evidence.
+- Intake conversion and request creation do not create a `PassengerProfile`; offer creation from a request rejects unresolved passenger identities.
+
 ## Rejected Roots
 
 | Supplementary root | Decision | Reason |

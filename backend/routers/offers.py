@@ -178,6 +178,20 @@ async def create_offer_from_request(agency_id: str, request_id: str, payload: Cr
     request = await db.collection("travel_requests").find_one({"agency_id": agency_id, "id": request_id})
     if not request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found.")
+    request_passengers = await db.collection("request_passengers").find_many(
+        {"agency_id": agency_id, "request_id": request_id, "status": "active"}
+    )
+    unresolved_passengers = [
+        passenger
+        for passenger in request_passengers
+        if not passenger.get("passenger_id")
+        or passenger.get("identity_status") in {"unresolved", "source_quarantined"}
+    ]
+    if unresolved_passengers:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Confirm every request passenger identity before creating an offer.",
+        )
     offer = Offer(
         agency_id=agency_id,
         offer_reference=await next_reference(db, agency_id),
@@ -194,7 +208,7 @@ async def create_offer_from_request(agency_id: str, request_id: str, payload: Cr
         client_visible_terms=payload.client_visible_terms,
     )
     created = await db.collection("offers").insert_one(offer.model_dump(mode="json"))
-    for request_passenger in await db.collection("request_passengers").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}):
+    for request_passenger in request_passengers:
         passenger = OfferPassenger(
             agency_id=agency_id,
             offer_id=offer.id,

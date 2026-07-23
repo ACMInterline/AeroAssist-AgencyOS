@@ -907,7 +907,27 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("normalized_email", ASCENDING), ("target_role", ASCENDING), ("status", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
         ],
-        "passenger_profiles": [[("agency_id", ASCENDING), ("display_name", ASCENDING)]],
+        "passenger_profiles": [
+            [("agency_id", ASCENDING), ("display_name", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("identity_integrity_status", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "passenger_profiles_identity_integrity_lookup",
+            },
+        ],
+        "request_passengers": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("identity_status", ASCENDING),
+                ],
+                "name": "request_passengers_identity_status_lookup",
+            }
+        ],
         "client_passenger_relationships": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("passenger_id", ASCENDING)],

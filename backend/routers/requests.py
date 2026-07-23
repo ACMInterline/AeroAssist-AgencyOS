@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -10,11 +10,11 @@ from models import (
     ClientPassengerRelationship,
     ClientProfile,
     OperationalRequestBuilderCreate,
-    PassengerProfile,
     RequestMessage,
     RequestMessageCreate,
     RequestPassenger,
     RequestPassengerCreate,
+    RequestPassengerIdentityConfirm,
     RequestPassengerUpdate,
     RequestSegment,
     RequestSegmentCreate,
@@ -30,6 +30,10 @@ from models import (
     TravelRequest,
     TravelRequestCreate,
     TravelRequestUpdate,
+)
+from services.request_passenger_identity_service import (
+    confirm_request_passenger_identity,
+    unresolved_request_passenger,
 )
 from services.request_normalization_service import normalize_request_children
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
@@ -193,38 +197,29 @@ async def create_inline_client(db: Database, agency_id: str, payload) -> dict:
 
 
 async def create_inline_passenger(db: Database, agency_id: str, client_id: str, payload, index: int) -> dict:
-    if payload.passenger_link_mode == "unresolved" and not payload.passenger_id and not payload.first_name and not payload.display_name:
+    if not payload.passenger_id:
+        display_name = compact_text(payload.display_name, 160)
+        first_name = compact_text(payload.first_name, 80)
+        last_name = compact_text(payload.last_name, 80)
+        if not display_name:
+            display_name = " ".join(
+                part for part in [first_name, last_name] if part
+            )
         return {
             "passenger": {
                 "id": None,
-                "display_name": payload.display_name or f"Unresolved passenger {index + 1}",
-                "date_of_birth": payload.date_of_birth or date(1900, 1, 1),
+                "display_name": display_name or f"Unresolved traveler {index + 1}",
+                "date_of_birth": payload.date_of_birth,
                 "passenger_type": PASSENGER_TYPE_MAP.get(payload.passenger_type, "ADT"),
             },
             "relationship": None,
         }
-    if payload.passenger_id:
-        passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
-    else:
-        display_name = compact_text(payload.display_name, 160)
-        first_name = compact_text(payload.first_name, 80)
-        last_name = compact_text(payload.last_name, 80)
-        if not display_name and not first_name:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passenger first name or display name is required.")
-        if not display_name:
-            display_name = " ".join([part for part in [first_name, last_name] if part])
-        passenger = PassengerProfile(
-            agency_id=agency_id,
-            first_name=first_name or display_name.split(" ", 1)[0],
-            last_name=last_name or "Unknown",
-            display_name=display_name,
-            date_of_birth=payload.date_of_birth or date(1900, 1, 1),
-            passenger_type=PASSENGER_TYPE_MAP.get(payload.passenger_type, "OTHER"),
-            known_assistance_needs=compact_text(payload.mobility_notes or payload.notes, 2000),
-            medical_notes_internal=compact_text(payload.medical_notes, 2000),
-            travel_document_notes=compact_text(payload.notes, 2000),
+    passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
+    if passenger.get("status") in {"archived", "duplicate_merged", "quarantined"}:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Archived, merged, or quarantined passengers cannot be linked to a request.",
         )
-        passenger = await db.collection("passenger_profiles").insert_one(passenger.model_dump(mode="json"))
     relationship = await db.collection("client_passenger_relationships").find_one({"agency_id": agency_id, "client_id": client_id, "passenger_id": passenger["id"]})
     if not relationship:
         relationship = await db.collection("client_passenger_relationships").insert_one(
@@ -314,19 +309,33 @@ async def create_request_from_builder(
         relationship = resolved["relationship"]
         if passenger.get("id"):
             passenger_id_map[passenger_payload.passenger_id or f"inline-{index}"] = passenger["id"]
-        request_passenger = RequestPassenger(
-            agency_id=agency_id,
-            request_id=created_request["id"],
-            passenger_id=passenger.get("id"),
-            passenger_link_mode=passenger_payload.passenger_link_mode if not passenger.get("id") else "existing",
-            client_passenger_relationship_id=relationship["id"] if relationship else None,
-            role_in_request="traveler",
-            is_primary_traveler=index == 0,
-            service_needs_summary=compact_text(passenger_payload.mobility_notes or passenger_payload.medical_notes or passenger_payload.notes, 1000),
-            snapshot_display_name=passenger["display_name"],
-            snapshot_date_of_birth=passenger["date_of_birth"],
-            snapshot_passenger_type=passenger["passenger_type"],
-        )
+            request_passenger = RequestPassenger(
+                agency_id=agency_id,
+                request_id=created_request["id"],
+                passenger_id=passenger["id"],
+                passenger_link_mode="existing",
+                client_passenger_relationship_id=relationship["id"] if relationship else None,
+                role_in_request="traveler",
+                is_primary_traveler=index == 0,
+                service_needs_summary=compact_text(passenger_payload.mobility_notes or passenger_payload.medical_notes or passenger_payload.notes, 1000),
+                snapshot_display_name=passenger["display_name"],
+                snapshot_date_of_birth=passenger["date_of_birth"],
+                snapshot_passenger_type=passenger["passenger_type"],
+                identity_status="confirmed",
+                identity_source="existing_passenger_profile",
+            )
+        else:
+            proposed_identity = passenger_payload.model_dump(mode="json")
+            proposed_identity["passenger_type"] = passenger["passenger_type"]
+            request_passenger = unresolved_request_passenger(
+                agency_id=agency_id,
+                request_id=created_request["id"],
+                index=index,
+                proposed_identity=proposed_identity,
+                service_needs_summary=passenger_payload.mobility_notes
+                or passenger_payload.medical_notes
+                or passenger_payload.notes,
+            )
         request_passengers.append(await db.collection("request_passengers").insert_one(request_passenger.model_dump(mode="json")))
 
     request_segments = []
@@ -368,7 +377,9 @@ async def create_request_from_builder(
         segment_id_map[str(segment_data.get("sequence") or index + 1)] = created_segment["id"]
 
     requested_services = []
-    all_passenger_ids = [item["passenger_id"] for item in request_passengers]
+    all_passenger_ids = [
+        item["passenger_id"] for item in request_passengers if item.get("passenger_id")
+    ]
     all_segment_ids = [item["id"] for item in request_segments]
     for service_payload in payload.services:
         passenger_ids = service_payload.passenger_ids or (all_passenger_ids if service_payload.applies_to_all_passengers else [])
@@ -589,6 +600,26 @@ async def update_request_passenger(agency_id: str, request_id: str, request_pass
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request passenger not found.")
     await write_timeline(db, agency_id, request_id, user["id"], "request.passenger_updated", "Request passenger updated")
     return {"request_passenger": item}
+
+
+@router.post("/requests/{request_id}/passengers/{request_passenger_id}/confirm-identity")
+async def confirm_request_passenger(
+    agency_id: str,
+    request_id: str,
+    request_passenger_id: str,
+    payload: RequestPassengerIdentityConfirm,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    return await confirm_request_passenger_identity(
+        db,
+        agency_id,
+        request_id,
+        request_passenger_id,
+        payload,
+        user["id"],
+    )
 
 
 @router.post("/requests/{request_id}/passengers/{request_passenger_id}/archive")

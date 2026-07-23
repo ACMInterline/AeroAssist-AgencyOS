@@ -2718,6 +2718,50 @@
       "execution_isolation": "none"
     },
     {
+      "script_path": "backend/scripts/smoke_audit_event_isolation.py",
+      "capability_name": "Audit Event Access Isolation",
+      "minimum_application_phase": "phase_56_5_4_authentication_security_http_hardening_foundation",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "platform",
+        "tenancy",
+        "security",
+        "audit"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable in-memory HTTP regression for anonymous, portal, Agency Owner, Agency Read-only, cross-agency, Platform Support, Platform Admin, and Platform Owner audit-event access; bounded pagination; restricted metadata redaction; canonical route ownership; and persisted audit source-truth preservation.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_request_passenger_identity_integrity.py",
+      "capability_name": "Request Passenger Identity Integrity",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "security",
+        "requests",
+        "passengers",
+        "offers",
+        "audit"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable in-memory HTTP and service regression proving intake conversion and request builder retain unresolved travelers at request scope, explicit identity confirmation is tenant- and role-guarded, offer creation requires confirmed passenger identities, and strict legacy intake-placeholder quarantine is non-destructive, precise, audited, and idempotent.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
       "capability_name": "Visual Policy Editor Foundation",
       "minimum_application_phase": "phase_52_3_visual_policy_editor_foundation",

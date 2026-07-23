@@ -2,7 +2,7 @@ import asyncio
 import time
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -44,6 +44,8 @@ from services.commercial_pilot_readiness_service import (
 from services.product_experience_recovery_service import (
     product_experience_recovery_readiness_metadata,
 )
+from auth import require_platform_role
+from services.audit_event_access_service import AuditEventAccessService, PLATFORM_AUDIT_READ_ROLES
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import platform_observability
@@ -7423,14 +7425,28 @@ async def system_readiness(x_internal_readiness_key: str | None = Header(default
     return await bounded_internal_readiness_payload()
 
 
-@app.get("/api/audit-events")
-async def audit_events() -> dict:
-    settings = get_settings()
+@app.get("/api/audit-events", deprecated=True)
+async def audit_events(
+    agency_id: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
+    entity_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1),
+    cursor: str | None = Query(default=None),
+    user: dict = Depends(require_platform_role(PLATFORM_AUDIT_READ_ROLES)),
+) -> dict:
+    result = await AuditEventAccessService(database).list_platform_events(
+        agency_id=agency_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        event_type=event_type,
+        limit=limit,
+        cursor=cursor,
+    )
     return {
-        "items": await database.collection("audit_events").find_many(
-            sort=[("created_at", -1), ("id", -1)],
-            limit=settings.query_maximum_limit,
-        )
+        **result,
+        "deprecated": True,
+        "canonical_route": "/api/platform/audit-events",
     }
 
 
