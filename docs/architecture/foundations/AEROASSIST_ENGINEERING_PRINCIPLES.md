@@ -5,6 +5,10 @@ These principles guide future AeroAssist implementation. They are architectural 
 ## Rules
 
 - Never duplicate operational models.
+- Before changing a kernel lifecycle or write path, follow the approved `canonical-domain-ownership-map.md`; one domain may have only one target mutable owner.
+- Treat every listed compatibility writer as migration debt. Do not make it a second canonical owner, and do not remove it without reconciliation and rollback evidence.
+- `agency_id` is the tenant boundary. `workspace_id` is context and must not authorize access or trigger a speculative tenant migration.
+- Immutable accepted-offer and issued-document evidence must never be reconstructed from later mutable records.
 - Do not expand the feature or metadata surface while the P0 product-kernel freeze is active; first approve one canonical ownership map and simplify the operator workflow.
 - Unconfirmed traveler claims belong to `RequestPassenger`; only explicit human identity confirmation may create or link a canonical `PassengerProfile`.
 - Never invent identity fields, dates of birth, passenger types, relationships, or master records to satisfy downstream schemas.

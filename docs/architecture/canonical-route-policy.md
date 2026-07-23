@@ -2,6 +2,14 @@
 
 AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin/*` route roots are intentionally not adopted.
 
+P1 Product Kernel Repair 2 introduces no route. Existing route families are
+classified in the [Canonical Domain Ownership Map](canonical-domain-ownership-map.md)
+as canonical writers, operational workspaces, projections, or compatibility
+writers. A canonical URL does not by itself make its model the canonical
+business owner; compatibility routes remain callable until a separately
+approved migration meets the [migration register](canonical-domain-migration-register.md)
+exit criteria.
+
 ## Canonical Routes
 
 | Route root | Purpose |

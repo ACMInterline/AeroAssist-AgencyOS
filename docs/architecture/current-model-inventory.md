@@ -427,3 +427,27 @@ Active marker: `phase_59_0_product_experience_recovery`.
 Phase 59.0 adds no new persistence, Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation projection over the existing React module catalogue and canonical route map. The Platform Overview adds a bounded `product_overview` projection to the existing protected `/api/platform/summary` response using canonical Agency onboarding and audit records; it does not persist a dashboard model or duplicate domain state.
 
 `WorkspacePage` owns layout width only. The Platform and Agency navigation projections own no authorization state: existing platform roles, agency memberships, tenant helpers, and API dependencies remain authoritative.
+
+## P1 Product Kernel Repair 2 Ownership Registry
+
+P1 Product Kernel Repair 2 adds no Pydantic model, MongoDB collection, index,
+router, endpoint, frontend page, lifecycle mutation, or readiness section.
+`backend/canonical_domain_ownership.py` is non-runtime governance metadata over
+the actual current model and persistence inventory.
+
+The registry selects `AuthIdentity`, `PlatformUser`,
+`AgencyStaffMembership`, `PortalAccessMapping`, `Agency`, `ClientProfile`,
+`PassengerProfile`, `ClientPassengerRelationship`, `TravelRequest`,
+request-scoped children, `PassengerServiceRequest`, `OfferWorkspace`,
+`OfferOption`, `OfferAcceptance`, immutable `TripAcceptedOfferSnapshot`,
+`TripDossier`, `BookingRecord`, `OfferBookingHandoff`, `TicketRecord` and
+`TicketCoupon`, `EMDRecord` and `EmdCoupon`, `SsrOsiWorkspace`, `Invoice` and
+`InvoiceLineItem`, `PaymentRecord`, `AfterSalesCase`, `DocumentWorkspace`,
+`OperationalWorkItem`, `OperationalTimeline`, `AuditEvent`, and
+`GlobalReferenceRecord` as targets. Passenger portal identity, Communication,
+Airline Knowledge, Policy, and Pricing remain `decision_required`.
+
+The registry confirms `agency_id` as the tenant boundary and classifies later
+Master/Workspace families and older routes without changing them. See
+[Canonical Domain Ownership Map](canonical-domain-ownership-map.md) and
+[Canonical Domain Migration Register](canonical-domain-migration-register.md).

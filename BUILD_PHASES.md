@@ -30,6 +30,17 @@ Before implementing future phases, Codex should read and follow:
 
 The [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architecture/p0-security-integrity-product-kernel-freeze.md) is active and is not a new roadmap phase. Audit access is protected, unconfirmed travelers remain request-owned until explicit identity confirmation, and proven legacy intake placeholders have a non-destructive quarantine utility. Do not add metadata foundations or top-level product surfaces until the canonical product-kernel ownership map and simplified operator workflow are approved. Security fixes, integrity repairs, canonical consolidation, pilot blockers, tests, documentation, and UI simplification remain allowed.
 
+### P1 Product Kernel Repair 2 - Canonical Domain Ownership Map
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It adds one machine-readable business-domain ownership
+contract, forty domain classifications, an explicit `agency_id` tenant
+decision, the frozen Request-to-Portal lifecycle, a migration register,
+deterministic validation, and focused smoke coverage. It performs no data
+migration, collection or route rename, runtime registration, or product
+behavior change. See [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md)
+and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md).
+
 ## Current Implementation State
 
 The repository currently contains:

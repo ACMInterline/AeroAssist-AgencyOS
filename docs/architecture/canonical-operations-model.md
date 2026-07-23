@@ -2,6 +2,15 @@
 
 This document defines the target canonical operations model for AgencyOS. It translates the original Travel Agency Micro-ERP + CRM blueprint into the current FastAPI/Mongo/React architecture.
 
+The enforceable per-domain ownership contract now lives in the
+[Canonical Domain Ownership Map](canonical-domain-ownership-map.md), with
+duplicate writers and future reconciliation tracked in the
+[Canonical Domain Migration Register](canonical-domain-migration-register.md).
+`agency_id` is the canonical tenant boundary; `workspace_id` is operational
+context only. Until that register's exit criteria are met, selected targets are
+architectural owners rather than a claim that compatibility writers have
+already been migrated.
+
 ## Main Entities
 
 - **Client**: payer/requester/account entity. A client may be an individual, household, or organization.
