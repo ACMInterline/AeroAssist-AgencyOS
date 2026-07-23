@@ -271,10 +271,31 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
             )
             created.append(f"agency_staff_membership:{staff_user['email']}")
 
-    await ensure_identity(DEMO_OWNER_EMAIL, "platform_user")
-    await ensure_identity("agency.owner@aeroassist.dev", "agency_staff")
-    await ensure_identity("agency.agent@aeroassist.dev", "agency_staff")
-    await ensure_identity("agency.readonly@aeroassist.dev", "agency_staff")
+    staff_identities = {
+        DEMO_OWNER_EMAIL: await ensure_identity(DEMO_OWNER_EMAIL, "platform_user"),
+        "agency.owner@aeroassist.dev": await ensure_identity("agency.owner@aeroassist.dev", "agency_staff"),
+        "agency.agent@aeroassist.dev": await ensure_identity("agency.agent@aeroassist.dev", "agency_staff"),
+        "agency.readonly@aeroassist.dev": await ensure_identity("agency.readonly@aeroassist.dev", "agency_staff"),
+    }
+    for staff_user in (owner, agency_owner_user, agency_agent_user, agency_readonly_user):
+        staff_identity = staff_identities[staff_user["email"]]
+        if staff_user.get("identity_id") != staff_identity["id"]:
+            staff_user = await users.update_one(
+                {"id": staff_user["id"]},
+                {"identity_id": staff_identity["id"]},
+            )
+        staff_membership = await memberships.find_one(
+            {"agency_id": agency["id"], "user_id": staff_user["id"]}
+        )
+        if staff_membership and staff_membership.get("identity_id") != staff_identity["id"]:
+            await memberships.update_one(
+                {"id": staff_membership["id"]},
+                {
+                    "identity_id": staff_identity["id"],
+                    "email": staff_user["email"],
+                    "normalized_email": normalize_email(staff_user["email"]),
+                },
+            )
 
     for record in core_reference_records():
         existing = await references.find_one({"domain": record.domain, "key": record.key})
@@ -349,18 +370,50 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         (organization_client, "travel@orbitex.example.com", "Orbitex Travel Desk"),
     ]
     for client, user_email, display_name in portal_specs:
-        existing_portal = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": user_email})
+        portal_identity = await ensure_identity(user_email, "client_portal")
+        existing_portal = await portal_mappings.find_one(
+            {"agency_id": agency["id"], "auth_identity_id": portal_identity["id"], "status": "active"}
+        )
+        if existing_portal is None:
+            existing_portal = await portal_mappings.find_one(
+                {"agency_id": agency["id"], "user_email": user_email}
+            )
         if existing_portal is None:
             portal_mapping = PortalAccessMapping(
                 agency_id=agency["id"],
-                client_id=client["id"],
+                auth_identity_id=portal_identity["id"],
+                subject_type="client",
+                client_profile_id=client["id"],
                 user_email=user_email,
+                identity_email_snapshot=user_email,
+                status="active",
                 portal_status="active",
+                active_mapping_key=portal_identity["id"],
+                active_subject_key=f"client:{client['id']}",
+                created_by="demo_seed",
+                updated_by="demo_seed",
                 display_name=display_name,
             )
             await portal_mappings.insert_one(portal_mapping.model_dump(mode="json"))
             created.append(f"portal_mapping:{user_email}")
-        await ensure_identity(user_email, "client_portal")
+        elif not existing_portal.get("auth_identity_id"):
+            await portal_mappings.update_one(
+                {"id": existing_portal["id"]},
+                {
+                    "auth_identity_id": portal_identity["id"],
+                    "subject_type": "client",
+                    "client_profile_id": client["id"],
+                    "client_id": client["id"],
+                    "identity_email_snapshot": user_email,
+                    "status": "active",
+                    "portal_status": "active",
+                    "active_mapping_key": portal_identity["id"],
+                    "active_subject_key": f"client:{client['id']}",
+                    "linkage_version": "explicit_identity_v1",
+                    "updated_by": "demo_seed",
+                },
+            )
+            created.append(f"portal_mapping_upgraded:{user_email}")
 
     anna_passenger = await passengers.find_one({"agency_id": agency["id"], "display_name": "Anna Novak"})
     if anna_passenger is None:
@@ -1390,7 +1443,14 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
 
         portal_request_action = await portal_action_events.find_one({"agency_id": agency["id"], "source_entity_id": portal_request["id"], "action_type": "request_submitted"})
         if portal_request_action is None:
-            portal_mapping = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": "anna.client@example.com"})
+            portal_mapping = await portal_mappings.find_one(
+                {
+                    "agency_id": agency["id"],
+                    "subject_type": "client",
+                    "client_profile_id": individual_client["id"],
+                    "status": "active",
+                }
+            )
             await portal_action_events.insert_one(
                 PortalActionEvent(
                     agency_id=agency["id"],
@@ -1408,7 +1468,14 @@ async def seed_core_data(db: Database) -> Dict[str, Any]:
         document = await rendered_documents.find_one({"agency_id": agency["id"], "client_id": organization_client["id"], "client_visible": True})
         if document:
             existing_ack = await document_acknowledgements.find_one({"agency_id": agency["id"], "rendered_document_id": document["id"], "client_id": organization_client["id"]})
-            portal_mapping = await portal_mappings.find_one({"agency_id": agency["id"], "user_email": "travel@orbitex.example.com"})
+            portal_mapping = await portal_mappings.find_one(
+                {
+                    "agency_id": agency["id"],
+                    "subject_type": "client",
+                    "client_profile_id": organization_client["id"],
+                    "status": "active",
+                }
+            )
             if existing_ack is None:
                 await document_acknowledgements.insert_one(
                     DocumentAcknowledgement(

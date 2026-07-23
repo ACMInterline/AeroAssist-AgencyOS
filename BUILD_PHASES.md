@@ -41,6 +41,21 @@ migration, collection or route rename, runtime registration, or product
 behavior change. See [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md)
 and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md).
 
+### P1 Product Kernel Repair 3 - Canonical Identity, Roles, Portal Links, And Tenancy
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It separates authentication, Platform profile, Agency
+membership, and Portal subject concerns; makes `agency_id` the sole Agency
+authorization boundary; centralizes role-to-permission resolution; and
+requires explicit identity-to-Client or identity-to-Passenger Portal links.
+Passenger Portal identity is resolved without a duplicate user model. Legacy
+Master and email-only Portal records remain compatibility data. New Master and
+relationship rows require verified same-Agency canonical sources, while
+historical unlinked rows remain readable and are analyzed by a dry-run-only
+reconciliation tool. See
+[Canonical Identity and Tenancy Contract](docs/architecture/canonical-identity-and-tenancy-contract.md)
+and [Portal Identity Linkage Contract](docs/architecture/portal-identity-linkage-contract.md).
+
 ## Current Implementation State
 
 The repository currently contains:

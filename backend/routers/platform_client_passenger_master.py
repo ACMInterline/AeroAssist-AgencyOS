@@ -18,21 +18,17 @@ from services.client_passenger_master_service import (
     ClientPassengerMasterError,
     ClientPassengerMasterService,
 )
-from services.tenant_service import require_any_platform_role
+from services.authorization_service import require_permission
 
 
 router = APIRouter(tags=["platform-client-passenger-master"])
 
-PLATFORM_READ_ROLES = ["platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"]
-PLATFORM_WRITE_ROLES = ["platform_owner", "platform_admin", "platform_knowledge_editor"]
-
-
 async def require_platform_read(user: dict) -> None:
-    await require_any_platform_role(user, PLATFORM_READ_ROLES)
+    require_permission(user, "manage_platform")
 
 
 async def require_platform_write(user: dict) -> None:
-    await require_any_platform_role(user, PLATFORM_WRITE_ROLES)
+    require_permission(user, "manage_platform")
 
 
 def bad_request(message: str) -> HTTPException:

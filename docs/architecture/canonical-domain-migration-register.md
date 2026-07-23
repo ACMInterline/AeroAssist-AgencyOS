@@ -16,10 +16,11 @@ targets and unresolved decisions.
 
 | Domain | Target | Duplicate or compatibility writer | Dependent routes | Dependent frontend | Required reconciliation | Exit criterion |
 |---|---|---|---|---|---|---|
-| Client portal identity | `PortalAccessMapping` | `ClientPortalAccessProfile`, `client_portal_access_profiles` | `/api/*/client-portal-access-profiles`, `/api/portal` | Portal dashboard; Client Master | Agency, client, email, status, auth identity | Legacy profile is projection-only; all active mappings verified |
-| CRM Client | `ClientProfile` | `ClientMasterRecord`, `client_master_records` | Agency/Platform Client Master CRUD | Clients, Client Detail, Client Master | Explicit agency-scoped ID map; no fuzzy auto-merge | Master routes read from canonical profile and stop independent writes |
-| Passenger | `PassengerProfile` | `PassengerMasterRecord`, `PassengerWorkspace` | Passenger Master and Passenger Workspace CRUD | Passengers, Passenger Detail, Passenger Master/Workspace | Human-confirmed identity; quarantine synthetic DOB; preserve links/history | No duplicate identity-shaped writes; P0 integrity smoke remains green |
-| Client-Passenger relationship | `ClientPassengerRelationship` | `ClientPassengerMasterLink` | Client Master link routes | Client/Passenger detail | Explicit client/passenger IDs within one agency | Master link writes removed; canonical relationship IDs retained |
+| Client portal identity | `PortalAccessMapping` | `ClientPortalAccessProfile`, `client_portal_access_profiles` | `/api/*/client-portal-access-profiles`, `/api/portal` | Portal dashboard; Client Master | Agency, client, email, status, auth identity | Legacy profile is non-authorizing; new active/invited rows require an explicit mapping; historical rows reconciled |
+| Passenger portal identity | `AuthIdentity` + `PortalAccessMapping` + `PassengerProfile` | Historical client-relationship-derived visibility and email-only mappings | `/api/portal`, passenger invitation and mapping management routes | Passenger Portal dashboard/profile/self view | Explicit identity and passenger IDs within one Agency; no email auto-link | Every passenger principal has one reviewed active or revoked explicit mapping |
+| CRM Client | `ClientProfile` | `ClientMasterRecord`, `client_master_records` | Agency/Platform Client Master CRUD | Clients, Client Detail, Client Master | Explicit agency-scoped ID map; no fuzzy auto-merge | New Master rows are one-per-source compatibility projections; historical rows remain for reconciliation |
+| Passenger | `PassengerProfile` | `PassengerMasterRecord`, `PassengerWorkspace` | Passenger Master and Passenger Workspace CRUD | Passengers, Passenger Detail, Passenger Master/Workspace | Human-confirmed identity; quarantine synthetic DOB; preserve links/history | New Passenger Master rows require canonical source; remaining workspace overlap is separately reconciled; P0 integrity smoke remains green |
+| Client-Passenger relationship | `ClientPassengerRelationship` | `ClientPassengerMasterLink` | Client Master link routes | Client/Passenger detail | Explicit client/passenger IDs within one agency | New Master links are one-per-source projections and must match the canonical relationship; historical links retained |
 | Request | `TravelRequest` | `TravelRequestWorkspace` | Travel Request Workspace CRUD | Requests, Travel Requests | Request reference, source intake, client/passenger/segment links | Workspace becomes projection or is retired |
 | Passenger Service | `PassengerServiceRequest` | `RequestedService` fulfillment overlap | Request service and Special Services routes | Request Detail, Special Services, Passenger Services | Request/trip/passenger/segment/service lineage | Fulfillment writes target PassengerServiceRequest only |
 | Offer | `OfferWorkspace` | `Offer`, `OfferWorkspaceV2` | Legacy `/offers`; Offer Workspace V2 APIs | Offers, Offer Workspaces, Offer Builder | Request/trip/client/options/pricing/status/acceptance | One write API; compatibility families read-only |
@@ -37,7 +38,6 @@ targets and unresolved decisions.
 
 | Domain | Current candidates | Why no target is safe | Decision evidence required |
 |---|---|---|---|
-| Passenger portal identity | Client-rooted portal mapping and relationship-derived passenger views | No independent passenger principal, consent, invitation, or revocation lifecycle | Decide whether a passenger can authenticate independently; define guardian/client delegation |
 | Communication | Request messages, portal messages, after-sales communication, supplier interactions, timeline communication fields | Different visibility and delivery semantics are mixed across aggregates | Define message aggregate, channel attempts, immutable content, internal/supplier/client partitions |
 | Airline Knowledge | Legacy items, acquisition, normalized records, evidence assertions, versions, governance releases, publications, agency overlays | The five knowledge pillars and evidence lifecycle cannot be collapsed safely | Approve aggregate boundaries and the relation between normalized item, version, publication, and overlay |
 | Policy | Approved extraction records, rules core, policy cards, composer rules, exceptions | Similar facts can be independently edited in multiple representations | Choose normalized policy aggregate and make editors/projections adapt to it |
@@ -95,8 +95,8 @@ targets and unresolved decisions.
 
 ## Recommended Repair Order
 
-1. **Identity and tenant edges:** portal identity decision, Client/Passenger
-   master adapters, relationship reconciliation, and uniform actor fields.
+1. **Identity and tenant edges:** reconcile explicit Portal links,
+   Client/Passenger master adapters, relationships, and uniform actor fields.
 2. **Request aggregate:** retain intake provenance, retire independent Travel
    Request Workspace truth, and finalize scoped services/pets/items.
 3. **Offer aggregate:** adapt legacy Offer and OfferWorkspaceV2 writes to
@@ -138,3 +138,19 @@ The product-kernel freeze can exit this ownership repair only when:
 - the canonical ownership validator and focused smoke pass without suppressing
   blockers.
 
+## P1 Identity And Tenancy Dry Run
+
+`backend/scripts/analyze_identity_tenancy_migration.py` analyzes historical
+Portal links, Client/Passenger Master overlaps, duplicate relationships,
+ambiguous/cross-Agency email candidates, and inactive or revoked identity
+links. It also reports duplicate active Portal subjects, active staff
+memberships without active identities, and active legacy Portal profiles
+without valid mappings. The command is intentionally dry-run only and reports
+`writes_performed: 0`; `--apply` is rejected. Suggestions are
+non-authoritative and never create a Portal link.
+
+Passenger Portal identity is no longer ambiguous: `AuthIdentity` authenticates,
+`PortalAccessMapping` authorizes, and `PassengerProfile` owns passenger truth.
+No separate Passenger Portal business model is introduced. Historical records
+still require reviewed reconciliation, so the domain remains
+`migration_required`, not migration complete.

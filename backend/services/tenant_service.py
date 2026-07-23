@@ -3,6 +3,10 @@ from typing import Any, Iterable, Mapping, Sequence
 from fastapi import HTTPException, status
 
 from database import Database
+from services.portal_identity_link_service import (
+    PortalIdentityLinkError,
+    resolve_portal_identity_context,
+)
 
 
 PLATFORM_ROLE_ORDER = {
@@ -61,9 +65,6 @@ async def assert_agency_access(db: Database, agency_id: str, user: dict) -> dict
     if agency is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
 
-    if user.get("global_role") in {"platform_owner", "platform_admin", "platform_support"}:
-        return agency
-
     await get_membership(db, agency_id, user["id"])
     return agency
 
@@ -101,38 +102,29 @@ async def require_any_platform_role(user: dict, allowed_roles: Iterable[str]) ->
 
 
 async def require_any_agency_role(db: Database, agency_id: str, user: dict, allowed_roles: Iterable[str]) -> dict:
-    if user.get("global_role") in {"platform_owner", "platform_admin"}:
-        agency = await db.collection("agencies").find_one({"id": agency_id})
-        if agency is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
-        return {"agency_role": "platform_override", "agency_id": agency_id, "user_id": user["id"]}
-
     membership = await get_membership(db, agency_id, user["id"])
     if membership.get("agency_role") not in set(allowed_roles):
         raise forbidden("Required agency role is missing.")
     return membership
 
 
-async def portal_client_context(db: Database, user_email: str) -> dict:
-    mapping = await db.collection("portal_access_mappings").find_one({"user_email": user_email})
-    if not mapping or mapping.get("portal_status") != "active":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Active demo portal account not found.")
-    agency_id = mapping["agency_id"]
-    agency = await db.collection("agencies").find_one({"id": agency_id})
-    client = await db.collection("client_profiles").find_one(
-        {"agency_id": agency_id, "id": mapping["client_id"]}
-    )
-    if not agency or not client or client.get("status") == "archived":
-        raise not_found("Portal client context not found.")
-    workspace = await db.collection("agency_workspaces").find_one({"agency_id": agency_id})
-    return {"account": mapping, "agency": agency, "workspace": workspace, "client": client}
+async def portal_client_context(db: Database, auth_identity_id: str) -> dict:
+    try:
+        context = await resolve_portal_identity_context(db, auth_identity_id)
+    except PortalIdentityLinkError as exc:
+        raise forbidden(str(exc)) from exc
+    if not context or context.get("subject_type") != "client":
+        raise forbidden("Client portal mapping is required.")
+    return context
 
 
 async def assert_portal_owns_client_record(db: Database, ctx: dict, collection_name: str, record_id: str, message: str = "Portal resource not found.") -> dict:
+    if ctx.get("subject_type") != "client":
+        raise forbidden("Client portal mapping is required.")
     record = await db.collection(collection_name).find_one(
         {
             "agency_id": ctx["account"]["agency_id"],
-            "client_id": ctx["account"]["client_id"],
+            "client_id": ctx["account"].get("client_profile_id") or ctx["account"].get("client_id"),
             "id": record_id,
         }
     )
@@ -142,10 +134,20 @@ async def assert_portal_owns_client_record(db: Database, ctx: dict, collection_n
 
 
 async def assert_portal_can_view_passenger(db: Database, ctx: dict, passenger_id: str) -> dict:
+    if ctx.get("subject_type") == "passenger":
+        linked_passenger_id = ctx["account"].get("passenger_profile_id")
+        if linked_passenger_id != passenger_id:
+            raise not_found("Portal passenger not found.")
+        passenger = await db.collection("passenger_profiles").find_one(
+            {"agency_id": ctx["account"]["agency_id"], "id": linked_passenger_id}
+        )
+        if not passenger or passenger.get("status") == "archived":
+            raise not_found("Portal passenger not found.")
+        return {"passenger": passenger, "relationship": None}
     relationship = await db.collection("client_passenger_relationships").find_one(
         {
             "agency_id": ctx["account"]["agency_id"],
-            "client_id": ctx["account"]["client_id"],
+            "client_id": ctx["account"].get("client_profile_id") or ctx["account"].get("client_id"),
             "passenger_id": passenger_id,
             "status": "active",
             "can_view": True,

@@ -205,9 +205,13 @@ async def seed_source(db: Database) -> None:
     })
     for suffix in ["a", "b", "c"]:
         await db.collection("portal_access_mappings").insert_one({
-            "id": f"portal-{suffix}", "agency_id": "agency-a", "client_id": "client-a",
+            "id": f"portal-{suffix}", "agency_id": "agency-a",
+            "auth_identity_id": f"portal-identity-{suffix}", "subject_type": "client",
+            "client_profile_id": "client-a", "client_id": "client-a",
             "user_email": f"client-{suffix}@example.test", "display_name": f"Client {suffix.upper()}",
-            "portal_status": "active", "created_at": now, "updated_at": now,
+            "status": "active", "portal_status": "active",
+            "active_mapping_key": f"portal-identity-{suffix}",
+            "linkage_version": "explicit_identity_v1", "created_at": now, "updated_at": now,
         })
     await db.collection("journey_comparison_presentations").insert_one({
         "id": "presentation-a", "agency_id": "agency-a", "journey_id": "journey-a",

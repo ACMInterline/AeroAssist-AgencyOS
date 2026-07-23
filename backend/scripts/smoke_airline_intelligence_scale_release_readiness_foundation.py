@@ -389,9 +389,13 @@ def verify_live_routes() -> None:
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     request("POST", f"/api/agencies/{agency_id}/airline-intelligence-readiness", {}, OWNER_HEADERS, 405)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/airline-intelligence-readiness", OWNER_HEADERS)
-        if any(item.get("id") == candidate["id"] for item in foreign.get("released_coverage") or []):
-            raise AssertionError("Live agency readiness route leaked a release assignment.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-intelligence-readiness",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

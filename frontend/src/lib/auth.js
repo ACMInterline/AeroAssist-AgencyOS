@@ -45,7 +45,8 @@ export function authHeaders() {
     "Content-Type": "application/json",
   }
   if (!isProduction) {
-    headers["X-Demo-User-Email"] = getDemoEmail()
+    const portalRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/portal")
+    headers["X-Demo-User-Email"] = portalRoute ? getDemoPortalEmail() : getDemoEmail()
     headers["X-Demo-Role"] = "portal_client"
     headers["X-Demo-Client-Email"] = getDemoPortalEmail()
   }

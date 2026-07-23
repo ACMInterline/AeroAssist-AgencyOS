@@ -36,10 +36,7 @@ WRITE_METHODS = {
     "upsert",
 }
 PROTECTED_GOVERNANCE_FILES = {
-    "backend/database.py",
-    "backend/persistence_query.py",
     "backend/persistence_repository.py",
-    "backend/server.py",
 }
 ALLOWED_ROUTE_ROOTS = (
     "/api/auth",

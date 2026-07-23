@@ -9,6 +9,7 @@ import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
+import { useAuthorization } from "../../context/AuthorizationContext"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -19,6 +20,7 @@ const emptyFare = { fare_family_name: "", cabin_class: "economy", booking_class:
 const emptyPrice = { line_type: "base_fare", label: "", amount: "", currency: "EUR" }
 
 export default function OfferBuilderPage({ workspaceId }) {
+  const authorization = useAuthorization()
   const [state, setState] = useState(null)
   const [selectedOptionId, setSelectedOptionId] = useState("")
   const [optionForm, setOptionForm] = useState(emptyOption)
@@ -73,6 +75,12 @@ export default function OfferBuilderPage({ workspaceId }) {
       pricingLines: (state?.pricing_lines || []).filter((item) => item.option_id === optionId),
     }
   }, [selectedOption, state])
+  const pricingLineTypes = useMemo(() => {
+    const values = ["base_fare", "tax", "surcharge", "service_fee", "discount", "ancillary", "other"]
+    return authorization.hasPermission("view_margins")
+      ? [...values.slice(0, 4), "commission", ...values.slice(4)]
+      : values
+  }, [authorization])
 
   function setNested(setter, name, value) {
     setter((current) => ({ ...current, [name]: value }))
@@ -378,7 +386,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                 <h3 className="font-semibold text-slate-950">Add Pricing Line</h3>
                 <Field label="Type">
                   <select value={priceForm.line_type} onChange={(event) => setNested(setPriceForm, "line_type", event.target.value)}>
-                    {["base_fare", "tax", "surcharge", "service_fee", "commission", "discount", "ancillary", "other"].map((value) => <option value={value} key={value}>{value.replaceAll("_", " ")}</option>)}
+                    {pricingLineTypes.map((value) => <option value={value} key={value}>{value.replaceAll("_", " ")}</option>)}
                   </select>
                 </Field>
                 <Field label="Label"><input value={priceForm.label} onChange={(event) => setNested(setPriceForm, "label", event.target.value)} /></Field>

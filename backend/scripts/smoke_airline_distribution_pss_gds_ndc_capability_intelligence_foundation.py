@@ -321,9 +321,13 @@ def verify_live_routes() -> None:
     request("POST", f"{PLATFORM_BASE}/channels", {"airline_code": airline_code, "channel_code": "sabre", "client_secret": "forbidden"}, OWNER_HEADERS, 400)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/distribution-capabilities?airline_code={airline_code}", OWNER_HEADERS)
-        if foreign.get("operational_channels"):
-            raise AssertionError("Agency-scoped distribution intelligence leaked to another agency.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/distribution-capabilities?airline_code={airline_code}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

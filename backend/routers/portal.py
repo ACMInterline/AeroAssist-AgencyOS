@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 
 from auth import DEMO_AUTH_ENABLED, get_current_identity
 from config import get_settings
@@ -24,11 +24,16 @@ from models import (
 )
 from services.seed_service import seed_core_data
 from services.request_intake_conversion_service import create_intake
+from services.portal_identity_link_service import (
+    PortalIdentityLinkError,
+    UNLINKED_PORTAL_MESSAGE,
+    resolve_portal_identity_context,
+)
+from security import normalize_email
 from services.tenant_service import (
     assert_portal_can_view_passenger,
     assert_portal_owns_client_record,
     assert_portal_projection_safe,
-    portal_client_context,
     safe_public_projection,
 )
 
@@ -50,6 +55,7 @@ def brand_snapshot(workspace: dict | None, agency: dict | None) -> dict:
 
 
 async def portal_context(
+    request: Request,
     authorization: Optional[str] = Header(default=None),
     x_demo_role: Optional[str] = Header(default=None),
     x_demo_client_email: Optional[str] = Header(default=None),
@@ -59,30 +65,77 @@ async def portal_context(
     if get_settings().seed_on_startup:
         await seed_core_data(db)
     if authorization:
-        if identity.get("identity_type") != "client_portal":
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Client portal identity required.")
-        email = identity["email"]
+        if identity.get("identity_type") not in {"client_portal", "passenger_portal"}:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Portal identity required.")
+        portal_identity = identity
     elif DEMO_AUTH_ENABLED:
-        email = x_demo_client_email or DEFAULT_PORTAL_EMAIL
+        demo_email = x_demo_client_email or DEFAULT_PORTAL_EMAIL
+        portal_identity = await db.collection("auth_identities").find_one(
+            {"normalized_email": normalize_email(demo_email)}
+        )
+        if not portal_identity or portal_identity.get("identity_type") not in {
+            "client_portal",
+            "passenger_portal",
+        }:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=UNLINKED_PORTAL_MESSAGE,
+            )
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Portal login required.")
-    resolved = await portal_client_context(db, email)
+    try:
+        resolved = await resolve_portal_identity_context(db, portal_identity["id"])
+    except PortalIdentityLinkError as exc:
+        detail = (
+            UNLINKED_PORTAL_MESSAGE
+            if str(exc) == UNLINKED_PORTAL_MESSAGE
+            else str(exc)
+        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail) from exc
     mapping = resolved["account"]
     agency = resolved["agency"]
-    client = resolved["client"]
     workspace = resolved["workspace"]
-    await db.collection("portal_access_mappings").update_one(
-        {"agency_id": mapping["agency_id"], "id": mapping["id"]},
+    subject_type = resolved["subject_type"]
+    if subject_type == "passenger":
+        allowed_paths = {
+            "/api/portal/me",
+            "/api/portal/dashboard",
+            "/api/portal/profile",
+            "/api/portal/passengers",
+        }
+        passenger_prefix = "/api/portal/passengers/"
+        if request.method != "GET" or (
+            request.url.path not in allowed_paths
+            and not request.url.path.startswith(passenger_prefix)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Passenger portal access is limited to the linked passenger profile.",
+            )
+    refreshed_mapping = await db.collection("portal_access_mappings").update_one(
+        {
+            "agency_id": mapping["agency_id"],
+            "id": mapping["id"],
+            "status": "active",
+        },
         {"last_login_at": datetime.now(timezone.utc)},
     )
+    if not refreshed_mapping:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=UNLINKED_PORTAL_MESSAGE,
+        )
+    mapping = refreshed_mapping
     return {
         "account": mapping,
         "agency": agency,
         "workspace": workspace,
-        "client": client,
+        "client": resolved.get("client"),
+        "passenger": resolved.get("passenger"),
+        "subject_type": subject_type,
         "brand": brand_snapshot(workspace, agency),
         "demo_role": x_demo_role or "portal_client",
-        "identity": identity if identity.get("identity_type") == "client_portal" else None,
+        "identity": portal_identity,
     }
 
 
@@ -94,7 +147,16 @@ def safe_response(payload: dict) -> dict:
 def safe_portal_account(account: dict) -> dict:
     return safe_public_projection(
         account,
-        ["id", "user_email", "portal_status", "display_name", "last_login_at"],
+        [
+            "id",
+            "subject_type",
+            "client_profile_id",
+            "passenger_profile_id",
+            "status",
+            "portal_status",
+            "display_name",
+            "last_login_at",
+        ],
     )
 
 
@@ -142,9 +204,12 @@ def safe_passenger(passenger: dict, relationship: dict | None = None) -> dict:
 
 
 async def permitted_relationships(db: Database, ctx: dict) -> list[dict]:
+    if ctx.get("subject_type") != "client":
+        return []
+    client_id = ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")
     return [
         item
-        for item in await db.collection("client_passenger_relationships").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "status": "active"})
+        for item in await db.collection("client_passenger_relationships").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": client_id, "status": "active"})
         if item.get("can_view")
     ]
 
@@ -682,8 +747,10 @@ async def visible_invoice_or_404(db: Database, ctx: dict, invoice_id: str) -> di
 async def me(ctx: dict = Depends(portal_context)) -> dict:
     return safe_response({
         "portal_account": safe_portal_account(ctx["account"]),
+        "subject_type": ctx["subject_type"],
         "agency": ctx["agency"],
-        "client": safe_client(ctx["client"]),
+        "client": safe_client(ctx["client"]) if ctx.get("client") else None,
+        "passenger": safe_passenger(ctx["passenger"]) if ctx.get("passenger") else None,
         "brand": ctx["brand"],
         "workspace": {
             "brand_name": ctx["brand"].get("brand_name"),
@@ -692,14 +759,49 @@ async def me(ctx: dict = Depends(portal_context)) -> dict:
             "secondary_color": ctx["brand"].get("secondary_color"),
             "font_family": ctx["brand"].get("font_family"),
         },
-        "demo_notice": "Read-only portal preview. Development-only demo mapping.",
+        "demo_notice": "Portal access is scoped to the explicitly linked profile.",
     })
 
 
 @router.get("/dashboard")
 async def dashboard(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     agency_id = ctx["account"]["agency_id"]
-    client_id = ctx["account"]["client_id"]
+    if ctx.get("subject_type") == "passenger":
+        passenger_id = ctx["account"]["passenger_profile_id"]
+        documents = [
+            safe_document(item)
+            for item in await db.collection("rendered_documents").find_many(
+                {
+                    "agency_id": agency_id,
+                    "passenger_id": passenger_id,
+                    "client_visible": True,
+                }
+            )
+        ]
+        return safe_response(
+            {
+                "subject_type": "passenger",
+                "counts": {
+                    "requests": 0,
+                    "offers": 0,
+                    "bookings": 0,
+                    "documents": len(documents),
+                    "invoices": 0,
+                    "payments": 0,
+                    "actions": 0,
+                },
+                "latest": {
+                    "requests": [],
+                    "offers": [],
+                    "bookings": [],
+                    "documents": documents[:5],
+                    "invoices": [],
+                    "payments": [],
+                    "actions": [],
+                },
+            }
+        )
+    client_id = ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")
     requests = [safe_request(item) for item in await db.collection("travel_requests").find_many({"agency_id": agency_id, "client_id": client_id})]
     offers = [safe_offer(item) for item in await db.collection("offers").find_many({"agency_id": agency_id, "client_id": client_id})]
     bookings = [safe_booking(item) for item in await db.collection("bookings").find_many({"agency_id": agency_id, "client_id": client_id})]
@@ -733,11 +835,19 @@ async def dashboard(ctx: dict = Depends(portal_context), db: Database = Depends(
 
 @router.get("/profile")
 async def profile(ctx: dict = Depends(portal_context)) -> dict:
-    return safe_response({"client": safe_client(ctx["client"]), "portal_account": safe_portal_account(ctx["account"]), "brand": ctx["brand"]})
+    return safe_response({
+        "subject_type": ctx["subject_type"],
+        "client": safe_client(ctx["client"]) if ctx.get("client") else None,
+        "passenger": safe_passenger(ctx["passenger"]) if ctx.get("passenger") else None,
+        "portal_account": safe_portal_account(ctx["account"]),
+        "brand": ctx["brand"],
+    })
 
 
 @router.get("/passengers")
 async def passengers(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
+    if ctx.get("subject_type") == "passenger":
+        return safe_response({"items": [safe_passenger(ctx["passenger"])]})
     relationships = await permitted_relationships(db, ctx)
     passengers_by_id = {item["id"]: item for item in await db.collection("passenger_profiles").find_many({"agency_id": ctx["account"]["agency_id"]})}
     return safe_response({"items": [safe_passenger(passengers_by_id[item["passenger_id"]], item) for item in relationships if item["passenger_id"] in passengers_by_id and passengers_by_id[item["passenger_id"]].get("status") != "archived"]})

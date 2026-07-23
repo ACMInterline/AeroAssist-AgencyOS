@@ -493,7 +493,8 @@ def verify_deadline_lifecycle(agency_id: str, other_agency_id: str) -> None:
     if not agency_dashboard.get("policies") or not agency_dashboard.get("business_calendars"):
         raise AssertionError("Agency deadline dashboard missing policy/calendar metadata.")
 
-    other_deadline = post(
+    request(
+        "POST",
         f"/api/agencies/{other_agency_id}/deadlines/items",
         {
             "source_entity_type": "request",
@@ -503,9 +504,8 @@ def verify_deadline_lifecycle(agency_id: str, other_agency_id: str) -> None:
             "started_at": utc_iso(),
         },
         OWNER_HEADERS,
-        201,
-    )["deadline"]
-    request("GET", f"/api/agencies/{other_agency_id}/deadlines/{other_deadline['id']}", None, AGENCY_AGENT_HEADERS, expect=403)
+        expect=403,
+    )
 
 
 def main() -> int:

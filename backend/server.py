@@ -44,6 +44,7 @@ from services.commercial_pilot_readiness_service import (
 from services.product_experience_recovery_service import (
     product_experience_recovery_readiness_metadata,
 )
+from services.authorization_service import identity_tenancy_readiness_metadata
 from auth import require_platform_role
 from services.audit_event_access_service import AuditEventAccessService, PLATFORM_AUDIT_READ_ROLES
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
@@ -62,7 +63,7 @@ from routers import agency_airline_master_profiles, platform_airline_master_prof
 from routers import agency_airline_contact_directory, agency_airline_distribution_capabilities, agency_airline_fare_brand_intelligence, agency_airline_intelligence_readiness, agency_airline_knowledge_versioning, agency_airline_policy_evidence_governance, agency_airline_service_coverage, agency_interline_codeshare_intelligence, platform_airline_contact_intelligence, platform_airline_distribution_capabilities, platform_airline_fare_brand_intelligence, platform_airline_intelligence_readiness, platform_airline_knowledge_versioning, platform_airline_policy_evidence_governance, platform_airline_service_coverage, platform_interline_codeshare_intelligence
 from routers import agency_service_mechanics, platform_service_mechanics
 from routers import agency_airline_knowledge_publishing, agency_client_passenger_master, agency_intelligent_offer_builder, agency_knowledge_import_templates, agency_knowledge_population_toolkit, agency_knowledge_quality_assurance, agency_operational_intelligence_cases, agency_operational_rule_composer, agency_operational_scenario_testing, agency_pilot_readiness, agency_pricing_formula_builder, agency_reference_data_engine, agency_request_segment_services, agency_service_parameter_taxonomies, agency_visual_policy_editor, platform_airline_knowledge_publishing, platform_client_passenger_master, platform_intelligent_offer_builder, platform_knowledge_import_templates, platform_knowledge_population_toolkit, platform_knowledge_quality_assurance, platform_operational_intelligence_cases, platform_operational_rule_composer, platform_operational_scenario_testing, platform_pilot_readiness, platform_pricing_formula_builder, platform_reference_data_engine, platform_request_segment_services, platform_service_parameter_taxonomies, platform_visual_policy_editor
-from routers import agencies, agency_onboarding, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, refunds_exchanges, reference, request_intakes, requests, trips, websites
+from routers import agencies, agency_onboarding, agency_airline_policy_library, agency_booking_imports, agency_booking_workspaces, agency_documents, agency_gds_parser, agency_offer_acceptance, agency_offer_builder, agency_service_taxonomy, agency_special_services, agency_ticket_emd, agency_trip_changes, airline_intelligence, auth, bookings, clients, documents, finance, form_profiles, offers, passengers, platform_airline_intelligence, platform_airline_policy_ingestion, platform_blueprint, platform_documents, platform_gds_parser, platform_reference, platform_rules_services, platform_service_catalogue, platform_service_taxonomy, portal, portal_access_mappings, refunds_exchanges, reference, request_intakes, requests, trips, websites
 from services.blueprint_adoption_service import get_blueprint_adoption_map, get_blueprint_gap_summary, get_blueprint_route_policy
 from services.pdf_rendering_service import pdf_capabilities
 from services.reference_data_service import REFERENCE_DOMAINS, country_enrichment_complete
@@ -256,6 +257,7 @@ async def root_health() -> dict:
         "aeroassist_product_standards_ux_refinement": True,
         "commercial_pilot_readiness": True,
         "product_experience_recovery": True,
+        "canonical_identity_tenancy_contract": True,
     }
     if not settings.is_production:
         payload["app_env"] = settings.app_env
@@ -5381,6 +5383,7 @@ async def internal_readiness_payload() -> dict:
         "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
         "product_experience_recovery": product_experience_recovery_readiness_metadata(),
+        "canonical_identity_tenancy_contract": identity_tenancy_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7330,6 +7333,7 @@ async def public_readiness_payload() -> dict:
         "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
         "product_experience_recovery": product_experience_recovery_readiness_metadata(),
+        "canonical_identity_tenancy_contract": identity_tenancy_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]
@@ -7567,6 +7571,7 @@ app.include_router(agency_onboarding.router)
 app.include_router(agency_pilot_feedback.router)
 app.include_router(clients.router)
 app.include_router(passengers.router)
+app.include_router(portal_access_mappings.router)
 app.include_router(request_intakes.public_router)
 app.include_router(request_intakes.staff_router)
 app.include_router(requests.router)

@@ -80,7 +80,9 @@ export async function apiDownload(path) {
 async function readResponse(response) {
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {
-    throw new Error(data.detail || data.message || "Request failed")
+    const error = new Error(data.detail || data.message || "Request failed")
+    error.status = response.status
+    throw error
   }
   return data
 }

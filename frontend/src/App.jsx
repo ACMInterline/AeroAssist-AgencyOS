@@ -1,4 +1,5 @@
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
+import { AuthorizationBoundary, AuthorizationProvider } from "./context/AuthorizationContext"
 import AgencyOnboardingPage from "./pages/agency/AgencyOnboardingPage"
 import PilotFeedbackPage from "./pages/agency/PilotFeedbackPage"
 import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
@@ -539,7 +540,7 @@ const routes = {
   "/portal/payments": PortalPaymentsPage,
 }
 
-export default function App() {
+function RoutedApp() {
   const publicWebsiteRequestMatch = window.location.pathname.match(/^\/site\/([^/]+)\/request$/)
   if (publicWebsiteRequestMatch) {
     return <PublicAgencyWebsitePage slug={publicWebsiteRequestMatch[1]} requestMode />
@@ -803,4 +804,14 @@ export default function App() {
 
   const Page = routes[window.location.pathname] || HomePage
   return <Page />
+}
+
+export default function App() {
+  return (
+    <AuthorizationProvider>
+      <AuthorizationBoundary>
+        <RoutedApp />
+      </AuthorizationBoundary>
+    </AuthorizationProvider>
+  )
 }

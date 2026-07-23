@@ -32,13 +32,13 @@ export default function LoginPage() {
       setAuthSession(result.session, result.auth)
       if (!isProduction) {
         setDemoEmail(result.auth?.user?.email || email)
-        if (result.auth?.identity?.identity_type === "client_portal") {
+        if (["client_portal", "passenger_portal"].includes(result.auth?.identity?.identity_type)) {
           setDemoPortalEmail(result.auth.identity.email)
         }
       }
       setMessage("Signed in.")
       const type = result.auth?.identity?.identity_type
-      window.location.href = type === "client_portal" ? "/portal" : type === "platform_user" ? "/platform" : "/agency"
+      window.location.href = ["client_portal", "passenger_portal"].includes(type) ? "/portal" : type === "platform_user" ? "/platform" : "/agency"
     } catch (err) {
       clearAuthSession()
       setError(err.message)

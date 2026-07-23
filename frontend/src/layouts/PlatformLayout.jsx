@@ -13,6 +13,7 @@ import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
+import { useAuthorization } from "../context/AuthorizationContext"
 import {
   flattenModuleGroups,
   platformModuleGroups,
@@ -46,7 +47,9 @@ function isActive(item, pathname) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
-export default function PlatformLayout({ children, user }) {
+export default function PlatformLayout({ children, user: providedUser }) {
+  const authorization = useAuthorization()
+  const user = providedUser || authorization.user
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/platform"

@@ -392,9 +392,13 @@ def verify_workflow_endpoints() -> None:
     if not any(item.get("id") == instance_id for item in agency_dashboard.get("instances", [])):
         raise AssertionError("Agency dashboard did not include its own workflow instance.")
     if other_agency_id:
-        other_dashboard = get(f"/api/agencies/{other_agency_id}/operational-workflows", OWNER_HEADERS)
-        if any(item.get("id") == instance_id for item in other_dashboard.get("instances", [])):
-            raise AssertionError("Workflow instance leaked into another agency dashboard.")
+        request(
+            "GET",
+            f"/api/agencies/{other_agency_id}/operational-workflows",
+            None,
+            OWNER_HEADERS,
+            expect=403,
+        )
 
     available = get(f"/api/agencies/{agency_id}/operational-workflows/instances/{instance_id}/available-transitions", OWNER_HEADERS)
     warning_transition = find_transition(available.get("available_transitions") or [], "submitted_to_triage")
@@ -487,13 +491,22 @@ def verify_production_safety_text() -> None:
     ]:
         if required not in service_text:
             raise AssertionError(f"Operational workflow service missing safety marker: {required}")
-    for path in [
-        ROOT / "docs/architecture/operational-workflow-orchestration-foundation.md",
-        ROOT / "frontend/src/pages/platform/OperationalWorkflowsPage.jsx",
-        ROOT / "frontend/src/pages/agency/OperationalWorkflowsPage.jsx",
+    for path, safety_mode in [
+        (
+            ROOT / "docs/architecture/operational-workflow-orchestration-foundation.md",
+            "metadata-only",
+        ),
+        (
+            ROOT / "frontend/src/pages/platform/OperationalWorkflowsPage.jsx",
+            "metadata-only",
+        ),
+        (
+            ROOT / "frontend/src/pages/agency/OperationalWorkflowsPage.jsx",
+            "planning only",
+        ),
     ]:
         content = path.read_text(encoding="utf-8").lower()
-        for text in ["metadata-only", "does not", "status"]:
+        for text in [safety_mode, "does not", "status"]:
             if text not in content:
                 raise AssertionError(f"{path.relative_to(ROOT)} missing safety language: {text}")
 

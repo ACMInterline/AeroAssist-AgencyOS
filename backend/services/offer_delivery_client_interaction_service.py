@@ -379,12 +379,24 @@ class OfferDeliveryClientInteractionService:
         mapping = None
         portal_user_id = data.get("portal_user_id")
         if portal_user_id:
-            mapping = await self.db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "id": portal_user_id, "client_id": client_id})
-        elif data.get("email_reference"):
-            mapping = await self.db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "client_id": client_id, "user_email": data["email_reference"]})
-        if (portal_user_id or data.get("email_reference")) and not mapping:
-            raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient must resolve to an existing portal identity for this client and agency.")
-        if mapping and mapping.get("portal_status") != "active":
+            mapping = await self.db.collection("portal_access_mappings").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": portal_user_id,
+                    "auth_identity_id": {"$ne": None},
+                    "subject_type": "client",
+                    "client_profile_id": client_id,
+                    "status": "active",
+                }
+            )
+        if not portal_user_id and data.get("email_reference"):
+            raise JourneyOfferDeliveryError(
+                "RECIPIENT_NOT_AUTHORIZED",
+                "Email is not portal authority. Select an explicit portal access mapping.",
+            )
+        if portal_user_id and not mapping:
+            raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient must resolve to an active explicit portal identity for this client and agency.")
+        if mapping and (mapping.get("status") or mapping.get("portal_status")) != "active":
             raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient portal access is not active.")
         passenger_id = data.get("passenger_id")
         if passenger_id:

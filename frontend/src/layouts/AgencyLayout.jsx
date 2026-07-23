@@ -21,6 +21,7 @@ import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
 import { apiDeleteSession, apiGet } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
+import { useAuthorization } from "../context/AuthorizationContext"
 import {
   agencyModuleGroups,
   agencyProductNavigation,
@@ -67,7 +68,8 @@ function isActive(item, pathname) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
-export default function AgencyLayout({ children, user, agency }) {
+export default function AgencyLayout({ children, user: providedUser, agency }) {
+  const authorization = useAuthorization()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [entitlementVisibility, setEntitlementVisibility] = useState({})
@@ -76,7 +78,11 @@ export default function AgencyLayout({ children, user, agency }) {
   const sidebarLogo = agency?.branding?.logo_assets?.sidebar?.url || agency?.branding?.logo_url
   const initials = brandName.slice(0, 2).toUpperCase()
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/agency"
-  const navigationRole = agencyNavigationRole(user, agency)
+  const membershipAccess = (
+    authorization.auth?.authorization?.agency_memberships || []
+  ).find((item) => item.membership?.agency_id === agency?.id) || authorization.agencyAccess
+  const user = providedUser || authorization.user
+  const navigationRole = agencyNavigationRole(membershipAccess, agency)
   const navigation = useMemo(
     () => productNavigationForRole(agencyProductNavigation, navigationRole),
     [navigationRole],
@@ -184,11 +190,11 @@ export default function AgencyLayout({ children, user, agency }) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex" style={{ background: "var(--aa-muted-bg)", color: "var(--aa-primary)" }}>Agency operations</span>
-                <a className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" href="/agency/requests/new">
+                {(membershipAccess?.permissions || []).includes("edit_requests") ? <a className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" href="/agency/requests/new">
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Create request</span>
                   <span className="sm:hidden">Create</span>
-                </a>
+                </a> : null}
                 <div className="hidden min-w-0 text-right md:block">
                   <p className="truncate text-sm font-medium" style={{ color: "var(--aa-text)" }}>{user?.full_name || "Staff user"}</p>
                   <p className="truncate text-xs" style={{ color: "var(--aa-muted-text)" }}>{user?.email || "Signed in"}</p>
@@ -274,12 +280,10 @@ function NavItem({ item, pathname, collapsed, entitlementVisibility, icon, title
   )
 }
 
-function agencyNavigationRole(user, agency) {
-  const membershipRole = agency?.current_membership?.agency_role
-  if (membershipRole) return membershipRole
-  if (["platform_owner", "platform_admin"].includes(user?.global_role)) return "agency_owner"
-  if (user?.global_role === "platform_support") return "agency_readonly"
-  return null
+function agencyNavigationRole(membershipAccess, agency) {
+  return membershipAccess?.membership?.agency_role ||
+    agency?.current_membership?.agency_role ||
+    null
 }
 
 function EntitlementBadge({ status, title }) {

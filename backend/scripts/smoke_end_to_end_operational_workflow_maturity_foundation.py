@@ -307,7 +307,7 @@ def verify_live_api(paths: dict) -> None:
 
     verify_isolated_runs(agency_id)
     request("POST", f"/api/agencies/{agency_id}/workflow-maturity/test-runs", {"template_code": "unknown-template"}, AGENCY_AGENT_HEADERS, 400)
-    request("GET", "/api/agencies/not-an-agency/workflow-maturity", None, AGENCY_AGENT_HEADERS, 404)
+    request("GET", "/api/agencies/not-an-agency/workflow-maturity", None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
         other_id = agencies[1]["id"]
         other = get(f"/api/platform/workflow-maturity?agency_id={other_id}", OWNER_HEADERS)

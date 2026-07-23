@@ -471,9 +471,13 @@ def verify_live_versioning() -> None:
     request("POST", f"/api/agencies/{agency_id}/knowledge-updates", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        isolated = get(f"/api/agencies/{agencies[1]['id']}/knowledge-updates", OWNER_HEADERS)
-        if change_set["id"] in {item.get("id") for item in isolated.get("updates") or []}:
-            raise AssertionError("Agency-scoped knowledge update leaked to another agency.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/knowledge-updates",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
     filtered = get(f"{PLATFORM_BASE}/change-sets?category=restriction_increased&revalidation_required=true", OWNER_HEADERS)
     if change_set["id"] not in {item.get("id") for item in filtered.get("items") or []}:

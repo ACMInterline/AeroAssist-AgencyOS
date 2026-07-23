@@ -18,26 +18,20 @@ from services.client_passenger_master_service import (
     ClientPassengerMasterError,
     ClientPassengerMasterService,
 )
-from services.tenant_service import assert_agency_access, require_any_agency_role
+from services.authorization_service import require_permission
+from services.tenant_service import assert_agency_access
 
 
 router = APIRouter(tags=["agency-client-passenger-master"])
 
-READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
-WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-PLATFORM_ROLES = {"platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"}
-
-
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_clients")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    require_permission(user, "edit_clients")
 
 
 def not_found(detail: str) -> HTTPException:

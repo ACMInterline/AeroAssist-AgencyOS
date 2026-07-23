@@ -518,9 +518,13 @@ def verify_live_routes() -> None:
     request("POST", f"{PLATFORM_BASE}/channels", {"airline_code": airline_code, "contact_directory_entry_id": contact["id"], "channel_type": "email", "channel_label": "Unsafe", "api_key": "secret-value"}, OWNER_HEADERS, 400)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/airline-contact-directory?airline_code={airline_code}", OWNER_HEADERS)
-        if foreign.get("contacts") or foreign.get("interactions"):
-            raise AssertionError("Agency-scoped contact intelligence leaked across tenants.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-contact-directory?airline_code={airline_code}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

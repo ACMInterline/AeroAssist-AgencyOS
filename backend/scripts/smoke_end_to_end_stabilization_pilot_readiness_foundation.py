@@ -337,7 +337,7 @@ def verify_health_readiness_and_core_workflow() -> tuple[str, str, str]:
     if "remediation_checklist" not in checklist or "module_readiness" not in checklist:
         raise AssertionError("Agency remediation checklist response shape is incomplete.")
     if other_agency_id:
-        request("GET", f"/api/agencies/{other_agency_id}/pilot-readiness/golden-path-cases/{agency_case['id']}", None, OWNER_HEADERS, 404)
+        request("GET", f"/api/agencies/{other_agency_id}/pilot-readiness/golden-path-cases/{agency_case['id']}", None, OWNER_HEADERS, 403)
 
     dashboard = get("/api/platform/pilot-readiness", OWNER_HEADERS)
     for key in ["summary", "module_readiness", "airline_service_coverage", "sample_cases", "issues"]:

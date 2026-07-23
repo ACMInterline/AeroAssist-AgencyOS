@@ -14,7 +14,7 @@ governance remain owned by `backend/database.py`,
 `backend/persistence_query.py`, and `backend/persistence_repository.py`. The
 domain registry links to those controls; it does not replace them.
 
-The contract selects 35 ownership targets and leaves five domains explicitly
+The contract selects 36 ownership targets and leaves four domains explicitly
 `decision_required`. Twenty-one domains require compatibility reconciliation
 before their target can be considered exclusive. A valid registry therefore
 reports `migration_required`; it does not claim the product kernel has already
@@ -99,13 +99,13 @@ that can still read mutable offers, and fragmented messages/timelines.
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Auth, clients, portal, seed; Client Master service | `PortalAccessMapping` / `portal_access_mappings` | Auth mutations; `/api/portal` projections | `ClientPortalAccessProfile` / `client_portal_access_profiles` is a compatibility writer | Agency scoped; self and explicit client links | Portal boundary; migration required |
+| Auth, clients, portal, explicit link service, seed; Client Master service | `PortalAccessMapping` / `portal_access_mappings` | `portal_identity_link_service.py`; Agency mapping management; `/api/portal` projections | `ClientPortalAccessProfile` / `client_portal_access_profiles` is a deprecated, non-authorizing compatibility projection | Agency scoped; explicit identity-to-client link only | Portal boundary selected; historical reconciliation required |
 
 ### 5. Passenger Portal Identity
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Portal passenger list/detail projections only | No independent owner | `/api/portal/passengers` | Visibility derives from client portal mapping and relationship | Agency scoped; linked passengers only | Portal beneficiary; `decision_required` |
+| Auth invitation, Passenger invitation, explicit link service, Portal projections, seed | `AuthIdentity` + `PortalAccessMapping` + `PassengerProfile` / existing collections | `portal_identity_link_service.py`; `/api/agencies/{agency_id}/portal-access-mappings`; `/api/portal` | No duplicate `PassengerPortalUser`; historical relationship-derived visibility is reconciliation evidence only | Agency scoped; explicit identity-to-passenger self link only | Portal principal resolved; migration required |
 
 ### 6. Agency / Tenant / Workspace
 
@@ -117,19 +117,19 @@ that can still read mutable offers, and fragmented messages/timelines.
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Clients/auth/requests/intake writers and seed; Client Master CRUD | `ClientProfile` / `client_profiles` | `backend/routers/clients.py`; `/api/agencies/{agency_id}/clients` | `ClientMasterRecord` / `client_master_records` is a compatibility writer | Immutable `agency_id`; own client projection | Requester/payer; migration required |
+| Clients/auth/requests/intake writers and seed; source-bound Client Master adapter | `ClientProfile` / `client_profiles` | `backend/routers/clients.py`; `/api/agencies/{agency_id}/clients` | `ClientMasterRecord` / `client_master_records` accepts only one same-Agency canonical-source compatibility projection for new writes | Immutable `agency_id`; own client projection | Requester/payer selected; historical reconciliation required |
 
 ### 8. Passenger
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Passenger router, explicit request identity confirmation, seed; Passenger Master/Workspace CRUD | `PassengerProfile` / `passenger_profiles` | `backend/routers/passengers.py`; `/api/agencies/{agency_id}/passengers` | `PassengerMasterRecord` and `PassengerWorkspace` are compatibility writers | Immutable `agency_id`; explicit linked projection | Confirmed traveler; migration required, P0 integrity applies |
+| Passenger router, explicit request identity confirmation, seed; source-bound Passenger Master adapter and Passenger Workspace CRUD | `PassengerProfile` / `passenger_profiles` | `backend/routers/passengers.py`; `/api/agencies/{agency_id}/passengers` | `PassengerMasterRecord` accepts only one same-Agency canonical-source compatibility projection; `PassengerWorkspace` remains a compatibility writer | Immutable `agency_id`; explicit linked projection | Confirmed traveler selected; historical/workspace reconciliation required, P0 integrity applies |
 
 ### 9. Client-Passenger Relationship
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Client/passenger/request routers, identity confirmation, seed; Master Link CRUD | `ClientPassengerRelationship` / `client_passenger_relationships` | Client relationship routes | `ClientPassengerMasterLink` / `client_passenger_links` is a compatibility writer | Both endpoints must share immutable `agency_id` | Portal visibility edge; migration required |
+| Client/passenger/request routers, identity confirmation, seed; source-bound Master Link adapter | `ClientPassengerRelationship` / `client_passenger_relationships` | Client relationship routes | `ClientPassengerMasterLink` / `client_passenger_links` accepts only a matching same-Agency canonical relationship source for new writes | Both endpoints must share immutable `agency_id` | Portal visibility edge selected; historical reconciliation required |
 
 ### 10. Request
 
@@ -332,4 +332,3 @@ frontend consumers, portal visibility, lifecycle continuity, canonical route
 roots, deterministic ordering, secret/local-path exclusion, unchanged runtime
 governance, and smoke inventory resolution. Migration blockers are reported
 without turning an honest `migration_required` state into a validation failure.
-

@@ -20,6 +20,26 @@ exit criteria.
 | `/api/agencies/{agency_id}/*` | Agency operational APIs |
 | `/api/reference/*` | Shared consume APIs |
 
+## Identity And Tenant Authorization
+
+- `/api/agencies/{agency_id}/*` requires an active membership for the exact
+  route Agency. A Platform role, `workspace_id`, body field, query parameter,
+  or header cannot substitute for that membership.
+- `/api/platform/*` requires the centralized Platform permission selected for
+  the resource. Agency membership never grants Platform access.
+- `/api/portal/*` resolves only an authenticated Client or Passenger Portal
+  identity with an explicit active `PortalAccessMapping`; email matching does
+  not authorize.
+- Agency Owner/Admin Portal-link governance uses
+  `/api/agencies/{agency_id}/portal-access-mappings`. No `/admin/*` or
+  `/agent/*` alias is introduced.
+- Client and Passenger Portal identities cannot use Platform or Agency staff
+  routes. Revoked identities, memberships, and mappings are checked
+  server-side.
+
+See [Canonical Identity and Tenancy Contract](canonical-identity-and-tenancy-contract.md)
+and [Portal Identity Linkage Contract](portal-identity-linkage-contract.md).
+
 ## Audit Event Access
 
 - Canonical Platform review: `GET /api/platform/audit-events`, limited to Platform Owner and Platform Admin.

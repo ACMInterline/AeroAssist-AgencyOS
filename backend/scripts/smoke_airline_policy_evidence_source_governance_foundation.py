@@ -462,9 +462,13 @@ def verify_live_governance() -> None:
     request("POST", f"/api/agencies/{agency_id}/airline-evidence", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        isolated = get(f"/api/agencies/{agencies[1]['id']}/airline-evidence", OWNER_HEADERS)
-        if any(item.get("id") in {first["id"], second["id"]} for item in isolated.get("sources") or []):
-            raise AssertionError("Agency-scoped evidence leaked into another agency summary.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-evidence",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
     replacement = post(
         f"{PLATFORM_BASE}/sources",

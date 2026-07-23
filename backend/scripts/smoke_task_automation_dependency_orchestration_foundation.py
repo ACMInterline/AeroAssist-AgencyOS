@@ -474,9 +474,13 @@ def verify_task_automation_lifecycle(agency_id: str, other_agency_id: str) -> No
     if len(retry_run.get("tasks_created") or []) != 0 or len(retry_run.get("tasks_skipped") or []) < 2:
         raise AssertionError(f"Safe retry should skip existing generated tasks: {retry_run}")
 
-    other_dashboard = get(f"/api/agencies/{other_agency_id}/task-automation", OWNER_HEADERS)
-    if any(item.get("id") in {run["id"], retry_run["id"]} for item in other_dashboard.get("runs") or []):
-        raise AssertionError("Task automation runs leaked across agency boundaries.")
+    request(
+        "GET",
+        f"/api/agencies/{other_agency_id}/task-automation",
+        None,
+        OWNER_HEADERS,
+        expect=403,
+    )
     request("GET", f"/api/agencies/{other_agency_id}/task-automation/runs", None, AGENCY_AGENT_HEADERS, expect=403)
 
 

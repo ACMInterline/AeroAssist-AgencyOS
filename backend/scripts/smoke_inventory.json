@@ -2714,7 +2714,7 @@
       "test_class": "focused",
       "suitable_for_future_ci": true,
       "notes": "Exact-current source-level and module-level validation for task-based Platform and workflow-ordered Agency navigation, catalogue projection metadata, role-aware visibility, collapsed Advanced areas, practical home routes, onboarding compatibility, optional workflow diagnostic recovery, layout primitives, canonical deep links, readiness registration, documentation, and unchanged execution boundaries.",
-      "ci_tier": "static",
+      "ci_tier": "focused",
       "execution_isolation": "none"
     },
     {
@@ -2781,6 +2781,30 @@
       "suitable_for_future_ci": true,
       "notes": "Source-level corrective governance smoke for forty canonical product domains, one selected target or explicit decision-required state, agency_id tenancy, immutable accepted evidence, current/compatibility writers, persistence registration, frontend consumers, lifecycle continuity, canonical routes, documentation, deterministic ordering, and honest migration blockers. It changes no runtime behavior.",
       "ci_tier": "static",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_identity_tenancy_contract.py",
+      "capability_name": "Canonical Identity and Tenancy Contract",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "authentication",
+        "authorization",
+        "agency",
+        "platform",
+        "portal",
+        "tenancy",
+        "security",
+        "persistence"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable in-memory service and HTTP regression for separated identity/current-user context, centralized role permissions, active Agency membership, agency_id isolation, explicit Client and Passenger Portal mappings, revocation, email-only denial, compatibility projections, and dry-run reconciliation analysis.",
+      "ci_tier": "focused",
       "execution_isolation": "none"
     },
     {

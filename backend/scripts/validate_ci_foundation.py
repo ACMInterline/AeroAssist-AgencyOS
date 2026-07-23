@@ -134,7 +134,7 @@ def validate_ci_foundation() -> list[str]:
     entries = inventory.get("scripts") or []
     entry_by_path = {entry.get("script_path"): entry for entry in entries}
     allowlist = inventory.get("exact_current_allowlist") or []
-    exact_path = "backend/scripts/smoke_commercial_pilot_readiness.py"
+    exact_path = "backend/scripts/smoke_product_experience_recovery.py"
     pilot_operations_path = "backend/scripts/smoke_pilot_operations_release_readiness.py"
     release_gate_path = "backend/scripts/smoke_final_stabilization_pilot_release_gate.py"
     observability_path = "backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py"

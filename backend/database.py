@@ -782,7 +782,15 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         await create_compatible_index(collection, collection_name, [("agency_id", ASCENDING)])
 
     unique_indexes = {
-        "platform_users": [[("email", ASCENDING)]],
+        "platform_users": [
+            [("email", ASCENDING)],
+            {
+                "keys": [("identity_id", ASCENDING)],
+                "name": "platform_users_identity_unique",
+                "unique": True,
+                "partialFilterExpression": {"identity_id": {"$type": "string"}},
+            },
+        ],
         "agencies": [[("slug", ASCENDING)], [("id", ASCENDING)]],
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
         "reference_domain_metadata": [[("domain", ASCENDING)], [("id", ASCENDING)]],
@@ -883,7 +891,24 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "airline_rules_core": [[("airline_id", ASCENDING)], [("id", ASCENDING)]],
         "unified_exception_rules": [[("id", ASCENDING)]],
         "agency_staff_memberships": [[("agency_id", ASCENDING), ("user_id", ASCENDING)]],
-        "portal_access_mappings": [[("agency_id", ASCENDING), ("user_email", ASCENDING)]],
+        "portal_access_mappings": [
+            {
+                "keys": [("active_mapping_key", ASCENDING)],
+                "name": "portal_access_mappings_active_identity_unique",
+                "unique": True,
+                "partialFilterExpression": {
+                    "active_mapping_key": {"$type": "string"}
+                },
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("active_subject_key", ASCENDING)],
+                "name": "portal_access_mappings_active_subject_unique",
+                "unique": True,
+                "partialFilterExpression": {
+                    "active_subject_key": {"$type": "string"}
+                },
+            },
+        ],
         "auth_identities": [[("normalized_email", ASCENDING)], [("id", ASCENDING)]],
         "auth_sessions": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
         "invitations": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
@@ -901,6 +926,56 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "auth_sessions": [
             {"keys": [("status", ASCENDING), ("expires_at", ASCENDING)], "name": "auth_sessions_status_expiry_lookup"},
             {"keys": [("identity_id", ASCENDING), ("status", ASCENDING)], "name": "auth_sessions_identity_status_lookup"},
+        ],
+        "agency_staff_memberships": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("identity_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "agency_staff_memberships_identity_status_lookup",
+                "sparse": True,
+            },
+        ],
+        "portal_access_mappings": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("auth_identity_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_identity_status_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("subject_type", ASCENDING),
+                    ("client_profile_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_client_subject_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("subject_type", ASCENDING),
+                    ("passenger_profile_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_passenger_subject_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("portal_status", ASCENDING),
+                    ("created_at", ASCENDING),
+                ],
+                "name": "portal_access_mappings_legacy_status_lookup",
+            },
         ],
         "client_profiles": [[("agency_id", ASCENDING), ("primary_email", ASCENDING)]],
         "invitations": [

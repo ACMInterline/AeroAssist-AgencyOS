@@ -9,7 +9,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `ClientProfile` | `client_profiles` | Payer/requester/account profile | Agency | Relationships to passengers, requests | CRM client | Canonical |
 | `PassengerProfile` | `passenger_profiles` | Confirmed reusable traveler/beneficiary identity; strict legacy intake placeholders may be retained as non-selectable integrity-quarantined records | Agency | Client relationships, confirmed request passengers | Passenger registry | Canonical |
 | `ClientPassengerRelationship` | `client_passenger_relationships` | Client-passenger permissions/relationship | Agency | Client + passenger | Client traveler linkage | Canonical |
-| Client/passenger master workspace models | `client_master_records`, `passenger_master_records`, `client_passenger_links`, `passenger_service_history`, `passenger_operational_preferences`, `passenger_known_documents`, `client_portal_access_profiles` | Metadata-only master workspace records that consolidate Client as commercial owner and Passenger as reusable operational identity. Records support many-to-many links, reusable passenger service history, operational preferences, known documents, portal access metadata, and relationship graph views without CRM sales pipeline, marketing automation, provider integrations, AI/LLM, booking, ticketing, payments, workers, or automatic sending. | Platform metadata CRUD + agency-scoped metadata CRUD and read-only visualization | Client profiles, passenger profiles, requests, trips, offers, invoices, communications, documents, booking/ticket/EMD mirrors, operational evaluations, feasibility, recommendations, portal access mappings | Client passenger master workspace foundation | Canonical foundation |
+| Client/passenger master workspace models | `client_master_records`, `passenger_master_records`, `client_passenger_links`, `passenger_service_history`, `passenger_operational_preferences`, `passenger_known_documents`, `client_portal_access_profiles` | Deprecated metadata compatibility projections. New Client/Passenger Master and relationship rows require verified same-Agency canonical `ClientProfile`, `PassengerProfile`, and `ClientPassengerRelationship` sources; duplicate active projections are rejected. Legacy Portal profiles never authorize access and active/invited metadata requires an explicit `PortalAccessMapping`. Historical reads remain available. | Platform and agency source-bound compatibility writes + read-only visualization | Canonical client profiles, passenger profiles, relationships and Portal mappings; historical requests, trips, offers, invoices, communications, documents, booking/ticket/EMD mirrors, operational evaluations, feasibility, recommendations | Client passenger master workspace foundation | Deprecated compatibility projection |
 | `RequestIntake` | `request_intakes` | Public/portal/staff intake records | Optional agency | Converts to `TravelRequest` | Intake/request submission | Canonical |
 | `TravelRequest` | `travel_requests` | Operational request/work demand | Agency | Client, passengers, segments, services, optional trip | Request/case | Canonical |
 | `RequestPassenger` | `request_passengers` | Request-owned traveler snapshot and identity-resolution state; may remain unresolved with no master profile until explicit staff confirmation | Agency | Request + optional confirmed passenger | Request traveler | Canonical |
@@ -444,10 +444,39 @@ request-scoped children, `PassengerServiceRequest`, `OfferWorkspace`,
 `TicketCoupon`, `EMDRecord` and `EmdCoupon`, `SsrOsiWorkspace`, `Invoice` and
 `InvoiceLineItem`, `PaymentRecord`, `AfterSalesCase`, `DocumentWorkspace`,
 `OperationalWorkItem`, `OperationalTimeline`, `AuditEvent`, and
-`GlobalReferenceRecord` as targets. Passenger portal identity, Communication,
-Airline Knowledge, Policy, and Pricing remain `decision_required`.
+`GlobalReferenceRecord` as targets. P1 Repair 3 resolves Passenger Portal
+identity through `AuthIdentity`, `PortalAccessMapping`, and
+`PassengerProfile`. Communication, Airline Knowledge, Policy, and Pricing
+remain `decision_required`.
 
 The registry confirms `agency_id` as the tenant boundary and classifies later
 Master/Workspace families and older routes without changing them. See
 [Canonical Domain Ownership Map](canonical-domain-ownership-map.md) and
 [Canonical Domain Migration Register](canonical-domain-migration-register.md).
+
+## P1 Product Kernel Repair 3 Identity And Tenancy Contract
+
+| Canonical concern | Model / collection | Contract |
+|---|---|---|
+| Authentication | `AuthIdentity` / `auth_identities`; `AuthSession` / `auth_sessions` | Stable identity and opaque hashed-token session; no Client/Passenger truth in tokens |
+| Platform profile | `PlatformUser` / `platform_users` | Global Platform role linked to identity by additive `identity_id` |
+| Agency authorization | `AgencyStaffMembership` / `agency_staff_memberships` | Active, identity-linked membership for exact immutable `agency_id`; `workspace_id` is context only |
+| Portal authorization | `PortalAccessMapping` / `portal_access_mappings` | Explicit active identity-to-Client or identity-to-Passenger edge; email is non-authoritative |
+| Client | `ClientProfile` / `client_profiles` | Canonical CRM business owner |
+| Passenger | `PassengerProfile` / `passenger_profiles` | Canonical confirmed passenger owner |
+| Relationship | `ClientPassengerRelationship` / `client_passenger_relationships` | Canonical same-Agency relationship |
+
+`ClientMasterRecord`, `PassengerMasterRecord`, `ClientPassengerMasterLink`, and
+`ClientPortalAccessProfile` remain deprecated compatibility projections
+pending reviewed reconciliation. Their reads remain available. New Master and
+relationship rows require verified same-Agency canonical sources, duplicate
+active projections are rejected, and unlinked historical records cannot
+accept identity-shaped mutations. Legacy Portal profiles have no authorization
+effect. The identity migration analyzer is dry-run only and writes no
+production or local records.
+
+Portal mapping indexes add partial string-only active-identity uniqueness,
+partial string-only Agency/active-subject uniqueness, and Agency-first
+identity/subject/status lookups without dropping or mutating existing indexes.
+Platform-user identity uniqueness is partial for historical records, and
+membership identity lookup is additive.

@@ -554,9 +554,13 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
     overdue_queue = get(f"/api/agencies/{agency_id}/work-queue?{urlencode({'queue_code': 'overdue'})}", AGENCY_AGENT_HEADERS)
     assert_item_present(overdue_queue.get("items") or [], overdue_item["id"], "Overdue queue did not include overdue item.")
 
-    other_agency_queue = get(f"/api/agencies/{other_agency_id}/work-queue?{urlencode({'include_completed': 'true'})}", OWNER_HEADERS)
-    if any(item.get("id") in {manual_item["id"], overdue_item["id"], generated_once["work_item"]["id"]} for item in other_agency_queue.get("items") or []):
-        raise AssertionError("Agency work queue leaked items across agency boundaries.")
+    request(
+        "GET",
+        f"/api/agencies/{other_agency_id}/work-queue?{urlencode({'include_completed': 'true'})}",
+        None,
+        OWNER_HEADERS,
+        expect=403,
+    )
     request("GET", f"/api/agencies/{other_agency_id}/work-queue/work-items/{manual_item['id']}", None, AGENCY_AGENT_HEADERS, expect=403)
 
     platform_item = get(f"/api/platform/work-queues/work-items/{manual_item['id']}", OWNER_HEADERS)["work_item"]

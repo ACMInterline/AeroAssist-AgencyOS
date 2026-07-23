@@ -493,9 +493,13 @@ def verify_live_routes() -> None:
     request("POST", f"/api/agencies/{agency_id}/fare-brand-library/fare-families", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/fare-brand-library?airline_code={airline_code}", OWNER_HEADERS)
-        if foreign.get("fare_families"):
-            raise AssertionError("Agency-scoped fare-brand metadata leaked across tenants.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/fare-brand-library?airline_code={airline_code}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

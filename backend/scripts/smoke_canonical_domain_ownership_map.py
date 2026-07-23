@@ -23,7 +23,6 @@ from scripts.validate_canonical_domain_ownership import validate_registry  # noq
 
 MINIMUM_PHASE = "phase_59_0_product_experience_recovery"
 EXPECTED_DECISIONS = {
-    "passenger_portal_identity",
     "communication",
     "airline_knowledge",
     "policy",
@@ -34,6 +33,7 @@ EXPECTED_TARGETS = {
     "platform_user": "PlatformUser",
     "agency_membership": "AgencyStaffMembership",
     "client_portal_identity": "PortalAccessMapping",
+    "passenger_portal_identity": "PortalAccessMapping",
     "agency_tenant_workspace": "Agency",
     "crm_client": "ClientProfile",
     "passenger": "PassengerProfile",

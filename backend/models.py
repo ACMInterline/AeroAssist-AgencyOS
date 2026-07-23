@@ -42,6 +42,7 @@ class AuthIdentityType(str, Enum):
     PLATFORM_USER = "platform_user"
     AGENCY_STAFF = "agency_staff"
     CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
 
 
 class AuthSessionStatus(str, Enum):
@@ -54,6 +55,7 @@ class InvitationType(str, Enum):
     PLATFORM_USER = "platform_user"
     AGENCY_STAFF = "agency_staff"
     CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
 
 
 class InvitationStatus(str, Enum):
@@ -293,7 +295,13 @@ class ClientPortalStatus(str, Enum):
     EMAIL_UNVERIFIED = "email_unverified"
     ACTIVE = "active"
     SUSPENDED = "suspended"
+    REVOKED = "revoked"
     ARCHIVED = "archived"
+
+
+class PortalSubjectType(str, Enum):
+    CLIENT = "client"
+    PASSENGER = "passenger"
 
 
 class ClientStatus(str, Enum):
@@ -572,6 +580,7 @@ class BaseDocument(BaseModel):
 
 
 class PlatformUser(BaseDocument):
+    identity_id: Optional[str] = None
     email: EmailStr
     full_name: str
     global_role: Optional[PlatformRole] = None
@@ -581,6 +590,7 @@ class PlatformUser(BaseDocument):
 class PlatformUserCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    identity_id: Optional[str] = None
     email: EmailStr
     full_name: str
     global_role: Optional[PlatformRole] = None
@@ -621,6 +631,7 @@ class Invitation(BaseDocument):
     invitation_type: InvitationType
     target_role: Optional[str] = None
     target_client_id: Optional[str] = None
+    target_passenger_id: Optional[str] = None
     target_user_id: Optional[str] = None
     accepted_by_user_id: Optional[str] = None
     accepted_by_identity_id: Optional[str] = None
@@ -662,6 +673,11 @@ class StaffInvitationCreate(BaseModel):
 
 class ClientPortalInvitationCreate(BaseModel):
     email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
+
+
+class PassengerPortalInvitationCreate(BaseModel):
+    email: EmailStr
     display_name: Optional[str] = None
 
 
@@ -1291,11 +1307,98 @@ class ClientProfileUpdate(BaseModel):
 
 class PortalAccessMapping(BaseDocument):
     agency_id: str
-    client_id: str
-    user_email: EmailStr
+    auth_identity_id: Optional[str] = None
+    subject_type: Optional[PortalSubjectType] = None
+    client_profile_id: Optional[str] = None
+    passenger_profile_id: Optional[str] = None
+    status: ClientPortalStatus = ClientPortalStatus.ACTIVE
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    revoked_at: Optional[datetime] = None
+    revoked_by: Optional[str] = None
+    replacement_mapping_id: Optional[str] = None
+    active_mapping_key: Optional[str] = None
+    active_subject_key: Optional[str] = None
+    identity_email_snapshot: Optional[EmailStr] = None
+    linkage_version: str = "explicit_identity_v1"
+    # Compatibility fields are retained for historical reads and old indexes.
+    # They are never authoritative for portal authorization.
+    client_id: Optional[str] = None
+    user_email: Optional[EmailStr] = None
     portal_status: ClientPortalStatus = ClientPortalStatus.ACTIVE
-    display_name: str
+    display_name: Optional[str] = None
     last_login_at: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def validate_subject_link(self) -> "PortalAccessMapping":
+        if self.linkage_version == "legacy_email":
+            if not self.client_id or not self.user_email:
+                raise PydanticCustomError(
+                    "legacy_portal_mapping_invalid",
+                    "Legacy portal mappings require client_id and user_email.",
+                )
+            return self
+
+        if not self.auth_identity_id or not self.subject_type:
+            raise PydanticCustomError(
+                "portal_identity_link_required",
+                "Explicit portal mappings require an AuthIdentity and subject type.",
+            )
+        client_id = self.client_profile_id or self.client_id
+        if self.subject_type == PortalSubjectType.CLIENT:
+            if not client_id or self.passenger_profile_id:
+                raise PydanticCustomError(
+                    "portal_client_subject_invalid",
+                    "Client portal mappings require exactly one client profile.",
+                )
+            self.client_profile_id = client_id
+            self.client_id = client_id
+        elif not self.passenger_profile_id or client_id:
+            raise PydanticCustomError(
+                "portal_passenger_subject_invalid",
+                "Passenger portal mappings require exactly one passenger profile.",
+            )
+        if self.status != self.portal_status:
+            self.portal_status = self.status
+        return self
+
+
+class PortalAccessMappingCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    auth_identity_id: str
+    subject_type: PortalSubjectType
+    client_profile_id: Optional[str] = None
+    passenger_profile_id: Optional[str] = None
+    display_name: Optional[str] = None
+    replaces_mapping_id: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_subject(self) -> "PortalAccessMappingCreate":
+        client = bool(self.client_profile_id)
+        passenger = bool(self.passenger_profile_id)
+        if client == passenger:
+            raise PydanticCustomError(
+                "portal_subject_required",
+                "Exactly one client or passenger profile is required.",
+            )
+        if self.subject_type == PortalSubjectType.CLIENT and not client:
+            raise PydanticCustomError(
+                "portal_client_subject_required",
+                "Client subject type requires client_profile_id.",
+            )
+        if self.subject_type == PortalSubjectType.PASSENGER and not passenger:
+            raise PydanticCustomError(
+                "portal_passenger_subject_required",
+                "Passenger subject type requires passenger_profile_id.",
+            )
+        return self
+
+
+class PortalAccessMappingRevoke(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=3, max_length=500)
 
 
 class PassengerProfile(BaseDocument):
@@ -1481,7 +1584,7 @@ class ClientMasterRecordCreate(BaseModel):
     client_status: str = "active"
     client_version: Optional[str] = None
     created_by: Optional[str] = None
-    source_client_profile_id: Optional[str] = None
+    source_client_profile_id: str
     commercial_owner_type: Optional[str] = None
     profile: Dict[str, Any] = Field(default_factory=dict)
     contacts: List[Dict[str, Any]] = Field(default_factory=list)
@@ -1590,7 +1693,7 @@ class PassengerMasterRecordCreate(BaseModel):
     passenger_status: str = "active"
     passenger_version: Optional[str] = None
     created_by: Optional[str] = None
-    source_passenger_profile_id: Optional[str] = None
+    source_passenger_profile_id: str
     operational_profile: Dict[str, Any] = Field(default_factory=dict)
     service_history_ids: List[str] = Field(default_factory=list)
     mobility_profile: Dict[str, Any] = Field(default_factory=dict)
@@ -1699,7 +1802,7 @@ class ClientPassengerMasterLinkCreate(BaseModel):
     link_status: str = "active"
     client_master_record_id: str
     passenger_master_record_id: str
-    source_relationship_id: Optional[str] = None
+    source_relationship_id: str
     relationship_type: Optional[str] = None
     commercial_role: Optional[str] = None
     beneficiary_role: Optional[str] = None

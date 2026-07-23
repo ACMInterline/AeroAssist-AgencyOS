@@ -199,6 +199,8 @@ COLLECTION_OWNERSHIP_REGISTRY: dict[str, CollectionOwnership] = {
         _agency("travel_requests", filters=("status", "request_status", "client_id", "trip_id", "purpose"), sorts=("status", "request_status", "deadline"), recommended_indexes=("travel_requests_agency_updated_id",)),
         _agency("travel_request_workspaces", filters=("request_status", "request_type", "request_priority", "assigned_agent", "operational_workspace_id", "requested_departure_date"), sorts=("request_status", "request_priority", "requested_departure_date", "deadline"), recommended_indexes=("travel_request_workspaces_agency_status_updated_id",)),
         _agency("passenger_profiles", filters=("first_name", "last_name", "date_of_birth", "status", "identity_integrity_status"), sorts=("last_name", "status")),
+        _agency("agency_staff_memberships", filters=("user_id", "identity_id", "agency_role", "status", "workspace_id"), sorts=("status", "agency_role")),
+        _agency("portal_access_mappings", filters=("auth_identity_id", "subject_type", "client_profile_id", "client_id", "passenger_profile_id", "status", "portal_status"), sorts=("status", "subject_type")),
         _agency("request_passengers", filters=("request_id", "passenger_id", "status", "identity_status"), sorts=("request_id", "status")),
         _agency("client_passenger_relationships", filters=("client_id", "passenger_id", "status"), sorts=("client_id", "status")),
         _agency("request_passenger_segment_services", filters=("request_id", "request_passenger_id", "passenger_id", "status"), sorts=("request_id", "request_passenger_id")),

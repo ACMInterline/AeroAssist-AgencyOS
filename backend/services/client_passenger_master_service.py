@@ -84,6 +84,24 @@ class ClientPassengerMasterService:
     def __init__(self, db: Database) -> None:
         self.db = db
 
+    @staticmethod
+    def compatibility_contract(record_type: str) -> dict[str, Any]:
+        canonical_owner = {
+            "client": "ClientProfile",
+            "passenger": "PassengerProfile",
+            "portal": "PortalAccessMapping",
+        }[record_type]
+        return {
+            "authoritative": False,
+            "compatibility_projection": True,
+            "deprecated_compatibility_writer": True,
+            "canonical_owner": canonical_owner,
+            "warning": (
+                f"This legacy {record_type} master record is not authoritative. "
+                f"New business truth belongs to {canonical_owner}."
+            ),
+        }
+
     async def platform_clients_response(self, **filters: Any) -> dict[str, Any]:
         clients = await self.list_client_records(**filters)
         return {
@@ -94,6 +112,7 @@ class ClientPassengerMasterService:
             "filters": self.filter_metadata(),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("client"),
             "notice": "Client Master stores commercial-owner metadata only. It does not add CRM sales pipelines, marketing automation, provider integrations, booking, ticketing, payments, AI/LLM logic, or workers.",
             **self.safety_flags(),
         }
@@ -109,6 +128,7 @@ class ClientPassengerMasterService:
             "filters": self.filter_metadata(),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("client"),
             **self.safety_flags(),
         }
 
@@ -122,6 +142,7 @@ class ClientPassengerMasterService:
             "filters": self.filter_metadata(),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("passenger"),
             "notice": "Passenger Master stores reusable operational identity and history metadata only. Human authority remains final.",
             **self.safety_flags(),
         }
@@ -137,6 +158,7 @@ class ClientPassengerMasterService:
             "filters": self.filter_metadata(),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("passenger"),
             **self.safety_flags(),
         }
 
@@ -241,6 +263,26 @@ class ClientPassengerMasterService:
         data.setdefault("client_status", "active")
         data.setdefault("created_by", user.get("id"))
         self._validate_client_payload(data)
+        source = await self._require_canonical_source(
+            "client_profiles",
+            data.get("source_client_profile_id"),
+            data.get("agency_id"),
+            "ClientProfile",
+        )
+        data.setdefault("agency_id", source["agency_id"])
+        await self._reject_duplicate_projection(
+            CLIENT_MASTER_RECORDS_COLLECTION,
+            "source_client_profile_id",
+            data["source_client_profile_id"],
+            "client_status",
+            "ClientProfile",
+        )
+        data["metadata"] = {
+            **(data.get("metadata") or {}),
+            "canonical_source_status": "verified_canonical_source",
+            "compatibility_writer": True,
+            "write_contract": "canonical_source_projection",
+        }
         data.update(self.safety_flags())
         record = ClientMasterRecord(**data)
         created = await self.db.collection(CLIENT_MASTER_RECORDS_COLLECTION).insert_one(record.model_dump(mode="json"))
@@ -249,6 +291,7 @@ class ClientPassengerMasterService:
             "client_master_record": await self._client_projection(created),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("client"),
             **self.safety_flags(),
         }
 
@@ -261,8 +304,29 @@ class ClientPassengerMasterService:
     ) -> dict[str, Any]:
         existing = await self._require_record(CLIENT_MASTER_RECORDS_COLLECTION, record_id, agency_id=agency_id)
         updates = payload.model_dump(mode="json", exclude_unset=True, exclude_none=True)
-        if agency_id:
-            updates.pop("agency_id", None)
+        updates.pop("agency_id", None)
+        self._preserve_immutable_source(
+            updates,
+            existing,
+            "source_client_profile_id",
+            "ClientProfile",
+        )
+        await self._validate_source_link_update(
+            updates,
+            existing,
+            collection=CLIENT_MASTER_RECORDS_COLLECTION,
+            source_collection="client_profiles",
+            source_field="source_client_profile_id",
+            status_field="client_status",
+            canonical_owner="ClientProfile",
+        )
+        self._guard_unlinked_compatibility_update(
+            updates,
+            existing,
+            "source_client_profile_id",
+            "ClientProfile",
+            {"client_status", "archived", "archived_at", "internal_notes", "agent_notes", "metadata"},
+        )
         self._validate_client_payload(updates, partial=True)
         updates.update(self.safety_flags())
         updated = await self._update_record(CLIENT_MASTER_RECORDS_COLLECTION, existing["id"], updates, agency_id=agency_id)
@@ -271,6 +335,7 @@ class ClientPassengerMasterService:
             "client_master_record": await self._client_projection(updated),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("client"),
             **self.safety_flags(),
         }
 
@@ -289,6 +354,7 @@ class ClientPassengerMasterService:
             "physical_delete_disabled": True,
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("client"),
             **self.safety_flags(),
         }
 
@@ -305,6 +371,26 @@ class ClientPassengerMasterService:
         data.setdefault("passenger_status", "active")
         data.setdefault("created_by", user.get("id"))
         self._validate_passenger_payload(data)
+        source = await self._require_canonical_source(
+            "passenger_profiles",
+            data.get("source_passenger_profile_id"),
+            data.get("agency_id"),
+            "PassengerProfile",
+        )
+        data.setdefault("agency_id", source["agency_id"])
+        await self._reject_duplicate_projection(
+            PASSENGER_MASTER_RECORDS_COLLECTION,
+            "source_passenger_profile_id",
+            data["source_passenger_profile_id"],
+            "passenger_status",
+            "PassengerProfile",
+        )
+        data["metadata"] = {
+            **(data.get("metadata") or {}),
+            "canonical_source_status": "verified_canonical_source",
+            "compatibility_writer": True,
+            "write_contract": "canonical_source_projection",
+        }
         data.update(self.safety_flags())
         record = PassengerMasterRecord(**data)
         created = await self.db.collection(PASSENGER_MASTER_RECORDS_COLLECTION).insert_one(record.model_dump(mode="json"))
@@ -313,6 +399,7 @@ class ClientPassengerMasterService:
             "passenger_master_record": await self._passenger_projection(created),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("passenger"),
             **self.safety_flags(),
         }
 
@@ -325,8 +412,29 @@ class ClientPassengerMasterService:
     ) -> dict[str, Any]:
         existing = await self._require_record(PASSENGER_MASTER_RECORDS_COLLECTION, record_id, agency_id=agency_id)
         updates = payload.model_dump(mode="json", exclude_unset=True, exclude_none=True)
-        if agency_id:
-            updates.pop("agency_id", None)
+        updates.pop("agency_id", None)
+        self._preserve_immutable_source(
+            updates,
+            existing,
+            "source_passenger_profile_id",
+            "PassengerProfile",
+        )
+        await self._validate_source_link_update(
+            updates,
+            existing,
+            collection=PASSENGER_MASTER_RECORDS_COLLECTION,
+            source_collection="passenger_profiles",
+            source_field="source_passenger_profile_id",
+            status_field="passenger_status",
+            canonical_owner="PassengerProfile",
+        )
+        self._guard_unlinked_compatibility_update(
+            updates,
+            existing,
+            "source_passenger_profile_id",
+            "PassengerProfile",
+            {"passenger_status", "archived", "archived_at", "internal_notes", "agent_notes", "metadata"},
+        )
         self._validate_passenger_payload(updates, partial=True)
         updates.update(self.safety_flags())
         updated = await self._update_record(PASSENGER_MASTER_RECORDS_COLLECTION, existing["id"], updates, agency_id=agency_id)
@@ -335,6 +443,7 @@ class ClientPassengerMasterService:
             "passenger_master_record": await self._passenger_projection(updated),
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("passenger"),
             **self.safety_flags(),
         }
 
@@ -353,6 +462,7 @@ class ClientPassengerMasterService:
             "physical_delete_disabled": True,
             "read_only": False,
             "metadata_only": True,
+            "compatibility_contract": self.compatibility_contract("passenger"),
             **self.safety_flags(),
         }
 
@@ -368,6 +478,43 @@ class ClientPassengerMasterService:
         data.setdefault("link_reference", self._reference("CPL"))
         data.setdefault("link_status", "active")
         self._validate_choice(data, "link_status", CLIENT_PASSENGER_LINK_STATUSES)
+        relationship = await self._require_canonical_source(
+            "client_passenger_relationships",
+            data.get("source_relationship_id"),
+            data.get("agency_id"),
+            "ClientPassengerRelationship",
+        )
+        data.setdefault("agency_id", relationship["agency_id"])
+        client_master = await self._require_record(
+            CLIENT_MASTER_RECORDS_COLLECTION,
+            data["client_master_record_id"],
+            agency_id=data["agency_id"],
+        )
+        passenger_master = await self._require_record(
+            PASSENGER_MASTER_RECORDS_COLLECTION,
+            data["passenger_master_record_id"],
+            agency_id=data["agency_id"],
+        )
+        if (
+            client_master.get("source_client_profile_id") != relationship.get("client_id")
+            or passenger_master.get("source_passenger_profile_id") != relationship.get("passenger_id")
+        ):
+            raise ClientPassengerMasterError(
+                "Compatibility link sources do not match the canonical ClientPassengerRelationship."
+            )
+        await self._reject_duplicate_projection(
+            CLIENT_PASSENGER_LINKS_COLLECTION,
+            "source_relationship_id",
+            data["source_relationship_id"],
+            "link_status",
+            "ClientPassengerRelationship",
+        )
+        data["metadata"] = {
+            **(data.get("metadata") or {}),
+            "canonical_source_status": "verified_canonical_source",
+            "compatibility_writer": True,
+            "write_contract": "canonical_source_projection",
+        }
         data.update(self.safety_flags())
         record = ClientPassengerMasterLink(**data)
         created = await self.db.collection(CLIENT_PASSENGER_LINKS_COLLECTION).insert_one(record.model_dump(mode="json"))
@@ -382,6 +529,12 @@ class ClientPassengerMasterService:
         data = payload.model_dump(mode="json", exclude_none=True)
         if agency_id:
             data["agency_id"] = agency_id
+        parent = await self._require_tenant_parent(
+            PASSENGER_MASTER_RECORDS_COLLECTION,
+            data["passenger_master_record_id"],
+            agency_id=data.get("agency_id"),
+        )
+        data.setdefault("agency_id", parent.get("agency_id"))
         data.setdefault("history_reference", self._reference("PSH"))
         data.setdefault("history_status", "active")
         self._validate_choice(data, "history_status", PASSENGER_HISTORY_STATUSES)
@@ -399,6 +552,12 @@ class ClientPassengerMasterService:
         data = payload.model_dump(mode="json", exclude_none=True)
         if agency_id:
             data["agency_id"] = agency_id
+        parent = await self._require_tenant_parent(
+            PASSENGER_MASTER_RECORDS_COLLECTION,
+            data["passenger_master_record_id"],
+            agency_id=data.get("agency_id"),
+        )
+        data.setdefault("agency_id", parent.get("agency_id"))
         data.setdefault("preference_reference", self._reference("POP"))
         data.setdefault("preference_status", "active")
         self._validate_choice(data, "preference_status", PASSENGER_PREFERENCE_STATUSES)
@@ -416,6 +575,12 @@ class ClientPassengerMasterService:
         data = payload.model_dump(mode="json", exclude_none=True)
         if agency_id:
             data["agency_id"] = agency_id
+        parent = await self._require_tenant_parent(
+            PASSENGER_MASTER_RECORDS_COLLECTION,
+            data["passenger_master_record_id"],
+            agency_id=data.get("agency_id"),
+        )
+        data.setdefault("agency_id", parent.get("agency_id"))
         data.setdefault("document_reference", self._reference("PKD"))
         data.setdefault("document_status", "active")
         self._validate_choice(data, "document_status", PASSENGER_DOCUMENT_STATUSES)
@@ -433,13 +598,54 @@ class ClientPassengerMasterService:
         data = payload.model_dump(mode="json", exclude_none=True)
         if agency_id:
             data["agency_id"] = agency_id
+        client_master = await self._require_tenant_parent(
+            CLIENT_MASTER_RECORDS_COLLECTION,
+            data["client_master_record_id"],
+            agency_id=data.get("agency_id"),
+        )
+        data.setdefault("agency_id", client_master.get("agency_id"))
         data.setdefault("portal_access_reference", self._reference("CPA"))
         data.setdefault("portal_status", "no_portal_access")
         self._validate_choice(data, "portal_status", CLIENT_PORTAL_ACCESS_STATUSES)
+        source_mapping_id = data.get("source_portal_mapping_id")
+        source_status = "unlinked_non_authorizing_metadata"
+        if source_mapping_id:
+            mapping = await self._require_canonical_source(
+                "portal_access_mappings",
+                source_mapping_id,
+                data.get("agency_id"),
+                "PortalAccessMapping",
+            )
+            mapped_client_id = mapping.get("client_profile_id") or mapping.get("client_id")
+            if mapping.get("subject_type") != "client" or mapped_client_id != client_master.get(
+                "source_client_profile_id"
+            ):
+                raise ClientPassengerMasterError(
+                    "PortalAccessMapping does not target the canonical ClientProfile for this compatibility record."
+                )
+            if data["portal_status"] in {"invited", "active"} and (
+                mapping.get("status") or mapping.get("portal_status")
+            ) != "active":
+                raise ClientPassengerMasterError(
+                    "Only an active PortalAccessMapping may back active compatibility portal metadata."
+                )
+            source_status = "verified_canonical_source"
+        elif data["portal_status"] not in {"no_portal_access", "archived"}:
+            raise ClientPassengerMasterError(
+                "Active or invited legacy Portal metadata requires an explicit PortalAccessMapping source."
+            )
+        data["metadata"] = {
+            **(data.get("metadata") or {}),
+            "canonical_source_status": source_status,
+            "authorization_effect": False,
+            "compatibility_writer": True,
+        }
         data.update(self._portal_flags())
         record = ClientPortalAccessProfile(**data)
         created = await self.db.collection(CLIENT_PORTAL_ACCESS_PROFILES_COLLECTION).insert_one(record.model_dump(mode="json"))
-        return self._child_response("client_portal_access_profile", created)
+        response = self._child_response("client_portal_access_profile", created)
+        response["compatibility_contract"] = self.compatibility_contract("portal")
+        return response
 
     async def summarize_counts(self, agency_id: str | None = None) -> dict[str, Any]:
         filters = {"agency_id": agency_id} if agency_id else None
@@ -512,6 +718,7 @@ class ClientPassengerMasterService:
             "many_to_many_relationships_supported": True,
         }
         projected["link_summary"] = {field: len(projected.get(field) or []) for field in CLIENT_LINK_FIELDS}
+        projected["compatibility_contract"] = self.compatibility_contract("client")
         projected.update(self.safety_flags())
         return projected
 
@@ -552,12 +759,17 @@ class ClientPassengerMasterService:
             "preferred_cabins": projected.get("preferred_cabins") or [],
             "preferred_seats": projected.get("preferred_seats") or [],
         }
-        projected["portal_access_section"] = {"passenger_portal_visibility_is_client_controlled": True}
+        projected["portal_access_section"] = {
+            "authorization_owner": "PortalAccessMapping",
+            "direct_passenger_portal_supported": True,
+            "client_relationship_projection_supported": True,
+        }
         projected["relationship_graph_section"] = {
             "relationship_graph": projected.get("relationship_graph") or [],
             "many_to_many_relationships_supported": True,
         }
         projected["history_link_summary"] = {field: len(projected.get(field) or []) for field in PASSENGER_HISTORY_LINK_FIELDS}
+        projected["compatibility_contract"] = self.compatibility_contract("passenger")
         projected.update(self.safety_flags())
         return projected
 
@@ -568,6 +780,19 @@ class ClientPassengerMasterService:
         item = await self.db.collection(collection).find_one(filters)
         if not item:
             raise ClientPassengerMasterError("Client/passenger master metadata not found.")
+        return item
+
+    async def _require_tenant_parent(
+        self,
+        collection: str,
+        record_id: str,
+        agency_id: str | None = None,
+    ) -> dict[str, Any]:
+        item = await self._require_record(collection, record_id, agency_id=agency_id)
+        if not item.get("agency_id"):
+            raise ClientPassengerMasterError(
+                "Historical unscoped compatibility metadata cannot own new tenant records."
+            )
         return item
 
     async def _update_record(self, collection: str, record_id: str, updates: dict[str, Any], agency_id: str | None = None) -> dict[str, Any]:
@@ -587,6 +812,121 @@ class ClientPassengerMasterService:
             "metadata_only": True,
             **self.safety_flags(),
         }
+
+    async def _require_canonical_source(
+        self,
+        collection: str,
+        source_id: str | None,
+        agency_id: str | None,
+        canonical_owner: str,
+    ) -> dict[str, Any]:
+        if not source_id:
+            raise ClientPassengerMasterError(
+                f"{canonical_owner} source is required for new compatibility records."
+            )
+        filters = {"id": source_id}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        source = await self.db.collection(collection).find_one(filters)
+        if not source:
+            raise ClientPassengerMasterError(
+                f"{canonical_owner} source is not available in this agency."
+            )
+        if not source.get("agency_id"):
+            raise ClientPassengerMasterError(
+                f"{canonical_owner} source has no canonical agency boundary."
+            )
+        return source
+
+    async def _reject_duplicate_projection(
+        self,
+        collection: str,
+        source_field: str,
+        source_id: str,
+        status_field: str,
+        canonical_owner: str,
+        *,
+        excluding_record_id: str | None = None,
+    ) -> None:
+        filters: dict[str, Any] = {
+            source_field: source_id,
+            "archived": {"$ne": True},
+            status_field: {"$ne": "archived"},
+        }
+        if excluding_record_id:
+            filters["id"] = {"$ne": excluding_record_id}
+        if await self.db.collection(collection).find_one(filters):
+            raise ClientPassengerMasterError(
+                f"An active compatibility projection already exists for this {canonical_owner}."
+            )
+
+    async def _validate_source_link_update(
+        self,
+        updates: dict[str, Any],
+        existing: dict[str, Any],
+        *,
+        collection: str,
+        source_collection: str,
+        source_field: str,
+        status_field: str,
+        canonical_owner: str,
+    ) -> None:
+        source_id = updates.get(source_field)
+        if source_id is None:
+            return
+        await self._require_canonical_source(
+            source_collection,
+            source_id,
+            existing.get("agency_id"),
+            canonical_owner,
+        )
+        await self._reject_duplicate_projection(
+            collection,
+            source_field,
+            source_id,
+            status_field,
+            canonical_owner,
+            excluding_record_id=existing["id"],
+        )
+        updates["metadata"] = {
+            **(existing.get("metadata") or {}),
+            **(updates.get("metadata") or {}),
+            "canonical_source_status": "verified_canonical_source",
+            "compatibility_writer": True,
+            "write_contract": "canonical_source_projection",
+        }
+
+    def _guard_unlinked_compatibility_update(
+        self,
+        updates: dict[str, Any],
+        existing: dict[str, Any],
+        source_field: str,
+        canonical_owner: str,
+        allowed_fields: set[str],
+    ) -> None:
+        if existing.get(source_field) or updates.get(source_field):
+            return
+        unsupported = sorted(set(updates) - allowed_fields)
+        if unsupported:
+            raise ClientPassengerMasterError(
+                f"Historical unlinked compatibility data cannot create new {canonical_owner} truth; "
+                f"link a reviewed canonical source before updating: {', '.join(unsupported)}."
+            )
+
+    def _preserve_immutable_source(
+        self,
+        updates: dict[str, Any],
+        existing: dict[str, Any],
+        field: str,
+        canonical_owner: str,
+    ) -> None:
+        requested = updates.get(field)
+        if requested is None:
+            return
+        if existing.get(field) and requested != existing.get(field):
+            raise ClientPassengerMasterError(
+                f"{canonical_owner} source linkage is immutable; reconcile it through migration tooling."
+            )
 
     def _validate_client_payload(self, data: dict[str, Any], *, partial: bool = False) -> None:
         self._validate_choice(data, "client_status", CLIENT_MASTER_STATUSES)

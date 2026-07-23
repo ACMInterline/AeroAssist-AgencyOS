@@ -1,33 +1,55 @@
+import inspect
+from typing import Any
+
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 
 from auth import get_current_user
 from database import Database, get_database
+from services.authorization_service import (
+    project_authorized_commercial_fields,
+    require_commercial_field_permissions,
+    require_permission,
+)
 from services.journey_option_fare_brand_composition_service import (
     PHASE_LABEL,
     FinalizedCompositionSnapshotError,
     JourneyOptionCompositionError,
     JourneyOptionFareBrandCompositionService,
 )
-from services.tenant_service import assert_agency_access, require_any_agency_role
 
 
 router = APIRouter(prefix="/api/agencies/{agency_id}/journey-option-compositions", tags=["agency-journey-option-compositions"])
 
-READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
-WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-PLATFORM_ROLES = {"platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"}
+async def require_read(_db: Database, _agency_id: str, user: dict) -> None:
+    require_permission(user, "view_offers")
 
 
-async def require_read(db: Database, agency_id: str, user: dict) -> None:
-    await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+async def require_write(_db: Database, _agency_id: str, user: dict) -> None:
+    require_permission(user, "edit_offers")
 
 
-async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+class PermissionProjectedJourneyOptionService:
+    def __init__(self, db: Database, principal: dict[str, Any]) -> None:
+        self._service = JourneyOptionFareBrandCompositionService(db)
+        self._principal = principal
+
+    def __getattr__(self, name: str) -> Any:
+        member = getattr(self._service, name)
+        if not inspect.iscoroutinefunction(member):
+            return member
+
+        async def projected(*args: Any, **kwargs: Any) -> Any:
+            result = await member(*args, **kwargs)
+            return project_authorized_commercial_fields(result, self._principal)
+
+        return projected
+
+
+def permission_projected_service(
+    db: Database,
+    user: dict[str, Any],
+) -> PermissionProjectedJourneyOptionService:
+    return PermissionProjectedJourneyOptionService(db, user)
 
 
 def request_error(exc: Exception) -> HTTPException:
@@ -47,7 +69,7 @@ async def list_compositions(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_read(db, agency_id, user)
-    service = JourneyOptionFareBrandCompositionService(db)
+    service = permission_projected_service(db, user)
     items = await service.list_compositions(agency_id, journey_id=journey_id, status=composition_status, offer_id=offer_id, include_archived=include_archived)
     if client_safe:
         items = [service.sanitize_agency_output(item) for item in items]
@@ -58,7 +80,7 @@ async def list_compositions(
 async def create_composition(agency_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_composition(agency_id, payload, user)
+        return await permission_projected_service(db, user).create_composition(agency_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -66,14 +88,14 @@ async def create_composition(agency_id: str, payload: dict = Body(...), user: di
 @router.get("/summary")
 async def summary(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
-    service = JourneyOptionFareBrandCompositionService(db)
+    service = permission_projected_service(db, user)
     return {"phase": PHASE_LABEL, "summary": await service.summarize_readiness(agency_id), **service.safety_flags()}
 
 
 @router.get("/filters")
 async def filters(agency_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
-    service = JourneyOptionFareBrandCompositionService(db)
+    service = permission_projected_service(db, user)
     return {"phase": PHASE_LABEL, "filters": service.filters(), **service.safety_flags()}
 
 
@@ -81,7 +103,7 @@ async def filters(agency_id: str, user: dict = Depends(get_current_user), db: Da
 async def from_journey(agency_id: str, journey_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_from_journey(agency_id, journey_id, payload, user)
+        return await permission_projected_service(db, user).create_from_journey(agency_id, journey_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -90,7 +112,7 @@ async def from_journey(agency_id: str, journey_id: str, payload: dict = Body(def
 async def from_authoring_session(agency_id: str, session_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_from_authoring_session(agency_id, session_id, payload, user)
+        return await permission_projected_service(db, user).create_from_authoring_session(agency_id, session_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -99,7 +121,7 @@ async def from_authoring_session(agency_id: str, session_id: str, payload: dict 
 async def from_offer(agency_id: str, offer_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_from_offer(agency_id, offer_id, payload, user)
+        return await permission_projected_service(db, user).create_from_offer(agency_id, offer_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -108,7 +130,7 @@ async def from_offer(agency_id: str, offer_id: str, payload: dict = Body(default
 async def get_composition(agency_id: str, composition_id: str, client_safe: bool = Query(default=False), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).get_composition(agency_id, composition_id, client_safe=client_safe)
+        return await permission_projected_service(db, user).get_composition(agency_id, composition_id, client_safe=client_safe)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -117,7 +139,7 @@ async def get_composition(agency_id: str, composition_id: str, client_safe: bool
 async def update_composition(agency_id: str, composition_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).update_composition(agency_id, composition_id, payload, user)
+        return await permission_projected_service(db, user).update_composition(agency_id, composition_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -126,7 +148,7 @@ async def update_composition(agency_id: str, composition_id: str, payload: dict 
 async def archive_composition(agency_id: str, composition_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).archive_composition(agency_id, composition_id, user)
+        return await permission_projected_service(db, user).archive_composition(agency_id, composition_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -135,7 +157,7 @@ async def archive_composition(agency_id: str, composition_id: str, user: dict = 
 async def create_option(agency_id: str, composition_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_option(agency_id, composition_id, payload, user)
+        return await permission_projected_service(db, user).create_option(agency_id, composition_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -144,7 +166,7 @@ async def create_option(agency_id: str, composition_id: str, payload: dict = Bod
 async def update_option(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).update_option(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).update_option(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -153,7 +175,7 @@ async def update_option(agency_id: str, composition_id: str, option_id: str, pay
 async def clone_option(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).clone_option(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).clone_option(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -162,7 +184,7 @@ async def clone_option(agency_id: str, composition_id: str, option_id: str, payl
 async def reorder_options(agency_id: str, composition_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).reorder_options(agency_id, composition_id, list(payload.get("option_ids") or []), user)
+        return await permission_projected_service(db, user).reorder_options(agency_id, composition_id, list(payload.get("option_ids") or []), user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -171,7 +193,7 @@ async def reorder_options(agency_id: str, composition_id: str, payload: dict = B
 async def archive_option(agency_id: str, composition_id: str, option_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).archive_option(agency_id, composition_id, option_id, user)
+        return await permission_projected_service(db, user).archive_option(agency_id, composition_id, option_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -180,7 +202,7 @@ async def archive_option(agency_id: str, composition_id: str, option_id: str, us
 async def restore_option(agency_id: str, composition_id: str, option_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).restore_option(agency_id, composition_id, option_id, user)
+        return await permission_projected_service(db, user).restore_option(agency_id, composition_id, option_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -189,7 +211,7 @@ async def restore_option(agency_id: str, composition_id: str, option_id: str, us
 async def assign_segments(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).assign_segments(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).assign_segments(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -198,7 +220,7 @@ async def assign_segments(agency_id: str, composition_id: str, option_id: str, p
 async def replace_segments(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).replace_segment_assignments(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).replace_segment_assignments(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -207,7 +229,7 @@ async def replace_segments(agency_id: str, composition_id: str, option_id: str, 
 async def archive_segment_assignment(agency_id: str, composition_id: str, option_id: str, assignment_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).remove_segment_assignment(agency_id, composition_id, option_id, assignment_id, user)
+        return await permission_projected_service(db, user).remove_segment_assignment(agency_id, composition_id, option_id, assignment_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -216,7 +238,7 @@ async def archive_segment_assignment(agency_id: str, composition_id: str, option
 async def recalculate_option(agency_id: str, composition_id: str, option_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).calculate_option_metrics(agency_id, composition_id, option_id)
+        return await permission_projected_service(db, user).calculate_option_metrics(agency_id, composition_id, option_id)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -225,7 +247,7 @@ async def recalculate_option(agency_id: str, composition_id: str, option_id: str
 async def create_fare_brand(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_manual_fare_brand(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).create_manual_fare_brand(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -234,7 +256,7 @@ async def create_fare_brand(agency_id: str, composition_id: str, option_id: str,
 async def import_fare_brand(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).import_fare_brand(agency_id, composition_id, option_id, payload, user)
+        return await permission_projected_service(db, user).import_fare_brand(agency_id, composition_id, option_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -243,7 +265,7 @@ async def import_fare_brand(agency_id: str, composition_id: str, option_id: str,
 async def update_fare_brand(agency_id: str, composition_id: str, option_id: str, fare_choice_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).update_fare_brand(agency_id, composition_id, option_id, fare_choice_id, payload, user)
+        return await permission_projected_service(db, user).update_fare_brand(agency_id, composition_id, option_id, fare_choice_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -252,7 +274,7 @@ async def update_fare_brand(agency_id: str, composition_id: str, option_id: str,
 async def duplicate_fare_brand(agency_id: str, composition_id: str, option_id: str, fare_choice_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).duplicate_fare_brand(agency_id, composition_id, option_id, fare_choice_id, payload, user)
+        return await permission_projected_service(db, user).duplicate_fare_brand(agency_id, composition_id, option_id, fare_choice_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -261,7 +283,7 @@ async def duplicate_fare_brand(agency_id: str, composition_id: str, option_id: s
 async def reorder_fare_brands(agency_id: str, composition_id: str, option_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).reorder_fare_brands(agency_id, composition_id, option_id, list(payload.get("fare_choice_ids") or []), user)
+        return await permission_projected_service(db, user).reorder_fare_brands(agency_id, composition_id, option_id, list(payload.get("fare_choice_ids") or []), user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -270,7 +292,7 @@ async def reorder_fare_brands(agency_id: str, composition_id: str, option_id: st
 async def archive_fare_brand(agency_id: str, composition_id: str, option_id: str, fare_choice_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).archive_fare_brand(agency_id, composition_id, option_id, fare_choice_id, user)
+        return await permission_projected_service(db, user).archive_fare_brand(agency_id, composition_id, option_id, fare_choice_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -279,7 +301,7 @@ async def archive_fare_brand(agency_id: str, composition_id: str, option_id: str
 async def restore_fare_brand(agency_id: str, composition_id: str, option_id: str, fare_choice_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).restore_fare_brand(agency_id, composition_id, option_id, fare_choice_id, user)
+        return await permission_projected_service(db, user).restore_fare_brand(agency_id, composition_id, option_id, fare_choice_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -287,8 +309,9 @@ async def restore_fare_brand(agency_id: str, composition_id: str, option_id: str
 @router.put("/{composition_id}/options/{option_id}/fare-brands/{fare_choice_id}/pricing")
 async def set_price(agency_id: str, composition_id: str, option_id: str, fare_choice_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    require_commercial_field_permissions(payload, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).set_price_breakdown(agency_id, composition_id, option_id, fare_choice_id, payload, user)
+        return await permission_projected_service(db, user).set_price_breakdown(agency_id, composition_id, option_id, fare_choice_id, payload, user)
     except (JourneyOptionCompositionError, ValueError) as exc:
         raise request_error(exc) from exc
 
@@ -297,7 +320,7 @@ async def set_price(agency_id: str, composition_id: str, option_id: str, fare_ch
 async def assess_services(agency_id: str, composition_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).project_service_assessments(agency_id, composition_id, user)
+        return await permission_projected_service(db, user).project_service_assessments(agency_id, composition_id, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -306,7 +329,7 @@ async def assess_services(agency_id: str, composition_id: str, user: dict = Depe
 async def compare(agency_id: str, composition_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).generate_comparison(agency_id, composition_id, payload)
+        return await permission_projected_service(db, user).generate_comparison(agency_id, composition_id, payload)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -315,7 +338,7 @@ async def compare(agency_id: str, composition_id: str, payload: dict = Body(defa
 async def preferred_option(agency_id: str, composition_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).select_preferred_option(agency_id, composition_id, payload, user)
+        return await permission_projected_service(db, user).select_preferred_option(agency_id, composition_id, payload, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -324,7 +347,7 @@ async def preferred_option(agency_id: str, composition_id: str, payload: dict = 
 async def list_snapshots(agency_id: str, composition_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     try:
-        service = JourneyOptionFareBrandCompositionService(db)
+        service = permission_projected_service(db, user)
         items = await service.list_snapshots(agency_id, composition_id)
         return {"phase": PHASE_LABEL, "items": items, "count": len(items), **service.safety_flags()}
     except JourneyOptionCompositionError as exc:
@@ -335,7 +358,7 @@ async def list_snapshots(agency_id: str, composition_id: str, user: dict = Depen
 async def create_snapshot(agency_id: str, composition_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).create_snapshot(agency_id, composition_id, payload, user)
+        return await permission_projected_service(db, user).create_snapshot(agency_id, composition_id, payload, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -344,7 +367,7 @@ async def create_snapshot(agency_id: str, composition_id: str, payload: dict = B
 async def finalize_snapshot(agency_id: str, composition_id: str, snapshot_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).finalize_snapshot(agency_id, composition_id, snapshot_id, user)
+        return await permission_projected_service(db, user).finalize_snapshot(agency_id, composition_id, snapshot_id, user)
     except (JourneyOptionCompositionError, FinalizedCompositionSnapshotError) as exc:
         raise request_error(exc) from exc
 
@@ -353,7 +376,7 @@ async def finalize_snapshot(agency_id: str, composition_id: str, snapshot_id: st
 async def handoff_preview(agency_id: str, composition_id: str, payload: dict = Body(default={}), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).preview_offer_handoff(agency_id, composition_id, payload)
+        return await permission_projected_service(db, user).preview_offer_handoff(agency_id, composition_id, payload)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc
 
@@ -362,6 +385,6 @@ async def handoff_preview(agency_id: str, composition_id: str, payload: dict = B
 async def handoff_apply(agency_id: str, composition_id: str, payload: dict = Body(...), user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     try:
-        return await JourneyOptionFareBrandCompositionService(db).apply_offer_handoff(agency_id, composition_id, payload, user)
+        return await permission_projected_service(db, user).apply_offer_handoff(agency_id, composition_id, payload, user)
     except JourneyOptionCompositionError as exc:
         raise request_error(exc) from exc

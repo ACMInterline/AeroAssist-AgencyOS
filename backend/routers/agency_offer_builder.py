@@ -1,4 +1,5 @@
-from typing import Optional
+import inspect
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -16,25 +17,52 @@ from models import (
 )
 from services.offer_builder_service import OfferBuilderService
 from services.offer_comparison_service import OfferComparisonService
-from services.tenant_service import assert_agency_access, require_any_agency_role
+from services.authorization_service import (
+    project_authorized_commercial_fields,
+    require_commercial_field_permissions,
+    require_permission,
+)
 
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["agency-offer-builder"])
 
-READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
-WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
+async def require_read(_db: Database, _agency_id: str, user: dict) -> None:
+    require_permission(user, "view_offers")
 
 
-async def require_read(db: Database, agency_id: str, user: dict) -> None:
-    await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+async def require_write(_db: Database, _agency_id: str, user: dict) -> None:
+    require_permission(user, "edit_offers")
 
 
-async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+class PermissionProjectedOfferService:
+    def __init__(self, service: Any, principal: dict[str, Any]) -> None:
+        self._service = service
+        self._principal = principal
+
+    def __getattr__(self, name: str) -> Any:
+        member = getattr(self._service, name)
+        if not inspect.iscoroutinefunction(member):
+            return member
+
+        async def projected(*args: Any, **kwargs: Any) -> Any:
+            result = await member(*args, **kwargs)
+            return project_authorized_commercial_fields(result, self._principal)
+
+        return projected
+
+
+def offer_builder_service(
+    db: Database,
+    user: dict[str, Any],
+) -> PermissionProjectedOfferService:
+    return PermissionProjectedOfferService(OfferBuilderService(db), user)
+
+
+def offer_comparison_service(
+    db: Database,
+    user: dict[str, Any],
+) -> PermissionProjectedOfferService:
+    return PermissionProjectedOfferService(OfferComparisonService(db), user)
 
 
 def not_found(detail: str) -> HTTPException:
@@ -55,7 +83,7 @@ async def list_offer_workspaces(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_read(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     return {"items": await service.list_workspaces(agency_id, request_id=request_id, trip_id=trip_id, status=status_filter)}
 
 
@@ -67,7 +95,8 @@ async def create_offer_workspace(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    require_commercial_field_permissions(payload.model_dump(mode="json"), user)
+    service = offer_builder_service(db, user)
     try:
         workspace = await service.create_workspace(agency_id, payload, user.get("id"))
     except ValueError as exc:
@@ -83,7 +112,7 @@ async def get_offer_workspace(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_read(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     detail = await service.workspace_detail(agency_id, workspace_id)
     if detail is None:
         raise not_found("Offer workspace not found.")
@@ -99,7 +128,7 @@ async def update_offer_workspace(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     try:
         workspace = await service.update_workspace(agency_id, workspace_id, payload, user.get("id"))
     except ValueError as exc:
@@ -117,7 +146,7 @@ async def create_offer_workspace_from_request(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     workspace = await service.create_workspace_from_request(agency_id, request_id, user.get("id"))
     if workspace is None:
         raise not_found("Request not found.")
@@ -132,7 +161,7 @@ async def create_offer_workspace_from_trip(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     workspace = await service.create_workspace_from_trip(agency_id, trip_id, user.get("id"))
     if workspace is None:
         raise not_found("Trip not found.")
@@ -148,7 +177,7 @@ async def create_offer_option(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     option = await service.create_option(agency_id, workspace_id, payload, user.get("id"))
     if option is None:
         raise not_found("Offer workspace not found.")
@@ -164,7 +193,7 @@ async def update_offer_option(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     option = await service.update_option(agency_id, option_id, payload, user.get("id"))
     if option is None:
         raise not_found("Offer option not found.")
@@ -179,7 +208,7 @@ async def clone_offer_option(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     option = await service.clone_option(agency_id, option_id, user.get("id"))
     if option is None:
         raise not_found("Offer option not found.")
@@ -194,7 +223,7 @@ async def evaluate_offer_option_rules(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     result = await service.evaluate_option_rules(agency_id, option_id, user.get("id"))
     if result is None:
         raise not_found("Offer option not found.")
@@ -209,7 +238,7 @@ async def recalculate_offer_option_pricing(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     result = await service.recalculate_option_pricing(agency_id, option_id, user.get("id"))
     if result is None:
         raise not_found("Offer option not found.")
@@ -225,7 +254,7 @@ async def add_offer_option_segment(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     segment = await service.add_segment(agency_id, option_id, payload, user.get("id"))
     if segment is None:
         raise not_found("Offer option not found.")
@@ -241,7 +270,7 @@ async def add_offer_option_fare_bundle(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    service = offer_builder_service(db, user)
     fare_bundle = await service.add_fare_bundle(agency_id, option_id, payload, user.get("id"))
     if fare_bundle is None:
         raise not_found("Offer option not found.")
@@ -257,7 +286,8 @@ async def add_offer_option_pricing_line(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferBuilderService(db)
+    require_commercial_field_permissions(payload.model_dump(mode="json"), user)
+    service = offer_builder_service(db, user)
     pricing_line = await service.add_pricing_line(agency_id, option_id, payload, user.get("id"))
     if pricing_line is None:
         raise not_found("Offer option not found.")
@@ -272,7 +302,7 @@ async def get_offer_comparison(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_read(db, agency_id, user)
-    service = OfferComparisonService(db)
+    service = offer_comparison_service(db, user)
     matrix = await service.build_matrix(agency_id, workspace_id)
     if matrix is None:
         raise not_found("Offer workspace not found.")
@@ -287,7 +317,7 @@ async def save_offer_comparison_snapshot(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferComparisonService(db)
+    service = offer_comparison_service(db, user)
     snapshot = await service.save_snapshot(agency_id, workspace_id, user.get("id"))
     if snapshot is None:
         raise not_found("Offer workspace not found.")
@@ -303,7 +333,7 @@ async def recommend_offer_option(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    service = OfferComparisonService(db)
+    service = offer_comparison_service(db, user)
     result = await service.recommend_option(agency_id, workspace_id, payload.option_id, payload.tag, payload.rank, user.get("id"))
     if result is None:
         raise not_found("Offer workspace or option not found.")

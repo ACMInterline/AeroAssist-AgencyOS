@@ -36,6 +36,7 @@ from phase_assertions import application_phase_is_at_least
 
 MINIMUM_PHASE = "phase_51_3_client_passenger_master_workspace_foundation"
 ROOT = Path(__file__).resolve().parents[2]
+AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
 
 
 def run_ref(prefix: str) -> str:
@@ -76,13 +77,17 @@ def assert_disabled_response(payload: dict) -> None:
             raise AssertionError(f"Payload missing disabled flag {flag}: {payload}")
 
 
-def client_payload(agency_id: str, reference: str) -> dict:
+def client_payload(
+    agency_id: str,
+    reference: str,
+    source_client_profile_id: str = "CLIENT-PROFILE-SMOKE-513",
+) -> dict:
     return {
         "agency_id": agency_id,
         "client_master_reference": reference,
         "client_status": "active",
         "client_version": "51.3.0-smoke",
-        "source_client_profile_id": "CLIENT-PROFILE-SMOKE-513",
+        "source_client_profile_id": source_client_profile_id,
         "commercial_owner_type": "individual",
         "profile": {"display_name": "Phase 51.3 Client", "primary_email": "client513@example.com"},
         "contacts": [{"name": "Client Contact", "email": "client513@example.com", "role": "owner"}],
@@ -103,13 +108,17 @@ def client_payload(agency_id: str, reference: str) -> dict:
     }
 
 
-def passenger_payload(agency_id: str, reference: str) -> dict:
+def passenger_payload(
+    agency_id: str,
+    reference: str,
+    source_passenger_profile_id: str = "PASSENGER-PROFILE-SMOKE-513",
+) -> dict:
     return {
         "agency_id": agency_id,
         "passenger_master_reference": reference,
         "passenger_status": "active",
         "passenger_version": "51.3.0-smoke",
-        "source_passenger_profile_id": "PASSENGER-PROFILE-SMOKE-513",
+        "source_passenger_profile_id": source_passenger_profile_id,
         "operational_profile": {"display_name": "Phase 51.3 Passenger", "passenger_type": "ADT"},
         "service_history_ids": ["PSH-SMOKE-513"],
         "mobility_profile": {"wheelchair": "WCHR"},
@@ -295,9 +304,36 @@ def verify_router_ui_docs_registration() -> None:
 def verify_runtime_metadata() -> None:
     agency_id = get("/api/agencies", OWNER_HEADERS)["items"][0]["id"]
     ref = run_ref("513")
+    canonical_client = post(
+        f"/api/agencies/{agency_id}/clients",
+        {
+            "client_type": "individual",
+            "display_name": f"Phase 51.3 Client {ref}",
+            "primary_email": f"client-{ref}@example.com",
+            "portal_status": "no_portal_access",
+        },
+        OWNER_HEADERS,
+        expect=201,
+    )["client"]
+    canonical_passenger = post(
+        f"/api/agencies/{agency_id}/passengers",
+        {
+            "first_name": "Phase",
+            "last_name": f"Passenger {ref}",
+            "display_name": f"Phase 51.3 Passenger {ref}",
+            "date_of_birth": "1988-04-14",
+            "passenger_type": "ADT",
+        },
+        OWNER_HEADERS,
+        expect=201,
+    )["passenger"]
     client = post(
         "/api/platform/client-master",
-        client_payload(agency_id, f"CLM-SMOKE-{ref}"),
+        client_payload(
+            agency_id,
+            f"CLM-SMOKE-{ref}",
+            canonical_client["id"],
+        ),
         OWNER_HEADERS,
         expect=201,
     )
@@ -307,7 +343,11 @@ def verify_runtime_metadata() -> None:
 
     passenger = post(
         "/api/platform/passenger-master",
-        passenger_payload(agency_id, f"PXM-SMOKE-{ref}"),
+        passenger_payload(
+            agency_id,
+            f"PXM-SMOKE-{ref}",
+            canonical_passenger["id"],
+        ),
         OWNER_HEADERS,
         expect=201,
     )
@@ -317,6 +357,17 @@ def verify_runtime_metadata() -> None:
     if passenger_record["service_history_section"]["passenger_history_reusable"] is not True:
         raise AssertionError(f"Passenger reusable history metadata missing: {passenger_record}")
 
+    canonical_relationship = post(
+        f"/api/agencies/{agency_id}/client-passenger-relationships",
+        {
+            "client_id": canonical_client["id"],
+            "passenger_id": canonical_passenger["id"],
+            "relationship_type": "self",
+            "can_view": True,
+        },
+        OWNER_HEADERS,
+        expect=201,
+    )["relationship"]
     link = post(
         "/api/platform/client-passenger-links",
         {
@@ -324,6 +375,7 @@ def verify_runtime_metadata() -> None:
             "link_reference": f"CPL-SMOKE-{ref}",
             "client_master_record_id": client_id,
             "passenger_master_record_id": passenger_id,
+            "source_relationship_id": canonical_relationship["id"],
             "relationship_type": "self",
             "permissions": {"can_view": True},
             "request_ids": ["REQ-SMOKE-513"],
@@ -396,7 +448,7 @@ def verify_runtime_metadata() -> None:
             "agency_id": agency_id,
             "portal_access_reference": f"CPA-SMOKE-{ref}",
             "client_master_record_id": client_id,
-            "portal_status": "active",
+            "portal_status": "no_portal_access",
             "contact_email": "portal513@example.com",
             "display_name": "Portal Smoke",
             "linked_passenger_ids": [passenger_id],
@@ -409,6 +461,12 @@ def verify_runtime_metadata() -> None:
     )
     if portal.get("metadata_only") is not True or portal.get("human_authority_final") is not True:
         raise AssertionError(f"Portal access profile response missing metadata flags: {portal}")
+    portal_record = portal["client_portal_access_profile"]
+    if (
+        portal_record.get("metadata", {}).get("authorization_effect") is not False
+        or portal_record.get("portal_status") != "no_portal_access"
+    ):
+        raise AssertionError(f"Unlinked legacy Portal metadata gained authorization effect: {portal_record}")
 
     updated_client = put(
         f"/api/platform/client-master/{client_id}",
@@ -434,20 +492,65 @@ def verify_runtime_metadata() -> None:
     if not any(item["id"] == passenger_id for item in platform_passengers.get("items", [])):
         raise AssertionError(f"Platform passenger filters did not return created record: {platform_passengers}")
 
+    agency_canonical_client = post(
+        f"/api/agencies/{agency_id}/clients",
+        {
+            "client_type": "individual",
+            "display_name": f"Agency Phase 51.3 Client {ref}",
+            "primary_email": f"agency-client-{ref}@example.com",
+            "portal_status": "no_portal_access",
+        },
+        OWNER_HEADERS,
+        expect=201,
+    )["client"]
+    agency_canonical_passenger = post(
+        f"/api/agencies/{agency_id}/passengers",
+        {
+            "first_name": "Agency",
+            "last_name": f"Passenger {ref}",
+            "display_name": f"Agency Phase 51.3 Passenger {ref}",
+            "date_of_birth": "1990-06-20",
+            "passenger_type": "ADT",
+        },
+        OWNER_HEADERS,
+        expect=201,
+    )["passenger"]
     agency_client = post(
         f"/api/agencies/{agency_id}/client-master",
-        client_payload(agency_id, f"CLM-AGENCY-SMOKE-{ref}"),
+        client_payload(
+            agency_id,
+            f"CLM-AGENCY-SMOKE-{ref}",
+            agency_canonical_client["id"],
+        ),
         OWNER_HEADERS,
         expect=201,
     )["client_master_record"]
     agency_passenger = post(
         f"/api/agencies/{agency_id}/passenger-master",
-        passenger_payload(agency_id, f"PXM-AGENCY-SMOKE-{ref}"),
+        passenger_payload(
+            agency_id,
+            f"PXM-AGENCY-SMOKE-{ref}",
+            agency_canonical_passenger["id"],
+        ),
         OWNER_HEADERS,
         expect=201,
     )["passenger_master_record"]
     if agency_client["agency_id"] != agency_id or agency_passenger["agency_id"] != agency_id:
         raise AssertionError("Agency master create did not preserve agency scope.")
+    agency_history = post(
+        f"/api/agencies/{agency_id}/passenger-service-history",
+        {
+            "history_reference": f"PSH-AGENCY-SMOKE-{ref}",
+            "passenger_master_record_id": agency_passenger["id"],
+            "service_family": "mobility",
+            "service_code": "WCHR",
+            "ssr_code": "WCHR",
+        },
+        AGENCY_AGENT_HEADERS,
+        expect=201,
+    )
+    if agency_history.get("passenger_service_history", {}).get("agency_id") != agency_id:
+        raise AssertionError("Agency Agent passenger-history compatibility write lost tenant scope.")
 
     agency_update = put(
         f"/api/agencies/{agency_id}/client-master/{agency_client['id']}",

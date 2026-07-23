@@ -336,7 +336,7 @@ def verify_live_api(paths: dict) -> None:
     assert_flags(platform_summary)
     request("POST", "/api/platform/operations-governance", {}, OWNER_HEADERS, 405)
     request("POST", f"/api/agencies/{primary_agency_id}/operations-command-center", {}, AGENCY_AGENT_HEADERS, 405)
-    request("GET", "/api/agencies/not-an-agency/operations-command-center", None, AGENCY_AGENT_HEADERS, 404)
+    request("GET", "/api/agencies/not-an-agency/operations-command-center", None, AGENCY_AGENT_HEADERS, 403)
 
 
 def main() -> None:
