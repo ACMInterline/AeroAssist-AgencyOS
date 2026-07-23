@@ -389,3 +389,7 @@ These records are agency-scoped projections and governance metadata. They do not
 | `AgencyEmailSettings.configuration_status` | `agency_email_settings` | Additive readiness state for disabled, pending, unverified, verified, or not-required email configuration. |
 
 Phase 58.1 also seeds canonical `agency_workspaces`, `agency_branding_settings`, `document_templates`, `client_profiles`, `passenger_profiles`, `client_passenger_relationships`, `operational_travel_workspaces`, `travel_request_workspaces`, `passenger_workspaces`, `flight_workspaces`, `trip_workspaces`, `offer_workspaces_v2`, and `booking_workspaces`. These remain owned by their existing domains and are tagged as synthetic onboarding data where metadata is available.
+
+## Phase 58.2 Commercial Pilot Operations Command Centre
+
+Phase 58.2 adds no model or collection. `CommercialPilotOperationsCommandCentreService` is a bounded tenant-scoped read model over canonical work queue, SLA, workflow, request, offer, booking, ticket, EMD, passenger-service, document, finance, timeline, audit, and staff records. It extends `AgencyDashboardPreferences` with optional operations-home display and filter defaults; existing records use safe application defaults without migration. Work-item mutations continue to be owned by `OperationalWorkItem` and `OperationalAssignmentEvent` through `AgentWorkQueueService`.

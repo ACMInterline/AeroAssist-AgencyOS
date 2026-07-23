@@ -29,6 +29,9 @@ from observability import (
 from services.final_stabilization_pilot_release_gate_service import release_gate_readiness_metadata
 from services.pilot_operations_release_readiness_service import pilot_operations_readiness_metadata
 from services.agency_onboarding_service import agency_onboarding_readiness_metadata
+from services.commercial_pilot_operations_command_centre_service import (
+    commercial_pilot_operations_command_centre_readiness_metadata,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import platform_observability
@@ -233,6 +236,7 @@ async def root_health() -> dict:
         "phase": CURRENT_BUILD_PHASE,
         "pilot_operations_release_readiness": True,
         "commercial_pilot_agency_onboarding_foundation": True,
+        "commercial_pilot_operations_command_centre_foundation": True,
     }
     if not settings.is_production:
         payload["app_env"] = settings.app_env
@@ -5353,6 +5357,7 @@ async def internal_readiness_payload() -> dict:
         "final_stabilization_pilot_release_gate": release_gate_readiness_metadata(),
         "pilot_operations_release_readiness": pilot_operations_readiness_metadata(),
         "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
+        "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7297,6 +7302,7 @@ async def public_readiness_payload() -> dict:
         "observability_diagnostics_performance_telemetry_foundation": observability_readiness_metadata(settings),
         "final_stabilization_pilot_release_gate": release_gate_readiness_metadata(),
         "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
+        "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]

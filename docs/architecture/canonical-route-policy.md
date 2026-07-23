@@ -360,3 +360,12 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Newly created incomplete agencies are redirected through the shared Agency loader; completed and legacy-exempt agencies retain existing canonical routes.
 - Platform agency detail links to the same Agency route and API under existing Platform authorization; no parallel Platform onboarding API is introduced.
 - Phase 58.1 adds no `/admin/*`, `/agent/*`, public mutation, provider route, or duplicate agency/travel route family.
+
+## Phase 58.2 Commercial Pilot Operations Command Centre Routes
+
+- Canonical Agency home: `/agency`.
+- Compatibility Agency route: `/agency/operations-command-center`.
+- Canonical tenant-scoped read API: `GET /api/agencies/{agency_id}/operations-command-center`.
+- Supported assignment and completion mutations remain under `/api/agencies/{agency_id}/work-queue/work-items/{work_item_id}/*` and are not duplicated by the command-centre router.
+- Incomplete newly created agencies continue through the Phase 58.1 redirect before either Agency operations route is rendered.
+- Phase 58.2 adds no `/admin/*`, `/agent/*`, public mutation, provider route, parallel queue API, or parallel workflow route.

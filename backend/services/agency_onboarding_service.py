@@ -181,6 +181,10 @@ class AgencyOnboardingService:
             landing_page=values["landing_page"],
             compact_mode=values["compact_mode"],
             dashboard_widgets=values["dashboard_widgets"],
+            preferred_starting_view=values["preferred_starting_view"],
+            visible_operations_sections=values["visible_operations_sections"],
+            default_assignment_filter=values["default_assignment_filter"],
+            default_urgency_filter=values["default_urgency_filter"],
             seeded_by_onboarding=True,
         ).model_dump(mode="json")
         notifications = AgencyNotificationPreferences(

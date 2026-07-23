@@ -1,4 +1,3 @@
-import AgencyDashboardPage from "./pages/agency/AgencyDashboardPage"
 import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
 import AgencyOnboardingPage from "./pages/agency/AgencyOnboardingPage"
 import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
@@ -400,7 +399,7 @@ const routes = {
   "/platform/offer-decision-export-audit-reviews": PlatformOfferDecisionExportAuditReviewsPage,
   "/platform/offer-decision-export-governance": PlatformOfferDecisionExportGovernancePage,
   "/platform/offer-decision-export-compliance": PlatformOfferDecisionExportCompliancePage,
-  "/agency": AgencyDashboardPage,
+  "/agency": OperationsCommandCenterPage,
   "/agency/onboarding": AgencyOnboardingPage,
   "/agency/saas-subscription": SaaSSubscriptionPage,
   "/agency/feature-availability": FeatureAvailabilityPage,

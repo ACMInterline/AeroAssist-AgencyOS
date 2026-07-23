@@ -2523,3 +2523,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Exposes completion progress, audited saves, validation, safe retry, tenant isolation, and an explicit completion gate before normal Agency workspace entry.
 - Performs no provider, airline, GDS, NDC, payment, ticketing, messaging, AI, background, deployment, or production-data operation.
 - See [Commercial Pilot Agency Onboarding Foundation](docs/architecture/commercial-pilot-agency-onboarding-foundation.md).
+
+## Phase 58.2 - Operations Command Centre Foundation
+
+- Active marker: `phase_58_2_commercial_pilot_operations_command_centre_foundation`.
+- Makes `/agency` the primary operational home after Phase 58.1 onboarding while preserving `/agency/operations-command-center` as a compatibility route.
+- Reuses the canonical work queue, deadlines, requests, offers, booking handoffs, passenger services, documents, finance, timeline, audit, and staff records; no command-centre collection or parallel workflow is created.
+- Adds bounded, tenant-scoped, deterministic summaries for My Work Today, operational queues, the selected-day timeline, actionable alerts, permission-aware quick actions, and recent activity.
+- Reuses existing guarded work-queue APIs for assign-to-self, reassign, and complete actions. The command-centre API does not invent state transitions or provider operations.
+- Consumes Phase 58.1 dashboard preferences with safe defaults for legacy agencies and keeps incomplete newly created agencies behind the existing onboarding redirect.
+- See [Commercial Pilot Operations Command Centre Foundation](docs/architecture/commercial-pilot-operations-command-centre-foundation.md).

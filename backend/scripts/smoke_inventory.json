@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_commercial_pilot_agency_onboarding_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 58.1 build marker and commercial pilot onboarding registration.",
-      "exact_reason": "This smoke explicitly tests the current newly-created-agency onboarding surface; historical capability and infrastructure smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_commercial_pilot_operations_command_centre_foundation.py",
+      "assertion_purpose": "Validate the canonical Phase 58.2 build marker and commercial pilot operations home registration.",
+      "exact_reason": "This smoke explicitly tests the current Agency operations home, tenant aggregation, ordering, role-aware actions, and onboarding compatibility; historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -2595,6 +2595,26 @@
       "script_path": "backend/scripts/smoke_commercial_pilot_agency_onboarding_foundation.py",
       "capability_name": "Commercial Pilot Agency Onboarding Foundation",
       "minimum_application_phase": "phase_58_1_commercial_pilot_agency_onboarding_foundation",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Minimum-phase in-memory smoke for resumable newly-created-agency onboarding, legacy exemption, canonical defaults, deterministic synthetic travel records, completion gating, tenant isolation, audit evidence, UI/API registration, and no-execution safety boundaries.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_commercial_pilot_operations_command_centre_foundation.py",
+      "capability_name": "Commercial Pilot Operations Command Centre Foundation",
+      "minimum_application_phase": "phase_58_2_commercial_pilot_operations_command_centre_foundation",
       "phase_assertion_mode": "exact_current",
       "requires_running_backend": false,
       "requires_mongodb": false,
@@ -2607,7 +2627,7 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current in-memory smoke for resumable newly-created-agency onboarding, legacy exemption, canonical defaults, deterministic synthetic travel records, completion gating, tenant isolation, audit evidence, UI/API registration, and no-execution safety boundaries.",
+      "notes": "Exact-current in-memory smoke for the Agency operations home, bounded aggregation, deterministic priorities, queues, timeline, actionable alerts, role-aware work-queue actions, Phase 58.1 preferences, legacy defaults, tenant isolation, registration, and safety boundaries.",
       "ci_tier": "integration",
       "execution_isolation": "none"
     },

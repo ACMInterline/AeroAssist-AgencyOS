@@ -10,7 +10,8 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
+from scripts.phase_assertions import application_phase_is_at_least
 from database import Database
 from models import (
     Agency,
@@ -34,11 +35,13 @@ from models import (
     TripWorkspace,
 )
 from services.agency_onboarding_service import (
-    PHASE_LABEL,
     AgencyOnboardingError,
     AgencyOnboardingService,
     agency_onboarding_readiness_metadata,
 )
+
+
+MINIMUM_PHASE = "phase_58_1_commercial_pilot_agency_onboarding_foundation"
 
 
 async def verify_service() -> None:
@@ -139,8 +142,8 @@ async def verify_service() -> None:
 
 
 def verify_registration() -> None:
-    if not phase_is_exact(CURRENT_BUILD_PHASE, CURRENT_BUILD_PHASE) or CURRENT_BUILD_PHASE != PHASE_LABEL:
-        raise AssertionError(f"Expected exact Phase 58.1 marker, got {CURRENT_BUILD_PHASE}.")
+    if not application_phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE):
+        raise AssertionError(f"Expected Phase 58.1 or later marker, got {CURRENT_BUILD_PHASE}.")
     metadata = agency_onboarding_readiness_metadata()
     assert metadata["resumable_wizard_enabled"] is True
     assert metadata["legacy_agencies_exempt"] is True

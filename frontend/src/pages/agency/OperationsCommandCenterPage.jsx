@@ -1,207 +1,117 @@
-import { useEffect, useState } from "react"
-import EmptyState from "../../components/EmptyState"
+import { useEffect, useMemo, useState } from "react"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import OperationsAlerts from "../../components/operations/OperationsAlerts"
+import OperationsFilters from "../../components/operations/OperationsFilters"
+import OperationsQueues from "../../components/operations/OperationsQueues"
+import OperationsTimelineActivity from "../../components/operations/OperationsTimelineActivity"
+import OperationsWorkList from "../../components/operations/OperationsWorkList"
 import AgencyLayout from "../../layouts/AgencyLayout"
-import { apiGet } from "../../lib/api"
+import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
-const views = ["dashboard", "queue", "kanban", "calendar", "timeline", "exceptions", "workload"]
+const sectionOrder = ["my_work", "alerts", "queues", "timeline", "quick_actions", "recent_activity"]
 
 export default function OperationsCommandCenterPage() {
+  const [context, setContext] = useState(null)
   const [state, setState] = useState(null)
-  const [view, setView] = useState("dashboard")
+  const [filters, setFilters] = useState({})
+  const [selectedDate, setSelectedDate] = useState("")
   const [error, setError] = useState("")
+  const [busyAction, setBusyAction] = useState("")
 
-  async function load() {
-    const context = await loadCurrentAgency()
-    const response = await apiGet(`/api/agencies/${context.agency.id}/operations-command-center`)
-    setState({ ...context, ...response })
+  async function load(nextFilters = filters, nextDate = selectedDate, suppliedContext = context) {
+    const activeContext = suppliedContext || await loadCurrentAgency()
+    if (activeContext.onboardingRedirect || !activeContext.agency) {
+      setContext(activeContext)
+      return
+    }
+    const params = new URLSearchParams()
+    Object.entries(nextFilters).forEach(([key, value]) => value && params.set(key, value))
+    if (nextDate) params.set("date", nextDate)
+    const response = await apiGet(`/api/agencies/${activeContext.agency.id}/operations-command-center?${params}`)
+    setContext(activeContext)
+    setState(response)
+    setFilters(response.filter_metadata?.selected || nextFilters)
+    setSelectedDate(response.timeline?.selected_date || nextDate)
+    setError("")
   }
 
   useEffect(() => {
     load().catch((err) => setError(err.message))
   }, [])
 
-  const kpis = state?.kpis || {}
+  async function applyFilters(nextFilters) {
+    setFilters(nextFilters)
+    setState(null)
+    await load(nextFilters, selectedDate)
+  }
+
+  async function changeDate(date) {
+    setSelectedDate(date)
+    setState(null)
+    await load(filters, date)
+  }
+
+  async function runWorkAction(item, action, assigneeId) {
+    if (!action.api_path) return
+    if (action.confirmation_required && !window.confirm(`Complete “${item.reason}”?`)) return
+    setBusyAction(`${item.id}:${action.key}`)
+    try {
+      await apiPost(action.api_path, {
+        to_user_id: assigneeId || undefined,
+        reason: `${action.label} from Operations Command Centre`,
+      })
+      await load(filters, selectedDate)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusyAction("")
+    }
+  }
+
+  const visibleSections = state?.preferences?.visible_sections || sectionOrder
+  const orderedSections = useMemo(() => {
+    const starting = state?.preferences?.preferred_starting_view || "my_work"
+    return [starting, ...sectionOrder].filter((key, index, values) => visibleSections.includes(key) && values.indexOf(key) === index)
+  }, [state, visibleSections])
+
+  const name = state?.user_context?.display_name?.split(" ")?.[0] || "there"
+  const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening"
 
   return (
-    <AgencyLayout user={state?.me?.user} agency={state?.agency}>
-      <ProtectedRoute loading={!state && !error} error={error}>
-        <div className="space-y-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
-              <h2 className="mt-2 text-2xl font-semibold text-slate-950">Operations Command Center</h2>
-              <p className="mt-1 text-sm text-slate-600">Primary operational dashboard aggregated from existing work queue, SLA, workflow, request, offer, booking, document, after-sales, and pilot-readiness metadata. It does not duplicate records, execute providers, mutate statuses, use AI, or run uncontrolled drag-and-drop.</p>
+    <AgencyLayout user={context?.me?.user} agency={context?.agency}>
+      <ProtectedRoute loading={!state && !error && !context?.onboardingRedirect} error={error}>
+        {!context?.agency ? null : (
+          <main className="space-y-6">
+            <header className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
+              <div>
+                <p className="text-sm font-semibold text-blue-700">Operations</p>
+                <h1 className="mt-1 text-2xl font-semibold text-slate-950">{greeting}, {name}.</h1>
+                <p className="mt-1 text-sm text-slate-600">Here’s what needs attention.</p>
+              </div>
+              <OperationsFilters metadata={state?.filter_metadata} value={filters} onChange={applyFilters} />
+            </header>
+
+            {error ? <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
+
+            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="space-y-6">
+                {orderedSections.map((section) => {
+                  if (section === "my_work") return <OperationsWorkList key={section} priorities={state?.priorities} assignees={state?.filter_metadata?.assignees || []} busyAction={busyAction} onAction={runWorkAction} />
+                  if (section === "queues") return <OperationsQueues key={section} queues={state?.queues || []} />
+                  if (section === "timeline") return <OperationsTimelineActivity key={section} mode="timeline" timeline={state?.timeline} onDateChange={changeDate} />
+                  if (section === "recent_activity") return <OperationsTimelineActivity key={section} mode="activity" activities={state?.recent_activity || []} />
+                  return null
+                })}
+              </div>
+              <aside className="space-y-6">
+                {visibleSections.includes("alerts") ? <OperationsAlerts alerts={state?.alerts || []} /> : null}
+                {visibleSections.includes("quick_actions") ? <OperationsAlerts quickActions={state?.quick_actions || []} /> : null}
+              </aside>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Aggregation only</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Guarded workflow moves</span>
-            </div>
-          </div>
-
-          {error ? <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div> : null}
-
-          <section className="grid gap-3 md:grid-cols-4 xl:grid-cols-6">
-            <Metric label="Workload" value={kpis.current_operational_workload || 0} />
-            <Metric label="Unassigned" value={kpis.unassigned_work || 0} />
-            <Metric label="Due soon" value={kpis.due_soon || 0} />
-            <Metric label="Overdue" value={kpis.overdue || 0} />
-            <Metric label="Critical blockers" value={kpis.critical_blockers || 0} />
-            <Metric label="After-sales" value={kpis.after_sales_cases || 0} />
-          </section>
-
-          <nav className="flex flex-wrap gap-2">
-            {views.map((item) => (
-              <button className={`rounded-md border px-3 py-2 text-sm font-semibold ${view === item ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-700"}`} key={item} type="button" onClick={() => setView(item)}>{formatType(item)}</button>
-            ))}
-          </nav>
-
-          {view === "dashboard" ? <Dashboard state={state} /> : null}
-          {view === "queue" ? <Feed title="Urgency-ranked operational feed" items={state?.queue || []} /> : null}
-          {view === "kanban" ? <Kanban lanes={state?.kanban?.lanes || []} /> : null}
-          {view === "calendar" ? <Calendar events={state?.calendar?.events || []} /> : null}
-          {view === "timeline" ? <Timeline events={state?.timeline?.events || []} /> : null}
-          {view === "exceptions" ? <Feed title="Exception list" items={state?.exceptions || []} /> : null}
-          {view === "workload" ? <Workload items={state?.workload || []} /> : null}
-        </div>
+          </main>
+        )}
       </ProtectedRoute>
     </AgencyLayout>
   )
-}
-
-function Dashboard({ state }) {
-  const kpis = state?.kpis || {}
-  const cards = [
-    ["Requests awaiting triage", kpis.requests_awaiting_triage],
-    ["Offers awaiting action", kpis.offers_awaiting_action],
-    ["Accepted offers awaiting booking", kpis.accepted_offers_awaiting_booking],
-    ["Bookings awaiting ticketing", kpis.bookings_awaiting_ticketing],
-    ["Service approvals/documents", kpis.service_approvals_documents],
-    ["Departures 24h", kpis.departures_next_24_hours],
-    ["Departures 48h", kpis.departures_next_48_hours],
-    ["Departures 72h", kpis.departures_next_72_hours],
-    ["Disrupted trips", kpis.disrupted_trips],
-    ["Knowledge/manual review", kpis.unresolved_knowledge_manual_review],
-    ["Payment/invoice blockers", kpis.payment_invoice_blockers],
-    ["Pilot readiness issues", kpis.pilot_readiness_issues],
-  ]
-  return (
-    <div className="space-y-4">
-      <section className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
-        {cards.map(([label, value]) => <Metric label={label} value={value || 0} key={label} />)}
-      </section>
-      <Feed title="Top operational feed" items={state?.dashboard?.top_feed || []} />
-    </div>
-  )
-}
-
-function Feed({ title, items }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="font-semibold text-slate-950">{title}</h3>
-      {!items?.length ? <EmptyState title="No operational items" body="Aggregated work appears here when source modules contain open metadata." /> : (
-        <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
-          {items.map((item) => (
-            <a className="grid gap-3 px-4 py-3 text-sm hover:bg-slate-50 lg:grid-cols-[1.3fr_0.8fr_0.7fr_0.7fr]" href={item.safe_action_link || "#"} key={item.id}>
-              <span><span className="font-semibold text-slate-950">{item.title}</span><span className="mt-1 block text-slate-500">{item.summary || formatType(item.source)}</span></span>
-              <span>{formatType(item.status)}</span>
-              <span>{formatType(item.priority)}</span>
-              <span>{item.urgency_score || 0}</span>
-            </a>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function Kanban({ lanes }) {
-  return (
-    <section className="space-y-3">
-      <p className="text-sm text-slate-600">Kanban lanes are derived from workflow state. Moves must be performed through valid workflow transitions and guard checks; uncontrolled drag-and-drop is disabled.</p>
-      {!lanes?.length ? <EmptyState title="No workflow lanes" body="Workflow instances will populate lanes." /> : (
-        <div className="grid gap-4 lg:grid-cols-3">
-          {lanes.map((lane) => (
-            <div className="rounded-lg border border-slate-200 bg-white p-4" key={lane.lane_key}>
-              <h3 className="font-semibold text-slate-950">{lane.title} <span className="text-slate-500">({lane.count})</span></h3>
-              <div className="mt-3 space-y-2">
-                {lane.cards.map((card) => (
-                  <a className="block rounded-md border border-slate-200 p-3 text-sm hover:bg-slate-50" href={card.transition_route_required} key={card.id}>
-                    <span className="font-semibold text-slate-950">{formatType(card.entity_type)}</span>
-                    <span className="mt-1 block text-slate-600">{card.entity_id}</span>
-                    <span className="mt-2 block text-xs text-blue-700">Workflow transition required</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function Calendar({ events }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="font-semibold text-slate-950">Calendar</h3>
-      <CompactTable rows={events || []} columns={["event_type", "title", "start", "status"]} />
-    </section>
-  )
-}
-
-function Timeline({ events }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="font-semibold text-slate-950">Timeline</h3>
-      <CompactTable rows={events || []} columns={["event_type", "title", "timestamp", "source_entity_type"]} />
-    </section>
-  )
-}
-
-function Workload({ items }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
-      <h3 className="font-semibold text-slate-950">Agent and team workload</h3>
-      <CompactTable rows={items || []} columns={["owner_key", "open_count", "critical_count", "overdue_count", "blocked_count"]} />
-    </section>
-  )
-}
-
-function CompactTable({ rows, columns }) {
-  if (!rows?.length) return <EmptyState title="No metadata" body="Aggregated records will appear here." />
-  return (
-    <div className="mt-4 overflow-x-auto">
-      <table className="min-w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
-            {columns.map((column) => <th className="px-3 py-2" key={column}>{formatType(column)}</th>)}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {rows.map((row) => (
-            <tr key={row.id || row.owner_key || row.title}>
-              {columns.map((column) => <td className="px-3 py-2 text-slate-700" key={column}>{formatValue(row[column])}</td>)}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-function Metric({ label, value }) {
-  return <div className="rounded-lg border border-slate-200 bg-white p-5"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-2xl font-semibold text-slate-950">{value}</p></div>
-}
-
-function formatValue(value) {
-  if (value === null || value === undefined || value === "") return "Not set"
-  if (typeof value === "object") return JSON.stringify(value)
-  return formatType(value)
-}
-
-function formatType(value) {
-  if (value === null || value === undefined || value === "") return "Not set"
-  return String(value).replaceAll("_", " ")
 }

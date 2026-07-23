@@ -849,6 +849,12 @@ class AgencyOnboardingPreferencesUpdate(BaseModel):
     landing_page: str = "/agency"
     compact_mode: bool = False
     dashboard_widgets: List[str] = Field(default_factory=list)
+    preferred_starting_view: str = "my_work"
+    visible_operations_sections: List[str] = Field(
+        default_factory=lambda: ["my_work", "queues", "timeline", "alerts", "quick_actions", "recent_activity"]
+    )
+    default_assignment_filter: str = "my_work"
+    default_urgency_filter: str = "all"
     in_app_notifications: bool = True
     email_notifications: bool = False
     assignment_notifications: bool = True
@@ -862,6 +868,12 @@ class AgencyDashboardPreferences(BaseDocument):
     landing_page: str = "/agency"
     compact_mode: bool = False
     dashboard_widgets: List[str] = Field(default_factory=list)
+    preferred_starting_view: str = "my_work"
+    visible_operations_sections: List[str] = Field(
+        default_factory=lambda: ["my_work", "queues", "timeline", "alerts", "quick_actions", "recent_activity"]
+    )
+    default_assignment_filter: str = "my_work"
+    default_urgency_filter: str = "all"
     seeded_by_onboarding: bool = False
 
 

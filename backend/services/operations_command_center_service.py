@@ -105,7 +105,12 @@ class OperationsCommandCenterService:
             **self.safety_flags(),
         }
 
-    async def _load_records(self, agency_id: str | None = None) -> dict[str, list[dict[str, Any]]]:
+    async def _load_records(
+        self,
+        agency_id: str | None = None,
+        *,
+        include_agency_home_sources: bool = False,
+    ) -> dict[str, list[dict[str, Any]]]:
         filters = {"agency_id": agency_id} if agency_id else None
         names = {
             "work_items": "operational_work_items",
@@ -131,7 +136,28 @@ class OperationsCommandCenterService:
             "invoices": "invoices",
             "payments": "payments",
         }
-        return {key: await self.db.collection(collection).find_many(filters) for key, collection in names.items()}
+        if include_agency_home_sources:
+            names.update(
+                {
+                    "dashboard_preferences": "agency_dashboard_preferences",
+                    "staff_memberships": "agency_staff_memberships",
+                    "clients": "client_profiles",
+                    "passengers": "passenger_profiles",
+                    "passenger_workspaces": "passenger_workspaces",
+                    "operational_timelines": "operational_timelines",
+                    "audit_events": "audit_events",
+                    "document_deliveries": "document_deliveries",
+                    "booking_readiness_packages": "booking_readiness_packages",
+                }
+            )
+        return {
+            key: await self.db.collection(collection).find_many(
+                filters,
+                sort=[("updated_at", -1), ("id", -1)],
+                limit=250,
+            )
+            for key, collection in names.items()
+        }
 
     def _kpis(self, records: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
         now = self._now()
