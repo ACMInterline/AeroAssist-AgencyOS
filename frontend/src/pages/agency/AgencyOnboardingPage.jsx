@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Building2, Check, ChevronLeft, ChevronRight, Clock3, Image, Mail, Plane, Settings2 } from "lucide-react"
+import { Building2, Check, ChevronLeft, ChevronRight, Clock3, Gem, Image, Mail, Plane, Settings2, Users } from "lucide-react"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -36,6 +36,9 @@ export default function AgencyOnboardingPage() {
   const [hours, setHours] = useState(defaultHours)
   const [email, setEmail] = useState({ configuration_status: "not_configured", sender_name: "", sender_email: "", reply_to_email: "" })
   const [preferences, setPreferences] = useState({ landing_page: "/agency", compact_mode: false, dashboard_widgets: ["open_requests", "upcoming_departures", "deadlines", "work_queue"], in_app_notifications: true, email_notifications: false, assignment_notifications: true, deadline_notifications: true, service_notifications: true })
+  const [demoProfiles, setDemoProfiles] = useState([])
+  const [selectedDemoProfile, setSelectedDemoProfile] = useState("small_agency")
+  const [generationProgress, setGenerationProgress] = useState(0)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
@@ -44,8 +47,11 @@ export default function AgencyOnboardingPage() {
     const agencyContext = await loadCurrentAgency({ suppressOnboardingRedirect: true })
     if (!agencyContext.agency) throw new Error("No agency is available for onboarding.")
     const onboarding = await apiGet(`/api/agencies/${agencyContext.agency.id}/onboarding`)
+    const demoProfileState = await apiGet(`/api/agencies/${agencyContext.agency.id}/onboarding/demo-workspace/profiles`)
     setContext(agencyContext)
     setState(onboarding)
+    setDemoProfiles(demoProfileState.profiles || [])
+    setSelectedDemoProfile(demoProfileState.selected_profile || "small_agency")
     const agency = onboarding.agency
     setProfile({ name: agency.name || "", legal_name: agency.legal_name || "", contact_name: agency.contact_name || "", contact_email: agency.contact_email || "", contact_phone: agency.contact_phone || "", address_line_1: agency.address_line_1 || "", address_line_2: agency.address_line_2 || "", city: agency.city || "", region: agency.region || "", postal_code: agency.postal_code || "", country: agency.country || "", timezone: agency.timezone || "UTC", default_currency: agency.default_currency || "EUR" })
     setHours(agency.working_hours?.length ? agency.working_hours : defaultHours)
@@ -107,10 +113,17 @@ export default function AgencyOnboardingPage() {
   }
 
   async function seedDemo() {
-    const defaults = await action(() => apiPost(`/api/agencies/${state.agency.id}/onboarding/seed-defaults`), "Defaults created.")
-    if (!defaults) return
-    const result = await action(() => apiPost(`/api/agencies/${state.agency.id}/onboarding/demo-workspace`), "Synthetic travel workspace created.")
-    if (result) setStepIndex(5)
+    setGenerationProgress(5)
+    const progressTimer = window.setInterval(() => setGenerationProgress((current) => Math.min(current + 7, 88)), 350)
+    const result = await action(
+      () => apiPost(`/api/agencies/${state.agency.id}/onboarding/demo-workspace`, { demo_profile: selectedDemoProfile }),
+      "Complete synthetic pilot workspace created.",
+    )
+    window.clearInterval(progressTimer)
+    if (result) {
+      setGenerationProgress(100)
+      setStepIndex(5)
+    } else setGenerationProgress(0)
   }
 
   async function finish() {
@@ -144,10 +157,24 @@ export default function AgencyOnboardingPage() {
       <form className="space-y-5" onSubmit={(event) => { event.preventDefault(); saveCommunications(4) }}><div><h2 className="text-xl font-semibold text-slate-950">Communications and workspace</h2><p className="mt-1 text-sm text-slate-600">Record configuration readiness and choose quiet operational defaults. No message is sent.</p></div><div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm font-medium text-slate-700">Email configuration status<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2.5 text-sm" value={email.configuration_status} onChange={(event) => setEmail({ ...email, configuration_status: event.target.value })}>{["not_configured", "configuration_pending", "configured_unverified", "verified", "not_required"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label><Field label="Sender name" value={email.sender_name} onChange={(value) => setEmail({ ...email, sender_name: value })} required /><Field label="Sender email" type="email" value={email.sender_email} onChange={(value) => setEmail({ ...email, sender_email: value })} required /><Field label="Reply-to email" type="email" value={email.reply_to_email} onChange={(value) => setEmail({ ...email, reply_to_email: value })} /></div><div className="grid gap-3 rounded-md border border-slate-200 p-4 sm:grid-cols-2">{[["in_app_notifications", "In-app notifications"], ["email_notifications", "Email notifications"], ["assignment_notifications", "Assignments"], ["deadline_notifications", "Deadlines"], ["service_notifications", "Passenger services"], ["compact_mode", "Compact dashboard"]].map(([key, label]) => <label className="flex items-center gap-3 text-sm text-slate-700" key={key}><input type="checkbox" checked={Boolean(preferences[key])} onChange={(event) => setPreferences({ ...preferences, [key]: event.target.checked })} />{label}</label>)}</div><div className="rounded-md border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900"><Mail className="mr-2 inline h-4 w-4" />Email remains disabled until separately configured and verified.</div><Footer busy={busy} back={() => setStepIndex(2)} next="Save and continue" /></form>
     )
     if (activeStep === "demo_workspace") return (
-      <div className="space-y-5"><div><h2 className="text-xl font-semibold text-slate-950">Demo travel workspace</h2><p className="mt-1 text-sm text-slate-600">Create a realistic, synthetic Sofia–Frankfurt–New York case across the canonical travel workspaces.</p></div><div className="grid gap-3 sm:grid-cols-2"><Summary title="Operational records" items={["Demo company and passenger", "Travel request and trip", "Two Lufthansa flight segments", "Illustrative offer and draft booking"]} /><Summary title="Safety boundaries" items={["No provider or airline call", "No PNR or ticket issuance", "No payment collection", "Clearly tagged synthetic data"]} /></div><button className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white" type="button" disabled={busy} onClick={seedDemo}><Plane className="h-4 w-4" />{state.profile.demo_workspace_seeded ? "Refresh demo workspace safely" : "Create demo workspace"}</button><Footer busy={busy} back={() => setStepIndex(3)} next="Review setup" onNext={() => state.profile.demo_workspace_seeded ? setStepIndex(5) : setError("Create the demo workspace before review.")} /></div>
+      <div className="space-y-6">
+        <div><h2 className="text-xl font-semibold text-slate-950">Complete pilot workspace</h2><p className="mt-1 text-sm text-slate-600">Choose the operating profile your team wants to evaluate. Every record is synthetic, canonical, and linked across the workflow.</p></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {demoProfiles.map((item, index) => {
+            const Icon = index === 3 ? Gem : index === 0 ? Building2 : Users
+            const selected = selectedDemoProfile === item.key
+            return <button className={`min-h-36 rounded-md border p-4 text-left transition ${selected ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100" : "border-slate-200 bg-white hover:border-slate-300"}`} type="button" key={item.key} disabled={state.profile.demo_workspace_seeded || busy} onClick={() => setSelectedDemoProfile(item.key)}><span className="flex items-center justify-between gap-3"><span className="flex items-center gap-2 font-semibold text-slate-950"><Icon className="h-4 w-4 text-blue-700" />{item.label}</span><span className={`h-4 w-4 rounded-full border-4 ${selected ? "border-blue-600 bg-white" : "border-slate-300 bg-white"}`} /></span><span className="mt-3 block text-sm leading-5 text-slate-600">{item.description}</span><span className="mt-3 block text-xs font-semibold text-slate-500">About {item.estimated_record_count} records · {item.scenario_count} scenarios</span></button>
+          })}
+        </div>
+        {demoProfiles.find((item) => item.key === selectedDemoProfile) ? <div className="grid gap-5 border-y border-slate-200 py-5 lg:grid-cols-2"><Summary title="Operational areas" items={demoProfiles.find((item) => item.key === selectedDemoProfile).generated_operational_areas} /><Summary title="Scenario preview" items={demoProfiles.find((item) => item.key === selectedDemoProfile).scenario_preview} /></div> : null}
+        <Summary title="Safety boundaries" items={["No provider or airline communication", "No PNR creation or ticket issuance", "No payment execution", "Stable IDs make safe reruns idempotent"]} />
+        {generationProgress > 0 ? <div aria-live="polite"><div className="flex justify-between text-sm font-medium text-slate-700"><span>{generationProgress === 100 ? "Pilot workspace ready" : "Generating linked operational records"}</span><span>{generationProgress}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200"><div className="h-full bg-blue-600 transition-all" style={{ width: `${generationProgress}%` }} /></div></div> : null}
+        <button className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white disabled:bg-slate-400" type="button" disabled={busy} onClick={seedDemo}><Plane className="h-4 w-4" />{state.profile.demo_workspace_seeded ? "Refresh selected workspace safely" : "Create demo workspace"}</button>
+        <Footer busy={busy} back={() => setStepIndex(3)} next="Review setup" onNext={() => state.profile.demo_workspace_seeded ? setStepIndex(5) : setError("Create the demo workspace before review.")} />
+      </div>
     )
     return (
-      <div className="space-y-5"><div><h2 className="text-xl font-semibold text-slate-950">Ready for operations</h2><p className="mt-1 text-sm text-slate-600">Review the setup. Completing onboarding activates the agency workspace; it does not enable providers, payments, or ticketing.</p></div><div className="divide-y divide-slate-100 rounded-md border border-slate-200">{steps.slice(0, 5).map((item) => <div className="flex items-center justify-between p-4" key={item.key}><span className="text-sm font-medium text-slate-800">{item.label}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.complete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{item.complete ? "Complete" : "Needs attention"}</span></div>)}</div>{state.demo_workspace ? <div className="rounded-md border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"><p className="font-semibold text-slate-900">Demo workspace ready</p><p className="mt-1">The synthetic trip, request, offer, and booking records are linked and available after completion.</p></div> : null}<Footer busy={busy} back={() => setStepIndex(4)} next="Complete onboarding" onNext={finish} /></div>
+      <div className="space-y-5"><div><h2 className="text-xl font-semibold text-slate-950">Ready for operations</h2><p className="mt-1 text-sm text-slate-600">Review the setup. Completing onboarding activates the agency workspace; it does not enable providers, payments, or ticketing.</p></div><div className="divide-y divide-slate-100 rounded-md border border-slate-200">{steps.slice(0, 5).map((item) => <div className="flex items-center justify-between p-4" key={item.key}><span className="text-sm font-medium text-slate-800">{item.label}</span><span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.complete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>{item.complete ? "Complete" : "Needs attention"}</span></div>)}</div>{state.profile?.demo_generation_summary?.record_count ? <div className="border-y border-slate-200 py-5"><div className="grid gap-4 sm:grid-cols-3"><div><p className="text-xs font-semibold uppercase text-slate-500">Profile</p><p className="mt-1 text-sm font-semibold text-slate-950">{state.profile.demo_generation_summary.profile_label}</p></div><div><p className="text-xs font-semibold uppercase text-slate-500">Linked records</p><p className="mt-1 text-sm font-semibold text-slate-950">{state.profile.demo_generation_summary.record_count}</p></div><div><p className="text-xs font-semibold uppercase text-slate-500">Scenarios</p><p className="mt-1 text-sm font-semibold text-slate-950">{state.profile.demo_generation_summary.scenario_count}</p></div></div><p className="mt-4 text-sm text-slate-600">The Operations Command Centre, booking, offers, passenger services, documents, finance, and after-sales views now have linked synthetic examples.</p></div> : null}<Footer busy={busy} back={() => setStepIndex(4)} next="Complete onboarding" onNext={finish} /></div>
     )
   }
 

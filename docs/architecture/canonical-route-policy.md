@@ -369,3 +369,11 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Supported assignment and completion mutations remain under `/api/agencies/{agency_id}/work-queue/work-items/{work_item_id}/*` and are not duplicated by the command-centre router.
 - Incomplete newly created agencies continue through the Phase 58.1 redirect before either Agency operations route is rendered.
 - Phase 58.2 adds no `/admin/*`, `/agent/*`, public mutation, provider route, parallel queue API, or parallel workflow route.
+
+## Phase 58.3 Complete Pilot Agency Experience Routes
+
+- The canonical Agency UI remains `/agency/onboarding`.
+- Profile preview uses `GET /api/agencies/{agency_id}/onboarding/demo-workspace/profiles`.
+- Profile generation continues to use `POST /api/agencies/{agency_id}/onboarding/demo-workspace`, with an optional validated `demo_profile` body.
+- Generation remains restricted by the existing onboarding Agency authorization and reuses all downstream canonical UI/API route families.
+- Phase 58.3 adds no separate demo UI route, `/admin/*`, `/agent/*`, public mutation, fake operational API, provider route, or alternate workflow route.

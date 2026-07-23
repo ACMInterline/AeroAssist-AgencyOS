@@ -2533,3 +2533,13 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Reuses existing guarded work-queue APIs for assign-to-self, reassign, and complete actions. The command-centre API does not invent state transitions or provider operations.
 - Consumes Phase 58.1 dashboard preferences with safe defaults for legacy agencies and keeps incomplete newly created agencies behind the existing onboarding redirect.
 - See [Commercial Pilot Operations Command Centre Foundation](docs/architecture/commercial-pilot-operations-command-centre-foundation.md).
+
+## Phase 58.3 - Complete Pilot Agency Experience
+
+- Active marker: `phase_58_3_complete_pilot_agency_experience`.
+- Extends the existing Phase 58.1 `Create Demo Workspace` action with Small, Medium, Corporate, and Luxury Leisure Agency profiles; no parallel onboarding or demo API is created.
+- Generates a bounded, deterministic, idempotent, tenant-owned network of canonical operational records covering clients, associated passengers, requests, multi-segment trips, offer comparison and acceptance, booking readiness and handoff, booking timelines, Ticket/EMD mirrors, passenger services, documents/packages, finance, work queue, deadlines, workflow, timeline, disruption, and after-sales examples.
+- Stores the selected profile, original anchor date, stable record manifest, generated counts, scenarios, safety flags, progress state, and completion summary on the existing `AgencyOnboardingProfile`.
+- Naturally populates Phase 58.2 My Work Today, operational queues, timeline, alerts, recent activity, quick actions, and operational KPI summaries.
+- Performs no provider, airline, GDS/NDC, booking, payment, ticket/EMD issuance, communication, rendering/delivery, AI, background, deployment, or production-seeding operation.
+- See [Complete Pilot Agency Experience](docs/architecture/complete-pilot-agency-experience.md).

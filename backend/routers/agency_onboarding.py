@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from auth import get_current_user
 from database import Database, get_database
 from models import (
+    AgencyDemoWorkspaceGenerateRequest,
     AgencyOnboardingEmailStatusUpdate,
     AgencyOnboardingPreferencesUpdate,
     AgencyOnboardingProfileUpdate,
@@ -126,12 +127,26 @@ async def seed_onboarding_defaults(
 @router.post("/demo-workspace")
 async def seed_onboarding_demo_workspace(
     agency_id: str,
+    payload: AgencyDemoWorkspaceGenerateRequest | None = None,
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
     await authorize(db, agency_id, user, write=True)
     try:
-        return await AgencyOnboardingService(db).seed_demo_workspace(agency_id, user["id"])
+        return await AgencyOnboardingService(db).seed_demo_workspace(agency_id, user["id"], payload)
+    except AgencyOnboardingError as exc:
+        raise run_service_error(exc) from exc
+
+
+@router.get("/demo-workspace/profiles")
+async def list_onboarding_demo_workspace_profiles(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await authorize(db, agency_id, user, write=False)
+    try:
+        return await AgencyOnboardingService(db).demo_workspace_profiles(agency_id)
     except AgencyOnboardingError as exc:
         raise run_service_error(exc) from exc
 

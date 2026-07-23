@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_commercial_pilot_operations_command_centre_foundation.py",
-      "assertion_purpose": "Validate the canonical Phase 58.2 build marker and commercial pilot operations home registration.",
-      "exact_reason": "This smoke explicitly tests the current Agency operations home, tenant aggregation, ordering, role-aware actions, and onboarding compatibility; historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_complete_pilot_agency_experience.py",
+      "assertion_purpose": "Validate the canonical Phase 58.3 build marker and complete linked pilot workspace registration.",
+      "exact_reason": "This smoke explicitly tests the current selectable demo profiles, deterministic canonical generation, referential integrity, tenant isolation, Operations Command Centre population, and no-execution safety boundaries; historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -2615,7 +2615,7 @@
       "script_path": "backend/scripts/smoke_commercial_pilot_operations_command_centre_foundation.py",
       "capability_name": "Commercial Pilot Operations Command Centre Foundation",
       "minimum_application_phase": "phase_58_2_commercial_pilot_operations_command_centre_foundation",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": false,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -2627,7 +2627,28 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current in-memory smoke for the Agency operations home, bounded aggregation, deterministic priorities, queues, timeline, actionable alerts, role-aware work-queue actions, Phase 58.1 preferences, legacy defaults, tenant isolation, registration, and safety boundaries.",
+      "notes": "Minimum-phase in-memory smoke for the Agency operations home, bounded aggregation, deterministic priorities, queues, timeline, actionable alerts, role-aware work-queue actions, Phase 58.1 preferences, legacy defaults, tenant isolation, registration, and safety boundaries.",
+      "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_complete_pilot_agency_experience.py",
+      "capability_name": "Complete Pilot Agency Experience",
+      "minimum_application_phase": "phase_58_3_complete_pilot_agency_experience",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "agency",
+        "tenancy",
+        "operations",
+        "readiness",
+        "end_to_end"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current in-memory smoke for selectable Phase 58.3 demo profiles, deterministic and idempotent canonical generation, profile locking, referential integrity, tenant isolation, linked booking/offer/document/service/finance/timeline records, Operations Command Centre population, frontend/docs registration, and no-execution safety boundaries.",
       "ci_tier": "integration",
       "execution_isolation": "none"
     },

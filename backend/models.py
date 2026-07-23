@@ -778,6 +778,13 @@ class AgencyOnboardingStatus(str, Enum):
     COMPLETED = "completed"
 
 
+class AgencyDemoWorkspaceProfile(str, Enum):
+    SMALL_AGENCY = "small_agency"
+    MEDIUM_AGENCY = "medium_agency"
+    CORPORATE_AGENCY = "corporate_agency"
+    LUXURY_LEISURE_AGENCY = "luxury_leisure_agency"
+
+
 class AgencyEmailConfigurationStatus(str, Enum):
     NOT_CONFIGURED = "not_configured"
     CONFIGURATION_PENDING = "configuration_pending"
@@ -805,6 +812,10 @@ class AgencyOnboardingProfile(BaseDocument):
     logo_status: str = "pending"
     defaults_seeded: bool = False
     demo_workspace_seeded: bool = False
+    demo_workspace_profile: Optional[AgencyDemoWorkspaceProfile] = None
+    demo_generation_status: str = "not_started"
+    demo_anchor_date: Optional[date] = None
+    demo_generation_summary: Dict[str, Any] = Field(default_factory=dict)
     seeded_record_ids: Dict[str, Any] = Field(default_factory=dict)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -812,6 +823,12 @@ class AgencyOnboardingProfile(BaseDocument):
     created_by_user_id: Optional[str] = None
     completed_by_user_id: Optional[str] = None
     resumable: bool = True
+
+
+class AgencyDemoWorkspaceGenerateRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    demo_profile: AgencyDemoWorkspaceProfile = AgencyDemoWorkspaceProfile.SMALL_AGENCY
 
 
 class AgencyOnboardingProfileUpdate(BaseModel):

@@ -393,3 +393,9 @@ Phase 58.1 also seeds canonical `agency_workspaces`, `agency_branding_settings`,
 ## Phase 58.2 Commercial Pilot Operations Command Centre
 
 Phase 58.2 adds no model or collection. `CommercialPilotOperationsCommandCentreService` is a bounded tenant-scoped read model over canonical work queue, SLA, workflow, request, offer, booking, ticket, EMD, passenger-service, document, finance, timeline, audit, and staff records. It extends `AgencyDashboardPreferences` with optional operations-home display and filter defaults; existing records use safe application defaults without migration. Work-item mutations continue to be owned by `OperationalWorkItem` and `OperationalAssignmentEvent` through `AgentWorkQueueService`.
+
+## Phase 58.3 Complete Pilot Agency Experience
+
+Phase 58.3 adds no domain model or collection. It additively extends `AgencyOnboardingProfile` in `agency_onboarding_profiles` with `demo_workspace_profile`, `demo_generation_status`, `demo_anchor_date`, and `demo_generation_summary`. `AgencyDemoWorkspaceGenerateRequest` validates the four supported profile choices.
+
+`AgencyDemoWorkspaceGenerator` validates and upserts existing canonical Client, Passenger, relationship, Request, operational workspace, Trip, Flight, Offer/option/acceptance/snapshot, booking-readiness/handoff/Booking, Ticket, EMD, SSR/OSI, passenger-service, Document/package/delivery, Invoice/line/payment, workflow, work-item, deadline, task, timeline, audit, and After Sales records. Collection ownership remains with those existing domains; no demo collection, shared airline-knowledge copy, or alternate operational model is introduced.

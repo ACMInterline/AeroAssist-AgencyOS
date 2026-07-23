@@ -4,7 +4,6 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from build_phase import CURRENT_BUILD_PHASE
 from database import Database
 from services.operations_command_center_service import (
     CLOSED_WORK_STATUSES,
@@ -15,7 +14,7 @@ from services.operations_command_center_service import (
 )
 
 
-PHASE_LABEL = CURRENT_BUILD_PHASE
+PHASE_LABEL = "phase_58_2_commercial_pilot_operations_command_centre_foundation"
 RECORD_LIMIT = 250
 RESULT_LIMIT = 50
 SECTION_KEYS = ["my_work", "queues", "timeline", "alerts", "quick_actions", "recent_activity"]

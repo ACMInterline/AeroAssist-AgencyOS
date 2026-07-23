@@ -11,7 +11,8 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
+from scripts.phase_assertions import application_phase_is_at_least
 from database import AGENCY_OWNED_COLLECTIONS, Database
 from fastapi import HTTPException
 from routers.agency_operations_command_center import require_read
@@ -23,6 +24,7 @@ from services.commercial_pilot_operations_command_centre_service import (
 
 
 NOW = datetime(2026, 7, 23, 9, 0, tzinfo=timezone.utc)
+MINIMUM_PHASE = PHASE_LABEL
 
 
 async def insert(database: Database, collection: str, **document) -> None:
@@ -258,8 +260,7 @@ async def verify_service() -> None:
 
 
 def verify_registration() -> None:
-    assert phase_is_exact(CURRENT_BUILD_PHASE, CURRENT_BUILD_PHASE)
-    assert CURRENT_BUILD_PHASE == PHASE_LABEL
+    assert application_phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE)
     metadata = commercial_pilot_operations_command_centre_readiness_metadata()
     for key in [
         "agency_operations_home_enabled",

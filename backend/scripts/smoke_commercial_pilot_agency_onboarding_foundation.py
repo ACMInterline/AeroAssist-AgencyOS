@@ -91,13 +91,16 @@ async def verify_service() -> None:
     first = await service.seed_demo_workspace(new.id, "agency-owner")
     second = await service.seed_demo_workspace(new.id, "agency-owner")
     assert first["demo_workspace"] == second["demo_workspace"]
+    assert first["profile"]["demo_generation_summary"] == second["profile"]["demo_generation_summary"]
+    assert first["profile"]["demo_generation_summary"]["scenario_count"] >= 8
+    expected_counts = first["profile"]["demo_generation_summary"]["record_counts"]
     for collection_name in [
         "client_profiles", "passenger_profiles", "operational_travel_workspaces", "travel_request_workspaces",
         "passenger_workspaces", "trip_workspaces", "offer_workspaces_v2", "booking_workspaces",
     ]:
-        assert await database.collection(collection_name).count({"agency_id": new.id}) == 1
+        assert await database.collection(collection_name).count({"agency_id": new.id}) == expected_counts[collection_name]
         assert await database.collection(collection_name).count({"agency_id": other.id}) == 0
-    assert await database.collection("flight_workspaces").count({"agency_id": new.id}) == 2
+    assert await database.collection("flight_workspaces").count({"agency_id": new.id}) == expected_counts["flight_workspaces"]
     for collection_name, model in [
         ("client_profiles", ClientProfile),
         ("passenger_profiles", PassengerProfile),
@@ -115,8 +118,8 @@ async def verify_service() -> None:
     demo_booking = await database.collection("booking_workspaces").find_one({"agency_id": new.id})
     assert demo_booking["metadata"]["synthetic"] is True
     assert demo_booking["booking_execution_disabled"] is True
-    assert demo_booking["airline_pnr"] is None
-    assert demo_booking["payment_summary"] == "No payment collected"
+    assert demo_booking["airline_pnr"].startswith("D")
+    assert "no payment execution" in demo_booking["payment_summary"].lower()
 
     completed = await service.complete(new.id, "agency-owner")
     assert completed["profile"]["onboarding_status"] == "completed"

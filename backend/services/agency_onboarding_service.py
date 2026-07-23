@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from database import Database
 from models import (
+    AgencyDemoWorkspaceGenerateRequest,
     AgencyDashboardPreferences,
     AgencyEmailSettings,
     AgencyNotificationPreferences,
@@ -16,6 +17,11 @@ from models import (
     AgencyOnboardingProfileUpdate,
     AuditEvent,
     now_utc,
+)
+from services.agency_demo_workspace_generator import (
+    PHASE_LABEL as COMPLETE_PILOT_EXPERIENCE_PHASE_LABEL,
+    AgencyDemoWorkspaceGenerator,
+    demo_profile_catalog,
 )
 
 
@@ -44,6 +50,26 @@ def agency_onboarding_readiness_metadata() -> dict[str, Any]:
         "default_branding_templates_preferences_enabled": True,
         "idempotent_synthetic_demo_workspace_enabled": True,
         "external_provider_execution_enabled": False,
+        "automatic_production_seeding_enabled": False,
+        "readiness_required": False,
+    }
+
+
+def complete_pilot_agency_experience_readiness_metadata() -> dict[str, Any]:
+    return {
+        "selectable_demo_profiles_enabled": True,
+        "canonical_linked_demo_records_enabled": True,
+        "deterministic_generation_enabled": True,
+        "idempotent_safe_reruns_enabled": True,
+        "tenant_scoped_generation_enabled": True,
+        "bounded_generation_enabled": True,
+        "operations_command_centre_population_enabled": True,
+        "booking_offer_document_service_finance_examples_enabled": True,
+        "profile_preview_and_completion_summary_enabled": True,
+        "provider_execution_enabled": False,
+        "payment_execution_enabled": False,
+        "airline_communication_enabled": False,
+        "ticket_issuance_enabled": False,
         "automatic_production_seeding_enabled": False,
         "readiness_required": False,
     }
@@ -301,7 +327,7 @@ class AgencyOnboardingService:
         await self._audit(agency_id, actor_user_id, "agency.onboarding.defaults_seeded", "Seeded canonical onboarding defaults.", {"record_ids": seeded})
         return await self.get_state(agency_id)
 
-    async def seed_demo_workspace(self, agency_id: str, actor_user_id: str) -> dict:
+    async def _seed_phase_58_1_demo_workspace(self, agency_id: str, actor_user_id: str) -> dict:
         profile = await self._require_profile(agency_id)
         agency = await self.database.collection("agencies").find_one({"id": agency_id})
         if agency is None:
@@ -338,6 +364,90 @@ class AgencyOnboardingService:
             {"id": profile["id"]}, {"demo_workspace_seeded": True, "seeded_record_ids": seeded, "current_step": "review", "last_saved_at": now_utc()}
         )
         await self._audit(agency_id, actor_user_id, "agency.onboarding.demo_workspace_seeded", "Created the synthetic onboarding travel workspace.", {"record_ids": ids, "synthetic": True})
+        return await self.get_state(agency_id)
+
+    async def demo_workspace_profiles(self, agency_id: str) -> dict:
+        profile = await self._require_profile(agency_id)
+        return {
+            "profiles": demo_profile_catalog(),
+            "selected_profile": profile.get("demo_workspace_profile"),
+            "generation_status": profile.get("demo_generation_status", "not_started"),
+            "generation_summary": profile.get("demo_generation_summary", {}),
+            "profile_change_locked": bool(profile.get("demo_workspace_seeded")),
+            "phase": COMPLETE_PILOT_EXPERIENCE_PHASE_LABEL,
+        }
+
+    async def seed_demo_workspace(
+        self,
+        agency_id: str,
+        actor_user_id: str,
+        payload: AgencyDemoWorkspaceGenerateRequest | None = None,
+    ) -> dict:
+        profile = await self._require_profile(agency_id)
+        agency = await self.database.collection("agencies").find_one({"id": agency_id})
+        if agency is None:
+            raise AgencyOnboardingError("Agency not found.")
+        if not profile.get("defaults_seeded"):
+            await self.seed_defaults(agency_id, actor_user_id)
+            profile = await self._require_profile(agency_id)
+        selected = (payload or AgencyDemoWorkspaceGenerateRequest()).demo_profile
+        selected_value = selected.value if hasattr(selected, "value") else str(selected)
+        existing_profile = profile.get("demo_workspace_profile")
+        if existing_profile and str(existing_profile) != selected_value:
+            raise AgencyOnboardingError(
+                "The demo workspace profile cannot be changed after generation. Rerun the selected profile safely instead."
+            )
+        anchor = profile.get("demo_anchor_date") or date.today()
+        if isinstance(anchor, str):
+            anchor = date.fromisoformat(anchor)
+        await self.database.collection("agency_onboarding_profiles").update_one(
+            {"id": profile["id"]},
+            {
+                "demo_workspace_profile": selected_value,
+                "demo_generation_status": "generating",
+                "demo_anchor_date": anchor,
+                "last_saved_at": now_utc(),
+            },
+        )
+        try:
+            summary = await AgencyDemoWorkspaceGenerator(
+                self.database,
+                agency=agency,
+                actor_user_id=actor_user_id,
+                demo_profile=selected_value,
+                anchor_date=anchor,
+            ).generate()
+        except Exception as exc:
+            await self.database.collection("agency_onboarding_profiles").update_one(
+                {"id": profile["id"]},
+                {"demo_generation_status": "failed", "last_saved_at": now_utc()},
+            )
+            raise AgencyOnboardingError(f"Demo workspace generation failed safely: {exc}") from exc
+        seeded = {**profile.get("seeded_record_ids", {}), "demo": summary["record_ids"]}
+        await self.database.collection("agency_onboarding_profiles").update_one(
+            {"id": profile["id"]},
+            {
+                "demo_workspace_seeded": True,
+                "demo_generation_status": "completed",
+                "demo_generation_summary": {key: value for key, value in summary.items() if key != "record_ids"},
+                "seeded_record_ids": seeded,
+                "current_step": "review",
+                "last_saved_at": now_utc(),
+            },
+        )
+        await self._audit(
+            agency_id,
+            actor_user_id,
+            "agency.onboarding.complete_demo_workspace_seeded",
+            f"Generated the {summary['profile_label']} synthetic pilot workspace.",
+            {
+                "demo_profile": selected_value,
+                "scenario_count": summary["scenario_count"],
+                "record_count": summary["record_count"],
+                "synthetic": True,
+                "generator_version": summary["generator_version"],
+            },
+        )
         return await self.get_state(agency_id)
 
     async def complete(self, agency_id: str, actor_user_id: str) -> dict:
