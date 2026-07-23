@@ -10,9 +10,10 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from database import Database
 from models import Agency, AgencyDemoWorkspaceGenerateRequest
+from scripts.phase_assertions import application_phase_is_at_least
 from services.agency_demo_workspace_generator import (
     MAX_GENERATED_RECORDS,
     PHASE_LABEL,
@@ -26,6 +27,9 @@ from services.agency_onboarding_service import (
 from services.commercial_pilot_operations_command_centre_service import (
     CommercialPilotOperationsCommandCentreService,
 )
+
+
+MINIMUM_PHASE = PHASE_LABEL
 
 
 async def create_agency(database: Database, agency_id: str, name: str) -> AgencyOnboardingService:
@@ -207,8 +211,11 @@ async def verify_generation() -> None:
 
 
 def verify_registration() -> None:
-    assert phase_is_exact(CURRENT_BUILD_PHASE, CURRENT_BUILD_PHASE)
-    assert CURRENT_BUILD_PHASE == PHASE_LABEL
+    assert application_phase_is_at_least(
+        CURRENT_BUILD_PHASE,
+        MINIMUM_PHASE,
+        source="complete pilot agency experience smoke",
+    )
     metadata = complete_pilot_agency_experience_readiness_metadata()
     for key in [
         "selectable_demo_profiles_enabled",

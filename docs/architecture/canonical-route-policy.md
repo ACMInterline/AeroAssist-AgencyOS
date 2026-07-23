@@ -377,3 +377,12 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Profile generation continues to use `POST /api/agencies/{agency_id}/onboarding/demo-workspace`, with an optional validated `demo_profile` body.
 - Generation remains restricted by the existing onboarding Agency authorization and reuses all downstream canonical UI/API route families.
 - Phase 58.3 adds no separate demo UI route, `/admin/*`, `/agent/*`, public mutation, fake operational API, provider route, or alternate workflow route.
+
+## Phase 58.4 Product Standards and UX Refinement Routes
+
+- Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+- Phase 58.4 adds no frontend or API route.
+- Shared components refine existing `/agency/*` workspaces and continue to call their existing `/api/agencies/{agency_id}/*` contracts.
+- Platform, Agency, Client Portal, and public route ownership remains unchanged.
+- Travel-first labels do not rename internal route paths, model symbols, or compatibility identifiers.
+- No `/admin/*`, `/agent/*`, parallel workflow root, public mutation, or direct frontend persistence access is introduced.

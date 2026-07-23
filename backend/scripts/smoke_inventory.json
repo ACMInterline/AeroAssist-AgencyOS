@@ -3,9 +3,9 @@
   "description": "Machine-readable inventory of AeroAssist smoke scripts, application-phase assertions, CI tiers, and execution-isolation requirements.",
   "exact_current_allowlist": [
     {
-      "script_path": "backend/scripts/smoke_complete_pilot_agency_experience.py",
-      "assertion_purpose": "Validate the canonical Phase 58.3 build marker and complete linked pilot workspace registration.",
-      "exact_reason": "This smoke explicitly tests the current selectable demo profiles, deterministic canonical generation, referential integrity, tenant isolation, Operations Command Centre population, and no-execution safety boundaries; historical capability smokes use minimum semantics."
+      "script_path": "backend/scripts/smoke_aeroassist_product_standards_ux_refinement.py",
+      "assertion_purpose": "Validate the canonical Phase 58.4 build marker and product standards registration.",
+      "exact_reason": "This smoke explicitly tests the current product standards, shared-component use, priority workflow refinement, travel-first terminology, accessible controls, canonical routes, documentation, readiness, and phase registration; historical capability smokes use minimum semantics."
     }
   ],
   "scripts": [
@@ -2635,7 +2635,7 @@
       "script_path": "backend/scripts/smoke_complete_pilot_agency_experience.py",
       "capability_name": "Complete Pilot Agency Experience",
       "minimum_application_phase": "phase_58_3_complete_pilot_agency_experience",
-      "phase_assertion_mode": "exact_current",
+      "phase_assertion_mode": "minimum",
       "requires_running_backend": false,
       "requires_mongodb": false,
       "mutates_disposable_test_data": true,
@@ -2648,8 +2648,29 @@
       ],
       "test_class": "integration",
       "suitable_for_future_ci": true,
-      "notes": "Exact-current in-memory smoke for selectable Phase 58.3 demo profiles, deterministic and idempotent canonical generation, profile locking, referential integrity, tenant isolation, linked booking/offer/document/service/finance/timeline records, Operations Command Centre population, frontend/docs registration, and no-execution safety boundaries.",
+      "notes": "Minimum-phase in-memory smoke for selectable Phase 58.3 demo profiles, deterministic and idempotent canonical generation, profile locking, referential integrity, tenant isolation, linked booking/offer/document/service/finance/timeline records, Operations Command Centre population, frontend/docs registration, and no-execution safety boundaries.",
       "ci_tier": "integration",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_aeroassist_product_standards_ux_refinement.py",
+      "capability_name": "AeroAssist Product Standards And UX Refinement",
+      "minimum_application_phase": "phase_58_4_aeroassist_product_standards_ux_refinement",
+      "phase_assertion_mode": "exact_current",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "agency",
+        "frontend",
+        "accessibility",
+        "readiness",
+        "governance"
+      ],
+      "test_class": "focused",
+      "suitable_for_future_ci": true,
+      "notes": "Exact-current source-level validation for the Phase 58.4 product standards, shared components, eight priority Agency workflows, travel-first terminology, understandable states, permission-aware actions, accessible controls, canonical routes, documentation, readiness, and phase registration. It does not claim browser or assistive-technology testing.",
+      "ci_tier": "static",
       "execution_isolation": "none"
     },
     {

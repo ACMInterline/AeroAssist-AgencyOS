@@ -35,6 +35,9 @@ from services.agency_onboarding_service import (
 from services.commercial_pilot_operations_command_centre_service import (
     commercial_pilot_operations_command_centre_readiness_metadata,
 )
+from services.aeroassist_product_standards_service import (
+    aeroassist_product_standards_readiness_metadata,
+)
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
 from routers import platform
 from routers import platform_observability
@@ -241,6 +244,7 @@ async def root_health() -> dict:
         "commercial_pilot_agency_onboarding_foundation": True,
         "commercial_pilot_operations_command_centre_foundation": True,
         "complete_pilot_agency_experience": True,
+        "aeroassist_product_standards_ux_refinement": True,
     }
     if not settings.is_production:
         payload["app_env"] = settings.app_env
@@ -5363,6 +5367,7 @@ async def internal_readiness_payload() -> dict:
         "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
         "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
         "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
+        "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7309,6 +7314,7 @@ async def public_readiness_payload() -> dict:
         "commercial_pilot_agency_onboarding_foundation": agency_onboarding_readiness_metadata(),
         "commercial_pilot_operations_command_centre_foundation": commercial_pilot_operations_command_centre_readiness_metadata(),
         "complete_pilot_agency_experience": complete_pilot_agency_experience_readiness_metadata(),
+        "aeroassist_product_standards_ux_refinement": aeroassist_product_standards_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]

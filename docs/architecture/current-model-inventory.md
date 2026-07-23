@@ -399,3 +399,9 @@ Phase 58.2 adds no model or collection. `CommercialPilotOperationsCommandCentreS
 Phase 58.3 adds no domain model or collection. It additively extends `AgencyOnboardingProfile` in `agency_onboarding_profiles` with `demo_workspace_profile`, `demo_generation_status`, `demo_anchor_date`, and `demo_generation_summary`. `AgencyDemoWorkspaceGenerateRequest` validates the four supported profile choices.
 
 `AgencyDemoWorkspaceGenerator` validates and upserts existing canonical Client, Passenger, relationship, Request, operational workspace, Trip, Flight, Offer/option/acceptance/snapshot, booking-readiness/handoff/Booking, Ticket, EMD, SSR/OSI, passenger-service, Document/package/delivery, Invoice/line/payment, workflow, work-item, deadline, task, timeline, audit, and After Sales records. Collection ownership remains with those existing domains; no demo collection, shared airline-knowledge copy, or alternate operational model is introduced.
+
+## Phase 58.4 AeroAssist Product Standards and UX Refinement
+
+Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+
+Phase 58.4 adds no Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation and product-language refinement over existing Agency workspaces. The shared React components do not own domain state; Requests, Offers, Bookings, Passengers, Documents, tasks, timelines, and onboarding continue to use their existing canonical models and persistence services.

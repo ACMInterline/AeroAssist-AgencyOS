@@ -2543,3 +2543,14 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Naturally populates Phase 58.2 My Work Today, operational queues, timeline, alerts, recent activity, quick actions, and operational KPI summaries.
 - Performs no provider, airline, GDS/NDC, booking, payment, ticket/EMD issuance, communication, rendering/delivery, AI, background, deployment, or production-seeding operation.
 - See [Complete Pilot Agency Experience](docs/architecture/complete-pilot-agency-experience.md).
+
+## Phase 58.4 - AeroAssist Product Standards and UX Refinement
+
+- Active marker: `phase_58_4_aeroassist_product_standards_ux_refinement`.
+- Establishes permanent travel-first terminology, page structure, interaction, accessibility, responsive, customization, and destructive-action standards.
+- Reuses and consolidates shared headers, buttons, empty/loading/error states, status and priority badges, filters, confirmations, summaries, timelines, alerts, and form sections.
+- Refines Agency onboarding, Operations, Requests, Offers, Booking workspace, Passenger profiles, Documents, and Tasks and follow-ups without changing their canonical APIs or domain ownership.
+- Places source details and rarely used controls behind explicit progressive disclosure while keeping blockers, status, and next actions visible.
+- Adds source-level terminology, accessibility-control, shared-component, canonical-route, readiness, and registration validation.
+- Adds no route, model, collection, provider action, workflow editor, operational automation, deployment, or production-data change.
+- See [AeroAssist Product Standards](docs/product/aeroassist-product-standards.md).
