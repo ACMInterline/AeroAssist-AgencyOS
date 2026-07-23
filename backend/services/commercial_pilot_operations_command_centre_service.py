@@ -299,6 +299,18 @@ class CommercialPilotOperationsCommandCentreService(OperationsCommandCenterServi
             (records["document_workspaces"], "requirement_deadline", "document", "/agency/documents"),
             (records["trip_workspaces"], "departure_date", "departure", "/agency/trips"),
             (records["flight_workspaces"], "departure_datetime", "flight", "/agency/trips"),
+            (
+                records["workflow_events"],
+                "occurred_at",
+                "workflow_event",
+                "/agency/operational-workflows",
+            ),
+            (
+                records["operational_timelines"],
+                "created_at",
+                "operational_event",
+                "/agency/timeline",
+            ),
         ]
         for items, field, event_type, href in sources:
             for item in items:
@@ -512,7 +524,7 @@ class CommercialPilotOperationsCommandCentreService(OperationsCommandCenterServi
         return mapping.get(key, "/agency/work-queue")
 
     def _timeline_label(self, event_type: str, item: dict[str, Any]) -> str:
-        return item.get("title") or item.get("deadline_reference") or item.get("offer_title") or item.get("document_title") or item.get("trip_reference") or item.get("flight_reference") or self._label(event_type)
+        return item.get("title") or item.get("event_code") or item.get("summary") or item.get("deadline_reference") or item.get("offer_title") or item.get("document_title") or item.get("trip_reference") or item.get("flight_reference") or self._label(event_type)
 
     def _timeline_source_type(self, item: dict[str, Any]) -> Any:
         for field, label in [("travel_request_workspace_id", "request"), ("trip_workspace_id", "trip"), ("booking_workspace_id", "booking"), ("ticket_workspace_id", "ticket"), ("emd_workspace_id", "emd"), ("document_workspace_id", "document"), ("passenger_workspace_id", "passenger")]:

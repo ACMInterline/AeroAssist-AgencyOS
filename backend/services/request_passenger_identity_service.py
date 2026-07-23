@@ -12,6 +12,7 @@ from models import (
     RequestPassenger,
     RequestPassengerIdentityConfirm,
     RequestTimelineEvent,
+    RequestV4Payload,
 )
 from persistence_query import PaginationRequest
 from persistence_repository import PersistenceRepository
@@ -388,6 +389,35 @@ async def confirm_request_passenger_identity(
     await _sync_confirmed_identity(
         db, agency_id, request_id, request_passenger_id, passenger["id"]
     )
+    if request.get("request_version") == 4 and request_passenger.get("passenger_local_id"):
+        canonical = RequestV4Payload.model_validate(request.get("canonical_payload") or {})
+        canonical_passenger = next(
+            (
+                item
+                for item in canonical.passengers
+                if item.passenger_local_id == request_passenger["passenger_local_id"]
+            ),
+            None,
+        )
+        if canonical_passenger is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Canonical request passenger mapping requires reconciliation before identity confirmation can finish.",
+            )
+        canonical_passenger.passenger_profile_id = passenger["id"]
+        canonical_passenger.identity_status = "confirmed"
+        canonical_passenger.first_name = passenger.get("first_name") or canonical_passenger.first_name
+        canonical_passenger.last_name = passenger.get("last_name") or canonical_passenger.last_name
+        canonical_passenger.date_of_birth = passenger.get("date_of_birth")
+        canonical_passenger.nationality_label = passenger.get("nationality") or canonical_passenger.nationality_label
+        await db.collection("travel_requests").update_one(
+            {"agency_id": agency_id, "id": request_id},
+            {
+                "canonical_payload": canonical.model_dump(mode="json"),
+                "canonical_payload_updated_at": confirmed_at,
+                "canonical_projection_status": "current",
+            },
+        )
     confirmed_links = await _list_agency_records(
         db,
         "request_passengers",

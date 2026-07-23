@@ -120,3 +120,17 @@ Client delivery must originate from an immutable, reviewed Journey comparison sn
 ## Product Surface Review Gate
 
 One operational object has one primary workspace. Engines and services do not automatically justify top-level Agency pages; supporting capabilities should be embedded or linked contextually from their owning workspace. Separate surfaces require a different actor, Platform governance purpose, independent lifecycle, or materially different operational object. Every phase must apply [Product Surface and Workspace Governance](../product-surface-workspace-governance.md), use travel-agent vocabulary in ordinary UI, preserve passenger-needs-first design, and reject duplicate lifecycles or unnecessary navigation.
+
+## Canonical Request Aggregate Rule
+
+`TravelRequest` is the only Request owner. New Request structure is written
+through one typed aggregate. `RequestPassenger`, `RequestSegment`,
+`PassengerServiceRequest`, `RequestPet`, and `RequestSpecialItem` are governed
+children, not independently writable parallel truth. `RequestIntake` is
+provenance and `TravelRequestWorkspace` is compatibility metadata.
+
+Never create a master passenger from intake or ordinary Request creation.
+Traveler identity remains unresolved until an authorized human explicitly
+confirms or links it. Compatibility fields must be generated from canonical
+Request data, legacy ambiguity must remain visible, and accepted downstream
+snapshots must not be rewritten.

@@ -45,6 +45,7 @@ from services.product_experience_recovery_service import (
     product_experience_recovery_readiness_metadata,
 )
 from services.authorization_service import identity_tenancy_readiness_metadata
+from services.request_v4_service import request_v4_readiness_metadata
 from auth import require_platform_role
 from services.audit_event_access_service import AuditEventAccessService, PLATFORM_AUDIT_READ_ROLES
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
@@ -5384,6 +5385,7 @@ async def internal_readiness_payload() -> dict:
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
         "product_experience_recovery": product_experience_recovery_readiness_metadata(),
         "canonical_identity_tenancy_contract": identity_tenancy_readiness_metadata(),
+        "canonical_request_v4": request_v4_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7334,6 +7336,7 @@ async def public_readiness_payload() -> dict:
         "commercial_pilot_readiness": commercial_pilot_readiness_metadata(),
         "product_experience_recovery": product_experience_recovery_readiness_metadata(),
         "canonical_identity_tenancy_contract": identity_tenancy_readiness_metadata(),
+        "canonical_request_v4": request_v4_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]

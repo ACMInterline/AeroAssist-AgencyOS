@@ -144,3 +144,16 @@ The Global Field Library is platform-owned schema governance:
 - Agency custom questions normalize under `agency_custom_fields` in canonical payloads.
 
 Form profiles are a UI/presentation layer over canonical request payloads. They do not replace backend validation or the canonical request/intake models.
+
+## Canonical Request V4 Aggregate
+
+The Request lifecycle begins with either intake provenance or an Agency-created
+`TravelRequest`. For new records, `TravelRequest.canonical_payload` is the
+typed source of truth. Ordered segments, unresolved request passengers,
+passenger-scoped services, animals, and special items are validated as one
+aggregate and projected into their existing operational collections.
+
+The aggregate may exist before a Trip. Explicit request-to-trip conversion
+continues to map the Request into the downstream operational dossier. Offer and
+Trip consumers read deterministic compatibility projections; they do not own
+or mutate Request V4 truth. Accepted downstream snapshots remain immutable.

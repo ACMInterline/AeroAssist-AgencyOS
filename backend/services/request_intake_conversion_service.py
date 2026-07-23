@@ -11,11 +11,13 @@ from models import (
     RequestSegment,
     RequestTimelineEvent,
     RequestedService,
+    RequestV4Payload,
     TravelRequest,
 )
 from services.request_passenger_identity_service import unresolved_request_passenger
 from services.request_normalization_service import normalize_request_children
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
+from services.request_v4_service import create_request_v4
 
 
 SERVICE_LABELS = {
@@ -111,12 +113,14 @@ async def create_intake(
     raw_payload: Optional[dict] = None,
     actor_user_id: Optional[str] = None,
     source_metadata: Optional[dict] = None,
+    canonical_payload_override: Optional[dict[str, Any]] = None,
+    request_version: Optional[int] = None,
 ) -> dict:
     if not agency_id:
         default_context = await default_agency_context(db)
         agency_id = default_context["agency_id"]
         workspace_id = workspace_id or default_context["workspace_id"]
-    canonical_payload = {
+    canonical_payload = canonical_payload_override or {
         "contact": contact,
         "travel": travel,
         "services": services,
@@ -138,7 +142,9 @@ async def create_intake(
         contact_snapshot=contact,
         travel_summary=travel,
         service_summary=services,
+        request_version=request_version,
         canonical_payload=canonical_payload,
+        canonical_validation_status="validated" if request_version == 4 else "legacy",
         raw_payload=raw_payload or canonical_payload,
         priority=priority,
         assigned_to=assigned_to,
@@ -248,6 +254,50 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         return {"intake": intake, "request": request, "already_converted": True}
     if intake.get("status") in {"rejected", "duplicate", "archived"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Cannot convert intake with status {intake.get('status')}.")
+    if intake.get("request_version") == 4:
+        if not intake.get("agency_id"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assign intake to an agency before conversion.",
+            )
+        canonical_payload = RequestV4Payload.model_validate(intake.get("canonical_payload") or {})
+        created = await create_request_v4(
+            db,
+            intake["agency_id"],
+            canonical_payload,
+            actor_user_id,
+            source_intake_id=intake_id,
+        )
+        created_request = created["request"]
+        converted_at = datetime.now(timezone.utc)
+        updated_intake = await db.collection("request_intakes").update_one(
+            {"id": intake_id},
+            {
+                "status": "converted",
+                "normalized_payload": {
+                    "request_version": 4,
+                    "canonical_request_id": created_request["id"],
+                },
+                "converted_request_id": created_request["id"],
+                "converted_at": converted_at,
+                "converted_by": actor_user_id,
+            },
+        )
+        await write_audit(
+            db,
+            intake["agency_id"],
+            actor_user_id,
+            "intake_v4_converted",
+            "request_intake",
+            intake_id,
+            "Converted canonical V4 intake to operational request.",
+            {"request_id": created_request["id"]},
+        )
+        return {
+            "intake": updated_intake,
+            "request": created_request,
+            "already_converted": False,
+        }
 
     normalized = normalize_intake_payload(intake)
     validate_conversion(intake, normalized)

@@ -28,14 +28,22 @@ from models import (
     RequestedServiceCreate,
     RequestedServiceUpdate,
     TravelRequest,
-    TravelRequestCreate,
     TravelRequestUpdate,
+    RequestV4Payload,
+    RequestV4Update,
 )
 from services.request_passenger_identity_service import (
     confirm_request_passenger_identity,
     unresolved_request_passenger,
 )
 from services.request_normalization_service import normalize_request_children
+from services.request_v4_service import (
+    builder_payload_to_v4,
+    create_request_v4,
+    project_canonical_request,
+    request_detail_v4,
+    update_request_v4,
+)
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -59,13 +67,12 @@ def matches_search(record: dict, search: Optional[str]) -> bool:
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await assert_agency_access(db, agency_id, user)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
 
 
 async def write_audit(db: Database, agency_id: str, actor_user_id: str, event_type: str, entity_type: str, entity_id: str, summary: str, metadata: dict | None = None) -> None:
@@ -100,6 +107,14 @@ async def get_request_or_404(db: Database, agency_id: str, request_id: str) -> d
     if request is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found.")
     return request
+
+
+def reject_independent_v4_child_write(request: dict) -> None:
+    if request.get("request_version") == 4:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Request V4 structure is aggregate-owned. Update the canonical request instead of writing a child projection independently.",
+        )
 
 
 async def get_client_or_404(db: Database, agency_id: str, client_id: str) -> dict:
@@ -275,151 +290,8 @@ async def create_request_from_builder(
             confirmed = service.details.get("confirmed_ssr_code")
             if suggested and confirmed and confirmed != suggested and not service.details.get("override_reason"):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mobility SSR override reason is required when confirmed code differs from suggested code.")
-    client = await create_inline_client(db, agency_id, payload.client)
-    route_summary = route_summary_from_payload(payload)
-    service_labels = [SERVICE_LABELS.get(service.category, service.category.replace("_", " ")) for service in payload.services]
-    service_summary = "; ".join(service_labels) if service_labels else None
-    request = TravelRequest(
-        agency_id=agency_id,
-        client_id=client["id"],
-        created_by_user_id=user["id"],
-        request_reference=await next_reference(db, agency_id),
-        title=compact_text(payload.title, 180) or generated_request_title(client, route_summary, service_summary),
-        status=payload.status,
-        priority=payload.priority,
-        source=payload.source,
-        trip_type=payload.trip_type,
-        requested_departure_date=payload.departure_date or (payload.segments[0].departure_date if payload.segments else None),
-        requested_return_date=payload.return_date,
-        route_summary=route_summary,
-        service_summary=service_summary,
-        urgency_reason=None,
-        client_notes=compact_text(payload.route_notes, 2000),
-        internal_notes=compact_text(payload.internal_notes, 4000),
-        client_visible_notes=compact_text(payload.client_visible_notes, 2000),
-        builder_payload_snapshot=payload.model_dump(mode="json"),
-    )
-    created_request = await db.collection("travel_requests").insert_one(request.model_dump(mode="json"))
-
-    request_passengers = []
-    passenger_id_map: dict[str, str] = {}
-    for index, passenger_payload in enumerate(payload.passengers):
-        resolved = await create_inline_passenger(db, agency_id, client["id"], passenger_payload, index)
-        passenger = resolved["passenger"]
-        relationship = resolved["relationship"]
-        if passenger.get("id"):
-            passenger_id_map[passenger_payload.passenger_id or f"inline-{index}"] = passenger["id"]
-            request_passenger = RequestPassenger(
-                agency_id=agency_id,
-                request_id=created_request["id"],
-                passenger_id=passenger["id"],
-                passenger_link_mode="existing",
-                client_passenger_relationship_id=relationship["id"] if relationship else None,
-                role_in_request="traveler",
-                is_primary_traveler=index == 0,
-                service_needs_summary=compact_text(passenger_payload.mobility_notes or passenger_payload.medical_notes or passenger_payload.notes, 1000),
-                snapshot_display_name=passenger["display_name"],
-                snapshot_date_of_birth=passenger["date_of_birth"],
-                snapshot_passenger_type=passenger["passenger_type"],
-                identity_status="confirmed",
-                identity_source="existing_passenger_profile",
-            )
-        else:
-            proposed_identity = passenger_payload.model_dump(mode="json")
-            proposed_identity["passenger_type"] = passenger["passenger_type"]
-            request_passenger = unresolved_request_passenger(
-                agency_id=agency_id,
-                request_id=created_request["id"],
-                index=index,
-                proposed_identity=proposed_identity,
-                service_needs_summary=passenger_payload.mobility_notes
-                or passenger_payload.medical_notes
-                or passenger_payload.notes,
-            )
-        request_passengers.append(await db.collection("request_passengers").insert_one(request_passenger.model_dump(mode="json")))
-
-    request_segments = []
-    segment_id_map: dict[str, str] = {}
-    segments = payload.segments or (
-        [
-            {
-                "sequence": 1,
-                "origin_text": payload.origin,
-                "destination_text": payload.destination,
-                "departure_date": payload.departure_date,
-                "notes": payload.route_notes,
-            }
-        ]
-        if payload.origin and payload.destination
-        else []
-    )
-    for index, segment_payload in enumerate(segments):
-        segment_data = segment_payload if isinstance(segment_payload, dict) else segment_payload.model_dump(mode="json")
-        segment = RequestSegment(
-            agency_id=agency_id,
-            request_id=created_request["id"],
-            sequence=segment_data.get("sequence") or index + 1,
-            origin_text=segment_data["origin_text"],
-            destination_text=segment_data["destination_text"],
-            departure_date=segment_data.get("departure_date"),
-            departure_time_window=segment_data.get("departure_time_window"),
-            arrival_date=segment_data.get("arrival_date"),
-            arrival_time_window=segment_data.get("arrival_time_window"),
-            marketing_airline=segment_data.get("marketing_airline"),
-            operating_airline=segment_data.get("operating_airline"),
-            preferred_airline_code=segment_data.get("marketing_airline"),
-            preferred_flight_number=segment_data.get("flight_number"),
-            cabin_preference=segment_data.get("cabin_preference"),
-            notes=segment_data.get("notes"),
-        )
-        created_segment = await db.collection("request_segments").insert_one(segment.model_dump(mode="json"))
-        request_segments.append(created_segment)
-        segment_id_map[str(segment_data.get("sequence") or index + 1)] = created_segment["id"]
-
-    requested_services = []
-    all_passenger_ids = [
-        item["passenger_id"] for item in request_passengers if item.get("passenger_id")
-    ]
-    all_segment_ids = [item["id"] for item in request_segments]
-    for service_payload in payload.services:
-        passenger_ids = service_payload.passenger_ids or (all_passenger_ids if service_payload.applies_to_all_passengers else [])
-        segment_ids = service_payload.segment_ids or (all_segment_ids if service_payload.applies_to_all_segments else [])
-        label = SERVICE_LABELS.get(service_payload.category, service_payload.category.replace("_", " "))
-        service_code = service_code_for(service_payload.category)
-        service_record = await find_service_catalogue_record(db, service_code)
-        service_snapshot = service_catalogue_snapshot(service_record)
-        service = RequestedService(
-            agency_id=agency_id,
-            request_id=created_request["id"],
-            service_catalogue_id=service_snapshot.get("service_catalogue_id"),
-            service_key=service_snapshot.get("service_key"),
-            service_catalogue_snapshot_json=service_snapshot,
-            service_code=service_snapshot.get("service_key") or service_code,
-            service_name=service_snapshot.get("label") or label,
-            service_category=service_snapshot.get("category") or service_payload.category,
-            details=compact_text(service_payload.notes, 2000),
-            detail_payload=service_payload.details,
-            passenger_ids=passenger_ids,
-            segment_ids=segment_ids,
-            applies_to_all_passengers=service_payload.applies_to_all_passengers,
-            applies_to_all_segments=service_payload.applies_to_all_segments,
-            client_visible_summary=label,
-        )
-        requested_services.append(await db.collection("requested_services").insert_one(service.model_dump(mode="json")))
-
-    updated_request = await update_counts(db, agency_id, created_request["id"])
-    normalized = await normalize_request_children(db, agency_id, created_request["id"], payload, user["id"])
-    updated_request = normalized["request"]
-    await write_audit(db, agency_id, user["id"], "request.builder_created", "travel_request", created_request["id"], f"Created structured request {created_request['request_reference']}.", {"passengers": len(request_passengers), "segments": len(request_segments), "services": len(requested_services)})
-    await write_timeline(db, agency_id, created_request["id"], user["id"], "request.builder_created", "Operational request builder completed", service_summary)
-    return {
-        "request": updated_request,
-        "client": client,
-        "passengers": request_passengers,
-        "segments": request_segments,
-        "services": requested_services,
-        "normalized": normalized,
-    }
+    canonical_payload = await builder_payload_to_v4(db, agency_id, payload)
+    return await create_request_v4(db, agency_id, canonical_payload, user["id"])
 
 
 @router.get("/requests")
@@ -450,47 +322,19 @@ async def list_requests(
 @router.post("/requests", status_code=status.HTTP_201_CREATED)
 async def create_request(
     agency_id: str,
-    payload: TravelRequestCreate,
+    payload: RequestV4Payload,
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    await get_client_or_404(db, agency_id, payload.client_id)
-    request = TravelRequest(
-        agency_id=agency_id,
-        created_by_user_id=user["id"],
-        request_reference=await next_reference(db, agency_id),
-        **payload.model_dump(mode="json"),
-    )
-    created = await db.collection("travel_requests").insert_one(request.model_dump(mode="json"))
-    await write_audit(db, agency_id, user["id"], "request.created", "travel_request", request.id, f"Created request {request.request_reference}.")
-    await write_timeline(db, agency_id, request.id, user["id"], "request.created", "Request created", request.title)
-    return {"request": created}
+    return await create_request_v4(db, agency_id, payload, user["id"])
 
 
 @router.get("/requests/{request_id}")
 async def get_request(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     request = await get_request_or_404(db, agency_id, request_id)
-    client = await get_client_or_404(db, agency_id, request["client_id"])
-    linked_trip = await db.collection("trip_dossiers").find_one({"agency_id": agency_id, "id": request["trip_id"]}) if request.get("trip_id") else None
-    return {
-        "request": request,
-        "client": client,
-        "linked_trip": linked_trip,
-        "passengers": await db.collection("request_passengers").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
-        "segments": await db.collection("request_segments").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
-        "services": await db.collection("requested_services").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "case_flags": await db.collection("request_case_flags").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
-        "passenger_segment_services": await db.collection("request_passenger_segment_services").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "pets": await db.collection("request_pets").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
-        "pet_segment_transport": await db.collection("request_pet_segment_transport").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "special_items": await db.collection("request_special_items").find_many({"agency_id": agency_id, "request_id": request_id, "status": "active"}),
-        "special_item_segments": await db.collection("request_special_item_segments").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "messages": await db.collection("request_messages").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "tasks": await db.collection("request_tasks").find_many({"agency_id": agency_id, "request_id": request_id}),
-        "timeline": await db.collection("request_timeline_events").find_many({"agency_id": agency_id, "request_id": request_id}),
-    }
+    return await request_detail_v4(db, request)
 
 
 @router.post("/requests/{request_id}/normalize")
@@ -501,6 +345,23 @@ async def normalize_request(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
+    request = await get_request_or_404(db, agency_id, request_id)
+    if request.get("request_version") == 4:
+        payload = RequestV4Payload.model_validate(request.get("canonical_payload") or {})
+        counts = await project_canonical_request(db, request, payload)
+        updated = await db.collection("travel_requests").update_one(
+            {"agency_id": agency_id, "id": request_id},
+            {
+                "canonical_projection_status": "current",
+                "canonical_projection_warnings": [],
+                "passenger_count": counts["passenger_count"],
+                "service_count": counts["service_count"],
+                "pet_count": counts["pet_count"],
+                "special_service_count": counts["service_count"] + counts["pet_count"] + counts["special_item_count"],
+            },
+        )
+        await write_timeline(db, agency_id, request_id, user["id"], "request.v4_projection_rebuilt", "Request compatibility details rebuilt")
+        return {"request": updated, "projection": counts, "request_version": 4}
     result = await normalize_request_children(db, agency_id, request_id, actor_user_id=user["id"])
     await write_timeline(db, agency_id, request_id, user["id"], "request.normalized", "Request normalized", "Segment-scoped services, pets, special items, and flags updated.")
     return result
@@ -509,7 +370,12 @@ async def normalize_request(
 @router.put("/requests/{request_id}")
 async def update_request(agency_id: str, request_id: str, payload: TravelRequestUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
+    existing_request = await get_request_or_404(db, agency_id, request_id)
+    if existing_request.get("request_version") == 4:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Use PATCH with the canonical Request V4 aggregate to edit this request.",
+        )
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
@@ -521,11 +387,28 @@ async def update_request(agency_id: str, request_id: str, payload: TravelRequest
     return {"request": updated}
 
 
+@router.patch("/requests/{request_id}")
+async def patch_request_v4(
+    agency_id: str,
+    request_id: str,
+    payload: RequestV4Update,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    return await update_request_v4(db, agency_id, request_id, payload, user["id"])
+
+
 @router.post("/requests/{request_id}/archive")
 async def archive_request(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
-    updated = await db.collection("travel_requests").update_one({"agency_id": agency_id, "id": request_id}, {"status": "archived"})
+    request = await get_request_or_404(db, agency_id, request_id)
+    updates = {"status": "archived"}
+    if request.get("request_version") == 4:
+        canonical = RequestV4Payload.model_validate(request.get("canonical_payload") or {})
+        canonical.admin_metadata.status = "archived"
+        updates["canonical_payload"] = canonical.model_dump(mode="json")
+    updated = await db.collection("travel_requests").update_one({"agency_id": agency_id, "id": request_id}, updates)
     await write_audit(db, agency_id, user["id"], "request.archived", "travel_request", request_id, "Archived request.")
     await write_timeline(db, agency_id, request_id, user["id"], "request.archived", "Request archived")
     return {"request": updated}
@@ -534,8 +417,13 @@ async def archive_request(agency_id: str, request_id: str, user: dict = Depends(
 @router.post("/requests/{request_id}/restore")
 async def restore_request(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
-    updated = await db.collection("travel_requests").update_one({"agency_id": agency_id, "id": request_id}, {"status": "triage", "closed_at": None})
+    request = await get_request_or_404(db, agency_id, request_id)
+    updates = {"status": "triage", "closed_at": None}
+    if request.get("request_version") == 4:
+        canonical = RequestV4Payload.model_validate(request.get("canonical_payload") or {})
+        canonical.admin_metadata.status = "triage"
+        updates["canonical_payload"] = canonical.model_dump(mode="json")
+    updated = await db.collection("travel_requests").update_one({"agency_id": agency_id, "id": request_id}, updates)
     await write_audit(db, agency_id, user["id"], "request.restored", "travel_request", request_id, "Restored request.")
     await write_timeline(db, agency_id, request_id, user["id"], "request.restored", "Request restored")
     return {"request": updated}
@@ -544,8 +432,12 @@ async def restore_request(agency_id: str, request_id: str, user: dict = Depends(
 @router.post("/requests/{request_id}/status")
 async def change_status(agency_id: str, request_id: str, payload: RequestStatusUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
+    request = await get_request_or_404(db, agency_id, request_id)
     updates = {"status": payload.status}
+    if request.get("request_version") == 4:
+        canonical = RequestV4Payload.model_validate(request.get("canonical_payload") or {})
+        canonical.admin_metadata.status = getattr(payload.status, "value", payload.status)
+        updates["canonical_payload"] = canonical.model_dump(mode="json")
     if payload.status in {"closed", "cancelled"}:
         updates["closed_at"] = datetime.now(timezone.utc)
     updated = await db.collection("travel_requests").update_one({"agency_id": agency_id, "id": request_id}, updates)
@@ -565,6 +457,7 @@ async def list_request_passengers(agency_id: str, request_id: str, user: dict = 
 async def add_request_passenger(agency_id: str, request_id: str, payload: RequestPassengerCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     request = await get_request_or_404(db, agency_id, request_id)
+    reject_independent_v4_child_write(request)
     passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
     if payload.client_passenger_relationship_id:
         relationship = await db.collection("client_passenger_relationships").find_one({"agency_id": agency_id, "id": payload.client_passenger_relationship_id})
@@ -591,7 +484,8 @@ async def add_request_passenger(agency_id: str, request_id: str, payload: Reques
 @router.put("/requests/{request_id}/passengers/{request_passenger_id}")
 async def update_request_passenger(agency_id: str, request_id: str, request_passenger_id: str, payload: RequestPassengerUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
+    request = await get_request_or_404(db, agency_id, request_id)
+    reject_independent_v4_child_write(request)
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
@@ -625,6 +519,8 @@ async def confirm_request_passenger(
 @router.post("/requests/{request_id}/passengers/{request_passenger_id}/archive")
 async def archive_request_passenger(agency_id: str, request_id: str, request_passenger_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    request = await get_request_or_404(db, agency_id, request_id)
+    reject_independent_v4_child_write(request)
     item = await db.collection("request_passengers").update_one({"agency_id": agency_id, "request_id": request_id, "id": request_passenger_id}, {"status": "archived"})
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request passenger not found.")
@@ -635,7 +531,8 @@ async def archive_request_passenger(agency_id: str, request_id: str, request_pas
 
 async def create_child(db: Database, agency_id: str, request_id: str, user: dict, model, collection_name: str, payload, event_type: str, title: str) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
+    request = await get_request_or_404(db, agency_id, request_id)
+    reject_independent_v4_child_write(request)
     data = payload.model_dump(mode="json")
     if collection_name == "requested_services":
         record = await find_service_catalogue_record(db, data.get("service_key") or data.get("service_code"))
@@ -675,6 +572,8 @@ def child_routes(path: str, collection_name: str, model, create_model, update_mo
     @router.put(f"{path}/{{item_id}}")
     async def update_item(agency_id: str, request_id: str, item_id: str, payload: update_model, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
         await require_write(db, agency_id, user)
+        request = await get_request_or_404(db, agency_id, request_id)
+        reject_independent_v4_child_write(request)
         updates = clean_updates(payload)
         if not updates:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
@@ -688,6 +587,8 @@ def child_routes(path: str, collection_name: str, model, create_model, update_mo
     @router.post(f"{path}/{{item_id}}/archive")
     async def archive_item(agency_id: str, request_id: str, item_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
         await require_write(db, agency_id, user)
+        request = await get_request_or_404(db, agency_id, request_id)
+        reject_independent_v4_child_write(request)
         updates = {"status": "archived"} if collection_name == "request_segments" else {"status": "cancelled"}
         item = await db.collection(collection_name).update_one({"agency_id": agency_id, "request_id": request_id, "id": item_id}, updates)
         if not item:

@@ -332,3 +332,14 @@ frontend consumers, portal visibility, lifecycle continuity, canonical route
 roots, deterministic ordering, secret/local-path exclusion, unchanged runtime
 governance, and smoke inventory resolution. Migration blockers are reported
 without turning an honest `migration_required` state into a validation failure.
+
+## Canonical Request V4 Repair
+
+`TravelRequest` remains the Request owner. `RequestPassenger`,
+`RequestSegment`, `PassengerServiceRequest`, `RequestPet`, and
+`RequestSpecialItem` are governed child records projected by
+`request_v4_service.py`. `RequestIntake` remains pre-request provenance.
+`TravelRequestWorkspace` remains a compatibility writer and an open migration
+item; it is not promoted to canonical ownership. New V4 structural writes use
+the aggregate route, while explicit passenger identity confirmation remains a
+separate guarded action.

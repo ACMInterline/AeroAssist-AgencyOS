@@ -346,6 +346,22 @@ class RequestToTripConversionService:
             critical.append(self._issue("missing_client_linkage", "critical", "Client linkage is required before creating the trip shell.", "Resolve or attach the request client before conversion."))
         if not context["passengers"]:
             critical.append(self._issue("missing_passengers", "critical", "At least one normalized request passenger is required.", "Add or resolve passengers before conversion."))
+        elif all(
+            not passenger.get("passenger_id")
+            and not any(
+                str((passenger.get("proposed_identity_json") or {}).get(field) or "").strip()
+                for field in ("first_name", "last_name", "display_name")
+            )
+            for passenger in context["passengers"]
+        ):
+            critical.append(
+                self._issue(
+                    "missing_passenger_identity_details",
+                    "critical",
+                    "At least one request passenger needs identifying details before conversion.",
+                    "Add the traveler name or explicitly link a same-agency passenger profile.",
+                )
+            )
         if not context["segments"]:
             critical.append(self._issue("missing_segments", "critical", "At least one normalized request segment is required.", "Add request itinerary segments before conversion."))
         if existing_trip_id:

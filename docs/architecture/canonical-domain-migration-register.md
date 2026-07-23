@@ -154,3 +154,17 @@ Passenger Portal identity is no longer ambiguous: `AuthIdentity` authenticates,
 No separate Passenger Portal business model is introduced. Historical records
 still require reviewed reconciliation, so the domain remains
 `migration_required`, not migration complete.
+
+## Request V4 Migration Status
+
+| Family | Status | Required action |
+|---|---|---|
+| New `TravelRequest` | canonical V4 | Persist typed aggregate and regenerate governed child projections |
+| Existing `TravelRequest` | readable, reconciliation required | Analyze and review before creating a V4 aggregate |
+| `RequestIntake` | operational provenance | Preserve payload and convert explicitly |
+| `TravelRequestWorkspace` | compatibility writer | Reconcile links and retire independent writes in a later reviewed change |
+| Existing request children | legacy-compatible | Preserve; do not infer or overwrite ambiguous facts |
+
+`backend/scripts/analyze_legacy_request_v4_migration.py` is dry-run only. No
+production migration, automatic rewrite, inferred passenger identity, or
+destructive cleanup is authorized.

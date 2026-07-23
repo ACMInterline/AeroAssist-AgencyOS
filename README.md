@@ -1879,3 +1879,16 @@ Phase 56.5.8 advances the canonical marker to `phase_56_5_8_final_stabilization_
 ## Phase 57.0 Pilot Operations and Release Readiness
 
 Phase 57.0 advances the canonical marker to `phase_57_0_pilot_operations_release_readiness`. It adds a Platform-only operations console at `/platform/pilot-operations`, persists immutable deployment/smoke/backup/restore/production-validation/release-assessment/sign-off evidence, groups the existing deterministic release gate into eight operational assessment areas, records health history, and exposes protected bounded telemetry. Platform Owner controls existing-agency pilot enrollment and isolated prefixed synthetic metadata datasets with audited soft removal. Public health and readiness remain free of operational diagnostics and pilot data. No provider, GDS, payment, booking, ticketing, automatic release approval, migration, backup, restore, or production seed is executed. See [Pilot Operations and Release Readiness](docs/architecture/pilot-operations-release-readiness.md).
+
+## P1 Product Kernel Repair 4 - Canonical Request V4
+
+New Requests now use one strict `request_version: 4` aggregate owned by
+`TravelRequest`. Contact, trip preferences, ordered segments, request
+passengers, passenger-scoped services, animals, special items, and admin
+metadata are validated together. Existing child collections remain
+deterministic operational projections for Offer and request-to-trip
+compatibility; they cannot be written independently for V4 records. Public
+submissions remain intake-only and never create a master passenger. Legacy
+requests remain readable and the supplied analyzer is dry-run only. See
+[Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
+and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).

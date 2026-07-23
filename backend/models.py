@@ -2155,6 +2155,587 @@ class PassengerMergeAudit(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class RequestV4TripPurpose(str, Enum):
+    BUSINESS = "business"
+    LEISURE = "leisure"
+    MEDICAL = "medical"
+    FAMILY = "family"
+    OTHER = "other"
+
+
+class RequestV4QuoteMode(str, Enum):
+    ONE_WAY = "one_way"
+    ROUND_TRIP = "round_trip"
+    MULTI_CITY = "multi_city"
+    OPEN_JAW = "open_jaw"
+
+
+class RequestV4Cabin(str, Enum):
+    ECONOMY = "Y"
+    PREMIUM_ECONOMY = "W"
+    BUSINESS = "C"
+    FIRST = "F"
+
+
+class RequestV4ScopeMode(str, Enum):
+    ALL_SEGMENTS = "all_segments"
+    SELECTED_SEGMENTS = "selected_segments"
+
+
+class RequestV4Contact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    phone: Optional[str] = Field(default=None, max_length=80)
+
+    @model_validator(mode="after")
+    def validate_names(self):
+        self.first_name = self.first_name.strip()
+        self.last_name = self.last_name.strip()
+        if not self.first_name:
+            raise PydanticCustomError("contact_first_name_required", "Contact first name is required.")
+        if not self.last_name:
+            raise PydanticCustomError("contact_last_name_required", "Contact last name is required.")
+        return self
+
+
+class RequestV4Trip(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    trip_label: str = Field(default="", max_length=180)
+    trip_purpose: RequestV4TripPurpose = RequestV4TripPurpose.LEISURE
+    quote_mode: RequestV4QuoteMode = RequestV4QuoteMode.ONE_WAY
+    preferred_cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    budget_currency: str = Field(default="", max_length=3)
+    budget_amount: Optional[float] = None
+    max_stops: Optional[int] = Field(default=None, ge=0, le=12)
+    max_total_travel_hours: Optional[float] = Field(default=None, gt=0, le=240)
+    flexibility_days: Optional[int] = Field(default=None, ge=0, le=31)
+    preferred_airlines: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airlines: List[str] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def validate_trip_preferences(self):
+        if self.budget_amount is not None and self.budget_amount <= 0:
+            raise PydanticCustomError("budget_positive", "Budget amount must be greater than zero.")
+        if self.budget_currency:
+            self.budget_currency = self.budget_currency.strip().upper()
+            if len(self.budget_currency) != 3 or not self.budget_currency.isalpha():
+                raise PydanticCustomError("currency_invalid", "Budget currency must be a three-letter currency code.")
+        preferred = {value.strip().upper() for value in self.preferred_airlines if value.strip()}
+        excluded = {value.strip().upper() for value in self.excluded_airlines if value.strip()}
+        conflict = sorted(preferred.intersection(excluded))
+        if conflict:
+            raise PydanticCustomError(
+                "airline_preference_conflict",
+                f"Airline cannot be both preferred and excluded: {', '.join(conflict)}.",
+            )
+        self.preferred_airlines = sorted(preferred)
+        self.excluded_airlines = sorted(excluded)
+        return self
+
+
+class RequestV4Segment(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    segment_local_id: str = Field(min_length=1, max_length=80)
+    segment_order: int = Field(ge=1, le=100)
+    origin_label: str = Field(min_length=1, max_length=160)
+    origin_iata: str = Field(default="", max_length=3)
+    origin_country_code: str = Field(default="", max_length=2)
+    destination_label: str = Field(min_length=1, max_length=160)
+    destination_iata: str = Field(default="", max_length=3)
+    destination_country_code: str = Field(default="", max_length=2)
+    departure_date: date
+    departure_time: str = Field(default="", max_length=8)
+    arrival_date: Optional[date] = None
+    arrival_time: str = Field(default="", max_length=8)
+    marketing_carrier: str = Field(default="", max_length=3)
+    operating_carrier: str = Field(default="", max_length=3)
+    flight_number: str = Field(default="", max_length=12)
+    cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_segment(self):
+        self.segment_local_id = self.segment_local_id.strip()
+        self.origin_label = self.origin_label.strip()
+        self.destination_label = self.destination_label.strip()
+        self.origin_iata = self.origin_iata.strip().upper()
+        self.destination_iata = self.destination_iata.strip().upper()
+        self.origin_country_code = self.origin_country_code.strip().upper()
+        self.destination_country_code = self.destination_country_code.strip().upper()
+        self.marketing_carrier = self.marketing_carrier.strip().upper()
+        self.operating_carrier = self.operating_carrier.strip().upper()
+        origin_key = self.origin_iata or self.origin_label.casefold()
+        destination_key = self.destination_iata or self.destination_label.casefold()
+        if origin_key == destination_key:
+            raise PydanticCustomError("segment_same_airport", "Origin and destination must be different.")
+        for field_name, value in (("departure_time", self.departure_time), ("arrival_time", self.arrival_time)):
+            if value:
+                try:
+                    datetime.strptime(value, "%H:%M")
+                except ValueError as exc:
+                    raise PydanticCustomError("time_invalid", f"{field_name.replace('_', ' ').title()} must use HH:MM.") from exc
+        if self.arrival_date:
+            departure_value = datetime.combine(
+                self.departure_date,
+                datetime.strptime(self.departure_time or "00:00", "%H:%M").time(),
+            )
+            arrival_value = datetime.combine(
+                self.arrival_date,
+                datetime.strptime(self.arrival_time or "23:59", "%H:%M").time(),
+            )
+            if arrival_value < departure_value:
+                raise PydanticCustomError("segment_arrival_before_departure", "Arrival cannot be before departure.")
+        return self
+
+
+class RequestV4ServiceScope(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.segment_scope_mode == RequestV4ScopeMode.SELECTED_SEGMENTS and not self.segment_ids:
+            raise PydanticCustomError("selected_segments_required", "Select at least one itinerary segment.")
+        if self.segment_scope_mode == RequestV4ScopeMode.ALL_SEGMENTS and self.segment_ids:
+            raise PydanticCustomError("all_segments_has_ids", "All-segments scope cannot include selected segment IDs.")
+        if len(set(self.segment_ids)) != len(self.segment_ids):
+            raise PydanticCustomError("duplicate_segment_reference", "Segment references must be unique.")
+        return self
+
+
+class RequestV4ChildrenServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    child_age: Optional[int] = Field(default=None, ge=0, le=17)
+    escort_needed: bool = False
+    handover_contact: str = Field(default="", max_length=240)
+    pickup_contact: str = Field(default="", max_length=240)
+    airline_um_service_required: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_unaccompanied_minor(self):
+        if self.airline_um_service_required and self.child_age is None:
+            raise PydanticCustomError("child_age_required", "Child age is required for unaccompanied-minor support.")
+        if self.airline_um_service_required and (not self.handover_contact or not self.pickup_contact):
+            raise PydanticCustomError(
+                "minor_contacts_required",
+                "Handover and pickup contacts are required for unaccompanied-minor support.",
+            )
+        return self
+
+
+class RequestV4MobilityServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    assessment_version: str = Field(default="v2_assessment_driven", max_length=80)
+    passenger_context_tags: List[str] = Field(default_factory=list, max_length=30)
+    passenger_context_notes: str = Field(default="", max_length=2000)
+    functional_assessment: Dict[str, str] = Field(default_factory=dict)
+    suggested_ssr_code: str = Field(default="manual_review", max_length=20)
+    suggested_ssr_reason: str = Field(default="", max_length=1000)
+    recommendation_confidence: str = Field(default="manual_review", max_length=40)
+    confirmed_ssr_code: str = Field(default="manual_review", max_length=20)
+    override_reason: str = Field(default="", max_length=1000)
+    final_assistance_label: str = Field(default="", max_length=240)
+    own_mobility_device: str = Field(default="no", max_length=80)
+    own_device_details: Dict[str, Any] = Field(default_factory=dict)
+    battery_details: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_mobility(self):
+        allowed = {"WCHR", "WCHS", "WCHC", "MAAS", "MEDA", "BLND", "DEAF", "OTHER", "manual_review"}
+        if self.suggested_ssr_code not in allowed or self.confirmed_ssr_code not in allowed:
+            raise PydanticCustomError("mobility_code_invalid", "Mobility assistance code is not supported.")
+        if self.confirmed_ssr_code != self.suggested_ssr_code and not self.override_reason:
+            raise PydanticCustomError(
+                "mobility_override_reason_required",
+                "Explain why the confirmed assistance code differs from the suggested code.",
+            )
+        for container_name, values in (("device", self.own_device_details), ("battery", self.battery_details)):
+            for key in ("weight_kg", "length_cm", "width_cm", "height_cm", "battery_watt_hours", "battery_voltage", "battery_amp_hours"):
+                value = values.get(key)
+                if value not in (None, ""):
+                    try:
+                        if float(value) <= 0:
+                            raise ValueError
+                    except (TypeError, ValueError) as exc:
+                        raise PydanticCustomError("measurement_positive", f"{container_name.title()} {key.replace('_', ' ')} must be positive.") from exc
+        return self
+
+
+class RequestV4MedicalServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    medical_clearance_needed: bool = False
+    medif_required: bool = False
+    oxygen_needed: bool = False
+    portable_oxygen_concentrator: bool = False
+    equipment_type: str = Field(default="", max_length=120)
+    device_make_model: str = Field(default="", max_length=240)
+    battery_watt_hours: Optional[float] = Field(default=None, gt=0, le=5000)
+    stretcher_needed: bool = False
+    companion_required: bool = False
+    fit_to_fly_status: str = Field(default="unknown", max_length=80)
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_medical_support(self):
+        if self.portable_oxygen_concentrator and not self.device_make_model:
+            raise PydanticCustomError("poc_model_required", "Portable oxygen concentrator make and model is required.")
+        return self
+
+
+class RequestV4ServiceAnimalDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    species: str = Field(min_length=1, max_length=80)
+    task_or_support: str = Field(default="", max_length=500)
+    animal_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    documentation_status: str = Field(default="pending_information", max_length=80)
+    approval_status: str = Field(default="unknown", max_length=80)
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4SensoryServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    hearing_support: bool = False
+    visual_support: bool = False
+    preferred_communication_method: str = Field(default="", max_length=160)
+    escort_or_navigation_support: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4CognitiveServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    support_type: str = Field(min_length=1, max_length=160)
+    preferred_language: str = Field(default="", max_length=80)
+    communication_support: str = Field(default="", max_length=500)
+    companion_present: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4ExtraSeatDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    reason: str = Field(min_length=1, max_length=500)
+    extra_seat_count: int = Field(default=1, ge=1, le=4)
+    adjacent_seat_required: bool = True
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4SpecialEquipmentServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    item_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    item_type: str = Field(default="", max_length=160)
+    quantity: int = Field(default=1, ge=1, le=100)
+    weight_kg: Optional[float] = Field(default=None, gt=0, le=1000)
+    length_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    width_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    height_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4DocumentServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    nationality: str = Field(default="", max_length=80)
+    residence: str = Field(default="", max_length=80)
+    destination_documents_needed: List[str] = Field(default_factory=list, max_length=100)
+    visa_transit_concern: str = Field(default="", max_length=1000)
+    deadline: Optional[date] = None
+    notes: str = Field(default="", max_length=2000)
+
+
+REQUEST_V4_SERVICE_DETAIL_MODELS = {
+    "children_traveling_alone": RequestV4ChildrenServiceDetails,
+    "wheelchair_and_mobility_assistance": RequestV4MobilityServiceDetails,
+    "medical_equipment_and_travel_support": RequestV4MedicalServiceDetails,
+    "service_animal": RequestV4ServiceAnimalDetails,
+    "hearing_and_visual_impairments": RequestV4SensoryServiceDetails,
+    "invisible_cognitive_or_language_support": RequestV4CognitiveServiceDetails,
+    "extra_seat_support": RequestV4ExtraSeatDetails,
+    "special_items_and_equipment": RequestV4SpecialEquipmentServiceDetails,
+    "documents_and_travel_compliance": RequestV4DocumentServiceDetails,
+}
+
+
+class RequestV4Passenger(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    passenger_local_id: str = Field(min_length=1, max_length=80)
+    passenger_profile_id: Optional[str] = None
+    identity_status: RequestPassengerIdentityStatus = RequestPassengerIdentityStatus.UNRESOLVED
+    passenger_type_code_id: str = Field(default="", max_length=120)
+    passenger_type_code: str = Field(default="ADT", max_length=12)
+    passenger_type_label: str = Field(default="Adult", max_length=80)
+    first_name: str = Field(default="", max_length=80)
+    last_name: str = Field(default="", max_length=80)
+    date_of_birth: Optional[date] = None
+    calculated_age_on_first_segment: Optional[int] = Field(default=None, ge=0, le=130)
+    nationality_label: str = Field(default="", max_length=120)
+    nationality_code: str = Field(default="", max_length=3)
+    notes: str = Field(default="", max_length=2000)
+    selected_services: List[str] = Field(default_factory=list, max_length=50)
+    service_details: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_services(self):
+        self.passenger_local_id = self.passenger_local_id.strip()
+        self.passenger_type_code = self.passenger_type_code.strip().upper()
+        self.nationality_code = self.nationality_code.strip().upper()
+        selected = list(dict.fromkeys(value.strip() for value in self.selected_services if value.strip()))
+        unknown = sorted(set(selected).difference(REQUEST_V4_SERVICE_DETAIL_MODELS))
+        if unknown:
+            raise PydanticCustomError("service_key_unknown", f"Unsupported passenger service: {', '.join(unknown)}.")
+        missing = sorted(set(selected).difference(self.service_details))
+        if missing:
+            raise PydanticCustomError("service_details_missing", f"Service details are required for: {', '.join(missing)}.")
+        unexpected = sorted(set(self.service_details).difference(selected))
+        if unexpected:
+            raise PydanticCustomError("service_details_unselected", f"Remove details for unselected services: {', '.join(unexpected)}.")
+        normalized: Dict[str, Dict[str, Any]] = {}
+        for service_key in selected:
+            model = REQUEST_V4_SERVICE_DETAIL_MODELS[service_key]
+            normalized[service_key] = model.model_validate(self.service_details[service_key]).model_dump(mode="json")
+        self.selected_services = selected
+        self.service_details = normalized
+        return self
+
+
+class RequestV4Pet(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pet_local_id: str = Field(min_length=1, max_length=80)
+    linked_passenger_local_id: Optional[str] = Field(default=None, max_length=80)
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+    pet_category: str = Field(default="PETC", max_length=16)
+    species_label: str = Field(min_length=1, max_length=120)
+    species_key: str = Field(default="", max_length=120)
+    breed_label: str = Field(default="", max_length=120)
+    breed_key: str = Field(default="", max_length=120)
+    colour: str = Field(default="", max_length=80)
+    sex: str = Field(default="", max_length=40)
+    date_of_birth: Optional[date] = None
+    age_text: str = Field(default="", max_length=80)
+    is_pregnant: bool = False
+    is_nursing: bool = False
+    aggression_risk: bool = False
+    aggression_notes: str = Field(default="", max_length=1000)
+    pet_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    container_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    total_weight_kg: Optional[float] = Field(default=None, gt=0, le=500)
+    carrier_length_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    carrier_width_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    carrier_height_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    crate_type: str = Field(default="", max_length=120)
+    vaccination_passport_uploaded: bool = False
+    rabies_vaccination_date: Optional[date] = None
+    rabies_serology_done: bool = False
+    rabies_serology_date: Optional[date] = None
+    rabies_serology_result: str = Field(default="", max_length=500)
+    microchip_number: str = Field(default="", max_length=120)
+    microchip_implantation_date: Optional[date] = None
+    eu_pet_passport: bool = False
+    import_permits_notes: str = Field(default="", max_length=2000)
+    quarantine_documents_notes: str = Field(default="", max_length=2000)
+    country_specific_restrictions_notes: str = Field(default="", max_length=2000)
+    special_instructions: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_pet(self):
+        self.pet_category = self.pet_category.strip().upper()
+        if self.pet_category not in {"PETC", "AVIH", "SVAN", "ESAN", "OTHER"}:
+            raise PydanticCustomError("pet_category_invalid", "Pet category is not supported.")
+        RequestV4ServiceScope(
+            segment_scope_mode=self.segment_scope_mode,
+            segment_ids=self.segment_ids,
+        )
+        if self.pet_category in {"PETC", "AVIH"} and not all(
+            value is not None and value > 0
+            for value in (self.carrier_length_cm, self.carrier_width_cm, self.carrier_height_cm)
+        ):
+            raise PydanticCustomError(
+                "pet_carrier_dimensions_required",
+                "PETC and AVIH requests require positive carrier length, width, and height.",
+            )
+        if self.aggression_risk and not self.aggression_notes:
+            raise PydanticCustomError("aggression_notes_required", "Add notes when aggression risk is selected.")
+        if self.pet_weight_kg is not None or self.container_weight_kg is not None:
+            self.total_weight_kg = round((self.pet_weight_kg or 0) + (self.container_weight_kg or 0), 3)
+        else:
+            self.total_weight_kg = None
+        return self
+
+
+class RequestV4SpecialItem(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_local_id: str = Field(min_length=1, max_length=80)
+    linked_passenger_local_id: Optional[str] = Field(default=None, max_length=80)
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+    item_category: str = Field(default="other", max_length=40)
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_item(self):
+        self.item_category = self.item_category.strip().lower()
+        allowed = {"weapon", "sports_equipment", "musical_instrument", "valuables_fragile", "other"}
+        if self.item_category not in allowed:
+            raise PydanticCustomError("item_category_invalid", "Special-item category is not supported.")
+        RequestV4ServiceScope(
+            segment_scope_mode=self.segment_scope_mode,
+            segment_ids=self.segment_ids,
+        )
+        detail_fields = {
+            "weapon": {"weapon_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "unloaded_confirmed", "secure_case_confirmed", "approval_status", "currency", "declared_value", "notes"},
+            "sports_equipment": {"equipment_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "fragile", "notes"},
+            "musical_instrument": {"instrument_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "cabin_transport_requested", "extra_seat_requested", "notes"},
+            "valuables_fragile": {"item_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "fragile", "notes"},
+            "other": {"item_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "notes"},
+        }
+        unexpected = sorted(set(self.details).difference(detail_fields[self.item_category]))
+        if unexpected:
+            raise PydanticCustomError("item_details_unknown", f"Unsupported {self.item_category} detail: {', '.join(unexpected)}.")
+        if self.item_category == "weapon":
+            if not self.details.get("unloaded_confirmed") or not self.details.get("secure_case_confirmed"):
+                raise PydanticCustomError(
+                    "weapon_confirmation_required",
+                    "Weapon requests require unloaded and secure-case confirmation.",
+                )
+            if not self.details.get("approval_status"):
+                raise PydanticCustomError("weapon_approval_status_required", "Weapon approval status is required.")
+        if self.item_category in {"sports_equipment", "musical_instrument", "valuables_fragile"}:
+            required_key = "equipment_type" if self.item_category == "sports_equipment" else "instrument_type" if self.item_category == "musical_instrument" else "item_type"
+            if not self.details.get(required_key):
+                raise PydanticCustomError("item_type_required", f"{required_key.replace('_', ' ').title()} is required.")
+        for field_name in ("quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "declared_value"):
+            value = self.details.get(field_name)
+            if value not in (None, ""):
+                try:
+                    if float(value) <= 0:
+                        raise ValueError
+                except (TypeError, ValueError) as exc:
+                    raise PydanticCustomError("item_measurement_positive", f"{field_name.replace('_', ' ').title()} must be positive.") from exc
+        currency = str(self.details.get("currency") or "").strip().upper()
+        if currency and (len(currency) != 3 or not currency.isalpha()):
+            raise PydanticCustomError("item_currency_invalid", "Declared-value currency must be a three-letter currency code.")
+        if currency:
+            self.details["currency"] = currency
+        return self
+
+
+class RequestV4AdminMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source: str = Field(default="public_submission", max_length=80)
+    status: str = Field(default="new", max_length=40)
+    priority: str = Field(default="normal", max_length=40)
+    created_on_behalf_of: str = Field(default="", max_length=160)
+    internal_notes: str = Field(default="", max_length=4000)
+    assigned_to: str = Field(default="", max_length=120)
+
+
+class RequestV4Payload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_version: int
+    contact: RequestV4Contact
+    trip: RequestV4Trip
+    itinerary_segments: List[RequestV4Segment] = Field(min_length=1, max_length=100)
+    passengers: List[RequestV4Passenger] = Field(min_length=1, max_length=100)
+    pets: List[RequestV4Pet] = Field(default_factory=list, max_length=100)
+    special_items: List[RequestV4SpecialItem] = Field(default_factory=list, max_length=100)
+    request_level_notes: str = Field(default="", max_length=4000)
+    admin_metadata: RequestV4AdminMetadata = Field(default_factory=RequestV4AdminMetadata)
+
+    @model_validator(mode="after")
+    def validate_aggregate(self):
+        if self.request_version != 4:
+            raise PydanticCustomError("request_version_invalid", "Request version must equal 4.")
+        segment_ids = [item.segment_local_id for item in self.itinerary_segments]
+        if len(segment_ids) != len(set(segment_ids)):
+            raise PydanticCustomError(
+                "duplicate_segment_ids",
+                "itinerary_segments.segment_local_id values must be unique.",
+            )
+        orders = [item.segment_order for item in self.itinerary_segments]
+        if orders != list(range(1, len(orders) + 1)):
+            raise PydanticCustomError(
+                "segment_order_invalid",
+                "itinerary_segments.segment_order must be sequential and begin at 1.",
+            )
+        passenger_ids = [item.passenger_local_id for item in self.passengers]
+        if len(passenger_ids) != len(set(passenger_ids)):
+            raise PydanticCustomError(
+                "duplicate_passenger_ids",
+                "passengers.passenger_local_id values must be unique.",
+            )
+        segment_id_set = set(segment_ids)
+        passenger_id_set = set(passenger_ids)
+        first_departure = self.itinerary_segments[0].departure_date
+        for passenger in self.passengers:
+            if passenger.date_of_birth:
+                age = first_departure.year - passenger.date_of_birth.year
+                if (first_departure.month, first_departure.day) < (
+                    passenger.date_of_birth.month,
+                    passenger.date_of_birth.day,
+                ):
+                    age -= 1
+                if age < 0 or age > 130:
+                    raise PydanticCustomError("passenger_age_invalid", "Passenger date of birth is not valid for the first departure.")
+                passenger.calculated_age_on_first_segment = age
+            else:
+                passenger.calculated_age_on_first_segment = None
+            for service_key, detail in passenger.service_details.items():
+                missing_segments = sorted(set(detail.get("segment_ids") or []).difference(segment_id_set))
+                if missing_segments:
+                    raise PydanticCustomError(
+                        "service_segment_reference_invalid",
+                        f"passengers.service_details.{service_key}.segment_ids references unknown itinerary segment IDs: {', '.join(missing_segments)}.",
+                    )
+        pet_ids = [item.pet_local_id for item in self.pets]
+        if len(pet_ids) != len(set(pet_ids)):
+            raise PydanticCustomError(
+                "duplicate_pet_ids",
+                "pets.pet_local_id values must be unique.",
+            )
+        item_ids = [item.item_local_id for item in self.special_items]
+        if len(item_ids) != len(set(item_ids)):
+            raise PydanticCustomError(
+                "duplicate_item_ids",
+                "special_items.item_local_id values must be unique.",
+            )
+        for label, items in (("Pet", self.pets), ("Special item", self.special_items)):
+            for item in items:
+                linked_passenger = item.linked_passenger_local_id
+                if linked_passenger and linked_passenger not in passenger_id_set:
+                    raise PydanticCustomError(
+                        "passenger_reference_invalid",
+                        f"{label}.linked_passenger_local_id references an unknown passengers.passenger_local_id: {linked_passenger}.",
+                    )
+                missing_segments = sorted(set(item.segment_ids).difference(segment_id_set))
+                if missing_segments:
+                    raise PydanticCustomError(
+                        "segment_reference_invalid",
+                        f"{label}.segment_ids references unknown itinerary_segments.segment_local_id values: {', '.join(missing_segments)}.",
+                    )
+        return self
+
+
+class RequestV4Update(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    canonical_payload: RequestV4Payload
+    remove_passenger_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_segment_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_pet_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_item_local_ids: List[str] = Field(default_factory=list, max_length=100)
+
+
 class TravelRequest(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None
@@ -2196,6 +2777,11 @@ class TravelRequest(BaseDocument):
     submission_channel: SubmissionChannel = SubmissionChannel.STAFF_CONSOLE
     account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.STAFF_CREATED
     canonical_alignment_notes: Dict[str, Any] = Field(default_factory=dict)
+    request_version: Optional[int] = None
+    canonical_payload: Dict[str, Any] = Field(default_factory=dict)
+    canonical_projection_status: str = "not_applicable"
+    canonical_projection_warnings: List[str] = Field(default_factory=list)
+    canonical_payload_updated_at: Optional[datetime] = None
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     closed_at: Optional[datetime] = None
@@ -2317,7 +2903,9 @@ class RequestIntake(BaseDocument):
     contact_snapshot: RequestIntakeContactSnapshot
     travel_summary: RequestIntakeTravelSummary
     service_summary: RequestIntakeServiceSummary
+    request_version: Optional[int] = None
     canonical_payload: Dict[str, Any] = Field(default_factory=dict)
+    canonical_validation_status: str = "legacy"
     raw_payload: Dict[str, Any] = Field(default_factory=dict)
     normalized_payload: Optional[Dict[str, Any]] = None
     priority: RequestPriority = RequestPriority.NORMAL
@@ -2569,10 +3157,25 @@ class RequestPet(BaseDocument):
     travel_request_id: Optional[str] = None
     request_passenger_id: Optional[str] = None
     passenger_id: Optional[str] = None
+    pet_local_id: Optional[str] = None
+    linked_passenger_local_id: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
+    segment_local_ids: List[str] = Field(default_factory=list)
+    pet_category: Optional[str] = None
     pet_name: Optional[str] = None
     species: str
+    species_key: Optional[str] = None
     breed: Optional[str] = None
+    breed_key: Optional[str] = None
     breed_free_text: Optional[str] = None
+    colour: Optional[str] = None
+    sex: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    age_text: Optional[str] = None
+    is_pregnant: bool = False
+    is_nursing: bool = False
+    aggression_risk: bool = False
+    aggression_notes: Optional[str] = None
     snub_nosed_flag: bool = False
     age_months: Optional[int] = None
     pet_weight_kg: Optional[float] = None
@@ -2580,11 +3183,25 @@ class RequestPet(BaseDocument):
     combined_weight_kg: Optional[float] = None
     requested_transport_mode: Optional[str] = None
     carrier_dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    crate_type: Optional[str] = None
+    vaccination_passport_uploaded: bool = False
+    rabies_vaccination_date: Optional[date] = None
+    rabies_serology_done: bool = False
+    rabies_serology_date: Optional[date] = None
+    rabies_serology_result: Optional[str] = None
+    microchip_number: Optional[str] = None
+    microchip_implantation_date: Optional[date] = None
+    eu_pet_passport: bool = False
+    import_permits_notes: Optional[str] = None
+    quarantine_documents_notes: Optional[str] = None
+    country_specific_restrictions_notes: Optional[str] = None
     documentation_status: Optional[str] = None
     special_requirements: Optional[str] = None
     carrier_required: bool = True
     service_animal: bool = False
     generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     notes: Optional[str] = None
     status: str = "active"
 
@@ -2612,6 +3229,10 @@ class RequestSpecialItem(BaseDocument):
     travel_request_id: Optional[str] = None
     request_passenger_id: Optional[str] = None
     owner_passenger_id: Optional[str] = None
+    item_local_id: Optional[str] = None
+    linked_passenger_local_id: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
+    segment_local_ids: List[str] = Field(default_factory=list)
     item_type: str
     item_category_code: Optional[str] = None
     item_name: Optional[str] = None
@@ -2629,6 +3250,9 @@ class RequestSpecialItem(BaseDocument):
     weight_text: Optional[str] = None
     requires_policy_check: bool = True
     generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
+    canonical_details: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
     status: str = "active"
 
@@ -2923,6 +3547,7 @@ class RequestPassenger(BaseDocument):
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    passenger_local_id: Optional[str] = None
     passenger_id: Optional[str] = None
     passenger_link_mode: PassengerLinkMode = PassengerLinkMode.EXISTING
     client_passenger_relationship_id: Optional[str] = None
@@ -2932,6 +3557,13 @@ class RequestPassenger(BaseDocument):
     snapshot_display_name: str
     snapshot_date_of_birth: Optional[date] = None
     snapshot_passenger_type: str
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_label: Optional[str] = None
+    calculated_age_on_first_segment: Optional[int] = None
+    nationality_label: Optional[str] = None
+    nationality_code: Optional[str] = None
+    selected_services: List[str] = Field(default_factory=list)
+    service_details: Dict[str, Any] = Field(default_factory=dict)
     identity_status: RequestPassengerIdentityStatus = RequestPassengerIdentityStatus.CONFIRMED
     identity_source: Optional[str] = None
     proposed_identity_json: Dict[str, Any] = Field(default_factory=dict)
@@ -2940,6 +3572,8 @@ class RequestPassenger(BaseDocument):
     identity_confirmation_reason: Optional[str] = None
     source_intake_id: Optional[str] = None
     quarantined_passenger_profile_id: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     status: str = "active"
 
 
@@ -3018,6 +3652,7 @@ class RequestSegment(BaseDocument):
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    segment_local_id: Optional[str] = None
     trip_segment_id: Optional[str] = None
     sequence: int
     origin_text: str
@@ -3037,6 +3672,8 @@ class RequestSegment(BaseDocument):
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     notes: Optional[str] = None
     status: str = "active"
 
@@ -3097,6 +3734,7 @@ class RequestedService(BaseDocument):
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
@@ -3114,6 +3752,8 @@ class RequestedService(BaseDocument):
     segment_ids: List[str] = Field(default_factory=list)
     applies_to_all_passengers: bool = True
     applies_to_all_segments: bool = True
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     client_visible_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     requires_documents: bool = False
@@ -24394,6 +25034,12 @@ class UnifiedExceptionRuleUpdate(BaseModel):
 class PassengerServiceRequest(BaseDocument):
     agency_id: str
     request_id: Optional[str] = None
+    request_passenger_id: Optional[str] = None
+    request_passenger_local_id: Optional[str] = None
+    request_segment_ids: List[str] = Field(default_factory=list)
+    request_segment_local_ids: List[str] = Field(default_factory=list)
+    request_service_key: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
     trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
@@ -24417,6 +25063,8 @@ class PassengerServiceRequest(BaseDocument):
     ssr_code: Optional[str] = None
     osi_code: Optional[str] = None
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    client_visible_details_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_details_json: Dict[str, Any] = Field(default_factory=dict)
     gds_text: Optional[str] = None
     required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
     warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
@@ -24439,6 +25087,9 @@ class PassengerServiceRequest(BaseDocument):
     fulfilment_correlation_id: Optional[str] = None
     timeline_entry_ids: List[str] = Field(default_factory=list)
     work_item_id: Optional[str] = None
+    generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     status: PassengerServiceRequestStatus = PassengerServiceRequestStatus.REQUESTED
 
 

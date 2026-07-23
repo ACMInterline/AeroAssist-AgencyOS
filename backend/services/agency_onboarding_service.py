@@ -397,7 +397,13 @@ class AgencyOnboardingService:
             raise AgencyOnboardingError(
                 "The demo workspace profile cannot be changed after generation. Rerun the selected profile safely instead."
             )
-        anchor = profile.get("demo_anchor_date") or date.today()
+        try:
+            agency_zone = ZoneInfo(str(agency.get("timezone") or "UTC"))
+        except ZoneInfoNotFoundError:
+            agency_zone = timezone.utc
+        anchor = profile.get("demo_anchor_date") or datetime.now(
+            timezone.utc
+        ).astimezone(agency_zone).date()
         if isinstance(anchor, str):
             anchor = date.fromisoformat(anchor)
         await self.database.collection("agency_onboarding_profiles").update_one(

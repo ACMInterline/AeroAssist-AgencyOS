@@ -1001,7 +1001,17 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
                     ("identity_status", ASCENDING),
                 ],
                 "name": "request_passengers_identity_status_lookup",
-            }
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("passenger_local_id", ASCENDING),
+                ],
+                "name": "request_passengers_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
         ],
         "client_passenger_relationships": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
@@ -1638,6 +1648,50 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("existing_trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
             [("agency_id", ASCENDING), ("request_purpose", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_version", ASCENDING),
+                    ("canonical_projection_status", ASCENDING),
+                ],
+                "name": "travel_requests_v4_projection_lookup",
+            },
+        ],
+        "request_segments": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("segment_local_id", ASCENDING),
+                ],
+                "name": "request_segments_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "request_pets": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("pet_local_id", ASCENDING),
+                ],
+                "name": "request_pets_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "request_special_items": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("item_local_id", ASCENDING),
+                ],
+                "name": "request_special_items_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
         ],
         "trip_dossiers": [[("agency_id", ASCENDING), ("primary_request_id", ASCENDING)], [("agency_id", ASCENDING), ("trip_reference", ASCENDING)]],
         "trip_passengers": [[("agency_id", ASCENDING), ("trip_id", ASCENDING)], [("agency_id", ASCENDING), ("source_request_passenger_id", ASCENDING)]],
@@ -1649,6 +1703,29 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("booking_id", ASCENDING)],
             [("agency_id", ASCENDING), ("category", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("generated_key", ASCENDING),
+                ],
+                "name": "passenger_service_requests_v4_generated_key_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "requested_services": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("service_key", ASCENDING),
+                    ("canonical_request_version", ASCENDING),
+                ],
+                "name": "requested_services_v4_service_key_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
         ],
         "offers": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("request_id", ASCENDING)]],
         "offer_workspaces": [

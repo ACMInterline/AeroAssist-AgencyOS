@@ -448,3 +448,19 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - `/platform` continues to resolve to the Platform Overview and `/agency` continues to resolve to the Phase 58.2 Operations Command Centre after the existing onboarding check.
 - Specialist deep links remain valid in collapsed Advanced navigation; contextual tools remain owned by their existing primary workspaces.
 - No `/admin/*`, `/agent/*`, parallel workflow root, or direct frontend persistence path is introduced.
+
+## Canonical Request V4 Routes
+
+- Public intake: `POST /api/public/requests`.
+- Agency collection: `GET|POST /api/agencies/{agency_id}/requests`.
+- Agency detail: `GET /api/agencies/{agency_id}/requests/{request_id}`.
+- Aggregate edit: `PATCH /api/agencies/{agency_id}/requests/{request_id}`.
+- Compatibility rebuild: `POST /api/agencies/{agency_id}/requests/{request_id}/normalize`.
+- Existing `/api/public/request-intakes` and
+  `/api/agencies/{agency_id}/requests/builder` routes remain compatibility
+  adapters.
+
+V4 structural child routes reject independent writes. The existing explicit
+identity-confirmation route remains available. No `/admin/*`, `/agent/*`,
+parallel Request route root, anonymous operational mutation, or workspace-ID
+authorization boundary is introduced.

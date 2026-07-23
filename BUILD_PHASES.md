@@ -2610,3 +2610,21 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Adds source-level UX governance, terminology, navigation, route, permission, readiness, documentation, and safety-boundary validation.
 - Adds no model, collection, index, router, provider action, workflow automation, payment, ticket issuance, messaging, deployment, or production-data change.
 - See [Platform Information Architecture](docs/product/platform-information-architecture.md), [Agency Information Architecture](docs/product/agency-information-architecture.md), and [Navigation and Layout Standards](docs/product/navigation-and-layout-standards.md).
+
+## P1 Product Kernel Repair 4 - Canonical Request V4
+
+- Keeps the active marker at `phase_59_0_product_experience_recovery`; this is
+  a product-kernel repair, not a new roadmap phase.
+- Keeps `TravelRequest` and `travel_requests` as the sole Request owner.
+- Adds a strict typed `request_version: 4` aggregate and deterministic
+  projections into existing Request child collections.
+- Adds canonical public create, Agency create/detail/update, and projection
+  normalization behavior while retaining valid legacy routes as adapters.
+- Keeps public and staff-created travelers unresolved until explicit identity
+  confirmation; no ordinary Request write creates `PassengerProfile`.
+- Keeps legacy records readable, labels ambiguous records for manual
+  reconciliation, and supplies write-free migration analysis.
+- Adds focused disposable Request V4 regression coverage without provider,
+  booking, ticketing, payment, messaging, migration, or production behavior.
+- See [Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
+  and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).

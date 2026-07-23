@@ -480,3 +480,20 @@ partial string-only Agency/active-subject uniqueness, and Agency-first
 identity/subject/status lookups without dropping or mutating existing indexes.
 Platform-user identity uniqueness is partial for historical records, and
 membership identity lookup is additive.
+
+## P1 Product Kernel Repair 4 - Request V4
+
+| Model | Collection | Role |
+|---|---|---|
+| `TravelRequest` | `travel_requests` | Canonical Request owner with `request_version`, typed `canonical_payload`, and projection state |
+| `RequestIntake` | `request_intakes` | Pre-request intake/triage provenance; may hold a validated V4 payload before conversion |
+| `RequestPassenger` | `request_passengers` | Request-scoped unresolved or explicitly confirmed traveler projection |
+| `RequestSegment` | `request_segments` | Ordered intended-itinerary projection |
+| `PassengerServiceRequest` | `passenger_service_requests` | Canonical passenger-scoped service request |
+| `RequestedService` | `requested_services` | Compatibility aggregate generated from passenger service requests |
+| `RequestPet` | `request_pets` | Request-owned animal facts |
+| `RequestSpecialItem` | `request_special_items` | Request-owned special-item facts |
+| `TravelRequestWorkspace` | `travel_request_workspaces` | Existing compatibility family; not canonical Request truth |
+
+V4 child collections have additive Agency/request/local-ID indexes. No
+collection is renamed, dropped, migrated, or duplicated.

@@ -189,6 +189,7 @@ export default function RequestDetailPage({ requestId }) {
   const unresolvedPassengerCount = (state?.passengers || []).filter((passenger) => !passenger.passenger_id || ["unresolved", "source_quarantined"].includes(passenger.identity_status)).length
   const identitiesConfirmed = requestReady && unresolvedPassengerCount === 0
   const requestClosed = ["cancelled", "archived"].includes(state?.request?.status)
+  const isCanonicalV4 = state?.request?.request_version === 4
 
   if (!state) {
     return (
@@ -208,8 +209,12 @@ export default function RequestDetailPage({ requestId }) {
             title={state?.request?.title}
             description="The client’s requested journey and services. Flight details remain planned until a booking is confirmed."
             status={<RequestStatusBadge status={state?.request?.status} />}
-            actions={<SecondaryButton onClick={archiveOrRestore}>{state?.request?.status === "archived" ? "Restore request" : "Archive request"}</SecondaryButton>}
+            actions={<div className="flex flex-wrap gap-2">
+              {isCanonicalV4 ? <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/requests/new?edit_request_id=${encodeURIComponent(requestId)}`}>Edit request</a> : null}
+              <SecondaryButton onClick={archiveOrRestore}>{state?.request?.status === "archived" ? "Restore request" : "Archive request"}</SecondaryButton>
+            </div>}
           />
+          {isCanonicalV4 ? <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">Journey, traveler, assistance, animal, and special-item changes are kept together. Use Edit request to update this request safely.</p> : <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">This earlier request remains readable. Reconcile it before using the unified request editor.</p>}
           <WorkflowContinuityPanel
             breadcrumbs={[{ label: "Clients", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }, { label: "Requests", href: "/agency/requests" }]}
             currentLabel={state?.request?.request_reference || "Request"}
@@ -303,7 +308,7 @@ export default function RequestDetailPage({ requestId }) {
             <List items={state.case_flags} empty="Nothing needs attention" render={(item) => `${item.flag_label} · ${item.severity} · ${item.source}`} />
           </Panel>
           <Panel title="Passengers">
-            <form className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={addPassenger}>
+            {!isCanonicalV4 ? <form className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={addPassenger}>
               <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={forms.passenger_id} onChange={(event) => setField("passenger_id", event.target.value)}>
                 {state.agencyPassengers.map((passenger) => <option key={passenger.id} value={passenger.id}>{passenger.display_name}</option>)}
               </select>
@@ -312,7 +317,7 @@ export default function RequestDetailPage({ requestId }) {
                 {allowedRelationships.map((relationship) => <option key={relationship.id} value={relationship.id}>{relationship.relationship_type.replaceAll("_", " ")}</option>)}
               </select>
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add passenger</button>
-            </form>
+            </form> : null}
             {!state.passengers.length ? <p className="text-sm text-slate-500">No passengers linked yet</p> : null}
             <div className="space-y-3">
               {state.passengers.map((item) => {
@@ -371,21 +376,21 @@ export default function RequestDetailPage({ requestId }) {
             </div>
           </Panel>
           <Panel title="Intended itinerary">
-            <form className="grid gap-3 md:grid-cols-[80px_1fr_1fr_auto]" onSubmit={addSegment}>
+            {!isCanonicalV4 ? <form className="grid gap-3 md:grid-cols-[80px_1fr_1fr_auto]" onSubmit={addSegment}>
               <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" type="number" value={forms.sequence} onChange={(event) => setField("sequence", event.target.value)} />
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Origin" value={forms.origin_text} onChange={(event) => setField("origin_text", event.target.value)} />
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Destination" value={forms.destination_text} onChange={(event) => setField("destination_text", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add segment</button>
-            </form>
+            </form> : null}
             <List items={state.segments} empty="No intended segments yet" render={(item) => `${item.sequence}. ${item.origin_text} to ${item.destination_text}${item.departure_date ? ` · ${item.departure_date}` : ""}${item.preferred_flight_number ? ` · ${item.preferred_flight_number}` : ""}${item.cabin_preference ? ` · ${item.cabin_preference}` : ""}`} />
           </Panel>
           <Panel title="Requested services">
-            <form className="grid gap-3 md:grid-cols-[120px_1fr_1fr_auto]" onSubmit={addService}>
+            {!isCanonicalV4 ? <form className="grid gap-3 md:grid-cols-[120px_1fr_1fr_auto]" onSubmit={addService}>
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Code" value={forms.service_code} onChange={(event) => setField("service_code", event.target.value)} />
               <input required className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Service name" value={forms.service_name} onChange={(event) => setField("service_name", event.target.value)} />
               <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Category" value={forms.service_category} onChange={(event) => setField("service_category", event.target.value)} />
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add service</button>
-            </form>
+            </form> : null}
             <List items={state.services} empty="No services requested yet" render={(item) => `${item.service_code} · ${item.service_name} · ${item.status.replaceAll("_", " ")}${item.detail_payload && Object.keys(item.detail_payload).length ? ` · ${detailSummary(item.service_category, item.detail_payload)}` : ""}`} />
           </Panel>
           <Panel title="Services by passenger and flight">
@@ -413,12 +418,14 @@ export default function RequestDetailPage({ requestId }) {
               }} />
             </Panel>
           </section>
-          <details className="rounded-lg border border-slate-200 bg-white p-5">
-            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Advanced source details</summary>
-            <div className="mt-4">
-              {Object.keys(state.request?.builder_payload_snapshot || {}).length ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.builder_payload_snapshot, null, 2)}</pre> : state.request?.intake_payload_snapshot ? <pre className="overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100">{JSON.stringify(state.request.intake_payload_snapshot, null, 2)}</pre> : <EmptyState title="No original request details" body="Older requests may not include the original submitted details." />}
-            </div>
-          </details>
+          <Panel title="Advanced source details">
+            <InfoCard title="Record details" rows={[
+              ["Request format", isCanonicalV4 ? "Unified request" : "Earlier request"],
+              ["Source", state.request?.source?.replaceAll("_", " ") || "Unknown"],
+              ["Passenger identity", unresolvedPassengerCount ? `${unresolvedPassengerCount} awaiting confirmation` : "Confirmed"],
+              ["Compatibility", isCanonicalV4 ? "Operational views synchronized" : "Manual reconciliation required"],
+            ]} />
+          </Panel>
           <section className="grid gap-4 lg:grid-cols-2">
             <Panel title="Messages">
               <form className="flex gap-2" onSubmit={addMessage}>
