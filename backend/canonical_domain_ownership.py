@@ -294,6 +294,7 @@ AUDIT_WRITE_OWNERS: tuple[str, ...] = (
     "backend/services/airline_master_profile_intelligence_service.py",
     "backend/services/airline_policy_evidence_governance_service.py",
     "backend/services/airline_service_coverage_gap_service.py",
+    "backend/services/canonical_commercial_lifecycle_service.py",
     "backend/services/canonical_journey_itinerary_service.py",
     "backend/services/commercial_pilot_readiness_service.py",
     "backend/services/document_workspace_service.py",
@@ -839,7 +840,10 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         required_adapters=("Route legacy offer screens and Phase 41.5 metadata views through OfferWorkspace projections.",),
         reconciliation_requirements=("Reconcile request/trip/client IDs, options, pricing lines, status, and accepted snapshot linkage.",),
         removal_criteria=("No independent writes to offers or offer_workspaces_v2 and all acceptances reference OfferWorkspace.",),
-        blockers=("Three independently writable offer families remain active.",),
+        blockers=(
+            "Historical legacy Offer and Phase 41.5 OfferWorkspaceV2 records still require per-agency reconciliation.",
+            "Compatibility writers remain available only for records not yet linked to canonical OfferWorkspace; normal Agency UI writes the canonical aggregate.",
+        ),
         workspace_owner_justification="Phase 36.1 OfferWorkspace is the governed mutable offer aggregate; its workspace name does not make it a generic operational shell.",
     ),
     _domain(
@@ -892,7 +896,15 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         immutable_snapshots=("Embedded accepted_*_snapshot_json fields",),
         frontend_consumers=("frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx", "frontend/src/pages/portal/PortalOfferDetailPage.jsx"),
         migration_required=True,
-        blockers=("Persistence query metadata currently labels the mutable acceptance-status collection as an immutable snapshot.",),
+        reconciliation_requirements=(
+            "Identify historical accepted decisions without exact Offer/Option versions or immutable snapshot linkage.",
+        ),
+        removal_criteria=(
+            "Every active acceptance references an exact OfferWorkspace version, OfferOption version, and immutable snapshot.",
+        ),
+        blockers=(
+            "Historical acceptance records may predate exact version, idempotency, and immutable snapshot requirements.",
+        ),
         notes=("Acceptance status is mutable governance state; its accepted commercial payload fields are immutable evidence.",),
     ),
     _domain(
@@ -946,7 +958,10 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         reconciliation_requirements=("Reconcile trip_reference, client, request, passenger, segment, offer, booking, and document links.",),
         removal_criteria=("TripWorkspace is read-only/retired and all links use TripDossier.id.",),
         blockers=("TripWorkspace duplicates trip identity and status without a required TripDossier link.",),
-        notes=("Request-to-trip conversion must remain explicit; a request ID is never a trip ID.",),
+        notes=(
+            "Request-to-trip conversion is planning-only before accepted evidence; a request ID is never a trip ID.",
+            "Normal confirmed Trips require TripAcceptedOfferSnapshot. Manual, imported, historical, and after-sales exceptions require explicit mode, source, reason, actor, and audit evidence.",
+        ),
     ),
     _domain(
         domain_key="booking_pnr",
@@ -968,7 +983,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             _artifact("collection", "bookings", "backend/database.py", "compatibility_writer"),
             _artifact("service", "BookingWorkspaceService", "backend/services/booking_workspace_service.py", "canonical_write_owner"),
             _artifact("router", "booking workspace routes", "backend/routers/agency_booking_workspaces.py", "operational_workspace", symbol="router"),
-            _artifact("router", "legacy booking routes", "backend/routers/bookings.py", "compatibility_writer", symbol="router"),
+            _artifact("router", "legacy booking routes", "backend/routers/bookings.py", "compatibility_projection", symbol="router"),
         ),
         operational_workspaces=("BookingWorkspace",),
         frontend_consumers=(
@@ -976,12 +991,15 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             "frontend/src/pages/agency/BookingWorkspaceDetailPage.jsx",
             "frontend/src/pages/agency/BookingsPage.jsx",
         ),
-        compatibility_writers=("Booking", "bookings"),
+        compatibility_writers=("Booking", "bookings", "backend/routers/finance.py:legacy booking financial summary"),
         migration_required=True,
         required_adapters=("Keep BookingWorkspace as workflow context and project legacy Booking from BookingRecord.",),
         reconciliation_requirements=("Reconcile booking reference, PNR, trip, accepted snapshot, passengers, segments, and status.",),
         removal_criteria=("Legacy /bookings mutations no longer write bookings and every workspace points to BookingRecord.",),
-        blockers=("Legacy Booking and canonical BookingRecord both accept booking state.",),
+        blockers=(
+            "Historical Booking records and finance-linked summaries still require reconciliation to BookingRecord.",
+            "Phase 41.6 BookingWorkspace metadata created before governed result evidence may contain ambiguous booked-like status.",
+        ),
         workspace_owner_justification="BookingWorkspace holds readiness, mapping, warnings, and manual workflow around the BookingRecord result.",
     ),
     _domain(
@@ -1013,7 +1031,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         canonical_service="backend/services/ticket_emd_service.py",
         canonical_route_family="/api/agencies/{agency_id}/tickets",
         lifecycle_role="ticket document mirror",
-        current_write_owners=("backend/routers/bookings.py", SEED_WRITER, "backend/services/ticket_emd_service.py"),
+        current_write_owners=(SEED_WRITER, "backend/services/ticket_emd_service.py"),
         target_write_owner="TicketRecord",
         tenant_contract=_tenant(portal_visibility="client_safe_ticket_projection"),
         artifacts=(
@@ -1024,7 +1042,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             _artifact("service", "TicketEmdService", "backend/services/ticket_emd_service.py", "canonical_write_owner"),
             _artifact("service", "TicketWorkspaceService", "backend/services/ticket_workspace_service.py", "compatibility_writer"),
             _artifact("router", "canonical ticket routes", "backend/routers/agency_ticket_emd.py", "canonical_write_owner", symbol="router"),
-            _artifact("router", "legacy booking ticket routes", "backend/routers/bookings.py", "compatibility_writer", symbol="create_ticket"),
+            _artifact("router", "legacy booking ticket routes", "backend/routers/bookings.py", "compatibility_projection", symbol="create_ticket"),
             _artifact("service", "seed_service", SEED_WRITER, "demo_or_test_only"),
         ),
         frontend_consumers=(
@@ -1032,7 +1050,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             "frontend/src/pages/agency/TicketDetailPage.jsx",
             "frontend/src/pages/agency/TicketWorkspaceMetadataPage.jsx",
         ),
-        compatibility_writers=("TicketWorkspace", "ticket_workspaces", "backend/routers/bookings.py:create_ticket"),
+        compatibility_writers=("TicketWorkspace", "ticket_workspaces"),
         migration_required=True,
         demo_or_test_writers=(SEED_WRITER,),
         reconciliation_requirements=("Reconcile ticket number, booking, passenger, coupons, pricing, status, and exchange links.",),
@@ -1066,7 +1084,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         canonical_service="backend/services/ticket_emd_service.py",
         canonical_route_family="/api/agencies/{agency_id}/emds",
         lifecycle_role="ancillary document mirror",
-        current_write_owners=("backend/routers/bookings.py", SEED_WRITER, "backend/services/ticket_emd_service.py"),
+        current_write_owners=(SEED_WRITER, "backend/services/ticket_emd_service.py"),
         target_write_owner="EMDRecord",
         tenant_contract=_tenant(portal_visibility="client_safe_emd_projection"),
         artifacts=(
@@ -1077,7 +1095,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             _artifact("service", "TicketEmdService", "backend/services/ticket_emd_service.py", "canonical_write_owner"),
             _artifact("service", "EmdWorkspaceService", "backend/services/emd_workspace_service.py", "compatibility_writer"),
             _artifact("router", "canonical EMD routes", "backend/routers/agency_ticket_emd.py", "canonical_write_owner", symbol="list_emds"),
-            _artifact("router", "legacy booking EMD routes", "backend/routers/bookings.py", "compatibility_writer", symbol="create_emd"),
+            _artifact("router", "legacy booking EMD routes", "backend/routers/bookings.py", "compatibility_projection", symbol="create_emd"),
             _artifact("service", "seed_service", SEED_WRITER, "demo_or_test_only"),
         ),
         frontend_consumers=(
@@ -1085,7 +1103,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
             "frontend/src/pages/agency/EmdDetailPage.jsx",
             "frontend/src/pages/agency/EmdWorkspaceMetadataPage.jsx",
         ),
-        compatibility_writers=("EmdWorkspace", "emd_workspaces", "backend/routers/bookings.py:create_emd"),
+        compatibility_writers=("EmdWorkspace", "emd_workspaces"),
         migration_required=True,
         demo_or_test_writers=(SEED_WRITER,),
         reconciliation_requirements=("Reconcile EMD number, ticket/booking/passenger, coupons, RFIC/RFISC, value, and status.",),
@@ -1326,6 +1344,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         canonical_route_family="/api/agencies/{agency_id}/operational-timelines",
         lifecycle_role="cross-domain chronological operational history",
         current_write_owners=(
+            "backend/services/canonical_commercial_lifecycle_service.py",
             "backend/services/offer_delivery_client_interaction_service.py",
             "backend/services/operational_sla_deadline_service.py",
             "backend/services/timeline_workspace_service.py",

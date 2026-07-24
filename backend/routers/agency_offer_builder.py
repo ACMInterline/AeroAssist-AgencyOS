@@ -13,8 +13,10 @@ from models import (
     OfferPricingLineCreate,
     OfferRecommendationRequest,
     OfferWorkspaceCreate,
+    OfferWorkspaceTransitionRequest,
     OfferWorkspaceUpdate,
 )
+from services.canonical_commercial_lifecycle_service import CommercialLifecycleError
 from services.offer_builder_service import OfferBuilderService
 from services.offer_comparison_service import OfferComparisonService
 from services.authorization_service import (
@@ -22,15 +24,18 @@ from services.authorization_service import (
     require_commercial_field_permissions,
     require_permission,
 )
+from services.tenant_service import assert_agency_access
 
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["agency-offer-builder"])
 
 async def require_read(_db: Database, _agency_id: str, user: dict) -> None:
+    await assert_agency_access(_db, _agency_id, user)
     require_permission(user, "view_offers")
 
 
 async def require_write(_db: Database, _agency_id: str, user: dict) -> None:
+    await assert_agency_access(_db, _agency_id, user)
     require_permission(user, "edit_offers")
 
 
@@ -73,6 +78,13 @@ def bad_request(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 
+def lifecycle_conflict(exc: CommercialLifecycleError) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail={"code": exc.code, "message": str(exc)},
+    )
+
+
 @router.get("/offer-workspaces")
 async def list_offer_workspaces(
     agency_id: str,
@@ -99,6 +111,8 @@ async def create_offer_workspace(
     service = offer_builder_service(db, user)
     try:
         workspace = await service.create_workspace(agency_id, payload, user.get("id"))
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     except ValueError as exc:
         raise bad_request(str(exc)) from exc
     return {"workspace": workspace}
@@ -131,11 +145,38 @@ async def update_offer_workspace(
     service = offer_builder_service(db, user)
     try:
         workspace = await service.update_workspace(agency_id, workspace_id, payload, user.get("id"))
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     except ValueError as exc:
         raise bad_request(str(exc)) from exc
     if workspace is None:
         raise not_found("Offer workspace not found.")
     return {"workspace": workspace}
+
+
+@router.post("/offer-workspaces/{workspace_id}/deliver")
+async def deliver_offer_workspace(
+    agency_id: str,
+    workspace_id: str,
+    payload: OfferWorkspaceTransitionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    service = offer_builder_service(db, user)
+    try:
+        workspace = await service.deliver_workspace(
+            agency_id, workspace_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
+    if workspace is None:
+        raise not_found("Offer workspace not found.")
+    return {
+        "workspace": workspace,
+        "delivery_recorded": True,
+        "communication_sent": False,
+    }
 
 
 @router.post("/requests/{request_id}/offer-workspace", status_code=status.HTTP_201_CREATED)
@@ -178,7 +219,12 @@ async def create_offer_option(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    option = await service.create_option(agency_id, workspace_id, payload, user.get("id"))
+    try:
+        option = await service.create_option(
+            agency_id, workspace_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if option is None:
         raise not_found("Offer workspace not found.")
     return {"option": option}
@@ -194,7 +240,12 @@ async def update_offer_option(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    option = await service.update_option(agency_id, option_id, payload, user.get("id"))
+    try:
+        option = await service.update_option(
+            agency_id, option_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if option is None:
         raise not_found("Offer option not found.")
     return {"option": option}
@@ -209,7 +260,10 @@ async def clone_offer_option(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    option = await service.clone_option(agency_id, option_id, user.get("id"))
+    try:
+        option = await service.clone_option(agency_id, option_id, user.get("id"))
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if option is None:
         raise not_found("Offer option not found.")
     return {"option": option}
@@ -224,7 +278,12 @@ async def evaluate_offer_option_rules(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    result = await service.evaluate_option_rules(agency_id, option_id, user.get("id"))
+    try:
+        result = await service.evaluate_option_rules(
+            agency_id, option_id, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if result is None:
         raise not_found("Offer option not found.")
     return result
@@ -239,7 +298,12 @@ async def recalculate_offer_option_pricing(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    result = await service.recalculate_option_pricing(agency_id, option_id, user.get("id"))
+    try:
+        result = await service.recalculate_option_pricing(
+            agency_id, option_id, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if result is None:
         raise not_found("Offer option not found.")
     return result
@@ -255,7 +319,12 @@ async def add_offer_option_segment(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    segment = await service.add_segment(agency_id, option_id, payload, user.get("id"))
+    try:
+        segment = await service.add_segment(
+            agency_id, option_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if segment is None:
         raise not_found("Offer option not found.")
     return {"segment": segment}
@@ -271,7 +340,12 @@ async def add_offer_option_fare_bundle(
 ) -> dict:
     await require_write(db, agency_id, user)
     service = offer_builder_service(db, user)
-    fare_bundle = await service.add_fare_bundle(agency_id, option_id, payload, user.get("id"))
+    try:
+        fare_bundle = await service.add_fare_bundle(
+            agency_id, option_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if fare_bundle is None:
         raise not_found("Offer option not found.")
     return {"fare_bundle": fare_bundle}
@@ -288,7 +362,12 @@ async def add_offer_option_pricing_line(
     await require_write(db, agency_id, user)
     require_commercial_field_permissions(payload.model_dump(mode="json"), user)
     service = offer_builder_service(db, user)
-    pricing_line = await service.add_pricing_line(agency_id, option_id, payload, user.get("id"))
+    try:
+        pricing_line = await service.add_pricing_line(
+            agency_id, option_id, payload, user.get("id")
+        )
+    except CommercialLifecycleError as exc:
+        raise lifecycle_conflict(exc) from exc
     if pricing_line is None:
         raise not_found("Offer option not found.")
     return {"pricing_line": pricing_line}

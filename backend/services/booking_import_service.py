@@ -11,6 +11,7 @@ from models import (
     BookingImportDraftImportRequest,
     BookingImportDraftSourceType,
     BookingImportParserStatus,
+    BookingRecordUpdate,
     BookingSourceContext,
     EmdSourceContext,
     ManualBookingWorkspaceCreate,
@@ -110,13 +111,58 @@ class BookingImportService:
             source_context=source_context,
             import_draft_id=draft_id,
         )
-        booking_result = await BookingWorkspaceService(self.db).create_manual_booking_workspace(
+        booking_service = BookingWorkspaceService(self.db)
+        booking_result = await booking_service.create_manual_booking_workspace(
             agency_id,
             manual_payload,
             user,
         )
         workspace = booking_result.get("booking_workspace") or {}
         record = booking_result.get("booking_record") or {}
+        imported_artifacts_requested = bool(
+            (payload.create_ticket_mirrors and parsed.get("ticket_numbers"))
+            or (payload.create_emd_mirrors and parsed.get("emd_numbers"))
+        )
+        if record and imported_artifacts_requested and not parsed.get("record_locator"):
+            raise BookingImportError(
+                "Imported Ticket or EMD mirrors require a reviewed booking record locator."
+            )
+        if record and parsed.get("record_locator"):
+            await booking_service.update_booking_workspace_status(
+                agency_id,
+                workspace["id"],
+                "ready_to_book",
+                user,
+                "Reviewed imported booking metadata before confirmation.",
+            )
+            await booking_service.update_booking_workspace_status(
+                agency_id,
+                workspace["id"],
+                "booking_in_progress",
+                user,
+                "Human operator began imported booking reconciliation.",
+            )
+            confirmed_booking = await booking_service.update_booking_record(
+                agency_id,
+                record["id"],
+                BookingRecordUpdate(
+                    pnr_locator=parsed["record_locator"],
+                    provider_status="confirmed",
+                    booking_status="confirmed",
+                    source_evidence_reference=f"booking-import:{draft_id}",
+                    source_evidence_json={
+                        "import_draft_id": draft_id,
+                        "source_type": draft.get("source_type"),
+                        "parser_status": draft.get("parser_status"),
+                        "operator_reviewed": True,
+                    },
+                    expected_version=record.get("current_external_result_version"),
+                    reason="Recorded a reviewed imported booking result.",
+                ),
+                user,
+            )
+            workspace = (confirmed_booking or {}).get("booking_workspace") or workspace
+            record = (confirmed_booking or {}).get("booking_record") or record
 
         ticket_ids: list[str] = []
         if payload.create_ticket_mirrors:

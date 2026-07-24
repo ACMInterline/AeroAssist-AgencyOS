@@ -16,15 +16,18 @@ from services.journey_option_fare_brand_composition_service import (
     JourneyOptionCompositionError,
     JourneyOptionFareBrandCompositionService,
 )
+from services.tenant_service import assert_agency_access
 
 
 router = APIRouter(prefix="/api/agencies/{agency_id}/journey-option-compositions", tags=["agency-journey-option-compositions"])
 
 async def require_read(_db: Database, _agency_id: str, user: dict) -> None:
+    await assert_agency_access(_db, _agency_id, user)
     require_permission(user, "view_offers")
 
 
 async def require_write(_db: Database, _agency_id: str, user: dict) -> None:
+    await assert_agency_access(_db, _agency_id, user)
     require_permission(user, "edit_offers")
 
 

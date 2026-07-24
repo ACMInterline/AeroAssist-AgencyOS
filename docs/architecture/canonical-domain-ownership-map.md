@@ -65,15 +65,18 @@ The target lifecycle is:
 DocumentWorkspace / OperationalWorkItem / OperationalTimeline -> authorized
 portal projections`
 
-The request remains the intake/audit origin. Trip creation is explicit and
-uses an independent ID. Accepted commercial evidence is immutable. Booking
+The request remains the intake/audit origin. A normal confirmed Trip uses an
+independent ID and is created from immutable accepted Offer evidence.
+Request-to-Trip conversion is planning-only before acceptance. Booking
 workspaces coordinate work but do not own PNR truth. Portal views are
 authorized projections, not owners.
 
-Current conflicts include premature or parallel `TripWorkspace` creation,
-three mutable Offer families, legacy `Booking` beside `BookingRecord`,
-ticket/EMD metadata workspaces duplicating document state, downstream paths
-that can still read mutable offers, and fragmented messages/timelines.
+P1 Product Kernel Repair 6 makes OfferWorkspace the normal Agency UI write
+target, requires exact Offer/Option versions for acceptance, creates one
+hashed accepted snapshot and one linked Trip idempotently, requires governed
+BookingRecord evidence before booked state, and enforces Booking lineage for
+normal Ticket/EMD creation. Historical Offer, TripWorkspace, Booking,
+TicketWorkspace, and EmdWorkspace records remain migration debt.
 
 ## Domain Map
 
@@ -353,3 +356,16 @@ existing stable domain keys rather than creating duplicate collections.
 `PassengerProfile`, `TravelRequest`, and `RequestPassenger` retain operational
 truth and store reference IDs with historical code/label snapshots. Agency
 scope is a visibility constraint, never a replacement ownership boundary.
+
+## P1 Product Kernel Repair 6 - Commercial Lifecycle
+
+The enforced normal flow is `TravelRequest -> OfferWorkspace -> OfferOption ->
+OfferAcceptance -> TripAcceptedOfferSnapshot -> TripDossier ->
+OfferBookingHandoff -> BookingRecord -> TicketRecord / EMDRecord`.
+OfferWorkspace and OfferOption own mutable commercial preparation; accepted
+evidence is create-only. BookingWorkspace owns preparation only, while
+BookingRecord owns an evidenced PNR/result. Legacy Offer and Booking routes
+remain readable compatibility surfaces and cannot overwrite linked canonical
+truth. Migration remains required for historical parallel records. See
+[Canonical Commercial Lifecycle Contract](canonical-commercial-lifecycle-contract.md)
+and [Commercial Lifecycle Compatibility And Migration](commercial-lifecycle-compatibility-and-migration.md).

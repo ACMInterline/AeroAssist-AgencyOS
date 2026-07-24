@@ -2649,3 +2649,27 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
   messaging, production, deployment, commit, or push action.
 - See [Canonical Reference Data Contract](docs/architecture/canonical-reference-data-contract.md)
   and [Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md).
+
+## P1 Product Kernel Repair 6 - Canonical Commercial Lifecycle Reconciliation
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  kernel repair, not a new roadmap phase.
+- Makes `OfferWorkspace` and `OfferOption` the normal mutable commercial
+  owners, with request ownership, stable ordering, backend-derived totals,
+  versioning, delivery freeze, and supersession.
+- Requires exact-version idempotent acceptance and creates one immutable hashed
+  `TripAcceptedOfferSnapshot`.
+- Creates/confirms normal `TripDossier` only from accepted evidence; pre-offer
+  Request conversion remains planning-only and exceptions require source,
+  reason, actor, audit, and reconciliation metadata.
+- Separates BookingWorkspace preparation from evidenced BookingRecord PNR
+  truth and blocks false booked state.
+- Enforces BookingRecord lineage for normal Ticket/EMD records while preserving
+  governed standalone historical/import paths.
+- Keeps legacy records readable, disables legacy Booking mutations, blocks
+  linked legacy Offers from overwriting canonical truth, and adds bounded
+  dry-run-only reconciliation analysis.
+- Performs no provider booking, Ticket/EMD issuance, payment, production
+  migration, commit, push, or deployment.
+- See [Canonical Commercial Lifecycle Contract](docs/architecture/canonical-commercial-lifecycle-contract.md)
+  and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).

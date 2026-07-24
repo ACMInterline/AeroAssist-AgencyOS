@@ -169,7 +169,23 @@ def create_priced_option(agency_id: str, workspace_id: str) -> dict:
         )
     post(f"/api/agencies/{agency_id}/offer-options/{option_id}/recalculate-pricing", {}, OWNER_HEADERS)
     post(f"/api/agencies/{agency_id}/offer-options/{option_id}/evaluate-rules", {}, OWNER_HEADERS)
-    return option
+    before_delivery = get(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}",
+        OWNER_HEADERS,
+    )
+    post(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/deliver",
+        {
+            "expected_version": before_delivery["workspace"]["version"],
+            "reason": "Acceptance foundation smoke delivery.",
+        },
+        OWNER_HEADERS,
+    )
+    delivered = get(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}",
+        OWNER_HEADERS,
+    )
+    return next(item for item in delivered["options"] if item["id"] == option_id)
 
 
 def main() -> int:
@@ -231,7 +247,13 @@ def main() -> int:
 
     accepted = post(
         f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/options/{option_id}/accept",
-        {"acceptance_source": "internal", "provider_target": "manual"},
+        {
+            "acceptance_source": "internal",
+            "offer_version": option["offer_workspace_version"],
+            "option_version": option["version"],
+            "acceptance_terms_version": "acceptance-smoke-v1",
+            "provider_target": "manual",
+        },
         OWNER_HEADERS,
         201,
     )
@@ -272,30 +294,39 @@ def main() -> int:
     if rebuilt.get("booking_readiness", {}).get("acceptance_id") != acceptance["id"]:
         raise AssertionError("Booking readiness rebuild did not return the acceptance package.")
 
-    clone = post(f"/api/agencies/{agency_id}/offer-options/{option_id}/clone", {}, OWNER_HEADERS, 201)["option"]
-    second_acceptance = post(
-        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/options/{clone['id']}/accept",
-        {"acceptance_source": "manual", "provider_target": "manual"},
+    retry = post(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/options/{option_id}/accept",
+        {
+            "acceptance_source": "internal",
+            "offer_version": option["offer_workspace_version"],
+            "option_version": option["version"],
+            "acceptance_terms_version": "acceptance-smoke-v1",
+            "provider_target": "manual",
+        },
         OWNER_HEADERS,
         201,
-    )["acceptance"]
+    )
+    if retry.get("acceptance", {}).get("id") != acceptance["id"] or retry.get("idempotent_reused") is not True:
+        raise AssertionError("Duplicate exact-version acceptance was not idempotently reused.")
     history = (
         get(f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/acceptance", OWNER_HEADERS).get("history")
         or []
     )
-    previous = [item for item in history if item["id"] == acceptance["id"]]
-    if not previous or previous[0].get("status") != "superseded":
-        raise AssertionError("Previous accepted offer was not superseded safely.")
+    if len([item for item in history if item["id"] == acceptance["id"]]) != 1:
+        raise AssertionError("Idempotent acceptance retry created duplicate history.")
 
     cancelled = post(
-        f"/api/agencies/{agency_id}/offer-acceptances/{second_acceptance['id']}/cancel",
+        f"/api/agencies/{agency_id}/offer-acceptances/{acceptance['id']}/cancel",
         {},
         OWNER_HEADERS,
     )
-    if cancelled.get("acceptance", {}).get("status") != "cancelled":
-        raise AssertionError("Cancellation did not mark acceptance cancelled.")
+    if cancelled.get("acceptance", {}).get("status") != "revoked":
+        raise AssertionError("Revocation did not mark acceptance revoked.")
     if cancelled.get("booking_readiness", {}).get("status") != "cancelled":
-        raise AssertionError("Cancellation did not mark linked readiness package cancelled.")
+        raise AssertionError("Revocation did not cancel the unused readiness package.")
+    preserved = get(f"/api/agencies/{agency_id}/trips/{trip_id}/accepted-offer", OWNER_HEADERS)
+    if preserved.get("accepted_offer", {}).get("id") != accepted["trip_snapshot"]["id"]:
+        raise AssertionError("Revocation did not preserve immutable accepted evidence.")
 
     print("Offer acceptance and booking readiness smoke passed.")
     return 0

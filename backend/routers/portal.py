@@ -987,6 +987,23 @@ async def offer_detail(offer_id: str, ctx: dict = Depends(portal_context), db: D
 
 async def submit_offer_decision(offer_id: str, decision: str, payload: PortalOfferDecisionSubmit, ctx: dict, db: Database) -> dict:
     offer = await visible_offer_or_404(db, ctx, offer_id)
+    canonical_offer = None
+    if offer.get("request_id"):
+        canonical_offer = await db.collection("offer_workspaces").find_one(
+            {
+                "agency_id": ctx["account"]["agency_id"],
+                "request_id": offer["request_id"],
+            }
+        )
+    if canonical_offer:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This legacy Offer is read-only because a canonical OfferWorkspace "
+                "owns the commercial lifecycle. Use the subject-scoped released "
+                "offer delivery decision workflow."
+            ),
+        )
     if offer.get("status") in {"withdrawn", "expired", "archived"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This offer is no longer open for a portal decision.")
     if offer.get("status") in {"accepted", "rejected"}:

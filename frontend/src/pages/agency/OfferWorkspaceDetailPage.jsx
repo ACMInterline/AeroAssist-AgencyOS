@@ -3,6 +3,7 @@ import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2.js"
 import Columns3 from "lucide-react/dist/esm/icons/columns-3.js"
 import Copy from "lucide-react/dist/esm/icons/copy.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
+import Send from "lucide-react/dist/esm/icons/send.js"
 import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
 import OfferDeliveryPanel from "../../components/offers/OfferDeliveryPanel"
 import EmptyState from "../../components/EmptyState"
@@ -85,18 +86,42 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
     await load()
   }
 
-  async function acceptOption(optionId) {
+  async function deliverOffer() {
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/deliver`, {
+        expected_version: state.workspace.version,
+        reason: "Reviewed by agency operator and ready for client decision.",
+      })
+      setMessage("Offer marked delivered. No message or provider action was sent.")
+      await load()
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  async function acceptOption(option) {
     setError("")
     setMessage("")
     try {
       await apiPost(
-        `/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/options/${optionId}/accept`,
+        `/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/options/${option.id}/accept`,
         {
           acceptance_source: "internal",
           provider_target: "manual",
+          offer_version: state.workspace.version,
+          option_version: option.version,
+          acceptance_terms_version: `agency-offer-v${state.workspace.version}`,
+          channel: "agency_staff",
+          consent_evidence_json: {
+            confirmation: "Agency operator confirmed the client decision.",
+            offer_version: state.workspace.version,
+            option_version: option.version,
+          },
         },
       )
-      setMessage("Offer option accepted. Trip snapshot and booking readiness were refreshed.")
+      setMessage("Offer accepted. Immutable evidence was created before the confirmed Trip and booking readiness package.")
       await load()
     } catch (err) {
       setError(err.message)
@@ -109,6 +134,10 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
     await load()
   }
 
+  const workspaceStatus = state?.workspace?.status
+  const isFrozen = ["delivered", "shared", "accepted", "declined", "expired", "superseded", "cancelled", "archived"].includes(workspaceStatus)
+  const isDelivered = ["delivered", "shared"].includes(workspaceStatus)
+
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
       <ProtectedRoute loading={!state && !error} error={error}>
@@ -117,7 +146,7 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <a className="text-sm font-medium text-blue-700" href="/agency/offers">Back to offers</a>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.workspace?.status?.replaceAll("_", " ")} · {state?.workspace?.currency}</p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.workspace?.status?.replaceAll("_", " ")} · Offer v{state?.workspace?.version || 1} · {state?.workspace?.currency}</p>
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{state?.workspace?.title}</h2>
                 <p className="mt-1 text-sm text-slate-600">{contextLabel(state)}</p>
               </div>
@@ -129,6 +158,10 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
                   <Copy className="h-4 w-4" />
                   Snapshot
                 </button>
+                {!isFrozen ? <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={deliverOffer} disabled={!state?.options?.length}>
+                  <Send className="h-4 w-4" />
+                  Deliver
+                </button> : null}
                 <a className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" href={`/agency/offers/${workspaceId}/builder`}>
                   <Wand2 className="h-4 w-4" />
                   Builder
@@ -150,6 +183,7 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
           />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
+          <LifecycleBanner status={workspaceStatus} frozen={isFrozen} delivered={isDelivered} />
 
           <OfferLifecycleNavigation workspaceId={workspaceId} active={section} />
 
@@ -181,7 +215,7 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
                   {["manual", "travelport", "amadeus", "ndc", "supplier", "other"].map((value) => <option value={value} key={value}>{value}</option>)}
                 </select>
               </Field>
-              <button className="aa-primary-action inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="submit">
+              <button className="aa-primary-action inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="submit" disabled={isFrozen}>
                 <Plus className="h-4 w-4" />
                 Add Option
               </button>
@@ -195,7 +229,9 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
                       option={option}
                       key={option.id}
                       acceptedOptionId={state.acceptance?.acceptance?.option_id}
-                      onAccept={() => acceptOption(option.id)}
+                      frozen={isFrozen}
+                      delivered={isDelivered}
+                      onAccept={() => acceptOption(option)}
                       onClone={() => cloneOption(option.id)}
                       onRecommend={() => recommendOption(option.id)}
                     />
@@ -261,9 +297,8 @@ function contextLabel(state) {
 function AcceptancePanel({ state }) {
   const acceptance = state?.acceptance?.acceptance
   const readiness = state?.acceptance?.booking_readiness
-  const history = state?.acceptance?.history || []
+  const snapshot = state?.acceptance?.trip_snapshot
   const bookingWorkspace = state?.bookingWorkspaces?.[0]
-  const superseded = history.filter((item) => item.status === "superseded").length
   if (!acceptance) {
     return (
       <section className="rounded-lg border border-dashed border-slate-300 bg-white p-5">
@@ -279,11 +314,7 @@ function AcceptancePanel({ state }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{acceptance.status}</p>
           <h3 className="mt-1 font-semibold text-slate-950">Accepted Offer</h3>
           <p className="mt-1 text-sm text-slate-600">{acceptance.client_visible_summary_json?.option_label || acceptance.option_id}</p>
-          {superseded ? (
-            <p className="mt-2 text-sm text-amber-700">
-              {superseded} previous acceptance was superseded for this workspace.
-            </p>
-          ) : null}
+          <p className="mt-2 text-sm text-slate-600">Offer v{acceptance.offer_version} · Option v{acceptance.option_version}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {acceptance.trip_id ? (
@@ -315,11 +346,12 @@ function AcceptancePanel({ state }) {
           ) : null}
         </div>
       </div>
+      {snapshot ? <ImmutableSummary snapshot={snapshot} /> : null}
     </section>
   )
 }
 
-function OptionCard({ option, acceptedOptionId, onAccept, onClone, onRecommend }) {
+function OptionCard({ option, acceptedOptionId, frozen, delivered, onAccept, onClone, onRecommend }) {
   const pricing = option.pricing_summary_json || {}
   const warnings = option.warnings_json || []
   const accepted = option.id === acceptedOptionId
@@ -330,7 +362,7 @@ function OptionCard({ option, acceptedOptionId, onAccept, onClone, onRecommend }
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {accepted ? "accepted" : option.status?.replaceAll("_", " ")} · {option.provider_name}
+            {accepted ? "accepted" : option.status?.replaceAll("_", " ")} · Option v{option.version || 1} · {option.provider_name}
           </p>
           <h3 className="mt-1 font-semibold text-slate-950">{option.label}</h3>
           <p className="mt-1 text-sm text-slate-600">{option.main_airline_code || "Airline pending"} · {option.option_type?.replaceAll("_", " ")}</p>
@@ -344,11 +376,11 @@ function OptionCard({ option, acceptedOptionId, onAccept, onClone, onRecommend }
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         <a className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" href={`/agency/offers/${option.workspace_id}/builder?option=${option.id}`}>Open</a>
-        <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClone}>
+        <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClone} disabled={frozen}>
           <Copy className="h-4 w-4" />
           Clone
         </button>
-        <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onRecommend}>
+        <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onRecommend} disabled={frozen}>
           <CheckCircle2 className="h-4 w-4" />
           Recommend
         </button>
@@ -356,13 +388,40 @@ function OptionCard({ option, acceptedOptionId, onAccept, onClone, onRecommend }
           className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold"
           type="button"
           onClick={onAccept}
-          disabled={accepted}
+          disabled={accepted || !delivered}
         >
           <CheckCircle2 className="h-4 w-4" />
           {accepted ? "Accepted" : "Accept"}
         </button>
       </div>
     </article>
+  )
+}
+
+function LifecycleBanner({ status, frozen, delivered }) {
+  const message = status === "accepted"
+    ? "Accepted evidence is frozen. Continue through the confirmed Trip and Booking Handoff."
+    : delivered
+      ? "This exact Offer version is delivered and frozen while it awaits a client decision."
+      : frozen
+        ? `This ${String(status || "offer").replaceAll("_", " ")} version is retained as read-only evidence.`
+        : "Prepare and review options, then explicitly deliver this Offer version before acceptance."
+  return <div className={`rounded-lg border p-4 text-sm ${frozen ? "border-blue-200 bg-blue-50 text-blue-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}><span className="font-semibold">Commercial lifecycle:</span> {message}</div>
+}
+
+function ImmutableSummary({ snapshot }) {
+  const pricing = snapshot.confirmed_pricing_json?.summary || snapshot.total_snapshot_json || {}
+  const segments = snapshot.confirmed_segments_json || []
+  const route = segments.length
+    ? segments.map((segment) => `${segment.origin_airport || segment.origin_airport_code || "TBD"}-${segment.destination_airport || segment.destination_airport_code || "TBD"}`).join(" / ")
+    : "No route recorded"
+  return (
+    <dl className="mt-4 grid gap-3 border-t border-emerald-100 pt-4 sm:grid-cols-4">
+      <ContextValue label="Frozen total" value={money(pricing.total_amount, snapshot.currency || pricing.currency)} />
+      <ContextValue label="Frozen route" value={route} />
+      <ContextValue label="Passengers" value={(snapshot.confirmed_passengers_json || []).length} />
+      <ContextValue label="Integrity" value={snapshot.source_hash ? `${snapshot.source_hash.slice(0, 12)}...` : "Unavailable"} />
+    </dl>
   )
 }
 

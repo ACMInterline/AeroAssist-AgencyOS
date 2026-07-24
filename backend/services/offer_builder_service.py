@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from database import Database
@@ -21,9 +21,20 @@ from models import (
     OfferRoutingOptionCreate,
     OfferWorkspace,
     OfferWorkspaceCreate,
+    OfferWorkspaceStatus,
+    OfferWorkspaceTransitionRequest,
     OfferWorkspaceUpdate,
     OperationalTimelineCreate,
+    new_id,
 )
+from services.canonical_commercial_lifecycle_service import (
+    CommercialLifecycleError,
+    FROZEN_OFFER_STATUSES,
+    canonical_status,
+    validate_lifecycle_transition,
+    write_lifecycle_evidence,
+)
+from services.canonical_reference_service import reference_snapshot, resolve_reference
 from services.exception_engine_service import ExceptionEngineService
 from services.rules_and_services_registry import normalize_code
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
@@ -156,9 +167,9 @@ class OfferBuilderService:
         options = sorted(
             options,
             key=lambda item: (
-                item.get("recommendation_rank") is None,
-                item.get("recommendation_rank") or 9999,
+                int(item.get("option_order") or 0),
                 str(item.get("created_at") or ""),
+                str(item.get("id") or ""),
             ),
         )
         option_ids = {option["id"] for option in options}
@@ -207,6 +218,25 @@ class OfferBuilderService:
             data["trip_id"] = request["trip_id"]
         if trip and not data.get("request_id") and trip.get("primary_request_id"):
             data["request_id"] = trip["primary_request_id"]
+        if not data.get("request_id"):
+            raise ValueError("Canonical OfferWorkspace requires a TravelRequest.")
+        currency_record, currency_state = await resolve_reference(
+            self.db,
+            "currencies",
+            reference_id=data.get("currency_reference_id"),
+            code=None if data.get("currency_reference_id") else data.get("currency"),
+            agency_id=agency_id,
+            allow_uninitialized_legacy=True,
+        )
+        if currency_record:
+            currency = reference_snapshot(currency_record)
+            data["currency"] = currency["code"]
+            data["currency_reference_id"] = currency["id"]
+            data["currency_label_snapshot"] = currency["label"]
+        else:
+            data["compatibility_metadata"] = {
+                "currency_resolution": currency_state,
+            }
         workspace = OfferWorkspace(
             agency_id=agency_id,
             created_by_user_id=actor_user_id,
@@ -214,6 +244,11 @@ class OfferBuilderService:
             **data,
         )
         created = await self.db.collection("offer_workspaces").insert_one(workspace.model_dump(mode="json"))
+        if not created.get("revision_root_id"):
+            created = await self.db.collection("offer_workspaces").update_one(
+                {"agency_id": agency_id, "id": created["id"]},
+                {"revision_root_id": created["id"]},
+            ) or created
         source_type = "trip" if created.get("trip_id") else "travel_request"
         source_id = created.get("trip_id") or created.get("request_id")
         transition = {
@@ -269,10 +304,84 @@ class OfferBuilderService:
         if workspace is None:
             return None
         updates = clean_update_payload(payload)
+        expected_version = updates.pop("expected_version", None)
+        revision_reason = updates.pop("revision_reason", None)
+        current_version = int(workspace.get("version") or 1)
+        if expected_version is not None and expected_version != current_version:
+            raise CommercialLifecycleError(
+                "Offer changed after it was opened. Refresh before updating.",
+                code="STALE_OFFER_VERSION",
+            )
         if updates.get("request_id") and await self.get_request_or_none(agency_id, updates["request_id"]) is None:
             raise ValueError("Request not found.")
         if updates.get("trip_id") and await self.get_trip_or_none(agency_id, updates["trip_id"]) is None:
             raise ValueError("Trip not found.")
+        if "currency" in updates or "currency_reference_id" in updates:
+            currency_record, currency_state = await resolve_reference(
+                self.db,
+                "currencies",
+                reference_id=updates.get("currency_reference_id"),
+                code=None if updates.get("currency_reference_id") else updates.get("currency"),
+                agency_id=agency_id,
+                allow_uninitialized_legacy=True,
+            )
+            if currency_record:
+                currency = reference_snapshot(currency_record)
+                updates["currency"] = currency["code"]
+                updates["currency_reference_id"] = currency["id"]
+                updates["currency_label_snapshot"] = currency["label"]
+            else:
+                updates["compatibility_metadata"] = {
+                    **(workspace.get("compatibility_metadata") or {}),
+                    "currency_resolution": currency_state,
+                }
+        material_fields = {
+            "request_id",
+            "client_profile_id",
+            "trip_id",
+            "offer_purpose",
+            "title",
+            "currency",
+            "currency_reference_id",
+            "expires_at",
+            "client_summary_json",
+        }
+        if canonical_status("offer", workspace.get("status")) in {
+            "delivered",
+            "accepted",
+            "declined",
+            "expired",
+            "superseded",
+            "cancelled",
+        } and material_fields.intersection(updates):
+            if not revision_reason:
+                raise CommercialLifecycleError(
+                    "Commercial edits to a delivered or accepted Offer require a governed revision reason.",
+                    code="OFFER_REVISION_REQUIRED",
+                )
+            return await self._create_workspace_revision(
+                agency_id,
+                workspace,
+                updates,
+                actor_user_id,
+                revision_reason,
+            )
+        previous_status = workspace.get("status")
+        if "status" in updates:
+            requested_status = canonical_status("offer", updates["status"])
+            if requested_status in {
+                "delivered",
+                "accepted",
+                "declined",
+                "expired",
+                "superseded",
+            }:
+                raise CommercialLifecycleError(
+                    "This Offer status requires its dedicated lifecycle action.",
+                    code="OFFER_DEDICATED_TRANSITION_REQUIRED",
+                )
+            validate_lifecycle_transition("offer", previous_status, updates["status"])
+        updates["version"] = current_version + 1
         updates["updated_by_user_id"] = actor_user_id
         updated = await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": workspace_id}, updates)
         await write_offer_builder_audit(
@@ -284,6 +393,112 @@ class OfferBuilderService:
             workspace_id,
             "Updated offer workspace.",
             {"fields": sorted(updates.keys())},
+        )
+        if "status" in updates:
+            await write_lifecycle_evidence(
+                self.db,
+                agency_id=agency_id,
+                actor_user_id=actor_user_id,
+                event_type="offer.lifecycle.transitioned",
+                entity_type="offer_workspace",
+                entity_id=workspace_id,
+                summary=f"Offer status changed to {updates['status']}.",
+                previous_status=previous_status,
+                next_status=updates["status"],
+                request_id=workspace.get("request_id"),
+                trip_id=workspace.get("trip_id"),
+            )
+        return updated
+
+    async def deliver_workspace(
+        self,
+        agency_id: str,
+        workspace_id: str,
+        payload: OfferWorkspaceTransitionRequest,
+        actor_user_id: str | None,
+    ) -> dict[str, Any] | None:
+        workspace = await self.get_workspace_or_none(agency_id, workspace_id)
+        if workspace is None:
+            return None
+        expected_version = payload.expected_version
+        current_version = int(workspace.get("version") or 1)
+        if expected_version is not None and expected_version != current_version:
+            raise CommercialLifecycleError(
+                "Offer changed after it was opened. Refresh before delivery.",
+                code="STALE_OFFER_VERSION",
+            )
+        if canonical_status("offer", workspace.get("status")) == "delivered":
+            return workspace
+        options = await self.db.collection("offer_options").find_many(
+            {"agency_id": agency_id, "workspace_id": workspace_id}
+        )
+        if not options:
+            raise CommercialLifecycleError(
+                "Offer cannot be delivered without at least one option.",
+                code="OFFER_OPTION_REQUIRED",
+            )
+        for option in options:
+            await self.recalculate_option_pricing(
+                agency_id, option["id"], actor_user_id
+            )
+            refreshed = await self.get_option_or_none(agency_id, option["id"])
+            if (refreshed or {}).get("pricing_summary_json", {}).get("total_amount") is None:
+                raise CommercialLifecycleError(
+                    "Every delivered option requires a server-derived total.",
+                    code="OFFER_TOTAL_REQUIRED",
+                )
+        previous_status = workspace.get("status")
+        normalized = canonical_status("offer", previous_status)
+        if normalized == "draft":
+            await self.db.collection("offer_workspaces").update_one(
+                {"agency_id": agency_id, "id": workspace_id},
+                {
+                    "status": OfferWorkspaceStatus.READY.value,
+                    "version": current_version + 1,
+                    "updated_by_user_id": actor_user_id,
+                },
+            )
+            current_version += 1
+            previous_status = OfferWorkspaceStatus.READY.value
+        validate_lifecycle_transition("offer", previous_status, "delivered")
+        delivered_at = datetime.now(timezone.utc)
+        updated = await self.db.collection("offer_workspaces").update_one(
+            {"agency_id": agency_id, "id": workspace_id},
+            {
+                "status": OfferWorkspaceStatus.DELIVERED.value,
+                "delivered_at": delivered_at,
+                "version": current_version + 1,
+                "updated_by_user_id": actor_user_id,
+            },
+        )
+        for option in options:
+            await self.db.collection("offer_options").update_one(
+                {"agency_id": agency_id, "id": option["id"]},
+                {"offer_workspace_version": current_version + 1},
+            )
+        await write_offer_builder_audit(
+            self.db,
+            agency_id,
+            actor_user_id,
+            "offer_workspace.delivered",
+            "offer_workspace",
+            workspace_id,
+            "Recorded Offer delivery readiness without sending a message.",
+            {"reason": payload.reason, "version": current_version + 1},
+        )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=actor_user_id,
+            event_type="offer.lifecycle.delivered",
+            entity_type="offer_workspace",
+            entity_id=workspace_id,
+            summary="Offer marked delivered; no communication was sent.",
+            previous_status=previous_status,
+            next_status="delivered",
+            request_id=workspace.get("request_id"),
+            trip_id=workspace.get("trip_id"),
+            metadata={"reason": payload.reason, "version": current_version + 1},
         )
         return updated
 
@@ -340,12 +555,41 @@ class OfferBuilderService:
         workspace = await self.get_workspace_or_none(agency_id, workspace_id)
         if workspace is None:
             return None
+        self._assert_workspace_mutable(workspace)
+        data = payload.model_dump(mode="json")
+        submitted_pricing = data.pop("pricing_summary_json", None)
+        if submitted_pricing:
+            data["source_payload_json"] = {
+                **(data.get("source_payload_json") or {}),
+                "submitted_pricing_summary": submitted_pricing,
+                "authoritative_pricing": False,
+            }
+        requested_order = data.pop("option_order", None)
+        existing_options = await self.db.collection("offer_options").find_many(
+            {"agency_id": agency_id, "workspace_id": workspace_id}
+        )
+        existing_orders = {
+            int(item.get("option_order") or index)
+            for index, item in enumerate(existing_options, start=1)
+        }
+        option_order = int(requested_order or (max(existing_orders, default=0) + 1))
+        if option_order in existing_orders:
+            raise CommercialLifecycleError(
+                "Option order must be unique within the Offer.",
+                code="DUPLICATE_OFFER_OPTION_ORDER",
+            )
         option = OfferOption(
             agency_id=agency_id,
             workspace_id=workspace_id,
+            offer_workspace_id=workspace_id,
+            offer_workspace_version=int(workspace.get("version") or 1),
+            option_order=option_order,
+            currency=workspace.get("currency") or "EUR",
             request_id=workspace.get("request_id"),
             trip_id=workspace.get("trip_id"),
-            **payload.model_dump(mode="json"),
+            created_by_user_id=actor_user_id,
+            updated_by_user_id=actor_user_id,
+            **data,
         )
         created = await self.db.collection("offer_options").insert_one(option.model_dump(mode="json"))
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": workspace_id}, {"updated_by_user_id": actor_user_id})
@@ -365,9 +609,33 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        workspace = await self.get_workspace_or_none(agency_id, option["workspace_id"])
+        if workspace is None:
+            raise CommercialLifecycleError(
+                "OfferOption has no same-Agency canonical OfferWorkspace.",
+                code="OFFER_OPTION_PARENT_MISSING",
+            )
+        self._assert_workspace_mutable(workspace)
         updates = clean_update_payload(payload)
+        expected_version = updates.pop("expected_version", None)
+        current_version = int(option.get("version") or 1)
+        if expected_version is not None and expected_version != current_version:
+            raise CommercialLifecycleError(
+                "Offer option changed after it was opened. Refresh before updating.",
+                code="STALE_OFFER_OPTION_VERSION",
+            )
+        submitted_pricing = updates.pop("pricing_summary_json", None)
+        if submitted_pricing is not None:
+            updates["source_payload_json"] = {
+                **(option.get("source_payload_json") or {}),
+                **(updates.get("source_payload_json") or {}),
+                "submitted_pricing_summary": submitted_pricing,
+                "authoritative_pricing": False,
+            }
         if not updates:
             return option
+        updates["version"] = current_version + 1
+        updates["updated_by_user_id"] = actor_user_id
         updated = await self.db.collection("offer_options").update_one({"agency_id": agency_id, "id": option_id}, updates)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         await write_offer_builder_audit(
@@ -386,6 +654,10 @@ class OfferBuilderService:
         source = await self.get_option_or_none(agency_id, option_id)
         if source is None:
             return None
+        workspace = await self.get_workspace_or_none(agency_id, source["workspace_id"])
+        if workspace is None:
+            return None
+        self._assert_workspace_mutable(workspace)
         clone_payload = {
             key: value
             for key, value in source.items()
@@ -401,6 +673,16 @@ class OfferBuilderService:
         clone_payload["status"] = OfferOptionStatus.DRAFT.value
         clone_payload["recommendation_rank"] = None
         clone_payload["recommendation_tag"] = None
+        option_orders = [
+            int(item.get("option_order") or 0)
+            for item in await self.db.collection("offer_options").find_many(
+                {"agency_id": agency_id, "workspace_id": source["workspace_id"]}
+            )
+        ]
+        clone_payload["option_order"] = max(option_orders, default=0) + 1
+        clone_payload["version"] = 1
+        clone_payload["created_by_user_id"] = actor_user_id
+        clone_payload["updated_by_user_id"] = actor_user_id
         clone = OfferOption(agency_id=agency_id, **clone_payload)
         created = await self.db.collection("offer_options").insert_one(clone.model_dump(mode="json"))
 
@@ -454,8 +736,12 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        self._assert_workspace_mutable(
+            await self.get_workspace_or_none(agency_id, option["workspace_id"]) or {}
+        )
         routing = OfferRoutingOption(agency_id=agency_id, option_id=option_id, **payload.model_dump(mode="json"))
         created = await self.db.collection("offer_routing_options").insert_one(routing.model_dump(mode="json"))
+        await self._touch_option_version(agency_id, option)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         return created
 
@@ -463,8 +749,12 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        self._assert_workspace_mutable(
+            await self.get_workspace_or_none(agency_id, option["workspace_id"]) or {}
+        )
         segment = OfferBuilderSegment(agency_id=agency_id, option_id=option_id, **payload.model_dump(mode="json"))
         created = await self.db.collection("offer_builder_segments").insert_one(segment.model_dump(mode="json"))
+        await self._touch_option_version(agency_id, option)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         await write_offer_builder_audit(
             self.db,
@@ -482,8 +772,12 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        self._assert_workspace_mutable(
+            await self.get_workspace_or_none(agency_id, option["workspace_id"]) or {}
+        )
         bundle = OfferFareBundle(agency_id=agency_id, option_id=option_id, **payload.model_dump(mode="json"))
         created = await self.db.collection("offer_fare_bundles").insert_one(bundle.model_dump(mode="json"))
+        await self._touch_option_version(agency_id, option)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         await write_offer_builder_audit(
             self.db,
@@ -501,8 +795,12 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        self._assert_workspace_mutable(
+            await self.get_workspace_or_none(agency_id, option["workspace_id"]) or {}
+        )
         line = OfferPricingLine(agency_id=agency_id, option_id=option_id, **payload.model_dump(mode="json"))
         created = await self.db.collection("offer_pricing_lines").insert_one(line.model_dump(mode="json"))
+        await self._touch_option_version(agency_id, option)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         await write_offer_builder_audit(
             self.db,
@@ -520,6 +818,8 @@ class OfferBuilderService:
         option = await self.get_option_or_none(agency_id, option_id)
         if option is None:
             return None
+        workspace = await self.get_workspace_or_none(agency_id, option["workspace_id"])
+        self._assert_workspace_mutable(workspace or {})
         lines = await self.db.collection("offer_pricing_lines").find_many({"agency_id": agency_id, "option_id": option_id})
         totals: dict[str, float] = {line_type.value: 0.0 for line_type in OfferBuilderPricingLineType}
         currency = option.get("currency") or (lines[0].get("currency") if lines else "EUR")
@@ -546,7 +846,36 @@ class OfferBuilderService:
             "discount_amount": round(totals.get(OfferBuilderPricingLineType.DISCOUNT.value, 0.0), 2),
             "recalculated_at": datetime.utcnow().isoformat(),
         }
-        updated = await self.db.collection("offer_options").update_one({"agency_id": agency_id, "id": option_id}, {"pricing_summary_json": pricing_summary})
+        updated = await self.db.collection("offer_options").update_one(
+            {"agency_id": agency_id, "id": option_id},
+            {
+                "pricing_summary_json": pricing_summary,
+                "airline_charge_snapshot_json": {
+                    key: round(value, 2)
+                    for key, value in totals.items()
+                    if key in {"base_fare", "surcharge", "ancillary"} and value
+                },
+                "agency_fee_snapshot_json": {
+                    "service_fee": round(
+                        totals.get(OfferBuilderPricingLineType.SERVICE_FEE.value, 0.0),
+                        2,
+                    )
+                },
+                "tax_snapshot_json": {
+                    "tax": round(
+                        totals.get(OfferBuilderPricingLineType.TAX.value, 0.0), 2
+                    )
+                },
+                "total_snapshot_json": {
+                    "total_amount": round(total, 2),
+                    "currency": currency or "EUR",
+                    "server_derived": True,
+                },
+                "currency": currency or "EUR",
+                "version": int(option.get("version") or 1) + 1,
+                "updated_by_user_id": actor_user_id,
+            },
+        )
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})
         await write_offer_builder_audit(
             self.db,
@@ -559,6 +888,146 @@ class OfferBuilderService:
             pricing_summary,
         )
         return {"option": updated, "pricing_summary": pricing_summary, "pricing_lines": lines}
+
+    def _assert_workspace_mutable(self, workspace: dict[str, Any]) -> None:
+        if not workspace or str(workspace.get("status") or "") in FROZEN_OFFER_STATUSES:
+            raise CommercialLifecycleError(
+                "Delivered, accepted, expired, superseded, or cancelled Offer evidence cannot be edited. Create a governed revision.",
+                code="OFFER_EVIDENCE_FROZEN",
+            )
+
+    def assert_workspace_mutable(self, workspace: dict[str, Any]) -> None:
+        self._assert_workspace_mutable(workspace)
+
+    async def _create_workspace_revision(
+        self,
+        agency_id: str,
+        workspace: dict[str, Any],
+        updates: dict[str, Any],
+        actor_user_id: str | None,
+        revision_reason: str,
+    ) -> dict[str, Any]:
+        current_version = int(workspace.get("version") or 1)
+        new_id_value = new_id()
+        timestamp = datetime.now(timezone.utc)
+        revision = {
+            **workspace,
+            **updates,
+            "id": new_id_value,
+            "status": OfferWorkspaceStatus.DRAFT.value,
+            "version": current_version + 1,
+            "revision_root_id": workspace.get("revision_root_id") or workspace["id"],
+            "previous_version_id": workspace["id"],
+            "created_at": timestamp,
+            "updated_at": timestamp,
+            "created_by_user_id": actor_user_id,
+            "updated_by_user_id": actor_user_id,
+            "delivered_at": None,
+            "superseded_at": None,
+            "superseded_by_offer_id": None,
+            "reconciliation_status": "canonical_revision",
+            "compatibility_metadata": {
+                **(workspace.get("compatibility_metadata") or {}),
+                "revision_reason": revision_reason,
+            },
+        }
+        created = await self.db.collection("offer_workspaces").insert_one(revision)
+        option_id_map: dict[str, str] = {}
+        options = await self.db.collection("offer_options").find_many(
+            {"agency_id": agency_id, "workspace_id": workspace["id"]}
+        )
+        for option in options:
+            cloned_option_id = new_id()
+            option_id_map[option["id"]] = cloned_option_id
+            await self.db.collection("offer_options").insert_one(
+                {
+                    **option,
+                    "id": cloned_option_id,
+                    "workspace_id": created["id"],
+                    "offer_workspace_id": created["id"],
+                    "offer_workspace_version": created["version"],
+                    "version": 1,
+                    "status": OfferOptionStatus.DRAFT.value,
+                    "created_at": timestamp,
+                    "updated_at": timestamp,
+                    "created_by_user_id": actor_user_id,
+                    "updated_by_user_id": actor_user_id,
+                }
+            )
+        for collection_name in (
+            "offer_routing_options",
+            "offer_builder_segments",
+            "offer_fare_bundles",
+            "offer_pricing_lines",
+        ):
+            for source_option_id, cloned_option_id in option_id_map.items():
+                children = await self.db.collection(collection_name).find_many(
+                    {"agency_id": agency_id, "option_id": source_option_id}
+                )
+                for child in children:
+                    await self.db.collection(collection_name).insert_one(
+                        {
+                            **child,
+                            "id": new_id(),
+                            "option_id": cloned_option_id,
+                            "created_at": timestamp,
+                            "updated_at": timestamp,
+                        }
+                    )
+        superseded = await self.db.collection("offer_workspaces").update_one(
+            {"agency_id": agency_id, "id": workspace["id"]},
+            {
+                "status": OfferWorkspaceStatus.SUPERSEDED.value,
+                "superseded_at": timestamp,
+                "superseded_by_offer_id": created["id"],
+                "updated_by_user_id": actor_user_id,
+            },
+        )
+        if superseded is None:
+            await self.db.collection("offer_workspaces").update_one(
+                {"agency_id": agency_id, "id": created["id"]},
+                {"reconciliation_status": "supersession_requires_review"},
+            )
+            raise CommercialLifecycleError(
+                "Offer revision was staged but supersession needs reconciliation.",
+                code="OFFER_REVISION_RECONCILIATION_REQUIRED",
+            )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=actor_user_id,
+            event_type="offer.lifecycle.revised",
+            entity_type="offer_workspace",
+            entity_id=created["id"],
+            summary="Created a governed Offer revision and preserved the superseded version.",
+            previous_status=workspace.get("status"),
+            next_status="draft",
+            request_id=created.get("request_id"),
+            trip_id=created.get("trip_id"),
+            metadata={
+                "previous_version_id": workspace["id"],
+                "revision_root_id": created["revision_root_id"],
+                "revision_reason": revision_reason,
+            },
+        )
+        return created
+
+    async def _touch_option_version(
+        self,
+        agency_id: str,
+        option: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        return await self.db.collection("offer_options").update_one(
+            {"agency_id": agency_id, "id": option["id"]},
+            {"version": int(option.get("version") or 1) + 1},
+        )
+
+    async def touch_option_version(
+        self,
+        agency_id: str,
+        option: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        return await self._touch_option_version(agency_id, option)
 
     async def _workspace_services(self, agency_id: str, workspace: dict[str, Any]) -> list[dict[str, Any]]:
         if workspace.get("trip_id"):
@@ -648,6 +1117,7 @@ class OfferBuilderService:
         workspace = await self.get_workspace_or_none(agency_id, option["workspace_id"])
         if workspace is None:
             return None
+        self._assert_workspace_mutable(workspace)
         segments = _sort_segments(await self.db.collection("offer_builder_segments").find_many({"agency_id": agency_id, "option_id": option_id}))
         services = await self._workspace_services(agency_id, workspace)
         evaluations: list[dict[str, Any]] = []
@@ -740,6 +1210,8 @@ class OfferBuilderService:
             "rules_summary_json": rules_summary,
             "service_feasibility_json": service_feasibility,
             "warnings_json": unique_warnings,
+            "version": int(option.get("version") or 1) + 1,
+            "updated_by_user_id": actor_user_id,
         }
         updated = await self.db.collection("offer_options").update_one({"agency_id": agency_id, "id": option_id}, updates)
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": option["workspace_id"]}, {"updated_by_user_id": actor_user_id})

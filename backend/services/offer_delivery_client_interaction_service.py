@@ -20,6 +20,7 @@ from models import (
     JourneyOfferDocumentPackageLink,
     JourneyOfferWarningAcknowledgement,
     OfferAcceptanceCreate,
+    OfferWorkspaceTransitionRequest,
     OperationalTimeline,
     new_id,
 )
@@ -678,6 +679,44 @@ class OfferDeliveryClientInteractionService:
             return {**preview, "created": False, "idempotent": True}
         if not preview["can_apply"]:
             raise JourneyOfferDeliveryError("ACCEPTANCE_HANDOFF_NOT_READY", "Acceptance handoff is blocked by deterministic validation findings.")
+        canonical_offer = await self.db.collection("offer_workspaces").find_one(
+            {
+                "agency_id": agency_id,
+                "id": preview["preview"]["offer_id"],
+            }
+        )
+        canonical_option = await self.db.collection("offer_options").find_one(
+            {
+                "agency_id": agency_id,
+                "id": preview["preview"]["offer_option_id"],
+                "workspace_id": preview["preview"]["offer_id"],
+            }
+        )
+        if not canonical_offer or not canonical_option:
+            raise JourneyOfferDeliveryError(
+                "ACCEPTANCE_HANDOFF_NOT_READY",
+                "Canonical Offer and Option must remain available for acceptance.",
+            )
+        if canonical_offer.get("status") not in {"delivered", "shared"}:
+            canonical_offer = await self.acceptance.builder.deliver_workspace(
+                agency_id,
+                canonical_offer["id"],
+                OfferWorkspaceTransitionRequest(
+                    expected_version=int(canonical_offer.get("version") or 1),
+                    reason=(
+                        "Released immutable client delivery "
+                        f"{preview['preview']['delivery_version_id']}."
+                    ),
+                ),
+                user.get("id"),
+            )
+            canonical_option = await self.db.collection("offer_options").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": canonical_option["id"],
+                    "workspace_id": canonical_offer["id"],
+                }
+            )
         result = await self.acceptance.accept_offer_option(
             agency_id,
             preview["preview"]["offer_id"],
@@ -685,6 +724,17 @@ class OfferDeliveryClientInteractionService:
             user,
             OfferAcceptanceCreate(
                 acceptance_source="client_preview",
+                offer_version=int(canonical_offer.get("version") or 1),
+                option_version=int((canonical_option or {}).get("version") or 1),
+                idempotency_key=f"delivery-decision:{preview['preview']['decision_id']}",
+                channel="portal_delivery_decision",
+                acceptance_terms_version=preview["preview"]["delivery_version_id"],
+                consent_evidence_json={
+                    "delivery_id": delivery_id,
+                    "delivery_version_id": preview["preview"]["delivery_version_id"],
+                    "decision_id": preview["preview"]["decision_id"],
+                    "source_payload_hash": preview["preview"]["source_payload_hash"],
+                },
                 provider_target="manual",
                 client_visible_summary_json={
                     "delivery_id": delivery_id,

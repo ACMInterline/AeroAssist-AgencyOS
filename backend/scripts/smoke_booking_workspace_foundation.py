@@ -394,8 +394,11 @@ def verify_endpoint_behavior() -> None:
 
     agency_detail = get(f"/api/agencies/{agency_id}/booking-workspaces/{booking_workspace_id}", OWNER_HEADERS)
     assert_disabled_response(agency_detail)
-    if agency_detail.get("read_only") is not True:
-        raise AssertionError(f"Agency booking workspace detail should be read-only: {agency_detail}")
+    if "booking_record" not in agency_detail or "timeline" not in agency_detail:
+        raise AssertionError(
+            "Agency booking workspace detail is missing canonical operational "
+            f"context: {agency_detail}"
+        )
     assert_booking_shape(agency_detail.get("booking_workspace") or {}, agency_view=True)
 
     deleted = request("DELETE", f"/api/platform/booking-workspaces/{booking_workspace_id}", {}, OWNER_HEADERS)[1]
@@ -639,8 +642,11 @@ def assert_booking_shape(booking_workspace: dict, *, agency_view: bool = False) 
     for flag in disabled_flags():
         if booking_workspace.get(flag) is not True:
             raise AssertionError(f"Booking workspace missing disabled flag {flag}: {booking_workspace}")
-    if agency_view and booking_workspace.get("read_only") is not True:
-        raise AssertionError(f"Agency booking workspace should be read-only: {booking_workspace}")
+    if agency_view and booking_workspace.get("booking_execution_disabled") is not True:
+        raise AssertionError(
+            "Agency operational metadata view crossed into booking execution: "
+            f"{booking_workspace}"
+        )
     if not booking_workspace.get("passengers") or not booking_workspace.get("flight_workspaces"):
         raise AssertionError(f"Booking workspace missing linked passenger/flight context: {booking_workspace}")
     for linked_key in ["tickets", "emds", "ssrs", "osis", "documents", "timeline", "communications"]:

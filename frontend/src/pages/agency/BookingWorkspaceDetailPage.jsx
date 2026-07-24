@@ -14,14 +14,14 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
-const workspaceStatuses = ["draft", "ready_to_book", "booking_in_progress", "booked", "blocked", "cancelled"]
+const workspaceStatuses = ["draft", "ready_to_book", "booking_in_progress", "blocked", "cancelled"]
 const providerStatuses = ["draft", "queued", "held", "confirmed", "failed", "cancelled"]
 const bookingStatuses = ["draft", "pending", "confirmed", "partially_confirmed", "failed", "cancelled"]
 
 export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   const [state, setState] = useState(null)
-  const [statusForm, setStatusForm] = useState({ status: "draft" })
-  const [recordForm, setRecordForm] = useState({ pnr_locator: "", provider_status: "draft", booking_status: "draft", internal_notes: "" })
+  const [statusForm, setStatusForm] = useState({ status: "draft", internal_notes: "" })
+  const [recordForm, setRecordForm] = useState({ pnr_locator: "", provider_status: "draft", booking_status: "draft", source_evidence_reference: "", reason: "", internal_notes: "" })
   const [confirmCancel, setConfirmCancel] = useState(false)
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
@@ -37,11 +37,13 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
       apiGet(`/api/agencies/${context.agency.id}/invoices?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}`),
     ])
     setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness, invoices: invoices.items || [] })
-    setStatusForm({ status: detail.booking_workspace?.status || "draft" })
+    setStatusForm({ status: detail.booking_workspace?.status || "draft", internal_notes: "" })
     setRecordForm({
       pnr_locator: detail.booking_record?.pnr_locator || "",
       provider_status: detail.booking_record?.provider_status || "draft",
       booking_status: detail.booking_record?.booking_status || "draft",
+      source_evidence_reference: detail.booking_record?.source_evidence_reference || "",
+      reason: "",
       internal_notes: detail.booking_record?.internal_notes || "",
     })
   }
@@ -72,8 +74,14 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
       await apiPut(`/api/agencies/${state.agency.id}/booking-records/${state.booking_record.id}`, {
         ...recordForm,
         pnr_locator: recordForm.pnr_locator || null,
+        source_evidence_reference: recordForm.source_evidence_reference || null,
+        source_evidence_json: recordForm.source_evidence_reference ? {
+          operator_attested: true,
+          evidence_reference: recordForm.source_evidence_reference,
+        } : {},
+        expected_version: state.booking_record.current_external_result_version || 1,
       })
-      setMessage("Manual PNR mirror updated.")
+      setMessage("Booking result evidence recorded. No provider action was executed.")
       await load()
     } catch (err) {
       setError(err.message)
@@ -161,7 +169,9 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   const readiness = source.booking_readiness_package || {}
   const ticket = state?.tickets?.[0]
   const invoice = state?.invoices?.[0]
-  const canContinueToTicket = Boolean(record && !["cancelled", "blocked"].includes(workspace?.status))
+  const confirmedResult = ["confirmed", "partially_confirmed"].includes(record?.booking_status)
+  const canContinueToTicket = Boolean(record && confirmedResult && workspace?.status === "booked")
+  const resultFrozen = record?.booking_status === "confirmed"
 
   return (
     <AgencyLayout user={state?.me?.user} agency={state?.agency}>
@@ -171,7 +181,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
             breadcrumbs={[{ label: "Bookings", href: "/agency/booking-workspaces" }, { label: workspace?.workspace_number || "Booking" }]}
             eyebrow={`${workspace?.workspace_number || "Booking"} · ${label(workspace?.provider_target)}`}
             title={workspace?.title}
-            description="Track the confirmed booking details, passengers, flights, tickets, services, and next action in one place."
+            description="Prepare booking work here, then record the evidenced external or manual result in the canonical BookingRecord."
             actions={<>{workspace?.trip_id ? <SecondaryButton href={`/agency/trips/${workspace.trip_id}`}>Open trip</SecondaryButton> : null}<SecondaryButton href={`/agency/after-sales?booking_workspace_id=${encodeURIComponent(workspace?.id || "")}`}>Start after-sales case</SecondaryButton><SecondaryButton icon={RefreshCw} onClick={rebuildRecord}>Refresh booking details</SecondaryButton><DestructiveButton icon={ArchiveX} onClick={cancelWorkspace}>Cancel booking</DestructiveButton></>}
           />
 
@@ -179,7 +189,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
             breadcrumbs={[{ label: "Booking handoffs", href: "/agency/booking-handoffs" }, { label: "Bookings", href: "/agency/booking-workspaces" }]}
             currentLabel={workspace?.workspace_number || "Booking"}
             status={workspace?.status}
-            validation={canContinueToTicket ? { state: "ready", label: "Ready for ticket details", reason: "Booking details are present. Ticket issue remains a separate authorized action." } : { state: "blocked", label: "Booking details required", reason: "Resolve the booking checks or refresh the booking details before continuing." }}
+            validation={canContinueToTicket ? { state: "ready", label: "Booking result confirmed", reason: "An evidenced BookingRecord exists. Ticket issuance remains outside AeroAssist." } : { state: "blocked", label: "Confirmed booking result required", reason: "Move preparation to booking in progress, then record the locator, evidence reference, and operator reason." }}
             previous={workspace?.offer_workspace_id ? { label: "Previous: accepted offer", href: `/agency/offers/${workspace.offer_workspace_id}` } : workspace?.trip_id ? { label: "Previous: trip", href: `/agency/trips/${workspace.trip_id}` } : { label: "Booking handoffs", href: "/agency/booking-handoffs" }}
             next={ticket
               ? { label: "Continue to ticket", href: `/agency/tickets/${ticket.id}` }
@@ -208,10 +218,11 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 <form className="space-y-3" onSubmit={updateStatus}>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">
                     Status
-                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={statusForm.status} onChange={(event) => setStatusForm({ status: event.target.value })}>
+                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={statusForm.status} onChange={(event) => setStatusForm({ ...statusForm, status: event.target.value })}>
                       {workspaceStatuses.map((value) => <option value={value} key={value}>{label(value)}</option>)}
                     </select>
                   </label>
+                  <Textarea label="Transition reason" value={statusForm.internal_notes} onChange={(value) => setStatusForm({ ...statusForm, internal_notes: value })} />
                   <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Save status</button>
                 </form>
               </Panel>
@@ -219,11 +230,16 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               <Panel title="Booking details">
                 {record ? (
                   <form className="space-y-3" onSubmit={updateRecord}>
-                    <Field label="PNR locator" value={recordForm.pnr_locator} onChange={(value) => setRecordForm({ ...recordForm, pnr_locator: value.toUpperCase() })} />
-                    <Select label="Provider status" value={recordForm.provider_status} options={providerStatuses} onChange={(value) => setRecordForm({ ...recordForm, provider_status: value })} />
-                    <Select label="Booking status" value={recordForm.booking_status} options={bookingStatuses} onChange={(value) => setRecordForm({ ...recordForm, booking_status: value })} />
-                    <Textarea label="Internal notes" value={recordForm.internal_notes} onChange={(value) => setRecordForm({ ...recordForm, internal_notes: value })} />
-                    <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Save booking details</button>
+                    <fieldset className="space-y-3" disabled={resultFrozen}>
+                      <Field label="PNR or record locator" value={recordForm.pnr_locator} onChange={(value) => setRecordForm({ ...recordForm, pnr_locator: value.toUpperCase() })} />
+                      <Select label="Provider status" value={recordForm.provider_status} options={providerStatuses} onChange={(value) => setRecordForm({ ...recordForm, provider_status: value })} />
+                      <Select label="Booking result status" value={recordForm.booking_status} options={bookingStatuses} onChange={(value) => setRecordForm({ ...recordForm, booking_status: value })} />
+                      <Field label="Source evidence reference" value={recordForm.source_evidence_reference} onChange={(value) => setRecordForm({ ...recordForm, source_evidence_reference: value })} />
+                      <Textarea label="Operator reason" value={recordForm.reason} onChange={(value) => setRecordForm({ ...recordForm, reason: value })} />
+                      <Textarea label="Internal notes" value={recordForm.internal_notes} onChange={(value) => setRecordForm({ ...recordForm, internal_notes: value })} />
+                      <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="submit">Record booking result</button>
+                    </fieldset>
+                    {resultFrozen ? <p className="text-sm text-slate-600">Confirmed BookingRecord evidence is read-only. A later correction requires a governed result revision.</p> : null}
                   </form>
                 ) : (
                   <EmptyState title="No booking details yet" body="Refresh the booking details to prepare this booking for ticket information." />
@@ -245,8 +261,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
 
               <Panel title="Tickets & EMDs">
                 <div className="grid gap-2">
-                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!record}>Add ticket details</button>
-                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftEmd} disabled={!record}>Add EMD details</button>
+                  <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftTicket} disabled={!canContinueToTicket}>Add ticket details</button>
+                  <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={createDraftEmd} disabled={!canContinueToTicket}>Add EMD details</button>
                 </div>
                 <p className="text-xs text-slate-500">Live issuance is not implemented in this phase.</p>
               </Panel>
@@ -265,7 +281,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                   <Summary label="Missing ticket #" value={state?.ticketEmdReadiness?.missing_ticket_numbers ?? 0} />
                   <Summary label="Missing EMD #" value={state?.ticketEmdReadiness?.missing_emd_numbers ?? 0} />
                 </div>
-                <SnapshotList items={state?.ticketEmdReadiness?.warnings} render={(item) => item.message || JSON.stringify(item)} />
+                <SnapshotList items={state?.ticketEmdReadiness?.warnings} render={(item) => item.message || item.reason || item.code || "Review required"} />
               </Panel>
 
               <section className="grid gap-4 lg:grid-cols-2">
@@ -304,32 +320,32 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               </Panel>
 
               <section className="grid gap-4 lg:grid-cols-2">
-                <Panel title="Pricing"><JsonBlock value={workspace?.pricing_snapshot_json} /></Panel>
-                <Panel title="Services"><JsonBlock value={workspace?.services_snapshot_json} /></Panel>
+                <Panel title="Pricing"><ReadableSummary value={workspace?.pricing_snapshot_json} empty="No accepted pricing recorded." /></Panel>
+                <Panel title="Services"><ReadableSummary value={workspace?.services_snapshot_json} empty="No service requirements recorded." /></Panel>
               </section>
 
               <section className="grid gap-4 lg:grid-cols-2">
-                <Panel title="Pets"><JsonBlock value={workspace?.pets_snapshot_json} /></Panel>
-                <Panel title="Special Items"><JsonBlock value={workspace?.special_items_snapshot_json} /></Panel>
+                <Panel title="Pets"><ReadableSummary value={workspace?.pets_snapshot_json} empty="No pets recorded." /></Panel>
+                <Panel title="Special Items"><ReadableSummary value={workspace?.special_items_snapshot_json} empty="No special items recorded." /></Panel>
               </section>
 
               <section className="grid gap-4 lg:grid-cols-2">
-                <Panel title="SSR"><SnapshotList items={workspace?.ssr_json} render={(item) => item.ssr_code || item.code || JSON.stringify(item)} /></Panel>
-                <Panel title="OSI"><SnapshotList items={workspace?.osi_json} render={(item) => item.osi_text || item.text || JSON.stringify(item)} /></Panel>
+                <Panel title="SSR"><SnapshotList items={workspace?.ssr_json} render={(item) => item.ssr_code || item.code || item.label || "SSR review item"} /></Panel>
+                <Panel title="OSI"><SnapshotList items={workspace?.osi_json} render={(item) => item.osi_text || item.text || item.label || "OSI review item"} /></Panel>
               </section>
 
               <section className="grid gap-4 lg:grid-cols-2">
-                <Panel title="Required Documents"><SnapshotList items={workspace?.required_documents_json} render={(item) => item.label || item.document_type || JSON.stringify(item)} /></Panel>
-                <Panel title="Warnings / Policy"><SnapshotList items={[...(workspace?.warnings_json || []), ...(workspace?.policy_violations_json || [])]} render={(item) => item.message || item.reason || JSON.stringify(item)} /></Panel>
+                <Panel title="Required Documents"><SnapshotList items={workspace?.required_documents_json} render={(item) => item.label || item.document_type || item.reference || "Document required"} /></Panel>
+                <Panel title="Warnings / Policy"><SnapshotList items={[...(workspace?.warnings_json || []), ...(workspace?.policy_violations_json || [])]} render={(item) => item.message || item.reason || item.code || "Review required"} /></Panel>
               </section>
 
-              <Panel title="Internal PNR Mirror">
-                <JsonBlock value={record?.internal_pnr_mirror_json} />
-              </Panel>
-
-              <Panel title="Source Readiness">
-                <JsonBlock value={readiness} />
-              </Panel>
+              <details className="rounded-lg border border-slate-200 bg-white p-5">
+                <summary className="cursor-pointer font-semibold text-slate-950">Advanced compatibility details</summary>
+                <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                  <div><h4 className="mb-2 text-sm font-semibold text-slate-700">Internal PNR mirror</h4><JsonBlock value={record?.internal_pnr_mirror_json} /></div>
+                  <div><h4 className="mb-2 text-sm font-semibold text-slate-700">Source readiness</h4><JsonBlock value={readiness} /></div>
+                </div>
+              </details>
 
               <Panel title="Timeline">
                 <SnapshotList items={state?.timeline} render={(item) => `${item.title}${item.description ? ` · ${item.description}` : ""}`} />
@@ -396,6 +412,43 @@ function LinkedList({ items, empty, href, render }) {
       {list.map((item) => <a className="block p-3 text-sm font-medium text-blue-700" href={href(item)} key={item.id}>{render(item)}</a>)}
     </div>
   )
+}
+
+function ReadableSummary({ value, empty }) {
+  const rows = flattenSummary(value)
+  if (!rows.length) return <p className="text-sm text-slate-500">{empty}</p>
+  return (
+    <dl className="divide-y divide-slate-100 rounded-md border border-slate-200">
+      {rows.slice(0, 20).map(([key, item], index) => (
+        <div className="grid gap-1 p-3 text-sm sm:grid-cols-[150px_minmax(0,1fr)]" key={`${key}-${index}`}>
+          <dt className="font-medium text-slate-600">{label(key)}</dt>
+          <dd className="text-slate-900">{summaryValue(item)}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
+function flattenSummary(value, prefix = "") {
+  if (!value) return []
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => {
+      if (item && typeof item === "object") return flattenSummary(item, `${prefix}item ${index + 1}`)
+      return [[`${prefix}item ${index + 1}`, item]]
+    })
+  }
+  if (typeof value !== "object") return prefix ? [[prefix, value]] : []
+  return Object.entries(value).flatMap(([key, item]) => {
+    const nextKey = prefix ? `${prefix} ${key}` : key
+    if (item && typeof item === "object") return flattenSummary(item, nextKey)
+    return [[nextKey, item]]
+  })
+}
+
+function summaryValue(value) {
+  if (value === null || value === undefined || value === "") return "Not set"
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  return String(value)
 }
 
 function JsonBlock({ value }) {

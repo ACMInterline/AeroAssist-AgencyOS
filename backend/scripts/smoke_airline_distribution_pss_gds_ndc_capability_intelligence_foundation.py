@@ -205,7 +205,43 @@ async def verify_service_behavior_and_handoff_integration() -> None:
     else:
         raise AssertionError("Credential-like distribution payload was accepted.")
 
-    await db.collection("offer_acceptances").insert_one({"id": "acceptance-lh", "agency_id": agency_id, "status": "accepted", "trip_id": "trip-lh"})
+    acceptance_hash = "fixture-acceptance-lh-canonical-hash"
+    await db.collection("offer_acceptances").insert_one(
+        {
+            "id": "acceptance-lh",
+            "agency_id": agency_id,
+            "workspace_id": "offer-lh",
+            "option_id": "option-lh",
+            "offer_version": 1,
+            "option_version": 1,
+            "idempotency_key": "fixture:acceptance-lh",
+            "status": "accepted",
+            "trip_id": "trip-lh",
+            "accepted_payload_hash": acceptance_hash,
+        }
+    )
+    await db.collection("trip_accepted_offer_snapshots").insert_one(
+        {
+            "id": "snapshot-lh",
+            "agency_id": agency_id,
+            "trip_id": "trip-lh",
+            "workspace_id": "offer-lh",
+            "option_id": "option-lh",
+            "acceptance_id": "acceptance-lh",
+            "offer_version": 1,
+            "option_version": 1,
+            "confirmed_segments_json": [
+                {
+                    "id": "segment-lh",
+                    "marketing_carrier": "LH",
+                    "operating_carrier": "LH",
+                }
+            ],
+            "confirmed_passengers_json": [{"id": "passenger-lh"}],
+            "source_hash": acceptance_hash,
+            "immutable": True,
+        }
+    )
     await db.collection("booking_readiness_packages").insert_one({"id": "readiness-lh", "agency_id": agency_id, "acceptance_id": "acceptance-lh", "trip_id": "trip-lh", "provider_target": "amadeus", "segments_snapshot_json": [{"id": "segment-lh", "marketing_carrier": "LH", "operating_carrier": "LH"}], "passengers_snapshot_json": [{"id": "passenger-lh"}], "pricing_snapshot_json": {"total_amount": 100, "currency": "EUR"}})
     context = await OfferToBookingHandoffService(db)._resolve_context({"agency_id": agency_id, "acceptance_id": "acceptance-lh", "booking_readiness_package_id": "readiness-lh", "provider_target": "amadeus"})
     handoff_distribution = context.get("distribution_capability") or {}

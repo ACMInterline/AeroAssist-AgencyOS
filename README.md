@@ -1906,3 +1906,19 @@ Migration analysis is bounded and dry-run only. See
 [Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md),
 [Reference Data Wiring and Migration](docs/architecture/reference-data-wiring-and-migration.md),
 and [Reference Data Consumer Map](docs/architecture/reference-data-consumer-map.md).
+
+## P1 Product Kernel Repair 6 - Canonical Commercial Lifecycle
+
+The normal Agency commercial flow now uses one enforceable lineage:
+`TravelRequest -> OfferWorkspace -> OfferOption -> OfferAcceptance ->
+TripAcceptedOfferSnapshot -> TripDossier -> OfferBookingHandoff ->
+BookingRecord -> TicketRecord / EMDRecord`. Offers require a Request, delivery
+freezes exact versions, acceptance creates immutable hashed evidence, normal
+Trip confirmation requires that evidence, and booked state requires an
+evidenced BookingRecord. Normal Ticket/EMD records require BookingRecord
+lineage. Legacy records remain readable and dry-run migration analysis performs
+zero writes. No provider booking, issuance, payment, migration, or deployment
+is enabled. See [Canonical Commercial Lifecycle Contract](docs/architecture/canonical-commercial-lifecycle-contract.md),
+[Offer Acceptance And Snapshot Contract](docs/architecture/offer-acceptance-and-snapshot-contract.md),
+[Trip And Booking Ownership Contract](docs/architecture/trip-and-booking-ownership-contract.md),
+and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).

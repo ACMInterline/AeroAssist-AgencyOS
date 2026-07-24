@@ -276,7 +276,30 @@ async def seed_source(db: Database) -> None:
     })
 
 
+class FakeAcceptanceBuilder:
+    def __init__(self, db):
+        self.db = db
+
+    async def deliver_workspace(self, agency_id, workspace_id, payload, actor_user_id):
+        workspace = await self.db.collection("offer_workspaces").find_one(
+            {"agency_id": agency_id, "id": workspace_id}
+        )
+        if not workspace or int(workspace.get("version") or 1) != payload.expected_version:
+            raise AssertionError("Acceptance handoff did not deliver the exact Offer version.")
+        return await self.db.collection("offer_workspaces").update_one(
+            {"agency_id": agency_id, "id": workspace_id},
+            {
+                "status": "delivered",
+                "offer_status": "delivered",
+                "version": payload.expected_version + 1,
+            },
+        )
+
+
 class FakeAcceptanceService:
+    def __init__(self, db):
+        self.builder = FakeAcceptanceBuilder(db)
+
     async def accept_offer_option(self, agency_id, workspace_id, option_id, user, payload):
         if (agency_id, workspace_id, option_id) != ("agency-a", "offer-a", "offer-option-a"):
             raise AssertionError("Acceptance handoff did not preserve canonical Offer mapping.")
@@ -404,7 +427,7 @@ async def verify_service_behavior() -> None:
     handoff_preview = await service.acceptance_handoff_preview("agency-a", delivery["id"], {"decision_id": accept_decision["id"]}, user)
     if not handoff_preview.get("can_apply") or handoff_preview["preview"].get("offer_option_id") != "offer-option-a":
         raise AssertionError(f"Canonical acceptance handoff mapping failed: {handoff_preview.get('findings')}")
-    service.acceptance = FakeAcceptanceService()
+    service.acceptance = FakeAcceptanceService(db)
     handoff = await service.acceptance_handoff_apply("agency-a", delivery["id"], {"decision_id": accept_decision["id"]}, user)
     if handoff["handoff"].get("canonical_acceptance_id") != "canonical-acceptance-a" or handoff.get("booking_created") is not False:
         raise AssertionError("Explicit canonical acceptance handoff failed.")

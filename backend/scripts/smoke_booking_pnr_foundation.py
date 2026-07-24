@@ -178,7 +178,23 @@ def create_priced_option(agency_id: str, workspace_id: str) -> dict:
         )
     post(f"/api/agencies/{agency_id}/offer-options/{option_id}/recalculate-pricing", {}, OWNER_HEADERS)
     post(f"/api/agencies/{agency_id}/offer-options/{option_id}/evaluate-rules", {}, OWNER_HEADERS)
-    return option
+    before_delivery = get(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}",
+        OWNER_HEADERS,
+    )
+    post(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/deliver",
+        {
+            "expected_version": before_delivery["workspace"]["version"],
+            "reason": "Booking foundation smoke delivery.",
+        },
+        OWNER_HEADERS,
+    )
+    delivered = get(
+        f"/api/agencies/{agency_id}/offer-workspaces/{workspace_id}",
+        OWNER_HEADERS,
+    )
+    return next(item for item in delivered["options"] if item["id"] == option_id)
 
 
 def flatten_service_snapshot(snapshot: dict) -> list[dict]:
@@ -254,7 +270,13 @@ def main() -> int:
     option = create_priced_option(agency_id, offer_workspace["id"])
     accepted = post(
         f"/api/agencies/{agency_id}/offer-workspaces/{offer_workspace['id']}/options/{option['id']}/accept",
-        {"acceptance_source": "internal", "provider_target": "manual"},
+        {
+            "acceptance_source": "internal",
+            "offer_version": option["offer_workspace_version"],
+            "option_version": option["version"],
+            "acceptance_terms_version": "booking-smoke-v1",
+            "provider_target": "manual",
+        },
         OWNER_HEADERS,
         201,
     )

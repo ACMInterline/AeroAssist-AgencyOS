@@ -77,7 +77,6 @@ import BookingHandoffsPage from "./pages/agency/BookingHandoffsPage"
 import AfterSalesPage from "./pages/agency/AfterSalesPage"
 import OperationsCommandCenterPage from "./pages/agency/OperationsCommandCenterPage"
 import AgencyWorkflowMaturityPage from "./pages/agency/WorkflowMaturityPage"
-import BookingCreatePage from "./pages/agency/BookingCreatePage"
 import BookingDetailPage from "./pages/agency/BookingDetailPage"
 import BookingImportsPage from "./pages/agency/BookingImportsPage"
 import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPage"
@@ -565,7 +564,7 @@ function RoutedApp() {
   }
 
   if (window.location.pathname === "/agency/bookings/new") {
-    return <BookingCreatePage />
+    return <BookingWorkspacesPage />
   }
 
   if (window.location.pathname === "/agency/refunds-exchanges") {
@@ -759,7 +758,7 @@ function RoutedApp() {
   }
 
   if (window.location.pathname === "/agency/booking-workspaces") {
-    return <BookingWorkspaceMetadataPage />
+    return <BookingWorkspacesPage />
   }
 
   if (window.location.pathname === "/agency/booking-imports") {

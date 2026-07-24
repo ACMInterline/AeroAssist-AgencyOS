@@ -266,7 +266,13 @@ def create_acceptance_fixture(agency_id: str) -> tuple[dict, dict]:
     option = create_priced_option(agency_id, workspace["id"])
     accepted = post(
         f"/api/agencies/{agency_id}/offer-workspaces/{workspace['id']}/options/{option['id']}/accept",
-        {"acceptance_source": "internal", "provider_target": "manual"},
+        {
+            "acceptance_source": "internal",
+            "offer_version": option["offer_workspace_version"],
+            "option_version": option["version"],
+            "acceptance_terms_version": "booking-handoff-smoke-v1",
+            "provider_target": "manual",
+        },
         OWNER_HEADERS,
         201,
     )
@@ -365,19 +371,23 @@ def verify_handoff_flow() -> None:
     if duplicate.get("handoff", {}).get("id") != handoff.get("id"):
         raise AssertionError("Duplicate handoff did not return the original handoff id.")
 
-    blocked = post(
+    rejected_status, rejected = request(
+        "POST",
         f"/api/agencies/{agency_id}/booking-handoffs",
         {
             "trip_id": f"missing-trip-{run_ref('phase546')}",
             "booking_mode": "manual",
-            "idempotency_key": run_ref("blocked-handoff"),
-            "metadata": {"smoke_blocked": True},
+            "idempotency_key": run_ref("invalid-handoff"),
+            "metadata": {"smoke_invalid": True},
         },
         OWNER_HEADERS,
-        201,
+        400,
     )
-    if blocked.get("handoff", {}).get("handoff_status") != "blocked":
-        raise AssertionError(f"Blocked handoff state was not produced: {blocked}")
+    if rejected_status != 400 or "OfferAcceptance" not in str(rejected):
+        raise AssertionError(
+            "A handoff without immutable acceptance evidence was not rejected: "
+            f"{rejected}"
+        )
 
     detail = get(f"/api/agencies/{agency_id}/booking-handoffs/{handoff['id']}", OWNER_HEADERS)
     if detail.get("handoff", {}).get("id") != handoff["id"]:

@@ -23,13 +23,13 @@ targets and unresolved decisions.
 | Client-Passenger relationship | `ClientPassengerRelationship` | `ClientPassengerMasterLink` | Client Master link routes | Client/Passenger detail | Explicit client/passenger IDs within one agency | New Master links are one-per-source projections and must match the canonical relationship; historical links retained |
 | Request | `TravelRequest` | `TravelRequestWorkspace` | Travel Request Workspace CRUD | Requests, Travel Requests | Request reference, source intake, client/passenger/segment links | Workspace becomes projection or is retired |
 | Passenger Service | `PassengerServiceRequest` | `RequestedService` fulfillment overlap | Request service and Special Services routes | Request Detail, Special Services, Passenger Services | Request/trip/passenger/segment/service lineage | Fulfillment writes target PassengerServiceRequest only |
-| Offer | `OfferWorkspace` | `Offer`, `OfferWorkspaceV2` | Legacy `/offers`; Offer Workspace V2 APIs | Offers, Offer Workspaces, Offer Builder | Request/trip/client/options/pricing/status/acceptance | One write API; compatibility families read-only |
+| Offer | `OfferWorkspace` | `Offer`, `OfferWorkspaceV2` | Legacy `/offers`; Offer Workspace V2 APIs | Offer Workspaces and Offer Builder are canonical; historical Offer views remain compatibility | Request/trip/client/options/pricing/status/acceptance | Normal Agency UI writes OfferWorkspace; historical families reconciled and eventually read-only |
 | Offer Option | `OfferOption` | `OfferFareOption` and legacy route/fare children | Legacy offer fare-option routes | Offer Builder and legacy Offer views | Explicit option IDs and route/fare mapping | Acceptance references canonical option only |
-| Offer Acceptance | `OfferAcceptance` | Persistence metadata treats collection as immutable | Acceptance routes | Offer detail; Portal offer detail | Separate mutable decision state from immutable accepted payload | Persistence classification reflects actual mutation contract |
+| Offer Acceptance | `OfferAcceptance` | Historical decisions without exact Offer/Option versions or snapshots | Acceptance routes | Offer detail; subject-scoped Portal delivery | Reconcile version, option, actor, consent, idempotency, snapshot | Every active acceptance has exact versions and one immutable snapshot |
 | Trip | `TripDossier` | `TripWorkspace` | Trip Workspace CRUD | Trips and Trip Workspaces | Trip reference, request/client/passengers/segments/offers/bookings/docs | Every workspace links to dossier; no independent identity/status |
-| Booking / PNR | `BookingRecord` | Legacy `Booking`; `BookingWorkspace` must remain context only | Legacy `/bookings`; Booking Workspace APIs | Bookings and Booking Workspaces | PNR/reference/trip/snapshot/passenger/segment/status | Legacy mutations adapt to BookingRecord; workspace points to record |
-| Ticket | `TicketRecord` | `TicketWorkspace`; legacy Booking ticket writer | `/tickets`, `/ticket-workspaces`, booking ticket routes | Tickets/EMDs and Ticket Workspace | Number, booking, passenger, coupons, pricing, status, lifecycle refs | Ticket Workspace is projection/context; one ticket writer |
-| EMD | `EMDRecord` | `EmdWorkspace`; legacy Booking EMD writer | `/emds`, `/emd-workspaces`, booking EMD routes | Tickets/EMDs and EMD Workspace | Number, booking/ticket/passenger, coupons, RFIC/RFISC, value/status | EMD Workspace is projection/context; one EMD writer |
+| Booking / PNR | `BookingRecord` | Historical `Booking`; BookingWorkspace remains context only | Legacy `/bookings` reads; Booking Workspace/Record APIs | Canonical Booking Workspaces; historical Booking deep links | PNR/reference/trip/snapshot/passenger/segment/status/evidence | Legacy mutations stay blocked; every confirmed workspace points to evidenced BookingRecord |
+| Ticket | `TicketRecord` | `TicketWorkspace` | `/tickets`, `/ticket-workspaces`, read-only legacy booking ticket routes | Tickets/EMDs and Ticket Workspace | Number, BookingRecord, Trip, passenger, coupons, pricing, status | Normal writes use TicketEmdService with BookingRecord lineage |
+| EMD | `EMDRecord` | `EmdWorkspace` | `/emds`, `/emd-workspaces`, read-only legacy booking EMD routes | Tickets/EMDs and EMD Workspace | Number, BookingRecord, Trip, ticket/passenger, coupons, RFIC/RFISC | Normal writes use TicketEmdService with BookingRecord lineage |
 | Refund / Exchange | `AfterSalesCase` | `RefundExchangeCase`, ticket/EMD exchange operations | `/refunds-exchanges`, `/after-sales` | Refunds/Exchanges and After Sales | Impact scope, coupon state, estimates, approvals, decisions, comms | Legacy cases are linked history or adapters |
 | Task / Work Item | `OperationalWorkItem` | `RequestTask` | Request task routes; Work Queue | Request Detail, Tasks, Work Queue | Assignment, due date, status, blocker, source, timeline | All actionable work is queue-owned |
 | Timeline | `OperationalTimeline` | Request, trip, booking, ticket/EMD, refund timelines | Entity timeline routes; operational timeline API | Timeline and entity details | Source event ID, actor, timestamp, visibility, entity links | New events use canonical timeline; old collections immutable |
@@ -49,12 +49,13 @@ targets and unresolved decisions.
    metadata creation instead of projecting canonical agency-owned records.
 2. Phase 41 metadata workspaces for Request, Trip, Offer, Ticket, and EMD carry
    business identity and status fields without mandatory canonical IDs.
-3. Legacy Offer and Booking routes remain active writers beside later
-   workspaces/records.
-4. Booking routes write directly to `ticket_records` and `emd_records`, bypassing
-   the target Ticket/EMD service boundary.
-5. `offer_acceptances` is updated for status transitions while query ownership
-   currently labels the whole collection immutable.
+3. Legacy Offer writers remain available for unreconciled records, although
+   they cannot overwrite a linked canonical OfferWorkspace and normal UI
+   creation uses OfferWorkspace.
+4. Legacy Booking, Booking Ticket, and Booking EMD mutation routes are now
+   read-only conflicts; historical records still require reconciliation.
+5. `offer_acceptances` correctly owns mutable decision lifecycle while
+   `trip_accepted_offer_snapshots` remains immutable.
 6. Entity-specific task and timeline collections continue accepting new writes
    beside the canonical Work Queue and Operational Timeline.
 7. Downstream handoff paths do not universally prove they read frozen accepted
@@ -66,12 +67,12 @@ targets and unresolved decisions.
 
 | Transition | Current condition | Repair needed | Must preserve |
 |---|---|---|---|
-| Request -> Offer | Legacy and canonical offer creation paths coexist | Adapt all creation to `OfferWorkspace` with explicit request link | Request can exist without trip |
-| Offer -> Acceptance | Acceptances target canonical options, while legacy portal/offer paths remain | Route compatibility acceptance through canonical service | Human decision and immutable accepted values |
-| Acceptance -> Trip | Trip can exist before accepted evidence and `TripWorkspace` can exist independently | Require explicit dossier linkage and label pre-acceptance trips accurately | Never reuse request ID as trip ID |
-| Accepted snapshot -> Booking | Booking handoff is correct in principle but legacy booking creation can read mutable offer state | Require snapshot ID on commercialized booking path | Accepted snapshot immutability |
-| Booking Workspace -> Booking Record | Both carry PNR/status-shaped state | Make workspace workflow-only and record result-only | Imported raw provider truth and manual mode |
-| Booking -> Ticket/EMD | Canonical service and legacy Booking route both write records | One service boundary with compatibility adapters | Coupon-level state and immutable historical snapshots |
+| Request -> Offer | Normal UI creates request-linked OfferWorkspace; legacy records remain | Reconcile historical Offer families per Agency | Request can exist without trip |
+| Offer -> Acceptance | Exact delivered Offer/Option versions pass through canonical service | Reconcile historical decisions and preserve subject-scoped Portal decisions | Human decision and immutable accepted values |
+| Acceptance -> Trip | Normal acceptance creates one hashed snapshot and one Trip; older Trips may be premature | Analyze only, then reconcile explicitly in a future migration | Never reuse request ID as trip ID |
+| Accepted snapshot -> Booking | Handoff and readiness require immutable snapshot/hash | Reconcile historical handoffs lacking frozen lineage | Accepted snapshot immutability |
+| Booking Workspace -> Booking Record | Workspace confirmation now requires evidenced BookingRecord | Reconcile historical booked-like workspace state | Imported raw provider truth and manual mode |
+| Booking -> Ticket/EMD | Canonical service enforces BookingRecord lineage; legacy routes are read-only | Reconcile historical standalone records with explicit exception evidence | Coupon-level state and immutable historical snapshots |
 | Booking -> Finance | Links accept several booking IDs/workspace IDs | Normalize explicit canonical booking linkage while retaining source IDs | Historical invoices/payments |
 | Operations -> Portal | Portal uses projections but communication/document visibility rules vary | Centralize authorization and visibility mapping | Internal/client separation and tenant isolation |
 

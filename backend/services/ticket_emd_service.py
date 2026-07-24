@@ -6,6 +6,7 @@ from typing import Any
 from database import Database
 from models import (
     AuditEvent,
+    BookingRecordStatus,
     EMDRecord,
     EmdSourceContext,
     EmdCoupon,
@@ -210,8 +211,20 @@ class TicketEmdService:
         booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
         if booking_record is None:
             return None
+        self._require_confirmed_booking_record(booking_record)
         workspace = await self._get_workspace_for_record(agency_id, booking_record)
         passenger = self._select_passenger(booking_record, payload.passenger_id)
+        passenger_id = payload.passenger_id or self._passenger_id(passenger)
+        existing = await self.db.collection("ticket_records").find_one(
+            {
+                "agency_id": agency_id,
+                "source_context": TicketSourceContext.BOOKING_RECORD.value,
+                "booking_record_id": booking_record["id"],
+                "passenger_id": passenger_id,
+            }
+        )
+        if existing:
+            return await self.get_ticket_detail(agency_id, existing["id"])
         segments = booking_record.get("segments_json") or (workspace or {}).get("segments_snapshot_json") or []
         pricing = booking_record.get("pricing_json") or (workspace or {}).get("pricing_snapshot_json") or {}
         pricing_summary = pricing.get("summary") if isinstance(pricing, dict) else {}
@@ -226,7 +239,7 @@ class TicketEmdService:
             request_id=booking_record.get("request_id"),
             booking_workspace_id=booking_record.get("booking_workspace_id"),
             booking_record_id=booking_record["id"],
-            passenger_id=payload.passenger_id or self._passenger_id(passenger),
+            passenger_id=passenger_id,
             passenger_snapshot_json=passenger or {},
             issuing_provider=booking_record.get("provider") or (workspace or {}).get("provider_target") or "manual",
             issue_status=TicketStatus.DRAFT,
@@ -302,11 +315,31 @@ class TicketEmdService:
         booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
         if booking_record is None:
             return None
+        self._require_confirmed_booking_record(booking_record)
         workspace = await self._get_workspace_for_record(agency_id, booking_record)
         passenger = self._select_passenger(booking_record, payload.passenger_id)
         service = self._resolve_service(booking_record, workspace, payload)
         segments = booking_record.get("segments_json") or (workspace or {}).get("segments_snapshot_json") or []
         linked_segment_ids = payload.linked_segment_ids or self._service_segment_ids(service, segments)
+        passenger_id = payload.passenger_id or self._passenger_id(passenger)
+        service_key = payload.service_key or _service_key(service)
+        existing_emds = await self.db.collection("emd_records").find_many(
+            {
+                "agency_id": agency_id,
+                "source_context": EmdSourceContext.BOOKING_SERVICE.value,
+                "booking_record_id": booking_record["id"],
+                "passenger_id": passenger_id,
+                "service_key": service_key,
+            }
+        )
+        normalized_segment_ids = sorted(linked_segment_ids)
+        for existing in existing_emds:
+            if (
+                existing.get("ticket_record_id") == payload.ticket_record_id
+                and sorted(existing.get("linked_segment_ids") or [])
+                == normalized_segment_ids
+            ):
+                return await self.get_emd_detail(agency_id, existing["id"])
         ticket_coupons = await self._linked_ticket_coupons(agency_id, payload.ticket_record_id, linked_segment_ids)
         linked_ticket_coupon_ids = [item["id"] for item in ticket_coupons]
         warnings = []
@@ -338,12 +371,12 @@ class TicketEmdService:
             booking_record_id=booking_record["id"],
             ticket_record_id=payload.ticket_record_id,
             ticket_id=payload.ticket_record_id,
-            passenger_id=payload.passenger_id or self._passenger_id(passenger),
+            passenger_id=passenger_id,
             passenger_snapshot_json=passenger or {},
             emd_type=EmdType.MANUAL_MIRROR,
             service_code=_service_key(service),
             service_name=_service_label(service),
-            service_key=payload.service_key or _service_key(service),
+            service_key=service_key,
             service_catalogue_id=payload.service_catalogue_id or _service_catalogue_id(service),
             service_label=_service_label(service),
             service_category=_service_category(service),
@@ -399,6 +432,16 @@ class TicketEmdService:
         )
         return await self.get_emd_detail(agency_id, created["id"])
 
+    def _require_confirmed_booking_record(self, booking_record: dict[str, Any]) -> None:
+        booking_status = _enum_value(booking_record.get("booking_status"))
+        if booking_status not in {
+            BookingRecordStatus.CONFIRMED.value,
+            BookingRecordStatus.PARTIALLY_CONFIRMED.value,
+        }:
+            raise TicketEmdError(
+                "Normal-flow Ticket or EMD creation requires a confirmed BookingRecord."
+            )
+
     async def create_manual_ticket(
         self,
         agency_id: str,
@@ -408,6 +451,8 @@ class TicketEmdService:
         booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
         if payload.booking_record_id and booking_record is None:
             raise TicketEmdError("Booking record not found for manual ticket.")
+        if booking_record:
+            self._require_confirmed_booking_record(booking_record)
         workspace = await self._get_workspace_for_record(agency_id, booking_record) if booking_record else await self._get_workspace(agency_id, payload.booking_workspace_id)
         if payload.booking_workspace_id and workspace is None:
             raise TicketEmdError("Booking workspace not found for manual ticket.")
@@ -418,6 +463,19 @@ class TicketEmdService:
         pricing_summary = pricing.get("summary") if isinstance(pricing, dict) else {}
         pricing_summary = pricing_summary or pricing if isinstance(pricing, dict) else {}
         source_context = _enum_value(payload.source_context or TicketSourceContext.STANDALONE_MANUAL.value)
+        source_reference = payload.source_reference or payload.import_draft_id
+        exception_reason = payload.exception_reason
+        if not booking_record:
+            if source_context == TicketSourceContext.BOOKING_RECORD.value:
+                raise TicketEmdError(
+                    "Normal-flow Ticket creation requires a same-Agency BookingRecord."
+                )
+            if payload.import_draft_id and not exception_reason:
+                exception_reason = "Created from a reviewed standalone booking import draft."
+            if not source_reference or not exception_reason or not user.get("id"):
+                raise TicketEmdError(
+                    "Standalone Ticket import requires source_reference, exception_reason, and actor."
+                )
         trip_id = payload.trip_id or (booking_record or {}).get("trip_id") or (workspace or {}).get("trip_id")
         booking_workspace_id = payload.booking_workspace_id or (booking_record or {}).get("booking_workspace_id") or (workspace or {}).get("id")
         provider = _enum_value(payload.issuing_provider or (booking_record or {}).get("provider") or (workspace or {}).get("provider_target") or "manual")
@@ -434,6 +492,8 @@ class TicketEmdService:
             original_ticket_record_id=payload.original_ticket_record_id,
             exchange_operation_id=payload.exchange_operation_id,
             import_draft_id=payload.import_draft_id,
+            standalone_source_reference=source_reference,
+            standalone_exception_reason=exception_reason,
             ticket_number=payload.ticket_number,
             validating_airline_code=payload.validating_carrier,
             validating_carrier=payload.validating_carrier,
@@ -457,6 +517,24 @@ class TicketEmdService:
             transition_correlation_id=f"booking:{(booking_record or {}).get('id') or payload.booking_record_id or booking_workspace_id or trip_id or 'standalone'}:ticket-result",
             created_by_user_id=user.get("id"),
         )
+        if payload.ticket_number:
+            duplicate = await self.db.collection("ticket_records").find_one(
+                {
+                    "agency_id": agency_id,
+                    "ticket_number": payload.ticket_number,
+                }
+            )
+            if duplicate:
+                if (
+                    duplicate.get("booking_record_id")
+                    == ticket.booking_record_id
+                    and duplicate.get("standalone_source_reference")
+                    == source_reference
+                ):
+                    return await self.get_ticket_detail(agency_id, duplicate["id"])
+                raise TicketEmdError(
+                    "Ticket number already exists with different lineage."
+                )
         if _enum_value(payload.issue_status) == TicketStatus.ISSUED.value and not payload.external_evidence_reference:
             ticket.warnings_json.append({"code": "external_ticket_evidence_missing", "severity": "warning", "message": "Externally issued ticket evidence requires manual review."})
         created = await self.db.collection("ticket_records").insert_one(ticket.model_dump(mode="json"))
@@ -595,6 +673,8 @@ class TicketEmdService:
         booking_record = await self._get_booking_record(agency_id, payload.booking_record_id)
         if payload.booking_record_id and booking_record is None:
             raise TicketEmdError("Booking record not found for manual EMD.")
+        if booking_record:
+            self._require_confirmed_booking_record(booking_record)
         workspace = await self._get_workspace_for_record(agency_id, booking_record) if booking_record else await self._get_workspace(agency_id, payload.booking_workspace_id)
         if payload.booking_workspace_id and workspace is None:
             raise TicketEmdError("Booking workspace not found for manual EMD.")
@@ -603,8 +683,29 @@ class TicketEmdService:
             ticket = await self.db.collection("ticket_records").find_one({"agency_id": agency_id, "id": payload.ticket_record_id})
             if ticket is None:
                 raise TicketEmdError("Ticket record not found for manual EMD.")
+            if booking_record and ticket.get("booking_record_id") != booking_record.get("id"):
+                raise TicketEmdError(
+                    "Linked TicketRecord must belong to the same BookingRecord."
+                )
+            if payload.trip_id and ticket.get("trip_id") and ticket.get("trip_id") != payload.trip_id:
+                raise TicketEmdError(
+                    "Linked TicketRecord must belong to the same Trip."
+                )
         passenger = self._select_passenger(booking_record, payload.passenger_id) if booking_record else None
         source_context = _enum_value(payload.source_context or EmdSourceContext.STANDALONE_MANUAL.value)
+        source_reference = payload.source_reference or payload.import_draft_id
+        exception_reason = payload.exception_reason
+        if not booking_record:
+            if source_context == EmdSourceContext.BOOKING_SERVICE.value:
+                raise TicketEmdError(
+                    "Normal-flow EMD creation requires a same-Agency BookingRecord."
+                )
+            if payload.import_draft_id and not exception_reason:
+                exception_reason = "Created from a reviewed standalone booking import draft."
+            if not source_reference or not exception_reason or not user.get("id"):
+                raise TicketEmdError(
+                    "Standalone EMD import requires source_reference, exception_reason, and actor."
+                )
         trip_id = payload.trip_id or (booking_record or {}).get("trip_id") or (workspace or {}).get("trip_id") or (ticket or {}).get("trip_id")
         booking_workspace_id = payload.booking_workspace_id or (booking_record or {}).get("booking_workspace_id") or (workspace or {}).get("id") or (ticket or {}).get("booking_workspace_id")
         service_snapshot = payload.linked_service_snapshot_json or {
@@ -628,6 +729,8 @@ class TicketEmdService:
             original_emd_record_id=payload.original_emd_record_id,
             exchange_operation_id=payload.exchange_operation_id,
             import_draft_id=payload.import_draft_id,
+            standalone_source_reference=source_reference,
+            standalone_exception_reason=exception_reason,
             emd_number=payload.emd_number,
             emd_type=payload.emd_type,
             service_code=payload.service_key,
@@ -656,6 +759,20 @@ class TicketEmdService:
             internal_notes=payload.internal_notes,
             created_by_user_id=user.get("id"),
         )
+        if payload.emd_number:
+            duplicate = await self.db.collection("emd_records").find_one(
+                {"agency_id": agency_id, "emd_number": payload.emd_number}
+            )
+            if duplicate:
+                if (
+                    duplicate.get("booking_record_id") == emd.booking_record_id
+                    and duplicate.get("standalone_source_reference")
+                    == source_reference
+                ):
+                    return await self.get_emd_detail(agency_id, duplicate["id"])
+                raise TicketEmdError(
+                    "EMD number already exists with different lineage."
+                )
         created = await self.db.collection("emd_records").insert_one(emd.model_dump(mode="json"))
         coupons = []
         if payload.create_coupons:

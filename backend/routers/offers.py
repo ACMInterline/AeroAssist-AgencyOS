@@ -32,6 +32,10 @@ from models import (
     OfferUpdate,
     RequestTimelineEvent,
 )
+from services.authorization_service import require_permission
+from services.canonical_commercial_lifecycle_service import (
+    find_canonical_workspace_for_legacy_offer,
+)
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["offers"])
@@ -46,13 +50,14 @@ def clean_updates(payload: Any) -> dict:
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_offers")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await assert_agency_access(db, agency_id, user)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    require_permission(user, "edit_offers")
 
 
 async def write_audit(db: Database, agency_id: str, actor_user_id: str, event_type: str, entity_type: str, entity_id: str, summary: str, metadata: dict | None = None) -> None:
@@ -88,6 +93,29 @@ async def get_offer_or_404(db: Database, agency_id: str, offer_id: str) -> dict:
     offer = await db.collection("offers").find_one({"agency_id": agency_id, "id": offer_id})
     if not offer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer not found.")
+    return offer
+
+
+async def ensure_legacy_offer_write_allowed(
+    db: Database,
+    agency_id: str,
+    offer_id: str,
+) -> dict:
+    offer = await get_offer_or_404(db, agency_id, offer_id)
+    canonical = await find_canonical_workspace_for_legacy_offer(
+        db,
+        agency_id=agency_id,
+        legacy_offer_id=offer_id,
+        request_id=offer.get("request_id"),
+    )
+    if canonical:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This legacy Offer is a compatibility record and cannot overwrite "
+                "canonical OfferWorkspace truth."
+            ),
+        )
     return offer
 
 
@@ -165,6 +193,13 @@ async def create_offer(agency_id: str, payload: OfferCreate, user: dict = Depend
         request = await db.collection("travel_requests").find_one({"agency_id": agency_id, "id": payload.request_id})
         if not request or request["client_id"] != payload.client_id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request must belong to the selected client.")
+        if await db.collection("offer_workspaces").find_one(
+            {"agency_id": agency_id, "request_id": payload.request_id}
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="A canonical OfferWorkspace already owns this Request.",
+            )
     offer = Offer(agency_id=agency_id, offer_reference=await next_reference(db, agency_id), created_by_user_id=user["id"], **payload.model_dump(mode="json"))
     created = await db.collection("offers").insert_one(offer.model_dump(mode="json"))
     await write_audit(db, agency_id, user["id"], "offer.created", "offer", offer.id, f"Created offer {offer.offer_reference}.")
@@ -178,6 +213,13 @@ async def create_offer_from_request(agency_id: str, request_id: str, payload: Cr
     request = await db.collection("travel_requests").find_one({"agency_id": agency_id, "id": request_id})
     if not request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found.")
+    if await db.collection("offer_workspaces").find_one(
+        {"agency_id": agency_id, "request_id": request_id}
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A canonical OfferWorkspace already owns this Request.",
+        )
     request_passengers = await db.collection("request_passengers").find_many(
         {"agency_id": agency_id, "request_id": request_id, "status": "active"}
     )
@@ -236,7 +278,7 @@ async def get_offer(agency_id: str, offer_id: str, user: dict = Depends(get_curr
 @router.put("/offers/{offer_id}")
 async def update_offer(agency_id: str, offer_id: str, payload: OfferUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_offer_or_404(db, agency_id, offer_id)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
@@ -248,6 +290,7 @@ async def update_offer(agency_id: str, offer_id: str, payload: OfferUpdate, user
 @router.post("/offers/{offer_id}/archive")
 async def archive_offer(agency_id: str, offer_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     offer = await db.collection("offers").update_one({"agency_id": agency_id, "id": offer_id}, {"status": "archived"})
     if not offer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer not found.")
@@ -258,6 +301,7 @@ async def archive_offer(agency_id: str, offer_id: str, user: dict = Depends(get_
 @router.post("/offers/{offer_id}/restore")
 async def restore_offer(agency_id: str, offer_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     offer = await db.collection("offers").update_one({"agency_id": agency_id, "id": offer_id}, {"status": "draft"})
     if not offer:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer not found.")
@@ -268,6 +312,7 @@ async def restore_offer(agency_id: str, offer_id: str, user: dict = Depends(get_
 @router.post("/offers/{offer_id}/send")
 async def send_offer(agency_id: str, offer_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     detail = await offer_detail(db, agency_id, offer_id)
     routes = [r for r in detail["routes"] if r.get("status") != "withdrawn"]
     fares = [f for f in detail["fare_options"] if f.get("status") not in {"withdrawn", "unavailable"}]
@@ -308,7 +353,7 @@ async def list_offer_passengers(agency_id: str, offer_id: str, user: dict = Depe
 @router.post("/offers/{offer_id}/passengers", status_code=status.HTTP_201_CREATED)
 async def add_offer_passenger(agency_id: str, offer_id: str, payload: OfferPassengerCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_offer_or_404(db, agency_id, offer_id)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     passenger = await get_passenger_or_404(db, agency_id, payload.passenger_id)
     item = OfferPassenger(agency_id=agency_id, offer_id=offer_id, snapshot_display_name=passenger["display_name"], snapshot_date_of_birth=passenger["date_of_birth"], snapshot_passenger_type=passenger["passenger_type"], **payload.model_dump(mode="json"))
     created = await db.collection("offer_passengers").insert_one(item.model_dump(mode="json"))
@@ -319,6 +364,7 @@ async def add_offer_passenger(agency_id: str, offer_id: str, payload: OfferPasse
 @router.put("/offers/{offer_id}/passengers/{offer_passenger_id}")
 async def update_offer_passenger(agency_id: str, offer_id: str, offer_passenger_id: str, payload: OfferPassengerUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     item = await db.collection("offer_passengers").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": offer_passenger_id}, clean_updates(payload))
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer passenger not found.")
@@ -328,6 +374,7 @@ async def update_offer_passenger(agency_id: str, offer_id: str, offer_passenger_
 @router.post("/offers/{offer_id}/passengers/{offer_passenger_id}/archive")
 async def archive_offer_passenger(agency_id: str, offer_id: str, offer_passenger_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     item = await db.collection("offer_passengers").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": offer_passenger_id}, {"status": "archived"})
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Offer passenger not found.")
@@ -344,7 +391,7 @@ async def list_routes(agency_id: str, offer_id: str, user: dict = Depends(get_cu
 @router.post("/offers/{offer_id}/route-alternatives", status_code=status.HTTP_201_CREATED)
 async def create_route(agency_id: str, offer_id: str, payload: OfferRouteAlternativeCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_offer_or_404(db, agency_id, offer_id)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     active = [r for r in await db.collection("offer_route_alternatives").find_many({"agency_id": agency_id, "offer_id": offer_id}) if r.get("status") != "withdrawn"]
     if len(active) >= 3:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="An offer can have at most 3 route alternatives.")
@@ -358,6 +405,7 @@ async def create_route(agency_id: str, offer_id: str, payload: OfferRouteAlterna
 @router.put("/offers/{offer_id}/route-alternatives/{route_id}")
 async def update_route(agency_id: str, offer_id: str, route_id: str, payload: OfferRouteAlternativeUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     route = await db.collection("offer_route_alternatives").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": route_id}, clean_updates(payload))
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route alternative not found.")
@@ -368,6 +416,7 @@ async def update_route(agency_id: str, offer_id: str, route_id: str, payload: Of
 @router.post("/offers/{offer_id}/route-alternatives/{route_id}/archive")
 async def archive_route(agency_id: str, offer_id: str, route_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     route = await db.collection("offer_route_alternatives").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": route_id}, {"status": "withdrawn"})
     if not route:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Route alternative not found.")
@@ -385,6 +434,7 @@ async def list_segments(agency_id: str, offer_id: str, route_id: str, user: dict
 @router.post("/offers/{offer_id}/route-alternatives/{route_id}/segments", status_code=status.HTTP_201_CREATED)
 async def create_segment(agency_id: str, offer_id: str, route_id: str, payload: OfferSegmentCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     await get_route_or_404(db, agency_id, offer_id, route_id)
     segment = OfferSegment(agency_id=agency_id, offer_id=offer_id, route_alternative_id=route_id, **payload.model_dump(mode="json"))
     created = await db.collection("offer_segments").insert_one(segment.model_dump(mode="json"))
@@ -394,6 +444,7 @@ async def create_segment(agency_id: str, offer_id: str, route_id: str, payload: 
 @router.put("/offers/{offer_id}/route-alternatives/{route_id}/segments/{segment_id}")
 async def update_segment(agency_id: str, offer_id: str, route_id: str, segment_id: str, payload: OfferSegmentUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     segment = await db.collection("offer_segments").update_one({"agency_id": agency_id, "offer_id": offer_id, "route_alternative_id": route_id, "id": segment_id}, clean_updates(payload))
     if not segment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segment not found.")
@@ -403,6 +454,7 @@ async def update_segment(agency_id: str, offer_id: str, route_id: str, segment_i
 @router.post("/offers/{offer_id}/route-alternatives/{route_id}/segments/{segment_id}/archive")
 async def archive_segment(agency_id: str, offer_id: str, route_id: str, segment_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     segment = await db.collection("offer_segments").update_one({"agency_id": agency_id, "offer_id": offer_id, "route_alternative_id": route_id, "id": segment_id}, {"segment_status": "info_only"})
     if not segment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Segment not found.")
@@ -419,6 +471,7 @@ async def list_fares(agency_id: str, offer_id: str, route_id: str, user: dict = 
 @router.post("/offers/{offer_id}/route-alternatives/{route_id}/fare-options", status_code=status.HTTP_201_CREATED)
 async def create_fare(agency_id: str, offer_id: str, route_id: str, payload: OfferFareOptionCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     await get_route_or_404(db, agency_id, offer_id, route_id)
     active = [f for f in await db.collection("offer_fare_options").find_many({"agency_id": agency_id, "offer_id": offer_id, "route_alternative_id": route_id}) if f.get("status") != "withdrawn"]
     if len(active) >= 3:
@@ -435,6 +488,7 @@ async def create_fare(agency_id: str, offer_id: str, route_id: str, payload: Off
 @router.put("/offers/{offer_id}/route-alternatives/{route_id}/fare-options/{fare_option_id}")
 async def update_fare(agency_id: str, offer_id: str, route_id: str, fare_option_id: str, payload: OfferFareOptionUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     updates = clean_updates(payload)
     fare = await db.collection("offer_fare_options").update_one({"agency_id": agency_id, "offer_id": offer_id, "route_alternative_id": route_id, "id": fare_option_id}, updates)
     if not fare:
@@ -446,6 +500,7 @@ async def update_fare(agency_id: str, offer_id: str, route_id: str, fare_option_
 @router.post("/offers/{offer_id}/route-alternatives/{route_id}/fare-options/{fare_option_id}/archive")
 async def archive_fare(agency_id: str, offer_id: str, route_id: str, fare_option_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     fare = await db.collection("offer_fare_options").update_one({"agency_id": agency_id, "offer_id": offer_id, "route_alternative_id": route_id, "id": fare_option_id}, {"status": "withdrawn"})
     if not fare:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fare option not found.")
@@ -463,6 +518,7 @@ async def list_price_lines(agency_id: str, offer_id: str, fare_option_id: str, u
 @router.post("/offers/{offer_id}/fare-options/{fare_option_id}/price-lines", status_code=status.HTTP_201_CREATED)
 async def create_price_line(agency_id: str, offer_id: str, fare_option_id: str, payload: OfferPriceLineCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     fare = await get_fare_or_404(db, agency_id, offer_id, fare_option_id)
     data = payload.model_dump(mode="json")
     if data.get("total_amount") is None:
@@ -475,6 +531,7 @@ async def create_price_line(agency_id: str, offer_id: str, fare_option_id: str, 
 @router.put("/offers/{offer_id}/fare-options/{fare_option_id}/price-lines/{line_id}")
 async def update_price_line(agency_id: str, offer_id: str, fare_option_id: str, line_id: str, payload: OfferPriceLineUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     line = await db.collection("offer_price_lines").update_one({"agency_id": agency_id, "offer_id": offer_id, "fare_option_id": fare_option_id, "id": line_id}, clean_updates(payload))
     if not line:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Price line not found.")
@@ -484,6 +541,7 @@ async def update_price_line(agency_id: str, offer_id: str, fare_option_id: str, 
 @router.post("/offers/{offer_id}/fare-options/{fare_option_id}/price-lines/{line_id}/archive")
 async def archive_price_line(agency_id: str, offer_id: str, fare_option_id: str, line_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     line = await db.collection("offer_price_lines").update_one({"agency_id": agency_id, "offer_id": offer_id, "fare_option_id": fare_option_id, "id": line_id}, {"status": "archived"})
     if not line:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Price line not found.")
@@ -500,7 +558,7 @@ async def list_service_checks(agency_id: str, offer_id: str, user: dict = Depend
 @router.post("/offers/{offer_id}/service-checks", status_code=status.HTTP_201_CREATED)
 async def create_service_check(agency_id: str, offer_id: str, payload: OfferServiceCheckCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_offer_or_404(db, agency_id, offer_id)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     item = OfferServiceCheck(agency_id=agency_id, offer_id=offer_id, **payload.model_dump(mode="json"))
     created = await db.collection("offer_service_checks").insert_one(item.model_dump(mode="json"))
     return {"service_check": created}
@@ -509,6 +567,7 @@ async def create_service_check(agency_id: str, offer_id: str, payload: OfferServ
 @router.put("/offers/{offer_id}/service-checks/{check_id}")
 async def update_service_check(agency_id: str, offer_id: str, check_id: str, payload: OfferServiceCheckUpdate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     item = await db.collection("offer_service_checks").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": check_id}, clean_updates(payload))
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service check not found.")
@@ -518,6 +577,7 @@ async def update_service_check(agency_id: str, offer_id: str, check_id: str, pay
 @router.post("/offers/{offer_id}/service-checks/{check_id}/archive")
 async def archive_service_check(agency_id: str, offer_id: str, check_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
+    await ensure_legacy_offer_write_allowed(db, agency_id, offer_id)
     item = await db.collection("offer_service_checks").update_one({"agency_id": agency_id, "offer_id": offer_id, "id": check_id}, {"status": "archived"})
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Service check not found.")

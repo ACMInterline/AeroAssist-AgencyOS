@@ -24,6 +24,14 @@ from models import (
     TripTimelineEvent,
     new_id,
 )
+from services.canonical_commercial_lifecycle_service import (
+    CommercialLifecycleError,
+    booking_result_has_governed_evidence,
+    canonical_json_hash,
+    canonical_status,
+    validate_lifecycle_transition,
+    write_lifecycle_evidence,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -318,6 +326,10 @@ class BookingWorkspaceService:
         data = self._payload_dict(payload)
         status = data.get("booking_status") or BookingWorkspaceStatus.DRAFT.value
         self._validate_metadata_status(status)
+        if canonical_status("booking_workspace", status) == "booked":
+            raise BookingWorkspaceError(
+                "BookingWorkspace metadata cannot represent a confirmed external booking. Record a governed BookingRecord result."
+            )
         reference = data.get("booking_reference") or self._booking_reference()
         workspace = BookingWorkspace(
             id=data.get("id") or new_id(),
@@ -375,6 +387,10 @@ class BookingWorkspaceService:
         updates = {key: value for key, value in self._payload_dict(payload).items() if value is not None}
         if "booking_status" in updates:
             self._validate_metadata_status(updates["booking_status"])
+            if canonical_status("booking_workspace", updates["booking_status"]) == "booked":
+                raise BookingWorkspaceError(
+                    "BookingWorkspace metadata cannot represent a confirmed external booking. Record a governed BookingRecord result."
+                )
             updates["status"] = updates["booking_status"]
         if "booking_reference" in updates:
             updates["workspace_number"] = updates["booking_reference"]
@@ -452,6 +468,27 @@ class BookingWorkspaceService:
             raise BookingWorkspaceError(
                 "Booking creation requires the immutable accepted-offer snapshot. Rebuild the canonical booking handoff first."
             )
+        if (
+            payload.accepted_offer_snapshot_id
+            and payload.accepted_offer_snapshot_id != accepted_snapshot["id"]
+        ):
+            raise BookingWorkspaceError(
+                "Booking request references a different accepted-offer snapshot."
+            )
+        handoff = None
+        if payload.offer_booking_handoff_id:
+            handoff = await self.db.collection("offer_booking_handoffs").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": payload.offer_booking_handoff_id,
+                    "acceptance_id": acceptance_id,
+                    "trip_accepted_offer_snapshot_id": accepted_snapshot["id"],
+                }
+            )
+            if handoff is None:
+                raise BookingWorkspaceError(
+                    "Booking handoff does not match the accepted evidence."
+                )
 
         existing = await self._existing_active_workspace(agency_id, readiness["id"])
         if existing:
@@ -494,6 +531,8 @@ class BookingWorkspaceService:
             offer_workspace_id=readiness.get("workspace_id"),
             offer_option_id=readiness.get("option_id"),
             offer_acceptance_id=readiness.get("acceptance_id"),
+            accepted_offer_snapshot_id=accepted_snapshot["id"],
+            offer_booking_handoff_id=(handoff or {}).get("id"),
             booking_readiness_package_id=readiness["id"],
             workspace_number=workspace_number,
             title=self._workspace_title(workspace_number, trip, readiness),
@@ -540,6 +579,8 @@ class BookingWorkspaceService:
             description="Created from booking readiness package without provider execution.",
             payload_json={
                 "booking_readiness_package_id": readiness["id"],
+                "accepted_offer_snapshot_id": accepted_snapshot["id"],
+                "offer_booking_handoff_id": (handoff or {}).get("id"),
                 "provider_execution_disabled": True,
                 "workspace_status": created_workspace.get("status"),
             },
@@ -581,6 +622,10 @@ class BookingWorkspaceService:
             "trip": _summary_from_trip(trip),
             "import_draft_id": payload.import_draft_id,
             "trip_change_operation_id": payload.trip_change_operation_id,
+            "source_reference": payload.source_reference
+            or payload.import_draft_id
+            or payload.pnr_locator,
+            "reason": payload.reason,
         }
         workspace = BookingWorkspace(
             agency_id=agency_id,
@@ -636,6 +681,23 @@ class BookingWorkspaceService:
                 ssr_json=payload.ssr_json or [],
                 osi_json=payload.osi_json or [],
                 internal_pnr_mirror_json=self._internal_manual_pnr_mirror(created_workspace, payload, provider_target, source_context),
+                source_evidence_reference=payload.source_reference
+                or payload.import_draft_id,
+                source_evidence_json={
+                    "source_context": source_context,
+                    "reason": payload.reason,
+                    "import_draft_id": payload.import_draft_id,
+                    "manual_entry": True,
+                },
+                reconciliation_status=(
+                    "import_pending_review"
+                    if source_context
+                    in {
+                        BookingSourceContext.IMPORTED_GDS.value,
+                        BookingSourceContext.IMPORTED_CONFIRMATION.value,
+                    }
+                    else "manual_draft"
+                ),
                 warnings_json=[],
                 internal_notes=payload.internal_notes,
                 created_by_user_id=user.get("id"),
@@ -812,14 +874,16 @@ class BookingWorkspaceService:
             {"agency_id": agency_id, "booking_workspace_id": workspace["id"]}
         )
         timeline.sort(key=lambda item: str(item.get("created_at") or ""))
+        projected_workspace = await self._platform_metadata_projection(workspace)
         return {
-            "booking_workspace": workspace,
+            "booking_workspace": projected_workspace,
             "booking_record": record,
             "timeline": timeline,
             "warnings": [],
             "readiness_summary": _summary_from_readiness(readiness),
             "accepted_offer_summary": _summary_from_acceptance(acceptance),
             "trip_summary": _summary_from_trip(trip),
+            **self.safety_flags(),
         }
 
     async def update_booking_workspace_status(
@@ -835,6 +899,31 @@ class BookingWorkspaceService:
         )
         if workspace is None:
             return None
+        previous_status = workspace.get("status")
+        try:
+            validate_lifecycle_transition(
+                "booking_workspace", previous_status, status
+            )
+        except CommercialLifecycleError as exc:
+            raise BookingWorkspaceError(str(exc)) from exc
+        if canonical_status("booking_workspace", status) == "confirmed":
+            record = await self.db.collection("booking_records").find_one(
+                {
+                    "agency_id": agency_id,
+                    "booking_workspace_id": booking_workspace_id,
+                }
+            )
+            if (
+                record is None
+                or canonical_status(
+                    "booking_record", record.get("booking_status")
+                )
+                not in {"confirmed", "partially_confirmed"}
+                or not booking_result_has_governed_evidence(record)
+            ):
+                raise BookingWorkspaceError(
+                    "Booking workspace cannot be marked booked without an evidenced confirmed BookingRecord."
+                )
         updates: dict[str, Any] = {"status": status}
         if internal_notes is not None:
             updates["internal_notes"] = internal_notes
@@ -853,6 +942,21 @@ class BookingWorkspaceService:
             description=f"Status changed from {workspace.get('status')} to {status}.",
             payload_json={"previous_status": workspace.get("status"), "status": status},
         )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=user.get("id"),
+            event_type="booking_workspace.lifecycle.transitioned",
+            entity_type="booking_workspace",
+            entity_id=booking_workspace_id,
+            summary=f"Booking preparation status changed to {status}.",
+            previous_status=previous_status,
+            next_status=status,
+            request_id=workspace.get("request_id"),
+            trip_id=workspace.get("trip_id"),
+            booking_workspace_id=booking_workspace_id,
+            metadata={"reason": internal_notes},
+        )
         return await self.get_booking_workspace(agency_id, updated["id"])
 
     async def update_booking_record(
@@ -868,6 +972,100 @@ class BookingWorkspaceService:
         if record is None:
             return None
         updates = payload.model_dump(exclude_unset=True, mode="json")
+        expected_version = updates.pop("expected_version", None)
+        reason = updates.pop("reason", None)
+        current_version = int(record.get("current_external_result_version") or 1)
+        if expected_version is not None and expected_version != current_version:
+            raise BookingWorkspaceError(
+                "Booking result changed after it was opened. Refresh before updating."
+            )
+        if canonical_status("booking_record", record.get("booking_status")) == "confirmed":
+            raise BookingWorkspaceError(
+                "Confirmed BookingRecord evidence is immutable; create a governed result revision."
+            )
+        candidate = {**record, **updates}
+        target_status = canonical_status(
+            "booking_record", candidate.get("booking_status")
+        )
+        if "booking_status" in updates:
+            try:
+                validate_lifecycle_transition(
+                    "booking_record",
+                    record.get("booking_status"),
+                    updates["booking_status"],
+                )
+            except CommercialLifecycleError as exc:
+                raise BookingWorkspaceError(str(exc)) from exc
+        if target_status in {"confirmed", "partially_confirmed"}:
+            workspace = await self.db.collection("booking_workspaces").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": record["booking_workspace_id"],
+                }
+            )
+            if (
+                workspace is None
+                or canonical_status(
+                    "booking_workspace", workspace.get("status")
+                )
+                != "submitted_manual"
+            ):
+                raise BookingWorkspaceError(
+                    "Booking preparation must be in progress before a confirmed BookingRecord can be recorded."
+                )
+            if not candidate.get("pnr_locator"):
+                raise BookingWorkspaceError(
+                    "Confirmed BookingRecord requires a PNR or record locator."
+                )
+            if not reason:
+                raise BookingWorkspaceError(
+                    "Confirmed BookingRecord requires an operator reason."
+                )
+            candidate["source_evidence_reference"] = (
+                candidate.get("source_evidence_reference")
+                or candidate.get("import_draft_id")
+                or candidate.get("pnr_locator")
+            )
+            updates["source_evidence_reference"] = candidate[
+                "source_evidence_reference"
+            ]
+            if not booking_result_has_governed_evidence(candidate):
+                raise BookingWorkspaceError(
+                    "Confirmed BookingRecord requires governed manual/import/provider evidence."
+                )
+            duplicates = await self.db.collection("booking_records").find_many(
+                {"agency_id": agency_id, "pnr_locator": candidate["pnr_locator"]}
+            )
+            active_duplicates = [
+                item
+                for item in duplicates
+                if item.get("id") != record["id"]
+                and canonical_status(
+                    "booking_record", item.get("booking_status")
+                )
+                in {"confirmed", "partially_confirmed"}
+            ]
+            if active_duplicates:
+                raise BookingWorkspaceError(
+                    "An active BookingRecord already uses this record locator."
+                )
+            updates["confirmation_timestamp"] = datetime.now(timezone.utc)
+            updates["reconciliation_status"] = candidate.get(
+                "reconciliation_status"
+            ) or "confirmed_manual_evidence"
+            updates["result_hash"] = canonical_json_hash(
+                {
+                    "pnr_locator": candidate.get("pnr_locator"),
+                    "provider": candidate.get("provider"),
+                    "passengers": candidate.get("passengers_json") or [],
+                    "segments": candidate.get("segments_json") or [],
+                    "source_evidence_reference": candidate.get(
+                        "source_evidence_reference"
+                    ),
+                }
+            )
+        updates["current_external_result_version"] = current_version + 1
+        updates["updated_by_user_id"] = user.get("id")
         updated = await self.db.collection("booking_records").update_one(
             {"agency_id": agency_id, "id": booking_record_id},
             updates,
@@ -886,6 +1084,43 @@ class BookingWorkspaceService:
                 "provider_execution_disabled": True,
             },
         )
+        if "booking_status" in updates:
+            await write_lifecycle_evidence(
+                self.db,
+                agency_id=agency_id,
+                actor_user_id=user.get("id"),
+                event_type="booking_record.lifecycle.transitioned",
+                entity_type="booking_record",
+                entity_id=booking_record_id,
+                summary=f"Booking result status changed to {updates['booking_status']}.",
+                previous_status=record.get("booking_status"),
+                next_status=updates["booking_status"],
+                request_id=record.get("request_id"),
+                trip_id=record.get("trip_id"),
+                booking_workspace_id=record["booking_workspace_id"],
+                metadata={
+                    "reason": reason,
+                    "source_evidence_reference": updates.get(
+                        "source_evidence_reference"
+                    )
+                    or record.get("source_evidence_reference"),
+                },
+            )
+        if target_status in {"confirmed", "partially_confirmed"}:
+            await self.db.collection("booking_workspaces").update_one(
+                {"agency_id": agency_id, "id": record["booking_workspace_id"]},
+                {
+                    "booking_reference": candidate.get("pnr_locator"),
+                    "airline_pnr": candidate.get("pnr_locator"),
+                },
+            )
+            await self.update_booking_workspace_status(
+                agency_id,
+                record["booking_workspace_id"],
+                BookingWorkspaceStatus.BOOKED.value,
+                user,
+                reason,
+            )
         return await self.get_booking_workspace(agency_id, record["booking_workspace_id"])
 
     async def rebuild_booking_record_from_readiness(
@@ -1469,6 +1704,12 @@ class BookingWorkspaceService:
             request_id=workspace.get("request_id"),
             booking_readiness_package_id=readiness["id"],
             offer_acceptance_id=readiness.get("acceptance_id"),
+            accepted_offer_snapshot_id=workspace.get(
+                "accepted_offer_snapshot_id"
+            ),
+            offer_booking_handoff_id=workspace.get(
+                "offer_booking_handoff_id"
+            ),
             provider=workspace.get("provider_target") or BookingProviderTarget.MANUAL.value,
             provider_status=BookingRecordProviderStatus.DRAFT,
             booking_status=BookingRecordStatus.DRAFT,
@@ -1481,6 +1722,16 @@ class BookingWorkspaceService:
             ssr_json=readiness.get("ssr_json") or [],
             osi_json=readiness.get("osi_json") or [],
             internal_pnr_mirror_json=self._internal_pnr_mirror(workspace, readiness),
+            source_evidence_json={
+                "accepted_offer_snapshot_id": workspace.get(
+                    "accepted_offer_snapshot_id"
+                ),
+                "offer_booking_handoff_id": workspace.get(
+                    "offer_booking_handoff_id"
+                ),
+                "draft_only": True,
+            },
+            reconciliation_status="draft",
             warnings_json=readiness.get("warnings_json") or [],
             internal_notes=workspace.get("internal_notes"),
             created_by_user_id=user.get("id"),

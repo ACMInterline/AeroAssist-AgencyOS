@@ -8,23 +8,22 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
-const statuses = ["draft", "in_review", "shared", "accepted", "rejected", "expired", "archived"]
+const statuses = ["draft", "ready", "delivered", "accepted", "declined", "expired", "superseded", "cancelled", "in_review", "shared", "rejected", "archived"]
 
 export default function OfferWorkspacesPage() {
   const [state, setState] = useState(null)
   const [filters, setFilters] = useState({ search: "", status: "" })
-  const [form, setForm] = useState({ title: "", currency: "EUR", request_id: "", trip_id: "" })
+  const [form, setForm] = useState({ title: "", currency: "EUR", request_id: "" })
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [workspaces, requests, trips] = await Promise.all([
+    const [workspaces, requests] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/offer-workspaces`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
-      apiGet(`/api/agencies/${context.agency.id}/trips`),
     ])
-    setState({ ...context, workspaces: workspaces.items || [], requests: requests.items || [], trips: trips.items || [] })
+    setState({ ...context, workspaces: workspaces.items || [], requests: requests.items || [] })
   }
 
   useEffect(() => {
@@ -59,8 +58,7 @@ export default function OfferWorkspacesPage() {
       const payload = {
         title: form.title || "New offer workspace",
         currency: form.currency || "EUR",
-        request_id: form.request_id || null,
-        trip_id: form.trip_id || null,
+        request_id: form.request_id,
       }
       const result = await apiPost(`/api/agencies/${state.agency.id}/offer-workspaces`, payload)
       window.location.href = `/agency/offers/${result.workspace.id}/builder`
@@ -102,15 +100,9 @@ export default function OfferWorkspacesPage() {
                 <input value={form.currency} onChange={(event) => setField("currency", event.target.value.toUpperCase())} maxLength={3} />
               </Field>
               <Field label="Request">
-                <select value={form.request_id} onChange={(event) => setField("request_id", event.target.value)}>
-                  <option value="">No request link</option>
+                <select required value={form.request_id} onChange={(event) => setField("request_id", event.target.value)}>
+                  <option value="">Select request</option>
                   {(state?.requests || []).map((request) => <option value={request.id} key={request.id}>{request.request_reference} - {request.title}</option>)}
-                </select>
-              </Field>
-              <Field label="Trip">
-                <select value={form.trip_id} onChange={(event) => setField("trip_id", event.target.value)}>
-                  <option value="">No trip link</option>
-                  {(state?.trips || []).map((trip) => <option value={trip.id} key={trip.id}>{trip.trip_reference} - {trip.trip_title}</option>)}
                 </select>
               </Field>
               <button className="aa-primary-action inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="submit">
@@ -142,7 +134,7 @@ export default function OfferWorkspacesPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8">
-                  <EmptyState title="No offer workspaces found" body="Create a workspace from a request, a trip, or manual research." />
+                  <EmptyState title="No offer workspaces found" body="Open a travel request and prepare its first commercial offer." />
                 </div>
               )}
             </div>

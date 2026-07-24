@@ -512,3 +512,24 @@ collection is renamed, dropped, migrated, or duplicated.
 
 No new collection is introduced. Additive indexes support active deterministic
 reference lookups; startup index governance remains non-destructive.
+
+## P1 Product Kernel Repair 6 - Commercial Lifecycle Reconciliation
+
+| Canonical model | Collection | Ownership |
+|---|---|---|
+| `OfferWorkspace` | `offer_workspaces` | Mutable request-linked Offer and revision chain |
+| `OfferOption` | `offer_options` | Ordered commercial/itinerary alternative |
+| `OfferAcceptance` | `offer_acceptances` | Mutable decision lifecycle, exact Offer/Option versions |
+| `TripAcceptedOfferSnapshot` | `trip_accepted_offer_snapshots` | Create-only accepted evidence with integrity hash |
+| `TripDossier` | `trip_dossiers` | Confirmed Trip from snapshot or explicit governed exception |
+| `OfferBookingHandoff` | `offer_booking_handoffs` | Mutable accepted-evidence booking preparation |
+| `BookingWorkspace` | `booking_workspaces` | Operational preparation, not external truth |
+| `BookingRecord` | `booking_records` | Evidenced manual/imported/provider-result PNR mirror |
+| `TicketRecord` / `TicketCoupon` | `ticket_records` / `ticket_coupons` | Ticket and segment/usage child |
+| `EMDRecord` / `EmdCoupon` | `emd_records` / `emd_coupons` | EMD and service/usage child |
+
+`offers`, `offer_workspaces_v2`, `trip_workspaces`, `bookings`,
+`ticket_workspaces`, and `emd_workspaces` remain compatibility families.
+Existing records are not migrated or deleted. New indexes are additive,
+non-unique lineage/idempotency lookups and startup index governance remains
+non-destructive.

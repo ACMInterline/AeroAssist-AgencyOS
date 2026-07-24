@@ -149,3 +149,18 @@ Never create a second reference engine, silently auto-create an unknown typed
 value, destructively delete a referenced record, or infer universal airline
 pricing/policy from PTC metadata. Reference reconciliation must be bounded,
 auditable, dry-run first, and explicit about ambiguity.
+
+## Canonical Commercial Lifecycle Rule
+
+Commercial lineage is `TravelRequest -> OfferWorkspace -> OfferOption ->
+OfferAcceptance -> TripAcceptedOfferSnapshot -> TripDossier ->
+OfferBookingHandoff -> BookingRecord -> TicketRecord / EMDRecord`.
+Offer delivery freezes a version; acceptance targets exact versions; accepted
+evidence is immutable. Normal confirmed Trips derive from accepted evidence.
+BookingWorkspace is preparation and BookingRecord is evidenced PNR truth.
+Normal Ticket/EMD creation requires BookingRecord lineage.
+
+Never fabricate acceptance, Trip confirmation, booked state, Ticket/EMD
+issuance, or provider success to preserve compatibility. Keep historical
+records readable, classify unresolved duplicates honestly, and use bounded
+dry-run reconciliation before any separately approved migration.

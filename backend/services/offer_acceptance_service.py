@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from database import Database
@@ -10,13 +11,23 @@ from models import (
     OfferAcceptance,
     OfferAcceptanceCreate,
     OfferAcceptanceStatus,
+    OfferDeclineCreate,
     OfferOptionStatus,
     OfferWorkspaceStatus,
     TripAcceptedOfferSnapshot,
+    new_id,
+)
+from services.canonical_commercial_lifecycle_service import (
+    CommercialLifecycleError,
+    acceptance_idempotency_key,
+    canonical_json_hash,
+    canonical_status,
+    validate_lifecycle_transition,
+    write_lifecycle_evidence,
 )
 from services.offer_builder_service import OfferBuilderService, write_offer_builder_audit
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
-from services.trip_dossier_service import create_trip_from_request
+from services.trip_dossier_service import confirm_trip_from_accepted_snapshot
 
 
 def _sort_segments(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -120,53 +131,91 @@ class OfferAcceptanceService:
         option = await self.builder.get_option_or_none(agency_id, option_id)
         if workspace is None or option is None or option.get("workspace_id") != workspace_id:
             return None
-
-        request_id = workspace.get("request_id") or option.get("request_id")
-        trip_id = workspace.get("trip_id") or option.get("trip_id")
-        lifecycle_warnings: list[dict[str, Any]] = []
-        if not trip_id and request_id:
-            trip = await create_trip_from_request(self.db, agency_id, request_id, actor_user_id)
-            trip_id = trip["id"]
-            workspace = await self.db.collection("offer_workspaces").update_one(
-                {"agency_id": agency_id, "id": workspace_id},
-                {
-                    "trip_id": trip_id,
-                    "status": OfferWorkspaceStatus.ACCEPTED.value,
-                    "updated_by_user_id": actor_user_id,
-                },
-            ) or workspace
-            await self.db.collection("offer_options").update_one(
-                {"agency_id": agency_id, "id": option_id},
-                {"trip_id": trip_id},
+        offer_version = int(workspace.get("version") or 1)
+        option_version = int(option.get("version") or 1)
+        if int(option.get("offer_workspace_version") or offer_version) != offer_version:
+            raise CommercialLifecycleError(
+                "Offer Option belongs to a different Offer revision.",
+                code="OFFER_OPTION_REVISION_MISMATCH",
             )
-        elif not trip_id:
-            lifecycle_warnings.append(
-                _warning("Accepted offer has no linked trip; booking readiness was not created.", "trip_missing")
+        if payload.offer_version is None or int(payload.offer_version) != offer_version:
+            raise CommercialLifecycleError(
+                "Acceptance must target the exact current Offer version.",
+                code="STALE_OFFER_VERSION",
             )
+        if payload.option_version is None or int(payload.option_version) != option_version:
+            raise CommercialLifecycleError(
+                "Acceptance must target the exact current Offer Option version.",
+                code="STALE_OFFER_OPTION_VERSION",
+            )
+        idempotency_key = acceptance_idempotency_key(
+            agency_id,
+            workspace_id,
+            offer_version,
+            option_id,
+            option_version,
+            actor_user_id,
+            payload.idempotency_key,
+        )
+        existing_idempotent = await self.db.collection("offer_acceptances").find_one(
+            {"agency_id": agency_id, "idempotency_key": idempotency_key}
+        )
+        if existing_idempotent:
+            if (
+                existing_idempotent.get("workspace_id") != workspace_id
+                or existing_idempotent.get("option_id") != option_id
+                or int(existing_idempotent.get("offer_version") or 1) != offer_version
+            ):
+                raise CommercialLifecycleError(
+                    "Idempotency key is already bound to another acceptance decision.",
+                    code="IDEMPOTENCY_KEY_CONFLICT",
+                )
+            return await self._acceptance_result(existing_idempotent, idempotent=True)
 
-        if not (option.get("pricing_summary_json") or {}).get("total_amount"):
-            await self.builder.recalculate_option_pricing(agency_id, option_id, actor_user_id)
-        await self.builder.evaluate_option_rules(agency_id, option_id, actor_user_id)
-        snapshot = await self.build_acceptance_snapshot(agency_id, option_id)
-        if snapshot is None:
-            return None
-        snapshot["warnings"] = [*snapshot.get("warnings", []), *lifecycle_warnings]
-
-        previous_acceptances = await self.db.collection("offer_acceptances").find_many(
+        active_acceptances = await self.db.collection("offer_acceptances").find_many(
             {
                 "agency_id": agency_id,
                 "workspace_id": workspace_id,
-                "status": OfferAcceptanceStatus.ACCEPTED.value,
             }
         )
-        superseded_ids: list[str] = []
-        for previous in previous_acceptances:
-            superseded = await self.db.collection("offer_acceptances").update_one(
-                {"agency_id": agency_id, "id": previous["id"]},
-                {"status": OfferAcceptanceStatus.SUPERSEDED.value},
+        active_for_revision = [
+            item
+            for item in active_acceptances
+            if int(item.get("offer_version") or 1) == offer_version
+            and item.get("status")
+            in {
+                OfferAcceptanceStatus.PENDING.value,
+                OfferAcceptanceStatus.ACCEPTED.value,
+            }
+        ]
+        if active_for_revision:
+            active = self._latest(active_for_revision)
+            if active and active.get("option_id") == option_id:
+                return await self._acceptance_result(active, idempotent=True)
+            raise CommercialLifecycleError(
+                "This Offer revision already has an active acceptance.",
+                code="DUPLICATE_ACTIVE_ACCEPTANCE",
             )
-            if superseded:
-                superseded_ids.append(superseded["id"])
+
+        self._assert_offer_actionable(workspace, payload.override_reason)
+        if (option.get("pricing_summary_json") or {}).get("total_amount") is None:
+            raise CommercialLifecycleError(
+                "Accepted Offer Option requires a server-derived total.",
+                code="OFFER_TOTAL_REQUIRED",
+            )
+
+        request_id = workspace.get("request_id") or option.get("request_id")
+        trip_id = workspace.get("trip_id") or option.get("trip_id")
+        if not trip_id and request_id:
+            request = await self.db.collection("travel_requests").find_one(
+                {"agency_id": agency_id, "id": request_id}
+            )
+            trip_id = (request or {}).get("trip_id")
+        trip_id = trip_id or new_id()
+
+        snapshot = await self.build_acceptance_snapshot(agency_id, option_id)
+        if snapshot is None:
+            return None
 
         client_summary = payload.client_visible_summary_json or {
             "option_label": option.get("label"),
@@ -174,15 +223,35 @@ class OfferAcceptanceService:
             "pricing": snapshot["pricing"].get("summary") or {},
             "fare_bundle": snapshot["fare_bundle"].get("primary") or {},
         }
+        immutable_payload = self._immutable_payload(
+            agency_id=agency_id,
+            request_id=request_id,
+            trip_id=trip_id,
+            workspace=workspace,
+            option=option,
+            snapshot=snapshot,
+            client_summary=client_summary,
+            actor_user_id=actor_user_id,
+            acceptance_terms_version=payload.acceptance_terms_version,
+        )
+        payload_hash = canonical_json_hash(immutable_payload)
         acceptance = OfferAcceptance(
             agency_id=agency_id,
             workspace_id=workspace_id,
             option_id=option_id,
+            offer_version=offer_version,
+            option_version=option_version,
+            idempotency_key=idempotency_key,
             request_id=request_id,
             trip_id=trip_id,
             accepted_by_user_id=actor_user_id,
+            actor_identity_id=user.get("identity_id"),
+            accepted_at=None,
+            channel=payload.channel,
+            acceptance_terms_version=payload.acceptance_terms_version,
+            consent_evidence_json=payload.consent_evidence_json,
             acceptance_source=payload.acceptance_source,
-            status=OfferAcceptanceStatus.ACCEPTED,
+            status=OfferAcceptanceStatus.PENDING,
             accepted_pricing_snapshot_json=snapshot["pricing"],
             accepted_routing_snapshot_json=snapshot["routing"],
             accepted_fare_bundle_snapshot_json=snapshot["fare_bundle"],
@@ -191,37 +260,75 @@ class OfferAcceptanceService:
             accepted_special_items_snapshot_json=snapshot["special_items"],
             rules_feasibility_snapshot_json=snapshot["rules_feasibility"],
             client_visible_summary_json=client_summary,
+            accepted_payload_hash=payload_hash,
+            reconciliation_status="snapshot_pending",
             internal_notes=payload.internal_notes,
         )
         created = await self.db.collection("offer_acceptances").insert_one(acceptance.model_dump(mode="json"))
-
-        await self.db.collection("offer_options").update_one(
-            {"agency_id": agency_id, "id": option_id},
-            {
-                "status": OfferOptionStatus.RECOMMENDED.value,
-                "recommendation_rank": 1,
-                "recommendation_tag": "Accepted",
-            },
-        )
-        await self.db.collection("offer_workspaces").update_one(
-            {"agency_id": agency_id, "id": workspace_id},
-            {
-                "status": OfferWorkspaceStatus.ACCEPTED.value,
-                "trip_id": trip_id,
-                "updated_by_user_id": actor_user_id,
-            },
-        )
-
         trip_snapshot = None
         readiness = None
-        if trip_id:
-            trip_snapshot = await self._upsert_trip_snapshot(agency_id, trip_id, created, snapshot)
+        try:
+            trip_snapshot = await self._create_trip_snapshot_once(
+                agency_id,
+                trip_id,
+                created,
+                immutable_payload,
+                payload_hash,
+            )
+            trip = await confirm_trip_from_accepted_snapshot(
+                self.db,
+                agency_id,
+                trip_snapshot,
+                created,
+                actor_user_id,
+            )
+            accepted_at = datetime.now(timezone.utc)
+            created = await self.db.collection("offer_acceptances").update_one(
+                {"agency_id": agency_id, "id": created["id"]},
+                {
+                    "status": OfferAcceptanceStatus.ACCEPTED.value,
+                    "accepted_at": accepted_at,
+                    "trip_id": trip["id"],
+                    "accepted_snapshot_id": trip_snapshot["id"],
+                    "reconciliation_status": "canonical",
+                },
+            ) or created
+            await self.db.collection("offer_options").update_one(
+                {"agency_id": agency_id, "id": option_id},
+                {
+                    "status": OfferOptionStatus.RECOMMENDED.value,
+                    "recommendation_rank": 1,
+                    "recommendation_tag": "Accepted",
+                    "trip_id": trip["id"],
+                    "updated_by_user_id": actor_user_id,
+                },
+            )
+            validate_lifecycle_transition("offer", workspace.get("status"), "accepted")
+            await self.db.collection("offer_workspaces").update_one(
+                {"agency_id": agency_id, "id": workspace_id},
+                {
+                    "status": OfferWorkspaceStatus.ACCEPTED.value,
+                    "trip_id": trip["id"],
+                    "updated_by_user_id": actor_user_id,
+                },
+            )
             readiness = await self.build_booking_readiness_package(
                 agency_id,
                 created["id"],
                 user,
                 provider_target=payload.provider_target,
             )
+        except Exception as exc:
+            await self.db.collection("offer_acceptances").update_one(
+                {"agency_id": agency_id, "id": created["id"]},
+                {
+                    "status": OfferAcceptanceStatus.PENDING.value,
+                    "accepted_snapshot_id": (trip_snapshot or {}).get("id"),
+                    "reconciliation_status": "requires_review",
+                    "failure_reason": str(exc)[:500],
+                },
+            )
+            raise
 
         await write_offer_builder_audit(
             self.db,
@@ -234,8 +341,32 @@ class OfferAcceptanceService:
             {
                 "workspace_id": workspace_id,
                 "option_id": option_id,
-                "trip_id": trip_id,
-                "superseded_acceptance_ids": superseded_ids,
+                "trip_id": created.get("trip_id"),
+                "offer_version": offer_version,
+                "option_version": option_version,
+                "accepted_snapshot_id": trip_snapshot.get("id"),
+                "accepted_payload_hash": payload_hash,
+            },
+        )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=actor_user_id,
+            event_type="offer_acceptance.lifecycle.accepted",
+            entity_type="offer_acceptance",
+            entity_id=created["id"],
+            summary="Accepted exact Offer version and created immutable evidence.",
+            previous_status="pending",
+            next_status="accepted",
+            request_id=request_id,
+            trip_id=created.get("trip_id"),
+            metadata={
+                "workspace_id": workspace_id,
+                "offer_version": offer_version,
+                "option_id": option_id,
+                "option_version": option_version,
+                "accepted_snapshot_id": trip_snapshot.get("id"),
+                "accepted_payload_hash": payload_hash,
             },
         )
         return {
@@ -245,7 +376,126 @@ class OfferAcceptanceService:
             "warnings": snapshot.get("warnings", []),
             "required_documents": snapshot.get("required_documents", []),
             "ssr_osi_preview": snapshot.get("ssr_osi_preview", {}),
-            "superseded_acceptance_ids": superseded_ids,
+            "idempotent_reused": False,
+        }
+
+    async def decline_offer_option(
+        self,
+        agency_id: str,
+        workspace_id: str,
+        option_id: str,
+        user: dict,
+        payload: OfferDeclineCreate,
+    ) -> dict[str, Any] | None:
+        workspace = await self.builder.get_workspace_or_none(agency_id, workspace_id)
+        option = await self.builder.get_option_or_none(agency_id, option_id)
+        if workspace is None or option is None or option.get("workspace_id") != workspace_id:
+            return None
+        offer_version = int(workspace.get("version") or 1)
+        option_version = int(option.get("version") or 1)
+        if int(option.get("offer_workspace_version") or offer_version) != offer_version:
+            raise CommercialLifecycleError(
+                "Offer Option belongs to a different Offer revision.",
+                code="OFFER_OPTION_REVISION_MISMATCH",
+            )
+        if payload.offer_version is None or int(payload.offer_version) != offer_version:
+            raise CommercialLifecycleError(
+                "Decline must target the exact current Offer version.",
+                code="STALE_OFFER_VERSION",
+            )
+        if payload.option_version is None or int(payload.option_version) != option_version:
+            raise CommercialLifecycleError(
+                "Decline must target the exact current Offer Option version.",
+                code="STALE_OFFER_OPTION_VERSION",
+            )
+        self._assert_offer_actionable(workspace, None)
+        key = acceptance_idempotency_key(
+            agency_id,
+            workspace_id,
+            offer_version,
+            option_id,
+            option_version,
+            user.get("id"),
+            payload.idempotency_key,
+            decision="declined",
+        )
+        existing = await self.db.collection("offer_acceptances").find_one(
+            {"agency_id": agency_id, "idempotency_key": key}
+        )
+        if existing:
+            return {
+                "acceptance": existing,
+                "trip_snapshot": None,
+                "booking_readiness": None,
+                "idempotent_reused": True,
+            }
+        active = await self.db.collection("offer_acceptances").find_one(
+            {
+                "agency_id": agency_id,
+                "workspace_id": workspace_id,
+                "status": OfferAcceptanceStatus.ACCEPTED.value,
+            }
+        )
+        if active and int(active.get("offer_version") or 1) == offer_version:
+            raise CommercialLifecycleError(
+                "An accepted Offer revision cannot be declined.",
+                code="ACCEPTANCE_ALREADY_ACTIVE",
+            )
+        decision_payload = {
+            "workspace_id": workspace_id,
+            "offer_version": offer_version,
+            "option_id": option_id,
+            "option_version": option_version,
+            "decision": "declined",
+            "reason": payload.reason,
+        }
+        declined_at = datetime.now(timezone.utc)
+        model = OfferAcceptance(
+            agency_id=agency_id,
+            workspace_id=workspace_id,
+            option_id=option_id,
+            offer_version=offer_version,
+            option_version=option_version,
+            idempotency_key=key,
+            request_id=workspace.get("request_id"),
+            accepted_by_user_id=user.get("id"),
+            actor_identity_id=user.get("identity_id"),
+            channel=payload.channel,
+            status=OfferAcceptanceStatus.DECLINED,
+            declined_at=declined_at,
+            accepted_payload_hash=canonical_json_hash(decision_payload),
+            reconciliation_status="canonical",
+            internal_notes=payload.reason,
+        )
+        created = await self.db.collection("offer_acceptances").insert_one(
+            model.model_dump(mode="json")
+        )
+        validate_lifecycle_transition("offer", workspace.get("status"), "declined")
+        await self.db.collection("offer_workspaces").update_one(
+            {"agency_id": agency_id, "id": workspace_id},
+            {
+                "status": OfferWorkspaceStatus.DECLINED.value,
+                "updated_by_user_id": user.get("id"),
+            },
+        )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=user.get("id"),
+            event_type="offer_acceptance.lifecycle.declined",
+            entity_type="offer_acceptance",
+            entity_id=created["id"],
+            summary="Declined exact Offer version; no Trip was created.",
+            previous_status="pending",
+            next_status="declined",
+            request_id=workspace.get("request_id"),
+            metadata=decision_payload,
+        )
+        return {
+            "acceptance": created,
+            "trip_snapshot": None,
+            "booking_readiness": None,
+            "idempotent_reused": False,
         }
 
     async def build_acceptance_snapshot(self, agency_id: str, option_id: str) -> dict[str, Any] | None:
@@ -315,6 +565,7 @@ class OfferAcceptanceService:
         return {
             "workspace": workspace,
             "option": option,
+            "request": detail.get("request"),
             "passengers": passengers,
             "pricing": {"summary": pricing_summary, "lines": option_pricing},
             "routing": {"segments": option_segments, "routing_options": option_routings},
@@ -342,26 +593,40 @@ class OfferAcceptanceService:
         acceptance = await self.db.collection("offer_acceptances").find_one(
             {"agency_id": agency_id, "id": acceptance_id}
         )
-        if acceptance is None or not acceptance.get("trip_id"):
+        if (
+            acceptance is None
+            or acceptance.get("status") != OfferAcceptanceStatus.ACCEPTED.value
+            or not acceptance.get("trip_id")
+        ):
             return None
-        snapshot = await self.build_acceptance_snapshot(agency_id, acceptance["option_id"])
-        if snapshot is None:
+        trip_snapshot = await self.db.collection(
+            "trip_accepted_offer_snapshots"
+        ).find_one({"agency_id": agency_id, "acceptance_id": acceptance_id})
+        if trip_snapshot is None:
             return None
 
-        pricing = snapshot["pricing"].get("summary") or {}
-        segments = snapshot["routing"].get("segments", [])
-        passengers = snapshot.get("passengers", [])
-        policy_violations = snapshot.get("policy_violations", [])
+        pricing_snapshot = trip_snapshot.get("confirmed_pricing_json") or {}
+        pricing = pricing_snapshot.get("summary") or pricing_snapshot
+        segments = trip_snapshot.get("confirmed_segments_json") or []
+        passengers = trip_snapshot.get("confirmed_passengers_json") or []
+        policy_readiness = trip_snapshot.get("policy_readiness_snapshot_json") or {}
+        policy_violations = policy_readiness.get("policy_violations") or []
+        warnings = policy_readiness.get("warnings") or []
+        required_documents = policy_readiness.get("required_documents") or []
+        ssr_osi = trip_snapshot.get("ssr_osi_preview_json") or {}
+        rules_feasibility = policy_readiness.get("rules_feasibility") or {}
         checks = {
             "passengers_present": bool(passengers),
             "segments_present": bool(segments),
             "pricing_present": pricing.get("total_amount") is not None,
             "currency_present": bool(pricing.get("currency")),
-            "special_service_warnings_evaluated": bool(snapshot["rules_feasibility"].get("rules_summary")),
+            "special_service_warnings_evaluated": bool(
+                rules_feasibility.get("rules_summary")
+            ),
             "blocked_policy_violations_absent": not bool(policy_violations),
             "required_documents_listed": True,
             "ssr_osi_preview_generated": bool(
-                snapshot["ssr_osi_preview"].get("ssr") or snapshot["ssr_osi_preview"].get("osi")
+                ssr_osi.get("ssr") or ssr_osi.get("osi")
             ),
             "provider_target_selected": bool(provider_target),
         }
@@ -389,14 +654,17 @@ class OfferAcceptanceService:
             provider_target=provider_target or BookingProviderTarget.MANUAL,
             passengers_snapshot_json=passengers,
             segments_snapshot_json=segments,
-            pricing_snapshot_json=snapshot["pricing"],
-            services_snapshot_json=snapshot["services"],
-            pets_snapshot_json=snapshot["pets"],
-            special_items_snapshot_json=snapshot["special_items"],
-            ssr_json=snapshot["ssr_osi_preview"].get("ssr", []),
-            osi_json=snapshot["ssr_osi_preview"].get("osi", []),
-            warnings_json=snapshot.get("warnings", []),
-            required_documents_json=snapshot.get("required_documents", []),
+            pricing_snapshot_json=pricing_snapshot,
+            services_snapshot_json=trip_snapshot.get("confirmed_services_json") or {},
+            pets_snapshot_json=trip_snapshot.get("confirmed_pets_json") or {},
+            special_items_snapshot_json=trip_snapshot.get(
+                "confirmed_special_items_json"
+            )
+            or {},
+            ssr_json=ssr_osi.get("ssr", []),
+            osi_json=ssr_osi.get("osi", []),
+            warnings_json=warnings,
+            required_documents_json=required_documents,
             policy_violations_json=policy_violations,
             readiness_checks_json=checks,
             created_by_user_id=user.get("id"),
@@ -416,7 +684,6 @@ class OfferAcceptanceService:
             created = await self.db.collection("booking_readiness_packages").insert_one(
                 package.model_dump(mode="json")
             )
-        await self._refresh_trip_snapshot_readiness(agency_id, acceptance, created)
         return created
 
     async def get_workspace_acceptance(self, agency_id: str, workspace_id: str) -> dict[str, Any]:
@@ -494,9 +761,20 @@ class OfferAcceptanceService:
         )
         if acceptance is None:
             return None
+        if acceptance.get("status") != OfferAcceptanceStatus.ACCEPTED.value:
+            raise CommercialLifecycleError(
+                "Only an active acceptance may be revoked.",
+                code="ACCEPTANCE_NOT_ACTIVE",
+            )
+        validate_lifecycle_transition("acceptance", acceptance.get("status"), "revoked")
+        revoked_at = datetime.now(timezone.utc)
         cancelled = await self.db.collection("offer_acceptances").update_one(
             {"agency_id": agency_id, "id": acceptance_id},
-            {"status": OfferAcceptanceStatus.CANCELLED.value},
+            {
+                "status": OfferAcceptanceStatus.REVOKED.value,
+                "revoked_at": revoked_at,
+                "reconciliation_status": "revoked_downstream_preserved",
+            },
         )
         readiness = await self.db.collection("booking_readiness_packages").find_one(
             {"agency_id": agency_id, "acceptance_id": acceptance_id}
@@ -517,6 +795,23 @@ class OfferAcceptanceService:
             {
                 "trip_id": acceptance.get("trip_id"),
                 "workspace_id": acceptance.get("workspace_id"),
+            },
+        )
+        await write_lifecycle_evidence(
+            self.db,
+            agency_id=agency_id,
+            actor_user_id=user.get("id"),
+            event_type="offer_acceptance.lifecycle.revoked",
+            entity_type="offer_acceptance",
+            entity_id=acceptance_id,
+            summary="Revoked acceptance while preserving its Trip and immutable evidence.",
+            previous_status="accepted",
+            next_status="revoked",
+            request_id=acceptance.get("request_id"),
+            trip_id=acceptance.get("trip_id"),
+            metadata={
+                "accepted_snapshot_id": acceptance.get("accepted_snapshot_id"),
+                "downstream_records_preserved": True,
             },
         )
         return {"acceptance": cancelled, "booking_readiness": readiness}
@@ -596,13 +891,24 @@ class OfferAcceptanceService:
             ),
         }
 
-    async def _upsert_trip_snapshot(
+    async def _create_trip_snapshot_once(
         self,
         agency_id: str,
         trip_id: str,
         acceptance: dict[str, Any],
-        snapshot: dict[str, Any],
+        immutable_payload: dict[str, Any],
+        source_hash: str,
     ) -> dict[str, Any]:
+        existing = await self.db.collection("trip_accepted_offer_snapshots").find_one(
+            {"agency_id": agency_id, "acceptance_id": acceptance["id"]}
+        )
+        if existing:
+            if existing.get("source_hash") != source_hash:
+                raise CommercialLifecycleError(
+                    "Accepted snapshot already exists with different content.",
+                    code="ACCEPTED_SNAPSHOT_HASH_CONFLICT",
+                )
+            return existing
         item = TripAcceptedOfferSnapshot(
             agency_id=agency_id,
             trip_id=trip_id,
@@ -610,51 +916,208 @@ class OfferAcceptanceService:
             workspace_id=acceptance["workspace_id"],
             option_id=acceptance["option_id"],
             acceptance_id=acceptance["id"],
-            confirmed_segments_json=snapshot["routing"].get("segments", []),
-            confirmed_passengers_json=snapshot.get("passengers", []),
-            confirmed_fare_bundle_json=snapshot["fare_bundle"],
-            confirmed_pricing_json=snapshot["pricing"],
-            confirmed_services_json=snapshot["services"],
-            confirmed_pets_json=snapshot["pets"],
-            confirmed_special_items_json=snapshot["special_items"],
-            ssr_osi_preview_json=snapshot.get("ssr_osi_preview", {}),
+            request_version=immutable_payload.get("request_version"),
+            offer_version=immutable_payload["offer_version"],
+            option_version=immutable_payload["option_version"],
+            client_profile_id=immutable_payload.get("client_profile_id"),
+            confirmed_segments_json=immutable_payload["itinerary_segments"],
+            confirmed_passengers_json=immutable_payload["passengers"],
+            confirmed_fare_bundle_json=immutable_payload["fare"],
+            confirmed_pricing_json=immutable_payload["pricing"],
+            confirmed_services_json=immutable_payload["services"],
+            confirmed_pets_json=immutable_payload["pets"],
+            confirmed_special_items_json=immutable_payload["special_items"],
+            ssr_osi_preview_json=immutable_payload.get("ssr_osi_preview", {}),
             booking_readiness_json={},
+            airlines_snapshot_json=immutable_payload.get("airlines", []),
+            cabins_snapshot_json=immutable_payload.get("cabins", []),
+            baggage_snapshot_json=immutable_payload.get("baggage", {}),
+            airline_charges_snapshot_json=immutable_payload.get("airline_charges", {}),
+            agency_fees_snapshot_json=immutable_payload.get("agency_fees", {}),
+            taxes_snapshot_json=immutable_payload.get("taxes", {}),
+            total_snapshot_json=immutable_payload.get("total", {}),
+            currency=immutable_payload.get("currency"),
+            terms_snapshot_json=immutable_payload.get("terms", {}),
+            policy_readiness_snapshot_json=immutable_payload.get("policy_readiness", {}),
+            source_hash=source_hash,
+            created_by_user_id=immutable_payload.get("created_by"),
+            immutable=True,
         )
-        existing = await self.db.collection("trip_accepted_offer_snapshots").find_one(
+        existing_trip_snapshot = await self.db.collection(
+            "trip_accepted_offer_snapshots"
+        ).find_one(
             {"agency_id": agency_id, "trip_id": trip_id}
         )
-        if existing:
-            updates = item.model_dump(mode="json")
-            updates.pop("id", None)
-            updates.pop("created_at", None)
-            return await self.db.collection("trip_accepted_offer_snapshots").update_one(
-                {"agency_id": agency_id, "id": existing["id"]},
-                updates,
+        if existing_trip_snapshot:
+            raise CommercialLifecycleError(
+                "Trip already has immutable accepted-offer evidence.",
+                code="TRIP_ACCEPTED_SNAPSHOT_CONFLICT",
             )
         return await self.db.collection("trip_accepted_offer_snapshots").insert_one(
             item.model_dump(mode="json")
         )
 
-    async def _refresh_trip_snapshot_readiness(
+    def _assert_offer_actionable(
         self,
-        agency_id: str,
-        acceptance: dict[str, Any],
-        readiness: dict[str, Any] | None,
+        workspace: dict[str, Any],
+        override_reason: str | None,
     ) -> None:
-        if not readiness or not acceptance.get("trip_id"):
-            return
-        await self.db.collection("trip_accepted_offer_snapshots").update_one(
-            {"agency_id": agency_id, "trip_id": acceptance["trip_id"]},
-            {
-                "booking_readiness_json": {
-                    "package_id": readiness.get("id"),
-                    "status": readiness.get("status"),
-                    "readiness_checks": readiness.get("readiness_checks_json") or {},
-                    "warnings": readiness.get("warnings_json") or [],
-                    "required_documents": readiness.get("required_documents_json") or [],
-                }
+        status_value = canonical_status("offer", workspace.get("status"))
+        if status_value == "expired" or self._is_expired(workspace.get("expires_at")):
+            raise CommercialLifecycleError(
+                "Expired Offer versions cannot be accepted.",
+                code="OFFER_EXPIRED",
+            )
+        if status_value == "superseded":
+            raise CommercialLifecycleError(
+                "Superseded Offer versions cannot be accepted.",
+                code="OFFER_SUPERSEDED",
+            )
+        if status_value != "delivered":
+            raise CommercialLifecycleError(
+                "Offer must be delivered before an acceptance decision is recorded.",
+                code="OFFER_NOT_DELIVERED",
+            )
+        if override_reason:
+            raise CommercialLifecycleError(
+                "Override acceptance is not enabled by this repair; use a governed current Offer revision.",
+                code="OFFER_OVERRIDE_NOT_AUTHORIZED",
+            )
+
+    def _is_expired(self, value: Any) -> bool:
+        if not value:
+            return False
+        if isinstance(value, datetime):
+            expiry = value
+        else:
+            try:
+                expiry = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+            except ValueError:
+                return True
+        if expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=timezone.utc)
+        return expiry <= datetime.now(timezone.utc)
+
+    def _immutable_payload(
+        self,
+        *,
+        agency_id: str,
+        request_id: str | None,
+        trip_id: str,
+        workspace: dict[str, Any],
+        option: dict[str, Any],
+        snapshot: dict[str, Any],
+        client_summary: dict[str, Any],
+        actor_user_id: str | None,
+        acceptance_terms_version: str | None,
+    ) -> dict[str, Any]:
+        segments = snapshot["routing"].get("segments", [])
+        fare = snapshot["fare_bundle"]
+        pricing = snapshot["pricing"]
+        pricing_summary = pricing.get("summary") or {}
+        airlines = []
+        cabins = []
+        for segment in segments:
+            airline = {
+                "marketing_airline_code": segment.get("marketing_airline_code"),
+                "operating_airline_code": segment.get("operating_airline_code"),
+            }
+            if airline not in airlines:
+                airlines.append(airline)
+            cabin = {
+                "cabin_class": segment.get("cabin_class"),
+                "booking_class": segment.get("booking_class"),
+                "fare_basis": segment.get("fare_basis"),
+            }
+            if cabin not in cabins:
+                cabins.append(cabin)
+        primary_fare = fare.get("primary") or {}
+        return {
+            "agency_id": agency_id,
+            "request_id": request_id,
+            "request_version": (
+                snapshot.get("request") or {}
+            ).get("request_version"),
+            "trip_id": trip_id,
+            "offer_id": workspace["id"],
+            "offer_version": int(workspace.get("version") or 1),
+            "option_id": option["id"],
+            "option_version": int(option.get("version") or 1),
+            "client_profile_id": workspace.get("client_profile_id")
+            or (workspace.get("client_summary_json") or {}).get("client_id"),
+            "passengers": snapshot.get("passengers", []),
+            "itinerary_segments": segments,
+            "airlines": airlines,
+            "cabins": cabins,
+            "fare": fare,
+            "baggage": primary_fare.get("included_baggage_json") or {},
+            "pricing": pricing,
+            "services": snapshot["services"],
+            "pets": snapshot["pets"],
+            "special_items": snapshot["special_items"],
+            "airline_charges": option.get("airline_charge_snapshot_json") or {},
+            "agency_fees": option.get("agency_fee_snapshot_json") or {},
+            "taxes": option.get("tax_snapshot_json") or {},
+            "total": option.get("total_snapshot_json")
+            or {
+                "total_amount": pricing_summary.get("total_amount"),
+                "currency": pricing_summary.get("currency"),
+                "server_derived": True,
             },
+            "currency": pricing_summary.get("currency")
+            or option.get("currency")
+            or workspace.get("currency"),
+            "terms": {
+                "acceptance_terms_version": acceptance_terms_version,
+                "offer_expires_at": workspace.get("expires_at"),
+                "delivered_at": workspace.get("delivered_at"),
+                "client_visible_summary": client_summary,
+            },
+            "policy_readiness": {
+                "rules_feasibility": snapshot["rules_feasibility"],
+                "warnings": snapshot.get("warnings", []),
+                "required_documents": snapshot.get("required_documents", []),
+                "policy_violations": snapshot.get("policy_violations", []),
+            },
+            "ssr_osi_preview": snapshot.get("ssr_osi_preview", {}),
+            "created_by": actor_user_id,
+        }
+
+    async def _acceptance_result(
+        self,
+        acceptance: dict[str, Any],
+        *,
+        idempotent: bool,
+    ) -> dict[str, Any]:
+        trip_snapshot = await self.db.collection(
+            "trip_accepted_offer_snapshots"
+        ).find_one(
+            {
+                "agency_id": acceptance["agency_id"],
+                "acceptance_id": acceptance["id"],
+            }
         )
+        readiness = await self.db.collection("booking_readiness_packages").find_one(
+            {
+                "agency_id": acceptance["agency_id"],
+                "acceptance_id": acceptance["id"],
+            }
+        )
+        return {
+            "acceptance": acceptance,
+            "trip_snapshot": trip_snapshot,
+            "booking_readiness": readiness,
+            "warnings": (readiness or {}).get("warnings_json") or [],
+            "required_documents": (readiness or {}).get(
+                "required_documents_json"
+            )
+            or [],
+            "ssr_osi_preview": {
+                "ssr": (readiness or {}).get("ssr_json") or [],
+                "osi": (readiness or {}).get("osi_json") or [],
+            },
+            "idempotent_reused": idempotent,
+        }
 
     def _latest(self, items: list[dict[str, Any]]) -> dict[str, Any] | None:
         if not items:

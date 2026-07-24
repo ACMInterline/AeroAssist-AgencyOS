@@ -1755,6 +1755,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
             [("agency_id", ASCENDING), ("offer_purpose", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("revision_root_id", ASCENDING), ("version", ASCENDING)],
+            [("agency_id", ASCENDING), ("superseded_by_offer_id", ASCENDING)],
         ],
         "offer_options": [
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING)],
@@ -1762,6 +1764,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("offer_purpose", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
             [("agency_id", ASCENDING), ("recommendation_rank", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("option_order", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("offer_workspace_version", ASCENDING)],
         ],
         "offer_routing_options": [[("agency_id", ASCENDING), ("option_id", ASCENDING)]],
         "offer_builder_segments": [
@@ -1783,10 +1787,13 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("option_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("offer_version", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
         ],
         "trip_accepted_offer_snapshots": [
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("acceptance_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("source_hash", ASCENDING)],
         ],
         "booking_readiness_packages": [
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
@@ -2616,6 +2623,9 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("import_draft_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("accepted_offer_snapshot_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("offer_booking_handoff_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("source_evidence_reference", ASCENDING)],
         ],
         "booking_import_drafts": [
             [("agency_id", ASCENDING), ("source_type", ASCENDING)],

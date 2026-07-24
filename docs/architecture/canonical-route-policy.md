@@ -480,3 +480,28 @@ authorization boundary is introduced.
 Options are bounded and tenant safe. Inactive values require authenticated
 historical lookup. There is no `/admin/*`, `/agent/*`, duplicate reference API
 root, public mutation, or tenant-selectable scope override.
+
+## Canonical Commercial Lifecycle Routes
+
+- Offer list/create/detail/options/delivery:
+  `/api/agencies/{agency_id}/offer-workspaces*`.
+- Exact-version decision and immutable accepted snapshot:
+  `/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/acceptance*`.
+- Trip list/detail and governed creation:
+  `/api/agencies/{agency_id}/trips*`.
+- Accepted-evidence handoff:
+  `/api/agencies/{agency_id}/booking-handoffs*`.
+- Booking preparation and evidenced result:
+  `/api/agencies/{agency_id}/booking-workspaces*` and
+  `/api/agencies/{agency_id}/booking-records/{booking_record_id}`.
+- Ticket/EMD records:
+  `/api/agencies/{agency_id}/tickets*` and
+  `/api/agencies/{agency_id}/emds*`.
+
+All Agency routes use path scope plus active membership and centralized
+permissions. Body/query IDs cannot widen `agency_id`. Legacy `/offers` and
+`/bookings` reads remain compatibility routes. A linked legacy Offer cannot
+overwrite OfferWorkspace; legacy Booking and Booking Ticket/EMD mutations
+return `409`. Portal decisions use authenticated subject-scoped delivery and
+explicit PortalAccessMapping. There is no anonymous acceptance, `/admin/*`,
+provider booking, Ticket/EMD issuance, or payment execution route.

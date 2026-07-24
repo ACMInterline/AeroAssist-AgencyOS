@@ -63,6 +63,8 @@ class RequestToTripConversionService:
             "request_to_trip_operational_conversion_foundation": True,
             "request_remains_intake_origin": True,
             "trip_becomes_operational_shell": True,
+            "pre_acceptance_conversion_is_planning_projection": True,
+            "confirmed_trip_requires_accepted_offer_snapshot": True,
             "never_use_request_id_as_trip_id": True,
             "source_snapshots_preserved": True,
             "idempotent_safe_retry_enabled": True,
@@ -259,6 +261,15 @@ class RequestToTripConversionService:
             "timeline_event_ids": integrations.get("timeline_event_ids") or [],
             "source_request_snapshot_preserved": True,
             "request_id_used_as_trip_id": trip["id"] == data["request_id"],
+            "trip_lifecycle_state": trip.get("trip_status") or "planning",
+            "planning_projection": (
+                trip.get("creation_mode") == "request_planning_projection"
+                or trip.get("trip_status") in {"draft", "planning", "quoted"}
+            ),
+            "confirmed_trip_created": bool(
+                trip.get("trip_status") == "confirmed"
+                and trip.get("accepted_offer_snapshot_id")
+            ),
             "metadata_only": True,
         }
         updated_run = await self.db.collection(REQUEST_TRIP_CONVERSION_RUNS_COLLECTION).update_one(
@@ -289,6 +300,14 @@ class RequestToTripConversionService:
             "validation": validation,
             "integrations": integrations,
             "idempotent_reused": False,
+            "planning_projection": (
+                trip.get("creation_mode") == "request_planning_projection"
+                or trip.get("trip_status") in {"draft", "planning", "quoted"}
+            ),
+            "confirmed_trip_created": bool(
+                trip.get("trip_status") == "confirmed"
+                and trip.get("accepted_offer_snapshot_id")
+            ),
             "metadata_only": True,
             **self.safety_flags(),
         }

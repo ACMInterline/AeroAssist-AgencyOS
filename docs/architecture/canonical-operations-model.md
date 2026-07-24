@@ -145,6 +145,27 @@ The Global Field Library is platform-owned schema governance:
 
 Form profiles are a UI/presentation layer over canonical request payloads. They do not replace backend validation or the canonical request/intake models.
 
+## Canonical Commercial Lifecycle
+
+Commercial operations use one enforced lineage:
+
+`TravelRequest -> OfferWorkspace -> OfferOption -> OfferAcceptance ->
+TripAcceptedOfferSnapshot -> TripDossier -> OfferBookingHandoff ->
+BookingRecord -> TicketRecord / EMDRecord`.
+
+OfferWorkspace is the sole target mutable Offer aggregate and each option is a
+same-Agency ordered child. Delivery freezes a version; material changes create
+a governed superseding version. Acceptance targets exact Offer and Option
+versions and creates one immutable hashed snapshot. Normal Trip confirmation
+requires that snapshot. Request conversion before acceptance is planning-only.
+
+BookingWorkspace holds readiness and operator workflow. It cannot establish
+external booking truth. BookingRecord requires governed manual/import/source
+evidence and owns the current PNR result. Normal Ticket/EMD records require a
+same-Agency BookingRecord; explicit standalone imports retain mode, source,
+reason, actor, and reconciliation evidence. See
+[Canonical Commercial Lifecycle Contract](canonical-commercial-lifecycle-contract.md).
+
 ## Canonical Request V4 Aggregate
 
 The Request lifecycle begins with either intake provenance or an Agency-created

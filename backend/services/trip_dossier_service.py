@@ -16,6 +16,12 @@ from models import (
     TripServiceItem,
     TripTimelineEvent,
 )
+from services.canonical_commercial_lifecycle_service import (
+    CommercialLifecycleError,
+    canonical_json_hash,
+    canonical_status,
+    write_lifecycle_evidence,
+)
 
 
 def _compact(value: Any, limit: int = 1000) -> str | None:
@@ -141,16 +147,59 @@ async def get_request_or_404(db: Database, agency_id: str, request_id: str) -> d
 
 
 async def create_manual_trip(db: Database, agency_id: str, payload: TripDossierCreate, actor_user_id: str) -> dict:
+    data = payload.model_dump(mode="json")
+    creation_mode = data.pop("creation_mode", "manual_planning")
+    source_reference = data.pop("source_reference", None)
+    reason = data.pop("reason", None)
+    requested_status = canonical_status("trip", data.get("trip_status"))
+    confirmed_modes = {
+        "manual_confirmed",
+        "imported_booking",
+        "historical_migration",
+        "disruption_after_sales",
+    }
+    if requested_status != "planning" and creation_mode not in confirmed_modes:
+        raise CommercialLifecycleError(
+            "A confirmed manual Trip requires an explicit governed creation mode.",
+            code="TRIP_CREATION_MODE_REQUIRED",
+        )
+    if creation_mode in confirmed_modes and (not source_reference or not reason or not actor_user_id):
+        raise CommercialLifecycleError(
+            "Governed manual/imported Trip creation requires source_reference, reason, and actor.",
+            code="TRIP_SOURCE_EVIDENCE_REQUIRED",
+        )
     trip = TripDossier(
         agency_id=agency_id,
         created_by_user_id=actor_user_id,
         updated_by_user_id=actor_user_id,
         trip_reference=await next_trip_reference(db, agency_id),
-        **payload.model_dump(mode="json"),
+        creation_mode=creation_mode,
+        source_reference=source_reference,
+        creation_reason=reason,
+        reconciliation_status="governed_exception" if creation_mode in confirmed_modes else "planning_only",
+        confirmed_at=datetime.now(timezone.utc) if creation_mode in confirmed_modes else None,
+        confirmed_by_user_id=actor_user_id if creation_mode in confirmed_modes else None,
+        **data,
     )
     created = await db.collection("trip_dossiers").insert_one(trip.model_dump(mode="json"))
     await write_trip_audit(db, agency_id, actor_user_id, "trip_dossier_created", created["id"], f"Created trip dossier {created['trip_reference']}.")
     await write_trip_timeline(db, agency_id, created.get("workspace_id"), created["id"], actor_user_id, "trip_dossier_created", "Trip dossier created", created.get("trip_title"))
+    await write_lifecycle_evidence(
+        db,
+        agency_id=agency_id,
+        actor_user_id=actor_user_id,
+        event_type="trip.lifecycle.created_manual",
+        entity_type="trip_dossier",
+        entity_id=created["id"],
+        summary="Created a governed manual Trip planning record or exception.",
+        next_status=canonical_status("trip", created.get("trip_status")),
+        trip_id=created["id"],
+        metadata={
+            "creation_mode": creation_mode,
+            "source_reference": source_reference,
+            "reason": reason,
+        },
+    )
     return created
 
 
@@ -195,6 +244,10 @@ async def create_trip_from_request(db: Database, agency_id: str, request_id: str
         internal_notes=" ".join(summary_notes) or request.get("internal_notes"),
         client_visible_notes=request.get("client_visible_notes"),
         source=TripDossierSource.REQUEST_CONVERSION.value,
+        creation_mode="request_planning_projection",
+        source_reference=request_id,
+        creation_reason="Operational planning projection created from TravelRequest before acceptance.",
+        reconciliation_status="planning_only",
         raw_source_payloads=[{"request_id": request_id, "request_reference": request.get("request_reference")}],
         created_by_user_id=actor_user_id,
         updated_by_user_id=actor_user_id,
@@ -206,6 +259,440 @@ async def create_trip_from_request(db: Database, agency_id: str, request_id: str
     await write_trip_timeline(db, agency_id, created.get("workspace_id"), created["id"], actor_user_id, "trip_created_from_request", "Trip created from request", request.get("request_reference"), {"request_id": request_id})
     await write_request_timeline(db, agency_id, request_id, actor_user_id, "trip_created_from_request", "Trip dossier created", created["trip_reference"], {"trip_id": created["id"]})
     return await rebuild_trip_summary(db, agency_id, created["id"], actor_user_id)
+
+
+async def confirm_trip_from_accepted_snapshot(
+    db: Database,
+    agency_id: str,
+    snapshot: dict[str, Any],
+    acceptance: dict[str, Any],
+    actor_user_id: str | None,
+) -> dict[str, Any]:
+    if snapshot.get("agency_id") != agency_id or acceptance.get("agency_id") != agency_id:
+        raise CommercialLifecycleError(
+            "Accepted snapshot and acceptance must belong to the same Agency.",
+            code="CROSS_AGENCY_LINEAGE",
+        )
+    if snapshot.get("acceptance_id") != acceptance.get("id"):
+        raise CommercialLifecycleError(
+            "Accepted snapshot does not belong to this acceptance.",
+            code="ACCEPTED_SNAPSHOT_LINEAGE_MISMATCH",
+        )
+
+    existing = await db.collection("trip_dossiers").find_one(
+        {"agency_id": agency_id, "accepted_offer_snapshot_id": snapshot["id"]}
+    )
+    if existing:
+        return existing
+
+    trip_id = snapshot["trip_id"]
+    existing = await db.collection("trip_dossiers").find_one(
+        {"agency_id": agency_id, "id": trip_id}
+    )
+    if existing and existing.get("accepted_offer_snapshot_id") not in {None, snapshot["id"]}:
+        raise CommercialLifecycleError(
+            "Trip is already confirmed from different accepted evidence.",
+            code="TRIP_ACCEPTED_SNAPSHOT_CONFLICT",
+        )
+    if existing and canonical_status("trip", existing.get("trip_status")) not in {
+        "planning",
+        "confirmed",
+    }:
+        raise CommercialLifecycleError(
+            "Only a planning Trip may be confirmed from accepted evidence.",
+            code="TRIP_CONFIRMATION_STATE_CONFLICT",
+        )
+
+    request = None
+    request_id = snapshot.get("request_id")
+    if request_id:
+        request = await db.collection("travel_requests").find_one(
+            {"agency_id": agency_id, "id": request_id}
+        )
+    segments = snapshot.get("confirmed_segments_json") or []
+    passengers = snapshot.get("confirmed_passengers_json") or []
+    route = _route_from_snapshot_segments(segments)
+    confirmed_at = datetime.now(timezone.utc)
+    lineage_updates = {
+        "trip_status": "confirmed",
+        "source": TripDossierSource.ACCEPTED_OFFER.value,
+        "creation_mode": "accepted_offer",
+        "source_reference": snapshot["id"],
+        "creation_reason": "Confirmed from immutable accepted-offer evidence.",
+        "accepted_offer_snapshot_id": snapshot["id"],
+        "offer_workspace_id": snapshot.get("workspace_id"),
+        "offer_workspace_version": snapshot.get("offer_version") or 1,
+        "offer_option_id": snapshot.get("option_id"),
+        "offer_acceptance_id": acceptance["id"],
+        "confirmed_at": confirmed_at,
+        "confirmed_by_user_id": actor_user_id,
+        "reconciliation_status": "canonical",
+        "current_operational_version": int((existing or {}).get("current_operational_version") or 0) + 1,
+        "primary_request_id": request_id or (existing or {}).get("primary_request_id"),
+        "linked_request_ids": list(
+            dict.fromkeys(
+                [
+                    *((existing or {}).get("linked_request_ids") or []),
+                    *([request_id] if request_id else []),
+                ]
+            )
+        ),
+        "primary_client_id": snapshot.get("client_profile_id")
+        or (request or {}).get("client_id")
+        or (existing or {}).get("primary_client_id"),
+        "passenger_count": len(passengers),
+        "segment_count": len(segments),
+        "route_summary": route or (existing or {}).get("route_summary"),
+        "updated_by_user_id": actor_user_id,
+        "audit_metadata": {
+            **((existing or {}).get("audit_metadata") or {}),
+            "accepted_snapshot_hash": snapshot.get("source_hash"),
+            "accepted_snapshot_id": snapshot["id"],
+        },
+    }
+    if existing:
+        trip = await db.collection("trip_dossiers").update_one(
+            {"agency_id": agency_id, "id": existing["id"]},
+            lineage_updates,
+        )
+    else:
+        model = TripDossier(
+            id=trip_id,
+            agency_id=agency_id,
+            workspace_id=(request or {}).get("workspace_id"),
+            primary_client_id=lineage_updates["primary_client_id"],
+            primary_request_id=request_id,
+            linked_request_ids=lineage_updates["linked_request_ids"],
+            trip_reference=await next_trip_reference(db, agency_id),
+            trip_title=(
+                (request or {}).get("title")
+                or (request or {}).get("request_title")
+                or f"Confirmed trip from offer {snapshot.get('workspace_id')}"
+            ),
+            trip_status="confirmed",
+            trip_type=(request or {}).get("trip_type") or "unknown",
+            passenger_count=len(passengers),
+            segment_count=len(segments),
+            route_summary=route,
+            date_summary=(request or {}).get("date_summary"),
+            service_summary=(request or {}).get("service_summary"),
+            operational_summary="Confirmed from immutable accepted-offer evidence.",
+            source=TripDossierSource.ACCEPTED_OFFER,
+            creation_mode="accepted_offer",
+            source_reference=snapshot["id"],
+            creation_reason="Confirmed from immutable accepted-offer evidence.",
+            accepted_offer_snapshot_id=snapshot["id"],
+            offer_workspace_id=snapshot.get("workspace_id"),
+            offer_workspace_version=snapshot.get("offer_version") or 1,
+            offer_option_id=snapshot.get("option_id"),
+            offer_acceptance_id=acceptance["id"],
+            confirmed_at=confirmed_at,
+            confirmed_by_user_id=actor_user_id,
+            reconciliation_status="canonical",
+            raw_source_payloads=[
+                {
+                    "accepted_offer_snapshot_id": snapshot["id"],
+                    "source_hash": snapshot.get("source_hash"),
+                }
+            ],
+            created_by_user_id=actor_user_id,
+            updated_by_user_id=actor_user_id,
+            audit_metadata={
+                "accepted_snapshot_hash": snapshot.get("source_hash"),
+                "accepted_snapshot_id": snapshot["id"],
+            },
+        )
+        trip = await db.collection("trip_dossiers").insert_one(
+            model.model_dump(mode="json")
+        )
+
+    if request_id:
+        await db.collection("travel_requests").update_one(
+            {"agency_id": agency_id, "id": request_id},
+            {"trip_id": trip["id"]},
+        )
+    await _ensure_snapshot_trip_children(
+        db,
+        agency_id=agency_id,
+        trip=trip,
+        accepted_offer_snapshot_id=snapshot["id"],
+        passengers=passengers,
+        segments=segments,
+    )
+    await write_trip_timeline(
+        db,
+        agency_id,
+        trip.get("workspace_id"),
+        trip["id"],
+        actor_user_id,
+        "trip_confirmed_from_accepted_offer",
+        "Trip confirmed from accepted offer",
+        "The immutable accepted-offer snapshot is the commercial source.",
+        {
+            "accepted_offer_snapshot_id": snapshot["id"],
+            "offer_acceptance_id": acceptance["id"],
+            "source_hash": snapshot.get("source_hash"),
+        },
+    )
+    await write_lifecycle_evidence(
+        db,
+        agency_id=agency_id,
+        actor_user_id=actor_user_id,
+        event_type="trip.lifecycle.confirmed",
+        entity_type="trip_dossier",
+        entity_id=trip["id"],
+        summary="Confirmed Trip from immutable accepted-offer evidence.",
+        previous_status=canonical_status("trip", (existing or {}).get("trip_status")),
+        next_status="confirmed",
+        request_id=request_id,
+        trip_id=trip["id"],
+        metadata={
+            "accepted_offer_snapshot_id": snapshot["id"],
+            "offer_acceptance_id": acceptance["id"],
+            "source_hash": snapshot.get("source_hash"),
+        },
+    )
+    return trip
+
+
+def _route_from_snapshot_segments(segments: list[dict[str, Any]]) -> str | None:
+    route_parts = []
+    for segment in sorted(
+        segments,
+        key=lambda item: int(item.get("sequence") or item.get("segment_order") or 0),
+    ):
+        origin = segment.get("origin_airport") or segment.get("origin_airport_code")
+        destination = segment.get("destination_airport") or segment.get("destination_airport_code")
+        if origin and destination:
+            route_parts.append(f"{origin}-{destination}")
+    return " / ".join(route_parts) or None
+
+
+def _snapshot_date_time(value: Any) -> tuple[str | None, str | None]:
+    text = str(value or "")
+    if not text:
+        return None, None
+    if "T" in text:
+        date_value, time_value = text.split("T", 1)
+        return date_value[:10], time_value[:8]
+    return text[:10], None
+
+
+async def _ensure_snapshot_trip_children(
+    db: Database,
+    *,
+    agency_id: str,
+    trip: dict[str, Any],
+    accepted_offer_snapshot_id: str,
+    passengers: list[dict[str, Any]],
+    segments: list[dict[str, Any]],
+) -> None:
+    existing_passengers = await db.collection("trip_passengers").find_many(
+        {"agency_id": agency_id, "trip_id": trip["id"]}
+    )
+    unmatched_passenger_ids = {item["id"] for item in existing_passengers}
+    for index, passenger in enumerate(passengers, start=1):
+        identity = passenger.get("proposed_identity_json") or {}
+        display_name = (
+            passenger.get("snapshot_display_name")
+            or passenger.get("display_name")
+            or " ".join(
+                value
+                for value in (
+                    identity.get("first_name") or passenger.get("first_name"),
+                    identity.get("last_name") or passenger.get("last_name"),
+                )
+                if value
+            )
+            or f"Passenger {index}"
+        )
+        passenger_profile_id = passenger.get("passenger_id") or passenger.get(
+            "passenger_profile_id"
+        )
+        existing = next(
+            (
+                item
+                for item in existing_passengers
+                if passenger.get("id")
+                and item.get("source_request_passenger_id") == passenger.get("id")
+            ),
+            None,
+        )
+        existing = existing or next(
+            (
+                item
+                for item in existing_passengers
+                if passenger_profile_id
+                and item.get("passenger_profile_id") == passenger_profile_id
+            ),
+            None,
+        )
+        updates = {
+            "accepted_offer_snapshot_id": accepted_offer_snapshot_id,
+            "source_request_passenger_id": passenger.get("id"),
+            "passenger_profile_id": passenger_profile_id,
+            "display_name": display_name,
+            "passenger_type": _passenger_type(
+                passenger.get("snapshot_passenger_type")
+                or passenger.get("passenger_type_code")
+            ),
+            "date_of_birth": passenger.get("snapshot_date_of_birth")
+            or identity.get("date_of_birth")
+            or passenger.get("date_of_birth"),
+            "sort_order": index,
+            "reconciliation_status": "canonical_accepted_snapshot",
+        }
+        if existing:
+            unmatched_passenger_ids.discard(existing["id"])
+            if existing.get("accepted_offer_snapshot_id") != accepted_offer_snapshot_id:
+                updates["planning_projection_snapshot_json"] = (
+                    existing.get("planning_projection_snapshot_json")
+                    or {
+                        key: existing.get(key)
+                        for key in (
+                            "source_request_passenger_id",
+                            "passenger_profile_id",
+                            "display_name",
+                            "passenger_type",
+                            "date_of_birth",
+                            "sort_order",
+                        )
+                    }
+                )
+                updates["operational_version"] = int(
+                    existing.get("operational_version") or 1
+                ) + 1
+            await db.collection("trip_passengers").update_one(
+                {"agency_id": agency_id, "id": existing["id"]},
+                updates,
+            )
+        else:
+            model = TripPassenger(
+                agency_id=agency_id,
+                workspace_id=trip.get("workspace_id"),
+                trip_id=trip["id"],
+                **updates,
+            )
+            await db.collection("trip_passengers").insert_one(
+                model.model_dump(mode="json")
+            )
+    for passenger_id in unmatched_passenger_ids:
+        await db.collection("trip_passengers").update_one(
+            {"agency_id": agency_id, "id": passenger_id},
+            {"reconciliation_status": "planning_only_unmatched"},
+        )
+
+    existing_segments = await db.collection("trip_segments").find_many(
+        {"agency_id": agency_id, "trip_id": trip["id"]}
+    )
+    unmatched_segment_ids = {item["id"] for item in existing_segments}
+    for index, segment in enumerate(
+        sorted(
+            segments,
+            key=lambda item: int(
+                item.get("sequence") or item.get("segment_order") or 0
+            ),
+        ),
+        start=1,
+    ):
+        segment_order = int(
+            segment.get("sequence") or segment.get("segment_order") or index
+        )
+        departure_date, departure_time = _snapshot_date_time(
+            segment.get("departure_at") or segment.get("departure_datetime")
+        )
+        arrival_date, arrival_time = _snapshot_date_time(
+            segment.get("arrival_at") or segment.get("arrival_datetime")
+        )
+        source_request_segment_id = segment.get("source_request_segment_id")
+        existing = next(
+            (
+                item
+                for item in existing_segments
+                if source_request_segment_id
+                and item.get("source_request_segment_id")
+                == source_request_segment_id
+            ),
+            None,
+        )
+        existing = existing or next(
+            (
+                item
+                for item in existing_segments
+                if int(item.get("segment_order") or 0) == segment_order
+            ),
+            None,
+        )
+        updates = {
+            "accepted_offer_snapshot_id": accepted_offer_snapshot_id,
+            "source_request_segment_id": source_request_segment_id,
+            "segment_order": segment_order,
+            "origin_airport_code": _segment_code(
+                segment.get("origin_airport"),
+                segment.get("origin_airport_code"),
+            ),
+            "destination_airport_code": _segment_code(
+                segment.get("destination_airport"),
+                segment.get("destination_airport_code"),
+            ),
+            "departure_date": departure_date,
+            "departure_time": departure_time,
+            "arrival_date": arrival_date,
+            "arrival_time": arrival_time,
+            "marketing_airline_code": segment.get("marketing_airline_code"),
+            "operating_airline_code": segment.get("operating_airline_code"),
+            "flight_number": segment.get("flight_number"),
+            "cabin": segment.get("cabin_class") or segment.get("cabin"),
+            "booking_class": segment.get("booking_class"),
+            "segment_status": "planned",
+            "reconciliation_status": "canonical_accepted_snapshot",
+        }
+        if existing:
+            unmatched_segment_ids.discard(existing["id"])
+            if existing.get("accepted_offer_snapshot_id") != accepted_offer_snapshot_id:
+                updates["planning_projection_snapshot_json"] = (
+                    existing.get("planning_projection_snapshot_json")
+                    or {
+                        key: existing.get(key)
+                        for key in (
+                            "source_request_segment_id",
+                            "segment_order",
+                            "origin_airport_code",
+                            "destination_airport_code",
+                            "departure_date",
+                            "departure_time",
+                            "arrival_date",
+                            "arrival_time",
+                            "marketing_airline_code",
+                            "operating_airline_code",
+                            "flight_number",
+                            "cabin",
+                            "booking_class",
+                        )
+                    }
+                )
+                updates["operational_version"] = int(
+                    existing.get("operational_version") or 1
+                ) + 1
+            await db.collection("trip_segments").update_one(
+                {"agency_id": agency_id, "id": existing["id"]},
+                updates,
+            )
+        else:
+            model = TripSegment(
+                agency_id=agency_id,
+                workspace_id=trip.get("workspace_id"),
+                trip_id=trip["id"],
+                **updates,
+            )
+            await db.collection("trip_segments").insert_one(
+                model.model_dump(mode="json")
+            )
+    for segment_id in unmatched_segment_ids:
+        await db.collection("trip_segments").update_one(
+            {"agency_id": agency_id, "id": segment_id},
+            {"reconciliation_status": "planning_only_unmatched"},
+        )
 
 
 async def link_request_to_trip(db: Database, agency_id: str, trip_id: str, request_id: str, actor_user_id: str) -> dict:

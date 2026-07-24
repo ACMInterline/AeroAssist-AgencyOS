@@ -8,7 +8,7 @@ import { loadCurrentAgency } from "../../lib/agency"
 
 export default function TripDetailPage({ tripId }) {
   const [state, setState] = useState(null)
-  const [form, setForm] = useState({ trip_title: "", trip_status: "draft", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", link_request_id: "" })
+  const [form, setForm] = useState({ trip_title: "", trip_status: "planning", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", transition_reason: "", link_request_id: "" })
   const [changeForm, setChangeForm] = useState({
     operation_type: "itinerary_change",
     reason: "",
@@ -49,6 +49,7 @@ export default function TripDetailPage({ tripId }) {
       operational_summary: detail.trip.operational_summary || "",
       internal_notes: detail.trip.internal_notes || "",
       client_visible_notes: detail.trip.client_visible_notes || "",
+      transition_reason: "",
       link_request_id: "",
     })
   }
@@ -70,6 +71,8 @@ export default function TripDetailPage({ tripId }) {
       operational_summary: form.operational_summary,
       internal_notes: form.internal_notes,
       client_visible_notes: form.client_visible_notes,
+      expected_version: state.trip.current_operational_version || 1,
+      transition_reason: form.trip_status === state.trip.trip_status ? null : form.transition_reason,
     })
     await load()
   }
@@ -200,8 +203,21 @@ export default function TripDetailPage({ tripId }) {
   const acceptance = state?.acceptedOffer?.acceptance
   const bookingReadiness = state?.bookingReadiness?.booking_readiness
   const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const acceptedSnapshot = state?.acceptedOffer?.accepted_offer
   const tripReady = Boolean(state?.passengers?.length && state?.segments?.length)
   const tripClosed = ["cancelled", "archived"].includes(state?.trip?.trip_status)
+  const planningProjection = !state?.trip?.accepted_offer_snapshot_id && ["draft", "planning", "quoted"].includes(state?.trip?.trip_status)
+  const tripStatusOptions = Array.from(new Set([
+    state?.trip?.trip_status,
+    "planning",
+    "confirmed",
+    "booking_in_progress",
+    "booked",
+    "ticketed",
+    "servicing",
+    "completed",
+    "cancelled",
+  ].filter(Boolean)))
   const handoffHref = acceptance && bookingReadiness
     ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(acceptance.id)}&booking_readiness_package_id=${encodeURIComponent(bookingReadiness.id)}&trip_id=${encodeURIComponent(tripId)}&offer_workspace_id=${encodeURIComponent(acceptance.workspace_id || acceptance.offer_workspace_id || "")}`
     : ""
@@ -248,20 +264,31 @@ export default function TripDetailPage({ tripId }) {
             ]}
           />
 
-          <section className="grid gap-4 lg:grid-cols-4">
+          <div className={`rounded-lg border p-4 text-sm ${planningProjection ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+            <span className="font-semibold">{planningProjection ? "Planning projection:" : "Confirmed operational Trip:"}</span>{" "}
+            {planningProjection
+              ? "This record supports pre-acceptance planning and is not confirmed commercial truth."
+              : acceptedSnapshot
+                ? `Confirmed from immutable accepted evidence ${acceptedSnapshot.id}.`
+                : `Created through governed ${String(state?.trip?.creation_mode || "exception").replaceAll("_", " ")} evidence.`}
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-5">
             <Metric label="Status" value={state?.trip?.trip_status?.replaceAll("_", " ")} />
             <Metric label="Passengers" value={state?.trip?.passenger_count ?? 0} />
             <Metric label="Segments" value={state?.trip?.segment_count ?? 0} />
             <Metric label="Services" value={state?.trip?.service_count ?? 0} />
+            <Metric label="Version" value={state?.trip?.current_operational_version || 1} />
           </section>
 
           <form className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 md:grid-cols-3" onSubmit={save}>
             <Field label="Trip title" value={form.trip_title} onChange={(value) => setField("trip_title", value)} />
-            <Select label="Status" value={form.trip_status} onChange={(value) => setField("trip_status", value)} options={["draft", "planning", "quoted", "booked", "ticketed", "in_travel", "completed", "cancelled", "archived"]} />
+            <Select label="Status" value={form.trip_status} onChange={(value) => setField("trip_status", value)} options={tripStatusOptions} />
             <Select label="Trip type" value={form.trip_type} onChange={(value) => setField("trip_type", value)} options={["one_way", "round_trip", "multi_city", "open_jaw", "complex", "unknown"]} />
             <Textarea label="Operational summary" value={form.operational_summary} onChange={(value) => setField("operational_summary", value)} />
             <Textarea label="Internal notes" value={form.internal_notes} onChange={(value) => setField("internal_notes", value)} />
             <Textarea label="Client-visible notes" value={form.client_visible_notes} onChange={(value) => setField("client_visible_notes", value)} />
+            <Textarea label="Status change reason" value={form.transition_reason} onChange={(value) => setField("transition_reason", value)} />
             <div className="md:col-span-3">
               <button className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold" type="submit">Save trip</button>
             </div>
@@ -405,24 +432,24 @@ function AcceptedOfferPanel({ state }) {
         <SnapshotList
           title="SSR Preview"
           items={ssr}
-          render={(item) => item.ssr_code || item.code || JSON.stringify(item)}
+          render={(item) => item.ssr_code || item.code || item.label || "SSR review item"}
         />
         <SnapshotList
           title="OSI Preview"
           items={osi}
-          render={(item) => item.osi_text || item.text || JSON.stringify(item)}
+          render={(item) => item.osi_text || item.text || item.label || "OSI review item"}
         />
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
         <SnapshotList
           title="Warnings"
           items={readiness?.warnings_json}
-          render={(item) => item.message || JSON.stringify(item)}
+          render={(item) => item.message || item.reason || item.code || "Review required"}
         />
         <SnapshotList
           title="Required Documents"
           items={readiness?.required_documents_json}
-          render={(item) => item.label || item.document_type || JSON.stringify(item)}
+          render={(item) => item.label || item.document_type || item.reference || "Document required"}
         />
       </section>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
@@ -465,7 +492,7 @@ function TicketsEmdsTripPanel({ state }) {
       <SnapshotList
         title="EMD Readiness Warnings"
         items={readiness?.warnings}
-        render={(item) => item.message || JSON.stringify(item)}
+        render={(item) => item.message || item.reason || item.code || "Review required"}
       />
     </Panel>
   )

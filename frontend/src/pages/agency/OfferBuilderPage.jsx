@@ -5,6 +5,7 @@ import Copy from "lucide-react/dist/esm/icons/copy.js"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
 import RefreshCcw from "lucide-react/dist/esm/icons/refresh-ccw.js"
 import Save from "lucide-react/dist/esm/icons/save.js"
+import Send from "lucide-react/dist/esm/icons/send.js"
 import Wand2 from "lucide-react/dist/esm/icons/wand-2.js"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
@@ -16,7 +17,7 @@ import { loadCurrentAgency } from "../../lib/agency"
 
 const emptyOption = { label: "New option", option_type: "flight", main_airline_code: "", provider_name: "manual" }
 const emptySegment = { sequence: 1, marketing_airline_code: "", operating_airline_code: "", flight_number: "", origin_airport: "", destination_airport: "", departure_at: "", arrival_at: "", aircraft_type: "", cabin_class: "economy", booking_class: "", fare_basis: "" }
-const emptyFare = { fare_family_name: "", cabin_class: "economy", booking_class: "", included_baggage_json: "{}" }
+const emptyFare = { fare_family_name: "", cabin_class: "economy", booking_class: "", checked_bag_pieces: "", checked_bag_weight_kg: "", cabin_bag_weight_kg: "" }
 const emptyPrice = { line_type: "base_fare", label: "", amount: "", currency: "EUR" }
 
 export default function OfferBuilderPage({ workspaceId }) {
@@ -86,11 +87,6 @@ export default function OfferBuilderPage({ workspaceId }) {
     setter((current) => ({ ...current, [name]: value }))
   }
 
-  function parseJson(value) {
-    const trimmed = String(value || "").trim()
-    return trimmed ? JSON.parse(trimmed) : {}
-  }
-
   function payloadWithoutBlanks(payload) {
     return Object.fromEntries(Object.entries(payload).map(([key, value]) => [key, value === "" ? null : value]))
   }
@@ -141,7 +137,11 @@ export default function OfferBuilderPage({ workspaceId }) {
       fare_family_name: fareForm.fare_family_name,
       cabin_class: fareForm.cabin_class,
       booking_class: fareForm.booking_class,
-      included_baggage_json: parseJson(fareForm.included_baggage_json),
+      included_baggage_json: {
+        checked_bag_pieces: fareForm.checked_bag_pieces === "" ? null : Number(fareForm.checked_bag_pieces),
+        checked_bag_weight_kg: fareForm.checked_bag_weight_kg === "" ? null : Number(fareForm.checked_bag_weight_kg),
+        cabin_bag_weight_kg: fareForm.cabin_bag_weight_kg === "" ? null : Number(fareForm.cabin_bag_weight_kg),
+      },
     })
     await apiPost(`/api/agencies/${state.agency.id}/offer-options/${selectedOption.id}/fare-bundles`, payload)
     setFareForm(emptyFare)
@@ -184,6 +184,21 @@ export default function OfferBuilderPage({ workspaceId }) {
     await load(selectedOption.id)
   }
 
+  async function deliverOffer() {
+    setError("")
+    setMessage("")
+    try {
+      await apiPost(`/api/agencies/${state.agency.id}/offer-workspaces/${workspaceId}/deliver`, {
+        expected_version: state.workspace.version,
+        reason: "Reviewed by agency operator and ready for client decision.",
+      })
+      setMessage("Offer marked delivered. No message or provider action was sent.")
+      await load(selectedOption?.id)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
   async function acceptOption() {
     if (!acceptCandidate) return
     setError("")
@@ -194,10 +209,19 @@ export default function OfferBuilderPage({ workspaceId }) {
         {
           acceptance_source: "internal",
           provider_target: "manual",
+          offer_version: state.workspace.version,
+          option_version: acceptCandidate.version,
+          acceptance_terms_version: `agency-offer-v${state.workspace.version}`,
+          channel: "agency_staff",
+          consent_evidence_json: {
+            confirmation: "Agency operator confirmed the client decision.",
+            offer_version: state.workspace.version,
+            option_version: acceptCandidate.version,
+          },
         },
       )
       setAcceptCandidate(null)
-      setMessage("Offer accepted. The trip accepted-offer snapshot and booking readiness package were refreshed.")
+      setMessage("Offer accepted. Immutable evidence was created before the confirmed Trip and booking readiness package.")
       await load(acceptCandidate.id)
     } catch (err) {
       setError(err.message)
@@ -208,7 +232,11 @@ export default function OfferBuilderPage({ workspaceId }) {
   const acceptedOptionId = state?.acceptance?.acceptance?.option_id
   const accepted = state?.acceptance?.acceptance
   const readiness = state?.acceptance?.booking_readiness
+  const acceptedSnapshot = state?.acceptance?.trip_snapshot
   const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const workspaceStatus = state?.workspace?.status
+  const isFrozen = ["delivered", "shared", "accepted", "declined", "expired", "superseded", "cancelled", "archived"].includes(workspaceStatus)
+  const isDelivered = ["delivered", "shared"].includes(workspaceStatus)
   const handoffHref = accepted && readiness ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(accepted.id)}&booking_readiness_package_id=${encodeURIComponent(readiness.id)}&trip_id=${encodeURIComponent(accepted.trip_id || state?.trip?.id || "")}&offer_workspace_id=${encodeURIComponent(workspaceId)}` : ""
 
   return (
@@ -219,26 +247,30 @@ export default function OfferBuilderPage({ workspaceId }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <a className="text-sm font-medium text-blue-700" href={`/agency/offers/${workspaceId}`}>Back to workspace</a>
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.workspace?.status?.replaceAll("_", " ")} · {state?.workspace?.currency}</p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{state?.workspace?.status?.replaceAll("_", " ")} · Offer v{state?.workspace?.version || 1} · {state?.workspace?.currency}</p>
                 <h2 className="text-3xl font-semibold tracking-tight text-slate-950">{state?.workspace?.title}</h2>
               </div>
               <div className="flex flex-wrap gap-2">
                 <a className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={documentHref("offer_summary", selectedOption ? "offer_option" : "offer_workspace", selectedOption?.id || workspaceId)}>
                   Documents
                 </a>
-                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={cloneOption} disabled={!selectedOption}>
+                {!isFrozen ? <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={deliverOffer} disabled={!selectedOption}>
+                  <Send className="h-4 w-4" />
+                  Deliver
+                </button> : null}
+                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={cloneOption} disabled={!selectedOption || isFrozen}>
                   <Copy className="h-4 w-4" />
                   Clone
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={recalculatePricing} disabled={!selectedOption}>
+                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={recalculatePricing} disabled={!selectedOption || isFrozen}>
                   <RefreshCcw className="h-4 w-4" />
                   Price
                 </button>
-                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={evaluateRules} disabled={!selectedOption}>
+                <button className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={evaluateRules} disabled={!selectedOption || isFrozen}>
                   <Wand2 className="h-4 w-4" />
                   Rules
                 </button>
-                <button className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={recommendOption} disabled={!selectedOption}>
+                <button className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={recommendOption} disabled={!selectedOption || isFrozen}>
                   <CheckCircle2 className="h-4 w-4" />
                   Recommend
                 </button>
@@ -246,7 +278,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                   className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold"
                   type="button"
                   onClick={() => setAcceptCandidate(selectedOption)}
-                  disabled={!selectedOption || selectedOption?.id === acceptedOptionId}
+                  disabled={!selectedOption || !isDelivered || selectedOption?.id === acceptedOptionId}
                 >
                   <CheckCircle2 className="h-4 w-4" />
                   {selectedOption?.id === acceptedOptionId ? "Accepted" : "Accept"}
@@ -283,6 +315,8 @@ export default function OfferBuilderPage({ workspaceId }) {
           />
 
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
+          <LifecycleBanner status={workspaceStatus} frozen={isFrozen} delivered={isDelivered} />
+          {acceptedSnapshot ? <AcceptedEvidence snapshot={acceptedSnapshot} /> : null}
 
           <section className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)_360px]">
             <aside className="space-y-4">
@@ -295,7 +329,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                   </select>
                 </Field>
                 <Field label="Airline"><input value={optionForm.main_airline_code} onChange={(event) => setNested(setOptionForm, "main_airline_code", event.target.value.toUpperCase())} maxLength={3} /></Field>
-                <button className="aa-primary-action inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="submit"><Plus className="h-4 w-4" />Add</button>
+                <button className="aa-primary-action inline-flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" type="submit" disabled={isFrozen}><Plus className="h-4 w-4" />Add</button>
               </form>
 
               <div className="rounded-lg border border-slate-200 bg-white">
@@ -308,7 +342,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                       <span className="block font-semibold text-slate-950">{option.label}</span>
                       <span className="block text-xs text-slate-500">
                         {option.id === acceptedOptionId ? "accepted" : option.status?.replaceAll("_", " ")}
-                        {" · "}
+                        {` · Option v${option.version || 1} · `}
                         {money((option.pricing_summary_json || {}).total_amount, (option.pricing_summary_json || {}).currency)}
                       </span>
                     </span>
@@ -325,7 +359,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                     <Field label="Option label"><input value={editForm.label} onChange={(event) => setNested(setEditForm, "label", event.target.value)} /></Field>
                     <Field label="Main airline"><input value={editForm.main_airline_code} onChange={(event) => setNested(setEditForm, "main_airline_code", event.target.value.toUpperCase())} maxLength={3} /></Field>
                     <div className="flex items-end">
-                      <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit"><Save className="h-4 w-4" />Save</button>
+                      <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={isFrozen}><Save className="h-4 w-4" />Save</button>
                     </div>
                     <label className="grid gap-1 text-sm font-medium text-slate-700 md:col-span-3">Internal notes<textarea className="min-h-20 rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={editForm.internal_notes} onChange={(event) => setNested(setEditForm, "internal_notes", event.target.value)} /></label>
                   </form>
@@ -368,7 +402,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                   <Field label="Cabin"><input value={segmentForm.cabin_class} onChange={(event) => setNested(setSegmentForm, "cabin_class", event.target.value)} /></Field>
                   <Field label="Booking"><input value={segmentForm.booking_class} onChange={(event) => setNested(setSegmentForm, "booking_class", event.target.value.toUpperCase())} /></Field>
                 </div>
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption}><Plus className="h-4 w-4" />Add Segment</button>
+                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption || isFrozen}><Plus className="h-4 w-4" />Add Segment</button>
               </form>
 
               <form className="space-y-3 rounded-lg border border-slate-200 bg-white p-5" onSubmit={addFareBundle}>
@@ -378,8 +412,12 @@ export default function OfferBuilderPage({ workspaceId }) {
                   <Field label="Cabin"><input value={fareForm.cabin_class} onChange={(event) => setNested(setFareForm, "cabin_class", event.target.value)} /></Field>
                   <Field label="Booking"><input value={fareForm.booking_class} onChange={(event) => setNested(setFareForm, "booking_class", event.target.value.toUpperCase())} /></Field>
                 </div>
-                <label className="grid gap-1 text-sm font-medium text-slate-700">Baggage JSON<textarea className="min-h-20 rounded-md border border-slate-300 px-3 py-2 font-mono text-xs font-normal" value={fareForm.included_baggage_json} onChange={(event) => setNested(setFareForm, "included_baggage_json", event.target.value)} /></label>
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption}><Plus className="h-4 w-4" />Add Fare</button>
+                <div className="grid grid-cols-3 gap-2">
+                  <Field label="Checked bags"><input type="number" min="0" value={fareForm.checked_bag_pieces} onChange={(event) => setNested(setFareForm, "checked_bag_pieces", event.target.value)} /></Field>
+                  <Field label="Checked kg"><input type="number" min="0" step="0.1" value={fareForm.checked_bag_weight_kg} onChange={(event) => setNested(setFareForm, "checked_bag_weight_kg", event.target.value)} /></Field>
+                  <Field label="Cabin kg"><input type="number" min="0" step="0.1" value={fareForm.cabin_bag_weight_kg} onChange={(event) => setNested(setFareForm, "cabin_bag_weight_kg", event.target.value)} /></Field>
+                </div>
+                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption || isFrozen}><Plus className="h-4 w-4" />Add Fare</button>
               </form>
 
               <form className="space-y-3 rounded-lg border border-slate-200 bg-white p-5" onSubmit={addPricingLine}>
@@ -394,7 +432,7 @@ export default function OfferBuilderPage({ workspaceId }) {
                   <Field label="Amount"><input type="number" step="0.01" value={priceForm.amount} onChange={(event) => setNested(setPriceForm, "amount", event.target.value)} /></Field>
                   <Field label="Currency"><input value={priceForm.currency} onChange={(event) => setNested(setPriceForm, "currency", event.target.value.toUpperCase())} maxLength={3} /></Field>
                 </div>
-                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption}><Plus className="h-4 w-4" />Add Price</button>
+                <button className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit" disabled={!selectedOption || isFrozen}><Plus className="h-4 w-4" />Add Price</button>
               </form>
             </aside>
           </section>
@@ -425,6 +463,48 @@ function Metric({ label, value }) {
   return <div className="rounded-lg border border-slate-200 bg-white p-4"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-lg font-semibold text-slate-950">{value}</p></div>
 }
 
+function LifecycleBanner({ status, frozen, delivered }) {
+  const tone = frozen ? "border-blue-200 bg-blue-50 text-blue-900" : "border-amber-200 bg-amber-50 text-amber-900"
+  const message = status === "accepted"
+    ? "Accepted evidence is frozen. Continue through the confirmed Trip and Booking Handoff."
+    : delivered
+      ? "This exact Offer version is delivered and frozen while it awaits a client decision."
+      : frozen
+        ? `This ${String(status || "offer").replaceAll("_", " ")} version is retained as read-only evidence.`
+        : "Prepare and review the options, then explicitly deliver this version before acceptance."
+  return <div className={`rounded-lg border p-4 text-sm ${tone}`}><span className="font-semibold">Commercial lifecycle:</span> {message}</div>
+}
+
+function AcceptedEvidence({ snapshot }) {
+  const pricing = snapshot.confirmed_pricing_json?.summary || snapshot.total_snapshot_json || {}
+  const segments = snapshot.confirmed_segments_json || []
+  const passengers = snapshot.confirmed_passengers_json || []
+  const route = segments.length
+    ? segments.map((segment) => `${segment.origin_airport || segment.origin_airport_code || "TBD"}-${segment.destination_airport || segment.destination_airport_code || "TBD"}`).join(" / ")
+    : "No route recorded"
+  return (
+    <section className="rounded-lg border border-emerald-200 bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Immutable accepted evidence</p>
+          <h3 className="mt-1 font-semibold text-slate-950">Offer v{snapshot.offer_version} · Option v{snapshot.option_version}</h3>
+          <p className="mt-1 text-sm text-slate-600">{route}</p>
+        </div>
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">{money(pricing.total_amount, snapshot.currency || pricing.currency)}</span>
+      </div>
+      <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+        <EvidenceValue label="Passengers" value={passengers.length} />
+        <EvidenceValue label="Segments" value={segments.length} />
+        <EvidenceValue label="Integrity" value={snapshot.source_hash ? `${snapshot.source_hash.slice(0, 12)}...` : "Unavailable"} />
+      </dl>
+    </section>
+  )
+}
+
+function EvidenceValue({ label, value }) {
+  return <div className="rounded-md bg-slate-50 p-3"><dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt><dd className="mt-1 text-sm font-semibold text-slate-950">{value}</dd></div>
+}
+
 function RecordPanel({ title, items, empty, render }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5">
@@ -441,7 +521,7 @@ function WarningsPanel({ option }) {
       <h3 className="font-semibold text-slate-950">Warnings</h3>
       {warnings.length ? (
         <div className="mt-4 space-y-2">
-          {warnings.map((warning, index) => <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" key={`${warning.message}-${index}`}>{warning.message || JSON.stringify(warning)}</p>)}
+          {warnings.map((warning, index) => <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" key={`${warning.message || warning.code}-${index}`}>{warning.message || warning.reason || warning.code || "Review required"}</p>)}
         </div>
       ) : <p className="mt-4 text-sm text-slate-500">No warnings recorded.</p>}
     </section>
@@ -490,8 +570,8 @@ function AcceptModal({ option, grouped, onCancel, onConfirm }) {
           <p>Fare bundle: {fare ? `${fare.fare_family_name} · ${fare.cabin_class}` : "Fare bundle pending"}</p>
           <p>Warnings: {warnings.length}</p>
           <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-            Acceptance creates or updates the trip operational baseline and booking readiness package. It does not
-            create a live booking, PNR, ticket, EMD, invoice, or supplier action.
+            Acceptance freezes this exact Offer and Option version first, then confirms the Trip from that immutable
+            evidence. It does not create a live booking, PNR, ticket, EMD, invoice, message, or supplier action.
           </p>
         </div>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
