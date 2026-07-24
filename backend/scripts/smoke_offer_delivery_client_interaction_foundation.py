@@ -420,9 +420,18 @@ async def verify_service_behavior() -> None:
     preview = await service.portal_decision_preview(contexts[0], delivery["id"], accept_payload)
     if not preview.get("can_submit") or preview.get("canonical_acceptance_created") is not False:
         raise AssertionError(f"Valid client acceptance preview failed: {preview.get('findings')}")
+    service.acceptance = FakeAcceptanceService(db)
     accepted = await service.portal_submit_decision(contexts[0], delivery["id"], accept_payload)
-    if accepted["decision"].get("handoff_status") != "pending_agency_action" or accepted.get("booking_created") is not False:
-        raise AssertionError("Client acceptance did not remain a guarded handoff request.")
+    if (
+        accepted["decision"].get("handoff_status") != "applied"
+        or accepted.get("canonical_acceptance_created") is not True
+        or accepted.get("canonical_acceptance", {}).get("id")
+        != "canonical-acceptance-a"
+        or accepted.get("booking_created") is not False
+    ):
+        raise AssertionError(
+            "Client acceptance did not use the canonical Offer Acceptance handoff."
+        )
     await expect_error(
         service.portal_submit_decision(contexts[0], delivery["id"], accept_payload),
         "DECISION_ALREADY_SUBMITTED",
@@ -440,10 +449,13 @@ async def verify_service_behavior() -> None:
     handoff_preview = await service.acceptance_handoff_preview("agency-a", delivery["id"], {"decision_id": accept_decision["id"]}, user)
     if not handoff_preview.get("can_apply") or handoff_preview["preview"].get("offer_option_id") != "offer-option-a":
         raise AssertionError(f"Canonical acceptance handoff mapping failed: {handoff_preview.get('findings')}")
-    service.acceptance = FakeAcceptanceService(db)
     handoff = await service.acceptance_handoff_apply("agency-a", delivery["id"], {"decision_id": accept_decision["id"]}, user)
-    if handoff["handoff"].get("canonical_acceptance_id") != "canonical-acceptance-a" or handoff.get("booking_created") is not False:
-        raise AssertionError("Explicit canonical acceptance handoff failed.")
+    if (
+        handoff["handoff"].get("canonical_acceptance_id")
+        != "canonical-acceptance-a"
+        or not handoff.get("idempotent")
+    ):
+        raise AssertionError("Canonical acceptance handoff was not idempotent.")
     idempotent_handoff = await service.acceptance_handoff_apply("agency-a", delivery["id"], {"decision_id": accept_decision["id"]}, user)
     if not idempotent_handoff.get("idempotent"):
         raise AssertionError("Acceptance handoff was not idempotent.")

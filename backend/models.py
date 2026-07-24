@@ -1446,6 +1446,9 @@ class PassengerProfile(BaseDocument):
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Dict[str, str] = Field(default_factory=dict)
     loyalty_numbers: List[Dict[str, str]] = Field(default_factory=list)
     status: PassengerStatus = PassengerStatus.ACTIVE
     merged_into_passenger_id: Optional[str] = None
@@ -1490,6 +1493,9 @@ class PassengerProfileCreate(BaseModel):
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Dict[str, str] = Field(default_factory=dict)
     loyalty_numbers: List[Dict[str, str]] = Field(default_factory=list)
     status: PassengerStatus = PassengerStatus.ACTIVE
 
@@ -1528,6 +1534,9 @@ class PassengerProfileUpdate(BaseModel):
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Optional[Dict[str, str]] = None
     loyalty_numbers: Optional[List[Dict[str, str]]] = None
     status: Optional[PassengerStatus] = None
 

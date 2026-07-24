@@ -70,6 +70,23 @@ production migration, commit, push, or deployment is enabled. See
 [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md)
 and [Communication Thread Contract](docs/architecture/communication-thread-contract.md).
 
+### P1 Product Kernel Repair 9 - Client And Passenger Portal Completion
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It makes the authenticated Portal a customer-facing
+projection over Request, Offer, accepted snapshot, Trip, Booking, Ticket, EMD,
+Commercial Ledger, Document, Timeline, Notification, and Operational
+Collaboration truth. Client and Passenger dashboards are separate, Passenger
+visibility requires exact subject linkage, Offer acceptance uses the canonical
+acceptance service, documents retain immutable versions, and Client finance is
+read-only and private-cost safe. Historical Portal routes remain compatibility
+reads and reconciliation analysis is permanently dry-run only. No payment,
+provider, booking, ticketing, delivery, production migration, commit, push, or
+deployment action is enabled. See
+[Client Portal Contract](docs/architecture/client-portal-contract.md),
+[Passenger Portal Contract](docs/architecture/passenger-portal-contract.md),
+and [Portal Visibility Matrix](docs/architecture/portal-visibility-matrix.md).
+
 ## Current Implementation State
 
 The repository currently contains:
@@ -2735,3 +2752,24 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - See [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md),
   [Communication Visibility Contract](docs/architecture/communication-visibility-contract.md),
   and [Notification Projection Contract](docs/architecture/notification-projection-contract.md).
+
+## P1 Product Kernel Repair 9 - Client And Passenger Portal Completion
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Makes the Portal a bounded projection over canonical Request, Offer,
+  acceptance snapshot, Trip, Booking, Ticket, EMD, Document, Commercial
+  Ledger, Timeline, Notification, and Operational Collaboration records.
+- Provides distinct task-oriented Client and Passenger dashboards and
+  navigation, with exact mapping, Agency, relationship, participant, entity,
+  document, and passenger-record guards.
+- Routes Client Offer acceptance through the canonical Offer Acceptance
+  service; Passenger Offer access remains exact-recipient and read-only.
+- Provides immutable Document versions, checksum-verified download, and
+  requested-only bounded upload with Audit and Timeline evidence.
+- Provides Client-only ledger visibility without supplier costs, margin,
+  internal notes, raw data, or payment execution.
+- Retains valid historical Portal reads as compatibility, adds bounded
+  dry-run-only reconciliation analysis, and performs no production migration.
+- See [Portal Operational Workspace](docs/architecture/portal-operational-workspace.md)
+  and [Portal Approval Contract](docs/architecture/portal-approval-contract.md).

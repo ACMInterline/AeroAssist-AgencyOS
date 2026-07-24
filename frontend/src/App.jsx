@@ -274,7 +274,6 @@ import PortalDocumentsPage from "./pages/portal/PortalDocumentsPage"
 import PortalInvoiceDetailPage from "./pages/portal/PortalInvoiceDetailPage"
 import PortalInvoicesPage from "./pages/portal/PortalInvoicesPage"
 import PortalOfferDetailPage from "./pages/portal/PortalOfferDetailPage"
-import PortalOffersPage from "./pages/portal/PortalOffersPage"
 import PortalOfferDeliveriesPage from "./pages/portal/PortalOfferDeliveriesPage"
 import PortalOfferDeliveryDetailPage from "./pages/portal/PortalOfferDeliveryDetailPage"
 import PortalPassengerDetailPage from "./pages/portal/PortalPassengerDetailPage"
@@ -286,6 +285,19 @@ import PortalRequestCreatePage from "./pages/portal/PortalRequestCreatePage"
 import PortalRequestsPage from "./pages/portal/PortalRequestsPage"
 import PortalRefundExchangeCaseDetailPage from "./pages/portal/PortalRefundExchangeCaseDetailPage"
 import PortalRefundExchangeCasesPage from "./pages/portal/PortalRefundExchangeCasesPage"
+import PortalApprovalsPage from "./pages/portal/PortalApprovalsPage"
+import PortalAssistancePage from "./pages/portal/PortalAssistancePage"
+import PortalCommunicationDetailPage from "./pages/portal/PortalCommunicationDetailPage"
+import PortalCommunicationsPage from "./pages/portal/PortalCommunicationsPage"
+import PortalEmdDetailPage from "./pages/portal/PortalEmdDetailPage"
+import PortalEmdsPage from "./pages/portal/PortalEmdsPage"
+import PortalFinancePage from "./pages/portal/PortalFinancePage"
+import PortalNotificationsPage from "./pages/portal/PortalNotificationsPage"
+import PortalTicketDetailPage from "./pages/portal/PortalTicketDetailPage"
+import PortalTicketsPage from "./pages/portal/PortalTicketsPage"
+import PortalTimelinePage from "./pages/portal/PortalTimelinePage"
+import PortalTripDetailPage from "./pages/portal/PortalTripDetailPage"
+import PortalTripsPage from "./pages/portal/PortalTripsPage"
 import HomePage from "./pages/public/HomePage"
 import PublicAgencyWebsitePage from "./pages/public/PublicAgencyWebsitePage"
 
@@ -533,10 +545,19 @@ const routes = {
   "/portal/refunds-exchanges": PortalRefundExchangeCasesPage,
   "/portal/requests": PortalRequestsPage,
   "/portal/requests/new": PortalRequestCreatePage,
-  "/portal/offers": PortalOffersPage,
+  "/portal/offers": PortalOfferDeliveriesPage,
   "/portal/travel-options": PortalOfferDeliveriesPage,
+  "/portal/trips": PortalTripsPage,
   "/portal/bookings": PortalBookingsPage,
+  "/portal/tickets": PortalTicketsPage,
+  "/portal/emds": PortalEmdsPage,
   "/portal/documents": PortalDocumentsPage,
+  "/portal/communications": PortalCommunicationsPage,
+  "/portal/timeline": PortalTimelinePage,
+  "/portal/notifications": PortalNotificationsPage,
+  "/portal/approvals": PortalApprovalsPage,
+  "/portal/assistance": PortalAssistancePage,
+  "/portal/finance": PortalFinancePage,
   "/portal/invoices": PortalInvoicesPage,
   "/portal/payments": PortalPaymentsPage,
 }
@@ -718,6 +739,26 @@ function RoutedApp() {
   const portalBookingMatch = window.location.pathname.match(/^\/portal\/bookings\/([^/]+)$/)
   if (portalBookingMatch) {
     return <PortalBookingDetailPage bookingId={portalBookingMatch[1]} />
+  }
+
+  const portalTripMatch = window.location.pathname.match(/^\/portal\/trips\/([^/]+)$/)
+  if (portalTripMatch) {
+    return <PortalTripDetailPage tripId={portalTripMatch[1]} />
+  }
+
+  const portalTicketMatch = window.location.pathname.match(/^\/portal\/tickets\/([^/]+)$/)
+  if (portalTicketMatch) {
+    return <PortalTicketDetailPage ticketId={portalTicketMatch[1]} />
+  }
+
+  const portalEmdMatch = window.location.pathname.match(/^\/portal\/emds\/([^/]+)$/)
+  if (portalEmdMatch) {
+    return <PortalEmdDetailPage emdId={portalEmdMatch[1]} />
+  }
+
+  const portalCommunicationMatch = window.location.pathname.match(/^\/portal\/communications\/([^/]+)$/)
+  if (portalCommunicationMatch) {
+    return <PortalCommunicationDetailPage threadId={portalCommunicationMatch[1]} />
   }
 
   const portalRefundExchangeMatch = window.location.pathname.match(/^\/portal\/refunds-exchanges\/([^/]+)$/)

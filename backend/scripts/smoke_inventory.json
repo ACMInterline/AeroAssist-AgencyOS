@@ -718,6 +718,36 @@
       "execution_isolation": "shared_backend"
     },
     {
+      "script_path": "backend/scripts/smoke_client_passenger_portal_completion.py",
+      "capability_name": "Client And Passenger Portal Completion",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "portal",
+        "tenancy",
+        "security",
+        "requests",
+        "offers",
+        "trips",
+        "bookings",
+        "tickets",
+        "emds",
+        "documents",
+        "finance",
+        "communications",
+        "frontend",
+        "governance"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable in-memory regression for canonical Client and Passenger dashboards, exact shared-Trip subject filtering, Booking/Ticket/EMD/Document scope, requested immutable document versions, read-only ledger projection, governed profile and Request V4 actions, Operational Collaboration, timeline/notifications, disabled legacy Offer mutation, dry-run migration, frontend routes, and documentation.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_document_foundation.py",
       "capability_name": "Document Foundation",
       "minimum_application_phase": "phase_36_5_document_foundation",

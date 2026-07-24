@@ -118,7 +118,25 @@ function passengerPortalPathAllowed(pathname) {
   return pathname === "/portal" ||
     pathname === "/portal/profile" ||
     pathname === "/portal/passengers" ||
-    /^\/portal\/passengers\/[^/]+$/.test(pathname)
+    pathname === "/portal/trips" ||
+    pathname === "/portal/bookings" ||
+    pathname === "/portal/tickets" ||
+    pathname === "/portal/emds" ||
+    pathname === "/portal/documents" ||
+    pathname === "/portal/communications" ||
+    pathname === "/portal/timeline" ||
+    pathname === "/portal/notifications" ||
+    pathname === "/portal/approvals" ||
+    pathname === "/portal/assistance" ||
+    pathname === "/portal/travel-options" ||
+    /^\/portal\/passengers\/[^/]+$/.test(pathname) ||
+    /^\/portal\/trips\/[^/]+$/.test(pathname) ||
+    /^\/portal\/bookings\/[^/]+$/.test(pathname) ||
+    /^\/portal\/tickets\/[^/]+$/.test(pathname) ||
+    /^\/portal\/emds\/[^/]+$/.test(pathname) ||
+    /^\/portal\/documents\/[^/]+$/.test(pathname) ||
+    /^\/portal\/communications\/[^/]+$/.test(pathname) ||
+    /^\/portal\/travel-options\/[^/]+$/.test(pathname)
 }
 
 function AuthorizationState({ title, message, action }) {

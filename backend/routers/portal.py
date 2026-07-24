@@ -104,21 +104,50 @@ async def portal_context(
         allowed_paths = {
             "/api/portal/me",
             "/api/portal/dashboard",
+            "/api/portal/workspace/dashboard",
             "/api/portal/profile",
             "/api/portal/passengers",
+            "/api/portal/trips",
+            "/api/portal/booking-records",
+            "/api/portal/tickets",
+            "/api/portal/emds",
+            "/api/portal/document-center",
+            "/api/portal/timeline",
+            "/api/portal/notifications",
+            "/api/portal/approvals",
         }
-        passenger_prefix = "/api/portal/passengers/"
+        read_prefixes = (
+            "/api/portal/passengers/",
+            "/api/portal/trips/",
+            "/api/portal/booking-records/",
+            "/api/portal/tickets/",
+            "/api/portal/emds/",
+            "/api/portal/document-center/",
+            "/api/portal/communications",
+            "/api/portal/offer-deliveries",
+        )
         communication_prefix = "/api/portal/communications"
+        upload_suffix = "/upload"
         permitted_read = request.method == "GET" and (
             request.url.path in allowed_paths
-            or request.url.path.startswith(passenger_prefix)
-            or request.url.path.startswith(communication_prefix)
+            or request.url.path.startswith(read_prefixes)
         )
         permitted_communication = (
             request.method == "POST"
             and request.url.path.startswith(communication_prefix)
         )
-        if request.method != "GET" and not permitted_communication:
+        permitted_upload = (
+            request.method == "POST"
+            and request.url.path.startswith("/api/portal/document-center/")
+            and request.url.path.endswith(upload_suffix)
+        )
+        permitted_profile_update = (
+            request.method == "PATCH"
+            and request.url.path == "/api/portal/profile"
+        )
+        if request.method != "GET" and not (
+            permitted_communication or permitted_upload or permitted_profile_update
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Passenger portal access is limited to the linked passenger profile.",
@@ -160,6 +189,10 @@ def safe_response(payload: dict) -> dict:
     return payload
 
 
+def portal_client_id(ctx: dict) -> str | None:
+    return ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")
+
+
 def safe_portal_account(account: dict) -> dict:
     return safe_public_projection(
         account,
@@ -188,8 +221,13 @@ def safe_client(client: dict) -> dict:
             "primary_phone",
             "country",
             "city",
+            "address_line_1",
+            "address_line_2",
+            "postal_code",
             "preferred_language",
             "default_currency",
+            "marketing_consent",
+            "data_processing_consent",
             "portal_status",
             "client_visible_notes",
             "status",
@@ -214,6 +252,9 @@ def safe_passenger(passenger: dict, relationship: dict | None = None) -> dict:
         "passport_expiry": passenger.get("passport_expiry"),
         "known_assistance_needs": passenger.get("known_assistance_needs"),
         "meal_preferences": passenger.get("meal_preferences"),
+        "seating_preferences": passenger.get("seating_preferences"),
+        "baggage_preferences": passenger.get("baggage_preferences"),
+        "emergency_contact": passenger.get("emergency_contact", {}),
         "loyalty_numbers": passenger.get("loyalty_numbers", []),
         "relationship": relationship.get("relationship_type") if relationship else None,
     }
@@ -250,6 +291,15 @@ def safe_request(request: dict) -> dict:
         "client_visible_notes": request.get("client_visible_notes"),
         "passenger_count": request.get("passenger_count"),
         "service_count": request.get("service_count"),
+        "editable": (
+            request.get("request_version") == 4
+            and request.get("status") == "draft"
+        ),
+        "cancellable": (
+            request.get("request_version") == 4
+            and request.get("status") in {"draft", "new"}
+        ),
+        "updated_at": request.get("updated_at"),
     }
 
 
@@ -661,7 +711,7 @@ async def write_audit(db: Database, ctx: dict, event_type: str, entity_type: str
 async def create_portal_action(db: Database, ctx: dict, action_type: str, source_entity_type: str, source_entity_id: str | None, summary: str, payload: dict | None = None) -> dict:
     action = PortalActionEvent(
         agency_id=ctx["account"]["agency_id"],
-        client_id=ctx["account"]["client_id"],
+        client_id=portal_client_id(ctx),
         portal_account_id=ctx["account"]["id"],
         actor_identity_id=ctx.get("identity", {}).get("id") if ctx.get("identity") else None,
         action_type=action_type,
@@ -738,8 +788,9 @@ async def write_document_timeline(db: Database, ctx: dict, document_id: str, eve
 
 
 async def permitted_request_relationships(db: Database, ctx: dict) -> dict[str, dict]:
+    client_id = ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")
     relationships = await db.collection("client_passenger_relationships").find_many(
-        {"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "status": "active"}
+        {"agency_id": ctx["account"]["agency_id"], "client_id": client_id, "status": "active"}
     )
     return {
         item["passenger_id"]: item
@@ -886,7 +937,8 @@ async def passenger_detail(passenger_id: str, ctx: dict = Depends(portal_context
 
 @router.get("/requests")
 async def requests(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("travel_requests").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    client_id = ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")
+    items = await db.collection("travel_requests").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": client_id})
     return safe_response({"items": [safe_request(item) for item in items]})
 
 
@@ -941,7 +993,7 @@ async def submit_request(payload: PortalRequestSubmit, ctx: dict = Depends(porta
         },
         request_details="\n\n".join([item for item in [payload.title, payload.client_notes] if item]),
         client_visible_notes="Submitted through the client portal. The agency will review it manually.",
-        raw_payload={**payload.model_dump(mode="json"), "passenger_ids": requested_passenger_ids, "portal_account_id": ctx["account"]["id"], "client_id": ctx["account"]["client_id"]},
+        raw_payload={**payload.model_dump(mode="json"), "passenger_ids": requested_passenger_ids, "portal_account_id": ctx["account"]["id"], "client_id": ctx["account"].get("client_profile_id") or ctx["account"].get("client_id")},
         actor_user_id=ctx.get("identity", {}).get("id") if ctx.get("identity") else ctx["account"]["id"],
     )
     action = await create_portal_action(
@@ -1016,7 +1068,6 @@ async def request_detail(request_id: str, ctx: dict = Depends(portal_context), d
             "title": item.get("summary") or item.get("event_type"),
             "summary": item.get("summary"),
             "visibility": "client_visible",
-            "metadata": item.get("details") or {},
             "created_at": item.get("event_time") or item.get("created_at"),
         }
         for item in canonical_timeline
@@ -1084,7 +1135,7 @@ async def submit_request_message(request_id: str, payload: PortalMessageSubmit, 
 
 @router.get("/offers")
 async def offers(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("offers").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    items = await db.collection("offers").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx)})
     return safe_response({"items": [safe_offer(item) for item in items]})
 
 
@@ -1102,48 +1153,14 @@ async def offer_detail(offer_id: str, ctx: dict = Depends(portal_context), db: D
 
 
 async def submit_offer_decision(offer_id: str, decision: str, payload: PortalOfferDecisionSubmit, ctx: dict, db: Database) -> dict:
-    offer = await visible_offer_or_404(db, ctx, offer_id)
-    canonical_offer = None
-    if offer.get("request_id"):
-        canonical_offer = await db.collection("offer_workspaces").find_one(
-            {
-                "agency_id": ctx["account"]["agency_id"],
-                "request_id": offer["request_id"],
-            }
-        )
-    if canonical_offer:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                "This legacy Offer is read-only because a canonical OfferWorkspace "
-                "owns the commercial lifecycle. Use the subject-scoped released "
-                "offer delivery decision workflow."
-            ),
-        )
-    if offer.get("status") in {"withdrawn", "expired", "archived"}:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This offer is no longer open for a portal decision.")
-    if offer.get("status") in {"accepted", "rejected"}:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This offer already has a portal decision.")
-    now = now_utc()
-    updates = {"status": decision, f"{decision}_at": now}
-    updated = await db.collection("offers").update_one({"agency_id": ctx["account"]["agency_id"], "id": offer_id}, updates)
-    summary = "Client accepted the offer." if decision == "accepted" else "Client rejected the offer."
-    await write_offer_timeline(db, ctx, offer_id, f"portal.offer_{decision}", f"Offer {decision}", payload.reason or summary)
-    if offer.get("request_id"):
-        task_title = "Review accepted offer and proceed to booking manually" if decision == "accepted" else "Review rejected offer and follow up manually"
-        await create_staff_review_task(db, ctx, offer["request_id"], task_title, payload.reason)
-        await write_request_timeline(db, ctx, offer["request_id"], f"portal.offer_{decision}", f"Offer {decision}", payload.reason or summary, "internal", {"offer_id": offer_id})
-    action = await create_portal_action(
-        db,
-        ctx,
-        f"offer_{decision}",
-        "offer",
-        offer_id,
-        summary,
-        {"offer_reference": offer.get("offer_reference"), "reason": payload.reason},
+    await visible_offer_or_404(db, ctx, offer_id)
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            "This legacy Offer is read-only. Use Travel Options backed by the "
+            "canonical OfferWorkspace to decide a released Offer version."
+        ),
     )
-    await write_audit(db, ctx, f"portal.offer_{decision}", "offer", offer_id, summary, {"reason": payload.reason})
-    return safe_response({"offer": safe_offer(updated), "action": safe_portal_action(action)})
 
 
 @router.post("/offers/{offer_id}/accept")
@@ -1158,7 +1175,7 @@ async def reject_offer(offer_id: str, payload: PortalOfferDecisionSubmit, ctx: d
 
 @router.get("/bookings")
 async def bookings(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("bookings").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    items = await db.collection("bookings").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx)})
     return safe_response({"items": [safe_booking(item) for item in items]})
 
 
@@ -1175,32 +1192,32 @@ async def booking_detail(booking_id: str, ctx: dict = Depends(portal_context), d
 
 @router.get("/documents")
 async def documents(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("rendered_documents").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "client_visible": True})
+    items = await db.collection("rendered_documents").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx), "client_visible": True})
     return safe_response({"items": [safe_document(item) for item in items if item.get("status") != "archived"]})
 
 
 @router.get("/documents/{document_id}")
 async def document_detail(document_id: str, ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    document = await db.collection("rendered_documents").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "client_visible": True, "id": document_id})
+    document = await db.collection("rendered_documents").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx), "client_visible": True, "id": document_id})
     if not document or document.get("status") == "archived":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal document not found.")
-    acknowledgement = await db.collection("document_acknowledgements").find_one({"agency_id": ctx["account"]["agency_id"], "rendered_document_id": document_id, "client_id": ctx["account"]["client_id"]})
+    acknowledgement = await db.collection("document_acknowledgements").find_one({"agency_id": ctx["account"]["agency_id"], "rendered_document_id": document_id, "client_id": portal_client_id(ctx)})
     return safe_response({"document": safe_document(document, include_html=True), "acknowledgement": safe_acknowledgement(acknowledgement)})
 
 
 @router.post("/documents/{document_id}/acknowledge", status_code=status.HTTP_201_CREATED)
 async def acknowledge_document(document_id: str, payload: PortalDocumentAcknowledgeSubmit | None = None, ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
     payload = payload or PortalDocumentAcknowledgeSubmit()
-    document = await db.collection("rendered_documents").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"], "client_visible": True, "id": document_id})
+    document = await db.collection("rendered_documents").find_one({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx), "client_visible": True, "id": document_id})
     if not document or document.get("status") == "archived":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Portal document not found.")
-    existing = await db.collection("document_acknowledgements").find_one({"agency_id": ctx["account"]["agency_id"], "rendered_document_id": document_id, "client_id": ctx["account"]["client_id"]})
+    existing = await db.collection("document_acknowledgements").find_one({"agency_id": ctx["account"]["agency_id"], "rendered_document_id": document_id, "client_id": portal_client_id(ctx)})
     if existing:
         return safe_response({"acknowledgement": safe_acknowledgement(existing), "action": None})
     acknowledgement = DocumentAcknowledgement(
         agency_id=ctx["account"]["agency_id"],
         rendered_document_id=document_id,
-        client_id=ctx["account"]["client_id"],
+        client_id=portal_client_id(ctx),
         portal_account_id=ctx["account"]["id"],
         acknowledged_by_identity_id=ctx.get("identity", {}).get("id") if ctx.get("identity") else None,
         acknowledgement_type=payload.acknowledgement_type,
@@ -1223,13 +1240,13 @@ async def acknowledge_document(document_id: str, payload: PortalDocumentAcknowle
 
 @router.get("/actions")
 async def portal_actions(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("portal_action_events").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    items = await db.collection("portal_action_events").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx)})
     return safe_response({"items": [safe_portal_action(item) for item in items]})
 
 
 @router.get("/invoices")
 async def invoices(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    items = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    items = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx)})
     return safe_response({"items": [safe_invoice(item) for item in items]})
 
 
@@ -1243,7 +1260,7 @@ async def invoice_detail(invoice_id: str, ctx: dict = Depends(portal_context), d
 
 @router.get("/payments")
 async def payments(ctx: dict = Depends(portal_context), db: Database = Depends(get_database)) -> dict:
-    invoices = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": ctx["account"]["client_id"]})
+    invoices = await db.collection("invoices").find_many({"agency_id": ctx["account"]["agency_id"], "client_id": portal_client_id(ctx)})
     invoice_ids = {item["id"] for item in invoices}
     items = await db.collection("payment_records").find_many({"agency_id": ctx["account"]["agency_id"]})
     return safe_response({"items": [safe_payment(item) for item in items if item.get("invoice_id") in invoice_ids]})

@@ -191,3 +191,21 @@ posted communication, silently edit timeline evidence, copy attachment
 binaries, infer provider delivery, or weaken Client, Passenger, Supplier,
 Agency, Platform, and System visibility boundaries. Compatibility records
 remain readable and any migration is bounded, reviewed, and dry-run first.
+
+## Portal Projection Rule
+
+The Client and Passenger Portals are projections over canonical Product Kernel
+owners. Never introduce Portal-specific Request, Offer, acceptance, Trip,
+Booking, Ticket, EMD, finance, Document, Timeline, Notification, or
+Communication truth.
+
+Every Portal request must resolve an active identity-to-subject mapping and
+derive `agency_id` and subject scope server-side. A customer-visible flag,
+shared Trip, related record ID, request parameter, or email match cannot widen
+that scope. Client and Passenger capabilities must remain distinct.
+
+Portal actions must call the canonical owning service and record appropriate
+Audit or Timeline evidence. They must never imply provider execution, payment,
+booking, Ticket/EMD issuance, public document sharing, external messaging, or
+automatic approval. Historical compatibility remains readable; reconciliation
+is bounded and dry-run first.

@@ -222,3 +222,19 @@ The aggregate may exist before a Trip. Explicit request-to-trip conversion
 continues to map the Request into the downstream operational dossier. Offer and
 Trip consumers read deterministic compatibility projections; they do not own
 or mutate Request V4 truth. Accepted downstream snapshots remain immutable.
+
+## Portal Operational Projection
+
+The Portal is the customer-facing view of canonical operations, never an
+operational workspace owner. `PortalProjectionService` composes bounded views
+after `PortalAccessMapping` resolves one Agency and one Client or Passenger.
+It cannot accept `agency_id`, Client ID, or Passenger ID from a request as an
+authorization override.
+
+Client actions create governed events in existing owners: Request V4 updates
+and cancellation, canonical Offer decisions and acceptance, requested
+Document versions, profile updates, and Communication messages. Passenger
+actions are narrower and never imply household, finance, or commercial
+decision authority. Operational history remains append-only in
+`OperationalTimeline`; Audit remains security evidence; Notifications remain
+projections. See [Portal Operational Workspace](portal-operational-workspace.md).

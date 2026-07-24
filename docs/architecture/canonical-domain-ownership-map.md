@@ -380,3 +380,20 @@ and Exchange Ledger records complete the accounting chain. The Finance router
 is an adapter to the canonical service. After Sales remains the operational
 decision owner and the ledger records only reviewed commercial consequences.
 See [Canonical Commercial Ledger](canonical-commercial-ledger.md).
+
+## P1 Product Kernel Repair 9 - Portal Projection
+
+The Client and Passenger Portals do not introduce a business owner. Their
+canonical projection service derives one immutable Agency and subject scope
+from `PortalAccessMapping`, then reads Request, Offer, accepted snapshot, Trip,
+Booking, Ticket, EMD, Document, Commercial Ledger, Operational Collaboration,
+Timeline, and Notification owners.
+
+Client Passenger data requires an active canonical relationship. Passenger
+data requires an exact Passenger link even on shared Trips and Bookings.
+Customer-visible flags cannot override record ownership, participant scope, or
+internal visibility. Portal writes are limited to canonical Request actions,
+exact-version Offer decisions, requested Document versions, allowlisted
+profile updates, and governed Collaboration replies. Historical Portal
+records remain compatibility data and migration analysis is dry-run only. See
+[Portal Visibility Matrix](portal-visibility-matrix.md).

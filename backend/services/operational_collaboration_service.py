@@ -1921,16 +1921,24 @@ class OperationalCollaborationService:
                         if request_passenger:
                             return True
                     if entity_type == "trip":
-                        trip_passenger = await self.db.collection(
+                        trip_passengers = await self.db.collection(
                             "trip_passengers"
-                        ).find_one(
+                        ).find_many(
                             {
                                 "agency_id": agency_id,
                                 "trip_id": entity_id,
-                                "passenger_id": passenger_id,
-                            }
+                            },
+                            sort=[("id", 1)],
+                            limit=MAX_LIST_LIMIT,
                         )
-                        if trip_passenger:
+                        if any(
+                            (
+                                item.get("passenger_profile_id")
+                                or item.get("passenger_id")
+                            )
+                            == passenger_id
+                            for item in trip_passengers
+                        ):
                             return True
                     continue
                 if entity_type == "client" and entity_id == client_id:
