@@ -17,6 +17,7 @@ from models import (
 from persistence_query import PaginationRequest
 from persistence_repository import PersistenceRepository
 from services.canonical_reference_service import resolve_passenger_profile_references
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 INTAKE_PLACEHOLDER_BIRTH_DATE = "1900-01-01"
@@ -138,17 +139,17 @@ async def _write_request_timeline(
     summary: Optional[str] = None,
     metadata: Optional[dict[str, Any]] = None,
 ) -> None:
-    event = RequestTimelineEvent(
+    await OperationalCollaborationService(db).record_compatibility_event(
         agency_id=agency_id,
-        request_id=request_id,
+        entity_type="request",
+        entity_id=request_id,
+        source_event_type=event_type,
+        summary=summary or title,
         actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
         visibility="internal",
-        metadata=metadata or {},
+        details={"title": title, **(metadata or {})},
+        source_collection="request_timeline_events",
     )
-    await db.collection("request_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def _get_active_passenger(db: Database, agency_id: str, passenger_id: str) -> dict:

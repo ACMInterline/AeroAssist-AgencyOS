@@ -34,6 +34,10 @@ from services.agent_work_queue_service import AgentWorkQueueService
 from services.operational_sla_deadline_service import OperationalSlaDeadlineService
 from services.task_automation_dependency_service import TaskAutomationDependencyService
 from services.timeline_workspace_service import OperationalTimelineService
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -130,6 +134,7 @@ class AfterSalesWorkflowService:
         self.deadlines = OperationalSlaDeadlineService(db)
         self.task_automation = TaskAutomationDependencyService(db)
         self.timelines = OperationalTimelineService(db)
+        self.collaboration = OperationalCollaborationService(db)
 
     def safety_flags(self) -> dict[str, bool]:
         return {
@@ -495,7 +500,6 @@ class AfterSalesWorkflowService:
             raise AfterSalesWorkflowError("After-sales communication records are metadata-only; external sending is disabled.")
         communication = await self._create_communication(case, data, user)
         await self._refresh_case_child_links(case["id"], user)
-        await self._record_case_timeline(case, "after_sales_communication_recorded", communication.get("summary") or "After-sales communication metadata recorded.", user)
         return {"phase": PHASE_LABEL, "communication": communication, **self.safety_flags()}
 
     async def list_case_items(self, agency_id: str | None = None, case_id: str | None = None, item_type: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
@@ -511,7 +515,65 @@ class AfterSalesWorkflowService:
         return await self._list_child(AFTER_SALES_RESOLUTIONS_COLLECTION, agency_id=agency_id, case_id=case_id, field="resolution_status", value=resolution_status, limit=limit)
 
     async def list_communications(self, agency_id: str | None = None, case_id: str | None = None, communication_type: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
-        return await self._list_child(AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION, agency_id=agency_id, case_id=case_id, field="communication_type", value=communication_type, limit=limit)
+        legacy = await self._list_child(
+            AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION,
+            agency_id=agency_id,
+            case_id=case_id,
+            field="communication_type",
+            value=communication_type,
+            limit=limit,
+        )
+        if not agency_id:
+            return legacy
+        threads = await self.collaboration.list_threads(
+            agency_id,
+            entity_type="after_sales_case",
+            entity_id=case_id,
+            limit=limit,
+        )
+        canonical: list[dict[str, Any]] = []
+        for thread in threads:
+            detail = await self.collaboration.thread_detail(agency_id, thread["id"])
+            for message in detail.get("messages") or []:
+                if communication_type and message.get("message_type") != communication_type:
+                    continue
+                canonical.append(
+                    {
+                        **message,
+                        "case_id": case_id
+                        or next(
+                            (
+                                item.get("entity_id")
+                                for item in thread.get("entity_references") or []
+                                if item.get("entity_type") == "after_sales_case"
+                            ),
+                            None,
+                        ),
+                        "communication_reference": f"CANON-{message['id'][-12:].upper()}",
+                        "communication_type": message.get("message_type"),
+                        "direction": "internal"
+                        if message.get("visibility") == "internal"
+                        else "outbound",
+                        "audience": message.get("visibility"),
+                        "channel": "canonical_record",
+                        "sender": message.get("sender_display"),
+                        "summary": message.get("plain_text"),
+                        "internal_message": message.get("plain_text")
+                        if message.get("visibility") == "internal"
+                        else None,
+                        "client_message": message.get("plain_text")
+                        if message.get("visibility") == "client"
+                        else None,
+                        "document_ids": message.get("attachment_ids") or [],
+                        "timeline_entry_id": message.get("linked_timeline_entry_id"),
+                        "sent_externally": False,
+                        "canonical_thread_id": thread["id"],
+                        "canonical_message_id": message["id"],
+                    }
+                )
+        items = legacy + canonical
+        items.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
+        return items[:limit]
 
     async def _selector_records(self, agency_id: str, collection_name: str) -> list[dict[str, Any]]:
         page = await PersistenceRepository(self.db).find_agency_records(
@@ -1276,14 +1338,123 @@ class AfterSalesWorkflowService:
         data["communication_type"] = self._norm(data.get("communication_type") or "internal_note")
         if data["communication_type"] not in COMMUNICATION_TYPES:
             raise AfterSalesWorkflowError(f"Unsupported after-sales communication type metadata: {data['communication_type']}.")
-        communication = AfterSalesCommunicationRecord(
-            agency_id=case["agency_id"],
-            case_id=case["id"],
-            created_by=user.get("id"),
-            updated_by=user.get("id"),
-            **data,
+        audience = self._norm(data.get("audience") or "internal")
+        visibility = (
+            "client"
+            if audience == "client"
+            else "supplier"
+            if audience in {"supplier", "airline"}
+            or data["communication_type"] in {"supplier_message", "airline_message"}
+            else "internal"
         )
-        return await self.db.collection(AFTER_SALES_COMMUNICATION_RECORDS_COLLECTION).insert_one(communication.model_dump(mode="json"))
+        participant_payloads: list[dict[str, Any]] = []
+        thread_visibility = ["internal", visibility]
+        if visibility == "client" and case.get("client_id"):
+            mapping = await self.db.collection("portal_access_mappings").find_one(
+                {
+                    "agency_id": case["agency_id"],
+                    "client_profile_id": case["client_id"],
+                    "subject_type": "client",
+                    "status": "active",
+                }
+            )
+            if mapping:
+                client = await self.db.collection("client_profiles").find_one(
+                    {"agency_id": case["agency_id"], "id": case["client_id"]}
+                )
+                participant_payloads.append(
+                    {
+                        "participant_type": "client_portal",
+                        "identity_id": mapping.get("auth_identity_id"),
+                        "portal_account_id": mapping.get("id"),
+                        "client_id": case["client_id"],
+                        "display_name": (client or {}).get("display_name")
+                        or "Client Portal",
+                        "visibility": ["client"],
+                    }
+                )
+        if visibility == "supplier":
+            participant_payloads.append(
+                {
+                    "participant_type": "supplier",
+                    "supplier_reference": data.get("supplier_reference")
+                    or "manual_supplier",
+                    "display_name": data.get("recipient")
+                    or data.get("supplier_reference")
+                    or "Supplier",
+                    "visibility": ["supplier"],
+                    "permissions": ["read"],
+                }
+            )
+        actor = {
+            **user,
+            "actor_type": "agency",
+            "identity_id": user.get("identity_id") or user.get("id"),
+            "display_name": user.get("full_name")
+            or user.get("email")
+            or "Agency user",
+        }
+        try:
+            thread_detail = await self.collaboration.ensure_entity_thread(
+                agency_id=case["agency_id"],
+                entity_type="after_sales_case",
+                entity_id=case["id"],
+                subject=case.get("case_title")
+                or f"After-sales {case.get('case_reference') or case['id']}",
+                actor=actor,
+                visibility=list(dict.fromkeys(thread_visibility)),
+                participants=participant_payloads,
+                context_key=f"after_sales_{visibility}",
+            )
+            message_text = (
+                data.get("internal_message")
+                if visibility == "internal"
+                else data.get("client_message")
+                if visibility == "client"
+                else data.get("summary")
+            ) or data.get("summary") or data["communication_type"].replace("_", " ")
+            message = await self.collaboration.post_message(
+                case["agency_id"],
+                thread_detail["thread"]["id"],
+                {
+                    "message_type": data["communication_type"],
+                    "plain_text": message_text,
+                    "visibility": visibility,
+                    "delivery_status": "recorded"
+                    if visibility == "internal"
+                    else "not_sent",
+                    "metadata": {
+                        "compatibility_route": "after_sales_communication_records",
+                        "supplier_reference": data.get("supplier_reference"),
+                        "external_delivery": False,
+                    },
+                },
+                actor,
+            )
+        except OperationalCollaborationError as exc:
+            raise AfterSalesWorkflowError(str(exc)) from exc
+        return {
+            **message,
+            "agency_id": case["agency_id"],
+            "case_id": case["id"],
+            "communication_reference": data["communication_reference"],
+            "communication_type": data["communication_type"],
+            "direction": data.get("direction") or "internal",
+            "audience": audience,
+            "channel": data.get("channel") or "canonical_record",
+            "sender": data.get("sender") or message.get("sender_display"),
+            "recipient": data.get("recipient"),
+            "subject": data.get("subject"),
+            "summary": data.get("summary") or message_text,
+            "internal_message": data.get("internal_message"),
+            "client_message": data.get("client_message"),
+            "supplier_reference": data.get("supplier_reference"),
+            "document_ids": data.get("document_ids") or [],
+            "timeline_entry_id": message.get("linked_timeline_entry_id"),
+            "sent_externally": False,
+            "canonical_thread_id": thread_detail["thread"]["id"],
+            "canonical_message_id": message["id"],
+        }
 
     async def _refresh_case_child_links(self, case_id: str, user: dict) -> None:
         case = await self._require_case(case_id)

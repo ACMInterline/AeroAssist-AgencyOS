@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import DocumentPreviewFrame from "../../components/DocumentPreviewFrame"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import DocumentStatusBadge from "../../components/DocumentStatusBadge"
 import DocumentTypeBadge from "../../components/DocumentTypeBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
@@ -319,12 +320,12 @@ export default function DocumentDetailPage({ documentId }) {
             </form>
           </section>
           <DocumentPreviewFrame html={document.rendered_html} />
-          <section className="rounded-lg border border-slate-200 bg-white p-5">
-            <h3 className="font-semibold text-slate-950">Timeline</h3>
-            <div className="mt-4 divide-y divide-slate-100 rounded-md border border-slate-200">
-              {state.timeline.map((item) => <div className="p-3 text-sm text-slate-700" key={item.id}>{item.title}{item.summary ? ` · ${item.summary}` : ""}</div>)}
-            </div>
-          </section>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={documentId}
+            entityLabel={document.document_number || document.title || "Document"}
+            entityType="document"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

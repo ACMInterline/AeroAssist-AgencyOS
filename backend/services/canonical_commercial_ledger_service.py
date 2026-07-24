@@ -34,6 +34,7 @@ from models import (
 )
 from persistence_query import PaginationRequest
 from persistence_repository import PersistenceRepository
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 COMMERCIAL_LEDGERS_COLLECTION = "commercial_ledgers"
@@ -191,8 +192,36 @@ class CanonicalCommercialLedgerService:
                 "operational_record_mutated": False,
             },
         )
-        await self.db.collection("audit_events").insert_one(
+        audit_record = await self.db.collection("audit_events").insert_one(
             event.model_dump(mode="json")
+        )
+        canonical_event_type = {
+            "invoice.issued": "invoice_issued",
+            "payment.received": "payment_received",
+            "refund.recorded": "refund_recorded",
+            "exchange.recorded": "exchange_recorded",
+            "supplier_cost.confirmed": "supplier_cost_confirmed",
+        }.get(event_type, event_type.replace(".", "_"))
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=agency_id,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            event_type=canonical_event_type,
+            summary=summary,
+            actor={
+                "id": actor_user_id,
+                "identity_id": actor_user_id,
+                "actor_type": "agency" if actor_user_id else "system",
+            },
+            visibility="internal",
+            details={
+                "commercial_event_type": event_type,
+                "canonical_commercial_ledger": True,
+            },
+            linked_audit_event_id=audit_record["id"],
+            idempotency_key=f"audit-event:{audit_record['id']}",
+            source_collection="audit_events",
+            source_record_id=audit_record["id"],
         )
 
     async def _agency_record(

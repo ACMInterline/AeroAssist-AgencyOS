@@ -276,7 +276,7 @@ TicketWorkspace, and EmdWorkspace records remain migration debt.
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Request messages, portal messages, after-sales communication, supplier interactions, timeline fields | No safe single owner | Multiple request, portal, after-sales routes | Internal, supplier, and client content must remain separated | Immutable `agency_id`; client messages only | Cross-domain interaction; `decision_required` |
+| `OperationalCollaborationService`; legacy request, refund, after-sales, offer-question, and supplier records are compatibility | `CommunicationThread` / `communication_threads`; `CommunicationMessage` / `communication_messages` | `/api/agencies/{agency_id}/operational-collaboration`; `/api/portal/communications` | Participants and attachment references are children; notifications are projections; legacy rows remain history | Immutable `agency_id`; active membership or explicit Portal mapping plus participant, entity, and visibility checks | Governed operational interaction; selected, historical migration review required |
 
 ### 34. Task / Work Item
 
@@ -288,7 +288,7 @@ TicketWorkspace, and EmdWorkspace records remain migration debt.
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Timeline, SLA, and offer-delivery services plus entity-specific timelines | `OperationalTimeline` / `operational_timelines` | `/api/agencies/{agency_id}/operational-timelines` | Request/trip/booking/ticket-EMD/refund timelines are compatibility writers | Immutable `agency_id`; explicit visible events only | Cross-domain history; migration required |
+| `OperationalCollaborationService`; Timeline Workspace is an append-only adapter; historical entity timelines remain compatibility | `OperationalTimeline` / `operational_timelines` | `/api/agencies/{agency_id}/operational-collaboration` | Corrections/supersession are linked append-only entries; entity timeline collections remain immutable history | Immutable `agency_id`; explicit participant and visibility projection only | Canonical cross-domain history; selected, historical migration review required |
 
 ### 36. Audit Event
 

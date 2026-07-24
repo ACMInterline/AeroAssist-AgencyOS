@@ -6,6 +6,7 @@ import DestructiveButton from "../../components/DestructiveButton"
 import DetailSummary from "../../components/DetailSummary"
 import EmptyState from "../../components/EmptyState"
 import OperationalAlert from "../../components/OperationalAlert"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
@@ -360,9 +361,12 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 </div>
               </details>
 
-              <Panel title="Timeline">
-                <SnapshotList items={state?.timeline} render={(item) => `${item.title}${item.description ? ` · ${item.description}` : ""}`} />
-              </Panel>
+              <OperationalCollaborationPanel
+                agencyId={state.agency.id}
+                entityId={bookingWorkspaceId}
+                entityLabel={workspace.booking_reference || "Booking"}
+                entityType="booking_workspace"
+              />
             </div>
           </section>
           <ConfirmationDialog

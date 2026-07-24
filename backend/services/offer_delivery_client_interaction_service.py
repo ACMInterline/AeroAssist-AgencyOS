@@ -29,6 +29,10 @@ from services.journey_comparison_client_presentation_service import (
     JourneyComparisonClientPresentationService,
 )
 from services.offer_acceptance_service import OfferAcceptanceService
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -763,6 +767,28 @@ class OfferDeliveryClientInteractionService:
         await self.db.collection(DELIVERY_COLLECTION).update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "accepted"})
         await self._audit("handoff_applied", delivery, user, version_id=handoff["delivery_version_id"], summary="Client decision explicitly handed to canonical Offer Acceptance.")
         await self._timeline(delivery, "offer_accepted", "Client selection handed to Offer Acceptance", user)
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=agency_id,
+            entity_type="offer",
+            entity_id=delivery.get("offer_id") or delivery["id"],
+            event_type="portal_approval",
+            event_subtype="offer_acceptance",
+            summary="Portal approval was recorded against immutable offer evidence.",
+            actor={
+                "id": self._actor(user),
+                "identity_id": self._actor(user),
+                "actor_type": "client_portal",
+            },
+            visibility="client",
+            details={
+                "offer_delivery_id": delivery_id,
+                "decision_id": handoff["decision_id"],
+                "canonical_acceptance_id": acceptance_id,
+            },
+            idempotency_key=f"portal-approval:{handoff['decision_id']}",
+            source_collection=DECISION_COLLECTION,
+            source_record_id=handoff["decision_id"],
+        )
         return {"phase": PHASE_LABEL, "handoff": stored or handoff, "canonical_acceptance": result, "booking_created": False, **self.safety_flags()}
 
     async def document_handoff_preview(
@@ -958,7 +984,7 @@ class OfferDeliveryClientInteractionService:
         message = str(payload_dict(payload).get("message_text") or "").strip()
         if not message:
             raise JourneyOfferDeliveryError("DELIVERY_SOURCE_REQUIRED", "A question is required.")
-        question = await self.db.collection(QUESTION_COLLECTION).insert_one(JourneyOfferClientQuestion(
+        question_model = JourneyOfferClientQuestion(
             agency_id=agency_id,
             delivery_id=delivery_id,
             delivery_version_id=version["id"],
@@ -968,9 +994,64 @@ class OfferDeliveryClientInteractionService:
             message_text=message,
             created_by_type="client",
             created_by_id=recipient["id"],
-        ).model_dump(mode="json"))
+        )
+        collaboration = OperationalCollaborationService(self.db)
+        portal_actor = collaboration.portal_actor(context)
+        try:
+            offer_id = delivery.get("offer_id") or delivery_id
+            thread_detail = await collaboration.create_thread(
+                agency_id,
+                {
+                    "idempotency_key": (
+                        f"entity-thread:offer:{offer_id}:offer_delivery_questions"
+                    ),
+                    "subject": (
+                        f"Offer {delivery.get('delivery_reference') or delivery_id}"
+                    ),
+                    "entity_references": [
+                        {"entity_type": "offer", "entity_id": offer_id},
+                        {
+                            "entity_type": "client",
+                            "entity_id": delivery["client_id"],
+                        },
+                    ],
+                    "visibility": ["client"],
+                    "participants": [
+                    {
+                        "participant_type": "agency",
+                        "display_name": "Agency operations",
+                        "participant_role": "offer_operations",
+                        "visibility": ["client"],
+                        "permissions": ["read", "post"],
+                    }
+                    ],
+                    "metadata": {"context_key": "offer_delivery_questions"},
+                },
+                portal_actor,
+            )
+            canonical_message = await collaboration.portal_post_message(
+                context,
+                thread_detail["thread"]["id"],
+                {
+                    "plain_text": message,
+                    "message_type": "offer_question",
+                    "idempotency_key": f"offer-question:{question_model.id}",
+                    "metadata": {
+                        "source_collection": QUESTION_COLLECTION,
+                        "source_record_id": question_model.id,
+                        "delivery_id": delivery_id,
+                        "delivery_version_id": version["id"],
+                    },
+                },
+            )
+        except OperationalCollaborationError as exc:
+            raise JourneyOfferDeliveryError(exc.code, str(exc)) from exc
+        question_model.canonical_thread_id = thread_detail["thread"]["id"]
+        question_model.canonical_message_id = canonical_message["id"]
+        question = await self.db.collection(QUESTION_COLLECTION).insert_one(
+            question_model.model_dump(mode="json")
+        )
         await self._record_interaction(delivery, version, recipient, "question_submitted")
-        await self._timeline(delivery, "customer_contacted", "Client submitted an offer question", {"id": recipient["id"]})
         return {"phase": PHASE_LABEL, "question": self._client_question(question), "external_message_sent": False, **self._portal_safety_flags()}
 
     async def portal_decision_preview(
@@ -1475,20 +1556,40 @@ class OfferDeliveryClientInteractionService:
     async def _timeline(
         self, delivery: dict[str, Any], event_type: str, summary: str, user: dict[str, Any] | None
     ) -> None:
-        await self.db.collection("operational_timelines").insert_one(OperationalTimeline(
+        canonical_event_type = (
+            "offer_delivered"
+            if event_type == "offer_created"
+            else "communication_received"
+            if event_type == "customer_contacted"
+            else event_type
+        )
+        await OperationalCollaborationService(self.db).record_business_event(
             agency_id=delivery["agency_id"],
-            timeline_reference=f"JOD-{new_id()[:10].upper()}",
-            created_by=self._actor(user),
-            trip_workspace_id=delivery.get("trip_id"),
-            event_type=event_type,
-            event_category="offer_delivery",
-            event_source="phase_56_4",
-            event_status="recorded",
+            entity_type="offer",
+            entity_id=delivery.get("offer_id") or delivery["id"],
+            event_type=canonical_event_type,
             summary=summary,
-            internal_only=True,
-            passenger_visible=False,
-            metadata={"offer_delivery_id": delivery["id"]},
-        ).model_dump(mode="json"))
+            actor={
+                "id": self._actor(user),
+                "identity_id": self._actor(user),
+                "actor_type": "agency"
+                if event_type != "customer_contacted"
+                else "client_portal",
+            },
+            visibility="client"
+            if event_type == "customer_contacted"
+            else "internal",
+            details={"offer_delivery_id": delivery["id"]},
+            parent_entity_type="offer_delivery",
+            parent_entity_id=delivery["id"],
+            idempotency_key=(
+                f"offer-delivery:{delivery['id']}:{canonical_event_type}:"
+                f"{delivery.get('updated_at') or new_id()}"
+            ),
+            event_source="phase_56_4",
+            source_collection=DELIVERY_COLLECTION,
+            source_record_id=delivery["id"],
+        )
 
     def _sanitize_client(self, value: Any) -> Any:
         if isinstance(value, dict):

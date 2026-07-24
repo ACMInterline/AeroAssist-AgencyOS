@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -353,7 +354,12 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
-          <Panel title="Timeline"><List items={state?.timeline} empty="No trip timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={tripId}
+            entityLabel={state.trip.trip_reference || "Trip"}
+            entityType="trip"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

@@ -122,6 +122,15 @@ def verify_shared_components() -> None:
         "FormSection": SURFACES["booking_list"],
     }
     for component, relative_path in representative_usage.items():
+        if component == "Timeline":
+            require_markers(
+                relative_path,
+                [
+                    'components/OperationalCollaborationPanel"',
+                    "<OperationalCollaborationPanel",
+                ],
+            )
+            continue
         require_markers(relative_path, [f'components/{component}"', f"<{component}"])
 
 
@@ -152,7 +161,7 @@ def verify_priority_workflows() -> None:
         ],
         SURFACES["request_detail"]: [
             "<DetailSummary",
-            "<Timeline",
+            "<OperationalCollaborationPanel",
             "Advanced source details",
             "Prepare trip",
         ],
@@ -163,7 +172,7 @@ def verify_priority_workflows() -> None:
         ],
         SURFACES["offer_detail"]: [
             "<ConfirmationDialog",
-            "<Timeline",
+            "<OperationalCollaborationPanel",
             "Prepare booking",
         ],
         SURFACES["booking_list"]: [

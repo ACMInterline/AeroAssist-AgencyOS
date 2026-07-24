@@ -5,7 +5,7 @@ import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RequestStatusBadge from "../../components/RequestStatusBadge"
 import SecondaryButton from "../../components/SecondaryButton"
-import Timeline from "../../components/Timeline"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import PtcSelect from "../../components/reference/PtcSelect"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -28,7 +28,6 @@ export default function RequestDetailPage({ requestId }) {
     service_code: "",
     service_name: "",
     service_category: "general",
-    message_text: "",
     task_title: "",
   })
   const [error, setError] = useState("")
@@ -158,17 +157,6 @@ export default function RequestDetailPage({ requestId }) {
       status: "requested",
     })
     setForms((current) => ({ ...current, service_code: "", service_name: "" }))
-    await load()
-  }
-
-  async function addMessage(event) {
-    event.preventDefault()
-    await apiPost(`/api/agencies/${state.agency.id}/requests/${requestId}/messages`, {
-      sender_type: "staff",
-      visibility: "client_visible",
-      message_text: forms.message_text,
-    })
-    setField("message_text", "")
     await load()
   }
 
@@ -452,14 +440,7 @@ export default function RequestDetailPage({ requestId }) {
               ["Compatibility", isCanonicalV4 ? "Operational views synchronized" : "Manual reconciliation required"],
             ]} />
           </Panel>
-          <section className="grid gap-4 lg:grid-cols-2">
-            <Panel title="Messages">
-              <form className="flex gap-2" onSubmit={addMessage}>
-                <input required className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Message text" value={forms.message_text} onChange={(event) => setField("message_text", event.target.value)} />
-                <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white" type="submit">Add</button>
-              </form>
-              <List items={state.messages} empty="No messages yet" render={(item) => `${item.visibility.replaceAll("_", " ")} · ${item.message_text}`} />
-            </Panel>
+          <section>
             <Panel title="Tasks">
               <form className="flex gap-2" onSubmit={addTask}>
                 <input required className="min-w-0 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Task title" value={forms.task_title} onChange={(event) => setField("task_title", event.target.value)} />
@@ -468,9 +449,12 @@ export default function RequestDetailPage({ requestId }) {
               <List items={state.tasks} empty="No tasks yet" render={(item) => `${item.status.replaceAll("_", " ")} · ${item.title}`} />
             </Panel>
           </section>
-          <Panel title="Activity history">
-            <Timeline items={state.timeline} emptyTitle="No request activity yet" />
-          </Panel>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={requestId}
+            entityLabel={state.request.request_reference || "Request"}
+            entityType="request"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

@@ -372,7 +372,20 @@ async def verify_service_behavior() -> None:
         "DELIVERY_VERSION_IMMUTABLE",
     )
 
-    contexts = [{"account": {"id": f"portal-{suffix}", "agency_id": "agency-a", "client_id": "client-a"}} for suffix in ["a", "b", "c"]]
+    contexts = [
+        {
+            "identity": {"id": f"portal-identity-{suffix}"},
+            "account": {
+                "id": f"portal-{suffix}",
+                "agency_id": "agency-a",
+                "client_id": "client-a",
+                "client_profile_id": "client-a",
+            },
+            "client": {"id": "client-a", "display_name": "Alex Client"},
+            "subject_type": "client",
+        }
+        for suffix in ["a", "b", "c"]
+    ]
     portal_list = await service.portal_list(contexts[0])
     if portal_list.get("count") != 1 or portal_list.get("authenticated") is not True:
         raise AssertionError("Authenticated recipient delivery listing failed.")

@@ -34,7 +34,7 @@ The [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architectu
 
 This corrective gate is not a roadmap phase and does not change the active
 Phase 59.0 marker. It adds one machine-readable business-domain ownership
-contract, forty domain classifications, an explicit `agency_id` tenant
+contract, forty-six domain classifications, an explicit `agency_id` tenant
 decision, the frozen Request-to-Portal lifecycle, a migration register,
 deterministic validation, and focused smoke coverage. It performs no data
 migration, collection or route rename, runtime registration, or product
@@ -55,6 +55,20 @@ historical unlinked rows remain readable and are analyzed by a dry-run-only
 reconciliation tool. See
 [Canonical Identity and Tenancy Contract](docs/architecture/canonical-identity-and-tenancy-contract.md)
 and [Portal Identity Linkage Contract](docs/architecture/portal-identity-linkage-contract.md).
+
+### P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It selects `OperationalTimeline` as append-only operational
+history and `CommunicationThread` plus governed Message, Participant, and
+Attachment children as the communication owner. Notifications are
+regenerable projections and Audit Events remain separate immutable security
+evidence. Client, Passenger, Supplier, Agency, Platform, and System visibility
+is explicit; legacy records remain compatibility history; migration analysis
+is bounded and dry-run only. No provider communication, background delivery,
+production migration, commit, push, or deployment is enabled. See
+[Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md)
+and [Communication Thread Contract](docs/architecture/communication-thread-contract.md).
 
 ## Current Implementation State
 
@@ -2693,3 +2707,31 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md),
   [Invoice Lifecycle](docs/architecture/invoice-lifecycle-contract.md), and
   [Payment Allocation](docs/architecture/payment-allocation-contract.md).
+
+## P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Makes `OperationalTimeline` the append-only operational history owner and
+  assigns server timestamps, deterministic idempotent IDs, total ordering,
+  correction/supersession entries, entity links, Communication links, and
+  Audit links.
+- Makes `CommunicationThread` the multi-entity conversation aggregate with
+  Message, Participant, and immutable Attachment-reference children.
+- Preserves prior message bodies for reasoned edits and prohibits posted
+  message deletion.
+- Enforces Agency, Client Portal, Passenger Portal, Supplier, Platform, and
+  System visibility at thread, participant, child record, and read projection
+  boundaries.
+- Makes notifications deterministic projections that can regenerate from the
+  timeline without changing business truth.
+- Adds one shared Agency collaboration panel across major operational detail
+  pages and keeps compatibility routes readable.
+- Adds bounded, permanently dry-run analysis for historical messages,
+  duplicate threads/timelines/attachments, orphan notes, and missing links.
+- Performs no external email, SMS, chat, airline/supplier provider call,
+  background delivery, destructive migration, production action, commit, push,
+  or deployment.
+- See [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md),
+  [Communication Visibility Contract](docs/architecture/communication-visibility-contract.md),
+  and [Notification Projection Contract](docs/architecture/notification-projection-contract.md).

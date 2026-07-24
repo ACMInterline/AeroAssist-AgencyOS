@@ -4,6 +4,7 @@ import Pencil from "lucide-react/dist/esm/icons/pencil.js"
 import ConfirmationDialog from "../../components/ConfirmationDialog"
 import DestructiveButton from "../../components/DestructiveButton"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import PageHeader from "../../components/PageHeader"
 import PassengerForm from "../../components/PassengerForm"
 import ProtectedRoute from "../../components/ProtectedRoute"
@@ -202,6 +203,12 @@ export default function PassengerDetailPage({ passengerId }) {
               <p className="mt-3 text-sm text-slate-500">No merge targets available.</p>
             )}
           </details>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={passengerId}
+            entityLabel={state.passenger.display_name || "Passenger"}
+            entityType="passenger"
+          />
           <ConfirmationDialog
             confirmLabel="Archive passenger"
             destructive

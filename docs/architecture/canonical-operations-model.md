@@ -31,8 +31,11 @@ already been migrated.
 - **Credit Note**: non-destructive correction to an issued Invoice.
 - **Document**: generated or stored output attached to request/trip/client/passenger context.
 - **Task**: staff work item with owner, priority, due state, visibility, and operational context.
-- **Communication**: message/note/email/portal communication with visibility boundaries.
-- **Activity**: audit/timeline event recording state changes and staff/system actions.
+- **Communication Thread**: canonical multi-entity conversation aggregate with
+  governed participants, visibility, append-preserving messages, and immutable
+  attachment references.
+- **Activity**: append-only `OperationalTimeline` business history linked to,
+  but distinct from, immutable security `AuditEvent` evidence.
 - **Reference Data**: controlled catalogue and lookup data, including service catalogue.
 - **Airline Policy Rule**: airline-specific decision support knowledge separate from reference data.
 
@@ -84,10 +87,30 @@ Phase 35 implements the Trip Dossier as the agency operational shell:
 - `TripDossier.linked_request_ids` records the request scope for the operational shell.
 - `trip_passengers`, `trip_segments`, and `trip_service_items` copy normalized request child records for operational use while preserving source request child IDs.
 - Request-to-trip conversion does not delete, replace, or destructively mutate request records.
-- `trip_timeline_events` and `audit_events` record trip creation, conversion, linking, unlinking, child copying, summary rebuilding, updating, and archiving.
+- New Trip activity is appended to `OperationalTimeline`; historical
+  `trip_timeline_events` remain compatibility history. `audit_events` retain
+  separate security and mutation evidence.
 - Pets and special items remain request-level child records in this phase and are summarized on the trip only.
 
 Offer, booking, ticket, EMD, document, invoice, payment, claim, and communication workflows should attach through the trip dossier where relevant in future phases, but Phase 35 does not implement those expansions.
+
+## Canonical Operational Collaboration
+
+Operational collaboration follows:
+
+`OperationalTimeline -> TimelineEntry -> CommunicationThread ->
+CommunicationMessage -> CommunicationAttachment -> Participant ->
+NotificationProjection -> Audit linkage`
+
+The timeline is immutable business history. Messages may be soft-edited only
+with preserved prior content. Attachments reference canonical Documents or
+other same-Agency business records and do not duplicate binaries.
+Notifications are regenerable projections. Client, Passenger, Supplier,
+Agency, Platform, and System visibility is explicit and server-enforced.
+
+See [Canonical Operational Timeline](canonical-operational-timeline.md),
+[Communication Thread Contract](communication-thread-contract.md), and
+[Communication Visibility Contract](communication-visibility-contract.md).
 
 ## Service Catalogue
 

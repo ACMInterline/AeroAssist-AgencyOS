@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -142,11 +143,14 @@ export default function TicketDetailPage({ ticketRecordId }) {
                   </div>
                 ) : <EmptyState title="No linked EMDs" body="Draft EMD mirrors linked to this ticket appear here." />}
               </Panel>
-              <Panel title="Timeline">
-                <SnapshotList items={state?.timeline} render={(item) => `${item.title}${item.description ? ` · ${item.description}` : ""}`} />
-              </Panel>
             </div>
           </section>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={ticketRecordId}
+            entityLabel={ticket.ticket_number || "Ticket"}
+            entityType="ticket"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

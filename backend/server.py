@@ -53,6 +53,9 @@ from services.canonical_commercial_lifecycle_service import (
 from services.canonical_commercial_ledger_service import (
     commercial_ledger_readiness_metadata,
 )
+from services.operational_collaboration_service import (
+    operational_collaboration_readiness_metadata,
+)
 from auth import require_platform_role
 from services.audit_event_access_service import AuditEventAccessService, PLATFORM_AUDIT_READ_ROLES
 from smoke_inventory import SMOKE_INVENTORY_SUMMARY
@@ -60,6 +63,7 @@ from routers import platform
 from routers import platform_observability
 from routers import platform_final_stabilization_pilot_release_gate
 from routers import platform_pilot_operations_release_readiness
+from routers import agency_operational_collaboration, platform_operational_collaboration, portal_operational_collaboration
 from routers import agency_pilot_feedback, platform_commercial_pilot_readiness, platform_pilot_feedback
 from routers import agency_airline_capability_matrix, agency_airline_knowledge_acquisition, agency_airline_knowledge_governance, agency_airline_knowledge_normalisation, agency_airline_operational_intelligence, agency_airline_recommendations, agency_operational_constraints, agency_operational_evaluations, agency_passenger_service_feasibility, platform_airline_capability_matrix, platform_airline_knowledge_acquisition, platform_airline_knowledge_governance, platform_airline_knowledge_normalisation, platform_airline_operational_intelligence, platform_airline_recommendations, platform_operational_constraints, platform_operational_evaluations, platform_passenger_service_feasibility
 from routers import agency_airline_intelligence_agency_consumption, agency_airline_intelligence_data_pack_reviews, agency_airline_intelligence_data_packs, agency_airline_intelligence_knowledge_versions, agency_ancillary_pricing, agency_capabilities, agency_feature_bundle_assignments, agency_feature_flag_bundles, agency_feature_flag_readiness, agency_feature_flags, agency_offer_decision_export_audit_reviews, agency_offer_decision_export_compliance, agency_offer_decision_export_deliveries, agency_offer_decision_export_delivery_outcomes, agency_offer_decision_export_governance, agency_offer_decision_export_previews, agency_offer_decision_export_releases, agency_offer_decision_exports, agency_offer_decision_explanations, agency_offer_decision_packs, agency_offer_policy_advisor, agency_policy_comparison, agency_saas_subscriptions, platform_airline_intelligence_agency_consumption, platform_airline_intelligence_data_pack_reviews, platform_airline_intelligence_data_packs, platform_airline_intelligence_knowledge_versions, platform_ancillary_pricing, platform_capabilities, platform_feature_bundle_assignments, platform_feature_flag_audits, platform_feature_flag_bundles, platform_feature_flags, platform_offer_decision_export_audit_reviews, platform_offer_decision_export_compliance, platform_offer_decision_export_deliveries, platform_offer_decision_export_delivery_outcomes, platform_offer_decision_export_governance, platform_offer_decision_export_previews, platform_offer_decision_export_releases, platform_offer_decision_exports, platform_offer_decision_explanations, platform_offer_decision_packs, platform_offer_policy_advisor, platform_policy_comparison, platform_saas_subscriptions
@@ -5396,6 +5400,7 @@ async def internal_readiness_payload() -> dict:
         "canonical_reference_data_contract": canonical_reference_readiness_metadata(),
         "canonical_commercial_lifecycle_contract": canonical_commercial_lifecycle_readiness_metadata(),
         "canonical_commercial_ledger_contract": commercial_ledger_readiness_metadata(),
+        "canonical_operational_collaboration_contract": operational_collaboration_readiness_metadata(),
         "service_parameter_taxonomy_integration_foundation": {
             "service_parameter_taxonomy_integration_enabled": True,
             "service_parameter_taxonomies_collection_enabled": True,
@@ -7350,6 +7355,7 @@ async def public_readiness_payload() -> dict:
         "canonical_reference_data_contract": canonical_reference_readiness_metadata(),
         "canonical_commercial_lifecycle_contract": canonical_commercial_lifecycle_readiness_metadata(),
         "canonical_commercial_ledger_contract": commercial_ledger_readiness_metadata(),
+        "canonical_operational_collaboration_contract": operational_collaboration_readiness_metadata(),
     }
     duration_ms = (time.perf_counter() - started) * 1000
     degraded = not payload["ok"]
@@ -7550,6 +7556,7 @@ app.include_router(platform_emd_workspaces.router)
 app.include_router(platform_ssr_osi_workspaces.router)
 app.include_router(platform_document_workspaces.router)
 app.include_router(platform_operational_timelines.router)
+app.include_router(platform_operational_collaboration.router)
 app.include_router(platform_operational_workflows.router)
 app.include_router(platform_agent_work_queues.router)
 app.include_router(platform_operational_sla_deadlines.router)
@@ -7674,6 +7681,7 @@ app.include_router(agency_emd_workspaces.router)
 app.include_router(agency_ssr_osi_workspaces.router)
 app.include_router(agency_document_workspaces.router)
 app.include_router(agency_operational_timelines.router)
+app.include_router(agency_operational_collaboration.router)
 app.include_router(agency_operational_workflows.router)
 app.include_router(agency_agent_work_queues.router)
 app.include_router(agency_operational_sla_deadlines.router)
@@ -7711,6 +7719,7 @@ app.include_router(refunds_exchanges.portal_router)
 app.include_router(websites.router)
 app.include_router(websites.public_router)
 app.include_router(portal.router)
+app.include_router(portal_operational_collaboration.router)
 app.include_router(portal_offer_deliveries.router)
 app.include_router(reference.router)
 app.include_router(platform_reference.router)

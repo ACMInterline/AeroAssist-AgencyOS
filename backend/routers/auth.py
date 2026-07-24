@@ -37,6 +37,7 @@ from services.portal_identity_link_service import (
     PortalIdentityLinkError,
     activate_invited_portal_mapping,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.seed_service import seed_core_data
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -176,6 +177,35 @@ async def login(payload: LoginRequest, request: Request, db: Database = Depends(
     updated_identity = await clear_login_failures(db, identity["id"])
     session_bundle = await create_session(db, updated_identity or identity, request)
     payload_out = await resolve_auth_payload(db, updated_identity or identity)
+    portal = payload_out.get("portal") or {}
+    portal_account = portal.get("account") or {}
+    portal_subject_type = portal.get("subject_type")
+    portal_entity_id = (
+        portal_account.get("passenger_profile_id")
+        if portal_subject_type == "passenger"
+        else portal_account.get("client_profile_id")
+    )
+    if portal_account.get("agency_id") and portal_subject_type and portal_entity_id:
+        await OperationalCollaborationService(db).record_business_event(
+            agency_id=portal_account["agency_id"],
+            entity_type=portal_subject_type,
+            entity_id=portal_entity_id,
+            event_type="portal_login",
+            summary="Portal session started.",
+            actor={
+                "id": portal_account.get("id"),
+                "identity_id": identity.get("id"),
+                "actor_type": f"{portal_subject_type}_portal",
+            },
+            visibility=portal_subject_type,
+            details={
+                "portal_subject_type": portal_subject_type,
+                "authentication_succeeded": True,
+            },
+            idempotency_key=f"portal-login:{session_bundle['session']['id']}",
+            source_collection="auth_sessions",
+            source_record_id=session_bundle["session"]["id"],
+        )
     log_security_event(
         "login_succeeded",
         outcome="success",

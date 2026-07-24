@@ -233,7 +233,7 @@ _AGENCY_RESOURCE_PERMISSIONS: tuple[tuple[tuple[str, ...], str, str], ...] = (
     (("documents", "document-"), "view_documents", "edit_documents"),
     (("invoices", "payments", "finance"), "view_finance", "edit_commercial_ledger"),
     (("refund", "after-sales"), "view_finance", "edit_finance"),
-    (("tasks", "work-queue", "deadlines", "workflow", "timeline"), "view_tasks", "edit_tasks"),
+    (("tasks", "work-queue", "deadlines", "workflow", "timeline", "operational-collaboration"), "view_tasks", "edit_tasks"),
     (("audit-events",), "view_audit", "view_audit"),
     (("staff", "portal-access-mappings"), "manage_agency_users", "manage_agency_users"),
     (("settings", "branding", "onboarding", "saas-subscription"), "manage_settings", "manage_settings"),

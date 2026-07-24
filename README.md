@@ -6,7 +6,7 @@ The current build marker is `phase_59_0_product_experience_recovery`. Phase 59.0
 
 An immediate corrective gate now protects audit visibility and passenger identity integrity. Intake and request creation retain unconfirmed travelers as request-level placeholders; only an explicit, tenant-scoped staff confirmation may create or link a canonical `PassengerProfile`. New feature foundations are frozen until the canonical product-kernel ownership map and simplified operator UI are approved. See [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architecture/p0-security-integrity-product-kernel-freeze.md).
 
-P1 Product Kernel Repair 2 adds an enforceable, non-runtime [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md) and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md). Following the identity decision in Repair 3, the registry selects one target owner for 36 of 40 core domains, leaves four ambiguous domains explicitly `decision_required`, confirms `agency_id` as the tenant boundary, and records every known compatibility writer without migrating production data.
+P1 Product Kernel Repair 2 adds an enforceable, non-runtime [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md) and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md). Following later kernel decisions including Repairs 3 through 8, the registry selects one target owner for 43 of 46 core domains, leaves three knowledge domains explicitly `decision_required`, confirms `agency_id` as the tenant boundary, and records compatibility history without migrating production data.
 
 P1 Product Kernel Repair 3 enforces the [Canonical Identity and Tenancy Contract](docs/architecture/canonical-identity-and-tenancy-contract.md) and [Portal Identity Linkage Contract](docs/architecture/portal-identity-linkage-contract.md). `AuthIdentity`, `PlatformUser`, `AgencyStaffMembership`, and explicit `PortalAccessMapping` records now have separate responsibilities; every Agency API requires an active same-Agency membership; Client and Passenger Portal scope resolves by immutable identity links rather than email; and one centralized permission vocabulary governs backend requests. Legacy Client/Passenger Master families remain documented compatibility debt, but new Master and relationship rows are source-bound to verified canonical same-Agency records and cannot create independent identity truth. Historical reconciliation remains dry-run only and no production migration is performed.
 
@@ -1936,3 +1936,20 @@ Historical finance analysis is bounded and dry-run only. No payment gateway,
 provider, external accounting integration, migration, or upstream operational
 rewrite is enabled. See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md)
 and [Commercial Reporting Contract](docs/architecture/commercial-reporting-contract.md).
+
+## P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+`OperationalTimeline` now owns append-only business history and
+`CommunicationThread` owns multi-entity operational conversations.
+Communication Messages preserve edit history and deletion is prohibited;
+Participants and immutable Attachment references enforce same-Agency lineage;
+Client and Passenger Portal projections require explicit identity mappings;
+Supplier/Airline interaction is manual evidence only; and Notifications are
+regenerable projections rather than business truth. Legacy communication and
+entity timeline rows remain readable compatibility history, with bounded
+dry-run-only migration analysis. No external email, SMS, chat, airline,
+provider, background-delivery, production migration, commit, push, or
+deployment action is enabled. See [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md),
+[Communication Thread Contract](docs/architecture/communication-thread-contract.md),
+[Communication Visibility Contract](docs/architecture/communication-visibility-contract.md),
+and [Participant Visibility Matrix](docs/architecture/participant-visibility-matrix.md).

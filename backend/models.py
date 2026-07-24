@@ -4099,6 +4099,9 @@ class RequestMessage(BaseDocument):
     sender_type: MessageSenderType = MessageSenderType.STAFF
     visibility: Visibility = Visibility.INTERNAL
     message_text: str
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
 
 
 class RequestMessageCreate(BaseModel):
@@ -15944,9 +15947,230 @@ class DocumentWorkspaceOutputReconciliationRequest(BaseModel):
     correlation_id: Optional[str] = None
 
 
+class OperationalTimelineVisibility(str, Enum):
+    INTERNAL = "internal"
+    AGENCY = "agency"
+    CLIENT = "client"
+    PASSENGER = "passenger"
+    SUPPLIER = "supplier"
+    PLATFORM = "platform"
+    SYSTEM = "system"
+
+
+class CommunicationParticipantType(str, Enum):
+    PLATFORM = "platform"
+    AGENCY = "agency"
+    CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
+    SUPPLIER = "supplier"
+    AIRLINE = "airline"
+    SYSTEM = "system"
+
+
+class CommunicationThreadStatus(str, Enum):
+    OPEN = "open"
+    CLOSED = "closed"
+    ARCHIVED = "archived"
+
+
+class CommunicationDeliveryStatus(str, Enum):
+    RECORDED = "recorded"
+    RECEIVED = "received"
+    NOT_SENT = "not_sent"
+    ACKNOWLEDGED = "acknowledged"
+    FAILED = "failed"
+
+
+class NotificationProjectionType(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ACTION_REQUIRED = "action_required"
+    APPROVAL_REQUIRED = "approval_required"
+    DEADLINE = "deadline"
+    FAILED = "failed"
+
+
+class CommunicationEntityReference(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    entity_type: str
+    entity_id: str
+    label: Optional[str] = None
+
+
+class CommunicationParticipant(BaseDocument):
+    agency_id: str
+    thread_id: str
+    participant_type: CommunicationParticipantType
+    identity_id: Optional[str] = None
+    portal_account_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    airline_code: Optional[str] = None
+    display_name: str
+    participant_role: Optional[str] = None
+    permissions: List[str] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(default_factory=list)
+    status: str = "active"
+    created_by_actor_id: Optional[str] = None
+
+
+class CommunicationParticipantCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    participant_type: CommunicationParticipantType
+    identity_id: Optional[str] = None
+    portal_account_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    airline_code: Optional[str] = None
+    display_name: str
+    participant_role: Optional[str] = None
+    permissions: List[str] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(default_factory=list)
+
+
+class CommunicationThread(BaseDocument):
+    agency_id: str
+    thread_reference: str
+    subject: str
+    status: CommunicationThreadStatus = CommunicationThreadStatus.OPEN
+    participant_ids: List[str] = Field(default_factory=list)
+    entity_references: List[CommunicationEntityReference] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(
+        default_factory=lambda: [OperationalTimelineVisibility.INTERNAL]
+    )
+    created_by_actor_type: CommunicationParticipantType = CommunicationParticipantType.AGENCY
+    created_by_actor_id: Optional[str] = None
+    closed_at: Optional[datetime] = None
+    closed_by_actor_id: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    archived_by_actor_id: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    message_count: int = 0
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    canonical_communication_owner: bool = True
+
+
+class CommunicationThreadCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    idempotency_key: Optional[str] = None
+    subject: str
+    participants: List[CommunicationParticipantCreate] = Field(default_factory=list)
+    entity_references: List[CommunicationEntityReference] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(
+        default_factory=lambda: [OperationalTimelineVisibility.INTERNAL]
+    )
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CommunicationMessageEdit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    plain_text: str
+    rich_text: Optional[str] = None
+    reason: str
+
+
+class CommunicationMessage(BaseDocument):
+    agency_id: str
+    thread_id: str
+    sender_participant_id: str
+    sender_type: CommunicationParticipantType
+    sender_identity_id: Optional[str] = None
+    sender_display: str
+    recipient_participant_ids: List[str] = Field(default_factory=list)
+    message_type: str = "message"
+    plain_text: str
+    rich_text: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    delivery_status: CommunicationDeliveryStatus = CommunicationDeliveryStatus.RECORDED
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    edited_at: Optional[datetime] = None
+    edited_by_actor_id: Optional[str] = None
+    edit_history: List[Dict[str, Any]] = Field(default_factory=list)
+    linked_timeline_entry_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    deletion_prohibited: bool = True
+
+
+class CommunicationMessageCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    idempotency_key: Optional[str] = None
+    sender_participant_id: Optional[str] = None
+    recipient_participant_ids: List[str] = Field(default_factory=list)
+    message_type: str = "message"
+    plain_text: str
+    rich_text: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    delivery_status: CommunicationDeliveryStatus = CommunicationDeliveryStatus.RECORDED
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CommunicationAttachment(BaseDocument):
+    agency_id: str
+    thread_id: str
+    message_id: Optional[str] = None
+    document_id: Optional[str] = None
+    reference_type: str
+    reference_id: str
+    title: str
+    media_type: Optional[str] = None
+    checksum: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    created_by_actor_type: CommunicationParticipantType = CommunicationParticipantType.AGENCY
+    created_by_actor_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    binary_duplicated: bool = False
+
+
+class CommunicationAttachmentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    message_id: Optional[str] = None
+    document_id: Optional[str] = None
+    reference_type: str
+    reference_id: str
+    title: str
+    media_type: Optional[str] = None
+    checksum: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class NotificationProjection(BaseDocument):
+    agency_id: str
+    timeline_entry_id: str
+    participant_id: Optional[str] = None
+    notification_type: NotificationProjectionType = NotificationProjectionType.INFO
+    status: str = "unread"
+    title: str
+    summary: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    due_at: Optional[datetime] = None
+    regenerated_at: datetime = Field(default_factory=now_utc)
+    projection_key: str
+    source_event_type: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    business_truth: bool = False
+
+
 class OperationalTimeline(BaseDocument):
     agency_id: str
     timeline_reference: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    parent_entity_type: Optional[str] = None
+    parent_entity_id: Optional[str] = None
     created_by: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
@@ -15957,6 +16181,12 @@ class OperationalTimeline(BaseDocument):
     ssr_osi_workspace_id: Optional[str] = None
     document_workspace_id: Optional[str] = None
     event_type: str = "other"
+    event_subtype: Optional[str] = None
+    event_time: datetime = Field(default_factory=now_utc)
+    actor_type: str = "system"
+    actor_id: Optional[str] = None
+    actor_display: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
     event_category: Optional[str] = None
     event_source: Optional[str] = None
     event_status: Optional[str] = None
@@ -15972,6 +16202,18 @@ class OperationalTimeline(BaseDocument):
     recipient: Optional[str] = None
     subject: Optional[str] = None
     summary: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    linked_communication_thread_id: Optional[str] = None
+    linked_communication_message_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    linked_document_id: Optional[str] = None
+    linked_finance_record: Optional[str] = None
+    linked_booking: Optional[str] = None
+    linked_ticket: Optional[str] = None
+    linked_emd: Optional[str] = None
+    linked_request: Optional[str] = None
+    linked_offer: Optional[str] = None
+    linked_trip: Optional[str] = None
     attachment_ids: List[str] = Field(default_factory=list)
     approval_reference: Optional[str] = None
     approval_status: Optional[str] = None
@@ -15985,7 +16227,14 @@ class OperationalTimeline(BaseDocument):
     updated_by: Optional[str] = None
     deleted_at: Optional[datetime] = None
     deleted_by: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    ordering_key: str = ""
+    supersedes_entry_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    append_only: bool = True
+    immutable_business_history: bool = True
     metadata_only: bool = True
     timeline_workspace_metadata_only: bool = True
     email_sending_disabled: bool = True
@@ -16007,6 +16256,10 @@ class OperationalTimelineCreate(BaseModel):
     id: Optional[str] = None
     agency_id: str
     timeline_reference: Optional[str] = None
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    parent_entity_type: Optional[str] = None
+    parent_entity_id: Optional[str] = None
     created_by: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
@@ -16017,6 +16270,12 @@ class OperationalTimelineCreate(BaseModel):
     ssr_osi_workspace_id: Optional[str] = None
     document_workspace_id: Optional[str] = None
     event_type: str = "other"
+    event_subtype: Optional[str] = None
+    event_time: Optional[datetime] = None
+    actor_type: Optional[str] = None
+    actor_id: Optional[str] = None
+    actor_display: Optional[str] = None
+    visibility: Optional[OperationalTimelineVisibility] = None
     event_category: Optional[str] = None
     event_source: Optional[str] = None
     event_status: Optional[str] = None
@@ -16032,6 +16291,18 @@ class OperationalTimelineCreate(BaseModel):
     recipient: Optional[str] = None
     subject: Optional[str] = None
     summary: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    linked_communication_thread_id: Optional[str] = None
+    linked_communication_message_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    linked_document_id: Optional[str] = None
+    linked_finance_record: Optional[str] = None
+    linked_booking: Optional[str] = None
+    linked_ticket: Optional[str] = None
+    linked_emd: Optional[str] = None
+    linked_request: Optional[str] = None
+    linked_offer: Optional[str] = None
+    linked_trip: Optional[str] = None
     attachment_ids: List[str] = Field(default_factory=list)
     approval_reference: Optional[str] = None
     approval_status: Optional[str] = None
@@ -16042,6 +16313,10 @@ class OperationalTimelineCreate(BaseModel):
     passenger_visible: bool = False
     airline_visible: bool = False
     operational_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    supersedes_entry_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -17723,6 +17998,9 @@ class AfterSalesCommunicationRecord(BaseDocument):
     supplier_reference: Optional[str] = None
     document_ids: List[str] = Field(default_factory=list)
     timeline_entry_id: Optional[str] = None
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
     sent_externally: bool = False
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -29745,6 +30023,9 @@ class JourneyOfferClientQuestion(BaseDocument):
     created_by_id: Optional[str] = None
     answered_at: Optional[datetime] = None
     archived_at: Optional[datetime] = None
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
     metadata_only: bool = True
 
 

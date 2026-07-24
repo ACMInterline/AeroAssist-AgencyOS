@@ -10,6 +10,7 @@ from database import Database
 from models import AuditEvent, new_id
 from persistence_query import PaginationRequest
 from persistence_repository import PersistenceRepository
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 CANONICAL_COMMERCIAL_LIFECYCLE = (
@@ -252,18 +253,58 @@ async def write_lifecycle_evidence(
         metadata=evidence,
     )
     audit_record = await db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
-    timeline_record = await db.collection("operational_timelines").insert_one(
+    normalized_event = event_type.lower()
+    canonical_event_type = "status_transition"
+    for marker, canonical in [
+        ("offer_acceptance.lifecycle.accepted", "offer_accepted"),
+        ("offer_acceptance.lifecycle.declined", "offer_declined"),
+        ("offer.lifecycle.revised", "offer_revised"),
+        ("offer.lifecycle.delivered", "offer_delivered"),
+        ("trip.lifecycle.confirmed", "trip_confirmed"),
+        ("booking.lifecycle.prepared", "booking_prepared"),
+        ("booking.lifecycle.confirmed", "booking_confirmed"),
+    ]:
+        if marker in normalized_event:
+            canonical_event_type = canonical
+            break
+    if canonical_event_type == "status_transition":
+        canonical_event_type = {
+            "delivered": "offer_delivered"
+            if entity_type.startswith("offer")
+            else "status_transition",
+            "accepted": "offer_accepted"
+            if entity_type.startswith("offer")
+            else "status_transition",
+            "declined": "offer_declined"
+            if entity_type.startswith("offer")
+            else "status_transition",
+            "confirmed": "booking_confirmed"
+            if entity_type.startswith("booking")
+            else "trip_confirmed"
+            if entity_type.startswith("trip")
+            else "status_transition",
+        }.get(str(next_status or "").lower(), "status_transition")
+    canonical_entity_type = {
+        "offer_workspace": "offer",
+        "trip_dossier": "trip",
+        "booking_record": "booking",
+    }.get(entity_type, entity_type)
+    canonical_entity_id = entity_id
+    if entity_type == "offer_acceptance" and (metadata or {}).get("workspace_id"):
+        canonical_entity_type = "offer"
+        canonical_entity_id = str((metadata or {})["workspace_id"])
+    timeline_record = await OperationalCollaborationService(db).append_timeline(
         {
-            "id": new_id(),
             "agency_id": agency_id,
             "timeline_reference": f"commercial-lifecycle:{correlation_id}",
-            "created_at": now_utc(),
-            "updated_at": now_utc(),
+            "entity_type": canonical_entity_type,
+            "entity_id": canonical_entity_id,
             "created_by": actor_user_id,
             "travel_request_workspace_id": request_id,
             "trip_workspace_id": trip_id,
             "booking_workspace_id": booking_workspace_id,
-            "event_type": event_type,
+            "event_type": canonical_event_type,
+            "event_subtype": event_type,
             "event_category": "commercial_lifecycle",
             "event_source": "canonical_commercial_lifecycle",
             "event_status": next_status or "recorded",
@@ -271,13 +312,25 @@ async def write_lifecycle_evidence(
             "operational_stage": entity_type,
             "operational_result": next_status,
             "summary": summary,
+            "details": {
+                **evidence,
+                "source_entity_type": entity_type,
+                "source_entity_id": entity_id,
+            },
+            "visibility": "internal",
             "internal_only": True,
-            "passenger_visible": False,
-            "airline_visible": False,
+            "linked_audit_event_id": audit_record["id"],
+            "linked_request": request_id,
+            "linked_trip": trip_id,
+            "linked_booking": booking_workspace_id,
+            "idempotency_key": f"commercial-lifecycle:{correlation_id}",
             "metadata": evidence,
-            "metadata_only": True,
-            "automation_disabled": True,
-        }
+        },
+        {
+            "id": actor_user_id,
+            "identity_id": actor_user_id,
+            "actor_type": "agency" if actor_user_id else "system",
+        },
     )
     return {"audit_event_id": audit_record["id"], "timeline_event_id": timeline_record["id"]}
 

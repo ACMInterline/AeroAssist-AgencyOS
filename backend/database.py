@@ -610,6 +610,11 @@ AGENCY_OWNED_COLLECTIONS = [
     "ssr_osi_workspaces",
     "document_workspaces",
     "operational_timelines",
+    "communication_threads",
+    "communication_messages",
+    "communication_participants",
+    "communication_attachments",
+    "operational_notification_projections",
     "passenger_service_workflows",
     "airline_knowledge_acquisitions",
     "operational_constraints",
@@ -783,7 +788,7 @@ AGENCY_OWNED_COLLECTIONS = [
 
 
 async def ensure_mongo_indexes(mongo_database: Any) -> None:
-    from pymongo import ASCENDING
+    from pymongo import ASCENDING, DESCENDING
 
     for collection_name in AGENCY_OWNED_COLLECTIONS:
         collection = mongo_database[collection_name]
@@ -1958,6 +1963,11 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("id", ASCENDING)], "name": "operational_timelines_id_unique", "unique": True},
             {"keys": [("timeline_reference", ASCENDING)], "name": "operational_timelines_reference_unique", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("created_at", ASCENDING)], "name": "operational_timelines_agency_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("event_time", ASCENDING), ("id", ASCENDING)], "name": "operational_timelines_agency_event_time_id_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("entity_type", ASCENDING), ("entity_id", ASCENDING), ("event_time", ASCENDING)], "name": "operational_timelines_agency_entity_event_time_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)], "name": "operational_timelines_agency_idempotency_lookup", "unique": True, "partialFilterExpression": {"idempotency_key": {"$type": "string"}}},
+            {"keys": [("agency_id", ASCENDING), ("linked_communication_thread_id", ASCENDING), ("event_time", ASCENDING)], "name": "operational_timelines_agency_thread_event_time_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("linked_audit_event_id", ASCENDING)], "name": "operational_timelines_agency_audit_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_type", ASCENDING)], "name": "operational_timelines_agency_event_type_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_status", ASCENDING)], "name": "operational_timelines_agency_status_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_priority", ASCENDING)], "name": "operational_timelines_agency_priority_lookup"},
@@ -1976,6 +1986,41 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("due_date", ASCENDING)], "name": "operational_timelines_due_date_lookup"},
             {"keys": [("completed_date", ASCENDING)], "name": "operational_timelines_completed_date_lookup"},
             {"keys": [("attachment_ids", ASCENDING)], "name": "operational_timelines_attachment_lookup"},
+        ],
+        "communication_threads": [
+            {"keys": [("id", ASCENDING)], "name": "communication_threads_id_unique", "unique": True},
+            {"keys": [("thread_reference", ASCENDING)], "name": "communication_threads_reference_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("updated_at", DESCENDING)], "name": "communication_threads_agency_status_updated_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("participant_ids", ASCENDING)], "name": "communication_threads_agency_participant_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("entity_references.entity_type", ASCENDING), ("entity_references.entity_id", ASCENDING)], "name": "communication_threads_agency_entity_lookup"},
+        ],
+        "communication_messages": [
+            {"keys": [("id", ASCENDING)], "name": "communication_messages_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("created_at", ASCENDING), ("id", ASCENDING)], "name": "communication_messages_agency_thread_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("visibility", ASCENDING), ("created_at", DESCENDING)], "name": "communication_messages_agency_visibility_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("sender_identity_id", ASCENDING)], "name": "communication_messages_agency_sender_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("linked_timeline_entry_id", ASCENDING)], "name": "communication_messages_agency_timeline_lookup"},
+        ],
+        "communication_participants": [
+            {"keys": [("id", ASCENDING)], "name": "communication_participants_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("status", ASCENDING)], "name": "communication_participants_agency_thread_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("identity_id", ASCENDING), ("participant_type", ASCENDING)], "name": "communication_participants_agency_identity_type_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("client_id", ASCENDING)], "name": "communication_participants_agency_client_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("passenger_id", ASCENDING)], "name": "communication_participants_agency_passenger_lookup"},
+        ],
+        "communication_attachments": [
+            {"keys": [("id", ASCENDING)], "name": "communication_attachments_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("created_at", ASCENDING)], "name": "communication_attachments_agency_thread_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("message_id", ASCENDING)], "name": "communication_attachments_agency_message_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("reference_type", ASCENDING), ("reference_id", ASCENDING)], "name": "communication_attachments_agency_reference_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("document_id", ASCENDING)], "name": "communication_attachments_agency_document_lookup"},
+        ],
+        "operational_notification_projections": [
+            {"keys": [("id", ASCENDING)], "name": "operational_notification_projections_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("projection_key", ASCENDING)], "name": "operational_notification_projections_agency_key_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("created_at", DESCENDING)], "name": "operational_notification_projections_agency_status_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("timeline_entry_id", ASCENDING)], "name": "operational_notification_projections_agency_timeline_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("participant_id", ASCENDING), ("visibility", ASCENDING)], "name": "operational_notification_projections_agency_participant_visibility_lookup"},
         ],
         "passenger_service_workflows": [
             {"keys": [("id", ASCENDING)], "name": "passenger_service_workflows_id_unique", "unique": True},

@@ -21,6 +21,7 @@ from models import (
     TripTimelineEvent,
 )
 from services.booking_workspace_service import BookingWorkspaceService
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.ticket_emd_service import TicketEmdService
 
 
@@ -279,13 +280,14 @@ class TripChangeExchangeService:
         summary: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        event = TripTimelineEvent(
+        await OperationalCollaborationService(self.db).record_compatibility_event(
             agency_id=agency_id,
-            trip_id=trip_id,
+            entity_type="trip",
+            entity_id=trip_id,
+            source_event_type=event_type,
+            summary=summary or title,
             actor_user_id=actor_user_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            metadata=metadata or {},
+            visibility="internal",
+            details={"title": title, **(metadata or {})},
+            source_collection="trip_timeline_events",
         )
-        await self.db.collection("trip_timeline_events").insert_one(event.model_dump(mode="json"))

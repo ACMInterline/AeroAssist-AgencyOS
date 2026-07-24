@@ -32,6 +32,7 @@ from services.canonical_commercial_lifecycle_service import (
     validate_lifecycle_transition,
     write_lifecycle_evidence,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -870,10 +871,7 @@ class BookingWorkspaceService:
         trip = await self.db.collection("trip_dossiers").find_one(
             {"agency_id": agency_id, "id": workspace.get("trip_id")}
         )
-        timeline = await self.db.collection("booking_timeline_events").find_many(
-            {"agency_id": agency_id, "booking_workspace_id": workspace["id"]}
-        )
-        timeline.sort(key=lambda item: str(item.get("created_at") or ""))
+        timeline = await self._booking_timeline_events(workspace)
         projected_workspace = await self._platform_metadata_projection(workspace)
         return {
             "booking_workspace": projected_workspace,
@@ -1455,10 +1453,7 @@ class BookingWorkspaceService:
                 await self._generic_reference_context("timeline_id", timeline_id)
                 for timeline_id in workspace.get("timeline_ids") or []
             ]
-        events = await self.db.collection("booking_timeline_events").find_many(
-            {"agency_id": workspace.get("agency_id"), "booking_workspace_id": workspace.get("id")}
-        )
-        events.sort(key=lambda item: self._sort_text(item.get("created_at")), reverse=True)
+        events = list(reversed(await self._booking_timeline_events(workspace)))
         return [
             {
                 "timeline_id": event.get("id"),
@@ -1469,6 +1464,45 @@ class BookingWorkspaceService:
             }
             for event in events
         ]
+
+    async def _booking_timeline_events(
+        self, workspace: dict[str, Any]
+    ) -> list[dict[str, Any]]:
+        agency_id = workspace.get("agency_id")
+        workspace_id = workspace.get("id")
+        legacy = await self.db.collection("booking_timeline_events").find_many(
+            {"agency_id": agency_id, "booking_workspace_id": workspace_id},
+            sort=[("created_at", 1), ("id", 1)],
+            limit=200,
+        )
+        canonical = await OperationalCollaborationService(self.db).list_timeline(
+            agency_id=agency_id,
+            entity_type="booking_workspace",
+            entity_id=workspace_id,
+            visibility={"internal", "agency"},
+            limit=200,
+        )
+        items = legacy + [
+            {
+                **item,
+                "booking_workspace_id": workspace_id,
+                "booking_record_id": (item.get("details") or {}).get(
+                    "booking_record_id"
+                ),
+                "trip_id": (item.get("details") or {}).get("trip_id"),
+                "title": (item.get("details") or {}).get("title")
+                or item.get("summary")
+                or item.get("event_type"),
+                "description": (item.get("details") or {}).get("description"),
+                "payload_json": (item.get("details") or {}).get("payload_json")
+                or {},
+                "created_at": item.get("event_time") or item.get("created_at"),
+                "canonical_timeline_entry_id": item.get("id"),
+            }
+            for item in canonical
+        ]
+        items.sort(key=lambda item: self._sort_text(item.get("created_at")))
+        return items
 
     async def _generic_reference_context(self, id_key: str, reference_id: str | None) -> dict[str, Any]:
         return {id_key: reference_id, "label": reference_id, "status": None, "metadata_only": True}
@@ -1820,20 +1854,23 @@ class BookingWorkspaceService:
         description: str | None = None,
         payload_json: dict[str, Any] | None = None,
     ) -> None:
-        event = BookingTimelineEvent(
+        await OperationalCollaborationService(self.db).record_compatibility_event(
             agency_id=agency_id,
-            booking_workspace_id=booking_workspace_id,
-            booking_record_id=booking_record_id,
-            trip_id=trip_id,
-            event_type=event_type,
+            entity_type="booking_workspace",
+            entity_id=booking_workspace_id,
+            source_event_type=event_type,
+            summary=description or title,
             actor_user_id=actor_user_id,
-            title=title,
-            description=description,
-            summary=description,
-            payload_json=payload_json or {},
-            metadata=payload_json or {},
+            visibility="internal",
+            details={
+                "title": title,
+                "booking_record_id": booking_record_id,
+                "trip_id": trip_id,
+                "description": description,
+                "payload_json": payload_json or {},
+            },
+            source_collection="booking_timeline_events",
         )
-        await self.db.collection("booking_timeline_events").insert_one(event.model_dump(mode="json"))
 
     async def _write_trip_timeline(
         self,
@@ -1845,13 +1882,14 @@ class BookingWorkspaceService:
         summary: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        event = TripTimelineEvent(
+        await OperationalCollaborationService(self.db).record_compatibility_event(
             agency_id=agency_id,
-            trip_id=trip_id,
+            entity_type="trip",
+            entity_id=trip_id,
+            source_event_type=event_type,
+            summary=summary or title,
             actor_user_id=actor_user_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            metadata=metadata or {},
+            visibility="internal",
+            details={"title": title, **(metadata or {})},
+            source_collection="trip_timeline_events",
         )
-        await self.db.collection("trip_timeline_events").insert_one(event.model_dump(mode="json"))

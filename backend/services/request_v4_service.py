@@ -20,7 +20,6 @@ from models import (
     RequestSpecialItem,
     RequestSpecialItemSegment,
     RequestedService,
-    RequestTimelineEvent,
     RequestV4Payload,
     RequestV4Update,
     TravelRequest,
@@ -32,6 +31,7 @@ from services.canonical_reference_service import (
     resolve_reference,
     validate_ptc_for_date,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 REQUEST_V4_VERSION = 4
@@ -210,17 +210,32 @@ async def _write_timeline(
     title: str,
     summary: str | None = None,
 ) -> None:
-    event = RequestTimelineEvent(
+    await OperationalCollaborationService(db).record_business_event(
         agency_id=agency_id,
-        request_id=request_id,
-        actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
+        entity_type="request",
+        entity_id=request_id,
+        event_type=(
+            "request_created"
+            if event_type == "request.v4_created"
+            else "status_transition"
+        ),
+        event_subtype=event_type,
+        summary=summary or title,
+        actor={
+            "id": actor_user_id,
+            "identity_id": actor_user_id,
+            "actor_type": "agency" if actor_user_id else "system",
+        },
         visibility="internal",
-        metadata={"request_version": REQUEST_V4_VERSION},
+        details={"title": title, "request_version": REQUEST_V4_VERSION},
+        idempotency_key=(
+            f"request-v4:{request_id}:{event_type}"
+            if event_type == "request.v4_created"
+            else None
+        ),
+        source_collection="travel_requests",
+        source_record_id=request_id,
     )
-    await db.collection("request_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def _workspace_id(db: Database, agency_id: str) -> str | None:
@@ -1659,6 +1674,49 @@ async def request_detail_v4(
         )
         return page.items
 
+    collaboration = OperationalCollaborationService(db)
+    communication_threads = await collaboration.list_threads(
+        agency_id,
+        entity_type="request",
+        entity_id=request_id,
+        visibility={"internal", "agency", "client"},
+        limit=200,
+    )
+    canonical_messages: list[dict[str, Any]] = []
+    for thread in communication_threads:
+        thread_detail = await collaboration.thread_detail(
+            agency_id,
+            thread["id"],
+            visibility={"internal", "agency", "client"},
+        )
+        canonical_messages.extend(
+            {
+                **message,
+                "request_id": request_id,
+                "sender_user_id": message.get("sender_identity_id"),
+                "sender_type": "staff"
+                if message.get("sender_type") == "agency"
+                else "client"
+                if message.get("sender_type") == "client_portal"
+                else "system",
+                "message_text": message.get("plain_text"),
+                "visibility": "client_visible"
+                if message.get("visibility") == "client"
+                else "internal",
+                "canonical_thread_id": thread["id"],
+            }
+            for message in thread_detail.get("messages") or []
+        )
+    legacy_messages = await related("request_messages")
+    legacy_timeline = await related("request_timeline_events")
+    canonical_timeline = await collaboration.list_timeline(
+        agency_id=agency_id,
+        entity_type="request",
+        entity_id=request_id,
+        visibility={"internal", "agency", "client"},
+        limit=200,
+    )
+
     detail = {
         "request": request,
         "client": client,
@@ -1682,9 +1740,18 @@ async def request_detail_v4(
             filters={"status": "active"},
         ),
         "special_item_segments": await related("request_special_item_segments"),
-        "messages": await related("request_messages"),
+        "messages": legacy_messages + canonical_messages,
         "tasks": await related("request_tasks"),
-        "timeline": await related("request_timeline_events"),
+        "timeline": legacy_timeline
+        + [
+            {
+                **item,
+                "title": item.get("summary") or item.get("event_type"),
+                "created_at": item.get("event_time") or item.get("created_at"),
+            }
+            for item in canonical_timeline
+        ],
+        "communication_threads": communication_threads,
     }
     if request.get("request_version") == REQUEST_V4_VERSION:
         detail["canonical_request"] = RequestV4Payload.model_validate(

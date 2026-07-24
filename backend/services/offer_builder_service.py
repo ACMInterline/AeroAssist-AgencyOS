@@ -24,7 +24,6 @@ from models import (
     OfferWorkspaceStatus,
     OfferWorkspaceTransitionRequest,
     OfferWorkspaceUpdate,
-    OperationalTimelineCreate,
     new_id,
 )
 from services.canonical_commercial_lifecycle_service import (
@@ -40,7 +39,7 @@ from services.rules_and_services_registry import normalize_code
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.special_services_service import category_for_service_type
 from services.ssr_osi_generator_service import SsrOsiGeneratorService
-from services.timeline_workspace_service import OperationalTimelineService
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 def clean_update_payload(payload: Any) -> dict[str, Any]:
@@ -96,7 +95,6 @@ class OfferBuilderService:
         self.db = db
         self.exception_engine = ExceptionEngineService(db)
         self.ssr_osi_generator = SsrOsiGeneratorService(db)
-        self.timelines = OperationalTimelineService(db)
 
     async def get_request_or_none(self, agency_id: str, request_id: str | None) -> dict[str, Any] | None:
         if not request_id:
@@ -278,25 +276,25 @@ class OfferBuilderService:
             f"Created offer workspace {created['title']}.",
             {"request_id": created.get("request_id"), "trip_id": created.get("trip_id"), **transition},
         )
-        if created.get("trip_id"):
-            await self.timelines.create_entry(
-                OperationalTimelineCreate(
-                    agency_id=agency_id,
-                    created_by=actor_user_id,
-                    trip_workspace_id=created["trip_id"],
-                    event_type="Offer created",
-                    event_category="offer_preparation",
-                    event_source="offer_builder",
-                    event_status="recorded",
-                    event_priority="normal",
-                    operational_stage="offer_preparation",
-                    summary="Offer workspace created from the canonical trip record.",
-                    internal_only=True,
-                    operational_notes="No live fare search, availability confirmation, or provider action occurred.",
-                    metadata=transition,
-                ),
-                {"id": actor_user_id},
-            )
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=agency_id,
+            entity_type="offer",
+            entity_id=created["id"],
+            event_type="offer_created",
+            summary="Offer workspace created from the canonical request or trip.",
+            actor={
+                "id": actor_user_id,
+                "identity_id": actor_user_id,
+                "actor_type": "agency" if actor_user_id else "system",
+            },
+            visibility="internal",
+            details=transition,
+            parent_entity_type=source_type,
+            parent_entity_id=source_id,
+            idempotency_key=f"offer-created:{created['id']}",
+            source_collection="offer_workspaces",
+            source_record_id=created["id"],
+        )
         return created
 
     async def update_workspace(self, agency_id: str, workspace_id: str, payload: OfferWorkspaceUpdate, actor_user_id: str | None) -> dict[str, Any] | None:

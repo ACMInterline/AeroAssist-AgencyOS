@@ -9,7 +9,7 @@ import PageHeader from "../../components/PageHeader"
 import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
-import Timeline from "../../components/Timeline"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -288,9 +288,12 @@ export default function OfferDetailPage({ offerId }) {
               Record as sent
             </button>
           </Panel>
-          <Panel title="Activity history">
-            <Timeline items={state.timeline} emptyTitle="No offer activity yet" />
-          </Panel>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={offerId}
+            entityLabel={state.offer.offer_reference || "Offer"}
+            entityType="offer"
+          />
           <ConfirmationDialog
             confirmLabel="Record as sent"
             message="This preserves the current offer version and changes its status. It does not send an email or portal message."

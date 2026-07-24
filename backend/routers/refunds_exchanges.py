@@ -31,6 +31,10 @@ from models import (
     RequestTask,
 )
 from routers.portal import portal_context
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 from services.tenant_service import (
     assert_agency_access,
     assert_portal_projection_safe,
@@ -118,17 +122,17 @@ async def write_booking_timeline(
 ) -> None:
     if not booking_id:
         return
-    event = BookingTimelineEvent(
+    await OperationalCollaborationService(db).record_compatibility_event(
         agency_id=agency_id,
-        booking_id=booking_id,
+        entity_type="booking",
+        entity_id=booking_id,
+        source_event_type=event_type,
+        summary=summary or title,
         actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
         visibility="internal",
-        metadata=metadata or {},
+        details={"title": title, **(metadata or {})},
+        source_collection="booking_timeline_events",
     )
-    await db.collection("booking_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def write_case_timeline(
@@ -142,17 +146,27 @@ async def write_case_timeline(
     visibility: RefundExchangeTimelineVisibility | str = RefundExchangeTimelineVisibility.INTERNAL,
     metadata: dict | None = None,
 ) -> None:
-    event = RefundExchangeTimelineEvent(
-        agency_id=agency_id,
-        case_id=case_id,
-        actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
-        visibility=visibility,
-        metadata=metadata or {},
+    collaboration = OperationalCollaborationService(db)
+    visibility_value = (
+        visibility.value if isinstance(visibility, RefundExchangeTimelineVisibility) else visibility
     )
-    await db.collection("refund_exchange_timeline_events").insert_one(event.model_dump(mode="json"))
+    await collaboration.record_business_event(
+        agency_id=agency_id,
+        entity_type="after_sales_case",
+        entity_id=case_id,
+        event_type=event_type,
+        event_subtype="refund_exchange_case_event",
+        summary=summary or title,
+        actor={
+            "id": actor_user_id,
+            "identity_id": actor_user_id,
+            "actor_type": "agency" if actor_user_id else "system",
+        },
+        visibility="client" if visibility_value == "client_visible" else "internal",
+        details={"title": title, **(metadata or {})},
+        source_collection="refund_exchange_cases",
+        source_record_id=case_id,
+    )
 
 
 async def next_reference(db: Database, agency_id: str) -> str:
@@ -403,6 +417,88 @@ def _as_sort_value(value: Any) -> str:
     return str(value) if value is not None else ""
 
 
+async def canonical_case_messages(
+    db: Database, agency_id: str, case_id: str
+) -> list[dict[str, Any]]:
+    collaboration = OperationalCollaborationService(db)
+    threads = await collaboration.list_threads(
+        agency_id,
+        entity_type="after_sales_case",
+        entity_id=case_id,
+        visibility={"internal", "agency", "client"},
+        limit=200,
+    )
+    canonical: list[dict[str, Any]] = []
+    for thread in threads:
+        detail = await collaboration.thread_detail(
+            agency_id,
+            thread["id"],
+            visibility={"internal", "agency", "client"},
+        )
+        canonical.extend(
+            {
+                **message,
+                "case_id": case_id,
+                "sender_user_id": message.get("sender_identity_id"),
+                "sender_type": "client"
+                if message.get("sender_type") == "client_portal"
+                else "staff"
+                if message.get("sender_type") == "agency"
+                else "system",
+                "visibility": "client_visible"
+                if message.get("visibility") == "client"
+                else "internal",
+                "message_text": message.get("plain_text"),
+                "canonical_thread_id": thread["id"],
+                "canonical_message_id": message["id"],
+            }
+            for message in detail.get("messages") or []
+            if message.get("message_type") == "refund_exchange_message"
+        )
+    legacy = await db.collection("refund_exchange_messages").find_many(
+        {"agency_id": agency_id, "case_id": case_id},
+        sort=[("created_at", -1), ("id", -1)],
+        limit=200,
+    )
+    items = legacy + canonical
+    items.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
+    return items
+
+
+async def canonical_case_timeline(
+    db: Database, agency_id: str, case_id: str
+) -> list[dict[str, Any]]:
+    collaboration = OperationalCollaborationService(db)
+    canonical = [
+        {
+            **event,
+            "case_id": case_id,
+            "actor_user_id": event.get("actor_id"),
+            "title": (event.get("details") or {}).get("title")
+            or event.get("summary"),
+            "visibility": "client_visible"
+            if event.get("visibility") == "client"
+            else "internal",
+            "canonical_timeline_entry_id": event["id"],
+        }
+        for event in await collaboration.list_timeline(
+            agency_id=agency_id,
+            entity_type="after_sales_case",
+            entity_id=case_id,
+            visibility={"internal", "agency", "client"},
+            limit=200,
+        )
+    ]
+    legacy = await db.collection("refund_exchange_timeline_events").find_many(
+        {"agency_id": agency_id, "case_id": case_id},
+        sort=[("created_at", -1), ("id", -1)],
+        limit=200,
+    )
+    items = legacy + canonical
+    items.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
+    return items
+
+
 @router.get("/refund-exchange-cases")
 async def list_cases(
     agency_id: str,
@@ -503,8 +599,8 @@ async def get_case(
         "booking": await db.collection("bookings").find_one({"agency_id": agency_id, "id": case.get("booking_id")}),
         "items": await db.collection("refund_exchange_items").find_many({"agency_id": agency_id, "case_id": case_id}),
         "financial_lines": await db.collection("refund_exchange_financial_lines").find_many({"agency_id": agency_id, "case_id": case_id}),
-        "messages": await db.collection("refund_exchange_messages").find_many({"agency_id": agency_id, "case_id": case_id}),
-        "timeline": await db.collection("refund_exchange_timeline_events").find_many({"agency_id": agency_id, "case_id": case_id}),
+        "messages": await canonical_case_messages(db, agency_id, case_id),
+        "timeline": await canonical_case_timeline(db, agency_id, case_id),
     }
 
 
@@ -986,7 +1082,7 @@ async def list_case_messages(
 ) -> dict:
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
-    messages = await db.collection("refund_exchange_messages").find_many({"agency_id": agency_id, "case_id": case_id})
+    messages = await canonical_case_messages(db, agency_id, case_id)
     messages.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
     return {"items": messages}
 
@@ -1004,23 +1100,90 @@ async def create_case_message(
     payload_data = payload.model_dump(mode="json")
     if payload_data.get("sender_type") == RefundExchangeMessageSenderType.CLIENT:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Use portal endpoint only for client-visible messages.")
-    message_payload = {**payload_data, "sender_user_id": payload_data.get("sender_user_id") or user["id"]}
-    message = RefundExchangeMessage(
-        agency_id=agency_id,
-        case_id=case_id,
-        **message_payload,
+    case = await get_case_or_404(db, agency_id, case_id)
+    collaboration = OperationalCollaborationService(db)
+    canonical_visibility = (
+        "client"
+        if payload_data.get("visibility")
+        == RefundExchangeMessageVisibility.CLIENT_VISIBLE
+        else "internal"
     )
-    created = await db.collection("refund_exchange_messages").insert_one(message.model_dump(mode="json"))
-    await write_case_timeline(
-        db=db,
-        agency_id=agency_id,
-        case_id=case_id,
-        actor_user_id=user["id"],
-        event_type="message.posted",
-        title="Message posted",
-        summary=(created.get("message_text") or "").strip()[:160],
-        visibility=created.get("visibility") or RefundExchangeMessageVisibility.INTERNAL,
-    )
+    participants: list[dict[str, Any]] = []
+    thread_visibility = ["internal", canonical_visibility]
+    if canonical_visibility == "client":
+        mapping = await db.collection("portal_access_mappings").find_one(
+            {
+                "agency_id": agency_id,
+                "client_profile_id": case["client_id"],
+                "subject_type": "client",
+                "status": "active",
+            }
+        )
+        if mapping:
+            client = await db.collection("client_profiles").find_one(
+                {"agency_id": agency_id, "id": case["client_id"]}
+            )
+            participants.append(
+                {
+                    "participant_type": "client_portal",
+                    "identity_id": mapping.get("auth_identity_id"),
+                    "portal_account_id": mapping.get("id"),
+                    "client_id": case["client_id"],
+                    "display_name": (client or {}).get("display_name")
+                    or "Client Portal",
+                    "visibility": ["client"],
+                }
+            )
+    actor = {
+        **user,
+        "actor_type": "agency",
+        "identity_id": user.get("identity_id") or user.get("id"),
+        "display_name": user.get("full_name") or user.get("email") or "Agency user",
+    }
+    try:
+        thread_detail = await collaboration.ensure_entity_thread(
+            agency_id=agency_id,
+            entity_type="after_sales_case",
+            entity_id=case_id,
+            subject=f"Refund or exchange {case.get('case_reference') or case_id}",
+            actor=actor,
+            visibility=list(dict.fromkeys(thread_visibility)),
+            participants=participants,
+            context_key=f"refund_exchange_{canonical_visibility}",
+        )
+        canonical_message = await collaboration.post_message(
+            agency_id,
+            thread_detail["thread"]["id"],
+            {
+                "message_type": "refund_exchange_message",
+                "plain_text": payload_data["message_text"],
+                "visibility": canonical_visibility,
+                "delivery_status": "not_sent"
+                if canonical_visibility == "client"
+                else "recorded",
+                "metadata": {
+                    "compatibility_route": "refund_exchange_messages",
+                    "external_delivery": False,
+                },
+            },
+            actor,
+        )
+    except OperationalCollaborationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    created = {
+        **canonical_message,
+        "agency_id": agency_id,
+        "case_id": case_id,
+        "sender_user_id": user["id"],
+        "sender_type": payload_data.get("sender_type"),
+        "visibility": payload_data.get("visibility"),
+        "message_text": canonical_message.get("plain_text"),
+        "canonical_thread_id": thread_detail["thread"]["id"],
+        "canonical_message_id": canonical_message["id"],
+    }
     await write_audit(
         db=db,
         agency_id=agency_id,
@@ -1042,7 +1205,7 @@ async def list_case_timeline(
 ) -> dict:
     await require_read(db, agency_id, user)
     await get_case_or_404(db, agency_id, case_id)
-    events = await db.collection("refund_exchange_timeline_events").find_many({"agency_id": agency_id, "case_id": case_id})
+    events = await canonical_case_timeline(db, agency_id, case_id)
     events.sort(key=lambda item: _as_sort_value(item.get("created_at")), reverse=True)
     return {"items": events}
 
@@ -1103,15 +1266,15 @@ async def get_portal_case(
         ],
         "messages": [
             safe_client_case_message(item)
-            for item in await db.collection("refund_exchange_messages").find_many(
-                {"agency_id": agency_id, "case_id": case_id, "visibility": RefundExchangeMessageVisibility.CLIENT_VISIBLE},
-            )
+            for item in await canonical_case_messages(db, agency_id, case_id)
+            if item.get("visibility")
+            == RefundExchangeMessageVisibility.CLIENT_VISIBLE
         ],
         "timeline": [
             safe_client_case_timeline(item)
-            for item in await db.collection("refund_exchange_timeline_events").find_many(
-                {"agency_id": agency_id, "case_id": case_id, "visibility": RefundExchangeTimelineVisibility.CLIENT_VISIBLE},
-            )
+            for item in await canonical_case_timeline(db, agency_id, case_id)
+            if item.get("visibility")
+            == RefundExchangeTimelineVisibility.CLIENT_VISIBLE
         ],
     }
     assert_portal_projection_safe(payload)

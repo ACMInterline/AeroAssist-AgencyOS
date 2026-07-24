@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import BookingStatusBadge from "../../components/BookingStatusBadge"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -227,9 +228,12 @@ export default function BookingDetailPage({ bookingId }) {
             <List items={state.invoices} empty="No invoices linked" render={(item) => <a className="text-blue-700" href={`/agency/invoices/${item.id}`}>{item.invoice_number} · {item.total_amount} {item.currency} · due {item.due_amount}</a>} />
             <List items={state.payments} empty="No payments linked" render={(item) => `${item.amount} ${item.currency} · ${item.status.replaceAll("_", " ")} · ${item.reconciliation_status.replaceAll("_", " ")}`} />
           </Panel>
-          <Panel title="Timeline">
-            <List items={state.timeline} empty="No timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} />
-          </Panel>
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={bookingId}
+            entityLabel={state.booking.booking_reference || "Booking"}
+            entityType="booking"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

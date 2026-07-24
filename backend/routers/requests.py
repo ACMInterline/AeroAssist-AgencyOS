@@ -44,6 +44,10 @@ from services.request_v4_service import (
     request_detail_v4,
     update_request_v4,
 )
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -89,17 +93,24 @@ async def write_audit(db: Database, agency_id: str, actor_user_id: str, event_ty
 
 
 async def write_timeline(db: Database, agency_id: str, request_id: str, actor_user_id: str | None, event_type: str, title: str, summary: str | None = None, visibility: str = "internal", metadata: dict | None = None) -> dict:
-    event = RequestTimelineEvent(
+    canonical_visibility = "client" if visibility == "client_visible" else "internal"
+    return await OperationalCollaborationService(db).record_business_event(
         agency_id=agency_id,
-        request_id=request_id,
-        actor_user_id=actor_user_id,
+        entity_type="request",
+        entity_id=request_id,
         event_type=event_type,
-        title=title,
-        summary=summary,
-        visibility=visibility,
-        metadata=metadata or {},
+        summary=summary or title,
+        actor={
+            "id": actor_user_id,
+            "identity_id": actor_user_id,
+            "actor_type": "agency" if actor_user_id else "system",
+            "display_name": "Agency user" if actor_user_id else "System",
+        },
+        visibility=canonical_visibility,
+        details={"title": title, **(metadata or {})},
+        source_collection="travel_requests",
+        source_record_id=request_id,
     )
-    return await db.collection("request_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def get_request_or_404(db: Database, agency_id: str, request_id: str) -> dict:
@@ -612,17 +623,135 @@ child_routes("/requests/{request_id}/services", "requested_services", RequestedS
 async def list_messages(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     await get_request_or_404(db, agency_id, request_id)
-    return {"items": await db.collection("request_messages").find_many({"agency_id": agency_id, "request_id": request_id})}
+    service = OperationalCollaborationService(db)
+    threads = await service.list_threads(
+        agency_id,
+        entity_type="request",
+        entity_id=request_id,
+        visibility={"internal", "agency", "client"},
+        limit=100,
+    )
+    canonical_items = []
+    for thread in threads:
+        detail = await service.thread_detail(
+            agency_id,
+            thread["id"],
+            visibility={"internal", "agency", "client"},
+        )
+        canonical_items.extend(
+            {
+                **message,
+                "request_id": request_id,
+                "sender_user_id": message.get("sender_identity_id"),
+                "sender_type": "staff"
+                if message.get("sender_type") == "agency"
+                else "client"
+                if message.get("sender_type") == "client_portal"
+                else "system",
+                "message_text": message.get("plain_text"),
+                "visibility": "client_visible"
+                if message.get("visibility") == "client"
+                else "internal",
+                "canonical_thread_id": thread["id"],
+                "canonical_message_id": message.get("id"),
+            }
+            for message in detail.get("messages") or []
+        )
+    legacy_items = await db.collection("request_messages").find_many(
+        {"agency_id": agency_id, "request_id": request_id},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=200,
+    )
+    items = legacy_items + canonical_items
+    items.sort(key=lambda item: str(item.get("created_at") or ""))
+    return {"items": items, "canonical_communication_owner": True}
 
 
 @router.post("/requests/{request_id}/messages", status_code=status.HTTP_201_CREATED)
 async def create_message(agency_id: str, request_id: str, payload: RequestMessageCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    await get_request_or_404(db, agency_id, request_id)
-    message = RequestMessage(agency_id=agency_id, request_id=request_id, sender_user_id=user["id"], **payload.model_dump(mode="json"))
-    created = await db.collection("request_messages").insert_one(message.model_dump(mode="json"))
-    await write_timeline(db, agency_id, request_id, user["id"], "request.message_added", "Message added", payload.message_text[:140], payload.visibility)
-    return {"message": created}
+    request_record = await get_request_or_404(db, agency_id, request_id)
+    service = OperationalCollaborationService(db)
+    participant_payloads: list[dict[str, Any]] = []
+    visibility = ["internal", "agency"]
+    if payload.visibility == "client_visible" and request_record.get("client_id"):
+        visibility.append("client")
+        mapping = await db.collection("portal_access_mappings").find_one(
+            {
+                "agency_id": agency_id,
+                "client_profile_id": request_record["client_id"],
+                "subject_type": "client",
+                "status": "active",
+            }
+        )
+        if mapping:
+            client = await db.collection("client_profiles").find_one(
+                {"agency_id": agency_id, "id": request_record["client_id"]}
+            )
+            participant_payloads.append(
+                {
+                    "participant_type": "client_portal",
+                    "identity_id": mapping.get("auth_identity_id"),
+                    "portal_account_id": mapping.get("portal_account_id"),
+                    "client_id": request_record["client_id"],
+                    "display_name": (client or {}).get("display_name")
+                    or "Client Portal",
+                    "visibility": ["client"],
+                }
+            )
+    actor = {
+        **user,
+        "actor_type": "agency",
+        "identity_id": user.get("identity_id") or user.get("id"),
+        "display_name": user.get("full_name") or user.get("email") or "Agency user",
+    }
+    try:
+        thread_detail = await service.ensure_entity_thread(
+            agency_id=agency_id,
+            entity_type="request",
+            entity_id=request_id,
+            subject=f"Request {request_record.get('request_reference') or request_id}",
+            actor=actor,
+            visibility=visibility,
+            participants=participant_payloads,
+            context_key="request_conversation",
+        )
+        created = await service.post_message(
+            agency_id,
+            thread_detail["thread"]["id"],
+            {
+                "message_type": "message",
+                "plain_text": payload.message_text,
+                "visibility": "client"
+                if payload.visibility == "client_visible"
+                else "internal",
+                "delivery_status": "not_sent"
+                if payload.visibility == "client_visible"
+                else "recorded",
+                "metadata": {
+                    "compatibility_route": "request_messages",
+                    "external_delivery": False,
+                },
+            },
+            actor,
+        )
+    except OperationalCollaborationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    return {
+        "message": {
+            **created,
+            "request_id": request_id,
+            "sender_user_id": user["id"],
+            "sender_type": payload.sender_type,
+            "message_text": created.get("plain_text"),
+            "visibility": payload.visibility,
+            "canonical_thread_id": thread_detail["thread"]["id"],
+            "canonical_message_id": created["id"],
+        }
+    }
 
 
 @router.get("/requests/{request_id}/tasks")
@@ -671,6 +800,35 @@ async def complete_task(agency_id: str, request_id: str, task_id: str, user: dic
 async def list_timeline(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     await get_request_or_404(db, agency_id, request_id)
-    items = await db.collection("request_timeline_events").find_many({"agency_id": agency_id, "request_id": request_id})
-    items.sort(key=lambda item: item.get("created_at", ""))
+    legacy = await db.collection("request_timeline_events").find_many(
+        {"agency_id": agency_id, "request_id": request_id},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=200,
+    )
+    canonical = await OperationalCollaborationService(db).list_timeline(
+        agency_id=agency_id,
+        entity_type="request",
+        entity_id=request_id,
+        visibility={"internal", "agency", "client"},
+        limit=200,
+    )
+    items = legacy + [
+        {
+            **item,
+            "request_id": request_id,
+            "event_type": item.get("event_subtype") or item.get("event_type"),
+            "actor_user_id": item.get("actor_id"),
+            "title": (item.get("details") or {}).get("title")
+            or item.get("summary")
+            or item.get("event_type"),
+            "visibility": "client_visible"
+            if item.get("visibility") == "client"
+            else "internal",
+            "metadata": item.get("details") or {},
+            "created_at": item.get("event_time") or item.get("created_at"),
+            "canonical_timeline_entry_id": item.get("id"),
+        }
+        for item in canonical
+    ]
+    items.sort(key=lambda item: str(item.get("created_at") or ""))
     return {"items": items}

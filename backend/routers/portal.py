@@ -36,6 +36,10 @@ from services.tenant_service import (
     assert_portal_projection_safe,
     safe_public_projection,
 )
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
@@ -104,10 +108,22 @@ async def portal_context(
             "/api/portal/passengers",
         }
         passenger_prefix = "/api/portal/passengers/"
-        if request.method != "GET" or (
-            request.url.path not in allowed_paths
-            and not request.url.path.startswith(passenger_prefix)
-        ):
+        communication_prefix = "/api/portal/communications"
+        permitted_read = request.method == "GET" and (
+            request.url.path in allowed_paths
+            or request.url.path.startswith(passenger_prefix)
+            or request.url.path.startswith(communication_prefix)
+        )
+        permitted_communication = (
+            request.method == "POST"
+            and request.url.path.startswith(communication_prefix)
+        )
+        if request.method != "GET" and not permitted_communication:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Passenger portal access is limited to the linked passenger profile.",
+            )
+        if request.method == "GET" and not permitted_read:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Passenger portal access is limited to the linked passenger profile.",
@@ -671,44 +687,53 @@ async def create_staff_review_task(db: Database, ctx: dict, request_id: str, tit
 
 
 async def write_request_timeline(db: Database, ctx: dict, request_id: str, event_type: str, title: str, summary: str | None = None, visibility: str = "client_visible", payload: dict | None = None) -> None:
-    await db.collection("request_timeline_events").insert_one(
-        RequestTimelineEvent(
-            agency_id=ctx["account"]["agency_id"],
-            request_id=request_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            visibility=visibility,
-            metadata=payload or {},
-        ).model_dump(mode="json")
+    collaboration = OperationalCollaborationService(db)
+    portal_actor = collaboration.portal_actor(ctx)
+    await collaboration.record_compatibility_event(
+        agency_id=ctx["account"]["agency_id"],
+        entity_type="request",
+        entity_id=request_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=portal_actor.get("identity_id"),
+        actor_type=portal_actor["actor_type"],
+        visibility="client" if visibility == "client_visible" else "internal",
+        details={"title": title, **(payload or {})},
+        source_collection="request_timeline_events",
     )
 
 
 async def write_offer_timeline(db: Database, ctx: dict, offer_id: str, event_type: str, title: str, summary: str | None = None, visibility: str = "client_visible", payload: dict | None = None) -> None:
-    await db.collection("offer_timeline_events").insert_one(
-        OfferTimelineEvent(
-            agency_id=ctx["account"]["agency_id"],
-            offer_id=offer_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            visibility=visibility,
-            metadata=payload or {},
-        ).model_dump(mode="json")
+    collaboration = OperationalCollaborationService(db)
+    portal_actor = collaboration.portal_actor(ctx)
+    await collaboration.record_compatibility_event(
+        agency_id=ctx["account"]["agency_id"],
+        entity_type="offer",
+        entity_id=offer_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=portal_actor.get("identity_id"),
+        actor_type=portal_actor["actor_type"],
+        visibility="client" if visibility == "client_visible" else "internal",
+        details={"title": title, **(payload or {})},
+        source_collection="offer_timeline_events",
     )
 
 
 async def write_document_timeline(db: Database, ctx: dict, document_id: str, event_type: str, title: str, summary: str | None = None, payload: dict | None = None) -> None:
-    await db.collection("document_timeline_events").insert_one(
-        DocumentTimelineEvent(
-            agency_id=ctx["account"]["agency_id"],
-            rendered_document_id=document_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            visibility="client_visible",
-            metadata=payload or {},
-        ).model_dump(mode="json")
+    collaboration = OperationalCollaborationService(db)
+    portal_actor = collaboration.portal_actor(ctx)
+    await collaboration.record_compatibility_event(
+        agency_id=ctx["account"]["agency_id"],
+        entity_type="document",
+        entity_id=document_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=portal_actor.get("identity_id"),
+        actor_type=portal_actor["actor_type"],
+        visibility="client",
+        details={"title": title, **(payload or {})},
+        source_collection="document_timeline_events",
     )
 
 
@@ -938,9 +963,64 @@ async def request_detail(request_id: str, ctx: dict = Depends(portal_context), d
     permitted = await permitted_passenger_ids(db, ctx)
     passengers = [safe_request_passenger(item) for item in await db.collection("request_passengers").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id, "status": "active"}) if item.get("passenger_id") in permitted]
     services = [safe_requested_service(item) for item in await db.collection("requested_services").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id})]
-    messages = [safe_request_message(item) for item in await db.collection("request_messages").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
+    collaboration = OperationalCollaborationService(db)
+    threads = await collaboration.portal_threads(
+        ctx, entity_type="request", entity_id=request_id
+    )
+    canonical_messages = []
+    for thread in threads:
+        detail = await collaboration.portal_thread_detail(ctx, thread["id"])
+        canonical_messages.extend(
+            {
+                **item,
+                "request_id": request_id,
+                "sender_type": "client"
+                if item.get("sender_type") == "client_portal"
+                else "staff",
+                "message_text": item.get("plain_text"),
+                "visibility": "client_visible",
+            }
+            for item in detail.get("messages") or []
+        )
+    legacy_messages = [
+        item
+        for item in await db.collection("request_messages").find_many(
+            {"agency_id": ctx["account"]["agency_id"], "request_id": request_id},
+            sort=[("created_at", 1), ("id", 1)],
+            limit=200,
+        )
+        if item.get("visibility") == "client_visible"
+    ]
+    messages = [safe_request_message(item) for item in legacy_messages + canonical_messages]
     tasks = [safe_request_task(item) for item in await db.collection("request_tasks").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
-    timeline = [safe_request_timeline_event(item) for item in await db.collection("request_timeline_events").find_many({"agency_id": ctx["account"]["agency_id"], "request_id": request_id}) if item.get("visibility") == "client_visible"]
+    legacy_timeline = [
+        item
+        for item in await db.collection("request_timeline_events").find_many(
+            {"agency_id": ctx["account"]["agency_id"], "request_id": request_id},
+            sort=[("created_at", 1), ("id", 1)],
+            limit=200,
+        )
+        if item.get("visibility") == "client_visible"
+    ]
+    canonical_timeline = await collaboration.list_timeline(
+        agency_id=ctx["account"]["agency_id"],
+        entity_type="request",
+        entity_id=request_id,
+        visibility={"client"},
+        limit=200,
+    )
+    timeline = [safe_request_timeline_event(item) for item in legacy_timeline] + [
+        {
+            "id": item["id"],
+            "event_type": item.get("event_type"),
+            "title": item.get("summary") or item.get("event_type"),
+            "summary": item.get("summary"),
+            "visibility": "client_visible",
+            "metadata": item.get("details") or {},
+            "created_at": item.get("event_time") or item.get("created_at"),
+        }
+        for item in canonical_timeline
+    ]
     return safe_response({"request": safe_request(request), "passengers": passengers, "services": services, "messages": messages, "tasks": tasks, "timeline": timeline})
 
 
@@ -950,17 +1030,53 @@ async def submit_request_message(request_id: str, payload: PortalMessageSubmit, 
     message_text = payload.message_text.strip()
     if not message_text:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Message text is required.")
-    message = RequestMessage(
-        agency_id=ctx["account"]["agency_id"],
-        request_id=request_id,
-        sender_type="client",
-        visibility="client_visible",
-        message_text=message_text,
-    )
-    message_doc = await db.collection("request_messages").insert_one(message.model_dump(mode="json"))
+    collaboration = OperationalCollaborationService(db)
+    portal_actor = collaboration.portal_actor(ctx)
+    try:
+        thread_detail = await collaboration.ensure_entity_thread(
+            agency_id=ctx["account"]["agency_id"],
+            entity_type="request",
+            entity_id=request_id,
+            subject=f"Request {request.get('request_reference') or request_id}",
+            actor=portal_actor,
+            visibility=["client"],
+            participants=[
+                {
+                    "participant_type": "agency",
+                    "display_name": ctx["agency"].get("name") or "Agency operations",
+                    "participant_role": "agency_operations",
+                    "visibility": ["client"],
+                    "permissions": ["read", "post"],
+                }
+            ],
+            context_key="request_conversation",
+        )
+        canonical_message = await collaboration.portal_post_message(
+            ctx,
+            thread_detail["thread"]["id"],
+            {
+                "plain_text": message_text,
+                "message_type": "message",
+                "metadata": {
+                    "compatibility_route": "portal_request_messages",
+                    "requires_follow_up": payload.requires_follow_up,
+                },
+            },
+        )
+    except OperationalCollaborationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
+    message_doc = {
+        **canonical_message,
+        "request_id": request_id,
+        "sender_type": "client",
+        "visibility": "client_visible",
+        "message_text": canonical_message.get("plain_text"),
+    }
     if payload.requires_follow_up:
         await create_staff_review_task(db, ctx, request_id, "Review portal client message", "Client sent a portal message that may need follow-up.")
-    await write_request_timeline(db, ctx, request_id, "portal.message_sent", "Client message sent", message_text[:180])
     action = await create_portal_action(db, ctx, "message_sent", "request", request_id, f"Sent message on {request.get('request_reference')}.", {"message_preview": message_text[:180]})
     await write_audit(db, ctx, "portal.message_sent", "travel_request", request_id, "Client sent a portal message.")
     return safe_response({"message": safe_request_message(message_doc), "action": safe_portal_action(action)})

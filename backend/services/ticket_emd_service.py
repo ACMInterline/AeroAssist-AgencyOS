@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -23,7 +25,6 @@ from models import (
     TicketCoupon,
     TicketCouponStatus,
     TicketCreateFromBookingRequest,
-    TicketEmdTimelineEvent,
     TicketRecord,
     TicketResultReconciliationRequest,
     TicketRecordUpdate,
@@ -33,6 +34,7 @@ from models import (
     TripTimelineEvent,
 )
 from services.agent_work_queue_service import AgentWorkQueueService
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 PHASE_LABEL = "phase_36_4_6_standalone_change_exchange_foundation"
@@ -855,10 +857,12 @@ class TicketEmdService:
         emds = await self.db.collection("emd_records").find_many(
             {"agency_id": agency_id, "ticket_record_id": ticket_record_id}
         )
-        timeline = await self.db.collection("ticket_emd_timeline_events").find_many(
-            {"agency_id": agency_id, "ticket_record_id": ticket_record_id}
+        timeline = await self._timeline_projection(
+            agency_id,
+            "ticket",
+            ticket_record_id,
+            {"ticket_record_id": ticket_record_id},
         )
-        timeline.sort(key=lambda item: str(item.get("created_at") or ""))
         return {
             "ticket": ticket,
             "client_safe_ticket": {
@@ -956,10 +960,12 @@ class TicketEmdService:
         booking_record = await self._get_booking_record(agency_id, emd.get("booking_record_id"))
         workspace = await self._get_workspace_for_record(agency_id, booking_record) if booking_record else None
         trip = await self._get_trip(agency_id, emd.get("trip_id"))
-        timeline = await self.db.collection("ticket_emd_timeline_events").find_many(
-            {"agency_id": agency_id, "emd_record_id": emd_record_id}
+        timeline = await self._timeline_projection(
+            agency_id,
+            "emd",
+            emd_record_id,
+            {"emd_record_id": emd_record_id},
         )
-        timeline.sort(key=lambda item: str(item.get("created_at") or ""))
         return {
             "emd": emd,
             "coupons": coupons,
@@ -1266,7 +1272,29 @@ class TicketEmdService:
             summary=f"Ticket external-result state recorded as {evidence['result']}.",
             metadata=evidence,
         )
-        await self.db.collection("audit_events").insert_one(audit.model_dump(mode="json"))
+        audit_record = await self.db.collection("audit_events").insert_one(
+            audit.model_dump(mode="json")
+        )
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=ticket["agency_id"],
+            entity_type="ticket",
+            entity_id=ticket["id"],
+            event_type="ticket_imported"
+            if event_type == "ticket.external_result_recorded"
+            else "status_transition",
+            summary=audit.summary,
+            actor={
+                **user,
+                "actor_type": "agency",
+                "identity_id": user.get("identity_id") or user.get("id"),
+            },
+            visibility="internal",
+            details=evidence,
+            linked_audit_event_id=audit_record["id"],
+            idempotency_key=f"audit-event:{audit_record['id']}",
+            source_collection="ticket_records",
+            source_record_id=ticket["id"],
+        )
 
     async def _sync_ticket_work_item(
         self,
@@ -1328,23 +1356,126 @@ class TicketEmdService:
         description: str | None = None,
         payload_json: dict[str, Any] | None = None,
     ) -> None:
-        event = TicketEmdTimelineEvent(
-            agency_id=agency_id,
-            booking_workspace_id=booking_workspace_id,
-            booking_record_id=booking_record_id,
-            ticket_record_id=ticket_record_id,
-            emd_record_id=emd_record_id,
-            trip_id=trip_id,
-            event_type=event_type,
-            title=title,
-            description=description,
-            actor_user_id=actor_user_id,
-            payload_json={
+        entity_type, entity_id = next(
+            (
+                pair
+                for pair in [
+                    ("ticket", ticket_record_id),
+                    ("emd", emd_record_id),
+                    ("booking", booking_record_id),
+                    ("booking_workspace", booking_workspace_id),
+                    ("trip", trip_id),
+                ]
+                if pair[1]
+            ),
+            ("booking_workspace", booking_workspace_id or booking_record_id or trip_id),
+        )
+        if not entity_id:
+            return
+        canonical_event_type = "status_transition"
+        event_name = event_type.lower()
+        if entity_type == "ticket" and any(
+            marker in event_name for marker in {"created", "imported", "manual"}
+        ):
+            canonical_event_type = "ticket_imported"
+        elif entity_type == "emd" and any(
+            marker in event_name for marker in {"created", "imported", "manual"}
+        ):
+            canonical_event_type = "emd_imported"
+        elif entity_type in {"booking", "booking_workspace"}:
+            canonical_event_type = (
+                "booking_confirmed"
+                if "confirmed" in event_name
+                else "booking_prepared"
+            )
+        details = {
+            "legacy_event_type": event_type,
+            "title": title,
+            "description": description,
+            "booking_workspace_id": booking_workspace_id,
+            "booking_record_id": booking_record_id,
+            "ticket_record_id": ticket_record_id,
+            "emd_record_id": emd_record_id,
+            "trip_id": trip_id,
+            "payload_json": {
                 "phase": PHASE_LABEL,
                 **(payload_json or {}),
             },
+        }
+        content_hash = hashlib.sha256(
+            json.dumps(details, sort_keys=True, default=str).encode("utf-8")
+        ).hexdigest()
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=agency_id,
+            entity_type=entity_type,
+            entity_id=str(entity_id),
+            event_type=canonical_event_type,
+            event_subtype=event_type,
+            summary=description or title,
+            actor={
+                "id": actor_user_id,
+                "identity_id": actor_user_id,
+                "actor_type": "agency" if actor_user_id else "system",
+            },
+            visibility="internal",
+            details=details,
+            idempotency_key=(
+                f"ticket-emd:{entity_type}:{entity_id}:{event_type}:{content_hash}"
+            ),
+            source_collection="ticket_emd_timeline_events",
+            source_record_id=str(entity_id),
         )
-        await self.db.collection("ticket_emd_timeline_events").insert_one(event.model_dump(mode="json"))
+
+    async def _timeline_projection(
+        self,
+        agency_id: str,
+        entity_type: str,
+        entity_id: str,
+        legacy_filters: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        canonical = [
+            {
+                **entry,
+                "booking_workspace_id": (entry.get("details") or {}).get(
+                    "booking_workspace_id"
+                ),
+                "booking_record_id": (entry.get("details") or {}).get(
+                    "booking_record_id"
+                ),
+                "ticket_record_id": (entry.get("details") or {}).get(
+                    "ticket_record_id"
+                ),
+                "emd_record_id": (entry.get("details") or {}).get("emd_record_id"),
+                "trip_id": (entry.get("details") or {}).get("trip_id"),
+                "title": (entry.get("details") or {}).get("title")
+                or entry.get("summary"),
+                "description": (entry.get("details") or {}).get("description"),
+                "payload_json": (entry.get("details") or {}).get("payload_json")
+                or {},
+                "canonical_timeline_entry_id": entry["id"],
+            }
+            for entry in await OperationalCollaborationService(
+                self.db
+            ).list_timeline(
+                agency_id=agency_id,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                visibility={"internal", "agency"},
+                limit=200,
+            )
+        ]
+        legacy = await self.db.collection("ticket_emd_timeline_events").find_many(
+            {"agency_id": agency_id, **legacy_filters},
+            sort=[("created_at", 1), ("id", 1)],
+            limit=200,
+        )
+        items = legacy + canonical
+        items.sort(
+            key=lambda item: str(
+                item.get("event_time") or item.get("created_at") or ""
+            )
+        )
+        return items
 
     async def _write_trip_timeline(
         self,
@@ -1356,13 +1487,14 @@ class TicketEmdService:
         summary: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
-        event = TripTimelineEvent(
+        await OperationalCollaborationService(self.db).record_compatibility_event(
             agency_id=agency_id,
-            trip_id=trip_id,
+            entity_type="trip",
+            entity_id=trip_id,
+            source_event_type=event_type,
+            summary=summary or title,
             actor_user_id=actor_user_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            metadata=metadata or {},
+            visibility="internal",
+            details={"title": title, **(metadata or {})},
+            source_collection="trip_timeline_events",
         )
-        await self.db.collection("trip_timeline_events").insert_one(event.model_dump(mode="json"))

@@ -178,3 +178,16 @@ Never write accounting results back into accepted Offer snapshots, Trips,
 Bookings, Tickets, EMDs, or original Payments. Never infer historical cost or
 margin, expose supplier values without explicit permission, execute a payment,
 or synchronize external accounting from a ledger write.
+
+## Canonical Operational Collaboration Rule
+
+`OperationalTimeline` is the append-only operational history owner.
+`CommunicationThread` is the conversation owner, with Message, Participant,
+and immutable Attachment references as children. Notifications are projections
+and Audit Events remain separate security evidence.
+
+Never create a new entity-specific timeline or conversation tree. Never delete
+posted communication, silently edit timeline evidence, copy attachment
+binaries, infer provider delivery, or weaken Client, Passenger, Supplier,
+Agency, Platform, and System visibility boundaries. Compatibility records
+remain readable and any migration is bounded, reviewed, and dry-run first.

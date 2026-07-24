@@ -23,7 +23,6 @@ from scripts.validate_canonical_domain_ownership import validate_registry  # noq
 
 MINIMUM_PHASE = "phase_59_0_product_experience_recovery"
 EXPECTED_DECISIONS = {
-    "communication",
     "airline_knowledge",
     "policy",
     "pricing",
@@ -113,6 +112,16 @@ def main() -> int:
         raise AssertionError("Client Master compatibility writer is no longer visible.")
     if "OfferWorkspaceV2" not in DOMAIN_OWNERSHIP_BY_KEY["offer"]["compatibility_writers"]:
         raise AssertionError("Duplicate Offer workspace is no longer visible.")
+    if (
+        DOMAIN_OWNERSHIP_BY_KEY["communication"]["canonical_model"]
+        != "CommunicationThread / CommunicationMessage"
+    ):
+        raise AssertionError("Canonical communication ownership regressed.")
+    if (
+        DOMAIN_OWNERSHIP_BY_KEY["timeline"]["canonical_model"]
+        != "OperationalTimeline"
+    ):
+        raise AssertionError("Canonical operational timeline ownership regressed.")
     if not any(item["stage"] == "portal_visibility" for item in PRODUCT_KERNEL_LIFECYCLE):
         raise AssertionError("Lifecycle continuity does not reach the portal boundary.")
     if summary["kernel_status"] != "migration_required":

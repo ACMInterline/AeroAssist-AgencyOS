@@ -33,13 +33,13 @@ targets and unresolved decisions.
 | Commercial ledger | `CommercialLedger` + `CommercialTransaction` | Legacy Booking monetary summaries; direct legacy Invoice/Payment seed data | `/invoices`, `/payments`, `/finance/*` | Finance, Invoices, Payments, Trip and Booking summaries | Preserve Invoice/Payment IDs; identify missing postings, allocations, costs, and margins without inference | New finance writes use the canonical ledger; historical gaps are reviewed from dry-run analysis |
 | Refund / Exchange | `AfterSalesCase` | `RefundExchangeCase`, ticket/EMD exchange operations | `/refunds-exchanges`, `/after-sales` | Refunds/Exchanges and After Sales | Impact scope, coupon state, estimates, approvals, decisions, comms | Legacy cases are linked history or adapters |
 | Task / Work Item | `OperationalWorkItem` | `RequestTask` | Request task routes; Work Queue | Request Detail, Tasks, Work Queue | Assignment, due date, status, blocker, source, timeline | All actionable work is queue-owned |
-| Timeline | `OperationalTimeline` | Request, trip, booking, ticket/EMD, refund timelines | Entity timeline routes; operational timeline API | Timeline and entity details | Source event ID, actor, timestamp, visibility, entity links | New events use canonical timeline; old collections immutable |
+| Communication | `CommunicationThread` + `CommunicationMessage` | Request, refund, after-sales, offer-question, supplier interaction records | Compatibility message routes; canonical collaboration APIs | Shared collaboration panel and Portal communication views | Thread/entity/participant/visibility/attachment/audit/timeline lineage | New supported messages use canonical threads; old rows stay immutable |
+| Timeline | `OperationalTimeline` | Request, offer, trip, booking, ticket/EMD, document, refund timelines | Entity timeline adapters; canonical collaboration API | Shared collaboration panel and Timeline views | Source event ID, actor, server timestamp, visibility, entity, communication, and audit links | New supported events use canonical timeline; old collections immutable |
 
 ## Ambiguous Ownership
 
 | Domain | Current candidates | Why no target is safe | Decision evidence required |
 |---|---|---|---|
-| Communication | Request messages, portal messages, after-sales communication, supplier interactions, timeline communication fields | Different visibility and delivery semantics are mixed across aggregates | Define message aggregate, channel attempts, immutable content, internal/supplier/client partitions |
 | Airline Knowledge | Legacy items, acquisition, normalized records, evidence assertions, versions, governance releases, publications, agency overlays | The five knowledge pillars and evidence lifecycle cannot be collapsed safely | Approve aggregate boundaries and the relation between normalized item, version, publication, and overlay |
 | Policy | Approved extraction records, rules core, policy cards, composer rules, exceptions | Similar facts can be independently edited in multiple representations | Choose normalized policy aggregate and make editors/projections adapt to it |
 | Pricing | Ancillary rules, formula builders, offer pricing lines, accepted snapshots | Rule definitions, quoted commercial values, and immutable accepted evidence are distinct | Choose governed rule owner and preserve quote/snapshot ownership separately |
@@ -57,8 +57,9 @@ targets and unresolved decisions.
    read-only conflicts; historical records still require reconciliation.
 5. `offer_acceptances` correctly owns mutable decision lifecycle while
    `trip_accepted_offer_snapshots` remains immutable.
-6. Entity-specific task and timeline collections continue accepting new writes
-   beside the canonical Work Queue and Operational Timeline.
+6. Entity-specific task collections remain compatibility writers. Historical
+   timeline and message collections remain readable while supported runtime
+   paths converge on `OperationalTimeline` and `CommunicationThread`.
 7. Downstream handoff paths do not universally prove they read frozen accepted
    commercial evidence rather than a mutable offer.
 8. Actor fields vary among `created_by`, `created_by_user_id`, `updated_by`, and
@@ -111,10 +112,10 @@ targets and unresolved decisions.
    workspace/coupon state.
 7. **Finance and after-sales:** normalize booking/ticket/EMD references and
    merge legacy service cases into AfterSalesCase.
-8. **Operations support:** converge RequestTask and entity timelines into
-   OperationalWorkItem and OperationalTimeline.
-9. **Communication:** approve one aggregate without weakening internal,
-   supplier, and client partitions.
+8. **Operations support:** converge RequestTask into OperationalWorkItem and
+   finish historical timeline reconciliation without rewriting evidence.
+9. **Communication:** review bounded dry-run mappings for historical rows;
+   preserve internal, supplier, client, and passenger partitions.
 10. **Knowledge, Policy, Pricing:** approve aggregate boundaries only after the
     operational chain no longer has competing writers.
 

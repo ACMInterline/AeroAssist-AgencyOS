@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import InvoiceStatusBadge from "../../components/InvoiceStatusBadge"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import PaymentStatusBadge from "../../components/PaymentStatusBadge"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
@@ -212,6 +213,12 @@ export default function InvoiceDetailPage({ invoiceId }) {
             </div>
           </Panel>
           : null}
+          <OperationalCollaborationPanel
+            agencyId={state.agency.id}
+            entityId={invoiceId}
+            entityLabel={invoice.invoice_number || "Invoice"}
+            entityType="invoice"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

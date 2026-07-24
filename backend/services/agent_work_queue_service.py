@@ -22,6 +22,7 @@ from models import (
     OperationalWorkItemUpdate,
     new_id,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -1041,7 +1042,52 @@ class AgentWorkQueueService:
             actor_user_id=user.get("id"),
             payload_json=payload or {},
         )
-        return await self.db.collection(OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION).insert_one(event.model_dump(mode="json"))
+        created = await self.db.collection(
+            OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION
+        ).insert_one(event.model_dump(mode="json"))
+        timeline_event_type = (
+            "assignment"
+            if event_type
+            in {
+                "assigned",
+                "assigned_to_self",
+                "reassigned",
+                "unassigned",
+                "accepted",
+                "released",
+            }
+            else "status_transition"
+        )
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=item["agency_id"],
+            entity_type="task",
+            entity_id=item["id"],
+            event_type=timeline_event_type,
+            event_subtype=self._norm(event_type),
+            summary=f"Work item {self._norm(event_type).replace('_', ' ')}.",
+            actor={
+                **user,
+                "actor_type": "agency",
+                "identity_id": user.get("identity_id") or user.get("id"),
+            },
+            visibility="internal",
+            details={
+                "work_item_code": item.get("work_item_code"),
+                "source_entity_type": item.get("source_entity_type"),
+                "source_entity_id": item.get("source_entity_id"),
+                "reason": reason,
+                "from_user_id": from_user_id,
+                "to_user_id": to_user_id,
+                "from_team_code": from_team_code,
+                "to_team_code": to_team_code,
+            },
+            parent_entity_type=item.get("source_entity_type"),
+            parent_entity_id=item.get("source_entity_id"),
+            idempotency_key=f"assignment-event:{created['id']}",
+            source_collection=OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION,
+            source_record_id=created["id"],
+        )
+        return created
 
     async def _require_work_item(self, work_item_id: str, agency_id: str | None = None) -> dict[str, Any]:
         filters = {"id": work_item_id}

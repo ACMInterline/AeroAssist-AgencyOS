@@ -42,6 +42,7 @@ from services.document_storage_lifecycle_service import (
 from services.delivery_provider_service import delivery_provider_readiness, delivery_provider_statuses
 from services.file_storage_service import get_export_bytes, save_export_bytes
 from services.pdf_rendering_service import pdf_capabilities, render_pdf_from_html
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.secret_service import check_secret, mask_secret_ref, resolve_secret
 from services.tenant_service import assert_agency_access, assert_portal_projection_safe, require_any_agency_role
 
@@ -105,8 +106,50 @@ async def write_audit(db: Database, agency_id: str, actor_user_id: str, event_ty
 
 
 async def write_document_timeline(db: Database, agency_id: str, document_id: str, actor_user_id: str | None, event_type: str, title: str, summary: str | None = None, metadata: dict | None = None) -> None:
-    event = DocumentTimelineEvent(agency_id=agency_id, rendered_document_id=document_id, actor_user_id=actor_user_id, event_type=event_type, title=title, summary=summary, metadata=metadata or {})
-    await db.collection("document_timeline_events").insert_one(event.model_dump(mode="json"))
+    await OperationalCollaborationService(db).record_compatibility_event(
+        agency_id=agency_id,
+        entity_type="document",
+        entity_id=document_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=actor_user_id,
+        visibility="internal",
+        details={"title": title, **(metadata or {})},
+        source_collection="document_timeline_events",
+    )
+
+
+async def document_timeline_items(
+    db: Database, agency_id: str, document_id: str
+) -> list[dict[str, Any]]:
+    legacy = await db.collection("document_timeline_events").find_many(
+        {"agency_id": agency_id, "rendered_document_id": document_id},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=200,
+    )
+    canonical = await OperationalCollaborationService(db).list_timeline(
+        agency_id=agency_id,
+        entity_type="document",
+        entity_id=document_id,
+        visibility={"internal", "agency", "client", "passenger"},
+        limit=200,
+    )
+    items = legacy + [
+        {
+            **item,
+            "rendered_document_id": document_id,
+            "actor_user_id": item.get("actor_id"),
+            "title": (item.get("details") or {}).get("title")
+            or item.get("summary")
+            or item.get("event_type"),
+            "metadata": item.get("details") or {},
+            "created_at": item.get("event_time") or item.get("created_at"),
+            "canonical_timeline_entry_id": item.get("id"),
+        }
+        for item in canonical
+    ]
+    items.sort(key=lambda item: str(item.get("created_at") or ""))
+    return items
 
 
 def safe_filename(value: str, suffix: str) -> str:
@@ -512,25 +555,24 @@ async def process_delivery_send(db: Database, agency_id: str, delivery_id: str, 
 async def write_source_timeline(db: Database, agency_id: str, document: dict, actor_user_id: str | None) -> None:
     source_type = document.get("source_entity_type")
     source_id = document.get("source_entity_id")
-    if source_type == "offer":
-        event = OfferTimelineEvent(agency_id=agency_id, offer_id=source_id, actor_user_id=actor_user_id, event_type="document.rendered", title="Document rendered", summary=document["title"], metadata={"document_id": document["id"]})
-        await db.collection("offer_timeline_events").insert_one(event.model_dump(mode="json"))
-    elif source_type in {"booking", "ticket", "emd", "invoice"}:
-        booking_id = None
-        if source_type == "booking":
-            booking_id = source_id
-        elif source_type == "invoice":
-            invoice = await db.collection("invoices").find_one({"agency_id": agency_id, "id": source_id})
-            booking_id = invoice.get("booking_id") if invoice else None
-        elif source_type == "ticket":
-            ticket = await db.collection("ticket_records").find_one({"agency_id": agency_id, "id": source_id})
-            booking_id = ticket.get("booking_id") if ticket else None
-        elif source_type == "emd":
-            emd = await db.collection("emd_records").find_one({"agency_id": agency_id, "id": source_id})
-            booking_id = emd.get("booking_id") if emd else None
-        if booking_id:
-            event = BookingTimelineEvent(agency_id=agency_id, booking_id=booking_id, actor_user_id=actor_user_id, event_type="document.rendered", title="Document rendered", summary=document["title"], metadata={"document_id": document["id"], "source_entity_type": source_type, "source_entity_id": source_id})
-            await db.collection("booking_timeline_events").insert_one(event.model_dump(mode="json"))
+    if source_type and source_id:
+        await OperationalCollaborationService(db).record_compatibility_event(
+            agency_id=agency_id,
+            entity_type=source_type,
+            entity_id=source_id,
+            source_event_type="document.rendered",
+            summary=document["title"],
+            actor_user_id=actor_user_id,
+            visibility="internal",
+            details={
+                "title": "Document rendered",
+                "document_id": document["id"],
+                "source_entity_type": source_type,
+                "source_entity_id": source_id,
+            },
+            source_collection="document_timeline_events",
+            source_record_id=document["id"],
+        )
 
 
 async def create_rendered_document(db: Database, agency_id: str, user: dict, source_type: str, source_id: str, payload: RenderDocumentRequest, default_type: str) -> dict:
@@ -628,7 +670,10 @@ async def get_document(agency_id: str, document_id: str, user: dict = Depends(ge
     document = await db.collection("rendered_documents").find_one({"agency_id": agency_id, "id": document_id})
     if not document:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rendered document not found.")
-    return {"document": document, "timeline": await db.collection("document_timeline_events").find_many({"agency_id": agency_id, "rendered_document_id": document_id})}
+    return {
+        "document": document,
+        "timeline": await document_timeline_items(db, agency_id, document_id),
+    }
 
 
 @router.post("/documents/{document_id}/archive")
@@ -646,7 +691,7 @@ async def document_timeline(agency_id: str, document_id: str, user: dict = Depen
     await require_read(db, agency_id, user)
     if not await db.collection("rendered_documents").find_one({"agency_id": agency_id, "id": document_id}):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rendered document not found.")
-    return {"items": await db.collection("document_timeline_events").find_many({"agency_id": agency_id, "rendered_document_id": document_id})}
+    return {"items": await document_timeline_items(db, agency_id, document_id)}
 
 
 @router.get("/document-export-capabilities")

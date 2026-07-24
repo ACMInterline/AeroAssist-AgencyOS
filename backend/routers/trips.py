@@ -13,6 +13,7 @@ from services.canonical_commercial_lifecycle_service import (
     validate_lifecycle_transition,
     write_lifecycle_evidence,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.trip_dossier_service import (
     create_manual_trip,
     create_trip_from_request,
@@ -69,6 +70,33 @@ async def trip_detail_payload(db: Database, agency_id: str, trip: dict) -> dict:
     client = None
     if trip.get("primary_client_id"):
         client = await db.collection("client_profiles").find_one({"agency_id": agency_id, "id": trip["primary_client_id"]})
+    legacy_timeline = await db.collection("trip_timeline_events").find_many(
+        {"agency_id": agency_id, "trip_id": trip["id"]},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=200,
+    )
+    canonical_timeline = await OperationalCollaborationService(db).list_timeline(
+        agency_id=agency_id,
+        entity_type="trip",
+        entity_id=trip["id"],
+        visibility={"internal", "agency", "client", "passenger"},
+        limit=200,
+    )
+    timeline = legacy_timeline + [
+        {
+            **item,
+            "trip_id": trip["id"],
+            "actor_user_id": item.get("actor_id"),
+            "title": (item.get("details") or {}).get("title")
+            or item.get("summary")
+            or item.get("event_type"),
+            "metadata": item.get("details") or {},
+            "created_at": item.get("event_time") or item.get("created_at"),
+            "canonical_timeline_entry_id": item.get("id"),
+        }
+        for item in canonical_timeline
+    ]
+    timeline.sort(key=lambda item: str(item.get("created_at") or ""))
     return {
         "trip": trip,
         "client": client,
@@ -76,7 +104,7 @@ async def trip_detail_payload(db: Database, agency_id: str, trip: dict) -> dict:
         "passengers": await db.collection("trip_passengers").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
         "segments": await db.collection("trip_segments").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
         "services": await db.collection("trip_service_items").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
-        "timeline": await db.collection("trip_timeline_events").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
+        "timeline": timeline,
     }
 
 

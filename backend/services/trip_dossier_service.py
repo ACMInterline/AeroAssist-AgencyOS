@@ -22,6 +22,7 @@ from services.canonical_commercial_lifecycle_service import (
     canonical_status,
     write_lifecycle_evidence,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 def _compact(value: Any, limit: int = 1000) -> str | None:
@@ -98,31 +99,30 @@ async def write_trip_audit(db: Database, agency_id: str, actor_user_id: Optional
 
 
 async def write_trip_timeline(db: Database, agency_id: str, workspace_id: Optional[str], trip_id: str, actor_user_id: Optional[str], event_type: str, title: str, summary: str | None = None, metadata: dict | None = None) -> None:
-    await db.collection("trip_timeline_events").insert_one(
-        TripTimelineEvent(
-            agency_id=agency_id,
-            workspace_id=workspace_id,
-            trip_id=trip_id,
-            actor_user_id=actor_user_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            metadata=metadata or {},
-        ).model_dump(mode="json")
+    await OperationalCollaborationService(db).record_compatibility_event(
+        agency_id=agency_id,
+        entity_type="trip",
+        entity_id=trip_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=actor_user_id,
+        visibility="internal",
+        details={"title": title, "workspace_id": workspace_id, **(metadata or {})},
+        source_collection="trip_timeline_events",
     )
 
 
 async def write_request_timeline(db: Database, agency_id: str, request_id: str, actor_user_id: Optional[str], event_type: str, title: str, summary: str | None = None, metadata: dict | None = None) -> None:
-    await db.collection("request_timeline_events").insert_one(
-        RequestTimelineEvent(
-            agency_id=agency_id,
-            request_id=request_id,
-            actor_user_id=actor_user_id,
-            event_type=event_type,
-            title=title,
-            summary=summary,
-            metadata=metadata or {},
-        ).model_dump(mode="json")
+    await OperationalCollaborationService(db).record_compatibility_event(
+        agency_id=agency_id,
+        entity_type="request",
+        entity_id=request_id,
+        source_event_type=event_type,
+        summary=summary or title,
+        actor_user_id=actor_user_id,
+        visibility="internal",
+        details={"title": title, **(metadata or {})},
+        source_collection="request_timeline_events",
     )
 
 

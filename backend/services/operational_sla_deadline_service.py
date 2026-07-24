@@ -19,6 +19,7 @@ from models import (
     OperationalSlaPolicyUpdate,
     new_id,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -725,30 +726,26 @@ class OperationalSlaDeadlineService:
         )
 
     async def _emit_timeline_event(self, deadline: dict[str, Any], event_type: str, user: dict) -> None:
-        await self.db.collection("operational_timelines").insert_one(
-            {
-                "id": new_id(),
-                "agency_id": deadline["agency_id"],
-                "timeline_reference": f"SLA-{(deadline.get('deadline_reference') or deadline['id'])[-12:]}-{self._norm(event_type)}",
-                "created_at": self._now(),
-                "updated_at": self._now(),
-                "created_by": user.get("id"),
-                "event_type": f"SLA deadline {self._label(event_type)}",
-                "event_category": "sla_deadline",
-                "event_source": "sla_operational_deadline_engine",
-                "event_status": "recorded",
+        await OperationalCollaborationService(self.db).record_compatibility_event(
+            agency_id=deadline["agency_id"],
+            entity_type=deadline.get("source_entity_type") or "operational_deadline",
+            entity_id=deadline.get("source_entity_id") or deadline["id"],
+            source_event_type=f"sla.deadline.{self._norm(event_type)}",
+            summary=deadline.get("explanation")
+            or f"SLA deadline {self._label(event_type)}.",
+            actor_user_id=user.get("id"),
+            visibility="internal",
+            details={
+                "operational_deadline_id": deadline["id"],
+                "deadline_reference": deadline.get("deadline_reference"),
+                "deadline_type": deadline.get("deadline_type"),
                 "event_priority": deadline.get("priority") or "normal",
                 "operational_stage": "deadline_monitoring",
                 "operational_result": deadline.get("status"),
-                "summary": deadline.get("explanation"),
-                "operational_notes": "Metadata-only SLA/deadline timeline entry. No messaging, provider calls, or automation occurred.",
-                "internal_only": True,
-                "passenger_visible": False,
-                "airline_visible": False,
-                "attachment_ids": [],
                 "metadata_only": True,
-                "operational_deadline_id": deadline["id"],
-            }
+            },
+            source_collection=OPERATIONAL_SLA_EVENTS_COLLECTION,
+            source_record_id=deadline["id"],
         )
 
     async def _calendar_for_policy(self, policy: dict[str, Any], agency_id: str | None = None) -> dict[str, Any]:

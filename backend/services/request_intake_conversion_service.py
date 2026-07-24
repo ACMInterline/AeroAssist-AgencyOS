@@ -18,6 +18,7 @@ from services.request_passenger_identity_service import unresolved_request_passe
 from services.request_normalization_service import normalize_request_children
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.request_v4_service import create_request_v4
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 SERVICE_LABELS = {
@@ -65,17 +66,17 @@ async def write_timeline(
     summary: Optional[str] = None,
     metadata: dict | None = None,
 ) -> None:
-    event = RequestTimelineEvent(
+    await OperationalCollaborationService(db).record_compatibility_event(
         agency_id=agency_id,
-        request_id=request_id,
+        entity_type="request",
+        entity_id=request_id,
+        source_event_type=event_type,
+        summary=summary or title,
         actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
         visibility="internal",
-        metadata=metadata or {},
+        details={"title": title, **(metadata or {})},
+        source_collection="request_timeline_events",
     )
-    await db.collection("request_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def default_agency_context(db: Database) -> dict:
