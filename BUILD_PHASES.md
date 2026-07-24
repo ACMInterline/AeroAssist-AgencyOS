@@ -2673,3 +2673,23 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
   migration, commit, push, or deployment.
 - See [Canonical Commercial Lifecycle Contract](docs/architecture/canonical-commercial-lifecycle-contract.md)
   and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 7 - Finance, Accounting And Commercial Ledger
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Adds one Agency-scoped Commercial Ledger downstream of immutable accepted
+  Offer, Trip, Booking, Ticket, and EMD evidence.
+- Extends existing Invoice, Invoice Line, and Payment collections; adds
+  append-only transactions, allocations, supplier costs, credit notes, refund
+  entries, and exchange entries without creating parallel finance families.
+- Derives Invoice totals, balances, Payment availability, exchange totals,
+  revenue, supplier cost, agency expense, margin, and exposure on the server.
+- Restricts ledger mutation and private costs to owners, admins, and
+  accountants; agents and read-only staff retain appropriate finance reads.
+- Adds bounded dry-run migration analysis and comprehensive regression coverage.
+- Performs no payment, refund, exchange, provider, external accounting,
+  operational-record rewrite, production migration, commit, push, or deploy.
+- See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md),
+  [Invoice Lifecycle](docs/architecture/invoice-lifecycle-contract.md), and
+  [Payment Allocation](docs/architecture/payment-allocation-contract.md).

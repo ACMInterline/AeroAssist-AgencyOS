@@ -48,6 +48,7 @@ REQUIRED_PERMISSIONS = {
     "edit_tasks",
     "view_finance",
     "edit_finance",
+    "edit_commercial_ledger",
     "view_supplier_costs",
     "view_margins",
     "view_audit",
@@ -106,10 +107,15 @@ def main() -> int:
         AGENCY_ROLE_PERMISSIONS["agency_agent"]
     ):
         errors.append("Agency Agent can view supplier costs or margins.")
-    if not {"view_finance", "edit_finance"}.issubset(
-        AGENCY_ROLE_PERMISSIONS["agency_agent"]
+    if (
+        "view_finance" not in AGENCY_ROLE_PERMISSIONS["agency_agent"]
+        or "edit_finance" not in AGENCY_ROLE_PERMISSIONS["agency_agent"]
+        or "edit_commercial_ledger"
+        in AGENCY_ROLE_PERMISSIONS["agency_agent"]
     ):
-        errors.append("Agency Agent lost established invoice/payment access.")
+        errors.append(
+            "Agency Agent after-sales access is missing or ledger mutation is allowed."
+        )
     if not all(
         "edit_airline_knowledge" in AGENCY_ROLE_PERMISSIONS[role]
         for role in ("agency_owner", "agency_admin", "agency_agent")
@@ -129,6 +135,9 @@ def main() -> int:
         "view_tasks",
         "view_finance",
         "edit_finance",
+        "edit_commercial_ledger",
+        "view_supplier_costs",
+        "view_margins",
     }:
         errors.append("Agency Accountant exceeds the reviewed finance context.")
     if PLATFORM_ROLE_PERMISSIONS["platform_knowledge_editor"] != {

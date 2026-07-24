@@ -164,3 +164,17 @@ Never fabricate acceptance, Trip confirmation, booked state, Ticket/EMD
 issuance, or provider success to preserve compatibility. Keep historical
 records readable, classify unresolved duplicates honestly, and use bounded
 dry-run reconciliation before any separately approved migration.
+
+## Canonical Commercial Ledger Rule
+
+Finance consumes commercial evidence and never owns operational truth.
+`CommercialLedger` is the sole accounting aggregate. Invoice totals and
+balances are server-derived; received value is applied through immutable
+Payment Allocations; Supplier Costs remain separate from client charges; and
+Credit, Refund, and Exchange records correct or extend history
+non-destructively.
+
+Never write accounting results back into accepted Offer snapshots, Trips,
+Bookings, Tickets, EMDs, or original Payments. Never infer historical cost or
+margin, expose supplier values without explicit permission, execute a payment,
+or synchronize external accounting from a ledger write.

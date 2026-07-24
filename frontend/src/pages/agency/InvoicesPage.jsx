@@ -35,15 +35,15 @@ export default function InvoicesPage() {
       <ProtectedRoute loading={!state && !error} error={error}>
         <div className="space-y-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Finance Tracking</p>
-            <h2 className="text-2xl font-semibold text-slate-950">Invoices</h2>
-            <p className="mt-1 text-sm text-slate-600">Tracking only. This is not full accounting or tax filing.</p>
+            <a className="text-sm font-medium text-blue-700" href="/agency/finance">Finance & reports</a>
+            <h2 className="mt-2 text-2xl font-semibold text-slate-950">Invoices</h2>
+            <p className="mt-1 text-sm text-slate-600">Commercial documents with server-derived totals, payment allocations, and non-destructive credits.</p>
           </div>
           <section className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-2">
             <input className="rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Search invoices" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
             <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
               <option value="">All statuses</option>
-              {["draft", "issued", "partially_paid", "paid", "overdue", "voided", "cancelled", "archived"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
+              {["draft", "issued", "partially_paid", "paid", "cancelled", "credited"].map((value) => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}
             </select>
           </section>
           {filtered.length ? (
@@ -59,7 +59,7 @@ export default function InvoicesPage() {
                     <InvoiceStatusBadge status={invoice.status} />
                   </div>
                   <div className="mt-4 grid gap-2 text-sm text-slate-600 md:grid-cols-3">
-                    <span>Total: {invoice.total_amount} {invoice.currency}</span>
+                    <span>Invoice: {invoice.total_amount} {invoice.currency}</span>
                     <span>Paid: {invoice.paid_amount} {invoice.currency}</span>
                     <span>Due: {invoice.due_amount} {invoice.currency}</span>
                   </div>

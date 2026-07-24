@@ -21728,13 +21728,23 @@ class InvoiceStatus(str, Enum):
     ISSUED = "issued"
     PARTIALLY_PAID = "partially_paid"
     PAID = "paid"
+    CREDITED = "credited"
+    CANCELLED = "cancelled"
+    # Read compatibility only. New writes use the canonical lifecycle above.
     OVERDUE = "overdue"
     VOIDED = "voided"
-    CANCELLED = "cancelled"
     ARCHIVED = "archived"
 
 
 class InvoiceLineType(str, Enum):
+    TICKET = "ticket"
+    EMD = "emd"
+    SERVICE = "service"
+    AGENCY_FEE = "agency_fee"
+    SUPPLIER_FEE = "supplier_fee"
+    MANUAL_FEE = "manual_fee"
+    TAX = "tax"
+    ADJUSTMENT = "adjustment"
     AIRFARE = "airfare"
     TAXES = "taxes"
     AIRLINE_ANCILLARY = "airline_ancillary"
@@ -22289,17 +22299,22 @@ class TicketEmdTimelineEvent(BaseModel):
 
 class Invoice(BaseDocument):
     agency_id: str
+    ledger_id: Optional[str] = None
     invoice_number: str
     client_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"
     subtotal_amount: float = 0
     tax_amount: float = 0
     total_amount: float = 0
+    credited_amount: float = 0
+    payable_amount: float = 0
     paid_amount: float = 0
     due_amount: float = 0
     issue_date: Optional[date] = None
@@ -22308,6 +22323,12 @@ class Invoice(BaseDocument):
     internal_notes: Optional[str] = None
     issued_at: Optional[datetime] = None
     paid_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    credited_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+    source_snapshot_hash: Optional[str] = None
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
 
 
 class InvoiceCreate(BaseModel):
@@ -22315,10 +22336,12 @@ class InvoiceCreate(BaseModel):
 
     invoice_number: Optional[str] = None
     client_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"
     issue_date: Optional[date] = None
@@ -22330,7 +22353,6 @@ class InvoiceCreate(BaseModel):
 class InvoiceUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    status: Optional[InvoiceStatus] = None
     issue_date: Optional[date] = None
     due_date: Optional[date] = None
     client_visible_notes: Optional[str] = None
@@ -22340,9 +22362,13 @@ class InvoiceUpdate(BaseModel):
 class InvoiceLineItem(BaseDocument):
     agency_id: str
     invoice_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     ticket_id: Optional[str] = None
     emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
     line_type: InvoiceLineType
     description: str
     service_code: Optional[str] = None
@@ -22358,9 +22384,13 @@ class InvoiceLineItem(BaseDocument):
 class InvoiceLineItemCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     ticket_id: Optional[str] = None
     emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
     line_type: InvoiceLineType
     description: str
     service_code: Optional[str] = None
@@ -22379,24 +22409,32 @@ class InvoiceLineItemUpdate(InvoiceLineItemCreate):
 
 class PaymentRecord(BaseDocument):
     agency_id: str
-    invoice_id: str
+    ledger_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     client_id: str
     status: PaymentStatus = PaymentStatus.PENDING
     method: PaymentMethod = PaymentMethod.BANK_TRANSFER
     amount: float = 0
+    allocated_amount: float = 0
+    unallocated_amount: float = 0
     currency: str = "EUR"
     received_at: Optional[datetime] = None
     external_reference: Optional[str] = None
     reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    received_by_user_id: Optional[str] = None
+    source_snapshot_hash: Optional[str] = None
 
 
 class PaymentRecordCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    invoice_id: str
+    invoice_id: Optional[str] = None
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     client_id: str
     status: PaymentStatus = PaymentStatus.PENDING
@@ -22408,6 +22446,7 @@ class PaymentRecordCreate(BaseModel):
     reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
 
 
 class PaymentRecordUpdate(BaseModel):
@@ -22415,13 +22454,307 @@ class PaymentRecordUpdate(BaseModel):
 
     status: Optional[PaymentStatus] = None
     method: Optional[PaymentMethod] = None
-    amount: Optional[float] = None
-    currency: Optional[str] = None
     received_at: Optional[datetime] = None
     external_reference: Optional[str] = None
     reconciliation_status: Optional[ReconciliationStatus] = None
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+
+
+class CommercialTransactionType(str, Enum):
+    OFFER_ACCEPTED = "offer_accepted"
+    INVOICE_CREATED = "invoice_created"
+    INVOICE_ADJUSTED = "invoice_adjusted"
+    SUPPLIER_COST = "supplier_cost"
+    PAYMENT_RECEIVED = "payment_received"
+    PAYMENT_ALLOCATED = "payment_allocated"
+    REFUND = "refund"
+    CREDIT_NOTE = "credit_note"
+    EXCHANGE = "exchange"
+    MANUAL_ADJUSTMENT = "manual_adjustment"
+
+
+class CommercialLedger(BaseDocument):
+    agency_id: str
+    ledger_code: str
+    currency: str
+    status: str = "active"
+    created_by_user_id: Optional[str] = None
+
+
+class CommercialTransaction(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    entry_type: CommercialTransactionType
+    reporting_category: str
+    direction: str
+    amount: float
+    signed_amount: float
+    currency: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    invoice_line_item_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
+    credit_note_id: Optional[str] = None
+    refund_ledger_entry_id: Optional[str] = None
+    exchange_ledger_entry_id: Optional[str] = None
+    source_event_type: str
+    source_event_id: str
+    posting_time: datetime = Field(default_factory=now_utc)
+    created_by_user_id: Optional[str] = None
+    idempotency_key: str
+    immutable_source_hash: str
+    immutable_source_json: Dict[str, Any] = Field(default_factory=dict)
+    posting_status: str = "posted"
+
+
+class PaymentAllocation(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    payment_record_id: str
+    invoice_id: str
+    invoice_line_item_id: Optional[str] = None
+    amount: float
+    currency: str
+    status: str = "posted"
+    idempotency_key: str
+    allocated_at: datetime = Field(default_factory=now_utc)
+    allocated_by_user_id: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class PaymentAllocationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    invoice_id: str
+    invoice_line_item_id: Optional[str] = None
+    amount: float
+    idempotency_key: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class SupplierCostStatus(str, Enum):
+    DRAFT = "draft"
+    CONFIRMED = "confirmed"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+
+
+class SupplierCost(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    supplier_cost_reference: str
+    supplier_reference: str
+    supplier_name: Optional[str] = None
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    currency: str
+    expected_cost_amount: float = 0
+    actual_cost_amount: float = 0
+    posted_cost_amount: float = 0
+    status: SupplierCostStatus = SupplierCostStatus.DRAFT
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    confirmed_by_user_id: Optional[str] = None
+    confirmed_at: Optional[datetime] = None
+
+
+class SupplierCostLine(BaseDocument):
+    agency_id: str
+    supplier_cost_id: str
+    description: str
+    expected_amount: float = 0
+    actual_amount: float = 0
+    currency: str
+    expense_category: str = "supplier_cost"
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    status: str = "active"
+
+
+class SupplierCostCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    supplier_reference: str
+    supplier_name: Optional[str] = None
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    currency: str = "EUR"
+    description: str
+    expected_cost_amount: float = 0
+    actual_cost_amount: float = 0
+    expense_category: str = "supplier_cost"
+    notes: Optional[str] = None
+
+
+class SupplierCostLineCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    description: str
+    expected_amount: float = 0
+    actual_amount: float = 0
+    currency: Optional[str] = None
+    expense_category: str = "supplier_cost"
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+
+
+class CreditNoteStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    CANCELLED = "cancelled"
+
+
+class CreditNote(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    credit_note_number: str
+    invoice_id: str
+    client_id: str
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    currency: str
+    status: CreditNoteStatus = CreditNoteStatus.DRAFT
+    reason: str
+    total_amount: float = 0
+    created_by_user_id: Optional[str] = None
+    issued_by_user_id: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class CreditNoteLine(BaseDocument):
+    agency_id: str
+    credit_note_id: str
+    invoice_line_item_id: Optional[str] = None
+    description: str
+    amount: float
+    currency: str
+    status: str = "active"
+
+
+class CreditNoteCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    invoice_id: str
+    reason: str
+    amount: float
+    invoice_line_item_id: Optional[str] = None
+    description: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RefundLedgerEntry(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    refund_reference: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    commercial_source_type: str
+    commercial_source_id: Optional[str] = None
+    amount: float
+    currency: str
+    reason: str
+    status: str = "recorded"
+    recorded_by_user_id: Optional[str] = None
+    recorded_at: datetime = Field(default_factory=now_utc)
+    idempotency_key: str
+    notes: Optional[str] = None
+
+
+class RefundLedgerEntryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    commercial_source_type: str
+    commercial_source_id: Optional[str] = None
+    amount: float
+    currency: str = "EUR"
+    reason: str
+    status: str = "recorded"
+    idempotency_key: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ExchangeLedgerEntry(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    exchange_reference: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    original_ticket_id: Optional[str] = None
+    new_ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_change_id: Optional[str] = None
+    fare_difference_amount: float = 0
+    tax_difference_amount: float = 0
+    agency_fee_amount: float = 0
+    supplier_fee_amount: float = 0
+    emd_difference_amount: float = 0
+    exchange_fee_amount: float = 0
+    total_difference_amount: float = 0
+    currency: str
+    reason: str
+    status: str = "recorded"
+    recorded_by_user_id: Optional[str] = None
+    recorded_at: datetime = Field(default_factory=now_utc)
+    idempotency_key: str
+    notes: Optional[str] = None
+
+
+class ExchangeLedgerEntryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    original_ticket_id: Optional[str] = None
+    new_ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_change_id: Optional[str] = None
+    fare_difference_amount: float = 0
+    tax_difference_amount: float = 0
+    agency_fee_amount: float = 0
+    supplier_fee_amount: float = 0
+    emd_difference_amount: float = 0
+    exchange_fee_amount: float = 0
+    currency: str = "EUR"
+    reason: str
+    status: str = "recorded"
+    idempotency_key: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class BookingTimelineEvent(BaseModel):

@@ -246,25 +246,25 @@ TicketWorkspace, and EmdWorkspace records remain migration debt.
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Finance router and seed | `Invoice` / `invoices` | `/api/agencies/{agency_id}/invoices` | Invoice lines and payments link explicitly | Immutable `agency_id`; own invoice view | Receivable record; selected |
+| Canonical Commercial Ledger service; Finance router adapter; seed compatibility | `Invoice` / `invoices` | `/api/agencies/{agency_id}/invoices` | Lines are children; issued corrections use Credit Notes; totals are server-derived | Immutable `agency_id`; own invoice view | Commercial document; selected |
 
 ### 29. Invoice Line
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Finance router and seed | `InvoiceLineItem` / `invoice_line_items`, child of `Invoice` | Invoice line routes | No independent invoice ownership | Immutable `agency_id`; own invoice detail | Finance child; selected |
+| Canonical Commercial Ledger service; Finance router adapter; seed compatibility | `InvoiceLineItem` / `invoice_line_items`, child of `Invoice` | Invoice line routes | Draft-only edits; no independent Invoice ownership | Immutable `agency_id`; own invoice detail | Server-derived finance child; selected |
 
 ### 30. Payment
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| Finance router and seed | `PaymentRecord` / `payment_records` | `/api/agencies/{agency_id}/payments` | Manual tracking only, no processor execution | Immutable `agency_id`; own payment status | Payment tracking; selected |
+| Canonical Commercial Ledger service; Finance router adapter; seed compatibility | `PaymentRecord` / `payment_records` plus `PaymentAllocation` / `payment_allocations` | `/api/agencies/{agency_id}/payments` | Receipt evidence remains immutable; allocations settle one or more Invoices/lines | Immutable `agency_id`; own payment status; private reconciliation metadata | Payment evidence and settlement allocation; selected |
 
 ### 31. Refund / Exchange
 
 | Current owners | Target / collection | Service / route | Children, snapshots, compatibility | Tenant / portal | Lifecycle / status |
 |---|---|---|---|---|---|
-| After-Sales service; legacy refund/exchange and ticket/EMD operation writers | `AfterSalesCase` / `after_sales_cases` | `/api/agencies/{agency_id}/after-sales` | Case items, decisions, financial impacts, resolutions; legacy `RefundExchangeCase` is compatibility | Immutable `agency_id`; approved safe status only | Servicing case; migration required |
+| After-Sales owns operations; Canonical Commercial Ledger owns accounting; legacy refund/exchange and ticket/EMD writers remain compatibility | `AfterSalesCase` for operational decisions; `RefundLedgerEntry` and `ExchangeLedgerEntry` for accounting evidence | `/api/agencies/{agency_id}/after-sales`, `/api/agencies/{agency_id}/finance/refunds`, `/api/agencies/{agency_id}/finance/exchanges` | Accounting entries reference, but never mutate, cases, Tickets, EMDs, Payments, or accepted changes | Immutable `agency_id`; client-safe case status only; ledger writes require finance permission | Operational case migration required; accounting owners selected |
 
 ### 32. Document
 
@@ -369,3 +369,14 @@ remain readable compatibility surfaces and cannot overwrite linked canonical
 truth. Migration remains required for historical parallel records. See
 [Canonical Commercial Lifecycle Contract](canonical-commercial-lifecycle-contract.md)
 and [Commercial Lifecycle Compatibility And Migration](commercial-lifecycle-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 7 - Commercial Ledger
+
+`CommercialLedger` and append-only `CommercialTransaction` records own
+accounting postings downstream of the canonical commercial lifecycle.
+Existing Invoice, Invoice Line, and Payment collections remain canonical and
+are extended; Payment Allocation, Supplier Cost, Credit Note, Refund Ledger,
+and Exchange Ledger records complete the accounting chain. The Finance router
+is an adapter to the canonical service. After Sales remains the operational
+decision owner and the ledger records only reviewed commercial consequences.
+See [Canonical Commercial Ledger](canonical-commercial-ledger.md).

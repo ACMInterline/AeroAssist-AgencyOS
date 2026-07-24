@@ -21,7 +21,14 @@ already been migrated.
 - **Booking**: mirror/tracking record for booked itinerary state.
 - **Ticket**: mirror/tracking record for ticket state.
 - **EMD**: mirror/tracking record for ancillary document state.
-- **Invoice**: commercial record for billing/payment tracking.
+- **Invoice**: server-derived client commercial document.
+- **Commercial Ledger**: append-only accounting evidence derived from
+  immutable operational and commercial source events.
+- **Payment Allocation**: explicit application of received value to an Invoice
+  or positive Invoice line.
+- **Supplier Cost**: Agency-private supplier or agency-expense evidence,
+  separate from client charges.
+- **Credit Note**: non-destructive correction to an issued Invoice.
 - **Document**: generated or stored output attached to request/trip/client/passenger context.
 - **Task**: staff work item with owner, priority, due state, visibility, and operational context.
 - **Communication**: message/note/email/portal communication with visibility boundaries.
@@ -165,6 +172,20 @@ evidence and owns the current PNR result. Normal Ticket/EMD records require a
 same-Agency BookingRecord; explicit standalone imports retain mode, source,
 reason, actor, and reconciliation evidence. See
 [Canonical Commercial Lifecycle Contract](canonical-commercial-lifecycle-contract.md).
+
+## Canonical Commercial Ledger
+
+The commercial lifecycle produces evidence; it does not produce editable
+accounting totals on operational records. `CommercialLedger` and
+`CommercialTransaction` consume accepted Offer, Trip, Booking, Ticket, EMD,
+Invoice, Payment, Supplier Cost, Credit, Refund, and Exchange evidence without
+rewriting those upstream records.
+
+Invoice totals come from active lines. Received Payments remain intact while
+allocations settle one or more Invoices. Confirmed Supplier Costs and Agency
+expenses remain private margin inputs. Credit Notes, Refunds, and Exchanges
+add new evidence instead of replacing original entries. See
+[Canonical Commercial Ledger](canonical-commercial-ledger.md).
 
 ## Canonical Request V4 Aggregate
 

@@ -30,6 +30,7 @@ targets and unresolved decisions.
 | Booking / PNR | `BookingRecord` | Historical `Booking`; BookingWorkspace remains context only | Legacy `/bookings` reads; Booking Workspace/Record APIs | Canonical Booking Workspaces; historical Booking deep links | PNR/reference/trip/snapshot/passenger/segment/status/evidence | Legacy mutations stay blocked; every confirmed workspace points to evidenced BookingRecord |
 | Ticket | `TicketRecord` | `TicketWorkspace` | `/tickets`, `/ticket-workspaces`, read-only legacy booking ticket routes | Tickets/EMDs and Ticket Workspace | Number, BookingRecord, Trip, passenger, coupons, pricing, status | Normal writes use TicketEmdService with BookingRecord lineage |
 | EMD | `EMDRecord` | `EmdWorkspace` | `/emds`, `/emd-workspaces`, read-only legacy booking EMD routes | Tickets/EMDs and EMD Workspace | Number, BookingRecord, Trip, ticket/passenger, coupons, RFIC/RFISC | Normal writes use TicketEmdService with BookingRecord lineage |
+| Commercial ledger | `CommercialLedger` + `CommercialTransaction` | Legacy Booking monetary summaries; direct legacy Invoice/Payment seed data | `/invoices`, `/payments`, `/finance/*` | Finance, Invoices, Payments, Trip and Booking summaries | Preserve Invoice/Payment IDs; identify missing postings, allocations, costs, and margins without inference | New finance writes use the canonical ledger; historical gaps are reviewed from dry-run analysis |
 | Refund / Exchange | `AfterSalesCase` | `RefundExchangeCase`, ticket/EMD exchange operations | `/refunds-exchanges`, `/after-sales` | Refunds/Exchanges and After Sales | Impact scope, coupon state, estimates, approvals, decisions, comms | Legacy cases are linked history or adapters |
 | Task / Work Item | `OperationalWorkItem` | `RequestTask` | Request task routes; Work Queue | Request Detail, Tasks, Work Queue | Assignment, due date, status, blocker, source, timeline | All actionable work is queue-owned |
 | Timeline | `OperationalTimeline` | Request, trip, booking, ticket/EMD, refund timelines | Entity timeline routes; operational timeline API | Timeline and entity details | Source event ID, actor, timestamp, visibility, entity links | New events use canonical timeline; old collections immutable |
@@ -185,3 +186,18 @@ deterministic, zero-write analysis. It reports candidate mappings, ambiguity,
 manual review, PTC age contradictions, missing/inactive/wrong-domain links,
 duplicate codes/keys, and cross-scope conflicts. Write mode is intentionally
 unavailable.
+
+## Commercial Ledger Migration Status
+
+| Family | Status | Required action |
+|---|---|---|
+| New Invoices and Payments | canonical ledger-backed | Use server-derived totals and explicit allocations |
+| Historical Invoices and lines | readable, reconciliation required | Identify missing issue postings and ambiguous Booking lineage |
+| Historical Payments | readable, reconciliation required | Identify direct Invoice links without allocation evidence |
+| Historical refunds/exchanges | operational compatibility | Preserve source cases and review before accounting linkage |
+| Supplier cost and margin | absent or partial historically | Record only from reviewed evidence; never infer from client charges |
+
+`backend/scripts/analyze_commercial_ledger_migration.py` reports legacy
+Invoices, Payments, refunds, missing cost/margin evidence, duplicate Invoices,
+and duplicate allocations. It compares collection counts before and after the
+run, exposes no write mode, and never creates ledger entries.

@@ -28,7 +28,7 @@ from models import (
     DocumentWorkspaceOutputReconciliationRequest,
     EmdCreateFromBookingServiceRequest,
     Invoice,
-    InvoiceLineItem,
+    InvoiceLineItemCreate,
     ManualTicketCreate,
     OfferAcceptanceCreate,
     OfferBookingHandoffBookingCreateRequest,
@@ -44,7 +44,7 @@ from models import (
     PassengerServiceOutcomeRequest,
     PassengerServiceReconciliationRequest,
     PassengerServiceRequestCreate,
-    PaymentRecord,
+    PaymentRecordCreate,
     PlatformUser,
     RequestPassenger,
     RequestPassengerSegmentService,
@@ -56,6 +56,7 @@ from models import (
 )
 from services.after_sales_workflow_service import AfterSalesWorkflowError, AfterSalesWorkflowService
 from services.booking_workspace_service import BookingWorkspaceService
+from services.canonical_commercial_ledger_service import CanonicalCommercialLedgerService
 from services.document_workspace_service import DocumentWorkspaceError, DocumentWorkspaceService
 from services.offer_acceptance_service import OfferAcceptanceService
 from services.offer_builder_service import OfferBuilderService
@@ -116,7 +117,7 @@ async def seed_case(db: Database) -> dict:
             user_id=USER_ID,
             email=user["email"],
             normalized_email=user["email"],
-            agency_role="agency_agent",
+            agency_role="agency_admin",
             status="active",
         ),
     )
@@ -722,39 +723,28 @@ async def run_golden_path() -> None:
     )
     invoice_retry = await create_invoice_from_booking_workspace(AGENCY_ID, booking_workspace["id"], user=user, db=db)
     require(invoice_retry.get("idempotent_reused") is True and invoice_retry["invoice"]["id"] == invoice["id"], "Finance bridge retry duplicated the invoice.")
-    invoice = await db.collection("invoices").update_one(
-        {"agency_id": AGENCY_ID, "id": invoice["id"]},
-        {
-            "status": "issued",
-            "subtotal_amount": 305.0,
-            "total_amount": 305.0,
-            "paid_amount": 305.0,
-            "due_amount": 0.0,
-            "internal_notes": "Internal invoice note.",
-            "client_visible_notes": "Paid in full.",
-        },
-    )
-    invoice_line = await insert(
-        db,
-        "invoice_line_items",
-        InvoiceLineItem(
-            agency_id=AGENCY_ID,
-            invoice_id=invoice["id"],
+    ledger = CanonicalCommercialLedgerService(db)
+    invoice_line = await ledger.add_invoice_line(
+        AGENCY_ID,
+        invoice["id"],
+        InvoiceLineItemCreate(
             booking_id=booking_record["id"],
+            booking_record_id=booking_record["id"],
             ticket_id=ticket["id"],
-            line_type="airfare",
+            line_type="ticket",
             description="Accepted assisted itinerary",
             quantity=1,
             unit_amount=305.0,
-            total_amount=305.0,
             currency="EUR",
         ),
+        USER_ID,
     )
-    payment = await insert(
-        db,
-        "payment_records",
-        PaymentRecord(
-            agency_id=AGENCY_ID,
+    invoice = await ledger.issue_invoice(
+        AGENCY_ID, invoice["id"], USER_ID
+    )
+    payment = await ledger.create_payment(
+        AGENCY_ID,
+        PaymentRecordCreate(
             invoice_id=invoice["id"],
             booking_id=booking_record["id"],
             client_id=context["client"]["id"],
@@ -766,6 +756,7 @@ async def run_golden_path() -> None:
             reconciliation_status="reconciled",
             internal_notes="Internal bank reconciliation note.",
         ),
+        USER_ID,
     )
     after_sales_service = AfterSalesWorkflowService(db)
     link_options = await after_sales_service.link_options(AGENCY_ID)

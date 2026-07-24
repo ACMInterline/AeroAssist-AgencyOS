@@ -95,6 +95,8 @@ import EmdDetailPage from "./pages/agency/EmdDetailPage"
 import EmdWorkspaceMetadataPage from "./pages/agency/EmdWorkspaceMetadataPage"
 import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
 import InvoicesPage from "./pages/agency/InvoicesPage"
+import FinanceDashboardPage from "./pages/agency/FinanceDashboardPage"
+import SupplierCostsPage from "./pages/agency/SupplierCostsPage"
 import OfferCreatePage from "./pages/agency/OfferCreatePage"
 import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
 import OfferIntelligencePage from "./pages/agency/OfferIntelligencePage"
@@ -795,6 +797,14 @@ function RoutedApp() {
 
   if (window.location.pathname === "/agency/invoices") {
     return <InvoicesPage />
+  }
+
+  if (window.location.pathname === "/agency/finance") {
+    return <FinanceDashboardPage />
+  }
+
+  if (window.location.pathname === "/agency/supplier-costs") {
+    return <SupplierCostsPage />
   }
 
   if (window.location.pathname === "/agency/payments") {

@@ -2881,6 +2881,132 @@
       "execution_isolation": "none"
     },
     {
+      "script_path": "backend/scripts/smoke_canonical_commercial_ledger.py",
+      "capability_name": "Canonical Commercial Ledger",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "ledger",
+        "reporting",
+        "tenancy",
+        "persistence",
+        "frontend",
+        "governance"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable canonical ledger regression for immutable postings, ledger-derived reporting, audit evidence, private cost projection, persistence ownership, dry-run analysis, writer classification, upstream immutability, and disabled execution boundaries.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_invoice_lifecycle.py",
+      "capability_name": "Canonical Invoice Lifecycle",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "invoices",
+        "credit-notes",
+        "tenancy"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable Invoice regression for server-derived totals, canonical states, immutable issued lines, non-destructive credits, reasoned cancellation, strict lineage, and forbidden grand-total input.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_payment_allocation.py",
+      "capability_name": "Canonical Payment Allocation",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "payments",
+        "invoices",
+        "tenancy"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable Payment regression for multi-Invoice and line allocation, partial settlement, derived balances, currency and lifecycle guards, over-allocation prevention, and idempotent retries.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_supplier_cost.py",
+      "capability_name": "Canonical Supplier Cost",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "supplier-costs",
+        "margin",
+        "authorization",
+        "tenancy"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable private-cost regression for supplier and Agency expense separation, confirmation immutability, ledger-derived margin, centralized finance permissions, and supplier-cost redaction.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_refund_ledger.py",
+      "capability_name": "Canonical Refund Ledger",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "refunds",
+        "payments",
+        "tickets",
+        "audit"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable Refund regression for Payment Allocation lineage, refund limits, idempotency conflict handling, immutable original Payment evidence, posting, and audit.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
+      "script_path": "backend/scripts/smoke_canonical_exchange_ledger.py",
+      "capability_name": "Canonical Exchange Ledger",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "finance",
+        "exchanges",
+        "tickets",
+        "emds",
+        "tenancy"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable Exchange accounting regression for component-derived totals, original and replacement Ticket lineage, EMD linkage, idempotency conflicts, tenant isolation, immutable operational evidence, and ledger posting.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
       "capability_name": "Visual Policy Editor Foundation",
       "minimum_application_phase": "phase_52_3_visual_policy_editor_foundation",

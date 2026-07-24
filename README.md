@@ -1922,3 +1922,17 @@ is enabled. See [Canonical Commercial Lifecycle Contract](docs/architecture/cano
 [Offer Acceptance And Snapshot Contract](docs/architecture/offer-acceptance-and-snapshot-contract.md),
 [Trip And Booking Ownership Contract](docs/architecture/trip-and-booking-ownership-contract.md),
 and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 7 - Finance, Accounting And Commercial Ledger
+
+The canonical operational chain now feeds one Agency-scoped commercial ledger.
+Existing Invoice, Invoice Line, and Payment records are extended rather than
+duplicated. Posted transactions, explicit Payment Allocations, private Supplier
+Costs, non-destructive Credit Notes, Refund entries, and Exchange entries
+provide deterministic revenue, cost, margin, balance, and exposure reporting.
+Owners, admins, and accountants control ledger writes; agents and read-only
+staff receive appropriate read projections without supplier-cost leakage.
+Historical finance analysis is bounded and dry-run only. No payment gateway,
+provider, external accounting integration, migration, or upstream operational
+rewrite is enabled. See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md)
+and [Commercial Reporting Contract](docs/architecture/commercial-reporting-contract.md).

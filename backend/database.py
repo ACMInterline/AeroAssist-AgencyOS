@@ -749,6 +749,15 @@ AGENCY_OWNED_COLLECTIONS = [
     "invoices",
     "invoice_line_items",
     "payment_records",
+    "commercial_ledgers",
+    "commercial_transactions",
+    "payment_allocations",
+    "supplier_costs",
+    "supplier_cost_lines",
+    "credit_notes",
+    "credit_note_lines",
+    "refund_ledger_entries",
+    "exchange_ledger_entries",
     "booking_timeline_events",
     "refund_exchange_cases",
     "refund_exchange_items",
@@ -3958,6 +3967,68 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_workspace_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],
+        "commercial_ledgers": [
+            {
+                "keys": [("agency_id", ASCENDING), ("currency", ASCENDING)],
+                "name": "commercial_ledgers_agency_currency_unique",
+                "unique": True,
+            },
+        ],
+        "commercial_transactions": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "commercial_transactions_agency_idempotency_unique",
+                "unique": True,
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("posting_time", -1), ("id", -1)],
+                "name": "commercial_transactions_agency_posting_id",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("trip_id", ASCENDING), ("booking_id", ASCENDING)],
+                "name": "commercial_transactions_agency_trip_booking",
+            },
+        ],
+        "payment_allocations": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "payment_allocations_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("payment_record_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("invoice_id", ASCENDING)],
+        ],
+        "supplier_costs": [
+            [("agency_id", ASCENDING), ("booking_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
+        "supplier_cost_lines": [
+            [("agency_id", ASCENDING), ("supplier_cost_id", ASCENDING)],
+        ],
+        "credit_notes": [
+            [("agency_id", ASCENDING), ("invoice_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
+        "credit_note_lines": [
+            [("agency_id", ASCENDING), ("credit_note_id", ASCENDING)],
+        ],
+        "refund_ledger_entries": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "refund_ledger_entries_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("payment_allocation_id", ASCENDING)],
+        ],
+        "exchange_ledger_entries": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "exchange_ledger_entries_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("original_ticket_id", ASCENDING)],
+        ],
         "refund_exchange_cases": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],

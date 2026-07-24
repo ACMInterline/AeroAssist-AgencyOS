@@ -27,7 +27,7 @@ export default function TripDetailPage({ tripId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds, changes] = await Promise.all([
+    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds, changes, finance] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
@@ -36,12 +36,13 @@ export default function TripDetailPage({ tripId }) {
       apiGet(`/api/agencies/${context.agency.id}/tickets?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/emds?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/change-operations`),
+      apiGet(`/api/agencies/${context.agency.id}/finance/reporting?trip_id=${encodeURIComponent(tripId)}`),
     ])
     const bookingRecordId = bookingWorkspaces.items?.[0]?.booking_record?.id
     const ticketEmdReadiness = bookingRecordId
       ? await apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`)
       : null
-    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], changes, ticketEmdReadiness })
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], changes, ticketEmdReadiness, finance })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -341,6 +342,8 @@ export default function TripDetailPage({ tripId }) {
             state={state}
           />
 
+          <TripCommercialSummary finance={state?.finance} tripId={tripId} />
+
           <Panel title="Related operational records">
             <div className="flex flex-wrap gap-2">
               {state?.bookingWorkspaces?.[0] ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${state.bookingWorkspaces[0].id}`}>Booking workspace</a> : null}
@@ -363,6 +366,25 @@ function Metric({ label, value }) {
 
 function Panel({ title, children }) {
   return <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-950">{title}</h3>{children}</section>
+}
+
+function TripCommercialSummary({ finance, tripId }) {
+  const summary = finance?.summaries?.[0]
+  const profitability = finance?.profitability?.find((item) => item.context_type === "trip") || finance?.profitability?.[0]
+  return (
+    <Panel title="Commercial summary">
+      {summary ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Revenue" value={money(profitability?.revenue ?? summary.revenue, summary.currency)} />
+        {finance?.supplier_costs_visible ? <Metric label="Supplier costs" value={money(profitability?.supplier_costs, summary.currency)} /> : null}
+        {finance?.supplier_costs_visible ? <Metric label="Gross margin" value={money(profitability?.gross_margin, summary.currency)} /> : null}
+        <Metric label="Payments received" value={money(summary.payments_received, summary.currency)} />
+      </div> : <EmptyState title="No posted commercial activity" body="Issued invoices, received payments, and confirmed costs linked to this trip will appear here." />}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">This projection comes only from immutable ledger postings and does not recalculate or edit the Trip.</p>
+        <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/finance?trip_id=${encodeURIComponent(tripId)}`}>Open finance</a>
+      </div>
+    </Panel>
+  )
 }
 
 function AcceptedOfferPanel({ state }) {

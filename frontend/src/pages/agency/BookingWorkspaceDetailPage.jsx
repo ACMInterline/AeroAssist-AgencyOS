@@ -10,6 +10,7 @@ import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
+import { useAuthorization } from "../../context/AuthorizationContext"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -19,6 +20,7 @@ const providerStatuses = ["draft", "queued", "held", "confirmed", "failed", "can
 const bookingStatuses = ["draft", "pending", "confirmed", "partially_confirmed", "failed", "cancelled"]
 
 export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
+  const authorization = useAuthorization()
   const [state, setState] = useState(null)
   const [statusForm, setStatusForm] = useState({ status: "draft", internal_notes: "" })
   const [recordForm, setRecordForm] = useState({ pnr_locator: "", provider_status: "draft", booking_status: "draft", source_evidence_reference: "", reason: "", internal_notes: "" })
@@ -30,13 +32,14 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     const context = await loadCurrentAgency()
     const detail = await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces/${bookingWorkspaceId}`)
     const bookingRecordId = detail.booking_record?.id
-    const [tickets, emds, ticketEmdReadiness, invoices] = await Promise.all([
+    const [tickets, emds, ticketEmdReadiness, invoices, finance] = await Promise.all([
       bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/tickets?booking_record_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ items: [] }),
       bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/emds?booking_record_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ items: [] }),
       bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`) : Promise.resolve(null),
       apiGet(`/api/agencies/${context.agency.id}/invoices?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}`),
+      bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/finance/reporting?booking_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ summaries: [], profitability: [], supplier_costs_visible: false }),
     ])
-    setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness, invoices: invoices.items || [] })
+    setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness, invoices: invoices.items || [], finance })
     setStatusForm({ status: detail.booking_workspace?.status || "draft", internal_notes: "" })
     setRecordForm({
       pnr_locator: detail.booking_record?.pnr_locator || "",
@@ -169,6 +172,9 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   const readiness = source.booking_readiness_package || {}
   const ticket = state?.tickets?.[0]
   const invoice = state?.invoices?.[0]
+  const financeSummary = state?.finance?.summaries?.[0]
+  const profitability = state?.finance?.profitability?.[0]
+  const canEditFinance = authorization.hasPermission("edit_commercial_ledger")
   const confirmedResult = ["confirmed", "partially_confirmed"].includes(record?.booking_status)
   const canContinueToTicket = Boolean(record && confirmedResult && workspace?.status === "booked")
   const resultFrozen = record?.booking_status === "confirmed"
@@ -268,8 +274,15 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
               </Panel>
 
               <Panel title="Finance">
-                <button className="aa-primary-action w-full rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-50" type="button" onClick={createOrOpenInvoice} disabled={!record}>{invoice ? "Open linked invoice" : "Create linked invoice"}</button>
-                <p className="text-xs text-slate-500">Creates or opens one agency-scoped invoice linked to this canonical booking workspace and record. Payment remains manually recorded.</p>
+                <button className="aa-primary-action w-full rounded-md px-3 py-2 text-sm font-semibold disabled:opacity-50" type="button" onClick={createOrOpenInvoice} disabled={!record || (!invoice && !canEditFinance)}>{invoice ? "Open linked invoice" : "Create linked invoice"}</button>
+                {!invoice && !canEditFinance ? <p className="text-sm text-slate-600">An Agency owner, admin, or accountant creates the commercial document. You can review it here once issued.</p> : null}
+                {financeSummary ? <div className="grid gap-2 sm:grid-cols-2">
+                  <Summary label="Revenue" value={commercialMoney(profitability?.revenue ?? financeSummary.revenue, financeSummary.currency)} />
+                  {state?.finance?.supplier_costs_visible ? <Summary label="Supplier costs" value={commercialMoney(profitability?.supplier_costs, financeSummary.currency)} /> : null}
+                  {state?.finance?.supplier_costs_visible ? <Summary label="Margin" value={commercialMoney(profitability?.gross_margin, financeSummary.currency)} /> : null}
+                  <Summary label="Payments" value={commercialMoney(financeSummary.payments_received, financeSummary.currency)} />
+                </div> : <p className="text-sm text-slate-600">No posted commercial activity for this booking.</p>}
+                <p className="text-xs text-slate-500">Ledger reporting consumes booking evidence but never rewrites this BookingRecord.</p>
               </Panel>
             </div>
 
@@ -463,6 +476,10 @@ function label(value) {
 
 function labelValue(value) {
   return String(value || "").replaceAll("_", " ")
+}
+
+function commercialMoney(value, currency) {
+  return `${Number(value || 0).toFixed(2)} ${currency || ""}`.trim()
 }
 
 function documentHref(documentType, sourceContextType, sourceContextId) {

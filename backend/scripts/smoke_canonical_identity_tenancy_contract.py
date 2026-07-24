@@ -786,8 +786,14 @@ def verify_permission_contract() -> None:
     agent = agency_permissions("agency_agent")
     if "view_supplier_costs" in agent or "view_margins" in agent:
         raise AssertionError("Agency agent received supplier cost or margin access.")
-    if not {"view_finance", "edit_finance"}.issubset(agent):
-        raise AssertionError("Agency agent lost established invoice/payment access.")
+    if (
+        "view_finance" not in agent
+        or "edit_finance" not in agent
+        or "edit_commercial_ledger" in agent
+    ):
+        raise AssertionError(
+            "Agency agent must retain after-sales access without ledger mutation."
+        )
     if not all(
         "edit_airline_knowledge" in agency_permissions(role)
         for role in ("agency_owner", "agency_admin", "agency_agent")
@@ -845,7 +851,13 @@ def verify_permission_contract() -> None:
     else:
         raise AssertionError("Agency Agent could submit a protected commission line.")
     accountant = agency_permissions("agency_accountant")
-    if not {"view_finance", "edit_finance"}.issubset(accountant):
+    if not {
+        "view_finance",
+        "edit_finance",
+        "edit_commercial_ledger",
+        "view_supplier_costs",
+        "view_margins",
+    }.issubset(accountant):
         raise AssertionError("Agency accountant finance permissions are incomplete.")
     if {"edit_clients", "edit_passengers", "edit_requests"} & accountant:
         raise AssertionError("Agency accountant received unrelated operational edit access.")
@@ -857,6 +869,8 @@ def verify_permission_contract() -> None:
         "/api/agencies/agency-a/passenger-service-history": "edit_passengers",
         "/api/agencies/agency-a/passenger-operational-preferences": "edit_passengers",
         "/api/agencies/agency-a/passenger-known-documents": "edit_passengers",
+        "/api/agencies/agency-a/invoices": "edit_commercial_ledger",
+        "/api/agencies/agency-a/after-sales": "edit_finance",
     }
     for path, expected in expected_route_permissions.items():
         actual = agency_request_permission(path, "POST")
