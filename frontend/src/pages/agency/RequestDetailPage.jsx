@@ -7,9 +7,11 @@ import RequestStatusBadge from "../../components/RequestStatusBadge"
 import SecondaryButton from "../../components/SecondaryButton"
 import Timeline from "../../components/Timeline"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
+import PtcSelect from "../../components/reference/PtcSelect"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
+import { passengerTypeCompatibilityCode } from "../../lib/referenceData"
 
 export default function RequestDetailPage({ requestId }) {
   const [state, setState] = useState(null)
@@ -40,6 +42,11 @@ export default function RequestDetailPage({ requestId }) {
     setIdentityDrafts((current) => Object.fromEntries(
       (detail.passengers || []).filter((passenger) => !passenger.passenger_id).map((passenger) => {
         const proposed = passenger.proposed_identity_json || {}
+        const passengerTypeCode = proposed.passenger_type_code
+          || passenger.passenger_type_code
+          || proposed.passenger_type
+          || passenger.snapshot_passenger_type
+          || "ADT"
         return [passenger.id, current[passenger.id] || {
           existing_passenger_id: "",
           first_name: proposed.first_name || "",
@@ -47,7 +54,12 @@ export default function RequestDetailPage({ requestId }) {
           last_name: proposed.last_name || "",
           display_name: proposed.display_name || "",
           date_of_birth: proposed.date_of_birth || "",
-          passenger_type: proposed.passenger_type || passenger.snapshot_passenger_type || "ADT",
+          passenger_type: passengerTypeCompatibilityCode(
+            { code: proposed.passenger_type || passengerTypeCode },
+          ),
+          passenger_type_code_id: proposed.passenger_type_code_id || passenger.passenger_type_code_id || "",
+          passenger_type_code: passengerTypeCode,
+          passenger_type_label: proposed.passenger_type_label || passenger.passenger_type_label || passenger.snapshot_passenger_type || "Adult",
           relationship_type: "other",
           confirmation_reason: "",
         }]
@@ -107,6 +119,9 @@ export default function RequestDetailPage({ requestId }) {
           display_name: draft.display_name || undefined,
           date_of_birth: draft.date_of_birth,
           passenger_type: draft.passenger_type || "ADT",
+          passenger_type_code_id: draft.passenger_type_code_id || undefined,
+          passenger_type_code: draft.passenger_type_code || draft.passenger_type || "ADT",
+          passenger_type_label: draft.passenger_type_label || draft.passenger_type_code || draft.passenger_type || "Adult",
           relationship_type: draft.relationship_type || "other",
           confirmation_reason: draft.confirmation_reason,
         }
@@ -360,11 +375,22 @@ export default function RequestDetailPage({ requestId }) {
                             <label className="text-sm font-medium text-slate-700">Last name<input required className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.last_name || ""} onChange={(event) => setIdentityField(item.id, "last_name", event.target.value)} /></label>
                             <label className="text-sm font-medium text-slate-700">Display name<input className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.display_name || ""} onChange={(event) => setIdentityField(item.id, "display_name", event.target.value)} /></label>
                             <label className="text-sm font-medium text-slate-700">Date of birth<input required type="date" className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.date_of_birth || ""} onChange={(event) => setIdentityField(item.id, "date_of_birth", event.target.value)} /></label>
-                            <label className="text-sm font-medium text-slate-700">Passenger type
-                              <select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={draft.passenger_type || "ADT"} onChange={(event) => setIdentityField(item.id, "passenger_type", event.target.value)}>
-                                {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => <option key={value} value={value}>{value}</option>)}
-                              </select>
-                            </label>
+                            <PtcSelect
+                              required
+                              value={draft.passenger_type_code_id || ""}
+                              selectedCode={draft.passenger_type_code || draft.passenger_type || "ADT"}
+                              selectedLabel={draft.passenger_type_label || ""}
+                              onChange={(option) => setIdentityDrafts((current) => ({
+                                ...current,
+                                [item.id]: {
+                                  ...(current[item.id] || {}),
+                                  passenger_type_code_id: option?.id || "",
+                                  passenger_type_code: option?.code || "",
+                                  passenger_type: passengerTypeCompatibilityCode(option),
+                                  passenger_type_label: option?.label || "",
+                                },
+                              }))}
+                            />
                           </div>
                         ) : null}
                         <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60" disabled={confirmingIdentity === item.id} type="submit">{confirmingIdentity === item.id ? "Confirming..." : "Confirm identity"}</button>

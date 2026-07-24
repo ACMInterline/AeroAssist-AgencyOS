@@ -291,7 +291,13 @@ async def create_request_from_builder(
             if suggested and confirmed and confirmed != suggested and not service.details.get("override_reason"):
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mobility SSR override reason is required when confirmed code differs from suggested code.")
     canonical_payload = await builder_payload_to_v4(db, agency_id, payload)
-    return await create_request_v4(db, agency_id, canonical_payload, user["id"])
+    return await create_request_v4(
+        db,
+        agency_id,
+        canonical_payload,
+        user["id"],
+        allow_legacy_ptc=True,
+    )
 
 
 @router.get("/requests")

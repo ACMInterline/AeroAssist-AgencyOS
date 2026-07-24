@@ -343,3 +343,13 @@ without turning an honest `migration_required` state into a validation failure.
 item; it is not promoted to canonical ownership. New V4 structural writes use
 the aggregate route, while explicit passenger identity confirmation remains a
 separate guarded action.
+
+## P1 Product Kernel Repair 5 - Canonical Reference Data
+
+`GlobalReferenceRecord` and `global_reference_records` remain the sole shared
+reference-data owner. `passenger_type_codes`, `species`, `breeds`, pricing
+formula components, communication channels, and service codes resolve to
+existing stable domain keys rather than creating duplicate collections.
+`PassengerProfile`, `TravelRequest`, and `RequestPassenger` retain operational
+truth and store reference IDs with historical code/label snapshots. Agency
+scope is a visibility constraint, never a replacement ownership boundary.

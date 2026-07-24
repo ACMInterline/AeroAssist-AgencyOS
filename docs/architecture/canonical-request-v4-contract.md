@@ -99,11 +99,14 @@ updates the canonical payload so the aggregate and child projection agree.
 
 ## Reference Dependencies
 
-PTC, nationality, airport, airline, animal, breed, country, currency, and
-service values retain reference-compatible codes and labels. Request V4 does
-not create replacement reference registries. Richer reference IDs remain an
-explicit dependency where current reference domains do not yet provide one
-stable identifier.
+PTC, nationality, airport, airline, cabin, animal, breed, container, special
+item, country, currency, and service values resolve through the canonical
+reference-data contract where populated. Request V4 stores stable reference
+IDs plus compatibility code/key and label snapshots. Unknown legacy values
+remain readable and add a reconciliation message; they are never silently
+replaced. Age validation is performed on the backend from PTC metadata and the
+first segment departure date. See
+[Canonical Reference Data Contract](canonical-reference-data-contract.md).
 
 ## Downstream Contract
 

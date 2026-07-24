@@ -497,3 +497,18 @@ membership identity lookup is additive.
 
 V4 child collections have additive Agency/request/local-ID indexes. No
 collection is renamed, dropped, migrated, or duplicated.
+
+## P1 Product Kernel Repair 5 - Canonical Reference Wiring
+
+| Model | Collection | Role |
+|---|---|---|
+| `GlobalReferenceRecord` | `global_reference_records` | Canonical shared reference owner, including rich PTC metadata |
+| `PassengerProfile` | `passenger_profiles` | Passenger truth with PTC/country/language/document IDs and snapshots |
+| `TravelRequest` | `travel_requests` | Request aggregate containing reference-backed V4 snapshots and reconciliation messages |
+| `RequestPassenger` | `request_passengers` | Request-scoped PTC/nationality IDs and historical snapshots |
+| `RequestSegment` | `request_segments` | Airport, carrier, and cabin IDs plus compatibility values |
+| `RequestPet` | `request_pets` | Species, breed, and container references |
+| `RequestSpecialItem` | `request_special_items` | Category and declared-value currency references |
+
+No new collection is introduced. Additive indexes support active deterministic
+reference lookups; startup index governance remains non-destructive.

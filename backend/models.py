@@ -317,6 +317,11 @@ class PassengerType(str, Enum):
     YTH = "YTH"
     SRC = "SRC"
     STU = "STU"
+    SEA = "SEA"
+    MIL = "MIL"
+    GRP = "GRP"
+    # Legacy compatibility values remain readable. UMNR is a service and INS
+    # is not seeded as a canonical Passenger Type Code.
     UMNR = "UMNR"
     INS = "INS"
     OTHER = "other"
@@ -1409,12 +1414,27 @@ class PassengerProfile(BaseDocument):
     display_name: str
     date_of_birth: date
     passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: str = "ADT"
+    passenger_type_label: str = "Adult"
+    passenger_type_reconciliation_status: str = "legacy_unresolved"
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: str = "en"
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
@@ -1439,12 +1459,26 @@ class PassengerProfileCreate(BaseModel):
     display_name: Optional[str] = None
     date_of_birth: date
     passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: str = "en"
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
@@ -1463,12 +1497,26 @@ class PassengerProfileUpdate(BaseModel):
     display_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     passenger_type: Optional[PassengerType] = None
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: Optional[str] = None
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
@@ -2208,13 +2256,21 @@ class RequestV4Trip(BaseModel):
     trip_purpose: RequestV4TripPurpose = RequestV4TripPurpose.LEISURE
     quote_mode: RequestV4QuoteMode = RequestV4QuoteMode.ONE_WAY
     preferred_cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    preferred_cabin_id: str = Field(default="", max_length=120)
+    preferred_cabin_label: str = Field(default="", max_length=80)
     budget_currency: str = Field(default="", max_length=3)
+    budget_currency_id: str = Field(default="", max_length=120)
+    budget_currency_label: str = Field(default="", max_length=80)
     budget_amount: Optional[float] = None
     max_stops: Optional[int] = Field(default=None, ge=0, le=12)
     max_total_travel_hours: Optional[float] = Field(default=None, gt=0, le=240)
     flexibility_days: Optional[int] = Field(default=None, ge=0, le=31)
     preferred_airlines: List[str] = Field(default_factory=list, max_length=50)
+    preferred_airline_ids: List[str] = Field(default_factory=list, max_length=50)
+    preferred_airline_labels: List[str] = Field(default_factory=list, max_length=50)
     excluded_airlines: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airline_ids: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airline_labels: List[str] = Field(default_factory=list, max_length=50)
 
     @model_validator(mode="after")
     def validate_trip_preferences(self):
@@ -2243,19 +2299,29 @@ class RequestV4Segment(BaseModel):
     segment_local_id: str = Field(min_length=1, max_length=80)
     segment_order: int = Field(ge=1, le=100)
     origin_label: str = Field(min_length=1, max_length=160)
+    origin_airport_id: str = Field(default="", max_length=120)
     origin_iata: str = Field(default="", max_length=3)
+    origin_country_id: str = Field(default="", max_length=120)
     origin_country_code: str = Field(default="", max_length=2)
     destination_label: str = Field(min_length=1, max_length=160)
+    destination_airport_id: str = Field(default="", max_length=120)
     destination_iata: str = Field(default="", max_length=3)
+    destination_country_id: str = Field(default="", max_length=120)
     destination_country_code: str = Field(default="", max_length=2)
     departure_date: date
     departure_time: str = Field(default="", max_length=8)
     arrival_date: Optional[date] = None
     arrival_time: str = Field(default="", max_length=8)
     marketing_carrier: str = Field(default="", max_length=3)
+    marketing_carrier_id: str = Field(default="", max_length=120)
+    marketing_carrier_label: str = Field(default="", max_length=160)
     operating_carrier: str = Field(default="", max_length=3)
+    operating_carrier_id: str = Field(default="", max_length=120)
+    operating_carrier_label: str = Field(default="", max_length=160)
     flight_number: str = Field(default="", max_length=12)
     cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    cabin_id: str = Field(default="", max_length=120)
+    cabin_label: str = Field(default="", max_length=80)
     notes: str = Field(default="", max_length=2000)
 
     @model_validator(mode="after")
@@ -2474,6 +2540,9 @@ class RequestV4Passenger(BaseModel):
     last_name: str = Field(default="", max_length=80)
     date_of_birth: Optional[date] = None
     calculated_age_on_first_segment: Optional[int] = Field(default=None, ge=0, le=130)
+    passenger_type_reconciliation_status: str = Field(default="pending_resolution", max_length=80)
+    passenger_type_validation_messages: List[str] = Field(default_factory=list, max_length=20)
+    nationality_reference_id: str = Field(default="", max_length=120)
     nationality_label: str = Field(default="", max_length=120)
     nationality_code: str = Field(default="", max_length=3)
     notes: str = Field(default="", max_length=2000)
@@ -2512,8 +2581,10 @@ class RequestV4Pet(BaseModel):
     segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
     segment_ids: List[str] = Field(default_factory=list, max_length=100)
     pet_category: str = Field(default="PETC", max_length=16)
+    species_reference_id: str = Field(default="", max_length=120)
     species_label: str = Field(min_length=1, max_length=120)
     species_key: str = Field(default="", max_length=120)
+    breed_reference_id: str = Field(default="", max_length=120)
     breed_label: str = Field(default="", max_length=120)
     breed_key: str = Field(default="", max_length=120)
     colour: str = Field(default="", max_length=80)
@@ -2531,6 +2602,8 @@ class RequestV4Pet(BaseModel):
     carrier_width_cm: Optional[float] = Field(default=None, gt=0, le=1000)
     carrier_height_cm: Optional[float] = Field(default=None, gt=0, le=1000)
     crate_type: str = Field(default="", max_length=120)
+    container_type_reference_id: str = Field(default="", max_length=120)
+    container_type_label: str = Field(default="", max_length=120)
     vaccination_passport_uploaded: bool = False
     rabies_vaccination_date: Optional[date] = None
     rabies_serology_done: bool = False
@@ -2577,7 +2650,11 @@ class RequestV4SpecialItem(BaseModel):
     linked_passenger_local_id: Optional[str] = Field(default=None, max_length=80)
     segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
     segment_ids: List[str] = Field(default_factory=list, max_length=100)
+    item_category_reference_id: str = Field(default="", max_length=120)
+    item_category_label: str = Field(default="", max_length=120)
     item_category: str = Field(default="other", max_length=40)
+    declared_value_currency_id: str = Field(default="", max_length=120)
+    declared_value_currency_label: str = Field(default="", max_length=80)
     details: Dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -2637,6 +2714,7 @@ class RequestV4AdminMetadata(BaseModel):
     created_on_behalf_of: str = Field(default="", max_length=160)
     internal_notes: str = Field(default="", max_length=4000)
     assigned_to: str = Field(default="", max_length=120)
+    reference_reconciliation_messages: List[str] = Field(default_factory=list, max_length=100)
 
 
 class RequestV4Payload(BaseModel):
@@ -3163,8 +3241,10 @@ class RequestPet(BaseDocument):
     segment_local_ids: List[str] = Field(default_factory=list)
     pet_category: Optional[str] = None
     pet_name: Optional[str] = None
+    species_reference_id: Optional[str] = None
     species: str
     species_key: Optional[str] = None
+    breed_reference_id: Optional[str] = None
     breed: Optional[str] = None
     breed_key: Optional[str] = None
     breed_free_text: Optional[str] = None
@@ -3183,6 +3263,8 @@ class RequestPet(BaseDocument):
     combined_weight_kg: Optional[float] = None
     requested_transport_mode: Optional[str] = None
     carrier_dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    container_type_reference_id: Optional[str] = None
+    container_type_label: Optional[str] = None
     crate_type: Optional[str] = None
     vaccination_passport_uploaded: bool = False
     rabies_vaccination_date: Optional[date] = None
@@ -3234,6 +3316,8 @@ class RequestSpecialItem(BaseDocument):
     segment_scope_mode: Optional[str] = None
     segment_local_ids: List[str] = Field(default_factory=list)
     item_type: str
+    item_category_reference_id: Optional[str] = None
+    item_category_label: Optional[str] = None
     item_category_code: Optional[str] = None
     item_name: Optional[str] = None
     description: str
@@ -3246,6 +3330,8 @@ class RequestSpecialItem(BaseDocument):
     usage_in_cabin_flag: bool = False
     special_handling_instructions: Optional[str] = None
     documentation_status: Optional[str] = None
+    declared_value_currency_id: Optional[str] = None
+    declared_value_currency_label: Optional[str] = None
     dimensions_text: Optional[str] = None
     weight_text: Optional[str] = None
     requires_policy_check: bool = True
@@ -3558,8 +3644,12 @@ class RequestPassenger(BaseDocument):
     snapshot_date_of_birth: Optional[date] = None
     snapshot_passenger_type: str
     passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
     passenger_type_label: Optional[str] = None
+    passenger_type_reconciliation_status: str = "legacy_unresolved"
+    passenger_type_validation_messages: List[str] = Field(default_factory=list)
     calculated_age_on_first_segment: Optional[int] = None
+    nationality_reference_id: Optional[str] = None
     nationality_label: Optional[str] = None
     nationality_code: Optional[str] = None
     selected_services: List[str] = Field(default_factory=list)
@@ -3608,6 +3698,9 @@ class RequestPassengerIdentityConfirm(BaseModel):
     display_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
     gender: Optional[str] = None
     nationality: Optional[str] = None
     residence_country: Optional[str] = None
@@ -3656,11 +3749,15 @@ class RequestSegment(BaseDocument):
     trip_segment_id: Optional[str] = None
     sequence: int
     origin_text: str
+    origin_airport_id: Optional[str] = None
     origin_airport_code: Optional[str] = None
+    origin_country_id: Optional[str] = None
     origin_city: Optional[str] = None
     origin_country: Optional[str] = None
     destination_text: str
+    destination_airport_id: Optional[str] = None
     destination_airport_code: Optional[str] = None
+    destination_country_id: Optional[str] = None
     destination_city: Optional[str] = None
     destination_country: Optional[str] = None
     departure_date: Optional[date] = None
@@ -3668,10 +3765,16 @@ class RequestSegment(BaseDocument):
     arrival_date: Optional[date] = None
     arrival_time_window: Optional[str] = None
     marketing_airline: Optional[str] = None
+    marketing_airline_id: Optional[str] = None
+    marketing_airline_label: Optional[str] = None
     operating_airline: Optional[str] = None
+    operating_airline_id: Optional[str] = None
+    operating_airline_label: Optional[str] = None
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
+    cabin_reference_id: Optional[str] = None
+    cabin_label: Optional[str] = None
     canonical_request_version: Optional[int] = None
     canonical_projection: bool = False
     notes: Optional[str] = None
@@ -25975,6 +26078,13 @@ class GlobalReferenceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     source_type: Optional[ReferenceRecordSourceType] = None
     is_active: Optional[bool] = None
+
+
+class ReferenceDeactivationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    force: bool = False
+    reason: Optional[str] = Field(default=None, max_length=1000)
 
 
 class ReferenceDomainMetadata(BaseDocument):

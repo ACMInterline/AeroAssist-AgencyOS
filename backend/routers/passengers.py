@@ -21,6 +21,7 @@ from models import (
 from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import assert_agency_access, require_any_agency_role
 from services.authorization_service import require_permission
+from services.canonical_reference_service import resolve_passenger_profile_references
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["passengers"])
 
@@ -90,14 +91,24 @@ async def list_passengers(
     filters = {"agency_id": agency_id}
     if status_filter:
         filters["status"] = status_filter
-    if passenger_type:
-        filters["passenger_type"] = passenger_type
     passengers = await db.collection("passenger_profiles").find_many(filters)
     passengers = [
         passenger
         for passenger in passengers
         if status_filter or passenger.get("status") != "quarantined"
     ]
+    if passenger_type:
+        normalized_type = passenger_type.upper()
+        passengers = [
+            passenger
+            for passenger in passengers
+            if str(
+                passenger.get("passenger_type_code")
+                or passenger.get("passenger_type")
+                or ""
+            ).upper()
+            == normalized_type
+        ]
     passengers = [
         passenger
         for passenger in passengers
@@ -118,7 +129,11 @@ async def create_passenger(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    data = payload.model_dump(mode="json")
+    data = await resolve_passenger_profile_references(
+        db,
+        agency_id,
+        payload.model_dump(mode="json"),
+    )
     if not data.get("display_name"):
         middle = f" {data['middle_name']}" if data.get("middle_name") else ""
         data["display_name"] = f"{data['first_name']}{middle} {data['last_name']}"
@@ -166,10 +181,16 @@ async def update_passenger(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    await get_passenger_or_404(db, agency_id, passenger_id)
+    existing = await get_passenger_or_404(db, agency_id, passenger_id)
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
+    updates = await resolve_passenger_profile_references(
+        db,
+        agency_id,
+        updates,
+        existing=existing,
+    )
     passenger = await db.collection("passenger_profiles").update_one(
         {"agency_id": agency_id, "id": passenger_id},
         updates,

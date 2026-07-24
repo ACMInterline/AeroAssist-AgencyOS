@@ -27,6 +27,11 @@ from models import (
 )
 from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
 from persistence_repository import PersistenceRepository
+from services.canonical_reference_service import (
+    reference_snapshot,
+    resolve_reference,
+    validate_ptc_for_date,
+)
 
 
 REQUEST_V4_VERSION = 4
@@ -269,6 +274,409 @@ async def validate_passenger_links(db: Database, agency_id: str, payload: Reques
         passenger.identity_status = "confirmed"
 
 
+async def _resolve_optional_snapshot(
+    db: Database,
+    domain: str,
+    *,
+    reference_id: str,
+    code: str,
+    agency_id: str,
+    allow_uninitialized_legacy: bool = True,
+) -> tuple[dict[str, Any] | None, str]:
+    if not reference_id and not code:
+        return None, "not_supplied"
+    try:
+        return await resolve_reference(
+            db,
+            domain,
+            reference_id=reference_id or None,
+            code=code or None,
+            agency_id=agency_id,
+            active_required=True,
+            allow_uninitialized_legacy=allow_uninitialized_legacy,
+        )
+    except HTTPException as exc:
+        if not reference_id and code and exc.status_code == status.HTTP_400_BAD_REQUEST:
+            return None, "unknown_legacy_value"
+        raise
+
+
+async def resolve_request_references(
+    db: Database,
+    agency_id: str,
+    payload: RequestV4Payload,
+    *,
+    historical_payload: RequestV4Payload | None = None,
+    allow_legacy_ptc: bool = False,
+) -> None:
+    reconciliation_messages: list[str] = []
+
+    def record_reconciliation(domain: str, code: str, resolution: str) -> None:
+        if resolution == "unknown_legacy_value":
+            reconciliation_messages.append(
+                f"{domain}:{code} is not mapped to an active canonical reference."
+            )
+
+    historical_passengers = {
+        item.passenger_local_id: item for item in historical_payload.passengers
+    } if historical_payload else {}
+    first_departure = payload.itinerary_segments[0].departure_date
+    for passenger in payload.passengers:
+        historical = historical_passengers.get(passenger.passenger_local_id)
+        same_historical_reference = bool(
+            historical
+            and historical.passenger_type_code_id
+            and (
+                passenger.passenger_type_code_id == historical.passenger_type_code_id
+                or (
+                    not passenger.passenger_type_code_id
+                    and passenger.passenger_type_code == historical.passenger_type_code
+                )
+            )
+        )
+        if same_historical_reference:
+            record = await db.collection("global_reference_records").find_one(
+                {
+                    "domain": "passenger_types",
+                    "id": historical.passenger_type_code_id,
+                }
+            )
+            passenger.passenger_type_code_id = historical.passenger_type_code_id
+            passenger.passenger_type_code = historical.passenger_type_code
+            passenger.passenger_type_label = historical.passenger_type_label
+            if not record:
+                passenger.passenger_type_reconciliation_status = "missing_reference_historical"
+                reconciliation_messages.append(
+                    f"passenger_types:{historical.passenger_type_code} historical reference is missing."
+                )
+            elif (
+                str(record.get("scope") or "global") != "global"
+                and record.get("agency_id") != agency_id
+            ):
+                record = None
+                passenger.passenger_type_reconciliation_status = "cross_scope_reference_historical"
+                reconciliation_messages.append(
+                    f"passenger_types:{historical.passenger_type_code} historical reference needs scope reconciliation."
+                )
+            else:
+                passenger.passenger_type_reconciliation_status = (
+                    "resolved_inactive_historical"
+                    if not record.get("is_active", True)
+                    else historical.passenger_type_reconciliation_status or "resolved"
+                )
+        else:
+            if allow_legacy_ptc and not passenger.passenger_type_code_id:
+                record, resolution = await _resolve_optional_snapshot(
+                    db,
+                    "passenger_types",
+                    reference_id="",
+                    code=passenger.passenger_type_code,
+                    agency_id=agency_id,
+                )
+            else:
+                record, resolution = await resolve_reference(
+                    db,
+                    "passenger_types",
+                    reference_id=passenger.passenger_type_code_id or None,
+                    code=passenger.passenger_type_code or None,
+                    agency_id=agency_id,
+                    active_required=True,
+                    allow_uninitialized_legacy=True,
+                )
+            if record:
+                snapshot = reference_snapshot(record)
+                passenger.passenger_type_code_id = snapshot["id"]
+                legacy_alias = next(
+                    (
+                        str(alias).upper()
+                        for alias in record.get("aliases") or []
+                        if str(alias).upper() == passenger.passenger_type_code.upper()
+                    ),
+                    None,
+                )
+                passenger.passenger_type_code = legacy_alias or snapshot["code"]
+                passenger.passenger_type_label = snapshot["label"]
+                passenger.passenger_type_reconciliation_status = (
+                    "resolved"
+                    if (record.get("metadata_json") or record.get("metadata") or {}).get("passenger_category")
+                    else "legacy_reference_incomplete"
+                )
+            else:
+                passenger.passenger_type_reconciliation_status = resolution
+                record_reconciliation(
+                    "passenger_types",
+                    passenger.passenger_type_code,
+                    resolution,
+                )
+        if record and (record.get("metadata_json") or record.get("metadata") or {}).get("passenger_category"):
+            validation = validate_ptc_for_date(
+                record,
+                date_of_birth=passenger.date_of_birth,
+                travel_date=first_departure,
+            )
+            passenger.calculated_age_on_first_segment = validation["age"]
+            passenger.passenger_type_validation_messages = [
+                *validation["errors"],
+                *validation["warnings"],
+            ]
+            if validation["errors"] and not same_historical_reference:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail={
+                        "field": f"passengers.{passenger.passenger_local_id}.passenger_type_code_id",
+                        "messages": validation["errors"],
+                    },
+                )
+        elif record:
+            passenger.passenger_type_validation_messages = [
+                "Passenger type reference requires metadata reconciliation."
+            ]
+
+        nationality, nationality_resolution = await _resolve_optional_snapshot(
+            db,
+            "countries",
+            reference_id=passenger.nationality_reference_id,
+            code=passenger.nationality_code,
+            agency_id=agency_id,
+        )
+        if nationality:
+            snapshot = reference_snapshot(nationality)
+            passenger.nationality_reference_id = snapshot["id"]
+            passenger.nationality_code = snapshot["code"]
+            passenger.nationality_label = snapshot["label"]
+        else:
+            record_reconciliation(
+                "countries",
+                passenger.nationality_code,
+                nationality_resolution,
+            )
+
+    trip = payload.trip
+    cabin, cabin_resolution = await _resolve_optional_snapshot(
+        db,
+        "cabin_classes",
+        reference_id=trip.preferred_cabin_id,
+        code=str(trip.preferred_cabin),
+        agency_id=agency_id,
+    )
+    if cabin:
+        snapshot = reference_snapshot(cabin)
+        if snapshot["code"] not in {"Y", "W", "C", "F"}:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Selected cabin reference is not compatible with Request V4.",
+            )
+        trip.preferred_cabin_id = snapshot["id"]
+        trip.preferred_cabin = snapshot["code"]
+        trip.preferred_cabin_label = snapshot["label"]
+    else:
+        record_reconciliation(
+            "cabin_classes",
+            str(trip.preferred_cabin),
+            cabin_resolution,
+        )
+
+    currency, currency_resolution = await _resolve_optional_snapshot(
+        db,
+        "currencies",
+        reference_id=trip.budget_currency_id,
+        code=trip.budget_currency,
+        agency_id=agency_id,
+    )
+    if currency:
+        snapshot = reference_snapshot(currency)
+        trip.budget_currency_id = snapshot["id"]
+        trip.budget_currency = snapshot["code"]
+        trip.budget_currency_label = snapshot["label"]
+    else:
+        record_reconciliation("currencies", trip.budget_currency, currency_resolution)
+
+    async def resolve_airline_list(ids: list[str], codes: list[str]) -> tuple[list[str], list[str], list[str]]:
+        source: list[tuple[str, str]] = []
+        if ids:
+            source.extend((reference_id, "") for reference_id in ids)
+        else:
+            source.extend(("", code) for code in codes)
+        resolved_ids: list[str] = []
+        resolved_codes: list[str] = []
+        resolved_labels: list[str] = []
+        for reference_id, code in source:
+            record, resolution = await _resolve_optional_snapshot(
+                db,
+                "airlines",
+                reference_id=reference_id,
+                code=code,
+                agency_id=agency_id,
+            )
+            if record:
+                snapshot = reference_snapshot(record)
+                resolved_ids.append(snapshot["id"])
+                resolved_codes.append(snapshot["code"])
+                resolved_labels.append(snapshot["label"])
+            elif resolution == "reference_catalogue_uninitialized" and code:
+                resolved_codes.append(code)
+            elif resolution == "unknown_legacy_value" and code:
+                resolved_codes.append(code)
+                record_reconciliation("airlines", code, resolution)
+        return resolved_ids, resolved_codes, resolved_labels
+
+    (
+        trip.preferred_airline_ids,
+        trip.preferred_airlines,
+        trip.preferred_airline_labels,
+    ) = await resolve_airline_list(trip.preferred_airline_ids, trip.preferred_airlines)
+    (
+        trip.excluded_airline_ids,
+        trip.excluded_airlines,
+        trip.excluded_airline_labels,
+    ) = await resolve_airline_list(trip.excluded_airline_ids, trip.excluded_airlines)
+    conflict = sorted(set(trip.preferred_airlines).intersection(trip.excluded_airlines))
+    if conflict:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Airline cannot be both preferred and excluded: {', '.join(conflict)}.",
+        )
+
+    for segment in payload.itinerary_segments:
+        for prefix, reference_id, code in (
+            ("origin", segment.origin_airport_id, segment.origin_iata),
+            ("destination", segment.destination_airport_id, segment.destination_iata),
+        ):
+            record, resolution = await _resolve_optional_snapshot(
+                db,
+                "airports",
+                reference_id=reference_id,
+                code=code,
+                agency_id=agency_id,
+            )
+            if record:
+                snapshot = reference_snapshot(record)
+                setattr(segment, f"{prefix}_airport_id", snapshot["id"])
+                setattr(segment, f"{prefix}_iata", snapshot["code"])
+                setattr(segment, f"{prefix}_label", snapshot["label"])
+                country_code = str(
+                    (record.get("metadata_json") or record.get("metadata") or {}).get("country_code")
+                    or ""
+                ).upper()
+                if country_code:
+                    setattr(segment, f"{prefix}_country_code", country_code)
+            else:
+                record_reconciliation("airports", code, resolution)
+        for prefix, reference_id, code in (
+            ("marketing", segment.marketing_carrier_id, segment.marketing_carrier),
+            ("operating", segment.operating_carrier_id, segment.operating_carrier),
+        ):
+            record, resolution = await _resolve_optional_snapshot(
+                db,
+                "airlines",
+                reference_id=reference_id,
+                code=code,
+                agency_id=agency_id,
+            )
+            if record:
+                snapshot = reference_snapshot(record)
+                setattr(segment, f"{prefix}_carrier_id", snapshot["id"])
+                setattr(segment, f"{prefix}_carrier", snapshot["code"])
+                setattr(segment, f"{prefix}_carrier_label", snapshot["label"])
+            else:
+                record_reconciliation("airlines", code, resolution)
+        cabin, segment_cabin_resolution = await _resolve_optional_snapshot(
+            db,
+            "cabin_classes",
+            reference_id=segment.cabin_id,
+            code=str(segment.cabin),
+            agency_id=agency_id,
+        )
+        if cabin:
+            snapshot = reference_snapshot(cabin)
+            if snapshot["code"] not in {"Y", "W", "C", "F"}:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Segment {segment.segment_local_id} cabin reference is not Request V4 compatible.",
+                )
+            segment.cabin_id = snapshot["id"]
+            segment.cabin = snapshot["code"]
+            segment.cabin_label = snapshot["label"]
+        else:
+            record_reconciliation(
+                "cabin_classes",
+                str(segment.cabin),
+                segment_cabin_resolution,
+            )
+
+    for pet in payload.pets:
+        for domain, id_field, code_field, label_field in (
+            ("pet_species", "species_reference_id", "species_key", "species_label"),
+            ("pet_breeds", "breed_reference_id", "breed_key", "breed_label"),
+            ("container_types", "container_type_reference_id", "crate_type", "container_type_label"),
+        ):
+            record, resolution = await _resolve_optional_snapshot(
+                db,
+                domain,
+                reference_id=getattr(pet, id_field),
+                code=getattr(pet, code_field),
+                agency_id=agency_id,
+            )
+            if record:
+                snapshot = reference_snapshot(record)
+                setattr(pet, id_field, snapshot["id"])
+                setattr(pet, code_field, snapshot["code"])
+                setattr(pet, label_field, snapshot["label"])
+            else:
+                record_reconciliation(
+                    domain,
+                    str(getattr(pet, code_field) or ""),
+                    resolution,
+                )
+
+    for item in payload.special_items:
+        category, category_resolution = await _resolve_optional_snapshot(
+            db,
+            "special_item_categories",
+            reference_id=item.item_category_reference_id,
+            code=item.item_category,
+            agency_id=agency_id,
+        )
+        if category:
+            snapshot = reference_snapshot(category)
+            item.item_category_reference_id = snapshot["id"]
+            item.item_category_label = snapshot["label"]
+        else:
+            record_reconciliation(
+                "special_item_categories",
+                item.item_category,
+                category_resolution,
+            )
+        currency_code = str(item.details.get("currency") or "")
+        currency, item_currency_resolution = await _resolve_optional_snapshot(
+            db,
+            "currencies",
+            reference_id=item.declared_value_currency_id,
+            code=currency_code,
+            agency_id=agency_id,
+        )
+        if currency:
+            snapshot = reference_snapshot(currency)
+            item.declared_value_currency_id = snapshot["id"]
+            item.declared_value_currency_label = snapshot["label"]
+            item.details["currency"] = snapshot["code"]
+        else:
+            record_reconciliation(
+                "currencies",
+                currency_code,
+                item_currency_resolution,
+            )
+
+    payload.admin_metadata.reference_reconciliation_messages = sorted(
+        set(
+            [
+                *payload.admin_metadata.reference_reconciliation_messages,
+                *reconciliation_messages,
+            ]
+        )
+    )
+
+
 async def _upsert_projection(
     db: Database,
     collection_name: str,
@@ -399,8 +807,12 @@ async def project_canonical_request(
                 "snapshot_date_of_birth": passenger.date_of_birth,
                 "snapshot_passenger_type": passenger.passenger_type_code,
                 "passenger_type_code_id": passenger.passenger_type_code_id or None,
+                "passenger_type_code": passenger.passenger_type_code,
                 "passenger_type_label": passenger.passenger_type_label,
+                "passenger_type_reconciliation_status": passenger.passenger_type_reconciliation_status,
+                "passenger_type_validation_messages": passenger.passenger_type_validation_messages,
                 "calculated_age_on_first_segment": passenger.calculated_age_on_first_segment,
+                "nationality_reference_id": passenger.nationality_reference_id or None,
                 "nationality_label": passenger.nationality_label or None,
                 "nationality_code": passenger.nationality_code or None,
                 "selected_services": passenger.selected_services,
@@ -432,20 +844,30 @@ async def project_canonical_request(
                 "segment_local_id": segment.segment_local_id,
                 "sequence": segment.segment_order,
                 "origin_text": segment.origin_label,
+                "origin_airport_id": segment.origin_airport_id or None,
                 "origin_airport_code": segment.origin_iata or None,
+                "origin_country_id": segment.origin_country_id or None,
                 "origin_country": segment.origin_country_code or None,
                 "destination_text": segment.destination_label,
+                "destination_airport_id": segment.destination_airport_id or None,
                 "destination_airport_code": segment.destination_iata or None,
+                "destination_country_id": segment.destination_country_id or None,
                 "destination_country": segment.destination_country_code or None,
                 "departure_date": segment.departure_date,
                 "departure_time_window": segment.departure_time or None,
                 "arrival_date": segment.arrival_date,
                 "arrival_time_window": segment.arrival_time or None,
                 "marketing_airline": segment.marketing_carrier or None,
+                "marketing_airline_id": segment.marketing_carrier_id or None,
+                "marketing_airline_label": segment.marketing_carrier_label or None,
                 "operating_airline": segment.operating_carrier or None,
+                "operating_airline_id": segment.operating_carrier_id or None,
+                "operating_airline_label": segment.operating_carrier_label or None,
                 "preferred_airline_code": segment.marketing_carrier or None,
                 "preferred_flight_number": segment.flight_number or None,
                 "cabin_preference": segment.cabin,
+                "cabin_reference_id": segment.cabin_id or None,
+                "cabin_label": segment.cabin_label or None,
                 "canonical_request_version": REQUEST_V4_VERSION,
                 "canonical_projection": True,
                 "notes": _text(segment.notes, 2000),
@@ -621,8 +1043,10 @@ async def project_canonical_request(
                 "segment_scope_mode": pet.segment_scope_mode,
                 "segment_local_ids": local_segment_ids,
                 "pet_category": pet.pet_category,
+                "species_reference_id": pet.species_reference_id or None,
                 "species": pet.species_label,
                 "species_key": pet.species_key or None,
+                "breed_reference_id": pet.breed_reference_id or None,
                 "breed": pet.breed_label or None,
                 "breed_key": pet.breed_key or None,
                 "colour": pet.colour or None,
@@ -642,6 +1066,8 @@ async def project_canonical_request(
                     "width_cm": pet.carrier_width_cm,
                     "height_cm": pet.carrier_height_cm,
                 },
+                "container_type_reference_id": pet.container_type_reference_id or None,
+                "container_type_label": pet.container_type_label or None,
                 "crate_type": pet.crate_type or None,
                 "vaccination_passport_uploaded": pet.vaccination_passport_uploaded,
                 "rabies_vaccination_date": pet.rabies_vaccination_date,
@@ -731,6 +1157,8 @@ async def project_canonical_request(
                 "segment_scope_mode": item.segment_scope_mode,
                 "segment_local_ids": local_segment_ids,
                 "item_type": item.item_category,
+                "item_category_reference_id": item.item_category_reference_id or None,
+                "item_category_label": item.item_category_label or None,
                 "item_category_code": category_code,
                 "item_name": item_name,
                 "description": details.get("notes") or item_name,
@@ -745,6 +1173,8 @@ async def project_canonical_request(
                 "usage_in_cabin_flag": bool(details.get("cabin_transport_requested")),
                 "special_handling_instructions": details.get("notes"),
                 "documentation_status": details.get("approval_status"),
+                "declared_value_currency_id": item.declared_value_currency_id or None,
+                "declared_value_currency_label": item.declared_value_currency_label or None,
                 "requires_policy_check": True,
                 "generated_key": f"request-v4:item:{item.item_local_id}",
                 "canonical_request_version": REQUEST_V4_VERSION,
@@ -862,7 +1292,9 @@ def _request_parent_updates(payload: RequestV4Payload) -> dict[str, Any]:
         "canonical_payload": payload.model_dump(mode="json"),
         "canonical_payload_updated_at": datetime.now(timezone.utc),
         "canonical_projection_status": "syncing",
-        "canonical_projection_warnings": [],
+        "canonical_projection_warnings": list(
+            payload.admin_metadata.reference_reconciliation_messages
+        ),
         "title": payload.trip.trip_label
         or f"{payload.contact.first_name} {payload.contact.last_name} request",
         "status": _request_status(payload.admin_metadata.status),
@@ -920,7 +1352,14 @@ async def create_request_v4(
     actor_user_id: str,
     *,
     source_intake_id: str | None = None,
+    allow_legacy_ptc: bool = False,
 ) -> dict[str, Any]:
+    await resolve_request_references(
+        db,
+        agency_id,
+        payload,
+        allow_legacy_ptc=allow_legacy_ptc,
+    )
     await validate_passenger_links(db, agency_id, payload)
     client = await _resolve_client(db, agency_id, payload)
     parent = TravelRequest(
@@ -1074,6 +1513,12 @@ async def update_request_v4(
         update.remove_item_local_ids,
     )
     payload = RequestV4Payload.model_validate(submitted)
+    await resolve_request_references(
+        db,
+        agency_id,
+        payload,
+        historical_payload=current_payload,
+    )
     await validate_passenger_links(db, agency_id, payload)
     client = await _resolve_client(db, agency_id, payload)
     await db.collection("travel_requests").update_one(
@@ -1133,7 +1578,9 @@ async def update_request_v4(
         {"agency_id": agency_id, "id": request_id},
         {
             "canonical_projection_status": "current",
-            "canonical_projection_warnings": [],
+            "canonical_projection_warnings": list(
+                payload.admin_metadata.reference_reconciliation_messages
+            ),
             "passenger_count": counts["passenger_count"],
             "service_count": counts["service_count"],
             "pet_count": counts["pet_count"],

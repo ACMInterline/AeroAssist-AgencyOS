@@ -1,4 +1,8 @@
 import { useState } from "react"
+import AirportAutocomplete from "../../components/reference/AirportAutocomplete"
+import CurrencySelect from "../../components/reference/CurrencySelect"
+import PtcSelect from "../../components/reference/PtcSelect"
+import ReferenceSelect from "../../components/reference/ReferenceSelect"
 import PublicLayout from "../../layouts/PublicLayout"
 import { apiPost } from "../../lib/api"
 
@@ -48,20 +52,37 @@ function PublicRequestForm() {
     email: "",
     phone: "",
     origin: "",
+    origin_airport_id: "",
+    origin_iata: "",
     destination: "",
+    destination_airport_id: "",
+    destination_iata: "",
     departure_date: "",
     return_date: "",
     passenger_count: 1,
+    passenger_type_code_id: "",
+    passenger_type_code: "ADT",
+    passenger_type_label: "Adult",
+    preferred_cabin_id: "",
+    preferred_cabin: "Y",
+    preferred_cabin_label: "Economy",
+    budget_currency_id: "",
+    budget_currency: "",
+    budget_currency_label: "",
     service: "booking_or_planning",
     details: "",
     pet_transport: "PETC",
     pet_species: "",
+    pet_species_reference_id: "",
+    pet_species_label: "",
     pet_weight_kg: "",
     container_weight_kg: "",
     carrier_length_cm: "",
     carrier_width_cm: "",
     carrier_height_cm: "",
     special_item_category: "other",
+    special_item_category_reference_id: "",
+    special_item_category_label: "Other",
     special_item_name: "",
     special_item_weight_kg: "",
     privacy_policy_accepted: false,
@@ -85,7 +106,11 @@ function PublicRequestForm() {
         linked_passenger_local_id: passengerLocalIds[0],
         segment_scope_mode: "all_segments",
         segment_ids: [],
-        item_category: form.special_item_category,
+        item_category_reference_id: form.special_item_category_reference_id || "",
+        item_category_label: form.special_item_category_label || "",
+        item_category: form.special_item_category === "fragile_valuable"
+          ? "valuables_fragile"
+          : form.special_item_category,
         details: publicSpecialItemDetails(form),
       } : null
       const detail = publicServiceDetails(serviceKey, form, specialItem)
@@ -101,23 +126,33 @@ function PublicRequestForm() {
           trip_label: `${form.origin} to ${form.destination}`,
           trip_purpose: "leisure",
           quote_mode: form.return_date ? "round_trip" : "one_way",
-          preferred_cabin: "Y",
+          preferred_cabin: form.preferred_cabin || "Y",
+          preferred_cabin_id: form.preferred_cabin_id || "",
+          preferred_cabin_label: form.preferred_cabin_label || "",
+          budget_currency: form.budget_currency || "",
+          budget_currency_id: form.budget_currency_id || "",
+          budget_currency_label: form.budget_currency_label || "",
         },
         itinerary_segments: [{
           segment_local_id: segmentLocalId,
           segment_order: 1,
           origin_label: form.origin,
-          origin_iata: /^[A-Za-z]{3}$/.test(form.origin.trim()) ? form.origin.trim().toUpperCase() : "",
+          origin_airport_id: form.origin_airport_id || "",
+          origin_iata: form.origin_iata || "",
           destination_label: form.destination,
-          destination_iata: /^[A-Za-z]{3}$/.test(form.destination.trim()) ? form.destination.trim().toUpperCase() : "",
+          destination_airport_id: form.destination_airport_id || "",
+          destination_iata: form.destination_iata || "",
           departure_date: form.departure_date,
-          cabin: "Y",
+          cabin: form.preferred_cabin || "Y",
+          cabin_id: form.preferred_cabin_id || "",
+          cabin_label: form.preferred_cabin_label || "",
         }],
         passengers: passengerLocalIds.map((passengerLocalId, index) => ({
           passenger_local_id: passengerLocalId,
           identity_status: "unresolved",
-          passenger_type_code: "ADT",
-          passenger_type_label: "Adult",
+          passenger_type_code_id: form.passenger_type_code_id || "",
+          passenger_type_code: form.passenger_type_code || "ADT",
+          passenger_type_label: form.passenger_type_label || "Adult",
           first_name: index === 0 ? firstName : "",
           last_name: index === 0 ? lastName : "",
           selected_services: serviceKey ? [serviceKey] : [],
@@ -129,7 +164,9 @@ function PublicRequestForm() {
           segment_scope_mode: "all_segments",
           segment_ids: [],
           pet_category: form.pet_transport,
-          species_label: form.pet_species,
+          species_reference_id: form.pet_species_reference_id || "",
+          species_label: form.pet_species_label || form.pet_species,
+          species_key: form.pet_species,
           pet_weight_kg: Number(form.pet_weight_kg),
           container_weight_kg: Number(form.container_weight_kg),
           carrier_length_cm: Number(form.carrier_length_cm),
@@ -167,16 +204,91 @@ function PublicRequestForm() {
           <Field label="Name" value={form.name} onChange={(value) => setForm({ ...form, name: value })} required />
           <Field label="Email" type="email" value={form.email} onChange={(value) => setForm({ ...form, email: value })} required />
           <Field label="Phone" value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} />
-          <Field label="Origin" value={form.origin} onChange={(value) => setForm({ ...form, origin: value })} required />
-          <Field label="Destination" value={form.destination} onChange={(value) => setForm({ ...form, destination: value })} required />
+          <AirportAutocomplete
+            label="Origin"
+            required
+            value={form.origin_airport_id}
+            selectedCode={form.origin_iata}
+            selectedLabel={form.origin}
+            onChange={(option) => setForm({
+              ...form,
+              origin_airport_id: option?.id || "",
+              origin_iata: option?.code || "",
+              origin: option?.label || "",
+            })}
+          />
+          <AirportAutocomplete
+            label="Destination"
+            required
+            value={form.destination_airport_id}
+            selectedCode={form.destination_iata}
+            selectedLabel={form.destination}
+            onChange={(option) => setForm({
+              ...form,
+              destination_airport_id: option?.id || "",
+              destination_iata: option?.code || "",
+              destination: option?.label || "",
+            })}
+          />
           <Field label="Departure date" type="date" value={form.departure_date} onChange={(value) => setForm({ ...form, departure_date: value })} required />
           <Field label="Return date" type="date" value={form.return_date} onChange={(value) => setForm({ ...form, return_date: value })} />
           <Field label="Passengers" type="number" value={form.passenger_count} onChange={(value) => setForm({ ...form, passenger_count: value })} />
+          <PtcSelect
+            required
+            value={form.passenger_type_code_id}
+            selectedCode={form.passenger_type_code}
+            selectedLabel={form.passenger_type_label}
+            onChange={(option) => setForm({
+              ...form,
+              passenger_type_code_id: option?.id || "",
+              passenger_type_code: option?.code || "",
+              passenger_type_label: option?.label || "",
+            })}
+          />
+          <ReferenceSelect
+            domain="cabin_classes"
+            label="Preferred cabin"
+            required
+            value={form.preferred_cabin_id}
+            selectedCode={form.preferred_cabin}
+            selectedLabel={form.preferred_cabin_label}
+            onChange={(option) => setForm({
+              ...form,
+              preferred_cabin_id: option?.id || "",
+              preferred_cabin: option?.code || "",
+              preferred_cabin_label: option?.label || "",
+            })}
+          />
+          <CurrencySelect
+            label="Budget currency"
+            value={form.budget_currency_id}
+            selectedCode={form.budget_currency}
+            selectedLabel={form.budget_currency_label}
+            onChange={(option) => setForm({
+              ...form,
+              budget_currency_id: option?.id || "",
+              budget_currency: option?.code || "",
+              budget_currency_label: option?.label || "",
+            })}
+          />
           <label className="block text-sm font-medium text-slate-700">Service type<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.service} onChange={(event) => setForm({ ...form, service: event.target.value })}>{["booking_or_planning", "mobility_assistance", "medical_travel", "pet_travel", "child_or_unaccompanied_minor", "special_baggage", "documents_or_visa", "disruption_or_claims", "other"].map((item) => <option value={item} key={item}>{item.replaceAll("_", " ")}</option>)}</select></label>
           {form.service === "pet_travel" ? (
             <div className="grid gap-4 rounded-md border border-slate-200 p-4 md:col-span-2 md:grid-cols-3">
               <label className="block text-sm font-medium text-slate-700">Travel arrangement<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.pet_transport} onChange={(event) => setForm({ ...form, pet_transport: event.target.value })}><option value="PETC">In cabin</option><option value="AVIH">In hold</option><option value="SVAN">Service animal</option><option value="OTHER">Not sure</option></select></label>
-              <Field label="Animal species" value={form.pet_species} onChange={(value) => setForm({ ...form, pet_species: value })} required />
+              <ReferenceSelect
+                domain="pet_species"
+                label="Animal species"
+                required
+                value={form.pet_species_reference_id}
+                selectedCode={form.pet_species}
+                selectedLabel={form.pet_species_label}
+                onChange={(option) => setForm({
+                  ...form,
+                  pet_species_reference_id: option?.id || "",
+                  pet_species: option?.code || "",
+                  pet_species_label: option?.label || "",
+                })}
+              />
               <Field label="Animal weight kg" type="number" value={form.pet_weight_kg} onChange={(value) => setForm({ ...form, pet_weight_kg: value })} required />
               <Field label="Carrier weight kg" type="number" value={form.container_weight_kg} onChange={(value) => setForm({ ...form, container_weight_kg: value })} required />
               <Field label="Carrier length cm" type="number" value={form.carrier_length_cm} onChange={(value) => setForm({ ...form, carrier_length_cm: value })} required />
@@ -186,7 +298,19 @@ function PublicRequestForm() {
           ) : null}
           {form.service === "special_baggage" ? (
             <div className="grid gap-4 rounded-md border border-slate-200 p-4 md:col-span-2 md:grid-cols-3">
-              <label className="block text-sm font-medium text-slate-700">Item type<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={form.special_item_category} onChange={(event) => setForm({ ...form, special_item_category: event.target.value })}><option value="sports_equipment">Sports equipment</option><option value="musical_instrument">Musical instrument</option><option value="valuables_fragile">Valuable or fragile item</option><option value="other">Other</option></select></label>
+              <ReferenceSelect
+                domain="special_item_categories"
+                label="Item type"
+                value={form.special_item_category_reference_id}
+                selectedCode={form.special_item_category}
+                selectedLabel={form.special_item_category_label}
+                onChange={(option) => setForm({
+                  ...form,
+                  special_item_category_reference_id: option?.id || "",
+                  special_item_category: option?.code || "other",
+                  special_item_category_label: option?.label || "Other",
+                })}
+              />
               <Field label="Item name" value={form.special_item_name} onChange={(value) => setForm({ ...form, special_item_name: value })} required />
               <Field label="Weight kg" type="number" value={form.special_item_weight_kg} onChange={(value) => setForm({ ...form, special_item_weight_kg: value })} />
             </div>

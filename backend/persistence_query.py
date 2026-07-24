@@ -198,10 +198,10 @@ COLLECTION_OWNERSHIP_REGISTRY: dict[str, CollectionOwnership] = {
     for item in (
         _agency("travel_requests", filters=("status", "request_status", "client_id", "trip_id", "purpose"), sorts=("status", "request_status", "deadline"), recommended_indexes=("travel_requests_agency_updated_id",)),
         _agency("travel_request_workspaces", filters=("request_status", "request_type", "request_priority", "assigned_agent", "operational_workspace_id", "requested_departure_date"), sorts=("request_status", "request_priority", "requested_departure_date", "deadline"), recommended_indexes=("travel_request_workspaces_agency_status_updated_id",)),
-        _agency("passenger_profiles", filters=("first_name", "last_name", "date_of_birth", "status", "identity_integrity_status"), sorts=("last_name", "status")),
+        _agency("passenger_profiles", filters=("first_name", "last_name", "date_of_birth", "status", "identity_integrity_status", "passenger_type_code_id", "passenger_type_code", "nationality_reference_id", "residence_country_reference_id", "passport_country_reference_id"), sorts=("last_name", "status")),
         _agency("agency_staff_memberships", filters=("user_id", "identity_id", "agency_role", "status", "workspace_id"), sorts=("status", "agency_role")),
         _agency("portal_access_mappings", filters=("auth_identity_id", "subject_type", "client_profile_id", "client_id", "passenger_profile_id", "status", "portal_status"), sorts=("status", "subject_type")),
-        _agency("request_passengers", filters=("request_id", "passenger_id", "status", "identity_status"), sorts=("request_id", "status")),
+        _agency("request_passengers", filters=("request_id", "passenger_id", "status", "identity_status", "passenger_type_code_id", "passenger_type_code", "nationality_reference_id"), sorts=("request_id", "status")),
         _agency("request_segments", filters=("request_id", "status"), sorts=("request_id", "status", "sequence")),
         _agency("request_case_flags", filters=("request_id", "status", "flag_code"), sorts=("request_id", "status", "severity")),
         _agency("client_passenger_relationships", filters=("client_id", "passenger_id", "status"), sorts=("client_id", "status")),
@@ -259,7 +259,7 @@ COLLECTION_OWNERSHIP_REGISTRY: dict[str, CollectionOwnership] = {
         _agency("pilot_synthetic_datasets", filters=("dataset_status", "dataset_type"), sorts=("dataset_status", "dataset_type"), historical_reads=True),
         _ownership("pilot_health_timeline_events", CollectionOwnershipType.AUDIT_SECURITY, tenant_field="agency_id", default_sort="occurred_at", filters=("event_type", "status", "reference"), sorts=("event_type", "status"), historical_reads=True),
         _ownership("agencies", CollectionOwnershipType.PLATFORM_GLOBAL, default_sort="created_at", filters=("status", "slug"), sorts=("name", "status")),
-        _ownership("global_reference_records", CollectionOwnershipType.REFERENCE_DATA, default_sort="key", filters=("domain", "key", "status"), sorts=("domain", "status"), historical_reads=True),
+        _ownership("global_reference_records", CollectionOwnershipType.REFERENCE_DATA, default_sort="key", filters=("domain", "key", "code", "status", "is_active", "scope", "agency_id"), sorts=("domain", "status", "sort_order", "label", "key"), historical_reads=True, recommended_indexes=("global_reference_records_domain_active_sort_label", "global_reference_records_agency_domain_active_sort")),
         _ownership("service_catalogue", CollectionOwnershipType.REFERENCE_DATA, default_sort="service_code", filters=("service_code", "service_family", "status"), sorts=("service_family", "status")),
         _ownership("airline_profiles", CollectionOwnershipType.PLATFORM_GLOBAL, default_sort="airline_code", filters=("airline_code", "status"), sorts=("status",)),
         *(

@@ -1892,3 +1892,17 @@ submissions remain intake-only and never create a master passenger. Legacy
 requests remain readable and the supplied analyzer is dry-run only. See
 [Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
 and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 5 - Canonical Reference Data
+
+The existing `GlobalReferenceRecord` engine now owns normalized, tenant-safe
+reference options for Request V4 and Passenger Profile. Rich ADT, CHD, INF,
+YTH, SRC, STU, SEA, MIL, and GRP metadata drives backend PTC validation while
+UMNR remains a service. New writes retain stable IDs with code/key/label
+snapshots; unknown legacy values remain readable and enter reconciliation.
+Platform deactivation is usage-aware, reasoned, audited, and non-destructive.
+Migration analysis is bounded and dry-run only. See
+[Canonical Reference Data Contract](docs/architecture/canonical-reference-data-contract.md),
+[Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md),
+[Reference Data Wiring and Migration](docs/architecture/reference-data-wiring-and-migration.md),
+and [Reference Data Consumer Map](docs/architecture/reference-data-consumer-map.md).

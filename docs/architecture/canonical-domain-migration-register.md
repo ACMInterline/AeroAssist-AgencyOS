@@ -168,3 +168,19 @@ still require reviewed reconciliation, so the domain remains
 `backend/scripts/analyze_legacy_request_v4_migration.py` is dry-run only. No
 production migration, automatic rewrite, inferred passenger identity, or
 destructive cleanup is authorized.
+
+## Reference Wiring Migration Status
+
+| Family | Status | Required action |
+|---|---|---|
+| Passenger Type Codes | canonical reference metadata wired | Reconcile legacy code-only records by reviewed agency/domain batch |
+| Passenger Profile countries/language/document | new writes wired | Review legacy free text and missing IDs |
+| Request V4 airports/airlines/cabin/currency | new writes wired | Review legacy values and inactive/missing links |
+| Request V4 pets and special items | partially wired | Populate incomplete domains before requiring every ID |
+| Clients, Offers, Bookings, Invoices | compatibility debt | Wire existing forms incrementally; do not create replacement models |
+
+`backend/scripts/analyze_reference_wiring_migration.py` performs bounded,
+deterministic, zero-write analysis. It reports candidate mappings, ambiguity,
+manual review, PTC age contradictions, missing/inactive/wrong-domain links,
+duplicate codes/keys, and cross-scope conflicts. Write mode is intentionally
+unavailable.

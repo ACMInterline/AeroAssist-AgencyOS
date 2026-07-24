@@ -2830,6 +2830,31 @@
       "execution_isolation": "none"
     },
     {
+      "script_path": "backend/scripts/smoke_canonical_reference_data_wiring.py",
+      "capability_name": "Canonical Reference Data Wiring",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": true,
+      "scope": [
+        "reference-data",
+        "requests",
+        "passengers",
+        "platform",
+        "agency",
+        "tenancy",
+        "persistence",
+        "frontend",
+        "governance"
+      ],
+      "test_class": "integration",
+      "suitable_for_future_ci": true,
+      "notes": "Disposable in-memory 42-check regression for canonical passenger type records, metadata-driven age validation, Request V4 and PassengerProfile snapshots, governed lifecycle and imports, bounded usage, safe public options, reusable selectors, dry-run reconciliation, tenancy, canonical ownership, and inventory registration.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
       "capability_name": "Visual Policy Editor Foundation",
       "minimum_application_phase": "phase_52_3_visual_policy_editor_foundation",

@@ -2628,3 +2628,24 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
   booking, ticketing, payment, messaging, migration, or production behavior.
 - See [Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
   and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 5 - Passenger Type Codes and Canonical Reference Data
+
+- Keeps the active marker at `phase_59_0_product_experience_recovery`; this is
+  a product-kernel repair, not a new roadmap phase.
+- Keeps `GlobalReferenceRecord` and `global_reference_records` as the canonical
+  reference-data owner and maps specification aliases to stable domain keys.
+- Adds rich governed ADT, CHD, INF, YTH, SRC, STU, SEA, MIL, and GRP metadata;
+  UMNR remains a service and INS is not seeded.
+- Wires Request V4 and Passenger Profile priority fields to normalized,
+  bounded, tenant-safe options while preserving historical ID/code/label
+  snapshots and explicit legacy reconciliation.
+- Adds usage-aware non-destructive deactivation, conflict-aware reactivation,
+  typed PTC administration, matching import validation, and bounded
+  machine-readable consumer ownership.
+- Adds dry-run-only migration analysis with zero writes and no automatic
+  production migration.
+- Performs no provider, policy, pricing, booking, ticketing, payment,
+  messaging, production, deployment, commit, or push action.
+- See [Canonical Reference Data Contract](docs/architecture/canonical-reference-data-contract.md)
+  and [Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md).

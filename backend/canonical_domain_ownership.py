@@ -1390,6 +1390,7 @@ CANONICAL_DOMAIN_OWNERSHIP_REGISTRY: tuple[dict[str, Any], ...] = (
         current_write_owners=(
             "backend/routers/platform_reference.py",
             "backend/routers/reference.py",
+            "backend/services/canonical_reference_service.py",
             "backend/services/reference_data_service.py",
             "backend/services/reference_enrichment_service.py",
             "backend/services/reference_import_template_service.py",

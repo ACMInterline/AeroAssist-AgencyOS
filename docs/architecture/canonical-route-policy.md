@@ -464,3 +464,19 @@ V4 structural child routes reject independent writes. The existing explicit
 identity-confirmation route remains available. No `/admin/*`, `/agent/*`,
 parallel Request route root, anonymous operational mutation, or workspace-ID
 authorization boundary is introduced.
+
+## Canonical Reference Data Routes
+
+- Authenticated list/detail: `GET /api/reference/{domain}` and
+  `GET /api/reference/{domain}/{record_id}`.
+- Public-safe normalized options:
+  `GET /api/reference/{domain}/options`, restricted to an allowlist.
+- Platform usage: `GET /api/reference/{domain}/usage?record_id=...` and
+  `GET /api/platform/reference/records/{record_id}/usage`.
+- Platform-owned create/update/lifecycle actions remain under
+  `/api/platform/reference/*`; compatibility routes under `/api/reference/*`
+  reuse the same canonical collection and authorization.
+
+Options are bounded and tenant safe. Inactive values require authenticated
+historical lookup. There is no `/admin/*`, `/agent/*`, duplicate reference API
+root, public mutation, or tenant-selectable scope override.

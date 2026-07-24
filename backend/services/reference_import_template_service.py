@@ -8,11 +8,13 @@ from typing import Any
 
 from database import Database
 from models import GlobalReferenceRecord, ReferenceImportBatch, now_utc
+from services.canonical_reference_service import find_active_scope_conflict
 from services.reference_data_service import (
     audit_reference_event,
     normalize_city_reference_code,
     normalize_city_reference_metadata,
     normalize_reference_code,
+    normalize_reference_metadata_for_domain,
     safe_reference_import_batch,
 )
 from services.service_catalogue_service import (
@@ -56,6 +58,35 @@ IMPORT_TEMPLATES: dict[str, dict[str, Any]] = {
     "cities": _template("cities", "Cities", ["code", "label", "country_code"], ["aliases", "metadata_json"], "uppercase IATA city code", {"country_code": "metadata_json.country_code"}),
     "airports": _template("airports", "Airports", ["code", "label", "city_code", "country_code"], ["icao_code", "timezone", "latitude", "longitude", "metadata_json"], "uppercase IATA airport code", {"city_code": "metadata_json.city_code", "country_code": "metadata_json.country_code"}),
     "airlines": _template("airlines", "Airlines", ["code", "label"], ["iata_code", "icao_code", "country_code", "alliance_code", "metadata_json"], "uppercase airline code", {"iata_code": "metadata_json.iata_code", "icao_code": "metadata_json.icao_code"}),
+    "passenger_types": _template(
+        "passenger_types",
+        "Passenger Type Codes",
+        ["code", "label", "passenger_category"],
+        [
+            "description",
+            "iata_ptc_code",
+            "age_min_years",
+            "age_max_years",
+            "requires_date_of_birth",
+            "requires_guardian",
+            "is_infant",
+            "is_child",
+            "is_adult",
+            "is_senior",
+            "applies_to_pricing",
+            "applies_to_ticketing",
+            "applies_to_services",
+            "manual_review_required",
+            "metadata_json",
+        ],
+        "uppercase IATA-style passenger type code",
+        {
+            "passenger_category": "metadata_json.passenger_category",
+            "iata_ptc_code": "metadata_json.iata_ptc_code",
+            "age_min_years": "metadata_json.age_min_years",
+            "age_max_years": "metadata_json.age_max_years",
+        },
+    ),
     "currencies": _template("currencies", "Currencies", ["code", "label"], ["currency_iso_code", "symbol", "minor_unit", "metadata_json"], "uppercase ISO currency code", {"currency_iso_code": "metadata_json.currency_iso_code"}),
     "languages": _template("languages", "Languages", ["code", "label"], ["iso639_1", "iso639_2", "native_name", "metadata_json"], "lowercase language code", {"iso639_1": "metadata_json.iso639_1", "iso639_2": "metadata_json.iso639_2"}),
     "service_catalogue": _template("service_catalogue", "Service Catalogue", ["service_key", "label", "category"], ["ssr_code", "rules_category", "emd_applicability", "required_documents_json", "metadata_json"], "uppercase service key", {"service_key": "service_code/service_key", "category": "service_family_code/category"}),
@@ -167,6 +198,30 @@ def metadata_from_row(domain: str, row: dict[str, Any], row_number: int, errors:
         )
         errors.extend([f"Row {row_number}: {error}" for error in city_errors])
         return city_metadata
+    if domain == "passenger_types":
+        for field in ("age_min_years", "age_max_years"):
+            if metadata.get(field) not in (None, ""):
+                try:
+                    metadata[field] = int(str(metadata[field]).strip())
+                except (TypeError, ValueError):
+                    errors.append(f"Row {row_number}: {field} must be a whole number.")
+        for field in (
+            "requires_date_of_birth",
+            "requires_guardian",
+            "is_infant",
+            "is_child",
+            "is_adult",
+            "is_senior",
+            "applies_to_pricing",
+            "applies_to_ticketing",
+            "applies_to_services",
+            "manual_review_required",
+        ):
+            if field in metadata:
+                metadata[field] = parse_bool(metadata[field], False)
+        normalized, metadata_errors = normalize_reference_metadata_for_domain(domain, metadata)
+        errors.extend([f"Row {row_number}: {error}" for error in metadata_errors])
+        return normalized
     return metadata
 
 
@@ -249,6 +304,24 @@ async def preview_reference_import(db: Database, domain: str, csv_text: str, mod
             row_errors.append(f"Row {row_number}: duplicate code {code} within file.")
         seen_codes.add(code)
         found = await existing_record(db, domain, payload) if not row_errors else None
+        if not row_errors and domain != "service_catalogue":
+            conflict = await find_active_scope_conflict(
+                db,
+                domain=domain,
+                code=payload["code"],
+                key=payload["key"],
+                scope="global",
+                agency_id=None,
+                exclude_id=found.get("id") if found else None,
+            )
+            if conflict:
+                row_errors.append(
+                    f"Row {row_number}: active code or key conflicts in the effective scope."
+                )
+            if found and bool(found.get("is_active", True)) != bool(payload.get("is_active", True)):
+                row_errors.append(
+                    f"Row {row_number}: status changes require the governed deactivate or reactivate action."
+                )
         if row_errors:
             action = "error"
             summary["errors"] += 1

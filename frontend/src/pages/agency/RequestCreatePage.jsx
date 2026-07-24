@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from "react"
+import { X } from "lucide-react"
 import ErrorState from "../../components/ErrorState"
 import PageHeader from "../../components/PageHeader"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import AirlineAutocomplete from "../../components/reference/AirlineAutocomplete"
+import AirportAutocomplete from "../../components/reference/AirportAutocomplete"
+import CountrySelect from "../../components/reference/CountrySelect"
+import CurrencySelect from "../../components/reference/CurrencySelect"
+import PtcSelect from "../../components/reference/PtcSelect"
+import ReferenceSelect from "../../components/reference/ReferenceSelect"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPatch, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 import { fetchAgencyFormProfiles, fetchEffectiveAgencyFormProfile } from "../../lib/formProfiles"
-import { fetchReferenceDomain, fetchServiceCatalogue } from "../../lib/referenceData"
+import { fetchServiceCatalogue } from "../../lib/referenceData"
 
 const serviceCategories = [
   "mobility_assistance",
@@ -56,11 +63,11 @@ const ownMobilityDeviceOptions = [
 const batteryDeviceTypes = new Set(["electric_wheelchair_powerchair", "mobility_scooter"])
 
 const newLocalId = (prefix) => `${prefix}_${globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(16).slice(2)}`}`
-const blankPassenger = () => ({ passenger_local_id: newLocalId("pax"), passenger_id: "", first_name: "", last_name: "", display_name: "", date_of_birth: "", passenger_type: "adult", mobility_notes: "", medical_notes: "", notes: "" })
-const blankSegment = () => ({ segment_local_id: newLocalId("seg"), sequence: 1, origin_text: "", destination_text: "", departure_date: "", departure_time_window: "", arrival_date: "", arrival_time_window: "", marketing_airline: "", operating_airline: "", flight_number: "", cabin_preference: "Y", notes: "" })
+const blankPassenger = () => ({ passenger_local_id: newLocalId("pax"), passenger_id: "", first_name: "", last_name: "", display_name: "", date_of_birth: "", passenger_type_code_id: "", passenger_type_code: "ADT", passenger_type_label: "Adult", nationality_reference_id: "", nationality_code: "", nationality_label: "", mobility_notes: "", medical_notes: "", notes: "" })
+const blankSegment = () => ({ segment_local_id: newLocalId("seg"), sequence: 1, origin_text: "", origin_airport_id: "", origin_iata: "", destination_text: "", destination_airport_id: "", destination_iata: "", departure_date: "", departure_time_window: "", arrival_date: "", arrival_time_window: "", marketing_airline: "", marketing_airline_id: "", marketing_airline_label: "", operating_airline: "", operating_airline_id: "", operating_airline_label: "", flight_number: "", cabin_preference: "Y", cabin_id: "", cabin_label: "Economy", notes: "" })
 const blankService = () => ({ category: "mobility_assistance", applies_to_all_passengers: true, applies_to_all_segments: true, passenger_ids: [], segment_ids: [], notes: "", details: { assessment_version: "v2_assessment_driven", passenger_context_tags: [], functional_assessment: {}, confirmed_ssr_code: "use_suggested", own_mobility_device: "no", own_device_details: {}, battery_details: {} } })
-const blankPet = () => ({ pet_local_id: newLocalId("pet"), pet_name: "", species: "dog", breed: "", breed_free_text: "", requested_transport_mode: "PETC", pet_weight_kg: "", container_weight_kg: "", carrier_length_cm: "", carrier_width_cm: "", carrier_height_cm: "", documentation_status: "pending_information", segment_keys: [], notes: "" })
-const blankSpecialItem = () => ({ item_local_id: newLocalId("item"), item_category_code: "other", item_name: "", description: "", quantity: 1, weight_kg: "", length_cm: "", width_cm: "", height_cm: "", transport_location: "checked_baggage", documentation_status: "pending_information", segment_keys: [], notes: "" })
+const blankPet = () => ({ pet_local_id: newLocalId("pet"), pet_name: "", species: "", species_reference_id: "", species_label: "", breed: "", breed_reference_id: "", breed_label: "", breed_free_text: "", container_type_reference_id: "", container_type_code: "", container_type_label: "", requested_transport_mode: "PETC", pet_weight_kg: "", container_weight_kg: "", carrier_length_cm: "", carrier_width_cm: "", carrier_height_cm: "", documentation_status: "pending_information", segment_keys: [], notes: "" })
+const blankSpecialItem = () => ({ item_local_id: newLocalId("item"), item_category_code: "other", item_category_reference_id: "", item_category_label: "Other", declared_value_currency_id: "", declared_value_currency: "", declared_value_currency_label: "", item_name: "", description: "", quantity: 1, weight_kg: "", length_cm: "", width_cm: "", height_cm: "", transport_location: "checked_baggage", documentation_status: "pending_information", segment_keys: [], notes: "" })
 
 export default function RequestCreatePage() {
   const initialParams = new URLSearchParams(window.location.search)
@@ -83,13 +90,17 @@ export default function RequestCreatePage() {
     trip_type: "one_way",
     trip_purpose: "leisure",
     preferred_cabin: "Y",
+    preferred_cabin_id: "",
+    preferred_cabin_label: "Economy",
     budget_currency: "",
+    budget_currency_id: "",
+    budget_currency_label: "",
     budget_amount: "",
     max_stops: "",
     max_total_travel_hours: "",
     flexibility_days: "",
-    preferred_airlines: "",
-    excluded_airlines: "",
+    preferred_airline_options: [],
+    excluded_airline_options: [],
     origin: "",
     destination: "",
     departure_date: "",
@@ -109,17 +120,15 @@ export default function RequestCreatePage() {
   useEffect(() => {
     async function load() {
       const context = await loadCurrentAgency()
-      const [clients, passengers, serviceCatalogue, petSpecies, specialItemCategories] = await Promise.all([
+      const [clients, passengers, serviceCatalogue] = await Promise.all([
         apiGet(`/api/agencies/${context.agency.id}/clients`),
         apiGet(`/api/agencies/${context.agency.id}/passengers`),
         fetchServiceCatalogue().catch(() => ({ items: [] })),
-        fetchReferenceDomain("pet_species").catch(() => ({ items: [] })),
-        fetchReferenceDomain("special_item_categories").catch(() => ({ items: [] })),
       ])
       const profileList = await fetchAgencyFormProfiles(context.agency.id).catch(() => ({ items: [] }))
       const adminProfile = (profileList.items || []).find((profile) => profile.form_context === "admin_request" && profile.is_default) || (profileList.items || []).find((profile) => profile.form_context === "admin_request")
       const formProfile = adminProfile ? await fetchEffectiveAgencyFormProfile(context.agency.id, adminProfile.id).catch(() => null) : null
-      const loadedState = { ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], petSpecies: petSpecies.items || [], specialItemCategories: specialItemCategories.items || [], formProfile }
+      const loadedState = { ...context, clients: clients.items, passengers: passengers.items, serviceCatalogue: serviceCatalogue.items || [], formProfile }
       setState(loadedState)
       const clientId = initialParams.get("client_id") || clients.items[0]?.id || ""
       const passengerId = initialParams.get("passenger_id") || ""
@@ -205,6 +214,9 @@ export default function RequestCreatePage() {
     if (form.client_mode === "inline" && (!form.client_name || !form.client_email)) return "A new contact requires a full name and email address."
     if (!form.segments.some((segment) => segment.origin_text && segment.destination_text && segment.departure_date)) return "Add at least one journey segment with origin, destination, and departure date."
     if (!form.passengers.length) return "Add at least one passenger."
+    const preferredAirlines = new Set(form.preferred_airline_options.map((option) => option.id || option.code))
+    const conflictingAirlines = form.excluded_airline_options.filter((option) => preferredAirlines.has(option.id || option.code))
+    if (conflictingAirlines.length) return "An airline cannot be both preferred and excluded."
     if (form.services.some((service) => !service.applies_to_all_segments && !service.segment_ids.length)) return "Every service must be assigned to at least one exact segment."
     if (form.services.some((service) => !service.applies_to_all_passengers && !service.passenger_ids.length)) return "Every service must be assigned to at least one exact passenger."
     const assignedServiceKeys = new Set()
@@ -303,7 +315,30 @@ export default function RequestCreatePage() {
                     <Field label="Proposed display name" value={passenger.display_name} onChange={(value) => updateArray("passengers", index, { display_name: value })} />
                     <Field label="Proposed last name" value={passenger.last_name} onChange={(value) => updateArray("passengers", index, { last_name: value })} />
                     {fieldVisible("passengers.date_of_birth") ? <Field label="Date of birth" type="date" value={passenger.date_of_birth} onChange={(value) => updateArray("passengers", index, { date_of_birth: value })} /> : null}
-                    {fieldVisible("passengers.passenger_type") ? <Select label="Passenger type" value={passenger.passenger_type} onChange={(value) => updateArray("passengers", index, { passenger_type: value })} options={["adult", "child", "infant", "senior", "unaccompanied_minor"].map((item) => [item, item.replaceAll("_", " ")])} /> : null}
+                    {fieldVisible("passengers.passenger_type") ? (
+                      <PtcSelect
+                        required
+                        value={passenger.passenger_type_code_id || ""}
+                        selectedCode={passenger.passenger_type_code || "ADT"}
+                        selectedLabel={passenger.passenger_type_label || ""}
+                        onChange={(option) => updateArray("passengers", index, {
+                          passenger_type_code_id: option?.id || "",
+                          passenger_type_code: option?.code || "",
+                          passenger_type_label: option?.label || "",
+                        })}
+                      />
+                    ) : null}
+                    <CountrySelect
+                      label="Nationality"
+                      value={passenger.nationality_reference_id || ""}
+                      selectedCode={passenger.nationality_code || ""}
+                      selectedLabel={passenger.nationality_label || ""}
+                      onChange={(option) => updateArray("passengers", index, {
+                        nationality_reference_id: option?.id || "",
+                        nationality_code: option?.code || "",
+                        nationality_label: option?.label || "",
+                      })}
+                    />
                   </div>
                   <TextArea label="Mobility / medical / passenger notes" value={passenger.notes} onChange={(value) => updateArray("passengers", index, { notes: value, mobility_notes: value })} />
                   {form.passengers.length > 1 ? <button className="mt-2 text-sm font-medium text-rose-700" type="button" onClick={() => removeArrayItem("passengers", index)}>Remove passenger</button> : null}
@@ -316,7 +351,20 @@ export default function RequestCreatePage() {
               <div className="grid gap-3 md:grid-cols-4">
                 <Select label="Trip type" value={form.trip_type} onChange={(value) => setField("trip_type", value)} options={["one_way", "round_trip", "multi_city", "open_jaw"].map((item) => [item, item.replaceAll("_", " ")])} />
                 <Select label="Trip purpose" value={form.trip_purpose} onChange={(value) => setField("trip_purpose", value)} options={["business", "leisure", "medical", "family", "other"].map((item) => [item, item.replaceAll("_", " ")])} />
-                <Select label="Preferred cabin" value={form.preferred_cabin} onChange={(value) => setField("preferred_cabin", value)} options={[["Y", "Economy"], ["W", "Premium economy"], ["C", "Business"], ["F", "First"]]} />
+                <ReferenceSelect
+                  domain="cabin_classes"
+                  label="Preferred cabin"
+                  required
+                  value={form.preferred_cabin_id || ""}
+                  selectedCode={form.preferred_cabin}
+                  selectedLabel={form.preferred_cabin_label}
+                  onChange={(option) => setForm((current) => ({
+                    ...current,
+                    preferred_cabin_id: option?.id || "",
+                    preferred_cabin: option?.code || "",
+                    preferred_cabin_label: option?.label || "",
+                  }))}
+                />
                 <Field label="Origin" value={form.origin} onChange={(value) => setField("origin", value)} />
                 <Field label="Destination" value={form.destination} onChange={(value) => setField("destination", value)} />
                 <Field label="Departure date" type="date" value={form.departure_date} onChange={(value) => setField("departure_date", value)} />
@@ -325,27 +373,104 @@ export default function RequestCreatePage() {
               <details className="rounded-md border border-slate-200 p-4">
                 <summary className="cursor-pointer text-sm font-semibold text-slate-900">Journey preferences</summary>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <Field label="Budget currency" value={form.budget_currency} onChange={(value) => setField("budget_currency", value)} />
+                  <CurrencySelect
+                    label="Budget currency"
+                    value={form.budget_currency_id || ""}
+                    selectedCode={form.budget_currency}
+                    selectedLabel={form.budget_currency_label}
+                    onChange={(option) => setForm((current) => ({
+                      ...current,
+                      budget_currency_id: option?.id || "",
+                      budget_currency: option?.code || "",
+                      budget_currency_label: option?.label || "",
+                    }))}
+                  />
                   <Field label="Budget amount" type="number" value={form.budget_amount} onChange={(value) => setField("budget_amount", value)} />
                   <Field label="Maximum stops" type="number" value={form.max_stops} onChange={(value) => setField("max_stops", value)} />
                   <Field label="Maximum travel hours" type="number" value={form.max_total_travel_hours} onChange={(value) => setField("max_total_travel_hours", value)} />
                   <Field label="Flexible by days" type="number" value={form.flexibility_days} onChange={(value) => setField("flexibility_days", value)} />
-                  <Field label="Preferred airlines (comma separated)" value={form.preferred_airlines} onChange={(value) => setField("preferred_airlines", value)} />
-                  <Field label="Excluded airlines (comma separated)" value={form.excluded_airlines} onChange={(value) => setField("excluded_airlines", value)} />
+                  <AirlineChoiceList
+                    label="Preferred airlines"
+                    options={form.preferred_airline_options}
+                    onChange={(options) => setField("preferred_airline_options", options)}
+                  />
+                  <AirlineChoiceList
+                    label="Excluded airlines"
+                    options={form.excluded_airline_options}
+                    onChange={(options) => setField("excluded_airline_options", options)}
+                  />
                 </div>
               </details>
               {fieldVisible("itinerary_segments.notes") ? <TextArea label="Route notes" value={form.route_notes} onChange={(value) => setField("route_notes", value)} /> : null}
               {form.segments.map((segment, index) => (
                 <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
                   <div className="text-sm font-medium text-slate-700">Order<div className="mt-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">{index + 1}</div></div>
-                  <Field label="Origin" value={segment.origin_text} onChange={(value) => updateArray("segments", index, { origin_text: value })} required />
-                  <Field label="Destination" value={segment.destination_text} onChange={(value) => updateArray("segments", index, { destination_text: value })} required />
+                  <AirportAutocomplete
+                    label="Origin"
+                    required
+                    value={segment.origin_airport_id || ""}
+                    selectedCode={segment.origin_iata || ""}
+                    selectedLabel={segment.origin_text || ""}
+                    onChange={(option) => updateArray("segments", index, {
+                      origin_airport_id: option?.id || "",
+                      origin_iata: option?.code || "",
+                      origin_text: option?.label || "",
+                    })}
+                  />
+                  <AirportAutocomplete
+                    label="Destination"
+                    required
+                    value={segment.destination_airport_id || ""}
+                    selectedCode={segment.destination_iata || ""}
+                    selectedLabel={segment.destination_text || ""}
+                    onChange={(option) => updateArray("segments", index, {
+                      destination_airport_id: option?.id || "",
+                      destination_iata: option?.code || "",
+                      destination_text: option?.label || "",
+                    })}
+                  />
                   <Field label="Departure date" type="date" value={segment.departure_date} onChange={(value) => updateArray("segments", index, { departure_date: value })} />
                   <Field label="Departure time" value={segment.departure_time_window} onChange={(value) => updateArray("segments", index, { departure_time_window: value })} />
                   {fieldVisible("itinerary_segments.arrival_date") ? <Field label="Arrival date" type="date" value={segment.arrival_date} onChange={(value) => updateArray("segments", index, { arrival_date: value })} /> : null}
-                  {fieldVisible("itinerary_segments.preferred_airline") ? <Field label="Marketing airline" value={segment.marketing_airline} onChange={(value) => updateArray("segments", index, { marketing_airline: value })} /> : null}
+                  {fieldVisible("itinerary_segments.preferred_airline") ? (
+                    <AirlineAutocomplete
+                      label="Marketing airline"
+                      value={segment.marketing_airline_id || ""}
+                      selectedCode={segment.marketing_airline || ""}
+                      selectedLabel={segment.marketing_airline_label || ""}
+                      onChange={(option) => updateArray("segments", index, {
+                        marketing_airline_id: option?.id || "",
+                        marketing_airline: option?.code || "",
+                        marketing_airline_label: option?.label || "",
+                      })}
+                    />
+                  ) : null}
+                  <AirlineAutocomplete
+                    label="Operating airline"
+                    value={segment.operating_airline_id || ""}
+                    selectedCode={segment.operating_airline || ""}
+                    selectedLabel={segment.operating_airline_label || ""}
+                    onChange={(option) => updateArray("segments", index, {
+                      operating_airline_id: option?.id || "",
+                      operating_airline: option?.code || "",
+                      operating_airline_label: option?.label || "",
+                    })}
+                  />
                   <Field label="Flight number" value={segment.flight_number} onChange={(value) => updateArray("segments", index, { flight_number: value })} />
-                  {fieldVisible("itinerary_segments.cabin_class") ? <Field label="Cabin / class" value={segment.cabin_preference} onChange={(value) => updateArray("segments", index, { cabin_preference: value })} /> : null}
+                  {fieldVisible("itinerary_segments.cabin_class") ? (
+                    <ReferenceSelect
+                      domain="cabin_classes"
+                      label="Cabin / class"
+                      value={segment.cabin_id || ""}
+                      selectedCode={segment.cabin_preference}
+                      selectedLabel={segment.cabin_label}
+                      onChange={(option) => updateArray("segments", index, {
+                        cabin_id: option?.id || "",
+                        cabin_preference: option?.code || "",
+                        cabin_label: option?.label || "",
+                      })}
+                    />
+                  ) : null}
                   {fieldVisible("itinerary_segments.notes") ? <TextArea label="Segment notes" value={segment.notes} onChange={(value) => updateArray("segments", index, { notes: value })} /> : null}
                   <div className="flex gap-2">
                     <button className="rounded-md border border-slate-300 px-2 py-1 text-sm disabled:opacity-40" disabled={index === 0} type="button" onClick={() => moveArrayItem("segments", index, -1)}>Move up</button>
@@ -384,8 +509,44 @@ export default function RequestCreatePage() {
                 <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
                   <Field label="Pet name" value={pet.pet_name} onChange={(value) => updateArray("pets", index, { pet_name: value })} />
                   <Select label="Traveling with" value={pet.linked_passenger_local_id || ""} onChange={(value) => updateArray("pets", index, { linked_passenger_local_id: value })} options={[["", "Not assigned"], ...passengerKeys(form.passengers)]} />
-                  <Select label="Species" value={pet.species} onChange={(value) => updateArray("pets", index, { species: value })} options={(state?.petSpecies?.length ? state.petSpecies.map((item) => [item.code, item.label]) : [["dog", "Dog"], ["cat", "Cat"]])} />
-                  <Field label="Breed" value={pet.breed_free_text || pet.breed} onChange={(value) => updateArray("pets", index, { breed_free_text: value })} />
+                  <ReferenceSelect
+                    domain="pet_species"
+                    label="Species"
+                    required
+                    value={pet.species_reference_id || ""}
+                    selectedCode={pet.species || ""}
+                    selectedLabel={pet.species_label || ""}
+                    onChange={(option) => updateArray("pets", index, {
+                      species_reference_id: option?.id || "",
+                      species: option?.code || "",
+                      species_label: option?.label || "",
+                    })}
+                  />
+                  <ReferenceSelect
+                    domain="pet_breeds"
+                    label="Breed"
+                    value={pet.breed_reference_id || ""}
+                    selectedCode={pet.breed || ""}
+                    selectedLabel={pet.breed_label || pet.breed_free_text || ""}
+                    onChange={(option) => updateArray("pets", index, {
+                      breed_reference_id: option?.id || "",
+                      breed: option?.code || "",
+                      breed_label: option?.label || "",
+                      breed_free_text: option?.label || "",
+                    })}
+                  />
+                  <ReferenceSelect
+                    domain="container_types"
+                    label="Container type"
+                    value={pet.container_type_reference_id || ""}
+                    selectedCode={pet.container_type_code || ""}
+                    selectedLabel={pet.container_type_label || ""}
+                    onChange={(option) => updateArray("pets", index, {
+                      container_type_reference_id: option?.id || "",
+                      container_type_code: option?.code || "",
+                      container_type_label: option?.label || "",
+                    })}
+                  />
                   <Select label="Transport" value={pet.requested_transport_mode} onChange={(value) => updateArray("pets", index, { requested_transport_mode: value })} options={[["PETC", "PETC cabin"], ["AVIH", "AVIH hold"], ["SVAN", "Service animal"], ["ESAN", "Emotional support animal"], ["OTHER", "Other / manual review"]]} />
                   <Field label="Pet kg" type="number" value={pet.pet_weight_kg} onChange={(value) => updateArray("pets", index, { pet_weight_kg: value })} />
                   <Field label="Container kg" type="number" value={pet.container_weight_kg} onChange={(value) => updateArray("pets", index, { container_weight_kg: value })} />
@@ -405,7 +566,18 @@ export default function RequestCreatePage() {
             <Section id="builder-6" order={6} eyebrow="Special items" title="6. Special items">
               {form.special_items.map((item, index) => (
                 <div className="grid gap-3 rounded-md border border-slate-100 p-3 md:grid-cols-4" key={index}>
-                  <Select label="Category" value={item.item_category_code} onChange={(value) => updateArray("special_items", index, { item_category_code: value })} options={specialItemOptions(state?.specialItemCategories)} />
+                  <ReferenceSelect
+                    domain="special_item_categories"
+                    label="Category"
+                    value={item.item_category_reference_id || ""}
+                    selectedCode={item.item_category_code}
+                    selectedLabel={item.item_category_label}
+                    onChange={(option) => updateArray("special_items", index, {
+                      item_category_reference_id: option?.id || "",
+                      item_category_code: option?.code || "other",
+                      item_category_label: option?.label || "Other",
+                    })}
+                  />
                   <Select label="Belongs to" value={item.linked_passenger_local_id || ""} onChange={(value) => updateArray("special_items", index, { linked_passenger_local_id: value })} options={[["", "Not assigned"], ...passengerKeys(form.passengers)]} />
                   <Field label="Item name" value={item.item_name} onChange={(value) => updateArray("special_items", index, { item_name: value })} />
                   <Field label="Description" value={item.description} onChange={(value) => updateArray("special_items", index, { description: value })} required />
@@ -414,6 +586,17 @@ export default function RequestCreatePage() {
                   <Field label="Length cm" type="number" value={item.length_cm} onChange={(value) => updateArray("special_items", index, { length_cm: value })} />
                   <Field label="Width cm" type="number" value={item.width_cm} onChange={(value) => updateArray("special_items", index, { width_cm: value })} />
                   <Field label="Height cm" type="number" value={item.height_cm} onChange={(value) => updateArray("special_items", index, { height_cm: value })} />
+                  <CurrencySelect
+                    label="Declared value currency"
+                    value={item.declared_value_currency_id || ""}
+                    selectedCode={item.declared_value_currency || ""}
+                    selectedLabel={item.declared_value_currency_label || ""}
+                    onChange={(option) => updateArray("special_items", index, {
+                      declared_value_currency_id: option?.id || "",
+                      declared_value_currency: option?.code || "",
+                      declared_value_currency_label: option?.label || "",
+                    })}
+                  />
                   {canonicalItemCategory(item.item_category_code) === "weapon" ? (
                     <>
                       <Check label="Confirmed unloaded" checked={item.unloaded_confirmed} onChange={(value) => updateArray("special_items", index, { unloaded_confirmed: value })} />
@@ -472,19 +655,27 @@ function canonicalRequestFromForm(form, state, derivedTitle) {
       segment_local_id: segment.segment_local_id,
       segment_order: index + 1,
       origin_label: segment.origin_text,
-      origin_iata: iataCode(segment.origin_text),
+      origin_airport_id: segment.origin_airport_id || "",
+      origin_iata: segment.origin_iata || iataCode(segment.origin_text),
       origin_country_code: segment.origin_country_code || "",
       destination_label: segment.destination_text,
-      destination_iata: iataCode(segment.destination_text),
+      destination_airport_id: segment.destination_airport_id || "",
+      destination_iata: segment.destination_iata || iataCode(segment.destination_text),
       destination_country_code: segment.destination_country_code || "",
       departure_date: segment.departure_date,
       departure_time: segment.departure_time_window || "",
       arrival_date: segment.arrival_date || null,
       arrival_time: segment.arrival_time_window || "",
       marketing_carrier: segment.marketing_airline || "",
+      marketing_carrier_id: segment.marketing_airline_id || "",
+      marketing_carrier_label: segment.marketing_airline_label || "",
       operating_carrier: segment.operating_airline || "",
+      operating_carrier_id: segment.operating_airline_id || "",
+      operating_carrier_label: segment.operating_airline_label || "",
       flight_number: segment.flight_number || "",
       cabin: normalizeCabin(segment.cabin_preference || form.preferred_cabin),
+      cabin_id: segment.cabin_id || "",
+      cabin_label: segment.cabin_label || "",
       notes: segment.notes || "",
     }))
   const segmentIds = segments.map((segment) => segment.segment_local_id)
@@ -498,12 +689,13 @@ function canonicalRequestFromForm(form, state, derivedTitle) {
       passenger_profile_id: passenger.passenger_id || null,
       identity_status: passenger.passenger_id ? "confirmed" : "unresolved",
       passenger_type_code_id: passenger.passenger_type_code_id || "",
-      passenger_type_code: passengerTypeCode(passenger.passenger_type),
-      passenger_type_label: passengerTypeLabel(passenger.passenger_type),
+      passenger_type_code: passenger.passenger_type_code || "ADT",
+      passenger_type_label: passenger.passenger_type_label || passenger.passenger_type_code || "Adult",
       first_name: passenger.first_name || "",
       last_name: passenger.last_name || "",
       date_of_birth: passenger.date_of_birth || null,
       nationality_label: passenger.nationality_label || "",
+      nationality_reference_id: passenger.nationality_reference_id || "",
       nationality_code: passenger.nationality_code || "",
       notes: passenger.notes || "",
       selected_services: selectedServices,
@@ -526,13 +718,21 @@ function canonicalRequestFromForm(form, state, derivedTitle) {
       trip_purpose: form.trip_purpose,
       quote_mode: form.trip_type,
       preferred_cabin: normalizeCabin(form.preferred_cabin),
+      preferred_cabin_id: form.preferred_cabin_id || "",
+      preferred_cabin_label: form.preferred_cabin_label || "",
       budget_currency: form.budget_currency.trim().toUpperCase(),
+      budget_currency_id: form.budget_currency_id || "",
+      budget_currency_label: form.budget_currency_label || "",
       budget_amount: numericOrNull(form.budget_amount),
       max_stops: integerOrNull(form.max_stops),
       max_total_travel_hours: numericOrNull(form.max_total_travel_hours),
       flexibility_days: integerOrNull(form.flexibility_days),
-      preferred_airlines: commaValues(form.preferred_airlines),
-      excluded_airlines: commaValues(form.excluded_airlines),
+      preferred_airlines: form.preferred_airline_options.map((option) => option.code),
+      preferred_airline_ids: form.preferred_airline_options.map((option) => option.id).filter(Boolean),
+      preferred_airline_labels: form.preferred_airline_options.map((option) => option.label),
+      excluded_airlines: form.excluded_airline_options.map((option) => option.code),
+      excluded_airline_ids: form.excluded_airline_options.map((option) => option.id).filter(Boolean),
+      excluded_airline_labels: form.excluded_airline_options.map((option) => option.label),
     },
     itinerary_segments: segments,
     passengers,
@@ -542,10 +742,15 @@ function canonicalRequestFromForm(form, state, derivedTitle) {
       segment_scope_mode: pet.segment_keys?.length ? "selected_segments" : "all_segments",
       segment_ids: pet.segment_keys || [],
       pet_category: pet.requested_transport_mode,
-      species_label: pet.species,
+      species_reference_id: pet.species_reference_id || "",
+      species_label: pet.species_label || pet.species,
       species_key: pet.species || "",
-      breed_label: pet.breed_free_text || pet.breed || "",
+      breed_reference_id: pet.breed_reference_id || "",
+      breed_label: pet.breed_label || pet.breed_free_text || pet.breed || "",
       breed_key: pet.breed || "",
+      container_type_reference_id: pet.container_type_reference_id || "",
+      container_type_label: pet.container_type_label || "",
+      crate_type: pet.container_type_code || "",
       colour: pet.colour || "",
       sex: pet.sex || "",
       date_of_birth: pet.date_of_birth || null,
@@ -567,7 +772,11 @@ function canonicalRequestFromForm(form, state, derivedTitle) {
       linked_passenger_local_id: item.linked_passenger_local_id || null,
       segment_scope_mode: item.segment_keys?.length ? "selected_segments" : "all_segments",
       segment_ids: item.segment_keys || [],
+      item_category_reference_id: item.item_category_reference_id || "",
+      item_category_label: item.item_category_label || "",
       item_category: canonicalItemCategory(item.item_category_code),
+      declared_value_currency_id: item.declared_value_currency_id || "",
+      declared_value_currency_label: item.declared_value_currency_label || "",
       details: specialItemDetails(item),
     })),
     request_level_notes: form.client_visible_notes || form.route_notes || "",
@@ -613,13 +822,31 @@ function canonicalRequestToForm(canonical, clientId) {
     trip_type: canonical.trip.quote_mode,
     trip_purpose: canonical.trip.trip_purpose,
     preferred_cabin: canonical.trip.preferred_cabin,
+    preferred_cabin_id: canonical.trip.preferred_cabin_id || "",
+    preferred_cabin_label: canonical.trip.preferred_cabin_label || "",
     budget_currency: canonical.trip.budget_currency || "",
+    budget_currency_id: canonical.trip.budget_currency_id || "",
+    budget_currency_label: canonical.trip.budget_currency_label || "",
     budget_amount: canonical.trip.budget_amount ?? "",
     max_stops: canonical.trip.max_stops ?? "",
     max_total_travel_hours: canonical.trip.max_total_travel_hours ?? "",
     flexibility_days: canonical.trip.flexibility_days ?? "",
-    preferred_airlines: (canonical.trip.preferred_airlines || []).join(", "),
-    excluded_airlines: (canonical.trip.excluded_airlines || []).join(", "),
+    preferred_airline_options: (canonical.trip.preferred_airlines || []).map((code, index) => ({
+      id: canonical.trip.preferred_airline_ids?.[index] || "",
+      value: canonical.trip.preferred_airline_ids?.[index] || "",
+      code,
+      key: code,
+      label: canonical.trip.preferred_airline_labels?.[index] || code,
+      raw: { historical: !canonical.trip.preferred_airline_ids?.[index] },
+    })),
+    excluded_airline_options: (canonical.trip.excluded_airlines || []).map((code, index) => ({
+      id: canonical.trip.excluded_airline_ids?.[index] || "",
+      value: canonical.trip.excluded_airline_ids?.[index] || "",
+      code,
+      key: code,
+      label: canonical.trip.excluded_airline_labels?.[index] || code,
+      raw: { historical: !canonical.trip.excluded_airline_ids?.[index] },
+    })),
     origin: "",
     destination: "",
     departure_date: "",
@@ -635,7 +862,10 @@ function canonicalRequestToForm(canonical, clientId) {
       first_name: passenger.first_name || "",
       last_name: passenger.last_name || "",
       date_of_birth: passenger.date_of_birth || "",
-      passenger_type: formPassengerType(passenger.passenger_type_code),
+      passenger_type_code_id: passenger.passenger_type_code_id || "",
+      passenger_type_code: passenger.passenger_type_code || "ADT",
+      passenger_type_label: passenger.passenger_type_label || passenger.passenger_type_code || "Adult",
+      nationality_reference_id: passenger.nationality_reference_id || "",
       nationality_label: passenger.nationality_label || "",
       nationality_code: passenger.nationality_code || "",
       notes: passenger.notes || "",
@@ -644,16 +874,26 @@ function canonicalRequestToForm(canonical, clientId) {
       ...blankSegment(),
       segment_local_id: segment.segment_local_id,
       sequence: segment.segment_order,
-      origin_text: segment.origin_iata || segment.origin_label,
-      destination_text: segment.destination_iata || segment.destination_label,
+      origin_text: segment.origin_label || segment.origin_iata,
+      origin_airport_id: segment.origin_airport_id || "",
+      origin_iata: segment.origin_iata || "",
+      destination_text: segment.destination_label || segment.destination_iata,
+      destination_airport_id: segment.destination_airport_id || "",
+      destination_iata: segment.destination_iata || "",
       departure_date: segment.departure_date,
       departure_time_window: segment.departure_time || "",
       arrival_date: segment.arrival_date || "",
       arrival_time_window: segment.arrival_time || "",
       marketing_airline: segment.marketing_carrier || "",
+      marketing_airline_id: segment.marketing_carrier_id || "",
+      marketing_airline_label: segment.marketing_carrier_label || "",
       operating_airline: segment.operating_carrier || "",
+      operating_airline_id: segment.operating_carrier_id || "",
+      operating_airline_label: segment.operating_carrier_label || "",
       flight_number: segment.flight_number || "",
       cabin_preference: segment.cabin,
+      cabin_id: segment.cabin_id || "",
+      cabin_label: segment.cabin_label || "",
       notes: segment.notes || "",
     })),
     services,
@@ -662,8 +902,15 @@ function canonicalRequestToForm(canonical, clientId) {
       pet_local_id: pet.pet_local_id,
       linked_passenger_local_id: pet.linked_passenger_local_id || "",
       species: pet.species_key || pet.species_label,
+      species_reference_id: pet.species_reference_id || "",
+      species_label: pet.species_label || "",
       breed: pet.breed_key || "",
+      breed_reference_id: pet.breed_reference_id || "",
+      breed_label: pet.breed_label || "",
       breed_free_text: pet.breed_label || "",
+      container_type_reference_id: pet.container_type_reference_id || "",
+      container_type_code: pet.crate_type || "",
+      container_type_label: pet.container_type_label || "",
       requested_transport_mode: pet.pet_category,
       pet_weight_kg: pet.pet_weight_kg ?? "",
       container_weight_kg: pet.container_weight_kg ?? "",
@@ -677,7 +924,12 @@ function canonicalRequestToForm(canonical, clientId) {
       ...blankSpecialItem(),
       item_local_id: item.item_local_id,
       linked_passenger_local_id: item.linked_passenger_local_id || "",
-      item_category_code: item.item_category,
+      item_category_code: item.item_category === "valuables_fragile" ? "fragile_valuable" : item.item_category,
+      item_category_reference_id: item.item_category_reference_id || "",
+      item_category_label: item.item_category_label || "",
+      declared_value_currency_id: item.declared_value_currency_id || "",
+      declared_value_currency: item.details?.currency || "",
+      declared_value_currency_label: item.declared_value_currency_label || "",
       item_name: item.details?.equipment_type || item.details?.instrument_type || item.details?.item_type || "",
       description: item.details?.notes || "",
       quantity: item.details?.quantity || 1,
@@ -815,6 +1067,7 @@ function specialItemDetails(item) {
     length_cm: numericOrNull(item.length_cm),
     width_cm: numericOrNull(item.width_cm),
     height_cm: numericOrNull(item.height_cm),
+    currency: item.declared_value_currency || undefined,
     notes: item.notes || item.description || "",
   }
   if (category === "sports_equipment") details.equipment_type = item.item_name || "Sports equipment"
@@ -833,6 +1086,7 @@ function canonicalItemCategory(value) {
   return {
     fragile_item: "valuables_fragile",
     valuable_item: "valuables_fragile",
+    fragile_valuable: "valuables_fragile",
   }[value] || (["weapon", "sports_equipment", "musical_instrument", "valuables_fragile", "other"].includes(value) ? value : "other")
 }
 
@@ -848,18 +1102,6 @@ function normalizeCabin(value) {
 function iataCode(value) {
   const normalized = String(value || "").trim().toUpperCase()
   return /^[A-Z]{3}$/.test(normalized) ? normalized : ""
-}
-
-function passengerTypeCode(value) {
-  return { adult: "ADT", child: "CHD", infant: "INF", senior: "SRC", unaccompanied_minor: "UMNR" }[value] || "ADT"
-}
-
-function passengerTypeLabel(value) {
-  return { adult: "Adult", child: "Child", infant: "Infant", senior: "Senior", unaccompanied_minor: "Unaccompanied minor" }[value] || "Adult"
-}
-
-function formPassengerType(value) {
-  return { ADT: "adult", CHD: "child", INF: "infant", SRC: "senior", UMNR: "unaccompanied_minor" }[value] || "adult"
 }
 
 function numericOrNull(value) {
@@ -913,19 +1155,6 @@ function segmentKeys(segments) {
   return segments.filter((segment) => segment.origin_text && segment.destination_text).map((segment, index) => {
     return [segment.segment_local_id, `${index + 1}. ${segment.origin_text} to ${segment.destination_text}`]
   })
-}
-
-function specialItemOptions(referenceItems = []) {
-  const required = [
-    ["weapon", "Weapon / regulated item"],
-    ["sports_equipment", "Sports equipment"],
-    ["musical_instrument", "Musical instrument"],
-    ["valuables_fragile", "Valuable or fragile item"],
-    ["other", "Other"],
-  ]
-  const options = new Map(required)
-  for (const item of referenceItems || []) options.set(item.code, item.label)
-  return [...options.entries()]
 }
 
 function categoryToFamily(category) {
@@ -1019,6 +1248,42 @@ function TextArea({ label, value, onChange }) {
 
 function Select({ label, value, onChange, options, required = false }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<select className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm" value={value} required={required} onChange={(event) => onChange(event.target.value)}>{options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}</select></label>
+}
+
+function AirlineChoiceList({ label, options, onChange }) {
+  function add(option) {
+    if (!option || options.some((item) => (item.id || item.code) === (option.id || option.code))) return
+    onChange([...options, option])
+  }
+
+  return (
+    <div className="grid gap-2">
+      <AirlineAutocomplete
+        label={label}
+        value=""
+        selectedCode=""
+        selectedLabel=""
+        onChange={add}
+        helpText="Choose one airline at a time."
+      />
+      {options.length ? (
+        <div className="flex flex-wrap gap-2">
+          {options.map((option) => (
+            <button
+              className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700"
+              key={option.id || option.code}
+              title={`Remove ${option.label || option.code}`}
+              type="button"
+              onClick={() => onChange(options.filter((item) => (item.id || item.code) !== (option.id || option.code)))}
+            >
+              <span>{option.code} - {option.label}</span>
+              <X aria-hidden="true" className="ml-1 inline" size={14} />
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 function CheckboxGroup({ title, values, selected, onToggle }) {

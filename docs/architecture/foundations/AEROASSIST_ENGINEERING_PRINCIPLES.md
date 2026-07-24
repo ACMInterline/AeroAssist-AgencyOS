@@ -134,3 +134,18 @@ Traveler identity remains unresolved until an authorized human explicitly
 confirms or links it. Compatibility fields must be generated from canonical
 Request data, legacy ambiguity must remain visible, and accepted downstream
 snapshots must not be rewritten.
+
+## Canonical Reference Rule
+
+Shared aviation, geography, passenger classification, document, service,
+animal, pricing, finance, and operational vocabulary belongs to
+`GlobalReferenceRecord` unless a documented canonical owner already exists
+(for example the Service Catalogue). Store stable reference IDs with
+code/key/label snapshots on operational records. New selections must resolve
+an active same-domain record in the effective tenant scope; historical
+snapshots remain immutable and inactive references remain readable.
+
+Never create a second reference engine, silently auto-create an unknown typed
+value, destructively delete a referenced record, or infer universal airline
+pricing/policy from PTC metadata. Reference reconciliation must be bounded,
+auditable, dry-run first, and explicit about ambiguity.

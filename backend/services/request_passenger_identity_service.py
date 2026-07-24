@@ -16,6 +16,7 @@ from models import (
 )
 from persistence_query import PaginationRequest
 from persistence_repository import PersistenceRepository
+from services.canonical_reference_service import resolve_passenger_profile_references
 
 
 INTAKE_PLACEHOLDER_BIRTH_DATE = "1900-01-01"
@@ -192,20 +193,27 @@ async def _create_confirmed_passenger(
         ]
         if value
     )
-    passenger = PassengerProfile(
-        agency_id=agency_id,
-        first_name=compact_text(payload.first_name, 80) or "",
-        middle_name=compact_text(payload.middle_name, 80),
-        last_name=compact_text(payload.last_name, 80) or "",
-        display_name=display_name,
-        date_of_birth=payload.date_of_birth,
-        passenger_type=payload.passenger_type,
-        gender=compact_text(payload.gender, 80),
-        nationality=compact_text(payload.nationality, 80),
-        residence_country=compact_text(payload.residence_country, 80),
-        primary_language=compact_text(payload.primary_language, 20) or "en",
-        source_intake_id=request_passenger.get("source_intake_id"),
+    passenger_data = await resolve_passenger_profile_references(
+        db,
+        agency_id,
+        {
+            "first_name": compact_text(payload.first_name, 80) or "",
+            "middle_name": compact_text(payload.middle_name, 80),
+            "last_name": compact_text(payload.last_name, 80) or "",
+            "display_name": display_name,
+            "date_of_birth": payload.date_of_birth,
+            "passenger_type": payload.passenger_type,
+            "passenger_type_code_id": payload.passenger_type_code_id,
+            "passenger_type_code": payload.passenger_type_code,
+            "passenger_type_label": payload.passenger_type_label,
+            "gender": compact_text(payload.gender, 80),
+            "nationality": compact_text(payload.nationality, 80),
+            "residence_country": compact_text(payload.residence_country, 80),
+            "primary_language": compact_text(payload.primary_language, 20) or "en",
+            "source_intake_id": request_passenger.get("source_intake_id"),
+        },
     )
+    passenger = PassengerProfile(agency_id=agency_id, **passenger_data)
     return await db.collection("passenger_profiles").insert_one(passenger.model_dump(mode="json"))
 
 

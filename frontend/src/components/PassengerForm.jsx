@@ -1,4 +1,8 @@
 import { useState } from "react"
+import CountrySelect from "./reference/CountrySelect"
+import PtcSelect from "./reference/PtcSelect"
+import ReferenceSelect from "./reference/ReferenceSelect"
+import { passengerTypeCompatibilityCode } from "../lib/referenceData"
 
 const emptyPassenger = {
   first_name: "",
@@ -7,12 +11,26 @@ const emptyPassenger = {
   display_name: "",
   date_of_birth: "",
   passenger_type: "ADT",
+  passenger_type_code_id: "",
+  passenger_type_code: "ADT",
+  passenger_type_label: "Adult",
   gender: "",
-  nationality: "SK",
-  residence_country: "SK",
+  nationality: "",
+  nationality_reference_id: "",
+  nationality_label: "",
+  residence_country: "",
+  residence_country_reference_id: "",
+  residence_country_label: "",
   primary_language: "en",
+  primary_language_reference_id: "",
+  primary_language_label: "English",
   passport_number: "",
   passport_country: "",
+  passport_country_reference_id: "",
+  passport_country_label: "",
+  travel_document_type_id: "",
+  travel_document_type_code: "",
+  travel_document_type_label: "",
   passport_expiry: "",
   travel_document_notes: "",
   known_assistance_needs: "",
@@ -56,26 +74,85 @@ export default function PassengerForm({ initial = {}, onSubmit, submitLabel = "S
           Date of birth
           <input required type="date" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.date_of_birth} onChange={(event) => setField("date_of_birth", event.target.value)} />
         </label>
-        <label className="text-sm font-medium text-slate-700">
-          PTC
-          <select className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.passenger_type} onChange={(event) => setField("passenger_type", event.target.value)}>
-            {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Nationality
-          <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.nationality || ""} onChange={(event) => setField("nationality", event.target.value)} />
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Residence country
-          <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.residence_country || ""} onChange={(event) => setField("residence_country", event.target.value)} />
-        </label>
+        <PtcSelect
+          required
+          value={form.passenger_type_code_id || ""}
+          selectedCode={form.passenger_type_code || form.passenger_type || ""}
+          selectedLabel={form.passenger_type_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            passenger_type_code_id: option?.id || "",
+            passenger_type_code: option?.code || "",
+            passenger_type_label: option?.label || "",
+            passenger_type: passengerTypeCompatibilityCode(option),
+          }))}
+        />
+        <CountrySelect
+          label="Nationality"
+          value={form.nationality_reference_id || ""}
+          selectedCode={form.nationality || ""}
+          selectedLabel={form.nationality_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            nationality_reference_id: option?.id || "",
+            nationality: option?.code || "",
+            nationality_label: option?.label || "",
+          }))}
+        />
+        <CountrySelect
+          label="Residence country"
+          value={form.residence_country_reference_id || ""}
+          selectedCode={form.residence_country || ""}
+          selectedLabel={form.residence_country_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            residence_country_reference_id: option?.id || "",
+            residence_country: option?.code || "",
+            residence_country_label: option?.label || "",
+          }))}
+        />
+        <ReferenceSelect
+          domain="languages"
+          label="Primary language"
+          value={form.primary_language_reference_id || ""}
+          selectedCode={form.primary_language || ""}
+          selectedLabel={form.primary_language_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            primary_language_reference_id: option?.id || "",
+            primary_language: option?.code || "",
+            primary_language_label: option?.label || "",
+          }))}
+        />
         <label className="text-sm font-medium text-slate-700">
           Passport number
           <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.passport_number || ""} onChange={(event) => setField("passport_number", event.target.value)} />
         </label>
+        <CountrySelect
+          label="Passport issuing country"
+          value={form.passport_country_reference_id || ""}
+          selectedCode={form.passport_country || ""}
+          selectedLabel={form.passport_country_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            passport_country_reference_id: option?.id || "",
+            passport_country: option?.code || "",
+            passport_country_label: option?.label || "",
+          }))}
+        />
+        <ReferenceSelect
+          domain="document_types"
+          label="Travel document type"
+          value={form.travel_document_type_id || ""}
+          selectedCode={form.travel_document_type_code || ""}
+          selectedLabel={form.travel_document_type_label || ""}
+          onChange={(option) => setForm((current) => ({
+            ...current,
+            travel_document_type_id: option?.id || "",
+            travel_document_type_code: option?.code || "",
+            travel_document_type_label: option?.label || "",
+          }))}
+        />
         <label className="text-sm font-medium text-slate-700">
           Passport expiry
           <input type="date" className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={form.passport_expiry || ""} onChange={(event) => setField("passport_expiry", event.target.value)} />
