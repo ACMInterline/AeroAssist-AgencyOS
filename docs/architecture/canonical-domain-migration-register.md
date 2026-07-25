@@ -238,3 +238,12 @@ evidence. The complete purpose, allowed/forbidden operations, canonical owner,
 and retirement criteria are recorded in
 [Compatibility Retirement Register](../stabilization/compatibility-retirement-register.md).
 All migration analyzers remain dry-run only.
+
+## Product Recovery 12 - Rehearsal Result
+
+All eight Product Recovery analyzers were exercised against disposable
+fixtures. They remained bounded, performed zero writes, preserved before and
+after counts, retained ambiguous cases for manual review, and rejected
+available write-like flags. The combined analyzer and approval record is
+[Product Recovery Migration Readiness](../release-candidate/migration-readiness-summary.md).
+No production migration is authorized.

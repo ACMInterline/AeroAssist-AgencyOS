@@ -553,3 +553,11 @@ The assembled backend exposes 2,291 unique method/path pairs with no exact
 duplicate. Browser acceptance verifies Platform, Agency, Client Portal,
 Passenger Portal, revoked mapping, read-only, cross-Agency, deep-link, and
 Not Found behavior.
+
+## Product Recovery 12 - Route Inventory Confirmation
+
+The release-candidate gate adds no backend or frontend route. The assembled
+backend remains at 2,291 unique method/path pairs with no exact duplicate and
+no `/admin/*` or `/agent/*` family. The 273 frontend route strings and 311
+governed product pages retain their existing authorization and compatibility
+contracts.

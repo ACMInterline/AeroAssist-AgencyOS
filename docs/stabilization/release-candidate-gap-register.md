@@ -33,3 +33,8 @@ smoke-inventory validation; human review remains the approval gate.
 This register is paired with the full-system report, browser contract,
 accessibility findings, security review, performance report, compatibility
 register, focused regressions, and complete smoke inventory.
+
+The consolidated current warning set and release stop conditions are maintained
+in [Product Recovery Known Limitations](../release-candidate/known-limitations.md).
+This register does not mark production validation or Phase 57 approval
+complete.

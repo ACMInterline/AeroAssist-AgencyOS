@@ -37,3 +37,19 @@ Record the accepting Agency Administrator, Platform authority, date, assessed re
 
 Product Recovery 11B evidence supplements this checklist. Phase 57 remains the
 authoritative production evidence and human sign-off gate.
+
+## Product Recovery 12 Release Evidence
+
+- [ ] The exact application merge SHA passed post-merge validation.
+- [ ] The separate deployment-tooling pin names that exact application SHA.
+- [ ] Hosted CI passed for the exact reviewed commits.
+- [ ] Verified backup, independent off-host copy, and disposable restore
+  rehearsal evidence exists.
+- [ ] Production health, safe readiness, protected diagnostics, tenant
+  isolation, onboarding/Operations routing, and Commercial Pilot readiness
+  passed.
+- [ ] Phase 57 evidence IDs are persisted and the authorized human decision is
+  bound to the immutable assessment hash and rollback reference.
+
+See the [Product Recovery Release Candidate package](../release-candidate/README.md).
+These checklist items do not approve or execute deployment.

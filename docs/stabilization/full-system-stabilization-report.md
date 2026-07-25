@@ -65,3 +65,12 @@ integrity proof.
 **Evidence:** `smoke_full_system_stabilization.py`,
 `validate_canonical_lifecycle_integrity.py`, the Playwright browser suite,
 focused Product Kernel regressions, and the complete registered smoke inventory.
+
+## Product Recovery 12 Release Handoff
+
+The final integration review is recorded in the
+[Product Recovery Release Candidate package](../release-candidate/README.md).
+It preserves this stabilization scope and adds no runtime behavior. Local
+evidence must still be followed by exact-merge validation, hosted CI, verified
+backup and restore evidence, controlled deployment validation, and Phase 57
+human sign-off.

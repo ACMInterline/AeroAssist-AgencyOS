@@ -2845,3 +2845,20 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - See [Full-System Stabilization Report](docs/stabilization/full-system-stabilization-report.md),
   [Frontend Performance Report](docs/stabilization/frontend-performance-report.md),
   and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).
+
+## P1 Product Recovery 12 - Release Candidate Integration Gate
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  validation and release-preparation gate, not a new roadmap phase.
+- Changes no model, collection, index, route, service, permission, workflow,
+  readiness calculation, smoke registration, or business behavior.
+- Reconciles Git, repository, browser, performance, security, migration,
+  Docker, packaging, merge, deployment, rollback, and Phase 57 evidence into
+  one reviewable release package.
+- Keeps all migration analyzers dry-run only and requires future reviewed,
+  Agency-scoped approval before any write path can be designed.
+- Leaves the existing deployment pin unchanged until an approved `--no-ff`
+  merge produces the exact application release SHA.
+- Preserves Phase 57 as the authoritative production evidence and human
+  sign-off gate.
+- See [Product Recovery Release Candidate](docs/release-candidate/README.md).

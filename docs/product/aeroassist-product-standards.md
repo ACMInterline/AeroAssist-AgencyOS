@@ -369,3 +369,13 @@ The source validator and Chromium test do not establish formal WCAG
 conformance. Contrast tooling, screen readers, zoom, mobile, Safari, and
 Firefox remain explicit review items in
 [Accessibility Findings](../stabilization/accessibility-findings.md).
+
+## Product Recovery 12 - Release Discipline
+
+The Product Standards remain product-facing acceptance criteria during the
+release gate. A build or source validator cannot substitute for executed
+browser acceptance, and Chromium evidence cannot be generalized to Firefox,
+WebKit, screen readers, or formal WCAG conformance. The
+[Release Candidate Assessment](../release-candidate/release-candidate-assessment.md)
+records the exact evidence boundary; Phase 57 remains the production approval
+authority.

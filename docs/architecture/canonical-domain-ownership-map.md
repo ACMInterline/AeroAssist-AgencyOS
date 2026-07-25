@@ -428,3 +428,12 @@ The stabilization work adds no model, collection, writer route, or direct
 frontend persistence. Verified runtime fixes were limited to canonical Request
 serialization, one pre-existing Work Queue filter allowlist, guarded detail
 rendering, and safe client-side error presentation.
+
+## Product Recovery 12 - Ownership Freeze
+
+The release-candidate gate adds no canonical owner, compatibility owner,
+collection, writer, or projection. The ownership registry remains at 46
+domains: 43 selected and 3 decision required. Twenty-one domains retain an
+explicit `migration_required` classification and must follow the
+[Migration Readiness Summary](../release-candidate/migration-readiness-summary.md);
+release documentation is not migration authority.

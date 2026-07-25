@@ -574,3 +574,10 @@ The collection already has the compound
 `agency_id + source_entity_type + source_entity_id` lookup index, so no index
 change is required. Canonical ownership and compatibility classifications
 remain unchanged.
+
+## Product Recovery 12 - Model Inventory Confirmation
+
+The release-candidate review introduces no Pydantic model, MongoDB collection,
+index, persistence adapter, or startup hook. Existing inventory and ownership
+registrations remain authoritative. The release package is documentation and
+executed validation evidence only.

@@ -2031,3 +2031,13 @@ Finance workflow. The initial raw JavaScript shell is 30.7% smaller. See the
 and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).
 No provider, payment, issuance, external messaging, production migration,
 commit, push, or deployment behavior is enabled.
+
+## P1 Product Recovery 12 - Release Candidate Integration Gate
+
+Product Recovery 12 adds no runtime capability or new release system. It
+consolidates repository, browser, migration, security, performance, Docker,
+merge, deployment, rollback, and Phase 57 evidence requirements into the
+[Product Recovery Release Candidate package](docs/release-candidate/README.md).
+The application merge SHA must be validated before a separate tooling commit
+updates the exact deployment pin. Phase 57 remains the authoritative
+production evidence and human sign-off gate.
