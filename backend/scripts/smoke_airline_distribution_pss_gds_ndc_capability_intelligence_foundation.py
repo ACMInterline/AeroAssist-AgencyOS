@@ -269,8 +269,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
             raise AssertionError(f"Agency distribution capability route is not read-only: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-distribution-capabilities"),
-        ("frontend/src/App.jsx", "/agency/distribution-capabilities"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-distribution-capabilities"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/distribution-capabilities"),
         ("frontend/src/lib/moduleCatalog.js", "Distribution Capabilities"),
         ("frontend/src/pages/platform/AirlineDistributionCapabilitiesPage.jsx", "Airline × channel matrix"),
         ("frontend/src/pages/platform/AirlineDistributionCapabilitiesPage.jsx", "PSS and host summary"),

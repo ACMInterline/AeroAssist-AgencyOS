@@ -380,8 +380,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
         raise AssertionError("Agency contact directory records expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-contact-intelligence"),
-        ("frontend/src/App.jsx", "/agency/airline-contact-directory"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-contact-intelligence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-contact-directory"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Contact Directory"),
         ("frontend/src/pages/platform/AirlineContactIntelligencePage.jsx", "Separated communication templates"),
         ("frontend/src/pages/agency/AirlineContactDirectoryPage.jsx", "AeroAssist did not send a message"),

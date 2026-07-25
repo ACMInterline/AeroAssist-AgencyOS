@@ -166,8 +166,8 @@ def verify_router_ui_docs_registration() -> None:
                     raise AssertionError(f"Forbidden population execution route registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/knowledge-population-toolkit"),
-        (ROOT / "frontend/src/App.jsx", "/agency/knowledge-population-toolkit"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/knowledge-population-toolkit"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/knowledge-population-toolkit"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge Population Toolkit"),
         (ROOT / "frontend/src/pages/platform/KnowledgePopulationToolkitPage.jsx", "Population Toolkit Records"),
         (ROOT / "frontend/src/pages/agency/KnowledgePopulationToolkitPage.jsx", "Read-only airline knowledge population readiness"),

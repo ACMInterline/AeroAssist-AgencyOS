@@ -77,7 +77,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/layouts/AgencyLayout.jsx",
         ROOT / "frontend/src/pages/agency/AgencyDashboardPage.jsx",
         ROOT / "frontend/src/pages/platform/SaaSSubscriptionsPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

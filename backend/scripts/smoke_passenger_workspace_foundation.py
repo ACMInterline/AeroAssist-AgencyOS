@@ -200,8 +200,8 @@ def verify_routes(paths: dict) -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Passenger Workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/platform/passenger-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/passenger-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/passenger-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/passenger-workspaces"),
         (ROOT / "frontend/src/pages/platform/PassengerWorkspacesPage.jsx", "Passenger Workspaces"),
         (ROOT / "frontend/src/pages/platform/PassengerWorkspacesPage.jsx", "No matching or validation"),
         (ROOT / "frontend/src/pages/platform/PassengerWorkspacesPage.jsx", "Travel documents"),
@@ -221,7 +221,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/PassengerWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/PassengerWorkspacesPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

@@ -220,8 +220,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden execution route exposed for feasibility: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/passenger-service-feasibility"),
-        (ROOT / "frontend/src/App.jsx", "/agency/service-feasibility"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/passenger-service-feasibility"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/service-feasibility"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Passenger Service Feasibility"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Service Feasibility"),
         (ROOT / "frontend/src/pages/platform/PassengerServiceFeasibilityPage.jsx", "Feasibility is not Boolean"),

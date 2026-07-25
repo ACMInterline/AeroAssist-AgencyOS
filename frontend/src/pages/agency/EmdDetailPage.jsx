@@ -164,9 +164,9 @@ export default function EmdDetailPage({ emdRecordId }) {
             </div>
           </section>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={emdRecordId}
-            entityLabel={emd.emd_number || "EMD"}
+            entityLabel={emd?.emd_number || "EMD"}
             entityType="emd"
           />
         </div>

@@ -968,7 +968,17 @@ function canonicalServiceDetails(service, allSegmentIds, specialItems) {
     segment_ids: service.applies_to_all_segments ? [] : service.segment_ids,
   }
   const key = canonicalServiceKey(service.category)
-  if (key === "wheelchair_and_mobility_assistance") return { ...scope, ...serviceDetails(service), notes: service.notes || "" }
+  if (key === "wheelchair_and_mobility_assistance") {
+    const mobilityDetails = serviceDetails(service)
+    const contextNotes = [mobilityDetails.passenger_context_notes, service.notes]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+    return {
+      ...scope,
+      ...mobilityDetails,
+      passenger_context_notes: [...new Set(contextNotes)].join("\n"),
+    }
+  }
   if (key === "medical_equipment_and_travel_support") return {
     ...scope,
     medical_clearance_needed: Boolean(details.medical_clearance_needed),

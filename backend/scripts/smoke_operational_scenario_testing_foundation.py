@@ -205,8 +205,8 @@ def verify_router_ui_docs_registration() -> None:
                     raise AssertionError(f"Forbidden scenario execution route registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-scenario-testing"),
-        (ROOT / "frontend/src/App.jsx", "/agency/scenario-testing"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-scenario-testing"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/scenario-testing"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Scenario Testing"),
         (ROOT / "frontend/src/pages/platform/OperationalScenarioTestingPage.jsx", "Scenario Test Cases"),
         (ROOT / "frontend/src/pages/agency/ScenarioTestingPage.jsx", "Read-only passenger service scenario metadata"),

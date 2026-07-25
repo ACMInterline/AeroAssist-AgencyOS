@@ -16,7 +16,7 @@ import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
 
-const workspaceStatuses = ["draft", "ready_to_book", "booking_in_progress", "blocked", "cancelled"]
+const workspaceStatuses = ["draft", "ready_to_book", "booking_in_progress", "booked", "blocked", "cancelled"]
 const providerStatuses = ["draft", "queued", "held", "confirmed", "failed", "cancelled"]
 const bookingStatuses = ["draft", "pending", "confirmed", "partially_confirmed", "failed", "cancelled"]
 
@@ -29,7 +29,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
 
-  async function load() {
+  async function load(isActive = () => true) {
     const context = await loadCurrentAgency()
     const detail = await apiGet(`/api/agencies/${context.agency.id}/booking-workspaces/${bookingWorkspaceId}`)
     const bookingRecordId = detail.booking_record?.id
@@ -40,6 +40,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
       apiGet(`/api/agencies/${context.agency.id}/invoices?booking_workspace_id=${encodeURIComponent(bookingWorkspaceId)}`),
       bookingRecordId ? apiGet(`/api/agencies/${context.agency.id}/finance/reporting?booking_id=${encodeURIComponent(bookingRecordId)}`) : Promise.resolve({ summaries: [], profitability: [], supplier_costs_visible: false }),
     ])
+    if (!isActive()) return
     setState({ ...context, ...detail, tickets: tickets.items || [], emds: emds.items || [], ticketEmdReadiness, invoices: invoices.items || [], finance })
     setStatusForm({ status: detail.booking_workspace?.status || "draft", internal_notes: "" })
     setRecordForm({
@@ -53,7 +54,13 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
   }
 
   useEffect(() => {
-    load().catch((err) => setError(err.message))
+    let active = true
+    load(() => active).catch((err) => {
+      if (active) setError(err.message)
+    })
+    return () => {
+      active = false
+    }
   }, [bookingWorkspaceId])
 
   async function updateStatus(event) {
@@ -62,8 +69,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     setMessage("")
     try {
       await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/status`, statusForm)
-      setMessage("Booking workspace status updated.")
       await load()
+      setMessage("Booking workspace status updated.")
     } catch (err) {
       setError(err.message)
     }
@@ -85,8 +92,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
         } : {},
         expected_version: state.booking_record.current_external_result_version || 1,
       })
-      setMessage("Booking result evidence recorded. No provider action was executed.")
       await load()
+      setMessage("Booking result evidence recorded. No provider action was executed.")
     } catch (err) {
       setError(err.message)
     }
@@ -97,8 +104,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     setMessage("")
     try {
       await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/rebuild-record`)
-      setMessage("Booking record mirror rebuilt from readiness.")
       await load()
+      setMessage("Booking record mirror rebuilt from readiness.")
     } catch (err) {
       setError(err.message)
     }
@@ -114,8 +121,8 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
     try {
       await apiPost(`/api/agencies/${state.agency.id}/booking-workspaces/${bookingWorkspaceId}/cancel`)
       setConfirmCancel(false)
-      setMessage("Booking cancelled.")
       await load()
+      setMessage("Booking cancelled.")
     } catch (err) {
       setError(err.message)
     }
@@ -228,7 +235,7 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 <form className="space-y-3" onSubmit={updateStatus}>
                   <label className="grid gap-1 text-sm font-medium text-slate-700">
                     Status
-                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={statusForm.status} onChange={(event) => setStatusForm({ ...statusForm, status: event.target.value })}>
+                    <select aria-label="Status" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={statusForm.status} onChange={(event) => setStatusForm({ ...statusForm, status: event.target.value })}>
                       {workspaceStatuses.map((value) => <option value={value} key={value}>{label(value)}</option>)}
                     </select>
                   </label>
@@ -364,12 +371,14 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
                 </div>
               </details>
 
-              <OperationalCollaborationPanel
-                agencyId={state.agency.id}
-                entityId={bookingWorkspaceId}
-                entityLabel={workspace.booking_reference || "Booking"}
-                entityType="booking_workspace"
-              />
+              {state?.agency?.id && workspace ? (
+                <OperationalCollaborationPanel
+                  agencyId={state.agency.id}
+                  entityId={bookingWorkspaceId}
+                  entityLabel={workspace.booking_reference || "Booking"}
+                  entityType="booking_workspace"
+                />
+              ) : null}
             </div>
           </section>
           <ConfirmationDialog
@@ -407,7 +416,7 @@ function Select({ label, value, options, onChange }) {
   return (
     <label className="grid gap-1 text-sm font-medium text-slate-700">
       {label}
-      <select className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)}>
+      <select aria-label={label} className="rounded-md border border-slate-300 px-3 py-2 text-sm font-normal" value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => <option value={option} key={option}>{labelValue(option)}</option>)}
       </select>
     </label>

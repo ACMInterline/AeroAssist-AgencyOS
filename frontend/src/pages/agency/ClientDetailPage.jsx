@@ -162,9 +162,9 @@ export default function ClientDetailPage({ clientId }) {
             )}
           </section>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={clientId}
-            entityLabel={state.client.display_name || "Client"}
+            entityLabel={state?.client?.display_name || "Client"}
             entityType="client"
           />
         </div>

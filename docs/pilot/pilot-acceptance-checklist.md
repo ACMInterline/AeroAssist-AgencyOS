@@ -26,3 +26,14 @@
 ## Human Decision
 
 Record the accepting Agency Administrator, Platform authority, date, assessed release, conditions, unresolved warnings, and decision outside this checklist using the existing governed evidence/sign-off workflow. This document does not approve the pilot automatically.
+
+## Product Recovery 11B Stabilization Evidence
+
+- [ ] The 51-check disposable browser acceptance suite passes.
+- [ ] The complete registered smoke inventory passes with zero unresolved scripts.
+- [ ] Backend compile, frontend production build, dependency audit, persistence governance, canonical ownership, tenant isolation, and migration dry-run checks pass.
+- [ ] Generated Python caches, Playwright artifacts, disposable Document storage, and `frontend/dist` are removed.
+- [ ] Open accessibility, cross-browser, compatibility, and load-test warnings in the Release-Candidate Gap Register are accepted by the human reviewer.
+
+Product Recovery 11B evidence supplements this checklist. Phase 57 remains the
+authoritative production evidence and human sign-off gate.

@@ -243,8 +243,8 @@ def verify_router_ui_docs_registration() -> None:
                     raise AssertionError(f"Forbidden workflow execution route registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-workflows"),
-        (ROOT / "frontend/src/App.jsx", "/agency/operational-workflows"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-workflows"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operational-workflows"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Workflows"),
         (ROOT / "frontend/src/pages/platform/OperationalWorkflowsPage.jsx", "Workflow Definitions"),
         (ROOT / "frontend/src/pages/agency/OperationalWorkflowsPage.jsx", "Available next actions"),

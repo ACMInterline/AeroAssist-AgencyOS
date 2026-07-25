@@ -207,9 +207,9 @@ export default function PassengerDetailPage({ passengerId }) {
             )}
           </details>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={passengerId}
-            entityLabel={state.passenger.display_name || "Passenger"}
+            entityLabel={state?.passenger?.display_name || "Passenger"}
             entityType="passenger"
           />
           <ConfirmationDialog

@@ -248,8 +248,9 @@ def verify_shells_routes_and_performance() -> None:
         assert "max-w-7xl" not in source
 
     app = read("frontend/src/App.jsx")
-    assert '"/platform": PlatformDashboardPage' in app
-    assert '"/agency": OperationsCommandCenterPage' in app
+    route_registry = read("frontend/src/routes/RoutedApplication.jsx")
+    assert '"/platform": PlatformDashboardPage' in route_registry
+    assert '"/agency": OperationsCommandCenterPage' in route_registry
     for route in [
         *PLATFORM_PRIMARY_ROUTES,
         *AGENCY_PRIMARY_ROUTES,
@@ -258,15 +259,22 @@ def verify_shells_routes_and_performance() -> None:
         "/agency/operational-workflows",
         "/agency/workflow-maturity",
     ]:
-        assert f'"{route}"' in app
+        assert f'"{route}"' in route_registry
     for rejected_root in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
-        assert rejected_root not in app
+        assert rejected_root not in route_registry
 
-    lazy_imports = re.findall(r'^const \w+ = lazy\(\(\) => import\("\./pages/', app, flags=re.MULTILINE)
+    lazy_imports = re.findall(
+        r'^const \w+ = lazy\(\(\) => import\("\.\./pages/',
+        route_registry,
+        flags=re.MULTILINE,
+    )
     assert len(lazy_imports) >= 300, f"Expected route-level lazy loading, found {len(lazy_imports)} page imports"
-    assert not re.search(r'^import .+ from "\./pages/', app, flags=re.MULTILINE)
+    assert not re.search(r'^import .+ from "\.\./pages/', route_registry, flags=re.MULTILINE)
+    assert 'lazy(() => import("./routes/RoutedApplication"))' in app
     assert "<Suspense" in app
     assert 'LoadingState label="Opening page"' in app
+    assert "NotFoundPage" in route_registry
+    assert "|| HomePage" not in route_registry
 
     require(
         "frontend/src/lib/agency.js",
@@ -278,7 +286,12 @@ def verify_shells_routes_and_performance() -> None:
     )
     require(
         "frontend/src/components/ProductQuickSearch.jsx",
-        ['aria-haspopup="dialog"', 'event.key === "Escape"', "No permitted page matches"],
+        [
+            'aria-haspopup="dialog"',
+            "useDialogFocus",
+            'role="dialog"',
+            "No permitted page matches",
+        ],
     )
     require(
         "frontend/src/components/WorkflowQuickActions.jsx",

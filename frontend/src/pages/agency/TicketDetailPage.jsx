@@ -149,9 +149,9 @@ export default function TicketDetailPage({ ticketRecordId }) {
             </div>
           </section>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={ticketRecordId}
-            entityLabel={ticket.ticket_number || "Ticket"}
+            entityLabel={ticket?.ticket_number || "Ticket"}
             entityType="ticket"
           />
         </div>

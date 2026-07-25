@@ -281,8 +281,8 @@ def verify_routes(paths: dict) -> None:
 
 def verify_frontend_and_docs() -> None:
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/airline-capability-matrix"),
-        (ROOT / "frontend/src/App.jsx", "/agency/capability-matrix"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/airline-capability-matrix"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/capability-matrix"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Airline Capability Matrix"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Capability Matrix"),
         (ROOT / "frontend/src/pages/platform/AirlineCapabilityMatrixPage.jsx", "Capability is different from policy"),

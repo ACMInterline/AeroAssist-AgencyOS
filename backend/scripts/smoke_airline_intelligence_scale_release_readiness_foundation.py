@@ -308,8 +308,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
             raise AssertionError("Agency airline intelligence readiness routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-intelligence-readiness"),
-        ("frontend/src/App.jsx", "/agency/airline-intelligence-readiness"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-intelligence-readiness"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-intelligence-readiness"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Intelligence Readiness"),
         ("frontend/src/pages/platform/AirlineIntelligenceReadinessPage.jsx", "Airline readiness matrix"),
         ("frontend/src/pages/agency/AirlineIntelligenceReadinessPage.jsx", "Assigned released coverage"),

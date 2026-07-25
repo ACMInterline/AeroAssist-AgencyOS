@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import Search from "lucide-react/dist/esm/icons/search.js"
 import X from "lucide-react/dist/esm/icons/x.js"
+import useDialogFocus from "../hooks/useDialogFocus"
 
 export default function ProductQuickSearch({
   areas = [],
@@ -9,6 +10,7 @@ export default function ProductQuickSearch({
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState("")
   const inputRef = useRef(null)
+  const dialogRef = useRef(null)
   const items = useMemo(
     () => areas.flatMap((area) => area.items.map((item) => ({
       ...item,
@@ -28,15 +30,12 @@ export default function ProductQuickSearch({
     ].some((value) => String(value || "").toLowerCase().includes(needle))).slice(0, 10)
   }, [items, query])
 
-  useEffect(() => {
-    if (!open) return undefined
-    inputRef.current?.focus()
-    function closeOnEscape(event) {
-      if (event.key === "Escape") setOpen(false)
-    }
-    document.addEventListener("keydown", closeOnEscape)
-    return () => document.removeEventListener("keydown", closeOnEscape)
-  }, [open])
+  useDialogFocus({
+    dialogRef,
+    initialFocusRef: inputRef,
+    onEscape: () => setOpen(false),
+    open,
+  })
 
   return (
     <div className="relative">
@@ -54,8 +53,11 @@ export default function ProductQuickSearch({
       {open ? (
         <div
           aria-label={label}
+          aria-modal="true"
           className="fixed inset-x-3 top-20 z-50 mx-auto max-w-xl overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl sm:absolute sm:inset-auto sm:right-0 sm:top-11 sm:w-[min(92vw,34rem)]"
+          ref={dialogRef}
           role="dialog"
+          tabIndex="-1"
         >
           <div className="flex items-center gap-2 border-b border-slate-200 p-3">
             <Search aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400" />

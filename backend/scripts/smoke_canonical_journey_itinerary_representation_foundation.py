@@ -138,8 +138,8 @@ def verify_static_contracts() -> None:
         raise AssertionError("Non-canonical route root is present.")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/journey-engine"),
-        (ROOT / "frontend/src/App.jsx", "/agency/journeys"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/journey-engine"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/journeys"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Journey Engine"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Journeys"),
         (ROOT / "frontend/src/pages/platform/JourneyEnginePage.jsx", "canonical journey projections"),

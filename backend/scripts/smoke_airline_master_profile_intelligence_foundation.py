@@ -140,8 +140,8 @@ def verify_routes_ui_docs(paths: dict) -> None:
             raise AssertionError(f"Non-canonical route introduced: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-master-profiles"),
-        ("frontend/src/App.jsx", "/agency/airline-profiles"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-master-profiles"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-profiles"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Master Profiles"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Profiles"),
         ("frontend/src/pages/platform/AirlineMasterProfilesPage.jsx", "does not create a second airline catalogue"),

@@ -190,8 +190,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     if platform_methods & {"post", "put", "patch", "delete"}:
         raise AssertionError(f"Platform after-sales diagnostics should be read-only at root: {platform_methods}")
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/after-sales"),
-        (ROOT / "frontend/src/App.jsx", "/platform/after-sales"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/after-sales"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/after-sales"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "After-Sales"),
         (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "does not mutate tickets or EMDs"),
         (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "Search by operational label"),

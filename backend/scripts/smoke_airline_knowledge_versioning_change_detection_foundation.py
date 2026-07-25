@@ -241,8 +241,8 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
             raise AssertionError("Immutable version-item mutation route was registered.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/knowledge-versions"),
-        ("frontend/src/App.jsx", "/agency/knowledge-updates"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/knowledge-versions"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/knowledge-updates"),
         ("frontend/src/lib/moduleCatalog.js", "Knowledge Updates"),
         ("frontend/src/pages/platform/AirlineKnowledgeVersionsPage.jsx", "Historical operational snapshots are never rewritten"),
         ("frontend/src/pages/agency/KnowledgeUpdatesPage.jsx", "Draft changes and restricted source details are not visible"),

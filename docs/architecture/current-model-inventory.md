@@ -560,3 +560,17 @@ non-destructive.
 Historical `request_tasks` remain readable compatibility history and source
 input, not a canonical write target. All new indexes are additive,
 non-destructive scope, lineage, status, idempotency, or recipient lookups.
+
+## P1 Product Recovery 11B - Stabilization Inventory
+
+Product Recovery 11B introduces no Pydantic model, MongoDB collection, or
+startup index. It validates 1,619 classes in the existing central model module,
+379 literal collection calls, and 3,692 additive startup index intents across
+515 indexed collection names without connecting to MongoDB.
+
+The only persistence-query change adds the existing
+`OperationalWorkItem.source_entity_id` field to its governed filter allowlist.
+The collection already has the compound
+`agency_id + source_entity_type + source_entity_id` lookup index, so no index
+change is required. Canonical ownership and compatibility classifications
+remain unchanged.

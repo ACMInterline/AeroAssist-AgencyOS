@@ -192,8 +192,8 @@ def verify_routes(paths: dict) -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Offer Workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/platform/offer-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/offer-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/offer-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/offer-workspaces"),
         (ROOT / "frontend/src/pages/platform/OfferWorkspacesPage.jsx", "Offer Workspaces"),
         (ROOT / "frontend/src/pages/platform/OfferWorkspacesPage.jsx", "No fare calculations"),
         (ROOT / "frontend/src/pages/platform/OfferWorkspacesPage.jsx", "Pricing summary"),
@@ -214,7 +214,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/OfferWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/OfferWorkspaceMetadataPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

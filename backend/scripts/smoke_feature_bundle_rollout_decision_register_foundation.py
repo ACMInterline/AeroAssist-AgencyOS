@@ -193,8 +193,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Bundle Rollout Decisions"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Rollout Decisions"),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-bundle-rollout-decisions"),
-        (ROOT / "frontend/src/App.jsx", "/agency/rollout-decisions"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-bundle-rollout-decisions"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/rollout-decisions"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutDecisionsPage.jsx", "Feature Bundle Rollout Decisions"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutDecisionsPage.jsx", "Metadata-only decision register"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutDecisionsPage.jsx", "Timeline references"),
@@ -213,7 +213,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureBundleRolloutDecisionsPage.jsx",
         ROOT / "frontend/src/pages/agency/RolloutDecisionsPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

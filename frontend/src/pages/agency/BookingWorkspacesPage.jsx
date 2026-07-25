@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Plus from "lucide-react/dist/esm/icons/plus.js"
 import EmptyState from "../../components/EmptyState"
 import ErrorState from "../../components/ErrorState"
@@ -11,6 +11,7 @@ import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
 import StatusBadge from "../../components/StatusBadge"
+import useDialogFocus from "../../hooks/useDialogFocus"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -333,9 +334,12 @@ export default function BookingWorkspacesPage() {
 
 function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mode, onClose, onManualChange, onManualSubmit, onModeChange, onSelect, onSubmit, packages, selectedPackage, selectedPackageId }) {
   const actionLabel = selectedPackage?.booking_workspace_already_exists ? "Open booking" : "Prepare booking"
+  const closeRef = useRef(null)
+  const dialogRef = useRef(null)
+  useDialogFocus({ dialogRef, initialFocusRef: closeRef, onEscape: onClose, open: true })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <section aria-labelledby="create-booking-title" aria-modal="true" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl" role="dialog">
+      <section aria-labelledby="create-booking-title" aria-modal="true" className="flex max-h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl" ref={dialogRef} role="dialog" tabIndex="-1">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-5">
           <div>
             <p className="text-sm font-semibold text-blue-700">Booking preparation</p>
@@ -347,7 +351,7 @@ function CreateBookingWorkspaceModal({ creating, error, loading, manualForm, mod
               </a>
             ) : null}
           </div>
-          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClose}>Close</button>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" ref={closeRef} type="button" onClick={onClose}>Close</button>
         </div>
         <div className="overflow-y-auto p-5">
           <div className="mb-4 grid gap-2 md:grid-cols-3">

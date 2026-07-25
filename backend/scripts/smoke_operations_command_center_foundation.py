@@ -141,8 +141,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     if "/api/agencies/{agency_id}/operations-command-center/kanban/move" in paths:
         raise AssertionError("Command center must not expose uncontrolled kanban move endpoints.")
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/operations-command-center"),
-        (ROOT / "frontend/src/App.jsx", "/platform/operations-governance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operations-command-center"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operations-governance"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operations Command Centre"),
         (ROOT / "frontend/src/components/operations/OperationsWorkList.jsx", "My Work Today"),
         (ROOT / "frontend/src/pages/platform/OperationsGovernancePage.jsx", "Read-only platform command center"),

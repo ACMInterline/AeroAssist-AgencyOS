@@ -107,8 +107,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Bundle Rollout Plans"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Rollout Plans"),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-bundle-rollout-plans"),
-        (ROOT / "frontend/src/App.jsx", "/agency/rollout-plans"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-bundle-rollout-plans"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/rollout-plans"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutPlansPage.jsx", "Feature Bundle Rollout Plans"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutPlansPage.jsx", "do not activate, publish, send, bill, enforce access, block routes, or execute rollout actions"),
         (ROOT / "frontend/src/pages/agency/RolloutPlansPage.jsx", "Rollout Plans"),
@@ -126,7 +126,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureBundleRolloutPlansPage.jsx",
         ROOT / "frontend/src/pages/agency/RolloutPlansPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

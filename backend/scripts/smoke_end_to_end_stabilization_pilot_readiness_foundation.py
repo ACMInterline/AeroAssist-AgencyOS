@@ -195,8 +195,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Pilot readiness route used old root: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/pilot-readiness"),
-        (ROOT / "frontend/src/App.jsx", "/agency/pilot-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/pilot-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/pilot-readiness"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Pilot Readiness"),
         (ROOT / "backend/services/saas_subscription_service.py", "pilot_readiness"),
         (ROOT / "backend/services/blueprint_adoption_service.py", "PilotReadinessAssessment"),

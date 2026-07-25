@@ -534,3 +534,22 @@ definitions but reject Agency operational mutations with `409`. Portal routes
 do not expose internal rules, traces, work items, approvals, or deadlines.
 There is no `/admin/*`, `/agent/*`, arbitrary expression, external execution,
 or scheduler callback route.
+
+## P1 Product Recovery 11B - Route Stabilization
+
+- `frontend/src/App.jsx` owns only the authorization, error, loading, and lazy
+  route-shell boundary.
+- `frontend/src/routes/RoutedApplication.jsx` preserves the existing ordered
+  exact/regex matching and static route map while lazily importing every page.
+- Unknown paths render `NotFoundPage`; they do not silently render the public
+  homepage.
+- Canonical `/platform/*`, `/agency/*`, `/portal/*`,
+  `/api/platform/*`, `/api/agencies/{agency_id}/*`, `/api/portal/*`, and
+  `/api/reference/*` roots remain unchanged.
+- No `/admin/*`, `/agent/*`, second router framework, compatibility rewrite,
+  or frontend authorization substitute is introduced.
+
+The assembled backend exposes 2,291 unique method/path pairs with no exact
+duplicate. Browser acceptance verifies Platform, Agency, Client Portal,
+Passenger Portal, revoked mapping, read-only, cross-Agency, deep-link, and
+Not Found behavior.

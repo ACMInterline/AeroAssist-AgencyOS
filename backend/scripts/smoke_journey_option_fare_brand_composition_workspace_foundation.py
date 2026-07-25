@@ -103,8 +103,8 @@ def verify_static_contracts() -> None:
         if required not in service_text:
             raise AssertionError(f"Composition service missing required contract: {required}")
 
-    require_text(ROOT / "frontend/src/App.jsx", '"/agency/journey-option-composition"')
-    require_text(ROOT / "frontend/src/App.jsx", '"/platform/journey-option-compositions"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/agency/journey-option-composition"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/platform/journey-option-compositions"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", "Journey Option Composition")
     require_text(ROOT / "frontend/src/pages/agency/JourneyOptionCompositionWorkspacePage.jsx", "Itinerary option board")
     require_text(ROOT / "frontend/src/pages/agency/JourneyOptionCompositionWorkspacePage.jsx", "No live price, availability")

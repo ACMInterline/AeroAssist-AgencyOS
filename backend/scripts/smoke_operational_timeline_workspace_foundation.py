@@ -237,8 +237,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Timelines"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Timeline"),
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-timelines"),
-        (ROOT / "frontend/src/App.jsx", "/agency/timeline"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-timelines"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/timeline"),
         (ROOT / "frontend/src/pages/platform/OperationalTimelinesPage.jsx", "Operational Timelines"),
         (ROOT / "frontend/src/pages/platform/OperationalTimelinesPage.jsx", "No messaging"),
         (ROOT / "frontend/src/pages/platform/OperationalTimelinesPage.jsx", "No AI summaries"),
@@ -258,7 +258,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/OperationalTimelinesPage.jsx",
         ROOT / "frontend/src/pages/agency/TimelinePage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

@@ -222,3 +222,19 @@ dependency cycles, duplicate reminders/projections, conflicting active rule
 keys, orphan approvals/runs, and incomplete completion evidence. It produces
 deterministic candidate and manual-review output, compares collection counts,
 has no write path, and explicitly rejects `--write`.
+
+## P1 Product Recovery 11B - Compatibility Freeze
+
+No migration is executed by Product Recovery 11B. The stabilization review
+retains `TravelRequestWorkspace`, legacy Request intake/builder paths, legacy
+Offer and Booking records, Trip/Booking/Ticket/EMD workspace metadata,
+historical task stores, historical collaboration rows, and source-bound
+Client/Passenger master projections only where current compatibility contracts
+still require them.
+
+Seven orphan page modules remain excluded from primary navigation and are not
+deleted without import, route, historical-rendering, smoke, and migration
+evidence. The complete purpose, allowed/forbidden operations, canonical owner,
+and retirement criteria are recorded in
+[Compatibility Retirement Register](../stabilization/compatibility-retirement-register.md).
+All migration analyzers remain dry-run only.

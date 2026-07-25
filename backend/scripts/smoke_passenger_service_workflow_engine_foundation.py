@@ -220,8 +220,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Passenger Service Workflows"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Workflow Engine"),
-        (ROOT / "frontend/src/App.jsx", "/platform/passenger-service-workflows"),
-        (ROOT / "frontend/src/App.jsx", "/agency/workflow-engine"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/passenger-service-workflows"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/workflow-engine"),
         (ROOT / "frontend/src/pages/platform/PassengerServiceWorkflowsPage.jsx", "Passenger Service Workflows"),
         (ROOT / "frontend/src/pages/platform/PassengerServiceWorkflowsPage.jsx", "No automation"),
         (ROOT / "frontend/src/pages/platform/PassengerServiceWorkflowsPage.jsx", "No AI decisions"),
@@ -242,7 +242,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/PassengerServiceWorkflowsPage.jsx",
         ROOT / "frontend/src/pages/agency/WorkflowEnginePage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

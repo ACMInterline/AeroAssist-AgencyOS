@@ -143,8 +143,8 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
             raise AssertionError(f"Non-canonical route introduced: {path}")
 
     checks = [
-        (ROOT / "frontend/src/App.jsx", "/platform/workflow-maturity"),
-        (ROOT / "frontend/src/App.jsx", "/agency/workflow-maturity"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/workflow-maturity"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/workflow-maturity"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Workflow Maturity"),
         (ROOT / "backend/services/saas_subscription_service.py", "workflow_maturity"),
         (ROOT / "frontend/src/pages/platform/WorkflowMaturityPage.jsx", "Workflow Maturity"),

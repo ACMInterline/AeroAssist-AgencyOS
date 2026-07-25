@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react"
+import { useRef } from "react"
 import DestructiveButton from "./DestructiveButton"
 import SecondaryButton from "./SecondaryButton"
+import useDialogFocus from "../hooks/useDialogFocus"
 
 export default function ConfirmationDialog({
   cancelLabel = "Keep current",
@@ -13,20 +14,8 @@ export default function ConfirmationDialog({
   title,
 }) {
   const confirmRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return undefined
-    const previousFocus = document.activeElement
-    confirmRef.current?.focus()
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") onCancel()
-    }
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("keydown", onKeyDown)
-      previousFocus?.focus?.()
-    }
-  }, [onCancel, open])
+  const dialogRef = useRef(null)
+  useDialogFocus({ dialogRef, initialFocusRef: confirmRef, onEscape: onCancel, open })
 
   if (!open) return null
 
@@ -38,7 +27,9 @@ export default function ConfirmationDialog({
         aria-labelledby="confirmation-dialog-title"
         aria-modal="true"
         className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
+        ref={dialogRef}
         role="alertdialog"
+        tabIndex="-1"
       >
         <h2 className="text-lg font-semibold text-slate-950" id="confirmation-dialog-title">{title}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600" id="confirmation-dialog-message">{message}</p>

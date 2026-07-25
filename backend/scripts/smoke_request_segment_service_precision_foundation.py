@@ -243,8 +243,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden route exposed for request segment services: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/request-segment-services"),
-        (ROOT / "frontend/src/App.jsx", "/agency/request-segment-services"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/request-segment-services"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/request-segment-services"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Request Segment Services"),
         (ROOT / "frontend/src/pages/platform/RequestSegmentServicesPage.jsx", "Scope Overview"),
         (ROOT / "frontend/src/pages/platform/RequestSegmentServicesPage.jsx", "Passenger Context"),

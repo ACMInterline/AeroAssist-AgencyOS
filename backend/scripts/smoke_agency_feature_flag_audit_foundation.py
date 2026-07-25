@@ -87,8 +87,8 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Flag Audit"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Readiness"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "metadata_only: true"),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-flag-audit"),
-        (ROOT / "frontend/src/App.jsx", "/agency/feature-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-flag-audit"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/feature-readiness"),
         (ROOT / "frontend/src/pages/platform/FeatureFlagAuditPage.jsx", "Audit History"),
         (ROOT / "frontend/src/pages/agency/FeatureReadinessPage.jsx", "Readiness checklist"),
         (ROOT / "docs/architecture/agency-feature-flag-audit-foundation.md", "Agency Feature Flag Readiness & Audit Foundation"),
@@ -103,7 +103,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureFlagAuditPage.jsx",
         ROOT / "frontend/src/pages/agency/FeatureReadinessPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

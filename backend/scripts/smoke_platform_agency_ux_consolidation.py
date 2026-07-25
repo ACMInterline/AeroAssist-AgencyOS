@@ -56,7 +56,7 @@ def verify_frontend_source() -> None:
     agency_layout = ROOT / "frontend/src/layouts/AgencyLayout.jsx"
     platform_dashboard = ROOT / "frontend/src/pages/platform/PlatformDashboardPage.jsx"
     agency_dashboard = ROOT / "frontend/src/pages/agency/AgencyDashboardPage.jsx"
-    app = ROOT / "frontend/src/App.jsx"
+    app = ROOT / "frontend/src/routes/RoutedApplication.jsx"
 
     for text in [
         "SaaS & Agencies",

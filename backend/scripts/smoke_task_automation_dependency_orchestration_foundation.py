@@ -365,8 +365,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old API route root must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/task-automation"),
-        (ROOT / "frontend/src/App.jsx", "/agency/task-automation"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/task-automation"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/task-automation"),
         (ROOT / "frontend/src/pages/platform/TaskAutomationPage.jsx", "Task Automation"),
         (ROOT / "frontend/src/pages/agency/TaskAutomationPage.jsx", "Approvals and dependencies"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "task_automation"),
@@ -384,7 +384,7 @@ def verify_router_ui_docs_registration() -> None:
     ]:
         require_text(path, text)
     for path in [
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "backend/routers/platform_task_automation.py",
         ROOT / "backend/routers/agency_task_automation.py",

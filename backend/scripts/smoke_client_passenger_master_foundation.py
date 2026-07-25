@@ -266,10 +266,10 @@ def verify_router_ui_docs_registration() -> None:
         assert_openapi_path(paths, path, method)
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/client-master"),
-        (ROOT / "frontend/src/App.jsx", "/platform/passenger-master"),
-        (ROOT / "frontend/src/App.jsx", "/agency/clients"),
-        (ROOT / "frontend/src/App.jsx", "/agency/passengers"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/client-master"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/passenger-master"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/clients"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/passengers"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Client Master"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Passenger Master"),
         (ROOT / "frontend/src/components/ClientPassengerMasterRecordList.jsx", "Client Overview"),

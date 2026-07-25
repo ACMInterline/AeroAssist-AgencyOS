@@ -241,8 +241,8 @@ def verify_routes(paths: dict) -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Document Workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/platform/document-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/document-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/document-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/document-workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "Document Workspaces"),
         (ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx", "No duplicate render layer"),
         (ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx", "Match the prepared document to its requirement, then record the review outcome"),
@@ -262,7 +262,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/DocumentWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/DocumentWorkspacesPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

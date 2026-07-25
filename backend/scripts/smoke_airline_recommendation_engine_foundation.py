@@ -223,8 +223,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden execution route exposed for recommendation engine: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/airline-recommendations"),
-        (ROOT / "frontend/src/App.jsx", "/agency/recommendations"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/airline-recommendations"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/recommendations"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Airline Recommendations"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Recommendations"),
         (ROOT / "frontend/src/pages/platform/AirlineRecommendationsPage.jsx", "Recommendation Dashboard"),

@@ -891,6 +891,21 @@ async def run_service_checks(checks: Checks) -> None:
         "DOCUMENT_TYPE_MISMATCH",
     )
     checks.items.append("document_extension_mime_mismatch_denied")
+    await expect_portal_error(
+        lambda: passenger_service.upload_document(
+            passenger_ctx,
+            "portal-completion-document-a",
+            {
+                "file_name": "disguised-document.pdf",
+                "content_type": "application/pdf",
+                "content_base64": base64.b64encode(
+                    b"<html>not a PDF document</html>"
+                ).decode("ascii"),
+            },
+        ),
+        "DOCUMENT_CONTENT_MISMATCH",
+    )
+    checks.items.append("document_content_signature_mismatch_denied")
 
     profile = await passenger_service.update_profile(
         passenger_ctx,
@@ -1015,7 +1030,7 @@ def run_source_checks(checks: Checks) -> None:
         required_api_routes.issubset(route_paths),
         f"Missing canonical Portal routes: {sorted(required_api_routes - route_paths)}",
     )
-    app_text = (ROOT / "frontend/src/App.jsx").read_text()
+    app_text = (ROOT / "frontend/src/routes/RoutedApplication.jsx").read_text()
     layout_text = (ROOT / "frontend/src/layouts/ClientPortalLayout.jsx").read_text()
     required_ui_routes = {
         "/portal/travel-options",

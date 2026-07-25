@@ -57,7 +57,7 @@ def main() -> int:
     if not application_phase_is_at_least(health.get("phase"), MINIMUM_PHASE):
         raise AssertionError(f"Unexpected phase label: {health.get('phase')}")
 
-    app = (ROOT / "frontend/src/App.jsx").read_text(encoding="utf-8")
+    app = (ROOT / "frontend/src/routes/RoutedApplication.jsx").read_text(encoding="utf-8")
     layout = (ROOT / "frontend/src/layouts/PlatformLayout.jsx").read_text(encoding="utf-8")
     module_catalog = (ROOT / "frontend/src/lib/moduleCatalog.js").read_text(encoding="utf-8")
     platform_catalog = module_catalog.split("export const agencyModuleGroups", 1)[0]
@@ -73,11 +73,11 @@ def main() -> int:
         '"/platform/airline-policy-ingestion": AirlinePolicyIngestionPage',
         '"/platform/service-taxonomy": PlatformServiceTaxonomyPage',
         '"/platform/service-mechanics": PlatformServiceMechanicsPage',
-        'const PlatformAgenciesPage = lazy(() => import("./pages/platform/PlatformAgenciesPage"))',
-        'const AirlinesPage = lazy(() => import("./pages/platform/AirlinesPage"))',
-        'const AirlinePolicyIngestionPage = lazy(() => import("./pages/platform/AirlinePolicyIngestionPage"))',
-        'const PlatformServiceTaxonomyPage = lazy(() => import("./pages/platform/ServiceTaxonomyPage"))',
-        'const PlatformServiceMechanicsPage = lazy(() => import("./pages/platform/ServiceMechanicsPage"))',
+        'const PlatformAgenciesPage = lazy(() => import("../pages/platform/PlatformAgenciesPage"))',
+        'const AirlinesPage = lazy(() => import("../pages/platform/AirlinesPage"))',
+        'const AirlinePolicyIngestionPage = lazy(() => import("../pages/platform/AirlinePolicyIngestionPage"))',
+        'const PlatformServiceTaxonomyPage = lazy(() => import("../pages/platform/ServiceTaxonomyPage"))',
+        'const PlatformServiceMechanicsPage = lazy(() => import("../pages/platform/ServiceMechanicsPage"))',
         "PlatformAgencyDetailPage",
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",

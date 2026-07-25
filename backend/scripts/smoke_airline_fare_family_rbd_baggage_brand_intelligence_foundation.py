@@ -377,8 +377,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
         raise AssertionError("Agency fare-brand record routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/fare-brand-intelligence"),
-        ("frontend/src/App.jsx", "/agency/fare-brand-library"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/fare-brand-intelligence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/fare-brand-library"),
         ("frontend/src/lib/moduleCatalog.js", "Fare Brand Library"),
         ("frontend/src/pages/platform/FareBrandIntelligencePage.jsx", "Fare-family hierarchy editor"),
         ("frontend/src/pages/agency/FareBrandLibraryPage.jsx", "Offer-builder integration"),

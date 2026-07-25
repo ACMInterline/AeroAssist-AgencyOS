@@ -3183,6 +3183,28 @@
       "execution_isolation": "none"
     },
     {
+      "script_path": "backend/scripts/smoke_full_system_stabilization.py",
+      "capability_name": "Product Recovery Full-System Stabilization",
+      "minimum_application_phase": "phase_59_0_product_experience_recovery",
+      "phase_assertion_mode": "minimum",
+      "requires_running_backend": false,
+      "requires_mongodb": false,
+      "mutates_disposable_test_data": false,
+      "scope": [
+        "stabilization",
+        "routing",
+        "security",
+        "accessibility",
+        "performance",
+        "browser_acceptance"
+      ],
+      "test_class": "broad",
+      "suitable_for_future_ci": true,
+      "notes": "Source-level release-candidate gate for lazy route loading, safe errors, unknown-route handling, governed dialogs, accessibility fundamentals, upload validation, query governance, lifecycle validation registration, readiness metadata, and the disposable browser acceptance contract.",
+      "ci_tier": "focused",
+      "execution_isolation": "none"
+    },
+    {
       "script_path": "backend/scripts/smoke_visual_policy_editor_foundation.py",
       "capability_name": "Visual Policy Editor Foundation",
       "minimum_application_phase": "phase_52_3_visual_policy_editor_foundation",

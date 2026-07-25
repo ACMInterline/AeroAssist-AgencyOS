@@ -413,3 +413,18 @@ adapters project their actionable state into `operational_work_items`; new
 governed automation writes actionable work only through
 `AgentWorkQueueService`. Platform governance can manage global definitions but
 cannot mutate Agency operational work without active Agency membership.
+
+## P1 Product Recovery 11B - Ownership Verification
+
+Product Recovery 11B changes no canonical owner. The 51-check browser contract
+uses the existing `TravelRequest`, `OfferWorkspace`, `OfferOption`,
+`OfferAcceptance`, `TripAcceptedOfferSnapshot`, `TripDossier`,
+`OfferBookingHandoff`, `BookingRecord`, `TicketRecord`, `EMDRecord`, Invoice,
+Payment Allocation, Document Workspace, `OperationalTimeline`, and
+`OperationalWorkItem` owners.
+
+Compatibility writers remain governed by this map and the migration register.
+The stabilization work adds no model, collection, writer route, or direct
+frontend persistence. Verified runtime fixes were limited to canonical Request
+serialization, one pre-existing Work Queue filter allowlist, guarded detail
+rendering, and safe client-side error presentation.

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import useDialogFocus from "../../hooks/useDialogFocus"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -175,6 +176,9 @@ export default function TicketsEmdsPage() {
 }
 
 function MirrorModal({ form, modal, onChange, onClose, onSubmit, working }) {
+  const closeRef = useRef(null)
+  const dialogRef = useRef(null)
+  useDialogFocus({ dialogRef, initialFocusRef: closeRef, onEscape: onClose, open: true })
   const isTicket = modal === "ticket"
   const isEmd = modal === "emd"
   const isExchange = modal === "ticket_exchange" || modal === "emd_exchange"
@@ -186,14 +190,22 @@ function MirrorModal({ form, modal, onChange, onClose, onSubmit, working }) {
   }[modal]
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <form className="max-h-[90vh] w-full max-w-6xl overflow-auto rounded-lg bg-white shadow-xl" onSubmit={onSubmit}>
+      <form
+        aria-labelledby="ticket-emd-dialog-title"
+        aria-modal="true"
+        className="max-h-[90vh] w-full max-w-6xl overflow-auto rounded-lg bg-white shadow-xl"
+        onSubmit={onSubmit}
+        ref={dialogRef}
+        role="dialog"
+        tabIndex="-1"
+      >
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Record only</p>
-            <h3 className="text-xl font-semibold text-slate-950">{title}</h3>
+            <h3 className="text-xl font-semibold text-slate-950" id="ticket-emd-dialog-title">{title}</h3>
             <p className="mt-1 text-sm text-slate-600">No provider action, issuance, exchange, refund, or void is performed.</p>
           </div>
-          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onClose}>Close</button>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" ref={closeRef} type="button" onClick={onClose}>Close</button>
         </div>
         <div className="space-y-5 p-5">
           {isTicket ? <ManualTicketForm form={form} onChange={onChange} /> : null}

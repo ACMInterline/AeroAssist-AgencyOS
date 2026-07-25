@@ -6,10 +6,13 @@ const SELECTED_AGENCY_KEY = "aeroassist.selectedAgencyId"
 const UNLINKED_PORTAL_MESSAGE = "Your portal account is not linked to a profile yet."
 
 function isPublicPath(pathname) {
-  return pathname === "/" ||
+  if (pathname === "/" ||
     pathname === "/login" ||
     pathname === "/invite/accept" ||
-    pathname.startsWith("/site/")
+    pathname.startsWith("/site/")) return true
+  return !["/platform", "/agency", "/portal"].some(
+    (root) => pathname === root || pathname.startsWith(`${root}/`),
+  )
 }
 
 function selectedMembership(auth) {

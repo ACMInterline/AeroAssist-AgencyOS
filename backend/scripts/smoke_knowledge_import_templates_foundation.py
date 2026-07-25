@@ -157,8 +157,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/knowledge-import-templates"),
-        (ROOT / "frontend/src/App.jsx", "/agency/import-templates"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/knowledge-import-templates"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/import-templates"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge Import Templates"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "knowledge_import_templates"),
         (ROOT / "frontend/src/pages/platform/KnowledgeImportTemplatesPage.jsx", "Template Overview"),

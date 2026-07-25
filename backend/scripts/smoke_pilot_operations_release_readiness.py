@@ -137,7 +137,9 @@ def verify_static_registration() -> None:
     server_text = (BACKEND / "server.py").read_text(encoding="utf-8")
     database_text = (BACKEND / "database.py").read_text(encoding="utf-8")
     router_text = required_files[1].read_text(encoding="utf-8")
-    app_text = (ROOT / "frontend" / "src" / "App.jsx").read_text(encoding="utf-8")
+    route_text = (
+        ROOT / "frontend" / "src" / "routes" / "RoutedApplication.jsx"
+    ).read_text(encoding="utf-8")
     catalog_text = (ROOT / "frontend" / "src" / "lib" / "moduleCatalog.js").read_text(encoding="utf-8")
     for collection in PILOT_OPERATIONS_COLLECTIONS:
         if collection not in database_text:
@@ -148,7 +150,7 @@ def verify_static_registration() -> None:
         raise AssertionError("Phase 57.0 readiness or router registration is missing.")
     if "OWNER_ONLY = [\"platform_owner\"]" not in router_text or "require_platform_role" not in router_text:
         raise AssertionError("Pilot agency and synthetic data mutations are not Platform Owner governed.")
-    if "/platform/pilot-operations" not in app_text or "/platform/pilot-operations" not in catalog_text:
+    if "/platform/pilot-operations" not in route_text or "/platform/pilot-operations" not in catalog_text:
         raise AssertionError("Platform pilot operations route or module registration is missing.")
 
     tree = ast.parse(required_files[0].read_text(encoding="utf-8"), filename=str(required_files[0]))

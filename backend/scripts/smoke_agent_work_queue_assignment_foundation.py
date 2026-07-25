@@ -312,8 +312,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Platform governance must not silently act as agency staff: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/work-queues"),
-        (ROOT / "frontend/src/App.jsx", "/agency/work-queue"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/work-queues"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/work-queue"),
         (ROOT / "frontend/src/pages/platform/WorkQueueGovernancePage.jsx", "Platform governance only"),
         (ROOT / "frontend/src/pages/agency/AgentWorkQueuePage.jsx", "Assign selected to me"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Agent Work Queue"),
@@ -331,7 +331,7 @@ def verify_router_ui_docs_registration() -> None:
     ]:
         require_text(path, text)
     for path in [
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "backend/routers/platform_agent_work_queues.py",
         ROOT / "backend/routers/agency_agent_work_queues.py",
@@ -467,6 +467,20 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
     )
     if generated_twice.get("idempotent_reused") is not True or generated_twice["work_item"]["id"] != generated_once["work_item"]["id"]:
         raise AssertionError("Idempotent work item generation did not reuse existing source metadata.")
+    source_query = get(
+        f"/api/agencies/{agency_id}/work-queue?{urlencode({
+            'source_entity_type': generated_once['work_item']['source_entity_type'],
+            'source_entity_id': generated_once['work_item']['source_entity_id'],
+            'include_completed': 'true',
+        })}",
+        AGENCY_AGENT_HEADERS,
+    )
+    source_items = source_query.get("items") or []
+    if not source_items or any(
+        item.get("source_entity_id") != generated_once["work_item"]["source_entity_id"]
+        for item in source_items
+    ):
+        raise AssertionError("Governed source-entity work queue filtering failed.")
 
     assigned = post(
         f"/api/agencies/{agency_id}/work-queue/work-items/{manual_item['id']}/assign-self",

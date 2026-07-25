@@ -170,8 +170,8 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
             raise AssertionError(f"Non-canonical route introduced: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-evidence"),
-        ("frontend/src/App.jsx", "/agency/airline-evidence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-evidence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-evidence"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Evidence"),
         ("frontend/src/pages/platform/AirlineEvidencePage.jsx", "Conflicts are retained for human review"),
         ("frontend/src/pages/agency/AirlineEvidencePage.jsx", "Restricted attachments, source locations, and internal review notes are not shown"),

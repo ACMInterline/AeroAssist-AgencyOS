@@ -146,9 +146,9 @@ def verify_static_contracts() -> None:
         if required not in service_text:
             raise AssertionError(f"Delivery service missing required contract: {required}")
 
-    require_text(ROOT / "frontend/src/App.jsx", '"/agency/offer-deliveries"')
-    require_text(ROOT / "frontend/src/App.jsx", '"/platform/offer-delivery-diagnostics"')
-    require_text(ROOT / "frontend/src/App.jsx", '"/portal/travel-options"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/agency/offer-deliveries"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/platform/offer-delivery-diagnostics"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/portal/travel-options"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", 'label: "Offer Delivery"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", 'surface_type: "contextual_tool"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", 'navigation_visibility: "contextual"')

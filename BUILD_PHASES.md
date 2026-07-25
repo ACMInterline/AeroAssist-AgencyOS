@@ -2822,3 +2822,26 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md),
   [Operational Work Item Contract](docs/architecture/operational-work-item-contract.md),
   and [Automation Compatibility And Migration](docs/architecture/automation-compatibility-and-migration.md).
+
+## P1 Product Recovery 11B - Full-System Stabilization
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  release-candidate stabilization gate, not a new roadmap phase.
+- Preserves all Product Kernel owners and compatibility contracts.
+- Reduces the raw initial frontend shell by 30.7% through a lazy route
+  resolver while preserving 311 governed page modules and valid deep links.
+- Adds a real Not Found surface, application render boundary, safe
+  status/correlation errors, governed dialog focus, and source-level
+  accessibility acceptance.
+- Adds deterministic Portal upload byte-signature validation and fixes verified
+  Request V4, Work Queue query, Booking detail, and Portal Invoice runtime
+  defects.
+- Adds a 51-check disposable Chromium acceptance contract and deterministic
+  lifecycle integrity validator.
+- Registers 171 smoke scripts after adding the source-level stabilization gate.
+- Adds no model, collection, index, provider action, payment execution,
+  Ticket/EMD issuance, external message delivery, production migration,
+  scheduler, commit, push, or deployment.
+- See [Full-System Stabilization Report](docs/stabilization/full-system-stabilization-report.md),
+  [Frontend Performance Report](docs/stabilization/frontend-performance-report.md),
+  and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).

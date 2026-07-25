@@ -110,8 +110,8 @@ def verify_static_contracts() -> None:
         if required not in service_text:
             raise AssertionError(f"Presentation service missing required contract: {required}")
 
-    require_text(ROOT / "frontend/src/App.jsx", '"/agency/journey-comparison-presentations"')
-    require_text(ROOT / "frontend/src/App.jsx", '"/platform/journey-comparison-presentations"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/agency/journey-comparison-presentations"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/platform/journey-comparison-presentations"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", "Journey Comparison Presentations")
     require_text(ROOT / "frontend/src/pages/agency/JourneyComparisonPresentationWorkspacePage.jsx", "Client-safe preview")
     require_text(ROOT / "frontend/src/pages/agency/JourneyComparisonPresentationWorkspacePage.jsx", "Select explicitly")

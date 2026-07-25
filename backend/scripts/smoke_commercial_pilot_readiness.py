@@ -336,7 +336,7 @@ def verify_registration_and_safety() -> None:
             'prefix="/api/platform/commercial-pilot-readiness"',
             "require_any_platform_role",
         ],
-        "frontend/src/App.jsx": [
+        "frontend/src/routes/RoutedApplication.jsx": [
             '"/agency/pilot-feedback"',
             '"/platform/pilot-feedback"',
             '"/platform/commercial-pilot-readiness"',

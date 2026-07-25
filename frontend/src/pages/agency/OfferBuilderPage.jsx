@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2.js"
 import Columns3 from "lucide-react/dist/esm/icons/columns-3.js"
 import Copy from "lucide-react/dist/esm/icons/copy.js"
@@ -11,6 +11,7 @@ import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import { useAuthorization } from "../../context/AuthorizationContext"
+import useDialogFocus from "../../hooks/useDialogFocus"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost, apiPut } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -550,6 +551,9 @@ function MiniMatrix({ matrix, selectedOptionId }) {
 }
 
 function AcceptModal({ option, grouped, onCancel, onConfirm }) {
+  const cancelRef = useRef(null)
+  const dialogRef = useRef(null)
+  useDialogFocus({ dialogRef, initialFocusRef: cancelRef, onEscape: onCancel, open: Boolean(option) })
   if (!option) return null
   const pricing = option.pricing_summary_json || {}
   const fare = grouped.fareBundles?.[0]
@@ -559,8 +563,15 @@ function AcceptModal({ option, grouped, onCancel, onConfirm }) {
   const warnings = option.warnings_json || []
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <section className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-xl">
-        <h3 className="text-lg font-semibold text-slate-950">Accept Option</h3>
+      <section
+        aria-labelledby="accept-offer-option-title"
+        aria-modal="true"
+        className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-xl"
+        ref={dialogRef}
+        role="dialog"
+        tabIndex="-1"
+      >
+        <h3 className="text-lg font-semibold text-slate-950" id="accept-offer-option-title">Accept Option</h3>
         <div className="mt-4 space-y-3 text-sm text-slate-700">
           <p>
             <span className="font-semibold text-slate-950">{option.label}</span>
@@ -575,7 +586,7 @@ function AcceptModal({ option, grouped, onCancel, onConfirm }) {
           </p>
         </div>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={onCancel}>
+          <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" ref={cancelRef} type="button" onClick={onCancel}>
             Cancel
           </button>
           <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={onConfirm}>

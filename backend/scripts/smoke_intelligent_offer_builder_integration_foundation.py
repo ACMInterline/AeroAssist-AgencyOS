@@ -225,8 +225,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden execution route exposed for offer intelligence: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/intelligent-offer-builder"),
-        (ROOT / "frontend/src/App.jsx", "/agency/offer-intelligence"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/intelligent-offer-builder"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/offer-intelligence"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Intelligent Offer Builder"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Offer Intelligence"),
         (ROOT / "frontend/src/pages/platform/IntelligentOfferBuilderPage.jsx", "Package Overview"),

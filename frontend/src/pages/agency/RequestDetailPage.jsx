@@ -453,9 +453,9 @@ export default function RequestDetailPage({ requestId }) {
             </Panel>
           </section>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={requestId}
-            entityLabel={state.request.request_reference || "Request"}
+            entityLabel={state?.request?.request_reference || "Request"}
             entityType="request"
           />
         </div>

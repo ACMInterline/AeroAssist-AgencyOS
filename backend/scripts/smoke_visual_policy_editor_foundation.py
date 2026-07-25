@@ -174,8 +174,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/visual-policy-editor"),
-        (ROOT / "frontend/src/App.jsx", "/agency/policy-editor"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/visual-policy-editor"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/policy-editor"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Visual Policy Editor"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "visual_policy_editor"),
         (ROOT / "frontend/src/pages/platform/VisualPolicyEditorPage.jsx", "Route / Aircraft / Cabin / Date / Weather Restrictions"),

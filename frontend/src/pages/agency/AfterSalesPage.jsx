@@ -317,7 +317,7 @@ export default function AfterSalesPage() {
           </section>
           {selected ? (
             <OperationalCollaborationPanel
-              agencyId={state.agency.id}
+              agencyId={state?.agency?.id}
               entityId={selected.id}
               entityLabel={selected.case_reference || "After-Sales Case"}
               entityType="after_sales_case"

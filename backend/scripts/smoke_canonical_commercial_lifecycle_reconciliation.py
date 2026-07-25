@@ -1316,7 +1316,7 @@ async def verify_transitions_security_and_analysis(db: Database) -> None:
     )
     check(
         "65_frontend_canonical_flow_registered",
-        "/agency/booking-workspaces" in source("frontend/src/App.jsx")
+        "/agency/booking-workspaces" in source("frontend/src/routes/RoutedApplication.jsx")
         and "Accepted evidence is frozen" in source(
             "frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx"
         )

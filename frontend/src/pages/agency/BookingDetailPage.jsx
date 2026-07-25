@@ -229,9 +229,9 @@ export default function BookingDetailPage({ bookingId }) {
             <List items={state.payments} empty="No payments linked" render={(item) => `${item.amount} ${item.currency} · ${item.status.replaceAll("_", " ")} · ${item.reconciliation_status.replaceAll("_", " ")}`} />
           </Panel>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={bookingId}
-            entityLabel={state.booking.booking_reference || "Booking"}
+            entityLabel={state?.booking?.booking_reference || "Booking"}
             entityType="booking"
           />
         </div>

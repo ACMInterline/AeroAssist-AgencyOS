@@ -737,6 +737,14 @@ def verify_source_contract() -> None:
             raise AssertionError(f"Request workflow step is missing: {label}")
     if "/requests/builder" in frontend:
         raise AssertionError("Request page still writes through the legacy builder route.")
+    if '...serviceDetails(service), notes: service.notes' in frontend:
+        raise AssertionError(
+            "Mobility serialization still sends a non-canonical notes field."
+        )
+    if "passenger_context_notes: [...new Set(contextNotes)].join" not in frontend:
+        raise AssertionError(
+            "Mobility notes are not preserved in the canonical passenger context field."
+        )
     router_source = (ROOT / "backend/routers/requests.py").read_text(encoding="utf-8")
     if "RequestV4Payload | TravelRequestCreate" in router_source:
         raise AssertionError("Canonical Request creation still accepts an independently writable legacy body.")

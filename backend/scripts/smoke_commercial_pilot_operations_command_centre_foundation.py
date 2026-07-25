@@ -296,7 +296,7 @@ def verify_registration() -> None:
             "Query(default=50, ge=1, le=50)",
         ],
         ROOT / "backend/server.py": ["commercial_pilot_operations_command_centre_foundation"],
-        ROOT / "frontend/src/App.jsx": ['"/agency": OperationsCommandCenterPage', '"/agency/operations-command-center": OperationsCommandCenterPage'],
+        ROOT / "frontend/src/routes/RoutedApplication.jsx": ['"/agency": OperationsCommandCenterPage', '"/agency/operations-command-center": OperationsCommandCenterPage'],
         ROOT / "frontend/src/lib/moduleCatalog.js": ["Operations Command Centre", 'href: "/agency"'],
         ROOT / "frontend/src/pages/agency/OperationsCommandCenterPage.jsx": ["Here’s what needs attention and the next action", "OperationsWorkList", "OperationsQueues"],
         ROOT / "frontend/src/components/operations/OperationsWorkList.jsx": ["My Work Today", "reassign"],

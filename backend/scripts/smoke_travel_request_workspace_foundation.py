@@ -188,8 +188,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Travel Request Workspaces"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Travel Requests"),
-        (ROOT / "frontend/src/App.jsx", "/platform/travel-request-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/travel-requests"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/travel-request-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/travel-requests"),
         (ROOT / "frontend/src/pages/platform/TravelRequestWorkspacesPage.jsx", "Travel Request Workspaces"),
         (ROOT / "frontend/src/pages/platform/TravelRequestWorkspacesPage.jsx", "No trip or offer automation"),
         (ROOT / "frontend/src/pages/platform/TravelRequestWorkspacesPage.jsx", "Linked records"),
@@ -209,7 +209,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/TravelRequestWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/TravelRequestsPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

@@ -223,8 +223,8 @@ def verify_readiness() -> None:
 
 def verify_frontend_and_docs() -> None:
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/airline-operational-intelligence"),
-        (ROOT / "frontend/src/App.jsx", "/agency/operational-intelligence"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/airline-operational-intelligence"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operational-intelligence"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Airline Operational Intelligence"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Intelligence"),
         (ROOT / "frontend/src/pages/platform/AirlineOperationalIntelligencePage.jsx", "Architecture only"),

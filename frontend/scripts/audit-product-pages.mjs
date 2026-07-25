@@ -12,9 +12,9 @@ const scriptDirectory = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(scriptDirectory, "../..")
 const frontendSource = path.join(root, "frontend/src")
 const pagesDirectory = path.join(frontendSource, "pages")
-const appPath = path.join(frontendSource, "App.jsx")
+const routeRegistryPath = path.join(frontendSource, "routes/RoutedApplication.jsx")
 const outputPath = path.join(root, "docs/architecture/product-page-inventory.csv")
-const appSource = fs.readFileSync(appPath, "utf8")
+const routeRegistrySource = fs.readFileSync(routeRegistryPath, "utf8")
 
 function walk(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -32,15 +32,15 @@ const pageFiles = walk(pagesDirectory)
   .sort((left, right) => relative(left).localeCompare(relative(right)))
 
 const importsByFile = new Map()
-for (const match of appSource.matchAll(/const\s+(\w+)\s*=\s*lazy\(\(\)\s*=>\s*import\("(\.\/pages\/[^"]+)"\)\)/g)) {
-  const importedFile = path.resolve(frontendSource, `${match[2].slice(2)}.jsx`)
+for (const match of routeRegistrySource.matchAll(/const\s+(\w+)\s*=\s*lazy\(\(\)\s*=>\s*import\("(\.\.\/pages\/[^"]+)"\)\)/g)) {
+  const importedFile = path.resolve(path.dirname(routeRegistryPath), `${match[2]}.jsx`)
   const names = importsByFile.get(importedFile) || []
   names.push(match[1])
   importsByFile.set(importedFile, names)
 }
 
 const routesByComponent = new Map()
-for (const match of appSource.matchAll(/"(\/[^"]+)"\s*:\s*(\w+)/g)) {
+for (const match of routeRegistrySource.matchAll(/"(\/[^"]*)"\s*:\s*(\w+)/g)) {
   const routes = routesByComponent.get(match[2]) || []
   routes.push(match[1])
   routesByComponent.set(match[2], routes)
@@ -138,22 +138,21 @@ const rows = pageFiles.map((filePath) => {
   const importedNames = importsByFile.get(filePath) || []
   const symbolMatch = source.match(/export\s+default\s+function\s+(\w+)/)
   const symbols = importedNames.length ? importedNames : [symbolMatch?.[1] || path.basename(filePath, ".jsx")]
-  const fallbackRoutes = symbols.includes("HomePage") && appSource.includes("|| HomePage") ? ["/"] : []
-  const routes = [...new Set([...symbols.flatMap((symbol) => routesByComponent.get(symbol) || []), ...fallbackRoutes])].sort()
-  const dynamic = symbols.some((symbol) => new RegExp(`<${symbol}\\b`).test(appSource))
+  const routes = [...new Set(symbols.flatMap((symbol) => routesByComponent.get(symbol) || []))].sort()
+  const dynamic = symbols.some((symbol) => new RegExp(`<${symbol}\\b`).test(routeRegistrySource))
   const routeStatus = routes.length
     ? (dynamic ? "exact_and_dynamic" : "exact")
     : (dynamic ? "dynamic" : "orphan")
   const audience = audienceFor(filePath)
   const placement = routePlacement(audience, routes, routeStatus)
   const sourceIndicators = indicators(source)
-  const routeLabel = routes.length ? routes.join(" | ") : (dynamic ? "dynamic route in frontend/src/App.jsx" : "none found")
+  const routeLabel = routes.length ? routes.join(" | ") : (dynamic ? "dynamic route in frontend/src/routes/RoutedApplication.jsx" : "none found")
   const notes = routes.length > 1
     ? "Compatibility aliases share this page component."
     : placement === "advanced"
       ? "Retained under collapsed Advanced navigation."
       : placement === "orphan"
-        ? "No App.jsx route reference found; review before removal."
+        ? "No route-registry reference found; review before removal."
         : "Canonical or contextual product surface."
   return [
     audience,

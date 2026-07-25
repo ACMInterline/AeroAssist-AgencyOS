@@ -289,9 +289,9 @@ export default function OfferDetailPage({ offerId }) {
             </button>
           </Panel>
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={offerId}
-            entityLabel={state.offer.offer_reference || "Offer"}
+            entityLabel={state?.offer?.offer_reference || "Offer"}
             entityType="offer"
           />
           <ConfirmationDialog

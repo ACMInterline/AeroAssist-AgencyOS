@@ -321,9 +321,9 @@ export default function DocumentDetailPage({ documentId }) {
           </section>
           <DocumentPreviewFrame html={document.rendered_html} />
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={documentId}
-            entityLabel={document.document_number || document.title || "Document"}
+            entityLabel={document?.document_number || document?.title || "Document"}
             entityType="document"
           />
         </div>

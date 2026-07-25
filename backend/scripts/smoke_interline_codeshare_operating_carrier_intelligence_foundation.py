@@ -208,8 +208,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
         raise AssertionError("Agency carrier intelligence record routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/interline-codeshare-intelligence"),
-        ("frontend/src/App.jsx", "/agency/interline-codeshare-advisor"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/interline-codeshare-intelligence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/interline-codeshare-advisor"),
         ("frontend/src/lib/moduleCatalog.js", "Interline & Codeshare Advisor"),
         ("frontend/src/pages/platform/InterlineCodeshareIntelligencePage.jsx", "Special-service responsibility matrix"),
         ("frontend/src/pages/agency/InterlineCodeshareAdvisorPage.jsx", "Responsibility explanation"),

@@ -217,9 +217,9 @@ export default function InvoiceDetailPage({ invoiceId }) {
           </Panel>
           : null}
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={invoiceId}
-            entityLabel={invoice.invoice_number || "Invoice"}
+            entityLabel={invoice?.invoice_number || "Invoice"}
             entityType="invoice"
           />
         </div>

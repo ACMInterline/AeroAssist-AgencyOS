@@ -245,8 +245,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
             raise AssertionError(f"Agency service coverage route is not read-only: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-service-coverage"),
-        ("frontend/src/App.jsx", "/agency/airline-service-coverage"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-service-coverage"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-service-coverage"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Service Coverage"),
         ("frontend/src/pages/platform/AirlineServiceCoveragePage.jsx", "Airline × service matrix"),
         ("frontend/src/pages/platform/AirlineServiceCoveragePage.jsx", "Priority gap register"),

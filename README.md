@@ -2013,3 +2013,21 @@ persistent scheduler, external delivery, provider execution, payment,
 refund, Ticket/EMD issuance, permission mutation, and autonomous decisions
 remain disabled. See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md)
 and [Automation Rule And Safety Contract](docs/architecture/automation-rule-and-safety-contract.md).
+
+## P1 Product Recovery 11B - Full-System Stabilization
+
+Product Recovery 11B keeps the active
+`phase_59_0_product_experience_recovery` marker and introduces no new business
+domain. It splits the route registry from the initial application shell,
+preserves lazy deep links, adds safe render and Not Found handling, standardizes
+redacted API errors, governs dialog keyboard focus, verifies Portal upload
+content signatures, and repairs Request and Work Queue integration defects.
+
+A deterministic disposable browser contract now exercises 51 Platform, Agency,
+Client Portal, and Passenger Portal checks across the canonical Request to
+Finance workflow. The initial raw JavaScript shell is 30.7% smaller. See the
+[Full-System Stabilization Report](docs/stabilization/full-system-stabilization-report.md),
+[Browser Acceptance Contract](docs/stabilization/browser-acceptance-contract.md),
+and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).
+No provider, payment, issuance, external messaging, production migration,
+commit, push, or deployment behavior is enabled.

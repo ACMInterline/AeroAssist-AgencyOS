@@ -89,6 +89,16 @@ def _enum_value(value: Any) -> Any:
     return value.value if hasattr(value, "value") else value
 
 
+def _portal_upload_content_type(data: bytes) -> str | None:
+    if data.startswith(b"%PDF-"):
+        return "application/pdf"
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    return None
+
+
 def _safe_nested(value: Any) -> Any:
     if isinstance(value, list):
         return [_safe_nested(item) for item in value]
@@ -914,6 +924,11 @@ class PortalProjectionService:
             raise PortalProjectionError(
                 "DOCUMENT_SIZE_INVALID",
                 "The document must be between 1 byte and 5 MB.",
+            )
+        if _portal_upload_content_type(data) != content_type:
+            raise PortalProjectionError(
+                "DOCUMENT_CONTENT_MISMATCH",
+                "The file content does not match the selected document type.",
             )
         versions = await self._document_versions(scope["agency_id"], document)
         version_number = len(versions) + 1

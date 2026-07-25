@@ -93,8 +93,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Capability Catalog"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Available Capabilities"),
-        (ROOT / "frontend/src/App.jsx", "/platform/capabilities"),
-        (ROOT / "frontend/src/App.jsx", "/agency/capabilities"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/capabilities"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/capabilities"),
         (ROOT / "frontend/src/pages/platform/CapabilityCatalogPage.jsx", "Platform Capability Catalog"),
         (ROOT / "frontend/src/pages/platform/CapabilityCatalogPage.jsx", "Dependency view"),
         (ROOT / "frontend/src/pages/agency/CapabilitiesPage.jsx", "Available Capabilities"),
@@ -111,7 +111,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/CapabilityCatalogPage.jsx",
         ROOT / "frontend/src/pages/agency/CapabilitiesPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

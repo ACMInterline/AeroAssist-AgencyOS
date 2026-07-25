@@ -191,8 +191,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     if platform_methods & {"post", "put", "patch", "delete"}:
         raise AssertionError(f"Platform handoff diagnostics should be read-only at root: {platform_methods}")
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/booking-handoffs"),
-        (ROOT / "frontend/src/App.jsx", "/platform/booking-handoffs"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/booking-handoffs"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/booking-handoffs"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Booking Handoffs"),
         (ROOT / "frontend/src/pages/agency/BookingHandoffsPage.jsx", "Accepted-offer to booking readiness metadata"),
         (ROOT / "frontend/src/pages/platform/BookingHandoffDiagnosticsPage.jsx", "Read-only platform visibility"),

@@ -114,8 +114,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Bundle Rollout Readiness"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Bundle Rollout Readiness"),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-bundle-rollout-readiness"),
-        (ROOT / "frontend/src/App.jsx", "/agency/bundle-rollout-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-bundle-rollout-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/bundle-rollout-readiness"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutReadinessPage.jsx", "Feature Bundle Rollout Readiness"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutReadinessPage.jsx", "does not activate, deactivate, allow, or block features"),
         (ROOT / "frontend/src/pages/agency/BundleRolloutReadinessPage.jsx", "Bundle Rollout Readiness"),
@@ -133,7 +133,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureBundleRolloutReadinessPage.jsx",
         ROOT / "frontend/src/pages/agency/BundleRolloutReadinessPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

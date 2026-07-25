@@ -358,9 +358,9 @@ export default function TripDetailPage({ tripId }) {
           </Panel>
 
           <OperationalCollaborationPanel
-            agencyId={state.agency.id}
+            agencyId={state?.agency?.id}
             entityId={tripId}
-            entityLabel={state.trip.trip_reference || "Trip"}
+            entityLabel={state?.trip?.trip_reference || "Trip"}
             entityType="trip"
           />
         </div>

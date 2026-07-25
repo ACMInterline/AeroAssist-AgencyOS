@@ -169,8 +169,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/knowledge-quality-assurance"),
-        (ROOT / "frontend/src/App.jsx", "/agency/knowledge-quality-assurance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/knowledge-quality-assurance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/knowledge-quality-assurance"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge QA"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "knowledge_quality_assurance"),
         (ROOT / "frontend/src/pages/platform/KnowledgeQualityAssurancePage.jsx", "Requested Changes"),

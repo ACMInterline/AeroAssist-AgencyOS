@@ -160,8 +160,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Feature Bundle Rollout Schedule"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Rollout Schedule"),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-bundle-rollout-schedule"),
-        (ROOT / "frontend/src/App.jsx", "/agency/rollout-schedule"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-bundle-rollout-schedule"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/rollout-schedule"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutSchedulePage.jsx", "Feature Bundle Rollout Schedule"),
         (ROOT / "frontend/src/pages/platform/FeatureBundleRolloutSchedulePage.jsx", "Schedule records are metadata only"),
         (ROOT / "frontend/src/pages/agency/RolloutSchedulePage.jsx", "Rollout Schedule"),
@@ -179,7 +179,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureBundleRolloutSchedulePage.jsx",
         ROOT / "frontend/src/pages/agency/RolloutSchedulePage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)
