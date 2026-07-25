@@ -7,6 +7,13 @@ from auth import get_current_user
 from database import Database, get_database
 from models import TripDossierCreate, TripDossierUpdate
 from services.tenant_service import assert_agency_access, require_any_agency_role
+from services.authorization_service import require_permission
+from services.canonical_commercial_lifecycle_service import (
+    CommercialLifecycleError,
+    validate_lifecycle_transition,
+    write_lifecycle_evidence,
+)
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.trip_dossier_service import (
     create_manual_trip,
     create_trip_from_request,
@@ -26,14 +33,14 @@ WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_trips")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    require_permission(user, "edit_trips")
 
 
 def clean_updates(payload: Any) -> dict:
@@ -63,6 +70,33 @@ async def trip_detail_payload(db: Database, agency_id: str, trip: dict) -> dict:
     client = None
     if trip.get("primary_client_id"):
         client = await db.collection("client_profiles").find_one({"agency_id": agency_id, "id": trip["primary_client_id"]})
+    legacy_timeline = await db.collection("trip_timeline_events").find_many(
+        {"agency_id": agency_id, "trip_id": trip["id"]},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=200,
+    )
+    canonical_timeline = await OperationalCollaborationService(db).list_timeline(
+        agency_id=agency_id,
+        entity_type="trip",
+        entity_id=trip["id"],
+        visibility={"internal", "agency", "client", "passenger"},
+        limit=200,
+    )
+    timeline = legacy_timeline + [
+        {
+            **item,
+            "trip_id": trip["id"],
+            "actor_user_id": item.get("actor_id"),
+            "title": (item.get("details") or {}).get("title")
+            or item.get("summary")
+            or item.get("event_type"),
+            "metadata": item.get("details") or {},
+            "created_at": item.get("event_time") or item.get("created_at"),
+            "canonical_timeline_entry_id": item.get("id"),
+        }
+        for item in canonical_timeline
+    ]
+    timeline.sort(key=lambda item: str(item.get("created_at") or ""))
     return {
         "trip": trip,
         "client": client,
@@ -70,7 +104,7 @@ async def trip_detail_payload(db: Database, agency_id: str, trip: dict) -> dict:
         "passengers": await db.collection("trip_passengers").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
         "segments": await db.collection("trip_segments").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
         "services": await db.collection("trip_service_items").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
-        "timeline": await db.collection("trip_timeline_events").find_many({"agency_id": agency_id, "trip_id": trip["id"]}),
+        "timeline": timeline,
     }
 
 
@@ -108,7 +142,13 @@ async def create_trip(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    created = await create_manual_trip(db, agency_id, payload, user["id"])
+    try:
+        created = await create_manual_trip(db, agency_id, payload, user["id"])
+    except CommercialLifecycleError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": exc.code, "message": str(exc)},
+        ) from exc
     return {"trip": created}
 
 
@@ -126,10 +166,51 @@ async def update_trip(agency_id: str, trip_id: str, payload: TripDossierUpdate, 
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
+    expected_version = updates.pop("expected_version", None)
+    transition_reason = updates.pop("transition_reason", None)
+    current_version = int(trip.get("current_operational_version") or 1)
+    if expected_version is not None and expected_version != current_version:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Trip changed after it was opened. Refresh before updating.",
+        )
+    previous_status = trip.get("trip_status")
+    canonical_transition = None
+    if "trip_status" in updates:
+        try:
+            canonical_transition = validate_lifecycle_transition(
+                "trip", previous_status, updates["trip_status"]
+            )
+        except CommercialLifecycleError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"code": exc.code, "message": str(exc)},
+            ) from exc
+        if canonical_transition[0] != canonical_transition[1] and not transition_reason:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A transition reason is required for Trip status changes.",
+            )
     updates["updated_by_user_id"] = user["id"]
+    updates["current_operational_version"] = current_version + 1
     updated = await db.collection("trip_dossiers").update_one({"agency_id": agency_id, "id": trip_id}, updates)
     await write_trip_audit(db, agency_id, user["id"], "trip_dossier_updated", trip_id, "Updated trip dossier.", {"fields": sorted(updates.keys())})
     await write_trip_timeline(db, agency_id, trip.get("workspace_id"), trip_id, user["id"], "trip_dossier_updated", "Trip dossier updated", ", ".join(sorted(updates.keys())))
+    if "trip_status" in updates and canonical_transition and canonical_transition[0] != canonical_transition[1]:
+        await write_lifecycle_evidence(
+            db,
+            agency_id=agency_id,
+            actor_user_id=user["id"],
+            event_type="trip.lifecycle.transitioned",
+            entity_type="trip_dossier",
+            entity_id=trip_id,
+            summary=f"Trip status changed to {updates['trip_status']}.",
+            previous_status=previous_status,
+            next_status=updates["trip_status"],
+            request_id=trip.get("primary_request_id"),
+            trip_id=trip_id,
+            metadata={"reason": transition_reason},
+        )
     return {"trip": updated}
 
 

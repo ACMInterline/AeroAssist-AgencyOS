@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from database import Database
+from persistence_query import MAXIMUM_QUERY_LIMIT
 
 
 HIGH_RISK_DOMAINS = {
@@ -32,6 +33,9 @@ def _usage(
     bulk_import_supported: bool = True,
     health_checks: list[str] | None = None,
     operational_impact: str | None = None,
+    fields_using_reference: list[str] | None = None,
+    frontend_selectors: list[str] | None = None,
+    migration_reconciliation_status: str = "not_assessed",
 ) -> dict[str, Any]:
     return {
         "domain_key": domain_key,
@@ -43,6 +47,8 @@ def _usage(
         "secondary_consumers": secondary_consumers or [],
         "used_in_routes": used_in_routes or [],
         "used_in_models": used_in_models or [],
+        "fields_using_reference": fields_using_reference or [],
+        "frontend_selectors": frontend_selectors or [],
         "used_in_workflows": used_in_workflows,
         "required_metadata_fields": required_metadata_fields,
         "optional_metadata_fields": optional_metadata_fields,
@@ -58,10 +64,49 @@ def _usage(
         "operational_impact": operational_impact
         or f"{label} records feed {', '.join(used_in_workflows[:3])}. Missing data can reduce automation quality.",
         "missing_data_risk_level": missing_data_risk_level,
+        "deactivation_risk": missing_data_risk_level,
+        "migration_reconciliation_status": migration_reconciliation_status,
+        "usage_counts_available": True,
+        "usage_queries_bounded": True,
     }
 
 
 DOMAIN_USAGE: dict[str, dict[str, Any]] = {
+    "passenger_types": _usage(
+        "passenger_types",
+        "Passenger Type Codes",
+        "Canonical passenger classification metadata with historical code and label snapshots.",
+        ["passenger_profiles", "request_passengers"],
+        ["passenger_profiles", "request_v4", "request_passenger_identity"],
+        ["iata_ptc_code", "passenger_category"],
+        [
+            "age_min_years",
+            "age_max_years",
+            "requires_date_of_birth",
+            "requires_guardian",
+            "manual_review_required",
+        ],
+        "passenger_types",
+        "high",
+        used_in_routes=[
+            "/api/reference/passenger_types/options",
+            "/api/agencies/{agency_id}/passengers",
+            "/api/agencies/{agency_id}/requests",
+        ],
+        used_in_models=[
+            "GlobalReferenceRecord",
+            "PassengerProfile",
+            "RequestV4Passenger",
+            "RequestPassenger",
+        ],
+        fields_using_reference=[
+            "passenger_type_code_id",
+            "passenger_type_code",
+            "passenger_type_label",
+        ],
+        frontend_selectors=["PtcSelect", "PassengerForm", "RequestCreatePage"],
+        migration_reconciliation_status="dry_run_analysis_available",
+    ),
     "countries": _usage(
         "countries",
         "Countries",
@@ -266,8 +311,35 @@ DOMAIN_USAGE: dict[str, dict[str, Any]] = {
 }
 
 
+def _register_unwired_reference_domains() -> None:
+    from services.reference_data_service import REFERENCE_DOMAINS
+
+    for domain_key, label in REFERENCE_DOMAINS.items():
+        if domain_key in DOMAIN_USAGE:
+            continue
+        DOMAIN_USAGE[domain_key] = _usage(
+            domain_key,
+            label,
+            f"{label} are governed by GlobalReferenceRecord; consumer wiring remains explicitly inventoried.",
+            [],
+            [],
+            [],
+            [],
+            domain_key,
+            "low",
+            enrichment_supported=False,
+            fields_using_reference=[],
+            frontend_selectors=[],
+            migration_reconciliation_status="consumer_wiring_pending",
+            operational_impact="No canonical operational consumer is registered yet; deactivation still requires platform governance.",
+        )
+
+
+_register_unwired_reference_domains()
+
+
 def list_domain_usage() -> list[dict[str, Any]]:
-    return list(DOMAIN_USAGE.values())
+    return [DOMAIN_USAGE[key] for key in sorted(DOMAIN_USAGE)]
 
 
 def get_domain_usage(domain_key: str) -> dict[str, Any] | None:
@@ -342,7 +414,38 @@ def service_code(record: dict[str, Any]) -> str:
 async def workflow_reference_counts(db: Database) -> dict[str, dict[str, int]]:
     counts: dict[str, dict[str, int]] = {domain: {} for domain in DOMAIN_USAGE}
 
-    for segment in await db.collection("request_segments").find_many():
+    for passenger in await db.collection("passenger_profiles").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
+        key = str(
+            passenger.get("passenger_type_code")
+            or passenger.get("passenger_type")
+            or ""
+        ).upper()
+        if key:
+            counts["passenger_types"][key] = (
+                counts["passenger_types"].get(key, 0) + 1
+            )
+
+    for passenger in await db.collection("request_passengers").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
+        key = str(
+            passenger.get("passenger_type_code")
+            or passenger.get("snapshot_passenger_type")
+            or ""
+        ).upper()
+        if key:
+            counts["passenger_types"][key] = (
+                counts["passenger_types"].get(key, 0) + 1
+            )
+
+    for segment in await db.collection("request_segments").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         for domain, keys in {
             "airports": [segment.get("origin_airport_code"), segment.get("destination_airport_code")],
             "airlines": [segment.get("marketing_airline"), segment.get("operating_airline"), segment.get("preferred_airline_code")],
@@ -351,7 +454,10 @@ async def workflow_reference_counts(db: Database) -> dict[str, dict[str, int]]:
                 if key:
                     counts[domain][str(key).upper()] = counts[domain].get(str(key).upper(), 0) + 1
 
-    for segment in await db.collection("trip_segments").find_many():
+    for segment in await db.collection("trip_segments").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         for key in [segment.get("origin_airport_code"), segment.get("destination_airport_code")]:
             if key:
                 counts["airports"][str(key).upper()] = counts["airports"].get(str(key).upper(), 0) + 1
@@ -359,7 +465,10 @@ async def workflow_reference_counts(db: Database) -> dict[str, dict[str, int]]:
             if key:
                 counts["airlines"][str(key).upper()] = counts["airlines"].get(str(key).upper(), 0) + 1
 
-    for segment in await db.collection("offer_builder_segments").find_many():
+    for segment in await db.collection("offer_builder_segments").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         for key in [segment.get("origin_airport"), segment.get("destination_airport")]:
             if key:
                 counts["airports"][str(key).upper()] = counts["airports"].get(str(key).upper(), 0) + 1
@@ -367,33 +476,51 @@ async def workflow_reference_counts(db: Database) -> dict[str, dict[str, int]]:
             if key:
                 counts["airlines"][str(key).upper()] = counts["airlines"].get(str(key).upper(), 0) + 1
 
-    for option in await db.collection("offer_options").find_many():
+    for option in await db.collection("offer_options").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         if option.get("main_airline_code"):
             key = str(option["main_airline_code"]).upper()
             counts["airlines"][key] = counts["airlines"].get(key, 0) + 1
 
-    for workspace in await db.collection("offer_workspaces").find_many():
+    for workspace in await db.collection("offer_workspaces").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         if workspace.get("currency"):
             key = str(workspace["currency"]).upper()
             counts["currencies"][key] = counts["currencies"].get(key, 0) + 1
 
-    for line in await db.collection("offer_pricing_lines").find_many():
+    for line in await db.collection("offer_pricing_lines").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         if line.get("currency"):
             key = str(line["currency"]).upper()
             counts["currencies"][key] = counts["currencies"].get(key, 0) + 1
 
-    for service in await db.collection("requested_services").find_many():
+    for service in await db.collection("requested_services").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         key = str(service.get("service_key") or service.get("service_code") or "").upper()
         if key:
             counts["service_catalogue"][key] = counts["service_catalogue"].get(key, 0) + 1
 
-    for service in await db.collection("passenger_service_requests").find_many():
+    for service in await db.collection("passenger_service_requests").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         key = str(service.get("service_key") or service.get("service_type") or service.get("ssr_code") or "").upper()
         if key:
             counts["service_catalogue"][key] = counts["service_catalogue"].get(key, 0) + 1
             counts["ssr_osi_codes"][key] = counts["ssr_osi_codes"].get(key, 0) + 1
 
-    for package in await db.collection("booking_readiness_packages").find_many():
+    for package in await db.collection("booking_readiness_packages").find_many(
+        sort=[("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    ):
         pricing = package.get("pricing_snapshot_json") or {}
         summary = pricing.get("summary") or {}
         if summary.get("currency"):
@@ -408,9 +535,19 @@ async def workflow_reference_counts(db: Database) -> dict[str, dict[str, int]]:
 
 
 async def reference_action_required(db: Database) -> list[dict[str, Any]]:
-    records = await db.collection("global_reference_records").find_many()
-    services = await db.collection("service_catalogue").find_many()
-    suggestions = await db.collection("reference_data_suggestions").find_many({"status": "pending_review"})
+    records = await db.collection("global_reference_records").find_many(
+        sort=[("domain", 1), ("key", 1), ("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    )
+    services = await db.collection("service_catalogue").find_many(
+        sort=[("service_family_code", 1), ("service_code", 1), ("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT
+    )
+    suggestions = await db.collection("reference_data_suggestions").find_many(
+        {"status": "pending_review"},
+        sort=[("created_at", 1), ("id", 1)],
+        limit=MAXIMUM_QUERY_LIMIT,
+    )
     usage_counts = await workflow_reference_counts(db)
     items: list[dict[str, Any]] = []
 

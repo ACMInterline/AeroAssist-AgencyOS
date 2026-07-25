@@ -23,7 +23,11 @@ const queueTabs = [
   ["overdue", "Overdue"],
   ["blocked", "Blocked"],
   ["waiting_client", "Waiting for client"],
+  ["waiting_airline_supplier", "Waiting for supplier"],
   ["waiting_documents", "Waiting for documents"],
+  ["waiting_approval", "Approval required"],
+  ["waiting_payment", "Finance review"],
+  ["service_case_queue", "Service cases"],
   ["knowledge_gap_queue", "Knowledge follow-up"],
   ["workflow_blocker_queue", "Blocked follow-ups"],
 ]
@@ -39,7 +43,15 @@ const defaultFilters = {
 
 export default function AgentWorkQueuePage() {
   const [state, setState] = useState(null)
-  const [filters, setFilters] = useState(defaultFilters)
+  const [filters, setFilters] = useState(() => {
+    const query = new URLSearchParams(window.location.search)
+    return {
+      ...defaultFilters,
+      queue_code: query.get("source_entity_id") ? "" : defaultFilters.queue_code,
+      source_entity_type: query.get("source_entity_type") || "",
+      source_entity_id: query.get("source_entity_id") || "",
+    }
+  })
   const [selectedIds, setSelectedIds] = useState([])
   const [reason, setReason] = useState("Queue review")
   const [error, setError] = useState("")
@@ -69,7 +81,12 @@ export default function AgentWorkQueuePage() {
   }
 
   async function action(workItemId, name, body = {}) {
-    await reloadAfter(() => apiPost(`/api/agencies/${state.agency.id}/work-queue/work-items/${workItemId}/${name}`, { reason, ...body }))
+    setError("")
+    try {
+      await reloadAfter(() => apiPost(`/api/agencies/${state.agency.id}/work-queue/work-items/${workItemId}/${name}`, { reason, ...body }))
+    } catch (actionError) {
+      setError(actionError.message)
+    }
   }
 
   async function bulkAssignSelf() {
@@ -84,7 +101,7 @@ export default function AgentWorkQueuePage() {
 
   useEffect(() => {
     load(filters).catch((err) => setError(err.message))
-  }, [filters.queue_code, filters.status, filters.priority, filters.severity, filters.work_item_type, filters.assigned_team_code])
+  }, [filters.queue_code, filters.status, filters.priority, filters.severity, filters.work_item_type, filters.assigned_team_code, filters.source_entity_type, filters.source_entity_id])
 
   const metrics = [
     ["Open", state?.summary?.work_item_count || 0],
@@ -148,6 +165,7 @@ export default function AgentWorkQueuePage() {
                   selected={selectedIds.includes(item.id)}
                   onSelect={(checked) => setSelectedIds((ids) => checked ? [...new Set([...ids, item.id])] : ids.filter((id) => id !== item.id))}
                   onAction={action}
+                  open={new URLSearchParams(window.location.search).get("work_item_id") === item.id}
                 />
               ))}
             </section>
@@ -158,9 +176,9 @@ export default function AgentWorkQueuePage() {
   )
 }
 
-function WorkItemCard({ item, selected, onSelect, onAction }) {
+function WorkItemCard({ item, selected, onSelect, onAction, open }) {
   return (
-    <details className="rounded-lg border border-slate-200 bg-white p-4">
+    <details className="rounded-lg border border-slate-200 bg-white p-4" open={open || undefined}>
       <summary className="cursor-pointer list-none">
         <div className="grid gap-3 lg:grid-cols-[24px_1fr_180px_180px_200px]">
           <input aria-label={`Select ${item.title}`} className="mt-1" type="checkbox" checked={selected} onChange={(event) => onSelect(event.target.checked)} />
@@ -193,6 +211,8 @@ function WorkItemCard({ item, selected, onSelect, onAction }) {
           `Request task: ${item.request_task_id || "None"}`,
           `History reference: ${item.timeline_entry_id || "None"}`,
           `Source reference: ${item.source_entity_id || "None"}`,
+          `Source event: ${item.source_timeline_entry_id || "None"}`,
+          `Automation rule: ${item.source_automation_rule_id || "Manual work"}`,
         ]} />
         <DetailBlock title="Assignment history" lines={(item.assignment_events || []).length ? item.assignment_events.map((event) => `${formatType(event.event_type)}: ${event.reason || "No reason recorded"}`) : ["No assignment history yet"]} />
         <div>
@@ -201,11 +221,18 @@ function WorkItemCard({ item, selected, onSelect, onAction }) {
             <ActionButton label="Assign to me" onClick={() => onAction(item.id, "assign-self")} />
             <ActionButton label="Accept" onClick={() => onAction(item.id, "accept")} />
             <ActionButton label="In progress" onClick={() => onAction(item.id, "in-progress")} />
+            <ActionButton label="Wait" onClick={() => onAction(item.id, "wait", { blocker_status: "waiting_client" })} />
             <ActionButton label="Block" onClick={() => onAction(item.id, "block", { blocker_status: "blocked" })} />
-            <ActionButton label="Complete" onClick={() => onAction(item.id, "complete")} />
+            <ActionButton label="Resolve blocker" onClick={() => onAction(item.id, "resolve-blocker")} />
+            <ActionButton label="Request approval" onClick={() => onAction(item.id, "request-approval", { approval_type: item.approval_type || "operational_review", required_permission: item.approval_required_permission || "edit_tasks" })} />
+            <ActionButton label="Complete" onClick={() => onAction(item.id, "complete", { completion_evidence: { method: "manual_operator_confirmation", reason: "Operator confirmed completion in the work queue." } })} />
             <ActionButton label="Reopen" onClick={() => onAction(item.id, "reopen")} />
+            <ActionButton label="Escalate" onClick={() => onAction(item.id, "escalate")} />
             <ActionButton label="Release" onClick={() => onAction(item.id, "release")} />
+            <ActionButton label="Cancel" onClick={() => onAction(item.id, "cancel")} />
+            {item.source_route ? <a className="rounded-md border border-blue-300 px-2.5 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50" href={item.source_route}>Open source record</a> : null}
           </div>
+          <p className="mt-3 text-xs text-slate-500">Next safe action: {formatType(item.next_recommended_safe_action)}</p>
         </div>
       </div>
     </details>

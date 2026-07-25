@@ -267,8 +267,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old API route root must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/sla-policies"),
-        (ROOT / "frontend/src/App.jsx", "/agency/deadlines"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/sla-policies"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/deadlines"),
         (ROOT / "frontend/src/pages/platform/SlaPoliciesPage.jsx", "No automation"),
         (ROOT / "frontend/src/pages/agency/DeadlinesPage.jsx", "Extension due date/time"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "SLA Policies"),
@@ -290,7 +290,7 @@ def verify_router_ui_docs_registration() -> None:
         ROOT / "backend/services/operational_sla_deadline_service.py",
         ROOT / "backend/routers/platform_operational_sla_deadlines.py",
         ROOT / "backend/routers/agency_operational_sla_deadlines.py",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         reject_text(path, "/admin/")
         reject_text(path, "/agent/")
@@ -493,7 +493,8 @@ def verify_deadline_lifecycle(agency_id: str, other_agency_id: str) -> None:
     if not agency_dashboard.get("policies") or not agency_dashboard.get("business_calendars"):
         raise AssertionError("Agency deadline dashboard missing policy/calendar metadata.")
 
-    other_deadline = post(
+    request(
+        "POST",
         f"/api/agencies/{other_agency_id}/deadlines/items",
         {
             "source_entity_type": "request",
@@ -503,9 +504,8 @@ def verify_deadline_lifecycle(agency_id: str, other_agency_id: str) -> None:
             "started_at": utc_iso(),
         },
         OWNER_HEADERS,
-        201,
-    )["deadline"]
-    request("GET", f"/api/agencies/{other_agency_id}/deadlines/{other_deadline['id']}", None, AGENCY_AGENT_HEADERS, expect=403)
+        expect=403,
+    )
 
 
 def main() -> int:

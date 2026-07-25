@@ -2,7 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from auth import get_current_user
 from database import Database, get_database
-from models import OperationalDeadlineActionRequest, OperationalDeadlineCreate, OperationalDeadlineUpdate
+from models import (
+    OperationalBusinessCalendarCreate,
+    OperationalBusinessCalendarUpdate,
+    OperationalDeadlineActionRequest,
+    OperationalDeadlineCreate,
+    OperationalDeadlineUpdate,
+    OperationalSlaPolicyCreate,
+    OperationalSlaPolicyUpdate,
+)
 from services.operational_sla_deadline_service import PHASE_LABEL, OperationalSlaDeadlineError, OperationalSlaDeadlineService
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -11,19 +19,22 @@ router = APIRouter(prefix="/api/agencies/{agency_id}/deadlines", tags=["agency-d
 
 READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
 WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-PLATFORM_ROLES = {"platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"}
+ADMIN_ROLES = ["agency_owner", "agency_admin"]
 
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+
+
+async def require_admin(db: Database, agency_id: str, user: dict) -> None:
+    await assert_agency_access(db, agency_id, user)
+    await require_any_agency_role(db, agency_id, user, ADMIN_ROLES)
 
 
 def bad_request(message: str) -> HTTPException:
@@ -90,6 +101,43 @@ async def list_agency_sla_policies(
     return {"phase": PHASE_LABEL, "agency_id": agency_id, "policies": await service.list_policies(agency_id=agency_id, deadline_type=deadline_type, include_defaults=True), "metadata_only": True, **service.safety_flags()}
 
 
+@router.post("/policies", status_code=status.HTTP_201_CREATED)
+async def create_agency_sla_policy(
+    agency_id: str,
+    payload: OperationalSlaPolicyCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    data = payload.model_dump(mode="json", exclude_none=True)
+    data["agency_id"] = agency_id
+    data["scope"] = "agency"
+    try:
+        return await OperationalSlaDeadlineService(db).create_policy(data, user)
+    except OperationalSlaDeadlineError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.put("/policies/{policy_id}")
+async def update_agency_sla_policy(
+    agency_id: str,
+    policy_id: str,
+    payload: OperationalSlaPolicyUpdate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await OperationalSlaDeadlineService(db).update_policy(
+            policy_id,
+            payload,
+            user,
+            agency_id=agency_id,
+        )
+    except OperationalSlaDeadlineError as exc:
+        raise bad_request(str(exc)) from exc
+
+
 @router.get("/business-calendars")
 async def list_agency_business_calendars(
     agency_id: str,
@@ -99,6 +147,44 @@ async def list_agency_business_calendars(
     await require_read(db, agency_id, user)
     service = OperationalSlaDeadlineService(db)
     return {"phase": PHASE_LABEL, "agency_id": agency_id, "business_calendars": await service.list_business_calendars(agency_id=agency_id, include_defaults=True), "metadata_only": True, **service.safety_flags()}
+
+
+@router.post("/business-calendars", status_code=status.HTTP_201_CREATED)
+async def create_agency_business_calendar(
+    agency_id: str,
+    payload: OperationalBusinessCalendarCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    data = payload.model_dump(mode="json", exclude_none=True)
+    data["agency_id"] = agency_id
+    try:
+        return await OperationalSlaDeadlineService(db).create_business_calendar(
+            data, user
+        )
+    except OperationalSlaDeadlineError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.put("/business-calendars/{calendar_id}")
+async def update_agency_business_calendar(
+    agency_id: str,
+    calendar_id: str,
+    payload: OperationalBusinessCalendarUpdate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await OperationalSlaDeadlineService(db).update_business_calendar(
+            calendar_id,
+            payload,
+            user,
+            agency_id=agency_id,
+        )
+    except OperationalSlaDeadlineError as exc:
+        raise bad_request(str(exc)) from exc
 
 
 @router.get("/items")

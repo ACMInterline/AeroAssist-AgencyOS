@@ -138,8 +138,8 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/lib/moduleCatalog.js", "/agency/saas-subscription"),
         (ROOT / "frontend/src/pages/platform/SaaSSubscriptionsPage.jsx", "No billing"),
         (ROOT / "frontend/src/pages/agency/SaaSSubscriptionPage.jsx", "Agency read-only"),
-        (ROOT / "frontend/src/App.jsx", "/platform/saas-subscriptions"),
-        (ROOT / "frontend/src/App.jsx", "/agency/saas-subscription"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/saas-subscriptions"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/saas-subscription"),
         (ROOT / "docs/architecture/saas-subscription-entitlement-foundation.md", "SaaS Subscription"),
         (ROOT / "README.md", "Phase 39.5 Includes"),
         (ROOT / "BUILD_PHASES.md", "Phase 39.5: SaaS Subscription"),
@@ -149,7 +149,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/SaaSSubscriptionsPage.jsx",
         ROOT / "frontend/src/pages/agency/SaaSSubscriptionPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

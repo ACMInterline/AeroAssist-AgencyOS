@@ -3,6 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from auth import get_current_user
 from database import Database, get_database
 from models import (
+    OperationalApprovalDecisionRequest,
+    OperationalApprovalRequestCreate,
+    OperationalAutomationDryRunRequest,
+    OperationalAutomationProcessRequest,
+    OperationalReminderProcessRequest,
+    OperationalAutomationRuleLifecycleRequest,
     OperationalTaskAutomationRuleCreate,
     OperationalTaskAutomationRuleUpdate,
     OperationalTaskAutomationRunRequest,
@@ -13,6 +19,7 @@ from models import (
     OperationalTaskTemplateUpdate,
 )
 from services.task_automation_dependency_service import PHASE_LABEL, TaskAutomationDependencyError, TaskAutomationDependencyService
+from services.governed_automation_contract import CANONICAL_AUTOMATION_EVENTS
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
 
@@ -20,19 +27,22 @@ router = APIRouter(prefix="/api/agencies/{agency_id}/task-automation", tags=["ag
 
 READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
 WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-PLATFORM_ROLES = {"platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"}
+ADMIN_ROLES = ["agency_owner", "agency_admin"]
 
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+
+
+async def require_admin(db: Database, agency_id: str, user: dict) -> None:
+    await assert_agency_access(db, agency_id, user)
+    await require_any_agency_role(db, agency_id, user, ADMIN_ROLES)
 
 
 def bad_request(message: str) -> HTTPException:
@@ -86,7 +96,7 @@ async def create_agency_task_template(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    await require_write(db, agency_id, user)
+    await require_admin(db, agency_id, user)
     try:
         return await TaskAutomationDependencyService(db).create_template({**payload.model_dump(mode="json", exclude_none=True), "agency_id": agency_id}, user)
     except TaskAutomationDependencyError as exc:
@@ -101,7 +111,7 @@ async def update_agency_task_template(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    await require_write(db, agency_id, user)
+    await require_admin(db, agency_id, user)
     try:
         return await TaskAutomationDependencyService(db).update_template(template_id, payload, user, agency_id=agency_id)
     except TaskAutomationDependencyError as exc:
@@ -135,7 +145,7 @@ async def create_agency_task_automation_rule(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    await require_write(db, agency_id, user)
+    await require_admin(db, agency_id, user)
     try:
         return await TaskAutomationDependencyService(db).create_rule({**payload.model_dump(mode="json", exclude_none=True), "agency_id": agency_id}, user)
     except TaskAutomationDependencyError as exc:
@@ -150,7 +160,7 @@ async def update_agency_task_automation_rule(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    await require_write(db, agency_id, user)
+    await require_admin(db, agency_id, user)
     try:
         return await TaskAutomationDependencyService(db).update_rule(rule_id, payload, user, agency_id=agency_id)
     except TaskAutomationDependencyError as exc:
@@ -292,4 +302,197 @@ async def retry_agency_task_automation_run(
     try:
         return await TaskAutomationDependencyService(db).retry_run(run_id, payload, user, agency_id=agency_id)
     except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/publish")
+async def publish_agency_automation_rule(
+    agency_id: str,
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).publish_rule(
+            rule_id, payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/deactivate")
+async def deactivate_agency_automation_rule(
+    agency_id: str,
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).deactivate_rule(
+            rule_id, payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/supersede")
+async def supersede_agency_automation_rule(
+    agency_id: str,
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).supersede_rule(
+            rule_id, payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/dry-run")
+async def dry_run_agency_automation_rule(
+    agency_id: str,
+    rule_id: str,
+    payload: OperationalAutomationDryRunRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).dry_run_rule(
+            rule_id, payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/process")
+async def process_agency_automation_events(
+    agency_id: str,
+    payload: OperationalAutomationProcessRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).process_timeline_events(
+            payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/process-reminders")
+async def process_agency_reminders_and_escalations(
+    agency_id: str,
+    payload: OperationalReminderProcessRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(
+            db
+        ).process_reminders_and_escalations(
+            payload, user, agency_id=agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.get("/catalog")
+async def agency_automation_catalog(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    service = TaskAutomationDependencyService(db)
+    return {
+        "phase": PHASE_LABEL,
+        "event_catalogue": list(CANONICAL_AUTOMATION_EVENTS),
+        "action_catalogue": service.action_catalogue(),
+        "metadata_only": True,
+        **service.safety_flags(),
+    }
+
+
+@router.get("/metrics")
+async def agency_automation_metrics(
+    agency_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    service = TaskAutomationDependencyService(db)
+    return {
+        "phase": PHASE_LABEL,
+        "agency_id": agency_id,
+        "metrics": await service.operational_metrics(agency_id),
+        "metadata_only": True,
+        **service.safety_flags(),
+    }
+
+
+@router.get("/approvals")
+async def list_agency_automation_approvals(
+    agency_id: str,
+    status_filter: str | None = Query(default=None, alias="status"),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_read(db, agency_id, user)
+    service = TaskAutomationDependencyService(db)
+    return {
+        "phase": PHASE_LABEL,
+        "agency_id": agency_id,
+        "approvals": await service.list_approvals(
+            agency_id, status=status_filter
+        ),
+        "metadata_only": True,
+        **service.safety_flags(),
+    }
+
+
+@router.post("/approvals", status_code=status.HTTP_201_CREATED)
+async def create_agency_automation_approval(
+    agency_id: str,
+    payload: OperationalApprovalRequestCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).create_approval(
+            payload, user, agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/approvals/{approval_id}/decision")
+async def decide_agency_automation_approval(
+    agency_id: str,
+    approval_id: str,
+    payload: OperationalApprovalDecisionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await TaskAutomationDependencyService(db).decide_approval(
+            approval_id, payload, user, agency_id
+        )
+    except TaskAutomationDependencyError as exc:
+        if "version conflict" in str(exc).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
         raise bad_request(str(exc)) from exc

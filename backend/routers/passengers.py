@@ -1,24 +1,30 @@
+from datetime import timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import get_current_user
+from auth import DEMO_AUTH_ENABLED, get_current_user
+from config import get_settings
 from database import Database, get_database
 from models import (
     AuditEvent,
     PassengerMergeAudit,
     PassengerMergeRequest,
+    PassengerPortalInvitationCreate,
     PassengerProfile,
     PassengerProfileCreate,
     PassengerProfileUpdate,
+    Invitation,
     new_id,
+    now_utc,
 )
+from security import hash_token, new_raw_token, normalize_email
 from services.tenant_service import assert_agency_access, require_any_agency_role
+from services.authorization_service import require_permission
+from services.canonical_reference_service import resolve_passenger_profile_references
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["passengers"])
 
-READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
-WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
 MERGE_ROLES = ["agency_owner", "agency_admin"]
 
 
@@ -57,13 +63,12 @@ async def write_audit(
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_passengers")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await assert_agency_access(db, agency_id, user)
+    require_permission(user, "edit_passengers")
 
 
 async def get_passenger_or_404(db: Database, agency_id: str, passenger_id: str) -> dict:
@@ -86,9 +91,24 @@ async def list_passengers(
     filters = {"agency_id": agency_id}
     if status_filter:
         filters["status"] = status_filter
-    if passenger_type:
-        filters["passenger_type"] = passenger_type
     passengers = await db.collection("passenger_profiles").find_many(filters)
+    passengers = [
+        passenger
+        for passenger in passengers
+        if status_filter or passenger.get("status") != "quarantined"
+    ]
+    if passenger_type:
+        normalized_type = passenger_type.upper()
+        passengers = [
+            passenger
+            for passenger in passengers
+            if str(
+                passenger.get("passenger_type_code")
+                or passenger.get("passenger_type")
+                or ""
+            ).upper()
+            == normalized_type
+        ]
     passengers = [
         passenger
         for passenger in passengers
@@ -109,7 +129,11 @@ async def create_passenger(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    data = payload.model_dump(mode="json")
+    data = await resolve_passenger_profile_references(
+        db,
+        agency_id,
+        payload.model_dump(mode="json"),
+    )
     if not data.get("display_name"):
         middle = f" {data['middle_name']}" if data.get("middle_name") else ""
         data["display_name"] = f"{data['first_name']}{middle} {data['last_name']}"
@@ -157,10 +181,16 @@ async def update_passenger(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_write(db, agency_id, user)
-    await get_passenger_or_404(db, agency_id, passenger_id)
+    existing = await get_passenger_or_404(db, agency_id, passenger_id)
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
+    updates = await resolve_passenger_profile_references(
+        db,
+        agency_id,
+        updates,
+        existing=existing,
+    )
     passenger = await db.collection("passenger_profiles").update_one(
         {"agency_id": agency_id, "id": passenger_id},
         updates,
@@ -212,8 +242,11 @@ async def restore_passenger(
 ) -> dict:
     await require_write(db, agency_id, user)
     passenger = await get_passenger_or_404(db, agency_id, passenger_id)
-    if passenger.get("status") == "duplicate_merged":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Merged duplicate passengers cannot be restored.")
+    if passenger.get("status") in {"duplicate_merged", "quarantined"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Merged or integrity-quarantined passengers cannot be restored.",
+        )
     restored = await db.collection("passenger_profiles").update_one(
         {"agency_id": agency_id, "id": passenger_id},
         {"status": "active"},
@@ -230,6 +263,64 @@ async def restore_passenger(
     return {"passenger": restored}
 
 
+@router.post("/passengers/{passenger_id}/portal-invitation", status_code=status.HTTP_201_CREATED)
+async def create_passenger_portal_invitation(
+    agency_id: str,
+    passenger_id: str,
+    payload: PassengerPortalInvitationCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await assert_agency_access(db, agency_id, user)
+    require_permission(user, "manage_agency_users")
+    passenger = await get_passenger_or_404(db, agency_id, passenger_id)
+    active_mapping = await db.collection("portal_access_mappings").find_one(
+        {
+            "agency_id": agency_id,
+            "subject_type": "passenger",
+            "passenger_profile_id": passenger_id,
+            "status": "active",
+        }
+    )
+    if active_mapping:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Passenger already has an active portal mapping.",
+        )
+    raw_token = new_raw_token()
+    invitation = Invitation(
+        agency_id=agency_id,
+        invited_email=payload.email,
+        invited_name=payload.display_name or passenger.get("display_name"),
+        normalized_email=normalize_email(str(payload.email)),
+        invitation_type="passenger_portal",
+        target_passenger_id=passenger_id,
+        invited_by_user_id=user["id"],
+        token_hash=hash_token(raw_token),
+        expires_at=now_utc() + timedelta(hours=get_settings().invitation_expiry_hours),
+    )
+    created = await db.collection("invitations").insert_one(invitation.model_dump(mode="json"))
+    await write_audit(
+        db,
+        agency_id,
+        user["id"],
+        "passenger.portal_invited",
+        "passenger_profile",
+        passenger_id,
+        "Created passenger portal invitation.",
+    )
+    response = {
+        "passenger": passenger,
+        "portal_mapping": None,
+        "linkage_status": "pending_identity_activation",
+        "invitation": {key: value for key, value in created.items() if key != "token_hash"},
+    }
+    if DEMO_AUTH_ENABLED and not get_settings().is_production:
+        response["dev_invitation_token"] = raw_token
+        response["dev_invitation_link"] = f"/login?invite={raw_token}"
+    return response
+
+
 @router.post("/passengers/{passenger_id}/merge")
 async def merge_passenger(
     agency_id: str,
@@ -238,15 +329,19 @@ async def merge_passenger(
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, MERGE_ROLES)
+    await assert_agency_access(db, agency_id, user)
+    require_permission(user, "edit_passengers")
+    await require_any_agency_role(db, agency_id, user, MERGE_ROLES)
 
     source = await get_passenger_or_404(db, agency_id, passenger_id)
     target = await get_passenger_or_404(db, agency_id, payload.target_passenger_id)
     if source["id"] == target["id"]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source and target passenger must differ.")
-    if source.get("status") == "duplicate_merged":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source passenger is already merged.")
+    if source.get("status") in {"duplicate_merged", "quarantined"} or target.get("status") == "quarantined":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Merged or integrity-quarantined passengers cannot participate in a merge.",
+        )
 
     existing_target_relationships = await db.collection("client_passenger_relationships").find_many(
         {"agency_id": agency_id, "passenger_id": target["id"]}

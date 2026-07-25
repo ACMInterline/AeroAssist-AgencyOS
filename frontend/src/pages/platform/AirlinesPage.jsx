@@ -70,7 +70,7 @@ export default function AirlinesPage() {
               <button className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white">Search</button>
             </form>
           </div>
-          {error ? <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Airline Knowledge is available as a platform foundation. {error}</div> : null}
+          {error ? <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">Airline Knowledge could not be refreshed. {error}</div> : null}
           {message ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{message}</div> : null}
           <section className="rounded-lg border border-slate-200 bg-white p-5">
             <h3 className="font-semibold text-slate-950">Create Airline</h3>

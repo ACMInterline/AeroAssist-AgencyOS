@@ -61,3 +61,15 @@ The readiness section `platform_agency_ux_consolidation` confirms:
 ## Safety Boundary
 
 Phase 39.4 does not publish CMS/client portal content, recommend airlines, execute providers, book, create or mutate PNRs, ticket, issue EMDs, charge, invoice, settle, scrape, call external APIs, call external AI, or send automatically.
+
+## Phase 59.0 Module Catalogue Projection
+
+Phase 59.0 retains the groups above as historical internal catalogue ownership, but no longer renders them as the primary product navigation. The catalogue is projected into eight Platform areas and thirteen workflow-ordered Agency areas using product-facing purpose, audience, priority, label, description, and Advanced-placement fields.
+
+Before Phase 59.0, every non-contextual item could appear with similar visual importance. After Phase 59.0, selected daily and governance routes appear in their task area; every remaining non-contextual technical route is available under a collapsed Advanced area. Contextual tools remain linked from their owning workflow. Route paths are resolved from the catalogue during module initialization, so an unknown product-navigation route fails validation rather than creating a conflicting registry.
+
+See:
+
+- `docs/product/platform-information-architecture.md`
+- `docs/product/agency-information-architecture.md`
+- `docs/product/navigation-and-layout-standards.md`

@@ -227,8 +227,8 @@ def verify_routes(paths: dict) -> None:
 
 def verify_frontend_and_docs() -> None:
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-constraints"),
-        (ROOT / "frontend/src/App.jsx", "/agency/operational-constraints"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-constraints"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operational-constraints"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Constraints"),
         (ROOT / "frontend/src/pages/platform/OperationalConstraintsPage.jsx", "Constraint Overview"),
         (ROOT / "frontend/src/pages/platform/OperationalConstraintsPage.jsx", "No live evaluation"),
@@ -250,7 +250,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/OperationalConstraintsPage.jsx",
         ROOT / "frontend/src/pages/agency/OperationalConstraintsPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

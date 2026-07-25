@@ -179,8 +179,8 @@ def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Travel Workspaces"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Travel Workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-travel-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/travel-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-travel-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/travel-workspaces"),
         (ROOT / "frontend/src/pages/platform/OperationalTravelWorkspacesPage.jsx", "Operational Travel Workspaces"),
         (ROOT / "frontend/src/pages/platform/OperationalTravelWorkspacesPage.jsx", "No provider actions"),
         (ROOT / "frontend/src/pages/platform/OperationalTravelWorkspacesPage.jsx", "Linked records"),
@@ -199,7 +199,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/OperationalTravelWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/TravelWorkspacesPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

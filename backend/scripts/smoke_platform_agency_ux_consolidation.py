@@ -56,7 +56,7 @@ def verify_frontend_source() -> None:
     agency_layout = ROOT / "frontend/src/layouts/AgencyLayout.jsx"
     platform_dashboard = ROOT / "frontend/src/pages/platform/PlatformDashboardPage.jsx"
     agency_dashboard = ROOT / "frontend/src/pages/agency/AgencyDashboardPage.jsx"
-    app = ROOT / "frontend/src/App.jsx"
+    app = ROOT / "frontend/src/routes/RoutedApplication.jsx"
 
     for text in [
         "SaaS & Agencies",
@@ -81,12 +81,13 @@ def verify_frontend_source() -> None:
 
     for path, text in [
         (platform_layout, "Platform Console"),
-        (platform_layout, "Platform Console modules"),
-        (platform_layout, "platformModuleGroups"),
+        (platform_layout, "platformProductNavigation"),
+        (platform_layout, "productNavigationForRole"),
         (agency_layout, "Agency Workspace"),
-        (agency_layout, "agencyModuleGroups"),
-        (platform_dashboard, "Platform Console"),
-        (platform_dashboard, "platformModuleGroups"),
+        (agency_layout, "agencyProductNavigation"),
+        (agency_layout, "productNavigationForRole"),
+        (platform_dashboard, "Platform overview"),
+        (platform_dashboard, "Attention required"),
         (agency_dashboard, "Agency Workspace"),
         (agency_dashboard, "agencyModuleGroups"),
     ]:

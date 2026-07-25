@@ -316,8 +316,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden route exposed for service parameter taxonomies: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/service-parameter-taxonomies"),
-        (ROOT / "frontend/src/App.jsx", "/agency/service-parameter-taxonomies"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/service-parameter-taxonomies"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/service-parameter-taxonomies"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Service Parameter Taxonomies"),
         (ROOT / "frontend/src/pages/platform/ServiceParameterTaxonomiesPage.jsx", "Taxonomy Overview"),
         (ROOT / "frontend/src/pages/platform/ServiceParameterTaxonomiesPage.jsx", "Passenger Assistance Parameters"),

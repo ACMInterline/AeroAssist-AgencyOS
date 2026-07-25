@@ -144,6 +144,14 @@ def main() -> int:
     request_detail = get(f"/api/agencies/{converted['request']['agency_id']}/requests/{request_id}", OWNER_HEADERS)
     if request_detail["request"].get("source_intake_id") != intake_id:
         raise AssertionError("Operational request does not link back to intake.")
+    if len(request_detail.get("passengers") or []) != 2:
+        raise AssertionError("Intake conversion did not create request-level traveler placeholders.")
+    if any(item.get("passenger_id") for item in request_detail["passengers"]):
+        raise AssertionError("Intake conversion created or linked a fake master passenger.")
+    if any(item.get("identity_status") != "unresolved" for item in request_detail["passengers"]):
+        raise AssertionError("Intake traveler placeholders were not marked unresolved.")
+    if any(item.get("snapshot_date_of_birth") is not None for item in request_detail["passengers"]):
+        raise AssertionError("Intake traveler placeholders contain a synthetic date of birth.")
     if len([item for item in get("/api/request-intakes", OWNER_HEADERS)["items"] if item.get("converted_request_id") == request_id]) != 1:
         raise AssertionError("Duplicate converted intake linkage detected.")
 

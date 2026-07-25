@@ -2,6 +2,15 @@
 
 This document defines the target canonical operations model for AgencyOS. It translates the original Travel Agency Micro-ERP + CRM blueprint into the current FastAPI/Mongo/React architecture.
 
+The enforceable per-domain ownership contract now lives in the
+[Canonical Domain Ownership Map](canonical-domain-ownership-map.md), with
+duplicate writers and future reconciliation tracked in the
+[Canonical Domain Migration Register](canonical-domain-migration-register.md).
+`agency_id` is the canonical tenant boundary; `workspace_id` is operational
+context only. Until that register's exit criteria are met, selected targets are
+architectural owners rather than a claim that compatibility writers have
+already been migrated.
+
 ## Main Entities
 
 - **Client**: payer/requester/account entity. A client may be an individual, household, or organization.
@@ -12,11 +21,21 @@ This document defines the target canonical operations model for AgencyOS. It tra
 - **Booking**: mirror/tracking record for booked itinerary state.
 - **Ticket**: mirror/tracking record for ticket state.
 - **EMD**: mirror/tracking record for ancillary document state.
-- **Invoice**: commercial record for billing/payment tracking.
+- **Invoice**: server-derived client commercial document.
+- **Commercial Ledger**: append-only accounting evidence derived from
+  immutable operational and commercial source events.
+- **Payment Allocation**: explicit application of received value to an Invoice
+  or positive Invoice line.
+- **Supplier Cost**: Agency-private supplier or agency-expense evidence,
+  separate from client charges.
+- **Credit Note**: non-destructive correction to an issued Invoice.
 - **Document**: generated or stored output attached to request/trip/client/passenger context.
 - **Task**: staff work item with owner, priority, due state, visibility, and operational context.
-- **Communication**: message/note/email/portal communication with visibility boundaries.
-- **Activity**: audit/timeline event recording state changes and staff/system actions.
+- **Communication Thread**: canonical multi-entity conversation aggregate with
+  governed participants, visibility, append-preserving messages, and immutable
+  attachment references.
+- **Activity**: append-only `OperationalTimeline` business history linked to,
+  but distinct from, immutable security `AuditEvent` evidence.
 - **Reference Data**: controlled catalogue and lookup data, including service catalogue.
 - **Airline Policy Rule**: airline-specific decision support knowledge separate from reference data.
 
@@ -42,7 +61,8 @@ This document defines the target canonical operations model for AgencyOS. It tra
 - `source_entry_path` identifies the UX/API entry route where the request began.
 - `submission_channel` identifies whether data came from public site, agency website, portal, staff console, import, or API.
 - `account_origin_at_submission` records whether the submitter was existing, new public contact, portal account, staff-created, imported, or unknown.
-- Passenger link modes are `existing`, `new_inline`, or `unresolved`.
+- Passenger link modes are `existing` or `unresolved`. The legacy `new_inline` input value is accepted only for compatibility and is normalized to an unresolved request passenger; it must not create a master profile.
+- `PassengerProfile` is created or linked only after an explicit staff identity-confirmation action with complete identity data or a selected existing profile.
 - Segment records are canonical for itinerary shape; summary fields are display conveniences.
 - Requested services should use passenger and segment scoping rather than unstructured notes whenever possible.
 - Mobility/medical/pet/special-item details use Phase 33 Reference Data and Phase 34 normalized child records while deeper airline policy checks are implemented separately.
@@ -67,10 +87,30 @@ Phase 35 implements the Trip Dossier as the agency operational shell:
 - `TripDossier.linked_request_ids` records the request scope for the operational shell.
 - `trip_passengers`, `trip_segments`, and `trip_service_items` copy normalized request child records for operational use while preserving source request child IDs.
 - Request-to-trip conversion does not delete, replace, or destructively mutate request records.
-- `trip_timeline_events` and `audit_events` record trip creation, conversion, linking, unlinking, child copying, summary rebuilding, updating, and archiving.
+- New Trip activity is appended to `OperationalTimeline`; historical
+  `trip_timeline_events` remain compatibility history. `audit_events` retain
+  separate security and mutation evidence.
 - Pets and special items remain request-level child records in this phase and are summarized on the trip only.
 
 Offer, booking, ticket, EMD, document, invoice, payment, claim, and communication workflows should attach through the trip dossier where relevant in future phases, but Phase 35 does not implement those expansions.
+
+## Canonical Operational Collaboration
+
+Operational collaboration follows:
+
+`OperationalTimeline -> TimelineEntry -> CommunicationThread ->
+CommunicationMessage -> CommunicationAttachment -> Participant ->
+NotificationProjection -> Audit linkage`
+
+The timeline is immutable business history. Messages may be soft-edited only
+with preserved prior content. Attachments reference canonical Documents or
+other same-Agency business records and do not duplicate binaries.
+Notifications are regenerable projections. Client, Passenger, Supplier,
+Agency, Platform, and System visibility is explicit and server-enforced.
+
+See [Canonical Operational Timeline](canonical-operational-timeline.md),
+[Communication Thread Contract](communication-thread-contract.md), and
+[Communication Visibility Contract](communication-visibility-contract.md).
 
 ## Service Catalogue
 
@@ -134,3 +174,87 @@ The Global Field Library is platform-owned schema governance:
 - Agency custom questions normalize under `agency_custom_fields` in canonical payloads.
 
 Form profiles are a UI/presentation layer over canonical request payloads. They do not replace backend validation or the canonical request/intake models.
+
+## Canonical Commercial Lifecycle
+
+Commercial operations use one enforced lineage:
+
+`TravelRequest -> OfferWorkspace -> OfferOption -> OfferAcceptance ->
+TripAcceptedOfferSnapshot -> TripDossier -> OfferBookingHandoff ->
+BookingRecord -> TicketRecord / EMDRecord`.
+
+OfferWorkspace is the sole target mutable Offer aggregate and each option is a
+same-Agency ordered child. Delivery freezes a version; material changes create
+a governed superseding version. Acceptance targets exact Offer and Option
+versions and creates one immutable hashed snapshot. Normal Trip confirmation
+requires that snapshot. Request conversion before acceptance is planning-only.
+
+BookingWorkspace holds readiness and operator workflow. It cannot establish
+external booking truth. BookingRecord requires governed manual/import/source
+evidence and owns the current PNR result. Normal Ticket/EMD records require a
+same-Agency BookingRecord; explicit standalone imports retain mode, source,
+reason, actor, and reconciliation evidence. See
+[Canonical Commercial Lifecycle Contract](canonical-commercial-lifecycle-contract.md).
+
+## Canonical Commercial Ledger
+
+The commercial lifecycle produces evidence; it does not produce editable
+accounting totals on operational records. `CommercialLedger` and
+`CommercialTransaction` consume accepted Offer, Trip, Booking, Ticket, EMD,
+Invoice, Payment, Supplier Cost, Credit, Refund, and Exchange evidence without
+rewriting those upstream records.
+
+Invoice totals come from active lines. Received Payments remain intact while
+allocations settle one or more Invoices. Confirmed Supplier Costs and Agency
+expenses remain private margin inputs. Credit Notes, Refunds, and Exchanges
+add new evidence instead of replacing original entries. See
+[Canonical Commercial Ledger](canonical-commercial-ledger.md).
+
+## Canonical Request V4 Aggregate
+
+The Request lifecycle begins with either intake provenance or an Agency-created
+`TravelRequest`. For new records, `TravelRequest.canonical_payload` is the
+typed source of truth. Ordered segments, unresolved request passengers,
+passenger-scoped services, animals, and special items are validated as one
+aggregate and projected into their existing operational collections.
+
+The aggregate may exist before a Trip. Explicit request-to-trip conversion
+continues to map the Request into the downstream operational dossier. Offer and
+Trip consumers read deterministic compatibility projections; they do not own
+or mutate Request V4 truth. Accepted downstream snapshots remain immutable.
+
+## Portal Operational Projection
+
+The Portal is the customer-facing view of canonical operations, never an
+operational workspace owner. `PortalProjectionService` composes bounded views
+after `PortalAccessMapping` resolves one Agency and one Client or Passenger.
+It cannot accept `agency_id`, Client ID, or Passenger ID from a request as an
+authorization override.
+
+Client actions create governed events in existing owners: Request V4 updates
+and cancellation, canonical Offer decisions and acceptance, requested
+Document versions, profile updates, and Communication messages. Passenger
+actions are narrower and never imply household, finance, or commercial
+decision authority. Operational history remains append-only in
+`OperationalTimeline`; Audit remains security evidence; Notifications remain
+projections. See [Portal Operational Workspace](portal-operational-workspace.md).
+
+## Governed Operational Automation
+
+The canonical orchestration loop is:
+
+`OperationalTimeline event -> published rule evaluation -> OperationalWorkItem
+/ OperationalDeadline / OperationalApproval / notification projection ->
+Agency human action -> completion evidence -> OperationalTimeline entry`.
+
+Rules do not own Request, Offer, Trip, Booking, Ticket, EMD, Document, finance,
+communication, identity, or permission state. They can create bounded internal
+work and evidence through the canonical owning services. Any externally or
+commercially meaningful Class C action stops at approval-required work and
+must later use the canonical business service; prohibited Class D actions are
+rejected.
+
+Processing is manual and bounded in the current topology. Idempotency keys,
+optimistic versions, source-event lineage, finite chain depth, recoverable
+locks, and deterministic ordering make retries safe without claiming
+exactly-once execution.

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -225,6 +226,9 @@ export default function AfterSalesPage() {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={selectedId}
+            workEntityType="after_sales_case"
             breadcrumbs={[{ label: "Finance", href: "/agency/invoices" }, { label: "After Sales", href: "/agency/after-sales" }]}
             currentLabel={selected?.case_reference || "After-Sales Case"}
             status={selected?.case_status || "not opened"}
@@ -311,6 +315,14 @@ export default function AfterSalesPage() {
               <CaseWorkspace selected={selected} onUpdateStatus={updateStatus} impactForm={impactForm} setImpactForm={setImpactForm} onRecordFinancialImpact={recordFinancialImpact} linkOptions={linkOptions} />
             </div>
           </section>
+          {selected ? (
+            <OperationalCollaborationPanel
+              agencyId={state?.agency?.id}
+              entityId={selected.id}
+              entityLabel={selected.case_reference || "After-Sales Case"}
+              entityType="after_sales_case"
+            />
+          ) : null}
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -374,9 +386,6 @@ function CaseWorkspace({ selected, onUpdateStatus, impactForm, setImpactForm, on
         <JsonPreview label="Read-only source summary" value={selected.affected_financial_records} />
       </Card>
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Communications">
-          <CompactTable rows={selected.communications || []} columns={["communication_type", "audience", "channel", "summary"]} />
-        </Card>
         <Card title="Resolution">
           <CompactTable rows={selected.resolutions || []} columns={["resolution_type", "resolution_status", "resolution_summary"]} />
         </Card>

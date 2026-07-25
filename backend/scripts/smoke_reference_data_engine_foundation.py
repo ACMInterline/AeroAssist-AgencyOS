@@ -181,8 +181,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/reference-data-engine"),
-        (ROOT / "frontend/src/App.jsx", "/agency/reference-data-engine"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/reference-data-engine"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/reference-data-engine"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Reference Data Engine"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "reference_data_engine"),
         (ROOT / "frontend/src/pages/platform/ReferenceDataEnginePage.jsx", "Domain Overview"),

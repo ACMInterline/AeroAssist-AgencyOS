@@ -2,6 +2,14 @@
 
 AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin/*` route roots are intentionally not adopted.
 
+P1 Product Kernel Repair 2 introduces no route. Existing route families are
+classified in the [Canonical Domain Ownership Map](canonical-domain-ownership-map.md)
+as canonical writers, operational workspaces, projections, or compatibility
+writers. A canonical URL does not by itself make its model the canonical
+business owner; compatibility routes remain callable until a separately
+approved migration meets the [migration register](canonical-domain-migration-register.md)
+exit criteria.
+
 ## Canonical Routes
 
 | Route root | Purpose |
@@ -11,6 +19,41 @@ AgencyOS keeps the current route model. The supplementary `/agent/*` and `/admin
 | `/api/platform/*` | Platform owner governance APIs |
 | `/api/agencies/{agency_id}/*` | Agency operational APIs |
 | `/api/reference/*` | Shared consume APIs |
+
+## Identity And Tenant Authorization
+
+- `/api/agencies/{agency_id}/*` requires an active membership for the exact
+  route Agency. A Platform role, `workspace_id`, body field, query parameter,
+  or header cannot substitute for that membership.
+- `/api/platform/*` requires the centralized Platform permission selected for
+  the resource. Agency membership never grants Platform access.
+- `/api/portal/*` resolves only an authenticated Client or Passenger Portal
+  identity with an explicit active `PortalAccessMapping`; email matching does
+  not authorize.
+- Agency Owner/Admin Portal-link governance uses
+  `/api/agencies/{agency_id}/portal-access-mappings`. No `/admin/*` or
+  `/agent/*` alias is introduced.
+- Client and Passenger Portal identities cannot use Platform or Agency staff
+  routes. Revoked identities, memberships, and mappings are checked
+  server-side.
+
+See [Canonical Identity and Tenancy Contract](canonical-identity-and-tenancy-contract.md)
+and [Portal Identity Linkage Contract](portal-identity-linkage-contract.md).
+
+## Audit Event Access
+
+- Canonical Platform review: `GET /api/platform/audit-events`, limited to Platform Owner and Platform Admin.
+- Canonical Agency review: `GET /api/agencies/{agency_id}/audit-events`, limited to Agency Owner and Agency Admin for their own agency.
+- Legacy `GET /api/audit-events` remains only as a deprecated Platform Owner/Admin compatibility alias and identifies the canonical replacement in its response.
+- All audit reads are bounded, ordered newest first, and return a recursively redacted projection. Portal identities, Platform Support, unauthorized agency roles, anonymous callers, and cross-agency reads are rejected.
+- Audit writes and stored source records are unchanged; read-time redaction never mutates audit history.
+
+## Request Passenger Identity
+
+- Unconfirmed traveler information remains on the agency-scoped `RequestPassenger` record.
+- Explicit confirmation uses `POST /api/agencies/{agency_id}/requests/{request_id}/passengers/{request_passenger_id}/confirm-identity`.
+- The route is limited to existing Agency write roles and Platform Owner/Admin override, enforces agency ownership for request and existing passenger selections, and records audit plus request-timeline evidence.
+- Intake conversion and request creation do not create a `PassengerProfile`; offer creation from a request rejects unresolved passenger identities.
 
 ## Rejected Roots
 
@@ -396,3 +439,125 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 - Platform Commercial Pilot readiness UI: `/platform/commercial-pilot-readiness`.
 - Protected computed assessment API: `GET /api/platform/commercial-pilot-readiness`, optionally scoped with `agency_id`.
 - Phase 58.5 adds no public or anonymous feedback route, `/admin/*`, `/agent/*`, external support endpoint, parallel incident/ticketing system, or Phase 57 release mutation.
+
+## Phase 59.0 Product Experience Recovery Routes
+
+- Phase 59.0 and P1 Product Recovery 10 add no API route, router, persistence
+  path, or business mutation.
+- Task-based navigation projects existing module-catalogue entries into Platform and Agency product areas.
+- Canonical `/platform/*`, `/agency/*`, `/api/platform/*`, and `/api/agencies/{agency_id}/*` ownership remains unchanged.
+- `/platform` continues to resolve to the Platform Overview and `/agency` continues to resolve to the Phase 58.2 Operations Command Centre after the existing onboarding check.
+- Product hubs use `/platform/users`, `/platform/monitoring`,
+  `/platform/audit`, `/platform/settings`, `/agency/communications`, and
+  `/agency/reports`. They consume existing protected APIs and do not create new
+  domain ownership.
+- `/platform/monitoring` is a product-facing alias of the existing protected
+  Pilot Operations surface; `/platform/pilot-operations` remains valid.
+- Specialist deep links remain valid in collapsed Advanced navigation; contextual tools remain owned by their existing primary workspaces.
+- No `/admin/*`, `/agent/*`, parallel workflow root, or direct frontend persistence path is introduced.
+
+## Canonical Request V4 Routes
+
+- Public intake: `POST /api/public/requests`.
+- Agency collection: `GET|POST /api/agencies/{agency_id}/requests`.
+- Agency detail: `GET /api/agencies/{agency_id}/requests/{request_id}`.
+- Aggregate edit: `PATCH /api/agencies/{agency_id}/requests/{request_id}`.
+- Compatibility rebuild: `POST /api/agencies/{agency_id}/requests/{request_id}/normalize`.
+- Existing `/api/public/request-intakes` and
+  `/api/agencies/{agency_id}/requests/builder` routes remain compatibility
+  adapters.
+
+V4 structural child routes reject independent writes. The existing explicit
+identity-confirmation route remains available. No `/admin/*`, `/agent/*`,
+parallel Request route root, anonymous operational mutation, or workspace-ID
+authorization boundary is introduced.
+
+## Canonical Reference Data Routes
+
+- Authenticated list/detail: `GET /api/reference/{domain}` and
+  `GET /api/reference/{domain}/{record_id}`.
+- Public-safe normalized options:
+  `GET /api/reference/{domain}/options`, restricted to an allowlist.
+- Platform usage: `GET /api/reference/{domain}/usage?record_id=...` and
+  `GET /api/platform/reference/records/{record_id}/usage`.
+- Platform-owned create/update/lifecycle actions remain under
+  `/api/platform/reference/*`; compatibility routes under `/api/reference/*`
+  reuse the same canonical collection and authorization.
+
+Options are bounded and tenant safe. Inactive values require authenticated
+historical lookup. There is no `/admin/*`, `/agent/*`, duplicate reference API
+root, public mutation, or tenant-selectable scope override.
+
+## Canonical Commercial Lifecycle Routes
+
+- Offer list/create/detail/options/delivery:
+  `/api/agencies/{agency_id}/offer-workspaces*`.
+- Exact-version decision and immutable accepted snapshot:
+  `/api/agencies/{agency_id}/offer-workspaces/{workspace_id}/acceptance*`.
+- Trip list/detail and governed creation:
+  `/api/agencies/{agency_id}/trips*`.
+- Accepted-evidence handoff:
+  `/api/agencies/{agency_id}/booking-handoffs*`.
+- Booking preparation and evidenced result:
+  `/api/agencies/{agency_id}/booking-workspaces*` and
+  `/api/agencies/{agency_id}/booking-records/{booking_record_id}`.
+- Ticket/EMD records:
+  `/api/agencies/{agency_id}/tickets*` and
+  `/api/agencies/{agency_id}/emds*`.
+
+All Agency routes use path scope plus active membership and centralized
+permissions. Body/query IDs cannot widen `agency_id`. Legacy `/offers` and
+`/bookings` reads remain compatibility routes. A linked legacy Offer cannot
+overwrite OfferWorkspace; legacy Booking and Booking Ticket/EMD mutations
+return `409`. Portal decisions use authenticated subject-scoped delivery and
+explicit PortalAccessMapping. There is no anonymous acceptance, `/admin/*`,
+provider booking, Ticket/EMD issuance, or payment execution route.
+
+## Governed Automation And Work Routes
+
+- Agency work operations:
+  `/api/agencies/{agency_id}/work-queue*`.
+- Agency automation, dependencies, approvals, reminders, and bounded
+  processing:
+  `/api/agencies/{agency_id}/task-automation*`.
+- Agency SLA policy/calendar administration and deadline operations:
+  `/api/agencies/{agency_id}/operational-sla-deadlines*`.
+- Platform global-definition governance:
+  `/api/platform/work-queues*`, `/api/platform/task-automation*`, and
+  `/api/platform/operational-sla-deadlines*`.
+
+Agency reads require active membership and Agency writes require the
+centralized role/permission boundary. Body, query, source entity, dependency,
+rule, deadline, or assignment IDs cannot widen the path `agency_id`. Platform
+roles do not imply Agency membership: Platform routes may govern global
+definitions but reject Agency operational mutations with `409`. Portal routes
+do not expose internal rules, traces, work items, approvals, or deadlines.
+There is no `/admin/*`, `/agent/*`, arbitrary expression, external execution,
+or scheduler callback route.
+
+## P1 Product Recovery 11B - Route Stabilization
+
+- `frontend/src/App.jsx` owns only the authorization, error, loading, and lazy
+  route-shell boundary.
+- `frontend/src/routes/RoutedApplication.jsx` preserves the existing ordered
+  exact/regex matching and static route map while lazily importing every page.
+- Unknown paths render `NotFoundPage`; they do not silently render the public
+  homepage.
+- Canonical `/platform/*`, `/agency/*`, `/portal/*`,
+  `/api/platform/*`, `/api/agencies/{agency_id}/*`, `/api/portal/*`, and
+  `/api/reference/*` roots remain unchanged.
+- No `/admin/*`, `/agent/*`, second router framework, compatibility rewrite,
+  or frontend authorization substitute is introduced.
+
+The assembled backend exposes 2,291 unique method/path pairs with no exact
+duplicate. Browser acceptance verifies Platform, Agency, Client Portal,
+Passenger Portal, revoked mapping, read-only, cross-Agency, deep-link, and
+Not Found behavior.
+
+## Product Recovery 12 - Route Inventory Confirmation
+
+The release-candidate gate adds no backend or frontend route. The assembled
+backend remains at 2,291 unique method/path pairs with no exact duplicate and
+no `/admin/*` or `/agent/*` family. The 273 frontend route strings and 311
+governed product pages retain their existing authorization and compatibility
+contracts.

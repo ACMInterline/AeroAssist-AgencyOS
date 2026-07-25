@@ -12,6 +12,7 @@ from models import (
     GlobalReferenceRecord,
     PlatformReferenceRecordCreate,
     PlatformReferenceRecordUpdate,
+    ReferenceDeactivationRequest,
     ReferenceEnrichmentPack,
     ReferenceEnrichmentPackCreate,
     ReferenceEnrichmentPackPreviewRequest,
@@ -59,6 +60,12 @@ from services.reference_data_service import (
     safe_reference_record,
     safe_reference_suggestion,
     sort_records,
+)
+from services.canonical_reference_service import (
+    find_active_scope_conflict,
+    governed_deactivate_reference,
+    normalize_domain_code as normalize_reference_value,
+    reference_record_usage,
 )
 
 router = APIRouter(prefix="/api/platform/reference", tags=["platform-reference"])
@@ -406,11 +413,18 @@ async def create_platform_reference_record(
 ) -> dict:
     domain = normalize_domain_code(payload.domain)
     await ensure_supported_domain(db, domain)
-    code = normalize_city_reference_code(payload.code) if domain == "cities" else normalize_reference_code(payload.code)
+    code = normalize_city_reference_code(payload.code) if domain == "cities" else normalize_reference_value(domain, payload.code)
     if not code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code is required.")
-    if await db.collection("global_reference_records").find_one({"domain": domain, "key": code}):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference record already exists.")
+    if await find_active_scope_conflict(
+        db,
+        domain=domain,
+        code=code,
+        key=code,
+        scope="global",
+        agency_id=None,
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An active reference code or key already exists in the effective scope.")
     metadata_json = enriched_record_metadata(domain, code, payload.label, payload.aliases, payload.metadata_json, user["id"])
     record = GlobalReferenceRecord(
         domain=domain,
@@ -447,6 +461,21 @@ async def get_platform_reference_record(
     return {"record": safe_reference_record(record), "actor_user_id": user["id"]}
 
 
+@router.get("/records/{record_id}/usage")
+async def get_platform_reference_record_usage(
+    record_id: str,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    record = await db.collection("global_reference_records").find_one({"id": record_id})
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
+    return {
+        "usage": await reference_record_usage(db, record),
+        "actor_user_id": user["id"],
+    }
+
+
 @router.put("/records/{record_id}")
 async def update_platform_reference_record(
     record_id: str,
@@ -463,13 +492,26 @@ async def update_platform_reference_record(
         payload_domain = normalize_domain_code(updates.pop("domain"))
         if payload_domain != domain:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Reference record belongs to {domain}, not {payload_domain}.")
+    if "is_active" in updates and bool(updates["is_active"]) != bool(existing.get("is_active", True)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use the governed archive or reactivate action to change reference status.",
+        )
     if "code" in updates:
-        code = normalize_city_reference_code(updates["code"]) if domain == "cities" else normalize_reference_code(updates["code"])
+        code = normalize_city_reference_code(updates["code"]) if domain == "cities" else normalize_reference_value(domain, updates["code"])
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code cannot be blank.")
-        conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
-        if conflict and conflict["id"] != record_id:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference code already exists.")
+        conflict = await find_active_scope_conflict(
+            db,
+            domain=domain,
+            code=code,
+            key=code,
+            scope=str(existing.get("scope") or "global"),
+            agency_id=existing.get("agency_id"),
+            exclude_id=record_id,
+        )
+        if conflict:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An active reference code or key already exists in the effective scope.")
         updates["code"] = code
         updates["key"] = code
     if "metadata_json" in updates:
@@ -505,14 +547,79 @@ async def update_platform_reference_record(
 @router.post("/records/{record_id}/archive")
 async def archive_platform_reference_record(
     record_id: str,
+    payload: ReferenceDeactivationRequest | None = None,
     user: dict = PlatformReferenceOwner,
     db: Database = Depends(get_database),
 ) -> dict:
-    updated = await db.collection("global_reference_records").update_one({"id": record_id}, {"is_active": False, "updated_by_user_id": user["id"]})
-    if not updated:
+    existing = await db.collection("global_reference_records").find_one({"id": record_id})
+    if not existing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
-    await audit_reference_event(db, "platform_reference_record_archived", "global_reference_record", record_id, "Platform reference record archived.", user["id"], {"domain": updated.get("domain")})
-    return {"record": safe_reference_record(updated), "actor_user_id": user["id"]}
+    action = payload or ReferenceDeactivationRequest()
+    updated, usage = await governed_deactivate_reference(
+        db,
+        existing,
+        actor_user_id=user["id"],
+        force=action.force,
+        reason=action.reason,
+    )
+    await audit_reference_event(
+        db,
+        "platform_reference_record_archived",
+        "global_reference_record",
+        record_id,
+        "Platform reference record archived.",
+        user["id"],
+        {
+            "domain": updated.get("domain"),
+            "forced": action.force,
+            "reason": action.reason,
+            "active_record_count": usage["active_record_count"],
+        },
+    )
+    return {
+        "record": safe_reference_record(updated),
+        "usage": usage,
+        "actor_user_id": user["id"],
+    }
+
+
+@router.post("/records/{record_id}/reactivate")
+async def reactivate_platform_reference_record(
+    record_id: str,
+    user: dict = PlatformReferenceOwner,
+    db: Database = Depends(get_database),
+) -> dict:
+    existing = await db.collection("global_reference_records").find_one({"id": record_id})
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
+    conflict = await find_active_scope_conflict(
+        db,
+        domain=existing["domain"],
+        code=existing.get("code") or existing.get("key") or "",
+        key=existing.get("key") or existing.get("code") or "",
+        scope=str(existing.get("scope") or "global"),
+        agency_id=existing.get("agency_id"),
+        exclude_id=record_id,
+    )
+    if conflict:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Reference record cannot be reactivated because an active code or key conflicts in the effective scope.",
+        )
+    updated = await db.collection("global_reference_records").update_one(
+        {"id": record_id},
+        {"is_active": True, "updated_by_user_id": user["id"]},
+    )
+    await audit_reference_event(
+        db,
+        "platform_reference_record_reactivated",
+        "global_reference_record",
+        record_id,
+        "Platform reference record reactivated.",
+        user["id"],
+        {"domain": existing.get("domain")},
+    )
+    return {"record": safe_reference_record(updated or existing), "actor_user_id": user["id"]}
 
 
 @router.get("/suggestions")

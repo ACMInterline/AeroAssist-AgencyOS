@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { Archive, RotateCcw } from "lucide-react"
 import EmptyState from "../../components/EmptyState"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import StatusBadge from "../../components/StatusBadge"
@@ -25,9 +26,11 @@ import {
   fetchPlatformReferenceDomains,
   fetchPlatformReferenceImportBatches,
   fetchPlatformReferenceRecord,
+  fetchPlatformReferenceRecordUsage,
   fetchPlatformReferenceRecords,
   fetchPlatformReferenceSuggestions,
   previewPlatformReferenceImport,
+  reactivatePlatformReferenceRecord,
   reviewPlatformReferenceSuggestion,
   savePlatformReferenceDomain,
   updatePlatformServiceCatalogue,
@@ -75,7 +78,26 @@ const cityDefaults = {
   country_code: "",
 }
 
+const ptcDefaults = {
+  iata_ptc_code: "",
+  passenger_category: "adult",
+  age_min_years: "",
+  age_max_years: "",
+  requires_date_of_birth: false,
+  requires_guardian: false,
+  is_infant: false,
+  is_child: false,
+  is_adult: true,
+  is_senior: false,
+  applies_to_pricing: true,
+  applies_to_ticketing: true,
+  applies_to_services: true,
+  manual_review_required: false,
+}
+
 const defaultRecordFilters = {
+  q: "",
+  status: "all",
   data_quality_status: "",
   continent: "",
   missing_iso3: false,
@@ -88,6 +110,7 @@ const defaultRecordFilters = {
 function metadataDefaultsForDomain(domain) {
   if (domain === "countries") return { ...countryDefaults }
   if (domain === "cities") return { ...cityDefaults }
+  if (domain === "passenger_types") return { ...ptcDefaults }
   return {}
 }
 
@@ -162,6 +185,7 @@ function normalizeAliases(value) {
 
 function domainSpecificMetadataKeys(domain) {
   if (domain === "cities") return ["record_type", "iata_city_code", "city_name", "legacy_codes", "country_code"]
+  if (domain === "passenger_types") return Object.keys(ptcDefaults)
   return []
 }
 
@@ -213,6 +237,26 @@ function buildMetadataFromRecordForm(domain, form) {
       country_code: String(form.metadata?.country_code || "").trim().toUpperCase(),
     })
   }
+  if (domain === "passenger_types") {
+    const metadata = form.metadata || {}
+    return compactObject({
+      ...extraMetadataFromJson({ ...form, domain }),
+      iata_ptc_code: String(metadata.iata_ptc_code || form.code || "").trim().toUpperCase(),
+      passenger_category: String(metadata.passenger_category || "").trim().toLowerCase(),
+      age_min_years: metadata.age_min_years === "" ? null : Number(metadata.age_min_years),
+      age_max_years: metadata.age_max_years === "" ? null : Number(metadata.age_max_years),
+      requires_date_of_birth: Boolean(metadata.requires_date_of_birth),
+      requires_guardian: Boolean(metadata.requires_guardian),
+      is_infant: Boolean(metadata.is_infant),
+      is_child: Boolean(metadata.is_child),
+      is_adult: Boolean(metadata.is_adult),
+      is_senior: Boolean(metadata.is_senior),
+      applies_to_pricing: Boolean(metadata.applies_to_pricing),
+      applies_to_ticketing: Boolean(metadata.applies_to_ticketing),
+      applies_to_services: Boolean(metadata.applies_to_services),
+      manual_review_required: Boolean(metadata.manual_review_required),
+    })
+  }
   if (domain !== "countries") {
     return parseAdvancedMetadata(form.metadata_json || "{}")
   }
@@ -258,6 +302,14 @@ function mergeMetadataIntoRecordForm(domain, record) {
     return {
       ...metadataDefaultsForDomain(domain),
       country_code: metadata.country_code || "",
+    }
+  }
+  if (domain === "passenger_types") {
+    return {
+      ...ptcDefaults,
+      ...metadata,
+      age_min_years: metadata.age_min_years ?? "",
+      age_max_years: metadata.age_max_years ?? "",
     }
   }
   if (domain !== "countries") return metadata
@@ -359,6 +411,10 @@ export default function PlatformReferenceDataPage({ recordId }) {
   const [auditEvents, setAuditEvents] = useState([])
   const [selectedDomain, setSelectedDomain] = useState("countries")
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [recordUsage, setRecordUsage] = useState(null)
+  const [usageLoading, setUsageLoading] = useState(false)
+  const [forceDeactivation, setForceDeactivation] = useState(false)
+  const [deactivationReason, setDeactivationReason] = useState("")
   const [recordForm, setRecordForm] = useState(emptyRecord("countries"))
   const [domainForm, setDomainForm] = useState({ domain: "countries", label: "Countries", description: "", category: "geography", is_active: true, sort_order: 10 })
   const [filters, setFilters] = useState(defaultRecordFilters)
@@ -420,9 +476,17 @@ export default function PlatformReferenceDataPage({ recordId }) {
     setRecords([])
     setRecordError("")
     try {
-      const result = await fetchPlatformReferenceRecords({ domain, include_inactive: true, ...nextFilters })
+      const result = await fetchPlatformReferenceRecords({
+        domain,
+        include_inactive: nextFilters.status !== "active",
+        ...nextFilters,
+        status: undefined,
+      })
       if (recordLoadRequestRef.current !== requestId || selectedDomainRef.current !== domain) return
-      setRecords((result.items || []).filter((record) => record.domain === domain))
+      setRecords((result.items || []).filter((record) => (
+        record.domain === domain
+        && (nextFilters.status !== "inactive" || record.is_active === false)
+      )))
     } catch (err) {
       if (recordLoadRequestRef.current !== requestId || selectedDomainRef.current !== domain) return
       setRecords([])
@@ -489,6 +553,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
       populateDomainMetadataForm(card.record.domain)
       setSelectedRecord(card.record)
       setRecordForm(recordToForm(card.record))
+      await loadRecordUsage(card.record)
       await loadRecords(card.record.domain)
     }
     setLoading(false)
@@ -520,6 +585,9 @@ export default function PlatformReferenceDataPage({ recordId }) {
     setRecords([])
     setRecordForm(emptyRecord(domain))
     setSelectedRecord(null)
+    setRecordUsage(null)
+    setForceDeactivation(false)
+    setDeactivationReason("")
     setRecordNotice("")
     setRecordError("")
     setNotice("")
@@ -588,6 +656,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
         : await createPlatformReferenceRecord(payload)
       setSelectedRecord(result.record)
       setRecordForm(recordToForm(result.record))
+      await loadRecordUsage(result.record)
       setRecordNotice("Global reference record saved.")
       await loadRecords(selectedDomain, selectedDomain === "countries" ? filters : defaultRecordFilters)
     } catch (err) {
@@ -597,10 +666,71 @@ export default function PlatformReferenceDataPage({ recordId }) {
     }
   }
 
-  async function archiveRecord(record) {
-    await archivePlatformReferenceRecord(record.id)
-    setNotice("Reference record archived.")
-    await loadRecords(record.domain)
+  async function loadRecordUsage(record) {
+    if (!record?.id) {
+      setRecordUsage(null)
+      return
+    }
+    setUsageLoading(true)
+    try {
+      const result = await fetchPlatformReferenceRecordUsage(record.id)
+      setRecordUsage(result.usage || null)
+    } catch (err) {
+      setRecordError(err.message)
+      setRecordUsage(null)
+    } finally {
+      setUsageLoading(false)
+    }
+  }
+
+  async function prepareRecordGovernance(record) {
+    editRecord(record)
+    setForceDeactivation(false)
+    setDeactivationReason("")
+    await loadRecordUsage(record)
+  }
+
+  async function deactivateSelectedRecord() {
+    if (!selectedRecord?.id) return
+    setRecordError("")
+    if (recordUsage?.used_by_active_records && !forceDeactivation) {
+      setRecordError("This reference is used by active records. Review usage and enable the governed override to continue.")
+      return
+    }
+    if (forceDeactivation && deactivationReason.trim().length < 3) {
+      setRecordError("A reason of at least three characters is required for a governed override.")
+      return
+    }
+    try {
+      const result = await archivePlatformReferenceRecord(selectedRecord.id, {
+        force: forceDeactivation,
+        reason: deactivationReason.trim() || null,
+      })
+      setSelectedRecord(result.record)
+      setRecordForm(recordToForm(result.record))
+      setRecordUsage(result.usage || recordUsage)
+      setRecordNotice("Reference record deactivated. Historical snapshots were not changed.")
+      await loadRecords(selectedRecord.domain)
+    } catch (err) {
+      setRecordError(err.message)
+    }
+  }
+
+  async function reactivateSelectedRecord() {
+    if (!selectedRecord?.id) return
+    setRecordError("")
+    try {
+      const result = await reactivatePlatformReferenceRecord(selectedRecord.id)
+      setSelectedRecord(result.record)
+      setRecordForm(recordToForm(result.record))
+      setForceDeactivation(false)
+      setDeactivationReason("")
+      setRecordNotice("Reference record reactivated after conflict validation.")
+      await loadRecordUsage(result.record)
+      await loadRecords(selectedRecord.domain)
+    } catch (err) {
+      setRecordError(err.message)
+    }
   }
 
   async function runSuggestionAction(suggestion, action) {
@@ -748,6 +878,9 @@ export default function PlatformReferenceDataPage({ recordId }) {
     setRecordError("")
     setSelectedRecord(record)
     setRecordForm(recordToForm(record))
+    setRecordUsage(null)
+    setForceDeactivation(false)
+    setDeactivationReason("")
     setActiveTab("records")
   }
 
@@ -857,6 +990,14 @@ export default function PlatformReferenceDataPage({ recordId }) {
                       {domainOptions.map((domain) => <option key={domain} value={domain}>{domain}</option>)}
                     </select>
                   </Field>
+                  <Field label="Search"><TextInput placeholder="Code, label, alias" value={filters.q} onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))} /></Field>
+                  <Field label="Status">
+                    <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}>
+                      <option value="all">Active and inactive</option>
+                      <option value="active">Active only</option>
+                      <option value="inactive">Inactive only</option>
+                    </select>
+                  </Field>
                   {selectedDomainHasCountrySchema ? (
                     <>
                       <Field label="Quality"><select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={filters.data_quality_status} onChange={(event) => setFilters((current) => ({ ...current, data_quality_status: event.target.value }))}><option value="">Any</option><option value="draft">Draft</option><option value="verified">Verified</option><option value="needs_review">Needs review</option><option value="deprecated">Deprecated</option></select></Field>
@@ -867,7 +1008,7 @@ export default function PlatformReferenceDataPage({ recordId }) {
                     </>
                   ) : null}
                   <button className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={recordsLoading} onClick={() => loadRecords(selectedDomain)}>Apply filters</button>
-                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => { setSelectedRecord(null); setRecordForm(emptyRecord(selectedDomain)); setRecordNotice(""); setRecordError("") }}>New record</button>
+                  <button className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" type="button" onClick={() => { setSelectedRecord(null); setRecordUsage(null); setForceDeactivation(false); setDeactivationReason(""); setRecordForm(emptyRecord(selectedDomain)); setRecordNotice(""); setRecordError("") }}>New record</button>
                 </div>
               </section>
 
@@ -907,9 +1048,11 @@ export default function PlatformReferenceDataPage({ recordId }) {
                               <td className="px-3 py-2"><StatusBadge status={record.metadata_json?.data_quality_status || (record.is_active ? "active" : "inactive")} /></td>
                               <td className="px-3 py-2">
                                 <div className="flex gap-2">
-                                  <button className="text-blue-700 hover:underline" type="button" onClick={() => editRecord(record)}>Edit</button>
+                                  <button className="text-blue-700 hover:underline" type="button" onClick={() => prepareRecordGovernance(record)}>Edit</button>
                                   <a className="text-slate-700 hover:underline" href={`/platform/reference/records/${record.id}`}>Card</a>
-                                  <button className="text-rose-700 hover:underline" type="button" onClick={() => archiveRecord(record)}>Archive</button>
+                                  <button className={record.is_active ? "text-rose-700 hover:underline" : "text-emerald-700 hover:underline"} type="button" onClick={() => prepareRecordGovernance(record)}>
+                                    {record.is_active ? "Deactivate" : "Reactivate"}
+                                  </button>
                                 </div>
                               </td>
                             </tr>
@@ -968,22 +1111,88 @@ export default function PlatformReferenceDataPage({ recordId }) {
                         <Field label="Source notes"><TextInput value={recordForm.metadata.source_notes} onChange={(event) => setMetadataField("source_notes", event.target.value)} /></Field>
                         <Field label="Travel notes"><textarea className="rounded-md border border-slate-300 px-3 py-2 text-sm" rows={2} value={recordForm.metadata.travel_notes} onChange={(event) => setMetadataField("travel_notes", event.target.value)} /></Field>
                       </div>
+                    ) : recordForm.domain === "passenger_types" ? (
+                      <div className="grid gap-3 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
+                        <Field label="IATA PTC code"><TextInput maxLength={3} value={recordForm.metadata.iata_ptc_code} onChange={(event) => setMetadataField("iata_ptc_code", event.target.value.toUpperCase())} /></Field>
+                        <Field label="Passenger category">
+                          <select className="rounded-md border border-slate-300 px-3 py-2 text-sm" value={recordForm.metadata.passenger_category} onChange={(event) => setMetadataField("passenger_category", event.target.value)}>
+                            {["adult", "child", "infant", "youth", "senior", "student", "seaman", "military", "group"].map((category) => <option key={category} value={category}>{category.replaceAll("_", " ")}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Minimum age"><TextInput min={0} max={130} type="number" value={recordForm.metadata.age_min_years} onChange={(event) => setMetadataField("age_min_years", event.target.value)} /></Field>
+                        <Field label="Maximum age"><TextInput min={0} max={130} type="number" value={recordForm.metadata.age_max_years} onChange={(event) => setMetadataField("age_max_years", event.target.value)} /></Field>
+                        {[
+                          ["requires_date_of_birth", "Date of birth required"],
+                          ["requires_guardian", "Guardian review required"],
+                          ["is_infant", "Infant category"],
+                          ["is_child", "Child category"],
+                          ["is_adult", "Adult category"],
+                          ["is_senior", "Senior category"],
+                          ["applies_to_pricing", "Available to pricing"],
+                          ["applies_to_ticketing", "Available to ticketing"],
+                          ["applies_to_services", "Available to services"],
+                          ["manual_review_required", "Manual policy review"],
+                        ].map(([key, label]) => (
+                          <label className="flex items-center gap-2 text-sm text-slate-700" key={key}>
+                            <input checked={Boolean(recordForm.metadata[key])} type="checkbox" onChange={(event) => setMetadataField(key, event.target.checked)} />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
                     ) : null}
                     {recordForm.domain === "cities" ? (
                       <Field label="Synchronized advanced metadata JSON">
                         <textarea readOnly className="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" rows={8} value={synchronizedMetadataJson} />
                       </Field>
-                    ) : recordForm.domain !== "countries" ? (
-                      <Field label="Synchronized advanced metadata JSON">
-                        <textarea className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" rows={8} value={recordForm.metadata_json} onChange={(event) => setRecordField("metadata_json", event.target.value)} />
-                      </Field>
+                    ) : recordForm.domain !== "countries" && recordForm.domain !== "passenger_types" ? (
+                      <details className="rounded-md border border-slate-200 p-3">
+                        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Advanced metadata</summary>
+                        <Field label="Advanced metadata JSON">
+                          <textarea className="rounded-md border border-slate-300 px-3 py-2 font-mono text-xs" rows={8} value={recordForm.metadata_json} onChange={(event) => setRecordField("metadata_json", event.target.value)} />
+                        </Field>
+                      </details>
                     ) : (
-                      <Field label="Synchronized advanced metadata JSON">
-                        <textarea readOnly className="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" rows={8} value={synchronizedMetadataJson} />
-                      </Field>
+                      <details className="rounded-md border border-slate-200 p-3">
+                        <summary className="cursor-pointer text-sm font-semibold text-slate-700">Advanced metadata preview</summary>
+                        <Field label="Synchronized metadata JSON">
+                          <textarea readOnly className="rounded-md border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700" rows={8} value={synchronizedMetadataJson} />
+                        </Field>
+                      </details>
                     )}
                     <button className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={savingRecord}>{savingRecord ? "Saving..." : "Save global record"}</button>
                   </form>
+                  {selectedRecord ? (
+                    <div className="mt-5 border-t border-slate-200 pt-5">
+                      <h4 className="font-semibold text-slate-950">Usage and lifecycle</h4>
+                      <p className="mt-1 text-sm text-slate-600">Deactivation never deletes a reference or rewrites historical operational snapshots.</p>
+                      {usageLoading ? <p className="mt-3 text-sm text-slate-600">Loading bounded usage counts...</p> : recordUsage ? (
+                        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                          <div className="rounded-md bg-slate-50 p-3"><strong>{recordUsage.active_record_count}</strong> active records</div>
+                          <div className="rounded-md bg-slate-50 p-3"><strong>{recordUsage.historical_record_count}</strong> historical records</div>
+                          <div className="rounded-md bg-slate-50 p-3 sm:col-span-2">Risk: {recordUsage.deactivation_risk}. Queries are bounded to {recordUsage.bounded_query_limit} records per consumer.</div>
+                        </div>
+                      ) : null}
+                      {selectedRecord.is_active ? (
+                        <div className="mt-4 grid gap-3">
+                          {recordUsage?.used_by_active_records ? (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Used by active records. Deactivation requires an explicit Platform override and audit reason.</div>
+                          ) : null}
+                          <label className="flex items-center gap-2 text-sm text-slate-700">
+                            <input checked={forceDeactivation} disabled={!recordUsage?.used_by_active_records} type="checkbox" onChange={(event) => setForceDeactivation(event.target.checked)} />
+                            Governed override for active usage
+                          </label>
+                          {forceDeactivation ? <Field label="Override reason"><textarea className="rounded-md border border-slate-300 px-3 py-2 text-sm" rows={2} value={deactivationReason} onChange={(event) => setDeactivationReason(event.target.value)} /></Field> : null}
+                          <button className="flex w-fit items-center gap-2 rounded-md border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-700" type="button" onClick={deactivateSelectedRecord}>
+                            <Archive aria-hidden="true" size={16} /> Deactivate reference
+                          </button>
+                        </div>
+                      ) : (
+                        <button className="mt-4 flex w-fit items-center gap-2 rounded-md border border-emerald-300 px-3 py-2 text-sm font-semibold text-emerald-700" type="button" onClick={reactivateSelectedRecord}>
+                          <RotateCcw aria-hidden="true" size={16} /> Reactivate reference
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
                 </section>
               </div>
             </div>

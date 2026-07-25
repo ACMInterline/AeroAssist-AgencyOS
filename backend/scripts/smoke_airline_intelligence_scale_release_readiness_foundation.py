@@ -308,8 +308,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
             raise AssertionError("Agency airline intelligence readiness routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-intelligence-readiness"),
-        ("frontend/src/App.jsx", "/agency/airline-intelligence-readiness"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-intelligence-readiness"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-intelligence-readiness"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Intelligence Readiness"),
         ("frontend/src/pages/platform/AirlineIntelligenceReadinessPage.jsx", "Airline readiness matrix"),
         ("frontend/src/pages/agency/AirlineIntelligenceReadinessPage.jsx", "Assigned released coverage"),
@@ -389,9 +389,13 @@ def verify_live_routes() -> None:
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     request("POST", f"/api/agencies/{agency_id}/airline-intelligence-readiness", {}, OWNER_HEADERS, 405)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/airline-intelligence-readiness", OWNER_HEADERS)
-        if any(item.get("id") == candidate["id"] for item in foreign.get("released_coverage") or []):
-            raise AssertionError("Live agency readiness route leaked a release assignment.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-intelligence-readiness",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

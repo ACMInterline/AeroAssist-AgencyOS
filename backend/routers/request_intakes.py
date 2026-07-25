@@ -9,6 +9,7 @@ from models import (
     RequestIntakeAction,
     RequestIntakeTriageUpdate,
     StaffRequestIntakeCreate,
+    RequestV4Payload,
 )
 from services.request_intake_conversion_service import create_intake, convert_intake, write_audit
 from services.tenant_service import assert_agency_access, require_any_agency_role
@@ -56,6 +57,87 @@ def validate_public_payload(payload: PublicRequestIntakeCreate) -> None:
 
 def safe_public_intake(intake: dict) -> dict:
     return {"id": intake["id"], "reference_code": intake["reference_code"], "status": "received"}
+
+
+@public_router.post("/requests", status_code=status.HTTP_201_CREATED)
+async def submit_public_request_v4(
+    payload: RequestV4Payload,
+    privacy_policy_accepted: bool = Query(default=False),
+    db: Database = Depends(get_database),
+) -> dict:
+    if not privacy_policy_accepted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Privacy consent is required before submitting a request.",
+        )
+    if any(passenger.passenger_profile_id for passenger in payload.passengers):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Public requests cannot link or create passenger profiles. Staff must confirm traveler identity.",
+        )
+    if any(passenger.identity_status == "confirmed" for passenger in payload.passengers):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Public request travelers must remain unresolved until staff confirms identity.",
+        )
+    admin = payload.admin_metadata
+    if admin.internal_notes or admin.assigned_to or admin.created_on_behalf_of:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Public requests cannot include internal assignment or staff-only notes.",
+        )
+    admin.source = "public_submission"
+    admin.status = "new"
+    admin.priority = "normal"
+    first_segment = payload.itinerary_segments[0]
+    last_segment = payload.itinerary_segments[-1]
+    service_keys = list(
+        dict.fromkeys(
+            service_key
+            for passenger in payload.passengers
+            for service_key in passenger.selected_services
+        )
+    )
+    intake = await create_intake(
+        db,
+        source="public_website",
+        contact={
+            "name": f"{payload.contact.first_name} {payload.contact.last_name}".strip(),
+            "email": payload.contact.email,
+            "phone": payload.contact.phone,
+            "data_processing_consent": True,
+            "privacy_policy_accepted": True,
+        },
+        travel={
+            "origin": first_segment.origin_iata or first_segment.origin_label,
+            "destination": last_segment.destination_iata or last_segment.destination_label,
+            "departure_date": first_segment.departure_date,
+            "return_date": (
+                last_segment.arrival_date or last_segment.departure_date
+                if payload.trip.quote_mode in {"round_trip", "multi_city", "open_jaw"}
+                else None
+            ),
+            "passenger_count": len(payload.passengers),
+            "itinerary_notes": payload.request_level_notes or None,
+        },
+        services={
+            "selected_service_categories": service_keys,
+            "mobility_assistance": "wheelchair_and_mobility_assistance" in service_keys,
+            "medical_travel": "medical_equipment_and_travel_support" in service_keys,
+            "pet_travel": bool(payload.pets),
+            "child_or_unaccompanied_minor": "children_traveling_alone" in service_keys,
+            "special_baggage": bool(payload.special_items),
+            "documents_or_visa": "documents_and_travel_compliance" in service_keys,
+        },
+        request_details=payload.request_level_notes or None,
+        raw_payload={"request_version": 4, "source": "validated_public_request_v4"},
+        canonical_payload_override=payload.model_dump(mode="json"),
+        request_version=4,
+    )
+    return {
+        "intake": safe_public_intake(intake),
+        "message": "We received your request. Our team will review it.",
+    }
 
 
 async def accessible_agency_ids(db: Database, user: dict) -> Optional[set[str]]:

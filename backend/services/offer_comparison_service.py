@@ -221,6 +221,7 @@ class OfferComparisonService:
         option = await self.builder.get_option_or_none(agency_id, option_id)
         if workspace is None or option is None or option.get("workspace_id") != workspace_id:
             return None
+        self.builder.assert_workspace_mutable(workspace)
         options = await self.db.collection("offer_options").find_many({"agency_id": agency_id, "workspace_id": workspace_id})
         for other in options:
             if other["id"] == option_id:
@@ -228,7 +229,11 @@ class OfferComparisonService:
             if other.get("status") == OfferOptionStatus.RECOMMENDED.value:
                 await self.db.collection("offer_options").update_one(
                     {"agency_id": agency_id, "id": other["id"]},
-                    {"status": OfferOptionStatus.ALTERNATE.value},
+                    {
+                        "status": OfferOptionStatus.ALTERNATE.value,
+                        "version": int(other.get("version") or 1) + 1,
+                        "updated_by_user_id": actor_user_id,
+                    },
                 )
         updated = await self.db.collection("offer_options").update_one(
             {"agency_id": agency_id, "id": option_id},
@@ -236,6 +241,8 @@ class OfferComparisonService:
                 "status": OfferOptionStatus.RECOMMENDED.value,
                 "recommendation_tag": tag or "Recommended",
                 "recommendation_rank": rank if rank is not None else 1,
+                "version": int(option.get("version") or 1) + 1,
+                "updated_by_user_id": actor_user_id,
             },
         )
         await self.db.collection("offer_workspaces").update_one({"agency_id": agency_id, "id": workspace_id}, {"updated_by_user_id": actor_user_id})

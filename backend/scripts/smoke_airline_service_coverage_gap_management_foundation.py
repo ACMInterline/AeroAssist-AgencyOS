@@ -245,8 +245,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
             raise AssertionError(f"Agency service coverage route is not read-only: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-service-coverage"),
-        ("frontend/src/App.jsx", "/agency/airline-service-coverage"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-service-coverage"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-service-coverage"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Service Coverage"),
         ("frontend/src/pages/platform/AirlineServiceCoveragePage.jsx", "Airline × service matrix"),
         ("frontend/src/pages/platform/AirlineServiceCoveragePage.jsx", "Priority gap register"),
@@ -330,9 +330,13 @@ def verify_live_routes() -> None:
     request("POST", f"/api/agencies/{agency_id}/airline-service-coverage", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/airline-service-coverage?airline_code={airline_code}", OWNER_HEADERS)
-        if foreign.get("cells"):
-            raise AssertionError("Agency-scoped coverage leaked to another agency.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-service-coverage?airline_code={airline_code}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

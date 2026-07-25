@@ -33,6 +33,11 @@ from services.authentication_security_service import (
     login_attempt_state,
     record_login_failure,
 )
+from services.portal_identity_link_service import (
+    PortalIdentityLinkError,
+    activate_invited_portal_mapping,
+)
+from services.operational_collaboration_service import OperationalCollaborationService
 from services.seed_service import seed_core_data
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -172,6 +177,35 @@ async def login(payload: LoginRequest, request: Request, db: Database = Depends(
     updated_identity = await clear_login_failures(db, identity["id"])
     session_bundle = await create_session(db, updated_identity or identity, request)
     payload_out = await resolve_auth_payload(db, updated_identity or identity)
+    portal = payload_out.get("portal") or {}
+    portal_account = portal.get("account") or {}
+    portal_subject_type = portal.get("subject_type")
+    portal_entity_id = (
+        portal_account.get("passenger_profile_id")
+        if portal_subject_type == "passenger"
+        else portal_account.get("client_profile_id")
+    )
+    if portal_account.get("agency_id") and portal_subject_type and portal_entity_id:
+        await OperationalCollaborationService(db).record_business_event(
+            agency_id=portal_account["agency_id"],
+            entity_type=portal_subject_type,
+            entity_id=portal_entity_id,
+            event_type="portal_login",
+            summary="Portal session started.",
+            actor={
+                "id": portal_account.get("id"),
+                "identity_id": identity.get("id"),
+                "actor_type": f"{portal_subject_type}_portal",
+            },
+            visibility=portal_subject_type,
+            details={
+                "portal_subject_type": portal_subject_type,
+                "authentication_succeeded": True,
+            },
+            idempotency_key=f"portal-login:{session_bundle['session']['id']}",
+            source_collection="auth_sessions",
+            source_record_id=session_bundle["session"]["id"],
+        )
     log_security_event(
         "login_succeeded",
         outcome="success",
@@ -267,6 +301,22 @@ async def accept_invitation(
         if normalize_email(authenticated_identity["email"]) != invitation["normalized_email"]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Authenticated email does not match invitation.")
 
+    invitation_type = invitation["invitation_type"]
+    existing_identity_type = (identity or {}).get("identity_type")
+    portal_types = {"client_portal", "passenger_portal"}
+    staff_types = {"platform_user", "agency_staff"}
+    if (
+        existing_identity_type
+        and (
+            (invitation_type in portal_types and existing_identity_type != invitation_type)
+            or (invitation_type in staff_types and existing_identity_type in portal_types)
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Existing identity type is incompatible with this invitation.",
+        )
+
     if identity and identity.get("status") == "active":
         if authenticated_identity is None:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This account already exists. Sign in before accepting the invitation.")
@@ -290,6 +340,7 @@ async def accept_invitation(
         if user is None:
             user = await db.collection("platform_users").insert_one(
                 PlatformUser(
+                    identity_id=identity["id"],
                     email=invitation["invited_email"],
                     full_name=payload.display_name or invitation.get("invited_name") or invitation["invited_email"],
                     status="active",
@@ -298,7 +349,14 @@ async def accept_invitation(
         else:
             user = await db.collection("platform_users").update_one(
                 {"id": user["id"]},
-                {"status": "active", "full_name": user.get("full_name") or payload.display_name or invitation.get("invited_name") or invitation["invited_email"]},
+                {
+                    "identity_id": identity["id"],
+                    "status": "active",
+                    "full_name": user.get("full_name")
+                    or payload.display_name
+                    or invitation.get("invited_name")
+                    or invitation["invited_email"],
+                },
             )
         if invitation.get("agency_id"):
             if invitation.get("workspace_id"):
@@ -348,19 +406,25 @@ async def accept_invitation(
                 actor_user_id=user["id"],
                 metadata={"invitation_id": invitation["id"], "workspace_id": invitation.get("workspace_id"), "agency_role": invitation.get("target_role")},
             )
-    elif invitation["invitation_type"] == "client_portal" and invitation.get("agency_id"):
-        mapping = await db.collection("portal_access_mappings").find_one(
-            {"agency_id": invitation["agency_id"], "client_id": invitation["target_client_id"]}
-        )
-        if mapping:
-            await db.collection("portal_access_mappings").update_one(
-                {"id": mapping["id"]},
-                {"portal_status": "active", "user_email": invitation["invited_email"], "display_name": payload.display_name or mapping["display_name"]},
+    elif invitation["invitation_type"] in {"client_portal", "passenger_portal"} and invitation.get("agency_id"):
+        try:
+            await activate_invited_portal_mapping(
+                db,
+                invitation,
+                identity,
+                identity["id"],
+                payload.display_name,
             )
-        await db.collection("client_profiles").update_one(
-            {"agency_id": invitation["agency_id"], "id": invitation["target_client_id"]},
-            {"portal_status": "active"},
-        )
+        except PortalIdentityLinkError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=str(exc),
+            ) from exc
+        if invitation["invitation_type"] == "client_portal":
+            await db.collection("client_profiles").update_one(
+                {"agency_id": invitation["agency_id"], "id": invitation["target_client_id"]},
+                {"portal_status": "active"},
+            )
 
     accepted = await db.collection("invitations").update_one(
         {"id": invitation["id"], "status": "pending"},

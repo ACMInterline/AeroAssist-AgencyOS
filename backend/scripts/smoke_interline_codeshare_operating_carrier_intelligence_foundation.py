@@ -208,8 +208,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
         raise AssertionError("Agency carrier intelligence record routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/interline-codeshare-intelligence"),
-        ("frontend/src/App.jsx", "/agency/interline-codeshare-advisor"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/interline-codeshare-intelligence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/interline-codeshare-advisor"),
         ("frontend/src/lib/moduleCatalog.js", "Interline & Codeshare Advisor"),
         ("frontend/src/pages/platform/InterlineCodeshareIntelligencePage.jsx", "Special-service responsibility matrix"),
         ("frontend/src/pages/agency/InterlineCodeshareAdvisorPage.jsx", "Responsibility explanation"),
@@ -286,9 +286,13 @@ def verify_live_routes() -> None:
     request("POST", f"/api/agencies/{agency_id}/interline-codeshare-advisor/relationships", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/interline-codeshare-advisor?airline_code={marketing}", OWNER_HEADERS)
-        if foreign.get("relationships"):
-            raise AssertionError("Agency-scoped carrier intelligence leaked across tenants.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/interline-codeshare-advisor?airline_code={marketing}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

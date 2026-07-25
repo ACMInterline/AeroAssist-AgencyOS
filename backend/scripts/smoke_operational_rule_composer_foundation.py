@@ -184,8 +184,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-rule-composer"),
-        (ROOT / "frontend/src/App.jsx", "/agency/rule-composer"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-rule-composer"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/rule-composer"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Rule Composer"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "operational_rule_composer"),
         (ROOT / "frontend/src/pages/platform/OperationalRuleComposerPage.jsx", "All Conditions"),

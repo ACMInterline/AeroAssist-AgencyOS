@@ -57,14 +57,6 @@ async def create_owner(allow_existing_identities: bool) -> dict:
     if existing_user:
         raise RuntimeError("A platform user already exists for that email.")
 
-    user = PlatformUser(
-        email=email,
-        full_name=full_name,
-        global_role=PlatformRole.PLATFORM_OWNER,
-        status=UserStatus.ACTIVE,
-    )
-    created_user = await db.collection("platform_users").insert_one(user.model_dump(mode="json"))
-
     identity = AuthIdentity(
         email=email,
         normalized_email=normalized_email,
@@ -74,6 +66,14 @@ async def create_owner(allow_existing_identities: bool) -> dict:
         password_reset_required=False,
     )
     created_identity = await db.collection("auth_identities").insert_one(identity.model_dump(mode="json"))
+    user = PlatformUser(
+        identity_id=created_identity["id"],
+        email=email,
+        full_name=full_name,
+        global_role=PlatformRole.PLATFORM_OWNER,
+        status=UserStatus.ACTIVE,
+    )
+    created_user = await db.collection("platform_users").insert_one(user.model_dump(mode="json"))
 
     return {
         "platform_user_id": created_user["id"],

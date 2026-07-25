@@ -7,6 +7,13 @@ from typing import Any
 
 from database import Database
 from models import AuditEvent, GlobalReferenceRecord, ReferenceImportBatch, ServiceCatalogueRecord, now_utc
+from services.canonical_reference_service import (
+    canonical_domain,
+    find_active_scope_conflict,
+    normalize_domain_code,
+    reference_match_key,
+    validate_ptc_metadata,
+)
 from services.service_catalogue_service import normalize_service_catalogue_payload
 
 
@@ -38,6 +45,25 @@ REFERENCE_DOMAINS = {
     "pet_breeds": "Pet breeds",
     "special_item_categories": "Special item categories",
     "tax_types": "Tax types",
+    "fare_bundles": "Fare bundles",
+    "flight_types": "Flight types",
+    "route_types": "Route types",
+    "temperature_zones": "Temperature zones",
+    "vaccination_types": "Vaccination types",
+    "breed_risk_flags": "Breed risk flags",
+    "container_types": "Container types",
+    "service_codes": "Service codes",
+    "assistance_types": "Assistance types",
+    "condition_types": "Condition types",
+    "policy_statuses": "Policy statuses",
+    "policy_result_statuses": "Policy result statuses",
+    "seasonal_restriction_types": "Seasonal restriction types",
+    "pricing_categories": "Pricing categories",
+    "pricing_units": "Pricing units",
+    "formula_components": "Pricing formula components",
+    "task_types": "Task types",
+    "priority_levels": "Priority levels",
+    "statuses": "Statuses",
 }
 
 SERVICE_FAMILIES = [
@@ -189,10 +215,10 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         {"code": "PETC", "label": "Pet in cabin", "metadata_json": {"message_type": "ssr"}, "sort_order": 50},
     ],
     "cabin_classes": [
-        {"code": "economy", "label": "Economy", "sort_order": 10},
-        {"code": "premium_economy", "label": "Premium economy", "sort_order": 20},
-        {"code": "business", "label": "Business", "sort_order": 30},
-        {"code": "first", "label": "First", "sort_order": 40},
+        {"code": "Y", "label": "Economy", "metadata_json": {"cabin_code": "Y"}, "sort_order": 10},
+        {"code": "W", "label": "Premium economy", "metadata_json": {"cabin_code": "W"}, "sort_order": 20},
+        {"code": "C", "label": "Business", "metadata_json": {"cabin_code": "C"}, "sort_order": 30},
+        {"code": "F", "label": "First", "metadata_json": {"cabin_code": "F"}, "sort_order": 40},
     ],
     "aircraft_types": [
         {"code": "320", "label": "Airbus A320", "metadata_json": {"iata_aircraft_code": "320", "icao_aircraft_code": "A320"}, "sort_order": 10},
@@ -204,9 +230,207 @@ REFERENCE_BOOTSTRAP_RECORDS = {
         {"code": "SKYTEAM", "label": "SkyTeam", "metadata_json": {"alliance_key": "SKYTEAM"}, "sort_order": 30},
     ],
     "passenger_types": [
-        {"code": "adult", "label": "Adult", "aliases": ["ADT"], "sort_order": 10},
-        {"code": "child", "label": "Child", "aliases": ["CHD"], "sort_order": 20},
-        {"code": "infant", "label": "Infant", "aliases": ["INF"], "sort_order": 30},
+        {
+            "code": "ADT",
+            "label": "Adult",
+            "aliases": ["adult"],
+            "description": "Standard adult passenger classification. Airline fare eligibility remains policy-owned.",
+            "sort_order": 10,
+            "metadata_json": {
+                "iata_ptc_code": "ADT",
+                "passenger_category": "adult",
+                "age_min_years": 12,
+                "age_max_years": 130,
+                "requires_date_of_birth": False,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": True,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": False,
+            },
+        },
+        {
+            "code": "CHD",
+            "label": "Child",
+            "aliases": ["child"],
+            "description": "Child passenger classification. Configured age bounds are operational defaults, not airline pricing rules.",
+            "sort_order": 20,
+            "metadata_json": {
+                "iata_ptc_code": "CHD",
+                "passenger_category": "child",
+                "age_min_years": 2,
+                "age_max_years": 11,
+                "requires_date_of_birth": True,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": True,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": False,
+            },
+        },
+        {
+            "code": "INF",
+            "label": "Infant",
+            "aliases": ["infant"],
+            "description": "Infant passenger classification requiring date-of-birth and guardian review.",
+            "sort_order": 30,
+            "metadata_json": {
+                "iata_ptc_code": "INF",
+                "passenger_category": "infant",
+                "age_min_years": 0,
+                "age_max_years": 1,
+                "requires_date_of_birth": True,
+                "requires_guardian": True,
+                "is_infant": True,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": False,
+            },
+        },
+        {
+            "code": "YTH",
+            "label": "Youth",
+            "description": "Youth classification; airline-specific eligibility remains subject to policy review.",
+            "sort_order": 40,
+            "metadata_json": {
+                "iata_ptc_code": "YTH",
+                "passenger_category": "youth",
+                "age_min_years": 12,
+                "age_max_years": 17,
+                "requires_date_of_birth": True,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
+        {
+            "code": "SRC",
+            "label": "Senior",
+            "description": "Senior classification requiring airline or fare-rule review.",
+            "sort_order": 50,
+            "metadata_json": {
+                "iata_ptc_code": "SRC",
+                "passenger_category": "senior",
+                "age_min_years": 65,
+                "age_max_years": 130,
+                "requires_date_of_birth": True,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": True,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
+        {
+            "code": "STU",
+            "label": "Student",
+            "description": "Student classification requiring documentation and airline policy review.",
+            "sort_order": 60,
+            "metadata_json": {
+                "iata_ptc_code": "STU",
+                "passenger_category": "student",
+                "age_min_years": None,
+                "age_max_years": None,
+                "requires_date_of_birth": False,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
+        {
+            "code": "SEA",
+            "label": "Seaman",
+            "description": "Seaman classification requiring documentation and airline policy review.",
+            "sort_order": 70,
+            "metadata_json": {
+                "iata_ptc_code": "SEA",
+                "passenger_category": "seaman",
+                "age_min_years": None,
+                "age_max_years": None,
+                "requires_date_of_birth": False,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
+        {
+            "code": "MIL",
+            "label": "Military",
+            "description": "Military classification requiring documentation and airline policy review.",
+            "sort_order": 80,
+            "metadata_json": {
+                "iata_ptc_code": "MIL",
+                "passenger_category": "military",
+                "age_min_years": None,
+                "age_max_years": None,
+                "requires_date_of_birth": False,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
+        {
+            "code": "GRP",
+            "label": "Group Passenger",
+            "description": "Group passenger classification requiring airline and fare-rule review.",
+            "sort_order": 90,
+            "metadata_json": {
+                "iata_ptc_code": "GRP",
+                "passenger_category": "group",
+                "age_min_years": None,
+                "age_max_years": None,
+                "requires_date_of_birth": False,
+                "requires_guardian": False,
+                "is_infant": False,
+                "is_child": False,
+                "is_adult": False,
+                "is_senior": False,
+                "applies_to_pricing": True,
+                "applies_to_ticketing": True,
+                "applies_to_services": True,
+                "manual_review_required": True,
+            },
+        },
     ],
     "guardian_relationships": [
         {"code": "parent", "label": "Parent", "sort_order": 10},
@@ -338,6 +562,17 @@ def safe_reference_record(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def safe_legacy_reference_record(record: dict[str, Any]) -> dict[str, Any]:
+    safe = safe_reference_record(record)
+    if canonical_domain(record.get("domain") or "") != "passenger_types":
+        return safe
+    category = str((safe.get("metadata_json") or {}).get("passenger_category") or "").strip().lower()
+    if category in {"adult", "child", "infant"}:
+        safe["canonical_code"] = safe["code"]
+        safe["code"] = category
+    return safe
+
+
 def safe_reference_suggestion(record: dict[str, Any]) -> dict[str, Any]:
     return {**record, "suggested_metadata_json": record.get("suggested_metadata_json") or {}}
 
@@ -392,7 +627,28 @@ REFERENCE_DOMAIN_METADATA_SCHEMAS = {
         "fields": COUNTRY_METADATA_FIELDS,
         "array_max": 3,
         "quality_statuses": sorted(DATA_QUALITY_STATUSES),
-    }
+    },
+    "passenger_types": {
+        "label": "Passenger Type Code metadata",
+        "fields": [
+            "iata_ptc_code",
+            "passenger_category",
+            "age_min_years",
+            "age_max_years",
+            "requires_date_of_birth",
+            "requires_guardian",
+            "is_infant",
+            "is_child",
+            "is_adult",
+            "is_senior",
+            "applies_to_pricing",
+            "applies_to_ticketing",
+            "applies_to_services",
+            "manual_review_required",
+        ],
+        "typed_validation": True,
+        "airline_pricing_policy_embedded": False,
+    },
 }
 
 
@@ -604,6 +860,8 @@ def normalize_reference_metadata_for_domain(domain: str, metadata: dict[str, Any
     errors: list[str] = []
     if domain == "countries":
         return normalize_country_metadata(metadata, errors, row_number), errors
+    if domain == "passenger_types":
+        return validate_ptc_metadata(metadata)
     return metadata or {}, errors
 
 
@@ -687,7 +945,7 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
     for row_number, row in enumerate(reader, start=2):
         row_errors: list[str] = []
         row_domain = (row.get("domain") or "").strip()
-        code = normalize_reference_code(row.get("code") or "")
+        code = normalize_domain_code(domain, row.get("code") or "")
         label = (row.get("label") or "").strip()
         if row_domain != domain:
             row_errors.append(f"Row {row_number}: domain must be {domain}.")
@@ -695,10 +953,11 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
             row_errors.append(f"Row {row_number}: code is required.")
         if not label:
             row_errors.append(f"Row {row_number}: label is required.")
-        if code in seen_codes:
+        match_code = reference_match_key(domain, code)
+        if match_code in seen_codes:
             row_errors.append(f"Row {row_number}: duplicate code {code} within file.")
             duplicate_codes.append(code)
-        seen_codes.add(code)
+        seen_codes.add(match_code)
         metadata_json = parse_metadata(row.get("metadata_json"), row_number, row_errors)
         if domain == "countries":
             metadata_json, metadata_errors = normalize_reference_metadata_for_domain(domain, extract_country_metadata_from_row(row, metadata_json), row_number)
@@ -707,6 +966,35 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
             code = normalize_city_reference_code(code)
             metadata_json, metadata_errors = normalize_city_reference_metadata(code, label, parse_aliases(row.get("aliases")), metadata_json)
             row_errors.extend([f"Row {row_number}: {error}" for error in metadata_errors])
+        else:
+            metadata_json, metadata_errors = normalize_reference_metadata_for_domain(domain, metadata_json, row_number)
+            row_errors.extend([f"Row {row_number}: {error}" for error in metadata_errors])
+        requested_active = parse_bool(row.get("is_active"), True)
+        existing = (
+            await db.collection("global_reference_records").find_one(
+                {"domain": domain, "key": code}
+            )
+            if code
+            else None
+        )
+        if code:
+            conflict = await find_active_scope_conflict(
+                db,
+                domain=domain,
+                code=code,
+                key=code,
+                scope="global",
+                agency_id=None,
+                exclude_id=existing.get("id") if existing else None,
+            )
+            if conflict:
+                row_errors.append(
+                    f"Row {row_number}: active code or key conflicts in the effective scope."
+                )
+        if existing and bool(existing.get("is_active", True)) != requested_active:
+            row_errors.append(
+                f"Row {row_number}: status changes require the governed deactivate or reactivate action."
+            )
         try:
             sort_order = int(row.get("sort_order") or 100)
         except ValueError:
@@ -724,7 +1012,7 @@ async def validate_reference_csv(db: Database, domain: str, csv_text: str) -> di
                     "description": (row.get("description") or "").strip() or None,
                     "aliases": parse_aliases(row.get("aliases")),
                     "sort_order": sort_order,
-                    "is_active": parse_bool(row.get("is_active"), True),
+                    "is_active": requested_active,
                     "metadata_json": metadata_json,
                     "source_type": "import",
                 },
@@ -806,13 +1094,28 @@ async def create_reference_import_batch(
 
 
 async def upsert_reference_record(db: Database, domain: str, payload: dict[str, Any], actor_user_id: str | None = None) -> str:
-    code = normalize_city_reference_code(payload["code"]) if domain == "cities" else normalize_reference_code(payload["code"])
+    code = normalize_city_reference_code(payload["code"]) if domain == "cities" else normalize_domain_code(domain, payload["code"])
     metadata_json = payload.get("metadata_json", {})
     if domain == "cities":
         metadata_json, metadata_errors = normalize_city_reference_metadata(code, payload["label"], payload.get("aliases", []), metadata_json)
         if metadata_errors:
             raise ValueError("; ".join(metadata_errors))
+    else:
+        metadata_json, metadata_errors = normalize_reference_metadata_for_domain(domain, metadata_json)
+        if metadata_errors:
+            raise ValueError("; ".join(metadata_errors))
     existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+    conflict = await find_active_scope_conflict(
+        db,
+        domain=domain,
+        code=code,
+        key=code,
+        scope="global",
+        agency_id=None,
+        exclude_id=existing.get("id") if existing else None,
+    )
+    if conflict:
+        raise ValueError("Active reference code or key conflicts in the effective scope.")
     record_payload = {
         "domain": domain,
         "code": code,
@@ -824,7 +1127,11 @@ async def upsert_reference_record(db: Database, domain: str, payload: dict[str, 
         "metadata_json": metadata_json,
         "metadata": metadata_json,
         "source_type": payload.get("source_type", "system"),
-        "is_active": payload.get("is_active", True),
+        "is_active": (
+            existing.get("is_active", True)
+            if existing
+            else payload.get("is_active", True)
+        ),
         "updated_by_user_id": actor_user_id,
     }
     if existing:

@@ -7,6 +7,10 @@ from database import Database
 from models import OperationalTimeline, OperationalTimelineCreate, OperationalTimelineUpdate, new_id
 from persistence_query import MAXIMUM_QUERY_LIMIT, PaginationRequest
 from persistence_repository import PersistenceRepository
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -96,7 +100,7 @@ class OperationalTimelineService:
         query = {
             "collection_name": OPERATIONAL_TIMELINE_COLLECTION,
             "filters": filters or None,
-            "sort_field": "created_at",
+            "sort_field": "event_time",
             "sort_direction": "desc",
             "pagination": PaginationRequest.build(limit=MAXIMUM_QUERY_LIMIT),
         }
@@ -107,10 +111,18 @@ class OperationalTimelineService:
         )
         items = page.items
         if not include_archived:
+            superseded_by_archive = {
+                str(item.get("supersedes_entry_id"))
+                for item in items
+                if item.get("event_type") == "timeline_superseded"
+                and item.get("supersedes_entry_id")
+            }
             items = [
                 item
                 for item in items
-                if not item.get("deleted_at") and item.get("event_status") != "archived"
+                if not item.get("deleted_at")
+                and item.get("event_status") != "archived"
+                and str(item.get("id")) not in superseded_by_archive
             ]
         items = self._filter_exact(items, passenger, ["passenger_workspace_id"])
         items = self._filter_exact(items, booking, ["booking_workspace_id"])
@@ -126,7 +138,12 @@ class OperationalTimelineService:
                 or self._date_text(item.get("due_date")) == date
                 or self._date_text(item.get("completed_date")) == date
             ]
-        items.sort(key=lambda item: self._sort_text(item.get("created_at")))
+        items.sort(
+            key=lambda item: (
+                self._sort_text(item.get("event_time") or item.get("created_at")),
+                str(item.get("id") or ""),
+            )
+        )
         return [await self._platform_projection(item) for item in items]
 
     async def list_agency_entries(
@@ -228,10 +245,12 @@ class OperationalTimelineService:
         self._validate_payload(data)
         data.setdefault("timeline_reference", self._timeline_reference())
         data.setdefault("created_by", user.get("id"))
-        data["updated_by"] = user.get("id")
-        data.update(self.safety_flags())
-        entry = OperationalTimeline(**data)
-        created = await self.db.collection(OPERATIONAL_TIMELINE_COLLECTION).insert_one(entry.model_dump(mode="json"))
+        try:
+            created = await OperationalCollaborationService(self.db).append_timeline(
+                data, user
+            )
+        except OperationalCollaborationError as exc:
+            raise OperationalTimelineError(str(exc)) from exc
         return {
             "phase": PHASE_LABEL,
             "timeline_entry": await self._platform_projection(created),
@@ -241,14 +260,15 @@ class OperationalTimelineService:
         }
 
     async def update_entry(self, entry_id: str, payload: OperationalTimelineUpdate, user: dict) -> dict[str, Any]:
-        existing = await self._require_entry(entry_id)
+        await self._require_entry(entry_id)
         updates = payload.model_dump(mode="json", exclude_unset=True, exclude_none=True)
         self._validate_payload(updates, partial=True)
-        updates["updated_by"] = user.get("id")
-        updates.update(self.safety_flags())
-        updated = await self.db.collection(OPERATIONAL_TIMELINE_COLLECTION).update_one({"id": existing["id"]}, updates)
-        if not updated:
-            raise OperationalTimelineError("Operational timeline metadata could not be updated.")
+        try:
+            updated = await OperationalCollaborationService(self.db).append_correction(
+                entry_id, updates, user
+            )
+        except OperationalCollaborationError as exc:
+            raise OperationalTimelineError(str(exc)) from exc
         return {
             "phase": PHASE_LABEL,
             "timeline_entry": await self._platform_projection(updated),
@@ -258,19 +278,13 @@ class OperationalTimelineService:
         }
 
     async def delete_entry(self, entry_id: str, user: dict) -> dict[str, Any]:
-        existing = await self._require_entry(entry_id)
-        updated = await self.db.collection(OPERATIONAL_TIMELINE_COLLECTION).update_one(
-            {"id": existing["id"]},
-            {
-                "event_status": "archived",
-                "deleted_at": self._now(),
-                "deleted_by": user.get("id"),
-                "updated_by": user.get("id"),
-                **self.safety_flags(),
-            },
-        )
-        if not updated:
-            raise OperationalTimelineError("Operational timeline metadata could not be archived.")
+        await self._require_entry(entry_id)
+        try:
+            updated = await OperationalCollaborationService(self.db).append_correction(
+                entry_id, {}, user, archive=True
+            )
+        except OperationalCollaborationError as exc:
+            raise OperationalTimelineError(str(exc)) from exc
         return {
             "phase": PHASE_LABEL,
             "timeline_entry": await self._platform_projection(updated),
@@ -450,6 +464,10 @@ class OperationalTimelineService:
         return {
             "metadata_only": True,
             "timeline_workspace_metadata_only": True,
+            "timeline_append_only": True,
+            "timeline_corrections_append_entries": True,
+            "timeline_destructive_delete_disabled": True,
+            "immutable_ordering_enabled": True,
             "email_sending_disabled": True,
             "sms_sending_disabled": True,
             "whatsapp_disabled": True,

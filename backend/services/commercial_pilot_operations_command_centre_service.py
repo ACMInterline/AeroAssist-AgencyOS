@@ -273,11 +273,25 @@ class CommercialPilotOperationsCommandCentreService(OperationsCommandCenterServi
         for item in records["document_deliveries"]:
             if self._norm(item.get("status") or item.get("delivery_status")) in {"draft", "pending", "ready", "failed", "not_sent"}:
                 buckets["documents_to_send"].append(self._queue_item("document", item, item.get("document_title") or item.get("file_name") or "Document pending delivery", "/agency/documents"))
-        for item in records["request_tasks"]:
-            if self._norm(item.get("status")) not in {"done", "completed", "cancelled", "archived"}:
-                buckets["follow_ups"].append(self._queue_item("follow_up", item, item.get("title") or item.get("task_type") or "Follow-up", self._entity_href("request", item.get("request_id"))))
-                if self._is_overdue(item.get("due_at") or item.get("deadline")):
-                    buckets["overdue"].append(self._queue_item("follow_up", item, item.get("title") or "Overdue follow-up", self._entity_href("request", item.get("request_id"))))
+        for item in records["work_items"]:
+            if self._norm(item.get("work_item_type")) in {
+                "follow_up_offer",
+                "respond_to_client",
+                "respond_to_passenger",
+                "respond_to_supplier",
+                "reminder",
+            } and self._norm(item.get("status")) not in CLOSED_WORK_STATUSES and self._work_item_queue(item) != "follow_ups":
+                buckets["follow_ups"].append(
+                    self._queue_item(
+                        "follow_up",
+                        item,
+                        item.get("title") or "Follow-up",
+                        self._entity_href(
+                            item.get("source_entity_type"),
+                            item.get("source_entity_id"),
+                        ),
+                    )
+                )
         output = []
         for key, label in QUEUE_DEFINITIONS:
             items = self._dedupe_sorted(buckets[key])
@@ -294,11 +308,22 @@ class CommercialPilotOperationsCommandCentreService(OperationsCommandCenterServi
         sources = [
             (records["work_items"], "due_at", "task", "/agency/work-queue"),
             (records["deadlines"], "due_at", "deadline", "/agency/deadlines"),
-            (records["request_tasks"], "due_at", "follow_up", "/agency/requests"),
             (records["offer_workspaces"], "validity_date", "offer_expiry", "/agency/offers"),
             (records["document_workspaces"], "requirement_deadline", "document", "/agency/documents"),
             (records["trip_workspaces"], "departure_date", "departure", "/agency/trips"),
             (records["flight_workspaces"], "departure_datetime", "flight", "/agency/trips"),
+            (
+                records["workflow_events"],
+                "occurred_at",
+                "workflow_event",
+                "/agency/operational-workflows",
+            ),
+            (
+                records["operational_timelines"],
+                "created_at",
+                "operational_event",
+                "/agency/timeline",
+            ),
         ]
         for items, field, event_type, href in sources:
             for item in items:
@@ -512,7 +537,7 @@ class CommercialPilotOperationsCommandCentreService(OperationsCommandCenterServi
         return mapping.get(key, "/agency/work-queue")
 
     def _timeline_label(self, event_type: str, item: dict[str, Any]) -> str:
-        return item.get("title") or item.get("deadline_reference") or item.get("offer_title") or item.get("document_title") or item.get("trip_reference") or item.get("flight_reference") or self._label(event_type)
+        return item.get("title") or item.get("event_code") or item.get("summary") or item.get("deadline_reference") or item.get("offer_title") or item.get("document_title") or item.get("trip_reference") or item.get("flight_reference") or self._label(event_type)
 
     def _timeline_source_type(self, item: dict[str, Any]) -> Any:
         for field, label in [("travel_request_workspace_id", "request"), ("trip_workspace_id", "trip"), ("booking_workspace_id", "booking"), ("ticket_workspace_id", "ticket"), ("emd_workspace_id", "emd"), ("document_workspace_id", "document"), ("passenger_workspace_id", "passenger")]:

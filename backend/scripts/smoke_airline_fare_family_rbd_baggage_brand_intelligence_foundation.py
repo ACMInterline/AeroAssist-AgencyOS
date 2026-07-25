@@ -377,8 +377,8 @@ def verify_routes_ui_docs_and_readiness(paths: dict) -> None:
         raise AssertionError("Agency fare-brand record routes expose mutation.")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/fare-brand-intelligence"),
-        ("frontend/src/App.jsx", "/agency/fare-brand-library"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/fare-brand-intelligence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/fare-brand-library"),
         ("frontend/src/lib/moduleCatalog.js", "Fare Brand Library"),
         ("frontend/src/pages/platform/FareBrandIntelligencePage.jsx", "Fare-family hierarchy editor"),
         ("frontend/src/pages/agency/FareBrandLibraryPage.jsx", "Offer-builder integration"),
@@ -493,9 +493,13 @@ def verify_live_routes() -> None:
     request("POST", f"/api/agencies/{agency_id}/fare-brand-library/fare-families", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        foreign = get(f"/api/agencies/{agencies[1]['id']}/fare-brand-library?airline_code={airline_code}", OWNER_HEADERS)
-        if foreign.get("fare_families"):
-            raise AssertionError("Agency-scoped fare-brand metadata leaked across tenants.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/fare-brand-library?airline_code={airline_code}",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
 
 def verify_safety() -> None:

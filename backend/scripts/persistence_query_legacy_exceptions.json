@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "production_find_many_call_ceiling": 1009,
+  "production_find_many_call_ceiling": 1074,
   "production_zero_argument_find_many_ceiling": 268,
   "documented_hotspots": [
     {
@@ -18,6 +18,14 @@
     {
       "path": "backend/services/agent_work_queue_service.py",
       "reason": "Explicit user-triggered idempotent synchronization still reads several tenant-scoped source collections; the queue list itself is governed and bounded."
+    },
+    {
+      "path": "backend/services/task_automation_dependency_service.py",
+      "reason": "Governed automation processing, metrics, and permanently read-only migration analysis use explicit bounded and deterministically sorted reads."
+    },
+    {
+      "path": "backend/services/portal_projection_service.py",
+      "reason": "Portal Product Kernel projections use bounded, deterministically sorted tenant reads to assemble exact Client and Passenger visibility across canonical collections without duplicating customer-facing records."
     }
   ]
 }

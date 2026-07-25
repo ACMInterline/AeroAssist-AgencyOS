@@ -10,6 +10,8 @@ from phase_assertions import application_phase_is_at_least
 
 
 MINIMUM_PHASE = "phase_37_1_policy_comparison_service_advisor_foundation"
+AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
+AGENCY_READONLY_HEADERS = {"X-Demo-User-Email": "agency.readonly@aeroassist.dev"}
 
 
 def require_flag(section: dict, key: str, expected: object = True) -> None:
@@ -338,11 +340,16 @@ def main() -> int:
         raise AssertionError(f"Saved view patch failed: {patched_view}")
 
     agency_id = get("/api/agencies", OWNER_HEADERS)["items"][0]["id"]
-    agency_summary = get(f"/api/agencies/{agency_id}/policy-comparison/summary", OWNER_HEADERS)
+    agency_summary = get(f"/api/agencies/{agency_id}/policy-comparison/summary", AGENCY_AGENT_HEADERS)
     if agency_summary.get("platform_profiles_read_only") is not True or agency_summary.get("agency_global_mutation_blocked") is not True:
         raise AssertionError(f"Agency summary did not expose governance boundaries: {agency_summary}")
 
-    agency_compare = post(f"/api/agencies/{agency_id}/policy-comparison/compare", compare_payload, OWNER_HEADERS, 201)
+    agency_compare = post(
+        f"/api/agencies/{agency_id}/policy-comparison/compare",
+        compare_payload,
+        AGENCY_AGENT_HEADERS,
+        201,
+    )
     if len(agency_compare.get("rows") or []) != 2:
         raise AssertionError(f"Agency comparison failed: {agency_compare}")
 
@@ -350,7 +357,7 @@ def main() -> int:
         "PATCH",
         f"/api/agencies/{agency_id}/policy-comparison/profiles/{manual_profile['id']}",
         {"review_status": "corrected"},
-        OWNER_HEADERS,
+        AGENCY_AGENT_HEADERS,
         expect=404,
     )
     if blocked_status != 404:
@@ -370,7 +377,7 @@ def main() -> int:
             "direct_vs_connecting": "direct",
             "requested_service_context_json": {"service_code": "WCHR"},
         },
-        OWNER_HEADERS,
+        AGENCY_AGENT_HEADERS,
         201,
     )
     if agency_advisor.get("recommendations_disabled") is not True or agency_advisor.get("emd_issuance_disabled") is not True:
@@ -386,11 +393,30 @@ def main() -> int:
             "variant_code": variant_code,
             "visible_columns": ["airline", "complexity"],
         },
-        OWNER_HEADERS,
+        AGENCY_AGENT_HEADERS,
         201,
     )["saved_view"]
     if agency_view.get("agency_id") != agency_id or agency_view.get("is_global") is not False:
         raise AssertionError(f"Agency saved view was not scoped locally: {agency_view}")
+
+    readonly_status, _ = request(
+        "POST",
+        f"/api/agencies/{agency_id}/policy-comparison/saved-views",
+        {
+            "view_name": f"Readonly forbidden view {run_key}",
+            "airline_codes": airline_codes,
+            "domain_code": domain_code,
+            "family_code": family_code,
+            "variant_code": variant_code,
+            "visible_columns": ["airline"],
+        },
+        AGENCY_READONLY_HEADERS,
+        expect=403,
+    )
+    if readonly_status != 403:
+        raise AssertionError(
+            f"Agency read-only policy comparison write was not denied: {readonly_status}"
+        )
 
     comparison_after = get("/api/readiness").get("policy_comparison_service_advisor_foundation") or {}
     for key in ["comparison_profile_count", "comparison_snapshot_count", "comparison_row_count", "advisor_scenario_count", "advisor_result_count", "saved_view_count"]:

@@ -61,7 +61,7 @@ def verify_route_policy() -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "entitlementVisibilityLabels"),
-        (ROOT / "frontend/src/layouts/AgencyLayout.jsx", "Subscription visibility is informational only"),
+        (ROOT / "frontend/src/layouts/AgencyLayout.jsx", "Workspace access reflects your agency’s assigned plan."),
         (ROOT / "frontend/src/pages/agency/AgencyDashboardPage.jsx", "summarizeEntitlementVisibility"),
         (ROOT / "frontend/src/pages/platform/SaaSSubscriptionsPage.jsx", "Agency entitlement review visibility"),
         (ROOT / "docs/architecture/subscription-entitlement-ui-guardrails.md", "Subscription Entitlement UI Guardrails"),
@@ -77,7 +77,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/layouts/AgencyLayout.jsx",
         ROOT / "frontend/src/pages/agency/AgencyDashboardPage.jsx",
         ROOT / "frontend/src/pages/platform/SaaSSubscriptionsPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

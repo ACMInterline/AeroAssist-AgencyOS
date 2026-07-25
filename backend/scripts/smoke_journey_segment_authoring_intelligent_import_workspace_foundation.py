@@ -96,8 +96,8 @@ def verify_static_contracts() -> None:
         if required not in service_text:
             raise AssertionError(f"Journey authoring service missing required safety/integration contract: {required}")
 
-    require_text(ROOT / "frontend/src/App.jsx", '"/agency/journey-authoring"')
-    require_text(ROOT / "frontend/src/App.jsx", '"/platform/journey-authoring"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/agency/journey-authoring"')
+    require_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", '"/platform/journey-authoring"')
     require_text(ROOT / "frontend/src/lib/moduleCatalog.js", "Journey Authoring")
     require_text(ROOT / "frontend/src/pages/agency/JourneyAuthoringWorkspacePage.jsx", "Parse into editable drafts")
     require_text(ROOT / "frontend/src/pages/agency/JourneyAuthoringWorkspacePage.jsx", "Apply to canonical Journey")

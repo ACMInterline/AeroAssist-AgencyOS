@@ -189,8 +189,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Old admin route must not be registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/pricing-formula-builder"),
-        (ROOT / "frontend/src/App.jsx", "/agency/pricing-formula-builder"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/pricing-formula-builder"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/pricing-formula-builder"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Pricing Formula Builder"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "pricing_formula_builder"),
         (ROOT / "frontend/src/pages/platform/PricingFormulaBuilderPage.jsx", "Formula Components"),

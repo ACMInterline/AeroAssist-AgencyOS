@@ -190,8 +190,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     if platform_methods & {"post", "put", "patch", "delete"}:
         raise AssertionError(f"Platform after-sales diagnostics should be read-only at root: {platform_methods}")
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/after-sales"),
-        (ROOT / "frontend/src/App.jsx", "/platform/after-sales"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/after-sales"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/after-sales"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "After-Sales"),
         (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "does not mutate tickets or EMDs"),
         (ROOT / "frontend/src/pages/agency/AfterSalesPage.jsx", "Search by operational label"),
@@ -302,7 +302,7 @@ def verify_live_api(paths: dict) -> None:
         raise AssertionError(f"After-sales canonical selector groups are incomplete: {link_options}")
     if link_options.get("canonical_entities_only") is not True or link_options.get("context_preview_enabled") is not True:
         raise AssertionError(f"After-sales canonical selector safety metadata is missing: {link_options}")
-    request("GET", "/api/agencies/other-agency/after-sales/link-options", None, AGENCY_AGENT_HEADERS, 404)
+    request("GET", "/api/agencies/other-agency/after-sales/link-options", None, AGENCY_AGENT_HEADERS, 403)
     invalid_link_payload = case_payload("refund")
     invalid_link_payload["invoice_ids"] = ["missing-canonical-invoice"]
     invalid_link_payload["idempotency_key"] = f"smoke:invalid-link:{ref('case')}"
@@ -383,7 +383,7 @@ def verify_live_api(paths: dict) -> None:
         raise AssertionError(f"Platform after-sales diagnostics failed: {platform}")
     get(f"/api/platform/after-sales/{case['id']}", OWNER_HEADERS)
     request("POST", "/api/platform/after-sales", {"case_type": "refund"}, OWNER_HEADERS, 405)
-    request("GET", f"/api/agencies/other-agency/after-sales/{case['id']}", None, AGENCY_AGENT_HEADERS, 404)
+    request("GET", f"/api/agencies/other-agency/after-sales/{case['id']}", None, AGENCY_AGENT_HEADERS, 403)
 
 
 def main() -> None:

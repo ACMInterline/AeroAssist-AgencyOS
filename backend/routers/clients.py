@@ -16,17 +16,13 @@ from models import (
     ClientProfileCreate,
     ClientProfileUpdate,
     Invitation,
-    PortalAccessMapping,
     now_utc,
 )
 from security import hash_token, new_raw_token, normalize_email
-from services.tenant_service import assert_agency_access, require_any_agency_role
+from services.tenant_service import assert_agency_access
+from services.authorization_service import require_permission
 
 router = APIRouter(prefix="/api/agencies/{agency_id}", tags=["clients"])
-
-READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
-WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-
 
 def clean_updates(payload) -> dict:
     return payload.model_dump(exclude_unset=True, mode="json")
@@ -63,13 +59,12 @@ async def write_audit(
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_clients")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await assert_agency_access(db, agency_id, user)
+    require_permission(user, "edit_clients")
 
 
 async def get_client_or_404(db: Database, agency_id: str, client_id: str) -> dict:
@@ -240,23 +235,7 @@ async def create_client_portal_invitation(
     if not invited_email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Client portal invitation requires an email.")
     display_name = payload.display_name or client.get("display_name") or invited_email
-
-    mapping = await db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "client_id": client_id})
-    if mapping is None:
-        mapping = await db.collection("portal_access_mappings").insert_one(
-            PortalAccessMapping(
-                agency_id=agency_id,
-                client_id=client_id,
-                user_email=invited_email,
-                portal_status="invited",
-                display_name=display_name,
-            ).model_dump(mode="json")
-        )
-    else:
-        mapping = await db.collection("portal_access_mappings").update_one(
-            {"id": mapping["id"]},
-            {"user_email": invited_email, "portal_status": "invited", "display_name": display_name},
-        )
+    require_permission(user, "manage_agency_users")
 
     client = await db.collection("client_profiles").update_one(
         {"agency_id": agency_id, "id": client_id},
@@ -285,7 +264,8 @@ async def create_client_portal_invitation(
     )
     response = {
         "client": client,
-        "portal_mapping": mapping,
+        "portal_mapping": None,
+        "linkage_status": "pending_identity_activation",
         "invitation": {key: value for key, value in invitation_doc.items() if key != "token_hash"},
     }
     if DEMO_AUTH_ENABLED and not get_settings().is_production:

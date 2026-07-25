@@ -610,6 +610,11 @@ AGENCY_OWNED_COLLECTIONS = [
     "ssr_osi_workspaces",
     "document_workspaces",
     "operational_timelines",
+    "communication_threads",
+    "communication_messages",
+    "communication_participants",
+    "communication_attachments",
+    "operational_notification_projections",
     "passenger_service_workflows",
     "airline_knowledge_acquisitions",
     "operational_constraints",
@@ -749,6 +754,15 @@ AGENCY_OWNED_COLLECTIONS = [
     "invoices",
     "invoice_line_items",
     "payment_records",
+    "commercial_ledgers",
+    "commercial_transactions",
+    "payment_allocations",
+    "supplier_costs",
+    "supplier_cost_lines",
+    "credit_notes",
+    "credit_note_lines",
+    "refund_ledger_entries",
+    "exchange_ledger_entries",
     "booking_timeline_events",
     "refund_exchange_cases",
     "refund_exchange_items",
@@ -774,7 +788,7 @@ AGENCY_OWNED_COLLECTIONS = [
 
 
 async def ensure_mongo_indexes(mongo_database: Any) -> None:
-    from pymongo import ASCENDING
+    from pymongo import ASCENDING, DESCENDING
 
     for collection_name in AGENCY_OWNED_COLLECTIONS:
         collection = mongo_database[collection_name]
@@ -782,7 +796,15 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         await create_compatible_index(collection, collection_name, [("agency_id", ASCENDING)])
 
     unique_indexes = {
-        "platform_users": [[("email", ASCENDING)]],
+        "platform_users": [
+            [("email", ASCENDING)],
+            {
+                "keys": [("identity_id", ASCENDING)],
+                "name": "platform_users_identity_unique",
+                "unique": True,
+                "partialFilterExpression": {"identity_id": {"$type": "string"}},
+            },
+        ],
         "agencies": [[("slug", ASCENDING)], [("id", ASCENDING)]],
         "global_reference_records": [[("domain", ASCENDING), ("key", ASCENDING)], [("id", ASCENDING)]],
         "reference_domain_metadata": [[("domain", ASCENDING)], [("id", ASCENDING)]],
@@ -883,7 +905,24 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "airline_rules_core": [[("airline_id", ASCENDING)], [("id", ASCENDING)]],
         "unified_exception_rules": [[("id", ASCENDING)]],
         "agency_staff_memberships": [[("agency_id", ASCENDING), ("user_id", ASCENDING)]],
-        "portal_access_mappings": [[("agency_id", ASCENDING), ("user_email", ASCENDING)]],
+        "portal_access_mappings": [
+            {
+                "keys": [("active_mapping_key", ASCENDING)],
+                "name": "portal_access_mappings_active_identity_unique",
+                "unique": True,
+                "partialFilterExpression": {
+                    "active_mapping_key": {"$type": "string"}
+                },
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("active_subject_key", ASCENDING)],
+                "name": "portal_access_mappings_active_subject_unique",
+                "unique": True,
+                "partialFilterExpression": {
+                    "active_subject_key": {"$type": "string"}
+                },
+            },
+        ],
         "auth_identities": [[("normalized_email", ASCENDING)], [("id", ASCENDING)]],
         "auth_sessions": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
         "invitations": [[("token_hash", ASCENDING)], [("id", ASCENDING)]],
@@ -894,6 +933,26 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             await create_compatible_index(collection, collection_name, spec, unique=True)
 
     compound_indexes = {
+        "global_reference_records": [
+            {
+                "keys": [
+                    ("domain", ASCENDING),
+                    ("is_active", ASCENDING),
+                    ("sort_order", ASCENDING),
+                    ("label", ASCENDING),
+                ],
+                "name": "global_reference_records_domain_active_sort_label",
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("domain", ASCENDING),
+                    ("is_active", ASCENDING),
+                    ("sort_order", ASCENDING),
+                ],
+                "name": "global_reference_records_agency_domain_active_sort",
+            },
+        ],
         "auth_identities": [
             {"keys": [("locked_until", ASCENDING)], "name": "auth_identities_temporary_lock_lookup", "sparse": True},
             {"keys": [("last_failed_login_at", ASCENDING)], "name": "auth_identities_failed_login_reset_lookup", "sparse": True},
@@ -902,12 +961,92 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("status", ASCENDING), ("expires_at", ASCENDING)], "name": "auth_sessions_status_expiry_lookup"},
             {"keys": [("identity_id", ASCENDING), ("status", ASCENDING)], "name": "auth_sessions_identity_status_lookup"},
         ],
+        "agency_staff_memberships": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("identity_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "agency_staff_memberships_identity_status_lookup",
+                "sparse": True,
+            },
+        ],
+        "portal_access_mappings": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("auth_identity_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_identity_status_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("subject_type", ASCENDING),
+                    ("client_profile_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_client_subject_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("subject_type", ASCENDING),
+                    ("passenger_profile_id", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "portal_access_mappings_passenger_subject_lookup",
+                "sparse": True,
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("portal_status", ASCENDING),
+                    ("created_at", ASCENDING),
+                ],
+                "name": "portal_access_mappings_legacy_status_lookup",
+            },
+        ],
         "client_profiles": [[("agency_id", ASCENDING), ("primary_email", ASCENDING)]],
         "invitations": [
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("normalized_email", ASCENDING), ("target_role", ASCENDING), ("status", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
         ],
-        "passenger_profiles": [[("agency_id", ASCENDING), ("display_name", ASCENDING)]],
+        "passenger_profiles": [
+            [("agency_id", ASCENDING), ("display_name", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("identity_integrity_status", ASCENDING),
+                    ("status", ASCENDING),
+                ],
+                "name": "passenger_profiles_identity_integrity_lookup",
+            },
+        ],
+        "request_passengers": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("identity_status", ASCENDING),
+                ],
+                "name": "request_passengers_identity_status_lookup",
+            },
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("passenger_local_id", ASCENDING),
+                ],
+                "name": "request_passengers_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
         "client_passenger_relationships": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("passenger_id", ASCENDING)],
@@ -1297,6 +1436,9 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("blocker_status", ASCENDING)], "name": "operational_work_items_agency_blocker_lookup"},
             {"keys": [("agency_id", ASCENDING), ("due_at", ASCENDING)], "name": "operational_work_items_agency_due_at_lookup"},
             {"keys": [("agency_id", ASCENDING), ("source_entity_type", ASCENDING), ("source_entity_id", ASCENDING)], "name": "operational_work_items_agency_source_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("source_timeline_entry_id", ASCENDING), ("source_automation_rule_id", ASCENDING)], "name": "operational_work_items_automation_lineage_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("approval_status", ASCENDING)], "name": "operational_work_items_agency_approval_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("queue_key", ASCENDING), ("status", ASCENDING)], "name": "operational_work_items_agency_queue_key_status_lookup"},
             {"keys": [("workflow_instance_id", ASCENDING)], "name": "operational_work_items_workflow_instance_lookup"},
             {"keys": [("request_task_id", ASCENDING)], "name": "operational_work_items_request_task_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "operational_work_items_created_lookup"},
@@ -1388,6 +1530,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         "operational_task_automation_rules": [
             {"keys": [("id", ASCENDING)], "name": "operational_task_automation_rules_id_unique", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("rule_code", ASCENDING)], "name": "operational_task_automation_rules_agency_code_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("rule_key", ASCENDING), ("version", DESCENDING)], "name": "operational_task_automation_rules_agency_key_version_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("rule_key", ASCENDING), ("status", ASCENDING), ("enabled", ASCENDING)], "name": "operational_task_automation_rules_active_scope_lookup"},
             {"keys": [("trigger_event", ASCENDING)], "name": "operational_task_automation_rules_trigger_lookup"},
             {"keys": [("generated_template_code", ASCENDING)], "name": "operational_task_automation_rules_template_lookup"},
             {"keys": [("enabled", ASCENDING), ("status", ASCENDING)], "name": "operational_task_automation_rules_enabled_status_lookup"},
@@ -1399,6 +1543,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)], "name": "operational_task_automation_runs_agency_idempotency_lookup", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("trigger_event", ASCENDING)], "name": "operational_task_automation_runs_agency_trigger_lookup"},
             {"keys": [("agency_id", ASCENDING), ("source_entity_type", ASCENDING), ("source_entity_id", ASCENDING)], "name": "operational_task_automation_runs_source_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("source_timeline_entry_id", ASCENDING), ("status", ASCENDING)], "name": "operational_task_automation_runs_timeline_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("locked_until", ASCENDING)], "name": "operational_task_automation_runs_lock_recovery_lookup"},
             {"keys": [("agency_id", ASCENDING), ("status", ASCENDING)], "name": "operational_task_automation_runs_agency_status_lookup"},
             {"keys": [("retry_of_run_id", ASCENDING)], "name": "operational_task_automation_runs_retry_lookup"},
             {"keys": [("created_at", ASCENDING)], "name": "operational_task_automation_runs_created_lookup"},
@@ -1543,6 +1689,50 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("existing_trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
             [("agency_id", ASCENDING), ("request_purpose", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_version", ASCENDING),
+                    ("canonical_projection_status", ASCENDING),
+                ],
+                "name": "travel_requests_v4_projection_lookup",
+            },
+        ],
+        "request_segments": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("segment_local_id", ASCENDING),
+                ],
+                "name": "request_segments_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "request_pets": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("pet_local_id", ASCENDING),
+                ],
+                "name": "request_pets_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "request_special_items": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("item_local_id", ASCENDING),
+                ],
+                "name": "request_special_items_v4_local_id_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
         ],
         "trip_dossiers": [[("agency_id", ASCENDING), ("primary_request_id", ASCENDING)], [("agency_id", ASCENDING), ("trip_reference", ASCENDING)]],
         "trip_passengers": [[("agency_id", ASCENDING), ("trip_id", ASCENDING)], [("agency_id", ASCENDING), ("source_request_passenger_id", ASCENDING)]],
@@ -1554,6 +1744,29 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("booking_id", ASCENDING)],
             [("agency_id", ASCENDING), ("category", ASCENDING)],
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("generated_key", ASCENDING),
+                ],
+                "name": "passenger_service_requests_v4_generated_key_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
+        ],
+        "requested_services": [
+            {
+                "keys": [
+                    ("agency_id", ASCENDING),
+                    ("request_id", ASCENDING),
+                    ("service_key", ASCENDING),
+                    ("canonical_request_version", ASCENDING),
+                ],
+                "name": "requested_services_v4_service_key_unique",
+                "unique": True,
+                "partialFilterExpression": {"canonical_request_version": 4},
+            },
         ],
         "offers": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("request_id", ASCENDING)]],
         "offer_workspaces": [
@@ -1563,6 +1776,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
             [("agency_id", ASCENDING), ("offer_purpose", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("revision_root_id", ASCENDING), ("version", ASCENDING)],
+            [("agency_id", ASCENDING), ("superseded_by_offer_id", ASCENDING)],
         ],
         "offer_options": [
             [("agency_id", ASCENDING), ("workspace_id", ASCENDING)],
@@ -1570,6 +1785,8 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("offer_purpose", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
             [("agency_id", ASCENDING), ("recommendation_rank", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("option_order", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("offer_workspace_version", ASCENDING)],
         ],
         "offer_routing_options": [[("agency_id", ASCENDING), ("option_id", ASCENDING)]],
         "offer_builder_segments": [
@@ -1591,10 +1808,13 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("option_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("workspace_id", ASCENDING), ("offer_version", ASCENDING), ("status", ASCENDING)],
+            [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
         ],
         "trip_accepted_offer_snapshots": [
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
             [("agency_id", ASCENDING), ("acceptance_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("source_hash", ASCENDING)],
         ],
         "booking_readiness_packages": [
             [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
@@ -1750,6 +1970,11 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("id", ASCENDING)], "name": "operational_timelines_id_unique", "unique": True},
             {"keys": [("timeline_reference", ASCENDING)], "name": "operational_timelines_reference_unique", "unique": True},
             {"keys": [("agency_id", ASCENDING), ("created_at", ASCENDING)], "name": "operational_timelines_agency_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("event_time", ASCENDING), ("id", ASCENDING)], "name": "operational_timelines_agency_event_time_id_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("entity_type", ASCENDING), ("entity_id", ASCENDING), ("event_time", ASCENDING)], "name": "operational_timelines_agency_entity_event_time_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)], "name": "operational_timelines_agency_idempotency_lookup", "unique": True, "partialFilterExpression": {"idempotency_key": {"$type": "string"}}},
+            {"keys": [("agency_id", ASCENDING), ("linked_communication_thread_id", ASCENDING), ("event_time", ASCENDING)], "name": "operational_timelines_agency_thread_event_time_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("linked_audit_event_id", ASCENDING)], "name": "operational_timelines_agency_audit_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_type", ASCENDING)], "name": "operational_timelines_agency_event_type_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_status", ASCENDING)], "name": "operational_timelines_agency_status_lookup"},
             {"keys": [("agency_id", ASCENDING), ("event_priority", ASCENDING)], "name": "operational_timelines_agency_priority_lookup"},
@@ -1768,6 +1993,42 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             {"keys": [("due_date", ASCENDING)], "name": "operational_timelines_due_date_lookup"},
             {"keys": [("completed_date", ASCENDING)], "name": "operational_timelines_completed_date_lookup"},
             {"keys": [("attachment_ids", ASCENDING)], "name": "operational_timelines_attachment_lookup"},
+        ],
+        "communication_threads": [
+            {"keys": [("id", ASCENDING)], "name": "communication_threads_id_unique", "unique": True},
+            {"keys": [("thread_reference", ASCENDING)], "name": "communication_threads_reference_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("updated_at", DESCENDING)], "name": "communication_threads_agency_status_updated_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("participant_ids", ASCENDING)], "name": "communication_threads_agency_participant_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("entity_references.entity_type", ASCENDING), ("entity_references.entity_id", ASCENDING)], "name": "communication_threads_agency_entity_lookup"},
+        ],
+        "communication_messages": [
+            {"keys": [("id", ASCENDING)], "name": "communication_messages_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("created_at", ASCENDING), ("id", ASCENDING)], "name": "communication_messages_agency_thread_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("visibility", ASCENDING), ("created_at", DESCENDING)], "name": "communication_messages_agency_visibility_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("sender_identity_id", ASCENDING)], "name": "communication_messages_agency_sender_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("linked_timeline_entry_id", ASCENDING)], "name": "communication_messages_agency_timeline_lookup"},
+        ],
+        "communication_participants": [
+            {"keys": [("id", ASCENDING)], "name": "communication_participants_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("status", ASCENDING)], "name": "communication_participants_agency_thread_status_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("identity_id", ASCENDING), ("participant_type", ASCENDING)], "name": "communication_participants_agency_identity_type_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("client_id", ASCENDING)], "name": "communication_participants_agency_client_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("passenger_id", ASCENDING)], "name": "communication_participants_agency_passenger_lookup"},
+        ],
+        "communication_attachments": [
+            {"keys": [("id", ASCENDING)], "name": "communication_attachments_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("thread_id", ASCENDING), ("created_at", ASCENDING)], "name": "communication_attachments_agency_thread_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("message_id", ASCENDING)], "name": "communication_attachments_agency_message_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("reference_type", ASCENDING), ("reference_id", ASCENDING)], "name": "communication_attachments_agency_reference_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("document_id", ASCENDING)], "name": "communication_attachments_agency_document_lookup"},
+        ],
+        "operational_notification_projections": [
+            {"keys": [("id", ASCENDING)], "name": "operational_notification_projections_id_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("projection_key", ASCENDING)], "name": "operational_notification_projections_agency_key_unique", "unique": True},
+            {"keys": [("agency_id", ASCENDING), ("status", ASCENDING), ("created_at", DESCENDING)], "name": "operational_notification_projections_agency_status_created_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("timeline_entry_id", ASCENDING)], "name": "operational_notification_projections_agency_timeline_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("participant_id", ASCENDING), ("visibility", ASCENDING)], "name": "operational_notification_projections_agency_participant_visibility_lookup"},
+            {"keys": [("agency_id", ASCENDING), ("recipient_user_id", ASCENDING), ("created_at", DESCENDING)], "name": "operational_notification_projections_agency_recipient_lookup"},
         ],
         "passenger_service_workflows": [
             {"keys": [("id", ASCENDING)], "name": "passenger_service_workflows_id_unique", "unique": True},
@@ -2424,6 +2685,9 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("import_draft_id", ASCENDING)],
             [("agency_id", ASCENDING), ("trip_change_operation_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("accepted_offer_snapshot_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("offer_booking_handoff_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("source_evidence_reference", ASCENDING)],
         ],
         "booking_import_drafts": [
             [("agency_id", ASCENDING), ("source_type", ASCENDING)],
@@ -3756,6 +4020,68 @@ async def ensure_mongo_indexes(mongo_database: Any) -> None:
         ],
         "invoices": [[("agency_id", ASCENDING), ("client_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_id", ASCENDING)], [("agency_id", ASCENDING), ("booking_workspace_id", ASCENDING)]],
         "payment_records": [[("agency_id", ASCENDING), ("invoice_id", ASCENDING)], [("agency_id", ASCENDING), ("client_id", ASCENDING)]],
+        "commercial_ledgers": [
+            {
+                "keys": [("agency_id", ASCENDING), ("currency", ASCENDING)],
+                "name": "commercial_ledgers_agency_currency_unique",
+                "unique": True,
+            },
+        ],
+        "commercial_transactions": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "commercial_transactions_agency_idempotency_unique",
+                "unique": True,
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("posting_time", -1), ("id", -1)],
+                "name": "commercial_transactions_agency_posting_id",
+            },
+            {
+                "keys": [("agency_id", ASCENDING), ("trip_id", ASCENDING), ("booking_id", ASCENDING)],
+                "name": "commercial_transactions_agency_trip_booking",
+            },
+        ],
+        "payment_allocations": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "payment_allocations_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("payment_record_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("invoice_id", ASCENDING)],
+        ],
+        "supplier_costs": [
+            [("agency_id", ASCENDING), ("booking_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("trip_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
+        "supplier_cost_lines": [
+            [("agency_id", ASCENDING), ("supplier_cost_id", ASCENDING)],
+        ],
+        "credit_notes": [
+            [("agency_id", ASCENDING), ("invoice_id", ASCENDING)],
+            [("agency_id", ASCENDING), ("status", ASCENDING)],
+        ],
+        "credit_note_lines": [
+            [("agency_id", ASCENDING), ("credit_note_id", ASCENDING)],
+        ],
+        "refund_ledger_entries": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "refund_ledger_entries_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("payment_allocation_id", ASCENDING)],
+        ],
+        "exchange_ledger_entries": [
+            {
+                "keys": [("agency_id", ASCENDING), ("idempotency_key", ASCENDING)],
+                "name": "exchange_ledger_entries_agency_idempotency_unique",
+                "unique": True,
+            },
+            [("agency_id", ASCENDING), ("original_ticket_id", ASCENDING)],
+        ],
         "refund_exchange_cases": [
             [("agency_id", ASCENDING), ("client_id", ASCENDING)],
             [("agency_id", ASCENDING), ("status", ASCENDING)],

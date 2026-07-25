@@ -191,8 +191,8 @@ def verify_routes(paths: dict) -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Rollout Dashboard"),
-        (ROOT / "frontend/src/App.jsx", "/platform/rollout-dashboard"),
-        (ROOT / "frontend/src/App.jsx", "/agency/rollout-dashboard"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/rollout-dashboard"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/rollout-dashboard"),
         (ROOT / "frontend/src/pages/platform/RolloutDashboardPage.jsx", "Rollout Dashboard"),
         (ROOT / "frontend/src/pages/platform/RolloutDashboardPage.jsx", "No activation, automation, billing, publishing, provider execution, AI, route blocking, email, or SMS occurs."),
         (ROOT / "frontend/src/pages/agency/RolloutDashboardPage.jsx", "Rollout Dashboard"),
@@ -210,7 +210,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/RolloutDashboardPage.jsx",
         ROOT / "frontend/src/pages/agency/RolloutDashboardPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

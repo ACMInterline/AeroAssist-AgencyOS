@@ -170,8 +170,8 @@ def verify_routes_ui_and_docs(paths: dict) -> None:
             raise AssertionError(f"Non-canonical route introduced: {path}")
 
     checks = [
-        ("frontend/src/App.jsx", "/platform/airline-evidence"),
-        ("frontend/src/App.jsx", "/agency/airline-evidence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/platform/airline-evidence"),
+        ("frontend/src/routes/RoutedApplication.jsx", "/agency/airline-evidence"),
         ("frontend/src/lib/moduleCatalog.js", "Airline Evidence"),
         ("frontend/src/pages/platform/AirlineEvidencePage.jsx", "Conflicts are retained for human review"),
         ("frontend/src/pages/agency/AirlineEvidencePage.jsx", "Restricted attachments, source locations, and internal review notes are not shown"),
@@ -462,9 +462,13 @@ def verify_live_governance() -> None:
     request("POST", f"/api/agencies/{agency_id}/airline-evidence", {}, OWNER_HEADERS, 405)
     request("GET", PLATFORM_BASE, None, AGENCY_AGENT_HEADERS, 403)
     if len(agencies) > 1:
-        isolated = get(f"/api/agencies/{agencies[1]['id']}/airline-evidence", OWNER_HEADERS)
-        if any(item.get("id") in {first["id"], second["id"]} for item in isolated.get("sources") or []):
-            raise AssertionError("Agency-scoped evidence leaked into another agency summary.")
+        request(
+            "GET",
+            f"/api/agencies/{agencies[1]['id']}/airline-evidence",
+            None,
+            OWNER_HEADERS,
+            403,
+        )
 
     replacement = post(
         f"{PLATFORM_BASE}/sources",

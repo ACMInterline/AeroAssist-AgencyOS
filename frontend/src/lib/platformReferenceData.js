@@ -39,6 +39,10 @@ export function fetchPlatformReferenceRecord(recordId) {
   return apiGet(`/api/platform/reference/records/${recordId}`)
 }
 
+export function fetchPlatformReferenceRecordUsage(recordId) {
+  return apiGet(`/api/platform/reference/records/${recordId}/usage`)
+}
+
 export function createPlatformReferenceRecord(payload) {
   return apiPost("/api/platform/reference/records", payload)
 }
@@ -47,8 +51,12 @@ export function updatePlatformReferenceRecord(recordId, payload) {
   return apiPut(`/api/platform/reference/records/${recordId}`, payload)
 }
 
-export function archivePlatformReferenceRecord(recordId) {
-  return apiPost(`/api/platform/reference/records/${recordId}/archive`, {})
+export function archivePlatformReferenceRecord(recordId, payload = {}) {
+  return apiPost(`/api/platform/reference/records/${recordId}/archive`, payload)
+}
+
+export function reactivatePlatformReferenceRecord(recordId) {
+  return apiPost(`/api/platform/reference/records/${recordId}/reactivate`, {})
 }
 
 export function fetchPlatformReferenceSuggestions(params = {}) {

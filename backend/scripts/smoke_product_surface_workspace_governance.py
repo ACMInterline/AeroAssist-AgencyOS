@@ -18,7 +18,7 @@ def main() -> None:
     catalog = read("frontend/src/lib/moduleCatalog.js")
     layout = read("frontend/src/layouts/AgencyLayout.jsx")
     offer_workspace = read("frontend/src/pages/agency/OfferWorkspaceDetailPage.jsx")
-    app = read("frontend/src/App.jsx")
+    app = read("frontend/src/routes/RoutedApplication.jsx")
     service = read("backend/services/offer_delivery_client_interaction_service.py")
 
     expected_tools = [

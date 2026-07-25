@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import HTTPException, status
@@ -6,18 +6,19 @@ from fastapi import HTTPException, status
 from database import Database
 from models import (
     AuditEvent,
-    ClientPassengerRelationship,
     ClientProfile,
-    PassengerProfile,
     RequestIntake,
-    RequestPassenger,
     RequestSegment,
     RequestTimelineEvent,
     RequestedService,
+    RequestV4Payload,
     TravelRequest,
 )
+from services.request_passenger_identity_service import unresolved_request_passenger
 from services.request_normalization_service import normalize_request_children
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
+from services.request_v4_service import create_request_v4
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 SERVICE_LABELS = {
@@ -65,17 +66,17 @@ async def write_timeline(
     summary: Optional[str] = None,
     metadata: dict | None = None,
 ) -> None:
-    event = RequestTimelineEvent(
+    await OperationalCollaborationService(db).record_compatibility_event(
         agency_id=agency_id,
-        request_id=request_id,
+        entity_type="request",
+        entity_id=request_id,
+        source_event_type=event_type,
+        summary=summary or title,
         actor_user_id=actor_user_id,
-        event_type=event_type,
-        title=title,
-        summary=summary,
         visibility="internal",
-        metadata=metadata or {},
+        details={"title": title, **(metadata or {})},
+        source_collection="request_timeline_events",
     )
-    await db.collection("request_timeline_events").insert_one(event.model_dump(mode="json"))
 
 
 async def default_agency_context(db: Database) -> dict:
@@ -113,12 +114,14 @@ async def create_intake(
     raw_payload: Optional[dict] = None,
     actor_user_id: Optional[str] = None,
     source_metadata: Optional[dict] = None,
+    canonical_payload_override: Optional[dict[str, Any]] = None,
+    request_version: Optional[int] = None,
 ) -> dict:
     if not agency_id:
         default_context = await default_agency_context(db)
         agency_id = default_context["agency_id"]
         workspace_id = workspace_id or default_context["workspace_id"]
-    canonical_payload = {
+    canonical_payload = canonical_payload_override or {
         "contact": contact,
         "travel": travel,
         "services": services,
@@ -140,7 +143,9 @@ async def create_intake(
         contact_snapshot=contact,
         travel_summary=travel,
         service_summary=services,
+        request_version=request_version,
         canonical_payload=canonical_payload,
+        canonical_validation_status="validated" if request_version == 4 else "legacy",
         raw_payload=raw_payload or canonical_payload,
         priority=priority,
         assigned_to=assigned_to,
@@ -250,6 +255,50 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
         return {"intake": intake, "request": request, "already_converted": True}
     if intake.get("status") in {"rejected", "duplicate", "archived"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Cannot convert intake with status {intake.get('status')}.")
+    if intake.get("request_version") == 4:
+        if not intake.get("agency_id"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assign intake to an agency before conversion.",
+            )
+        canonical_payload = RequestV4Payload.model_validate(intake.get("canonical_payload") or {})
+        created = await create_request_v4(
+            db,
+            intake["agency_id"],
+            canonical_payload,
+            actor_user_id,
+            source_intake_id=intake_id,
+        )
+        created_request = created["request"]
+        converted_at = datetime.now(timezone.utc)
+        updated_intake = await db.collection("request_intakes").update_one(
+            {"id": intake_id},
+            {
+                "status": "converted",
+                "normalized_payload": {
+                    "request_version": 4,
+                    "canonical_request_id": created_request["id"],
+                },
+                "converted_request_id": created_request["id"],
+                "converted_at": converted_at,
+                "converted_by": actor_user_id,
+            },
+        )
+        await write_audit(
+            db,
+            intake["agency_id"],
+            actor_user_id,
+            "intake_v4_converted",
+            "request_intake",
+            intake_id,
+            "Converted canonical V4 intake to operational request.",
+            {"request_id": created_request["id"]},
+        )
+        return {
+            "intake": updated_intake,
+            "request": created_request,
+            "already_converted": False,
+        }
 
     normalized = normalize_intake_payload(intake)
     validate_conversion(intake, normalized)
@@ -295,38 +344,18 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
 
     request_passengers = []
     for index in range(travel.get("passenger_count", 1)):
-        passenger = PassengerProfile(
-            agency_id=intake["agency_id"],
-            first_name=f"Passenger {index + 1}",
-            last_name="Details pending",
-            display_name=f"Passenger {index + 1} details pending",
-            date_of_birth=date(1900, 1, 1),
-            passenger_type="ADT",
-            travel_document_notes="Created as a placeholder from request intake conversion.",
-        )
-        passenger_doc = await db.collection("passenger_profiles").insert_one(passenger.model_dump(mode="json"))
-        relationship = ClientPassengerRelationship(
-            agency_id=intake["agency_id"],
-            client_id=client["id"],
-            passenger_id=passenger_doc["id"],
-            relationship_type="self" if index == 0 else "other",
-            can_request_travel=True,
-            notes=f"Placeholder created from intake {intake.get('reference_code')}.",
-        )
-        relationship_doc = await db.collection("client_passenger_relationships").insert_one(relationship.model_dump(mode="json"))
-        request_passenger = RequestPassenger(
+        request_passenger = unresolved_request_passenger(
             agency_id=intake["agency_id"],
             request_id=created_request["id"],
-            passenger_id=passenger_doc["id"],
-            client_passenger_relationship_id=relationship_doc["id"],
-            role_in_request="traveler",
-            is_primary_traveler=index == 0,
+            index=index,
             service_needs_summary=normalized.get("request_details"),
-            snapshot_display_name=passenger_doc["display_name"],
-            snapshot_date_of_birth=passenger_doc["date_of_birth"],
-            snapshot_passenger_type=passenger_doc["passenger_type"],
+            source_intake_id=intake["id"],
         )
-        request_passengers.append(await db.collection("request_passengers").insert_one(request_passenger.model_dump(mode="json")))
+        request_passengers.append(
+            await db.collection("request_passengers").insert_one(
+                request_passenger.model_dump(mode="json")
+            )
+        )
 
     request_segment_ids = []
     if travel.get("origin") and travel.get("destination"):
@@ -379,7 +408,11 @@ async def convert_intake(db: Database, intake_id: str, actor_user_id: str) -> di
             service_category=service_snapshot.get("category") or "intake",
             details=normalized.get("request_details"),
             detail_payload=service_detail_payload,
-            passenger_ids=[item["passenger_id"] for item in request_passengers],
+            passenger_ids=[
+                item["passenger_id"]
+                for item in request_passengers
+                if item.get("passenger_id")
+            ],
             segment_ids=request_segment_ids,
             applies_to_all_passengers=True,
             applies_to_all_segments=True,

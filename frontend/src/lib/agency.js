@@ -16,7 +16,9 @@ export async function loadCurrentAgency({ suppressOnboardingRedirect = false } =
   const me = await apiGet("/api/auth/me")
   const agencies = await apiGet("/api/agencies")
   const requestedAgencyId = selectedAgencyIdFromUrl() || window.localStorage.getItem(SELECTED_AGENCY_KEY)
-  const agency = agencies.items.find((item) => item.id === requestedAgencyId) || agencies.items[0]
+  const selectedAgency = agencies.items.find((item) => item.id === requestedAgencyId) || agencies.items[0]
+  const membership = me.memberships?.find((item) => item.agency_id === selectedAgency?.id) || null
+  const agency = selectedAgency ? { ...selectedAgency, current_membership: membership } : null
   if (!agency) {
     return { me, agency: null }
   }

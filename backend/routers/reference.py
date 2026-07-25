@@ -9,6 +9,7 @@ from models import (
     GlobalReferenceCreate,
     GlobalReferenceRecord,
     GlobalReferenceUpdate,
+    ReferenceDeactivationRequest,
     ReferenceDataSuggestion,
     ReferenceDataSuggestionCreate,
     ReferenceImportBatchCreate,
@@ -26,9 +27,20 @@ from services.reference_data_service import (
     normalize_reference_code,
     normalize_reference_metadata_for_domain,
     safe_reference_import_batch,
+    safe_legacy_reference_record,
     safe_reference_record,
     safe_reference_suggestion,
     sort_records,
+)
+from services.canonical_reference_service import (
+    find_active_scope_conflict,
+    get_visible_reference,
+    governed_deactivate_reference,
+    list_reference_options,
+    list_visible_reference_records,
+    normalize_domain_code as normalize_canonical_reference_code,
+    reference_record_usage,
+    safe_reference_option,
 )
 from services.service_catalogue_service import safe_service_catalogue_record
 from services.seed_service import seed_core_data
@@ -137,10 +149,17 @@ async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_use
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Target reference record is required for this suggestion type.")
 
     if suggestion_type in {"new_record", "missing_domain_value"}:
-        code = normalize_reference_code(suggestion.get("suggested_code") or "")
+        code = normalize_canonical_reference_code(domain, suggestion.get("suggested_code") or "")
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Suggested code is required for approval.")
-        existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+        existing = await find_active_scope_conflict(
+            db,
+            domain=domain,
+            code=code,
+            key=code,
+            scope="global",
+            agency_id=None,
+        )
         metadata_json = normalize_metadata_or_raise(domain, suggestion.get("suggested_metadata_json") or {})
         payload = {
             "domain": domain,
@@ -170,14 +189,31 @@ async def apply_suggestion_approval(db: Database, suggestion: dict, reviewer_use
             "updated_by_user_id": reviewer_user_id,
         }
         if suggestion.get("suggested_code"):
-            code = normalize_reference_code(suggestion["suggested_code"])
-            conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
-            if conflict and conflict["id"] != target_id:
+            code = normalize_canonical_reference_code(domain, suggestion["suggested_code"])
+            conflict = await find_active_scope_conflict(
+                db,
+                domain=domain,
+                code=code,
+                key=code,
+                scope=str((approved_record or {}).get("scope") or "global"),
+                agency_id=(approved_record or {}).get("agency_id"),
+                exclude_id=target_id,
+            )
+            if conflict:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Suggested code conflicts with another global record.")
             updates.update({"code": code, "key": code})
         approved_record = await db.collection("global_reference_records").update_one({"domain": domain, "id": target_id}, updates)
     elif suggestion_type == "deactivation_request":
-        approved_record = await db.collection("global_reference_records").update_one({"domain": domain, "id": target_id}, {"is_active": False, "updated_by_user_id": reviewer_user_id})
+        target_record = await db.collection("global_reference_records").find_one({"domain": domain, "id": target_id})
+        if not target_record:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target reference record not found.")
+        approved_record, _ = await governed_deactivate_reference(
+            db,
+            target_record,
+            actor_user_id=reviewer_user_id,
+            force=False,
+            reason=reviewer_note,
+        )
     elif suggestion_type == "merge_request":
         approved_record = await db.collection("global_reference_records").find_one({"domain": domain, "id": target_id})
         final_status = "merged"
@@ -468,9 +504,82 @@ async def search_reference_domain(
 ) -> dict:
     ensure_domain(domain)
     await enforce_approved_reference_read(user, include_inactive)
-    records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many({"domain": domain})]
-    items = [record for record in filter_active(records, include_inactive) if matches_query(record, q)]
-    return {"domain": domain, "items": sort_records(items), "query": q, "actor_user_id": user["id"]}
+    records = await list_visible_reference_records(
+        db,
+        domain,
+        user=user,
+        include_inactive=include_inactive,
+        query=q,
+        limit=200,
+    )
+    return {
+        "domain": domain,
+        "items": [safe_legacy_reference_record(record) for record in records],
+        "query": q,
+        "actor_user_id": user["id"],
+    }
+
+
+@router.get("/{domain}/options")
+async def list_reference_domain_options(
+    domain: str,
+    q: str = Query(default="", max_length=120),
+    include_inactive: bool = Query(default=False),
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Database = Depends(get_database),
+) -> dict:
+    ensure_domain(domain)
+    if include_inactive:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive reference options require authenticated historical lookup.",
+        )
+    items = await list_reference_options(
+        db,
+        domain,
+        public=True,
+        query=q,
+        limit=limit,
+    )
+    return {
+        "domain": domain,
+        "items": items,
+        "query": q,
+        "limit": limit,
+        "public_safe": True,
+    }
+
+
+@router.get("/{domain}/usage")
+async def get_reference_usage(
+    domain: str,
+    record_id: str = Query(min_length=1, max_length=120),
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    ensure_domain(domain)
+    await require_platform_reference_owner(user)
+    record = await get_visible_reference(db, domain, record_id, user=user)
+    return {
+        "usage": await reference_record_usage(db, record),
+        "actor_user_id": user["id"],
+    }
+
+
+@router.get("/{domain}/{record_id}")
+async def get_reference_record(
+    domain: str,
+    record_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    ensure_domain(domain)
+    record = await get_visible_reference(db, domain, record_id, user=user)
+    return {
+        "record": safe_reference_option(record),
+        "historical": not record.get("is_active", True),
+        "actor_user_id": user["id"],
+    }
 
 
 @router.get("/{domain}")
@@ -482,7 +591,16 @@ async def list_reference_domain(
 ) -> dict:
     ensure_domain(domain)
     await enforce_approved_reference_read(user, include_inactive)
-    records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many({"domain": domain})]
+    records = [
+        safe_legacy_reference_record(record)
+        for record in await list_visible_reference_records(
+            db,
+            domain,
+            user=user,
+            include_inactive=include_inactive,
+            limit=200,
+        )
+    ]
     return {
         "domain": domain,
         "label": REFERENCE_DOMAINS[domain],
@@ -498,7 +616,18 @@ async def list_reference(
     db: Database = Depends(get_database),
 ) -> dict:
     await enforce_approved_reference_read(user, include_inactive)
-    records = [safe_reference_record(record) for record in await db.collection("global_reference_records").find_many()]
+    records: list[dict[str, Any]] = []
+    for domain in REFERENCE_DOMAINS:
+        records.extend(
+            safe_legacy_reference_record(record)
+            for record in await list_visible_reference_records(
+                db,
+                domain,
+                user=user,
+                include_inactive=include_inactive,
+                limit=200,
+            )
+        )
     return {"items": sort_records(filter_active(records, include_inactive)), "actor_user_id": user["id"]}
 
 
@@ -511,12 +640,20 @@ async def create_reference_record_for_domain(
 ) -> dict:
     ensure_domain(domain)
     await require_reference_manager(user, payload.scope.value if hasattr(payload.scope, "value") else payload.scope)
-    code = normalize_city_reference_code(payload.code or payload.key or "") if domain == "cities" else normalize_reference_code(payload.code or payload.key or "")
+    code = normalize_city_reference_code(payload.code or payload.key or "") if domain == "cities" else normalize_canonical_reference_code(domain, payload.code or payload.key or "")
     if not code:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code is required.")
-    existing = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
+    payload_scope = payload.scope.value if hasattr(payload.scope, "value") else str(payload.scope)
+    existing = await find_active_scope_conflict(
+        db,
+        domain=domain,
+        code=code,
+        key=payload.key or code,
+        scope=payload_scope,
+        agency_id=payload.agency_id,
+    )
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference record already exists.")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An active reference code or key already exists in the effective scope.")
     payload_dict = payload.model_dump(mode="json")
     metadata_json = normalize_record_metadata_or_raise(domain, code, payload.label, payload.aliases, payload_dict.get("metadata_json") or payload_dict.get("metadata") or {})
     record = GlobalReferenceRecord(
@@ -561,13 +698,27 @@ async def update_reference_record(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
     await require_reference_manager(user, payload.scope.value if payload.scope and hasattr(payload.scope, "value") else payload.scope)
     updates = {key: value for key, value in payload.model_dump(mode="json", exclude_unset=True).items() if value is not None}
+    if "is_active" in updates and bool(updates["is_active"]) != bool(existing.get("is_active", True)):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use the governed activate or deactivate action to change reference status.",
+        )
     if "code" in updates or "key" in updates:
-        code = normalize_city_reference_code(updates.get("code") or updates.get("key") or "") if domain == "cities" else normalize_reference_code(updates.get("code") or updates.get("key") or "")
+        code = normalize_city_reference_code(updates.get("code") or updates.get("key") or "") if domain == "cities" else normalize_canonical_reference_code(domain, updates.get("code") or updates.get("key") or "")
         if not code:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reference code cannot be blank.")
-        conflict = await db.collection("global_reference_records").find_one({"domain": domain, "key": code})
-        if conflict and conflict["id"] != record_id:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Reference code already exists.")
+        effective_scope = updates.get("scope") or existing.get("scope") or "global"
+        conflict = await find_active_scope_conflict(
+            db,
+            domain=domain,
+            code=code,
+            key=updates.get("key") or code,
+            scope=effective_scope,
+            agency_id=updates.get("agency_id") or existing.get("agency_id"),
+            exclude_id=record_id,
+        )
+        if conflict:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="An active reference code or key already exists in the effective scope.")
         updates["code"] = code
         updates["key"] = code
     if "metadata_json" in updates or "metadata" in updates:
@@ -605,6 +756,23 @@ async def activate_reference_record(
 ) -> dict:
     ensure_domain(domain)
     await require_reference_manager(user)
+    existing = await db.collection("global_reference_records").find_one({"domain": domain, "id": record_id})
+    if not existing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
+    conflict = await find_active_scope_conflict(
+        db,
+        domain=domain,
+        code=existing.get("code") or existing.get("key") or "",
+        key=existing.get("key") or existing.get("code") or "",
+        scope=str(existing.get("scope") or "global"),
+        agency_id=existing.get("agency_id"),
+        exclude_id=record_id,
+    )
+    if conflict:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Reference record cannot be reactivated because an active code or key conflicts in the effective scope.",
+        )
     updated = await db.collection("global_reference_records").update_one({"domain": domain, "id": record_id}, {"is_active": True, "updated_by_user_id": user["id"]})
     if not updated:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
@@ -616,13 +784,40 @@ async def activate_reference_record(
 async def deactivate_reference_record(
     domain: str,
     record_id: str,
+    payload: ReferenceDeactivationRequest | None = None,
     user: dict = Depends(get_current_user),
     db: Database = Depends(get_database),
 ) -> dict:
     ensure_domain(domain)
     await require_reference_manager(user)
-    updated = await db.collection("global_reference_records").update_one({"domain": domain, "id": record_id}, {"is_active": False, "updated_by_user_id": user["id"]})
-    if not updated:
+    existing = await db.collection("global_reference_records").find_one({"domain": domain, "id": record_id})
+    if not existing:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Reference record not found.")
-    await audit_reference_event(db, "reference_data.deactivated", "global_reference_record", record_id, f"Reference record {domain}:{record_id} deactivated.", user["id"], {"domain": domain})
-    return {"record": safe_reference_record(updated), "actor_user_id": user["id"]}
+    action = payload or ReferenceDeactivationRequest()
+    updated, usage = await governed_deactivate_reference(
+        db,
+        existing,
+        actor_user_id=user["id"],
+        force=action.force,
+        reason=action.reason,
+    )
+    await audit_reference_event(
+        db,
+        "reference_data.deactivated",
+        "global_reference_record",
+        record_id,
+        f"Reference record {domain}:{record_id} deactivated.",
+        user["id"],
+        {
+            "domain": domain,
+            "forced": action.force,
+            "reason": action.reason,
+            "active_record_count": usage["active_record_count"],
+            "historical_record_count": usage["historical_record_count"],
+        },
+    )
+    return {
+        "record": safe_reference_record(updated),
+        "usage": usage,
+        "actor_user_id": user["id"],
+    }

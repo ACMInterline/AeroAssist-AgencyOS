@@ -237,8 +237,8 @@ def validate_static_contracts() -> None:
     ]:
         assert_openapi_path(paths, path, method)
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/request-trip-conversion"),
-        (ROOT / "frontend/src/App.jsx", "/platform/request-trip-conversion"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/request-trip-conversion"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/request-trip-conversion"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Request-to-Trip Conversion"),
         (ROOT / "backend/services/saas_subscription_service.py", "request_trip_conversion"),
         (ROOT / "docs/architecture/request-to-trip-operational-conversion-foundation.md", "A request id must never be reused as a trip id"),
@@ -253,8 +253,8 @@ def validate_static_contracts() -> None:
     for rejected in ["requests.get(", "urllib.request", "openai", "BackgroundTasks", "send_email", "send_sms", "stripe"]:
         if rejected.lower() in service_text.lower():
             raise AssertionError(f"Forbidden execution semantic found in request-to-trip service: {rejected}")
-    reject_text(ROOT / "frontend/src/App.jsx", "/admin/request-trip-conversion")
-    reject_text(ROOT / "frontend/src/App.jsx", "/agent/request-trip-conversion")
+    reject_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", "/admin/request-trip-conversion")
+    reject_text(ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agent/request-trip-conversion")
 
 
 def validate_readiness() -> None:

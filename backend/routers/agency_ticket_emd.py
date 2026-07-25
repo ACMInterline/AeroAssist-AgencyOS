@@ -11,6 +11,10 @@ from models import (
     TicketRecordUpdate,
     TicketResultReconciliationRequest,
 )
+from services.authorization_service import (
+    project_authorized_commercial_fields,
+    require_permission,
+)
 from services.tenant_service import assert_agency_access, require_any_agency_role
 from services.ticket_emd_service import TicketEmdError, TicketEmdService
 
@@ -23,14 +27,14 @@ WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    require_permission(user, "view_tickets_emds")
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin"}:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    require_permission(user, "edit_tickets_emds")
 
 
 def not_found(detail: str) -> HTTPException:
@@ -55,16 +59,19 @@ async def list_tickets(
 ) -> dict:
     await require_read(db, agency_id, user)
     service = TicketEmdService(db)
-    return await service.list_tickets(
-        agency_id,
-        {
-            "trip_id": trip_id,
-            "booking_workspace_id": booking_workspace_id,
-            "booking_record_id": booking_record_id,
-            "passenger_id": passenger_id,
-            "issue_status": issue_status,
-            "ticket_number": ticket_number,
-        },
+    return project_authorized_commercial_fields(
+        await service.list_tickets(
+            agency_id,
+            {
+                "trip_id": trip_id,
+                "booking_workspace_id": booking_workspace_id,
+                "booking_record_id": booking_record_id,
+                "passenger_id": passenger_id,
+                "issue_status": issue_status,
+                "ticket_number": ticket_number,
+            },
+        ),
+        user,
     )
 
 
@@ -83,7 +90,7 @@ async def create_ticket_from_booking_record(
         raise bad_request(exc)
     if result is None:
         raise not_found("Booking record not found.")
-    return result
+    return project_authorized_commercial_fields(result, user)
 
 
 @router.post("/tickets/manual", status_code=status.HTTP_201_CREATED)
@@ -96,7 +103,10 @@ async def create_manual_ticket(
     await require_write(db, agency_id, user)
     service = TicketEmdService(db)
     try:
-        return await service.create_manual_ticket(agency_id, payload, user)
+        return project_authorized_commercial_fields(
+            await service.create_manual_ticket(agency_id, payload, user),
+            user,
+        )
     except TicketEmdError as exc:
         raise bad_request(exc)
 
@@ -113,7 +123,7 @@ async def get_ticket_detail(
     result = await service.get_ticket_detail(agency_id, ticket_record_id)
     if not result:
         raise not_found("Ticket record not found.")
-    return result
+    return project_authorized_commercial_fields(result, user)
 
 
 @router.put("/tickets/{ticket_record_id}")
@@ -129,7 +139,7 @@ async def update_ticket_record(
     result = await service.update_ticket_record(agency_id, ticket_record_id, payload, user)
     if result is None:
         raise not_found("Ticket record not found.")
-    return result
+    return project_authorized_commercial_fields(result, user)
 
 
 @router.post("/tickets/{ticket_record_id}/reconcile")
@@ -166,18 +176,21 @@ async def list_emds(
 ) -> dict:
     await require_read(db, agency_id, user)
     service = TicketEmdService(db)
-    return await service.list_emds(
-        agency_id,
-        {
-            "trip_id": trip_id,
-            "booking_workspace_id": booking_workspace_id,
-            "booking_record_id": booking_record_id,
-            "ticket_record_id": ticket_record_id,
-            "passenger_id": passenger_id,
-            "service_key": service_key,
-            "issue_status": issue_status,
-            "emd_number": emd_number,
-        },
+    return project_authorized_commercial_fields(
+        await service.list_emds(
+            agency_id,
+            {
+                "trip_id": trip_id,
+                "booking_workspace_id": booking_workspace_id,
+                "booking_record_id": booking_record_id,
+                "ticket_record_id": ticket_record_id,
+                "passenger_id": passenger_id,
+                "service_key": service_key,
+                "issue_status": issue_status,
+                "emd_number": emd_number,
+            },
+        ),
+        user,
     )
 
 
@@ -196,7 +209,7 @@ async def create_emd_from_booking_service(
         raise bad_request(exc)
     if result is None:
         raise not_found("Booking record not found.")
-    return result
+    return project_authorized_commercial_fields(result, user)
 
 
 @router.post("/emds/manual", status_code=status.HTTP_201_CREATED)
@@ -209,7 +222,10 @@ async def create_manual_emd(
     await require_write(db, agency_id, user)
     service = TicketEmdService(db)
     try:
-        return await service.create_manual_emd(agency_id, payload, user)
+        return project_authorized_commercial_fields(
+            await service.create_manual_emd(agency_id, payload, user),
+            user,
+        )
     except TicketEmdError as exc:
         raise bad_request(exc)
 
@@ -226,7 +242,7 @@ async def get_emd_detail(
     result = await service.get_emd_detail(agency_id, emd_record_id)
     if not result:
         raise not_found("EMD record not found.")
-    return result
+    return project_authorized_commercial_fields(result, user)
 
 
 @router.put("/emds/{emd_record_id}")

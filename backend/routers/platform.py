@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from auth import get_current_user, require_platform_role
 from config import get_settings
 from database import Database, get_database
 from services.saas_subscription_service import PHASE_LABEL
+from persistence_query import PaginationRequest
+from persistence_repository import PersistenceRepository
+from services.audit_event_access_service import AuditEventAccessService, PLATFORM_AUDIT_READ_ROLES
 
 router = APIRouter(prefix="/api/platform", tags=["platform"])
 
@@ -37,8 +40,33 @@ async def summary(
         for item in await db.collection("travel_requests").find_many()
         if item.get("status") not in {"closed", "cancelled", "archived"}
     ]
+    onboarding_profile_count = await db.collection("agency_onboarding_profiles").count()
+    onboarding_attention_count = await db.collection("agency_onboarding_profiles").count(
+        {"onboarding_status": {"$ne": "completed"}}
+    )
+    recent_activity_page = await PersistenceRepository(db).find_platform_records(
+        collection_name="audit_events",
+        sort_field="created_at",
+        sort_direction="desc",
+        pagination=PaginationRequest.build(limit=6),
+    )
+    recent_platform_activity = [
+        {
+            "event_type": item.get("event_type"),
+            "summary": item.get("summary"),
+            "created_at": item.get("created_at"),
+        }
+        for item in recent_activity_page.items
+    ]
     return {
         "current_user": user,
+        "product_overview": {
+            "agency_count": agency_count,
+            "onboarding_attention_count": onboarding_attention_count,
+            "legacy_agency_count": max(agency_count - onboarding_profile_count, 0),
+            "open_operational_request_count": len(open_operational_requests),
+            "recent_activity": recent_platform_activity,
+        },
         "counts": {
             "agencies": agency_count,
             "workspaces": workspace_count,
@@ -375,10 +403,23 @@ async def summary(
 
 @router.get("/audit-events")
 async def audit_events(
-    user: dict = Depends(require_platform_role(["platform_owner", "platform_admin", "platform_support"])),
+    agency_id: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
+    entity_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1),
+    cursor: str | None = Query(default=None),
+    user: dict = Depends(require_platform_role(PLATFORM_AUDIT_READ_ROLES)),
     db: Database = Depends(get_database),
 ) -> dict:
-    return {"items": await db.collection("audit_events").find_many()}
+    return await AuditEventAccessService(db).list_platform_events(
+        agency_id=agency_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        event_type=event_type,
+        limit=limit,
+        cursor=cursor,
+    )
 
 
 @router.get("/whoami")

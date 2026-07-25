@@ -1,16 +1,40 @@
-import Briefcase from "lucide-react/dist/esm/icons/briefcase.js"
+import Bell from "lucide-react/dist/esm/icons/bell.js"
+import BookOpenCheck from "lucide-react/dist/esm/icons/book-open-check.js"
+import CircleDollarSign from "lucide-react/dist/esm/icons/circle-dollar-sign.js"
 import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list.js"
-import FileCheck2 from "lucide-react/dist/esm/icons/file-check-2.js"
 import FileText from "lucide-react/dist/esm/icons/file-text.js"
 import Home from "lucide-react/dist/esm/icons/home.js"
-import ReceiptText from "lucide-react/dist/esm/icons/receipt-text.js"
-import Repeat2 from "lucide-react/dist/esm/icons/repeat-2.js"
+import LogOut from "lucide-react/dist/esm/icons/log-out.js"
+import MessageSquareText from "lucide-react/dist/esm/icons/message-square-text.js"
+import PlaneTakeoff from "lucide-react/dist/esm/icons/plane-takeoff.js"
+import TicketCheck from "lucide-react/dist/esm/icons/ticket-check.js"
 import UserCircle from "lucide-react/dist/esm/icons/user-circle.js"
-import Users from "lucide-react/dist/esm/icons/users.js"
-import WalletCards from "lucide-react/dist/esm/icons/wallet-cards.js"
-import ListChecks from "lucide-react/dist/esm/icons/list-checks.js"
+import { useAuthorization } from "../context/AuthorizationContext"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
+
+const clientLinks = [
+  ["/portal", "Dashboard", Home],
+  ["/portal/trips", "Trips", PlaneTakeoff],
+  ["/portal/travel-options", "Offers", BookOpenCheck],
+  ["/portal/requests", "Requests", ClipboardList],
+  ["/portal/documents", "Documents", FileText],
+  ["/portal/communications", "Messages", MessageSquareText],
+  ["/portal/finance", "Payments", CircleDollarSign],
+  ["/portal/profile", "Profile", UserCircle],
+]
+
+const passengerLinks = [
+  ["/portal", "Dashboard", Home],
+  ["/portal/trips", "My trips", PlaneTakeoff],
+  ["/portal/tickets", "My tickets", TicketCheck],
+  ["/portal/assistance", "My assistance", BookOpenCheck],
+  ["/portal/documents", "My documents", FileText],
+  ["/portal/communications", "Messages", MessageSquareText],
+  ["/portal/timeline", "Timeline", ClipboardList],
+  ["/portal/notifications", "Actions", Bell],
+  ["/portal/profile", "Travel profile", UserCircle],
+]
 
 async function logout() {
   await apiDeleteSession().catch(() => null)
@@ -18,42 +42,51 @@ async function logout() {
   window.location.href = "/login"
 }
 
-export default function ClientPortalLayout({ children, user, brand }) {
+export default function ClientPortalLayout({ children, user: providedUser, brand }) {
+  const authorization = useAuthorization()
+  const subjectType = authorization.portalAccess?.subject_type || "client"
+  const user = providedUser || {
+    full_name: authorization.portalAccess?.subject?.display_name,
+  }
+  const links = subjectType === "passenger" ? passengerLinks : clientLinks
   const primary = brand?.primary_color || "#2563eb"
+
   return (
     <div className="min-h-screen bg-slate-50">
+      <a className="aa-skip-link" href="#main-content">Skip to main content</a>
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: primary }}>Client Portal</p>
-            <h1 className="text-lg font-semibold text-slate-950">{brand?.brand_name || "Portal foundation"}</h1>
-          </div>
-          <nav className="flex flex-wrap items-center gap-2 text-sm">
-            <Nav href="/portal" icon={<Home className="h-4 w-4" />} label="Dashboard" />
-            <Nav href="/portal/profile" icon={<UserCircle className="h-4 w-4" />} label="Profile" />
-            <Nav href="/portal/passengers" icon={<Users className="h-4 w-4" />} label="Passengers" />
-            <Nav href="/portal/requests" icon={<ClipboardList className="h-4 w-4" />} label="Requests" />
-            <Nav href="/portal/offers" icon={<FileText className="h-4 w-4" />} label="Offers" />
-            <Nav href="/portal/travel-options" icon={<ListChecks className="h-4 w-4" />} label="Travel Options" />
-            <Nav href="/portal/bookings" icon={<Briefcase className="h-4 w-4" />} label="Bookings" />
-            <Nav href="/portal/documents" icon={<FileText className="h-4 w-4" />} label="Documents" />
-            <Nav href="/portal/invoices" icon={<ReceiptText className="h-4 w-4" />} label="Invoices" />
-            <Nav href="/portal/payments" icon={<WalletCards className="h-4 w-4" />} label="Payments" />
-            <Nav href="/portal/refunds-exchanges" icon={<Repeat2 className="h-4 w-4" />} label="Refunds / Exchanges" />
-            <Nav href="/portal/actions" icon={<FileCheck2 className="h-4 w-4" />} label="Actions" />
-          </nav>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <UserCircle className="h-4 w-4" />
-            {user?.full_name || "Demo user"}
-            <button className="rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>Logout</button>
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
+          <a className="min-w-0" href="/portal">
+            <p className="text-xs font-semibold uppercase" style={{ color: primary }}>
+              {subjectType === "passenger" ? "Passenger Portal" : "Client Portal"}
+            </p>
+            <h1 className="truncate text-lg font-semibold text-slate-950">{brand?.brand_name || "AeroAssist"}</h1>
+          </a>
+          <div className="flex shrink-0 items-center gap-2 text-sm text-slate-600">
+            <UserCircle aria-hidden="true" className="h-4 w-4" />
+            <span className="hidden max-w-48 truncate sm:inline">{user?.full_name || "Portal user"}</span>
+            <button aria-label="Sign out" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-700 hover:bg-slate-100" type="button" onClick={logout}>
+              <LogOut aria-hidden="true" className="h-4 w-4" />
+            </button>
           </div>
         </div>
+        <nav aria-label="Portal navigation" className="mx-auto max-w-7xl overflow-x-auto px-4">
+          <div className="flex min-w-max gap-1 pb-3">
+            {links.map(([href, label, Icon]) => <Nav href={href} icon={Icon} label={label} key={href} />)}
+          </div>
+        </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8" id="main-content" tabIndex="-1">{children}</main>
     </div>
   )
 }
 
-function Nav({ href, icon, label }) {
-  return <a className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100" href={href}>{icon}{label}</a>
+function Nav({ href, icon: Icon, label }) {
+  const active = window.location.pathname === href || (href !== "/portal" && window.location.pathname.startsWith(`${href}/`))
+  return (
+    <a aria-current={active ? "page" : undefined} className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ${active ? "bg-blue-50 text-blue-800" : "text-slate-700 hover:bg-slate-100"}`} href={href}>
+      <Icon aria-hidden="true" className="h-4 w-4" />
+      {label}
+    </a>
+  )
 }

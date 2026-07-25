@@ -7,12 +7,12 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | `Agency`, `AgencyWorkspace` | `agencies`, `agency_workspaces` | Agency tenant and workspace identity | Platform / agency | Staff, branding, websites, operations | Agency/company | Canonical |
 | `AgencyStaffMembership`, `Invitation`, auth/session models | `agency_staff_memberships`, `invitations`, auth collections | Staff access and invitations | Agency / platform | Users to agencies | Staff/user accounts | Canonical |
 | `ClientProfile` | `client_profiles` | Payer/requester/account profile | Agency | Relationships to passengers, requests | CRM client | Canonical |
-| `PassengerProfile` | `passenger_profiles` | Traveler/beneficiary registry | Agency | Client relationships, request passengers | Passenger registry | Canonical |
+| `PassengerProfile` | `passenger_profiles` | Confirmed reusable traveler/beneficiary identity; strict legacy intake placeholders may be retained as non-selectable integrity-quarantined records | Agency | Client relationships, confirmed request passengers | Passenger registry | Canonical |
 | `ClientPassengerRelationship` | `client_passenger_relationships` | Client-passenger permissions/relationship | Agency | Client + passenger | Client traveler linkage | Canonical |
-| Client/passenger master workspace models | `client_master_records`, `passenger_master_records`, `client_passenger_links`, `passenger_service_history`, `passenger_operational_preferences`, `passenger_known_documents`, `client_portal_access_profiles` | Metadata-only master workspace records that consolidate Client as commercial owner and Passenger as reusable operational identity. Records support many-to-many links, reusable passenger service history, operational preferences, known documents, portal access metadata, and relationship graph views without CRM sales pipeline, marketing automation, provider integrations, AI/LLM, booking, ticketing, payments, workers, or automatic sending. | Platform metadata CRUD + agency-scoped metadata CRUD and read-only visualization | Client profiles, passenger profiles, requests, trips, offers, invoices, communications, documents, booking/ticket/EMD mirrors, operational evaluations, feasibility, recommendations, portal access mappings | Client passenger master workspace foundation | Canonical foundation |
+| Client/passenger master workspace models | `client_master_records`, `passenger_master_records`, `client_passenger_links`, `passenger_service_history`, `passenger_operational_preferences`, `passenger_known_documents`, `client_portal_access_profiles` | Deprecated metadata compatibility projections. New Client/Passenger Master and relationship rows require verified same-Agency canonical `ClientProfile`, `PassengerProfile`, and `ClientPassengerRelationship` sources; duplicate active projections are rejected. Legacy Portal profiles never authorize access and active/invited metadata requires an explicit `PortalAccessMapping`. Historical reads remain available. | Platform and agency source-bound compatibility writes + read-only visualization | Canonical client profiles, passenger profiles, relationships and Portal mappings; historical requests, trips, offers, invoices, communications, documents, booking/ticket/EMD mirrors, operational evaluations, feasibility, recommendations | Client passenger master workspace foundation | Deprecated compatibility projection |
 | `RequestIntake` | `request_intakes` | Public/portal/staff intake records | Optional agency | Converts to `TravelRequest` | Intake/request submission | Canonical |
 | `TravelRequest` | `travel_requests` | Operational request/work demand | Agency | Client, passengers, segments, services, optional trip | Request/case | Canonical |
-| `RequestPassenger` | `request_passengers` | Passenger snapshot in request | Agency | Request + passenger | Request traveler | Canonical |
+| `RequestPassenger` | `request_passengers` | Request-owned traveler snapshot and identity-resolution state; may remain unresolved with no master profile until explicit staff confirmation | Agency | Request + optional confirmed passenger | Request traveler | Canonical |
 | `RequestSegment` | `request_segments` | Segment-first itinerary request structure | Agency | Request, future trip segment | Itinerary segment | Canonical |
 | `RequestedService` | `requested_services` | Requested assistance/service | Agency | Request, passengers, segments | Service request | Transitional toward Phase 34 catalogue-backed applicability |
 | `RequestPassengerSegmentService` | `request_passenger_segment_services` | Explicit passenger+segment service applicability with service catalogue/family metadata and catalogue snapshots | Agency/workspace | Request, service, passenger, segment, service catalogue | Service applicability | Canonical foundation |
@@ -131,7 +131,7 @@ This inventory maps current FastAPI/Pydantic model classes and Mongo-compatible 
 | Branding/logo/media models | `agency_branding_settings`, `agency_branding_assets`, `agency_website_media_assets` | Controlled branding and public-safe assets | Agency | Website/public renderer | Branding/media | Canonical |
 | Website/CMS models | `agency_website_settings`, `agency_website_pages` | Public website settings/pages/sections | Agency | Branding/media/intakes | Public CMS | Canonical |
 | Portal models | `portal_access_mappings`, `portal_action_events`, `document_acknowledgements` | Controlled client portal visibility/actions | Agency/client | Client, documents, actions | Portal/client accounts | Transitional |
-| `AuditEvent` | `audit_events` | Security/operations audit log | Agency optional | Any entity | Activity/audit | Canonical |
+| `AuditEvent` | `audit_events` | Security/operations audit log with bounded, redacted reads | Agency optional; Owner/Admin tenant reads; Platform Owner/Admin global reads | Any entity | Activity/audit | Canonical |
 
 ## Notes
 
@@ -419,3 +419,165 @@ Active marker: `phase_58_5_commercial_pilot_readiness`.
 | `CommercialPilotReadinessAssessment` | none | Computed `ready`, `conditionally_ready`, or `blocked` view that preserves Phase 57 governance. |
 
 `commercial_pilot_feedback` is registered as agency-owned in the persistence query registry and uses additive agency/status/category/related-record and Platform review indexes. It does not duplicate tasks, support tickets, incidents, operational records, or Phase 57 evidence.
+
+## Phase 59.0 Product Experience Recovery
+
+Active marker: `phase_59_0_product_experience_recovery`.
+
+Phase 59.0 adds no new persistence, Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation projection over the existing React module catalogue and canonical route map. The Platform Overview adds a bounded `product_overview` projection to the existing protected `/api/platform/summary` response using canonical Agency onboarding and audit records; it does not persist a dashboard model or duplicate domain state.
+
+P1 Product Recovery 10 adds frontend-only task hubs for Platform Users,
+Monitoring, Audit, and Settings plus Agency Communications and Reports. These
+pages consume existing protected services and do not add a model, collection,
+index, repository, or API. `ProductQuickSearch`, `WorkflowQuickActions`,
+`ProductTable`, and the enhanced `WorkflowContinuityPanel` are presentation
+components only.
+
+`WorkspacePage` owns layout width only. The Platform and Agency navigation projections own no authorization state: existing platform roles, agency memberships, tenant helpers, and API dependencies remain authoritative. The deterministic [Product Page Inventory](product-page-inventory.csv) classifies all page files without becoming a runtime registry.
+
+## P1 Product Kernel Repair 2 Ownership Registry
+
+P1 Product Kernel Repair 2 adds no Pydantic model, MongoDB collection, index,
+router, endpoint, frontend page, lifecycle mutation, or readiness section.
+`backend/canonical_domain_ownership.py` is non-runtime governance metadata over
+the actual current model and persistence inventory.
+
+The registry selects `AuthIdentity`, `PlatformUser`,
+`AgencyStaffMembership`, `PortalAccessMapping`, `Agency`, `ClientProfile`,
+`PassengerProfile`, `ClientPassengerRelationship`, `TravelRequest`,
+request-scoped children, `PassengerServiceRequest`, `OfferWorkspace`,
+`OfferOption`, `OfferAcceptance`, immutable `TripAcceptedOfferSnapshot`,
+`TripDossier`, `BookingRecord`, `OfferBookingHandoff`, `TicketRecord` and
+`TicketCoupon`, `EMDRecord` and `EmdCoupon`, `SsrOsiWorkspace`, `Invoice` and
+`InvoiceLineItem`, `PaymentRecord`, `AfterSalesCase`, `DocumentWorkspace`,
+`OperationalWorkItem`, `OperationalTimeline`, `AuditEvent`, and
+`GlobalReferenceRecord` as targets. P1 Repair 3 resolves Passenger Portal
+identity through `AuthIdentity`, `PortalAccessMapping`, and
+`PassengerProfile`. Communication, Airline Knowledge, Policy, and Pricing
+remain `decision_required`.
+
+The registry confirms `agency_id` as the tenant boundary and classifies later
+Master/Workspace families and older routes without changing them. See
+[Canonical Domain Ownership Map](canonical-domain-ownership-map.md) and
+[Canonical Domain Migration Register](canonical-domain-migration-register.md).
+
+## P1 Product Kernel Repair 3 Identity And Tenancy Contract
+
+| Canonical concern | Model / collection | Contract |
+|---|---|---|
+| Authentication | `AuthIdentity` / `auth_identities`; `AuthSession` / `auth_sessions` | Stable identity and opaque hashed-token session; no Client/Passenger truth in tokens |
+| Platform profile | `PlatformUser` / `platform_users` | Global Platform role linked to identity by additive `identity_id` |
+| Agency authorization | `AgencyStaffMembership` / `agency_staff_memberships` | Active, identity-linked membership for exact immutable `agency_id`; `workspace_id` is context only |
+| Portal authorization | `PortalAccessMapping` / `portal_access_mappings` | Explicit active identity-to-Client or identity-to-Passenger edge; email is non-authoritative |
+| Client | `ClientProfile` / `client_profiles` | Canonical CRM business owner |
+| Passenger | `PassengerProfile` / `passenger_profiles` | Canonical confirmed passenger owner |
+| Relationship | `ClientPassengerRelationship` / `client_passenger_relationships` | Canonical same-Agency relationship |
+
+`ClientMasterRecord`, `PassengerMasterRecord`, `ClientPassengerMasterLink`, and
+`ClientPortalAccessProfile` remain deprecated compatibility projections
+pending reviewed reconciliation. Their reads remain available. New Master and
+relationship rows require verified same-Agency canonical sources, duplicate
+active projections are rejected, and unlinked historical records cannot
+accept identity-shaped mutations. Legacy Portal profiles have no authorization
+effect. The identity migration analyzer is dry-run only and writes no
+production or local records.
+
+Portal mapping indexes add partial string-only active-identity uniqueness,
+partial string-only Agency/active-subject uniqueness, and Agency-first
+identity/subject/status lookups without dropping or mutating existing indexes.
+Platform-user identity uniqueness is partial for historical records, and
+membership identity lookup is additive.
+
+## P1 Product Kernel Repair 4 - Request V4
+
+| Model | Collection | Role |
+|---|---|---|
+| `TravelRequest` | `travel_requests` | Canonical Request owner with `request_version`, typed `canonical_payload`, and projection state |
+| `RequestIntake` | `request_intakes` | Pre-request intake/triage provenance; may hold a validated V4 payload before conversion |
+| `RequestPassenger` | `request_passengers` | Request-scoped unresolved or explicitly confirmed traveler projection |
+| `RequestSegment` | `request_segments` | Ordered intended-itinerary projection |
+| `PassengerServiceRequest` | `passenger_service_requests` | Canonical passenger-scoped service request |
+| `RequestedService` | `requested_services` | Compatibility aggregate generated from passenger service requests |
+| `RequestPet` | `request_pets` | Request-owned animal facts |
+| `RequestSpecialItem` | `request_special_items` | Request-owned special-item facts |
+| `TravelRequestWorkspace` | `travel_request_workspaces` | Existing compatibility family; not canonical Request truth |
+
+V4 child collections have additive Agency/request/local-ID indexes. No
+collection is renamed, dropped, migrated, or duplicated.
+
+## P1 Product Kernel Repair 5 - Canonical Reference Wiring
+
+| Model | Collection | Role |
+|---|---|---|
+| `GlobalReferenceRecord` | `global_reference_records` | Canonical shared reference owner, including rich PTC metadata |
+| `PassengerProfile` | `passenger_profiles` | Passenger truth with PTC/country/language/document IDs and snapshots |
+| `TravelRequest` | `travel_requests` | Request aggregate containing reference-backed V4 snapshots and reconciliation messages |
+| `RequestPassenger` | `request_passengers` | Request-scoped PTC/nationality IDs and historical snapshots |
+| `RequestSegment` | `request_segments` | Airport, carrier, and cabin IDs plus compatibility values |
+| `RequestPet` | `request_pets` | Species, breed, and container references |
+| `RequestSpecialItem` | `request_special_items` | Category and declared-value currency references |
+
+No new collection is introduced. Additive indexes support active deterministic
+reference lookups; startup index governance remains non-destructive.
+
+## P1 Product Kernel Repair 6 - Commercial Lifecycle Reconciliation
+
+| Canonical model | Collection | Ownership |
+|---|---|---|
+| `OfferWorkspace` | `offer_workspaces` | Mutable request-linked Offer and revision chain |
+| `OfferOption` | `offer_options` | Ordered commercial/itinerary alternative |
+| `OfferAcceptance` | `offer_acceptances` | Mutable decision lifecycle, exact Offer/Option versions |
+| `TripAcceptedOfferSnapshot` | `trip_accepted_offer_snapshots` | Create-only accepted evidence with integrity hash |
+| `TripDossier` | `trip_dossiers` | Confirmed Trip from snapshot or explicit governed exception |
+| `OfferBookingHandoff` | `offer_booking_handoffs` | Mutable accepted-evidence booking preparation |
+| `BookingWorkspace` | `booking_workspaces` | Operational preparation, not external truth |
+| `BookingRecord` | `booking_records` | Evidenced manual/imported/provider-result PNR mirror |
+| `TicketRecord` / `TicketCoupon` | `ticket_records` / `ticket_coupons` | Ticket and segment/usage child |
+| `EMDRecord` / `EmdCoupon` | `emd_records` / `emd_coupons` | EMD and service/usage child |
+
+`offers`, `offer_workspaces_v2`, `trip_workspaces`, `bookings`,
+`ticket_workspaces`, and `emd_workspaces` remain compatibility families.
+Existing records are not migrated or deleted. New indexes are additive,
+non-unique lineage/idempotency lookups and startup index governance remains
+non-destructive.
+
+## P1 Product Recovery 11A - Governed Automation
+
+| Model | Collection | Role |
+|---|---|---|
+| `OperationalWorkItem` | `operational_work_items` | Sole canonical actionable-work owner |
+| `OperationalAssignmentEvent` | `operational_assignment_events` | Append-only assignment and lifecycle actor evidence |
+| `OperationalQueueDefinition` / `OperationalQueueView` | `operational_queue_definitions` / `operational_queue_views` | Governed queue definitions and user views |
+| `OperationalTaskAutomationRule` | `operational_task_automation_rules` | Versioned rule metadata; only published active records evaluate |
+| `OperationalTaskAutomationRun` | `operational_task_automation_runs` | Bounded evaluation/execution evidence and recoverable lock state |
+| `OperationalTaskDependency` | `operational_task_dependencies` | Mandatory/advisory work dependency evidence |
+| `OperationalApprovalRequest` | `operational_approval_requests` | Internal Class C approval decision evidence; no underlying execution |
+| `OperationalSlaPolicy` | `operational_sla_policies` | Versioned Platform/Agency SLA policy |
+| `OperationalDeadline` / `OperationalSlaEvent` | `operational_deadlines` / `operational_sla_events` | Calculated deadline truth and append-only lifecycle history |
+| `OperationalBusinessCalendar` | `operational_business_calendars` | Agency-timezone working calendar |
+| `NotificationProjection` | `operational_notification_projections` | Regenerable, user-specific projection only |
+
+Historical `request_tasks` remain readable compatibility history and source
+input, not a canonical write target. All new indexes are additive,
+non-destructive scope, lineage, status, idempotency, or recipient lookups.
+
+## P1 Product Recovery 11B - Stabilization Inventory
+
+Product Recovery 11B introduces no Pydantic model, MongoDB collection, or
+startup index. It validates 1,619 classes in the existing central model module,
+379 literal collection calls, and 3,692 additive startup index intents across
+515 indexed collection names without connecting to MongoDB.
+
+The only persistence-query change adds the existing
+`OperationalWorkItem.source_entity_id` field to its governed filter allowlist.
+The collection already has the compound
+`agency_id + source_entity_type + source_entity_id` lookup index, so no index
+change is required. Canonical ownership and compatibility classifications
+remain unchanged.
+
+## Product Recovery 12 - Model Inventory Confirmation
+
+The release-candidate review introduces no Pydantic model, MongoDB collection,
+index, persistence adapter, or startup hook. Existing inventory and ownership
+registrations remain authoritative. The release package is documentation and
+executed validation evidence only.

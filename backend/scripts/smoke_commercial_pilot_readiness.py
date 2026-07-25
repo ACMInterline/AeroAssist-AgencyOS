@@ -12,7 +12,7 @@ BACKEND = Path(__file__).resolve().parents[1]
 ROOT = BACKEND.parent
 sys.path.insert(0, str(BACKEND))
 
-from build_phase import CURRENT_BUILD_PHASE, phase_is_exact
+from build_phase import CURRENT_BUILD_PHASE
 from database import Database
 from models import (
     Agency,
@@ -28,6 +28,10 @@ from services.commercial_pilot_readiness_service import (
     commercial_pilot_readiness_metadata,
 )
 from services.agency_onboarding_service import AgencyOnboardingService
+from scripts.phase_assertions import application_phase_is_at_least
+
+
+MINIMUM_PHASE = PHASE_LABEL
 
 
 async def verify_feedback_and_readiness() -> None:
@@ -279,8 +283,7 @@ async def verify_feedback_and_readiness() -> None:
 
 
 def verify_registration_and_safety() -> None:
-    assert phase_is_exact(CURRENT_BUILD_PHASE, CURRENT_BUILD_PHASE)
-    assert CURRENT_BUILD_PHASE == PHASE_LABEL
+    assert application_phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE)
     metadata = commercial_pilot_readiness_metadata()
     assert metadata["pilot_document_count"] == 13
     assert metadata["tenant_scoped_feedback_enabled"] is True
@@ -333,7 +336,7 @@ def verify_registration_and_safety() -> None:
             'prefix="/api/platform/commercial-pilot-readiness"',
             "require_any_platform_role",
         ],
-        "frontend/src/App.jsx": [
+        "frontend/src/routes/RoutedApplication.jsx": [
             '"/agency/pilot-feedback"',
             '"/platform/pilot-feedback"',
             '"/platform/commercial-pilot-readiness"',

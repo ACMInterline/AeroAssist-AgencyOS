@@ -43,6 +43,10 @@ def post(path: str, body: dict | None = None, headers: dict | None = None, expec
     return request("POST", path, body or {}, headers, expect)[1]
 
 
+def put(path: str, body: dict | None = None, headers: dict | None = None, expect: int | None = None) -> dict:
+    return request("PUT", path, body or {}, headers, expect)[1]
+
+
 def assert_openapi_path(paths: dict, path: str, method: str) -> None:
     if method.lower() not in paths.get(path, {}):
         raise AssertionError(f"OpenAPI missing {method.upper()} {path}")
@@ -200,6 +204,48 @@ def main() -> int:
     if not record or record.get("pnr_locator") != "MNL123":
         raise AssertionError("Manual booking did not create a draft booking record.")
 
+    post(
+        f"/api/agencies/{agency_id}/booking-workspaces/{workspace['id']}/status",
+        {
+            "status": "ready_to_book",
+            "internal_notes": "Human operator completed booking preparation.",
+        },
+        OWNER_HEADERS,
+        200,
+    )
+    post(
+        f"/api/agencies/{agency_id}/booking-workspaces/{workspace['id']}/status",
+        {
+            "status": "booking_in_progress",
+            "internal_notes": "Human operator began the external booking step.",
+        },
+        OWNER_HEADERS,
+        200,
+    )
+    confirmed_booking = put(
+        f"/api/agencies/{agency_id}/booking-records/{record['id']}",
+        {
+            "pnr_locator": "MNL123",
+            "provider_status": "confirmed",
+            "booking_status": "confirmed",
+            "source_evidence_reference": "evidence://booking/manual/MNL123",
+            "source_evidence_json": {"operator_verified": True},
+            "expected_version": record["current_external_result_version"],
+            "reason": "Recorded an externally confirmed manual booking result.",
+        },
+        OWNER_HEADERS,
+        200,
+    )
+    workspace = confirmed_booking["booking_workspace"]
+    record = confirmed_booking["booking_record"]
+    if (
+        record.get("booking_status") != "confirmed"
+        or not record.get("source_evidence_reference")
+    ):
+        raise AssertionError(
+            "Manual booking did not preserve governed confirmation evidence."
+        )
+
     ticket = post(
         f"/api/agencies/{agency_id}/tickets/manual",
         {
@@ -228,6 +274,8 @@ def main() -> int:
             "ticket_number": "2202222222222",
             "segments_snapshot_json": segments,
             "source_context": "standalone_manual",
+            "source_reference": "evidence://ticket/manual/2202222222222",
+            "exception_reason": "Reviewed standalone ticket mirror without a canonical BookingRecord.",
         },
         OWNER_HEADERS,
         201,
@@ -281,6 +329,8 @@ def main() -> int:
             "service_key": "BAG",
             "service_label": "Bag service",
             "source_context": "standalone_manual",
+            "source_reference": "evidence://emd/manual/2204444444444",
+            "exception_reason": "Reviewed standalone EMD mirror without a canonical BookingRecord.",
         },
         OWNER_HEADERS,
         201,

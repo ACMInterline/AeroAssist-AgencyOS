@@ -111,8 +111,8 @@ def verify_frontend_and_docs() -> None:
         (ROOT / "frontend/src/lib/moduleCatalog.js", "featureFlagLabels"),
         (ROOT / "frontend/src/pages/platform/FeatureFlagsPage.jsx", "Feature visibility is informational only. Operational enforcement is not performed."),
         (ROOT / "frontend/src/pages/agency/FeatureAvailabilityPage.jsx", "Feature visibility is informational only. Operational enforcement is not performed."),
-        (ROOT / "frontend/src/App.jsx", "/platform/feature-flags"),
-        (ROOT / "frontend/src/App.jsx", "/agency/feature-availability"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/feature-flags"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/feature-availability"),
         (ROOT / "docs/architecture/agency-feature-flags-foundation.md", "Agency Feature Flags Foundation"),
         (ROOT / "README.md", "Phase 39.7 Includes"),
         (ROOT / "BUILD_PHASES.md", "Phase 39.7: Agency Feature Flags Foundation"),
@@ -125,7 +125,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/FeatureFlagsPage.jsx",
         ROOT / "frontend/src/pages/agency/FeatureAvailabilityPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

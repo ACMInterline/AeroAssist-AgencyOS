@@ -26,6 +26,67 @@ Before implementing future phases, Codex should read and follow:
 - `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
 - `GLOSSARY.md`
 
+## Corrective Product Kernel Gate
+
+The [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architecture/p0-security-integrity-product-kernel-freeze.md) is active and is not a new roadmap phase. Audit access is protected, unconfirmed travelers remain request-owned until explicit identity confirmation, and proven legacy intake placeholders have a non-destructive quarantine utility. Do not add metadata foundations or top-level product surfaces until the canonical product-kernel ownership map and simplified operator workflow are approved. Security fixes, integrity repairs, canonical consolidation, pilot blockers, tests, documentation, and UI simplification remain allowed.
+
+### P1 Product Kernel Repair 2 - Canonical Domain Ownership Map
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It adds one machine-readable business-domain ownership
+contract, forty-six domain classifications, an explicit `agency_id` tenant
+decision, the frozen Request-to-Portal lifecycle, a migration register,
+deterministic validation, and focused smoke coverage. It performs no data
+migration, collection or route rename, runtime registration, or product
+behavior change. See [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md)
+and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md).
+
+### P1 Product Kernel Repair 3 - Canonical Identity, Roles, Portal Links, And Tenancy
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It separates authentication, Platform profile, Agency
+membership, and Portal subject concerns; makes `agency_id` the sole Agency
+authorization boundary; centralizes role-to-permission resolution; and
+requires explicit identity-to-Client or identity-to-Passenger Portal links.
+Passenger Portal identity is resolved without a duplicate user model. Legacy
+Master and email-only Portal records remain compatibility data. New Master and
+relationship rows require verified same-Agency canonical sources, while
+historical unlinked rows remain readable and are analyzed by a dry-run-only
+reconciliation tool. See
+[Canonical Identity and Tenancy Contract](docs/architecture/canonical-identity-and-tenancy-contract.md)
+and [Portal Identity Linkage Contract](docs/architecture/portal-identity-linkage-contract.md).
+
+### P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It selects `OperationalTimeline` as append-only operational
+history and `CommunicationThread` plus governed Message, Participant, and
+Attachment children as the communication owner. Notifications are
+regenerable projections and Audit Events remain separate immutable security
+evidence. Client, Passenger, Supplier, Agency, Platform, and System visibility
+is explicit; legacy records remain compatibility history; migration analysis
+is bounded and dry-run only. No provider communication, background delivery,
+production migration, commit, push, or deployment is enabled. See
+[Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md)
+and [Communication Thread Contract](docs/architecture/communication-thread-contract.md).
+
+### P1 Product Kernel Repair 9 - Client And Passenger Portal Completion
+
+This corrective gate is not a roadmap phase and does not change the active
+Phase 59.0 marker. It makes the authenticated Portal a customer-facing
+projection over Request, Offer, accepted snapshot, Trip, Booking, Ticket, EMD,
+Commercial Ledger, Document, Timeline, Notification, and Operational
+Collaboration truth. Client and Passenger dashboards are separate, Passenger
+visibility requires exact subject linkage, Offer acceptance uses the canonical
+acceptance service, documents retain immutable versions, and Client finance is
+read-only and private-cost safe. Historical Portal routes remain compatibility
+reads and reconciliation analysis is permanently dry-run only. No payment,
+provider, booking, ticketing, delivery, production migration, commit, push, or
+deployment action is enabled. See
+[Client Portal Contract](docs/architecture/client-portal-contract.md),
+[Passenger Portal Contract](docs/architecture/passenger-portal-contract.md),
+and [Portal Visibility Matrix](docs/architecture/portal-visibility-matrix.md).
+
 ## Current Implementation State
 
 The repository currently contains:
@@ -2567,3 +2628,237 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
 - Migrates the Phase 58.4 product-standards smoke to minimum semantics and makes the Phase 58.5 Commercial Pilot readiness smoke the sole exact-current assertion.
 - Adds no anonymous/public feedback, external support integration, provider or payment execution, ticketing, messaging, production seeding, deployment, backup/restore action, or automatic approval.
 - See [Commercial Pilot Package](docs/pilot/README.md).
+
+## Phase 59.0 - Product Experience Recovery
+
+- Active marker: `phase_59_0_product_experience_recovery`.
+- Replaces the Platform module dump with nine task-based, permission-aware areas and a practical Overview covering agency health, reference updates, knowledge updates, operational alerts, Commercial Pilot status, system health, recent activity, and quick actions.
+- Reorders Agency navigation around Dashboard, Requests, Offers, Trips, Bookings, Tickets & EMDs, Finance, Clients, Passengers, Communications, Documents, Operations, Reports, Settings, and a collapsed Advanced area.
+- Keeps the existing module catalogue as the internal source of truth and projects product labels, purposes, audiences, priorities, and Advanced placement onto existing routes.
+- Preserves `/agency` as the Phase 58.2 Operations Command Centre, the Phase 58.1 onboarding redirect and legacy exemption, existing canonical deep links, tenant isolation, and backend authorization.
+- Adds standard, wide, focused, and reading workspace layout primitives, task search, permission-aware shortcuts, accessible shell landmarks, responsive tables, and route-level lazy loading.
+- Treats missing optional workflow diagnostics as an empty state while preserving real authorization, tenancy, validation, and required-data failures; raw workflow state details are collapsed by default.
+- Adds source-level UX governance, terminology, navigation, route, permission, readiness, documentation, and safety-boundary validation.
+- Adds no model, collection, index, router, provider action, workflow automation, payment, ticket issuance, messaging, deployment, or production-data change.
+- See [Product Navigation Contract](docs/architecture/product-navigation-contract.md), [Dashboard Contract](docs/architecture/dashboard-contract.md), [Design System Contract](docs/architecture/design-system-contract.md), and [Workflow Banner Contract](docs/architecture/workflow-banner-contract.md).
+
+## P1 Product Kernel Repair 4 - Canonical Request V4
+
+- Keeps the active marker at `phase_59_0_product_experience_recovery`; this is
+  a product-kernel repair, not a new roadmap phase.
+- Keeps `TravelRequest` and `travel_requests` as the sole Request owner.
+- Adds a strict typed `request_version: 4` aggregate and deterministic
+  projections into existing Request child collections.
+- Adds canonical public create, Agency create/detail/update, and projection
+  normalization behavior while retaining valid legacy routes as adapters.
+- Keeps public and staff-created travelers unresolved until explicit identity
+  confirmation; no ordinary Request write creates `PassengerProfile`.
+- Keeps legacy records readable, labels ambiguous records for manual
+  reconciliation, and supplies write-free migration analysis.
+- Adds focused disposable Request V4 regression coverage without provider,
+  booking, ticketing, payment, messaging, migration, or production behavior.
+- See [Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
+  and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 5 - Passenger Type Codes and Canonical Reference Data
+
+- Keeps the active marker at `phase_59_0_product_experience_recovery`; this is
+  a product-kernel repair, not a new roadmap phase.
+- Keeps `GlobalReferenceRecord` and `global_reference_records` as the canonical
+  reference-data owner and maps specification aliases to stable domain keys.
+- Adds rich governed ADT, CHD, INF, YTH, SRC, STU, SEA, MIL, and GRP metadata;
+  UMNR remains a service and INS is not seeded.
+- Wires Request V4 and Passenger Profile priority fields to normalized,
+  bounded, tenant-safe options while preserving historical ID/code/label
+  snapshots and explicit legacy reconciliation.
+- Adds usage-aware non-destructive deactivation, conflict-aware reactivation,
+  typed PTC administration, matching import validation, and bounded
+  machine-readable consumer ownership.
+- Adds dry-run-only migration analysis with zero writes and no automatic
+  production migration.
+- Performs no provider, policy, pricing, booking, ticketing, payment,
+  messaging, production, deployment, commit, or push action.
+- See [Canonical Reference Data Contract](docs/architecture/canonical-reference-data-contract.md)
+  and [Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md).
+
+## P1 Product Kernel Repair 6 - Canonical Commercial Lifecycle Reconciliation
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  kernel repair, not a new roadmap phase.
+- Makes `OfferWorkspace` and `OfferOption` the normal mutable commercial
+  owners, with request ownership, stable ordering, backend-derived totals,
+  versioning, delivery freeze, and supersession.
+- Requires exact-version idempotent acceptance and creates one immutable hashed
+  `TripAcceptedOfferSnapshot`.
+- Creates/confirms normal `TripDossier` only from accepted evidence; pre-offer
+  Request conversion remains planning-only and exceptions require source,
+  reason, actor, audit, and reconciliation metadata.
+- Separates BookingWorkspace preparation from evidenced BookingRecord PNR
+  truth and blocks false booked state.
+- Enforces BookingRecord lineage for normal Ticket/EMD records while preserving
+  governed standalone historical/import paths.
+- Keeps legacy records readable, disables legacy Booking mutations, blocks
+  linked legacy Offers from overwriting canonical truth, and adds bounded
+  dry-run-only reconciliation analysis.
+- Performs no provider booking, Ticket/EMD issuance, payment, production
+  migration, commit, push, or deployment.
+- See [Canonical Commercial Lifecycle Contract](docs/architecture/canonical-commercial-lifecycle-contract.md)
+  and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 7 - Finance, Accounting And Commercial Ledger
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Adds one Agency-scoped Commercial Ledger downstream of immutable accepted
+  Offer, Trip, Booking, Ticket, and EMD evidence.
+- Extends existing Invoice, Invoice Line, and Payment collections; adds
+  append-only transactions, allocations, supplier costs, credit notes, refund
+  entries, and exchange entries without creating parallel finance families.
+- Derives Invoice totals, balances, Payment availability, exchange totals,
+  revenue, supplier cost, agency expense, margin, and exposure on the server.
+- Restricts ledger mutation and private costs to owners, admins, and
+  accountants; agents and read-only staff retain appropriate finance reads.
+- Adds bounded dry-run migration analysis and comprehensive regression coverage.
+- Performs no payment, refund, exchange, provider, external accounting,
+  operational-record rewrite, production migration, commit, push, or deploy.
+- See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md),
+  [Invoice Lifecycle](docs/architecture/invoice-lifecycle-contract.md), and
+  [Payment Allocation](docs/architecture/payment-allocation-contract.md).
+
+## P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Makes `OperationalTimeline` the append-only operational history owner and
+  assigns server timestamps, deterministic idempotent IDs, total ordering,
+  correction/supersession entries, entity links, Communication links, and
+  Audit links.
+- Makes `CommunicationThread` the multi-entity conversation aggregate with
+  Message, Participant, and immutable Attachment-reference children.
+- Preserves prior message bodies for reasoned edits and prohibits posted
+  message deletion.
+- Enforces Agency, Client Portal, Passenger Portal, Supplier, Platform, and
+  System visibility at thread, participant, child record, and read projection
+  boundaries.
+- Makes notifications deterministic projections that can regenerate from the
+  timeline without changing business truth.
+- Adds one shared Agency collaboration panel across major operational detail
+  pages and keeps compatibility routes readable.
+- Adds bounded, permanently dry-run analysis for historical messages,
+  duplicate threads/timelines/attachments, orphan notes, and missing links.
+- Performs no external email, SMS, chat, airline/supplier provider call,
+  background delivery, destructive migration, production action, commit, push,
+  or deployment.
+- See [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md),
+  [Communication Visibility Contract](docs/architecture/communication-visibility-contract.md),
+  and [Notification Projection Contract](docs/architecture/notification-projection-contract.md).
+
+## P1 Product Kernel Repair 9 - Client And Passenger Portal Completion
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  product-kernel repair, not a new roadmap phase.
+- Makes the Portal a bounded projection over canonical Request, Offer,
+  acceptance snapshot, Trip, Booking, Ticket, EMD, Document, Commercial
+  Ledger, Timeline, Notification, and Operational Collaboration records.
+- Provides distinct task-oriented Client and Passenger dashboards and
+  navigation, with exact mapping, Agency, relationship, participant, entity,
+  document, and passenger-record guards.
+- Routes Client Offer acceptance through the canonical Offer Acceptance
+  service; Passenger Offer access remains exact-recipient and read-only.
+- Provides immutable Document versions, checksum-verified download, and
+  requested-only bounded upload with Audit and Timeline evidence.
+- Provides Client-only ledger visibility without supplier costs, margin,
+  internal notes, raw data, or payment execution.
+- Retains valid historical Portal reads as compatibility, adds bounded
+  dry-run-only reconciliation analysis, and performs no production migration.
+- See [Portal Operational Workspace](docs/architecture/portal-operational-workspace.md)
+  and [Portal Approval Contract](docs/architecture/portal-approval-contract.md).
+
+## P1 Product Recovery 10 - Product Experience And Navigation Recovery
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  presentation recovery over the completed Product Kernel, not a new phase.
+- Defines exact nine-area Platform, fourteen-area Agency, and eight-area Client
+  Portal navigation while preserving the narrower Passenger Portal boundary.
+- Retains all valid deep links and places specialist lifecycle foundations,
+  diagnostics, catalogue tools, and governance pages under collapsed Advanced
+  navigation.
+- Adds permitted-page search, permission-aware Agency quick actions, shared
+  task tables, practical dashboard summaries, and richer workflow continuity
+  guidance across canonical operational detail pages.
+- Lazily loads every page route, adds skip links and focusable content targets,
+  and retains existing responsive shell behavior.
+- Governs all 311 page files through a deterministic inventory with primary,
+  contextual, specialist, technical, and orphan classifications.
+- Adds no model, collection, index, API, business rule, workflow transition,
+  provider action, payment, ticket issuance, message delivery, migration,
+  deployment, or production-data change.
+- See [Product Navigation Contract](docs/architecture/product-navigation-contract.md),
+  [Dashboard Contract](docs/architecture/dashboard-contract.md),
+  [Design System Contract](docs/architecture/design-system-contract.md), and
+  [Workflow Banner Contract](docs/architecture/workflow-banner-contract.md).
+
+## P1 Product Recovery 11A - Governed Automation And Orchestration
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  Product Kernel reconciliation, not a new roadmap phase.
+- Makes `OperationalWorkItem` the sole actionable-work owner and treats
+  historical `request_tasks` as compatibility history/projection input only.
+- Evaluates exact canonical `OperationalTimeline` events through versioned,
+  published, active, allowlisted rules with deterministic traces and replay
+  idempotency.
+- Supports bounded internal work, dependencies, SLA deadlines, approvals,
+  assignment, queue placement, reminders, escalations, and user-specific
+  notification projections.
+- Enforces Class A/B internal automation, Class C approval projection without
+  underlying business execution, and unconditional rejection of Class D.
+- Provides Agency operations and administration surfaces plus Platform
+  global-governance surfaces without allowing Platform roles to act as Agency
+  staff.
+- Keeps persistent scheduling disabled; processing is explicit, bounded,
+  lock-protected, recoverable, and safe to retry.
+- Adds permanently dry-run migration analysis with no write mode and performs
+  no production migration.
+- See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md),
+  [Operational Work Item Contract](docs/architecture/operational-work-item-contract.md),
+  and [Automation Compatibility And Migration](docs/architecture/automation-compatibility-and-migration.md).
+
+## P1 Product Recovery 11B - Full-System Stabilization
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  release-candidate stabilization gate, not a new roadmap phase.
+- Preserves all Product Kernel owners and compatibility contracts.
+- Reduces the raw initial frontend shell by 30.7% through a lazy route
+  resolver while preserving 311 governed page modules and valid deep links.
+- Adds a real Not Found surface, application render boundary, safe
+  status/correlation errors, governed dialog focus, and source-level
+  accessibility acceptance.
+- Adds deterministic Portal upload byte-signature validation and fixes verified
+  Request V4, Work Queue query, Booking detail, and Portal Invoice runtime
+  defects.
+- Adds a 51-check disposable Chromium acceptance contract and deterministic
+  lifecycle integrity validator.
+- Registers 171 smoke scripts after adding the source-level stabilization gate.
+- Adds no model, collection, index, provider action, payment execution,
+  Ticket/EMD issuance, external message delivery, production migration,
+  scheduler, commit, push, or deployment.
+- See [Full-System Stabilization Report](docs/stabilization/full-system-stabilization-report.md),
+  [Frontend Performance Report](docs/stabilization/frontend-performance-report.md),
+  and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).
+
+## P1 Product Recovery 12 - Release Candidate Integration Gate
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  validation and release-preparation gate, not a new roadmap phase.
+- Changes no model, collection, index, route, service, permission, workflow,
+  readiness calculation, smoke registration, or business behavior.
+- Reconciles Git, repository, browser, performance, security, migration,
+  Docker, packaging, merge, deployment, rollback, and Phase 57 evidence into
+  one reviewable release package.
+- Keeps all migration analyzers dry-run only and requires future reviewed,
+  Agency-scoped approval before any write path can be designed.
+- Leaves the existing deployment pin unchanged until an approved `--no-ff`
+  merge produces the exact application release SHA.
+- Preserves Phase 57 as the authoritative production evidence and human
+  sign-off gate.
+- See [Product Recovery Release Candidate](docs/release-candidate/README.md).

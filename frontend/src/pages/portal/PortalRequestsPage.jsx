@@ -9,7 +9,7 @@ export default function PortalRequestsPage() {
   const [state, setState] = useState(null)
   const [error, setError] = useState("")
   useEffect(() => { Promise.all([apiGet("/api/portal/me"), apiGet("/api/portal/requests")]).then(([me, data]) => setState({ me, items: data.items })).catch((err) => setError(err.message)) }, [])
-  return <ClientPortalLayout user={{ full_name: state?.me?.portal_account?.display_name }} brand={state?.me?.brand}><ProtectedRoute loading={!state && !error} error={error}><ListPage title="Requests" body="Read-only request status and client-visible notes." items={state?.items || []} href="/portal/requests" render={(item) => <><span className="font-semibold text-slate-950">{item.request_reference} · {item.title}</span><span className="flex items-center gap-2 text-slate-600"><RequestStatusBadge status={item.status} />{item.route_summary || "Route not set"}</span></>} /></ProtectedRoute></ClientPortalLayout>
+  return <ClientPortalLayout user={{ full_name: state?.me?.portal_account?.display_name }} brand={state?.me?.brand}><ProtectedRoute loading={!state && !error} error={error}><ListPage title="Requests" body="Create travel requests, update drafts, and follow agency progress." items={state?.items || []} href="/portal/requests" render={(item) => <><span className="font-semibold text-slate-950">{item.request_reference} · {item.title}</span><span className="flex items-center gap-2 text-slate-600"><RequestStatusBadge status={item.status} />{item.route_summary || "Route not set"}</span></>} /></ProtectedRoute></ClientPortalLayout>
 }
 
 function ListPage({ title, body, items, href, render }) {

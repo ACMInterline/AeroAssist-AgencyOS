@@ -5,6 +5,27 @@ These principles guide future AeroAssist implementation. They are architectural 
 ## Rules
 
 - Never duplicate operational models.
+- Before changing a kernel lifecycle or write path, follow the approved `canonical-domain-ownership-map.md`; one domain may have only one target mutable owner.
+- Treat every listed compatibility writer as migration debt. Do not make it a second canonical owner, and do not remove it without reconciliation and rollback evidence.
+- `agency_id` is the tenant boundary. `workspace_id` is context and must not authorize access or trigger a speculative tenant migration.
+- `AuthIdentity` owns authentication; Platform profiles, Agency memberships,
+  Portal mappings, Clients, and Passengers remain separate records.
+- Agency access always requires an active membership for the exact
+  `agency_id`; Platform role alone never grants Agency operational access.
+- Backend permissions come from the centralized permission resolver. Hidden
+  frontend navigation is never an authorization control.
+- Portal authorization requires an explicit active identity-to-subject link.
+  Email matching may suggest reconciliation but must never grant access.
+- `ClientProfile` and `PassengerProfile` own business truth. Master/workspace
+  duplicates are compatibility debt and may not become independent canonical
+  owners.
+- New Master compatibility rows must identify a verified same-Agency canonical
+  source. Historical unlinked rows remain read/reconciliation evidence, not a
+  route for new identity-shaped writes.
+- Immutable accepted-offer and issued-document evidence must never be reconstructed from later mutable records.
+- Do not expand the feature or metadata surface while the P0 product-kernel freeze is active; first approve one canonical ownership map and simplify the operator workflow.
+- Unconfirmed traveler claims belong to `RequestPassenger`; only explicit human identity confirmation may create or link a canonical `PassengerProfile`.
+- Never invent identity fields, dates of birth, passenger types, relationships, or master records to satisfy downstream schemas.
 - Prefer canonical taxonomy over free text.
 - Passenger Need is always the root object.
 - Capability is not Policy.
@@ -34,6 +55,8 @@ These principles guide future AeroAssist implementation. They are architectural 
 ## Model Discipline
 
 Future features must extend the existing operational chain instead of creating replacement objects. Passenger, request, trip, offer, booking, ticket, EMD, SSR / OSI, document, timeline, workflow, and AOIE records each have distinct responsibilities.
+
+Until the product-kernel freeze exits, “future feature” work is limited to security, integrity, consolidation, pilot-blocking corrections, test coverage, documentation, and simplification. A new metadata collection or page is not an acceptable substitute for resolving ownership in the existing chain.
 
 When a future phase needs new metadata, it should first ask:
 
@@ -97,3 +120,132 @@ Client delivery must originate from an immutable, reviewed Journey comparison sn
 ## Product Surface Review Gate
 
 One operational object has one primary workspace. Engines and services do not automatically justify top-level Agency pages; supporting capabilities should be embedded or linked contextually from their owning workspace. Separate surfaces require a different actor, Platform governance purpose, independent lifecycle, or materially different operational object. Every phase must apply [Product Surface and Workspace Governance](../product-surface-workspace-governance.md), use travel-agent vocabulary in ordinary UI, preserve passenger-needs-first design, and reject duplicate lifecycles or unnecessary navigation.
+
+## Product Experience Contract
+
+Normal navigation follows user tasks rather than implementation history.
+Specialist foundations, diagnostics, governance utilities, and catalogue tools
+remain available under Advanced navigation but do not compete with daily work.
+Each dashboard count links to its canonical owner, each operational detail
+surface explains its workflow position and next valid action, and Client and
+Passenger Portal navigation remains deliberately distinct.
+
+Frontend presentation must follow the
+[Product Navigation Contract](../product-navigation-contract.md),
+[Dashboard Contract](../dashboard-contract.md),
+[Design System Contract](../design-system-contract.md), and
+[Workflow Banner Contract](../workflow-banner-contract.md). Navigation hiding,
+search results, shortcuts, dashboard cards, and workflow banners never replace
+backend authorization, tenant isolation, lifecycle guards, or canonical
+ownership.
+
+## Canonical Request Aggregate Rule
+
+`TravelRequest` is the only Request owner. New Request structure is written
+through one typed aggregate. `RequestPassenger`, `RequestSegment`,
+`PassengerServiceRequest`, `RequestPet`, and `RequestSpecialItem` are governed
+children, not independently writable parallel truth. `RequestIntake` is
+provenance and `TravelRequestWorkspace` is compatibility metadata.
+
+Never create a master passenger from intake or ordinary Request creation.
+Traveler identity remains unresolved until an authorized human explicitly
+confirms or links it. Compatibility fields must be generated from canonical
+Request data, legacy ambiguity must remain visible, and accepted downstream
+snapshots must not be rewritten.
+
+## Canonical Reference Rule
+
+Shared aviation, geography, passenger classification, document, service,
+animal, pricing, finance, and operational vocabulary belongs to
+`GlobalReferenceRecord` unless a documented canonical owner already exists
+(for example the Service Catalogue). Store stable reference IDs with
+code/key/label snapshots on operational records. New selections must resolve
+an active same-domain record in the effective tenant scope; historical
+snapshots remain immutable and inactive references remain readable.
+
+Never create a second reference engine, silently auto-create an unknown typed
+value, destructively delete a referenced record, or infer universal airline
+pricing/policy from PTC metadata. Reference reconciliation must be bounded,
+auditable, dry-run first, and explicit about ambiguity.
+
+## Canonical Commercial Lifecycle Rule
+
+Commercial lineage is `TravelRequest -> OfferWorkspace -> OfferOption ->
+OfferAcceptance -> TripAcceptedOfferSnapshot -> TripDossier ->
+OfferBookingHandoff -> BookingRecord -> TicketRecord / EMDRecord`.
+Offer delivery freezes a version; acceptance targets exact versions; accepted
+evidence is immutable. Normal confirmed Trips derive from accepted evidence.
+BookingWorkspace is preparation and BookingRecord is evidenced PNR truth.
+Normal Ticket/EMD creation requires BookingRecord lineage.
+
+Never fabricate acceptance, Trip confirmation, booked state, Ticket/EMD
+issuance, or provider success to preserve compatibility. Keep historical
+records readable, classify unresolved duplicates honestly, and use bounded
+dry-run reconciliation before any separately approved migration.
+
+## Canonical Commercial Ledger Rule
+
+Finance consumes commercial evidence and never owns operational truth.
+`CommercialLedger` is the sole accounting aggregate. Invoice totals and
+balances are server-derived; received value is applied through immutable
+Payment Allocations; Supplier Costs remain separate from client charges; and
+Credit, Refund, and Exchange records correct or extend history
+non-destructively.
+
+Never write accounting results back into accepted Offer snapshots, Trips,
+Bookings, Tickets, EMDs, or original Payments. Never infer historical cost or
+margin, expose supplier values without explicit permission, execute a payment,
+or synchronize external accounting from a ledger write.
+
+## Canonical Operational Collaboration Rule
+
+`OperationalTimeline` is the append-only operational history owner.
+`CommunicationThread` is the conversation owner, with Message, Participant,
+and immutable Attachment references as children. Notifications are projections
+and Audit Events remain separate security evidence.
+
+Never create a new entity-specific timeline or conversation tree. Never delete
+posted communication, silently edit timeline evidence, copy attachment
+binaries, infer provider delivery, or weaken Client, Passenger, Supplier,
+Agency, Platform, and System visibility boundaries. Compatibility records
+remain readable and any migration is bounded, reviewed, and dry-run first.
+
+## Portal Projection Rule
+
+The Client and Passenger Portals are projections over canonical Product Kernel
+owners. Never introduce Portal-specific Request, Offer, acceptance, Trip,
+Booking, Ticket, EMD, finance, Document, Timeline, Notification, or
+Communication truth.
+
+Every Portal request must resolve an active identity-to-subject mapping and
+derive `agency_id` and subject scope server-side. A customer-visible flag,
+shared Trip, related record ID, request parameter, or email match cannot widen
+that scope. Client and Passenger capabilities must remain distinct.
+
+Portal actions must call the canonical owning service and record appropriate
+Audit or Timeline evidence. They must never imply provider execution, payment,
+booking, Ticket/EMD issuance, public document sharing, external messaging, or
+automatic approval. Historical compatibility remains readable; reconciliation
+is bounded and dry-run first.
+
+## Governed Automation Rule
+
+Automation must consume canonical `OperationalTimeline` events and create
+internal operational work only through `OperationalWorkItem` and the existing
+deadline, approval, audit, communication, and projection owners. It must not
+introduce another task engine, workflow owner, timeline, audit system,
+notification owner, or lifecycle framework.
+
+Stored conditions are allowlisted typed data, never executable expressions.
+Every evaluation is deterministic, Agency-scoped, permission-aware,
+explainable, bounded, idempotent, replay-safe, and linked to its exact source
+event. Class A and governed Class B actions may change internal work metadata.
+Class C can only create approval-required work; the approved action still
+requires the canonical human-governed business service. Class D is prohibited.
+
+No rule may change tenant scope or permissions, fabricate evidence, expose
+restricted finance/medical/internal details, or execute external messaging,
+airline/GDS/NDC/provider, Ticket/EMD, payment, refund, accounting, legal,
+medical, safety, pricing, or eligibility decisions. Persistent scheduling
+must remain disabled until the deployed topology can guarantee bounded,
+recoverable, duplicate-safe processing.

@@ -163,7 +163,7 @@ def verify_registration() -> None:
         ],
         ROOT / "backend/server.py": ["agency_onboarding.router", "commercial_pilot_agency_onboarding_foundation"],
         ROOT / "backend/database.py": ["agency_onboarding_profiles_agency_profile_unique", "agency_dashboard_preferences_agency_key_unique", "agency_notification_preferences_agency_key_unique"],
-        ROOT / "frontend/src/App.jsx": ["AgencyOnboardingPage", '"/agency/onboarding"'],
+        ROOT / "frontend/src/routes/RoutedApplication.jsx": ["AgencyOnboardingPage", '"/agency/onboarding"'],
         ROOT / "frontend/src/lib/agency.js": ["onboarding.required", "/agency/onboarding?agency_id="],
         ROOT / "frontend/src/pages/agency/AgencyOnboardingPage.jsx": ["Progress is saved after each step", "Create demo workspace", "Complete onboarding"],
         ROOT / "docs/architecture/commercial-pilot-agency-onboarding-foundation.md": ["newly created agencies", "Legacy agencies", "synthetic"],

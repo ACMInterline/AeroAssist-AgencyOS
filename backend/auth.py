@@ -9,6 +9,23 @@ from models import AuthIdentity, AuthSession, now_utc
 from security import hash_password, hash_token, new_raw_token, normalize_email, verify_password
 from http_security import log_security_event
 from services.authentication_security_service import token_refresh_metadata, validate_auth_token
+from services.authorization_service import (
+    active_memberships,
+    agency_permissions,
+    authorize_staff_request,
+    platform_permissions,
+    portal_permissions,
+    resolve_staff_user,
+    safe_membership,
+    safe_platform_user,
+)
+from services.portal_identity_link_service import (
+    PortalIdentityLinkError,
+    UNLINKED_PORTAL_MESSAGE,
+    resolve_portal_identity_context,
+    safe_portal_mapping,
+    safe_portal_subject,
+)
 from services.seed_service import DEMO_OWNER_EMAIL, seed_core_data
 from services.tenant_service import assert_agency_access, require_any_agency_role, require_any_platform_role
 
@@ -33,16 +50,17 @@ def safe_identity(identity: dict | None) -> dict | None:
     if not identity:
         return None
     return {
-        key: value
-        for key, value in identity.items()
-        if key
-        not in {
-            "password_hash",
-            "failed_login_count",
-            "first_failed_login_at",
-            "last_failed_login_at",
-            "locked_until",
-        }
+        key: identity.get(key)
+        for key in (
+            "id",
+            "email",
+            "identity_type",
+            "status",
+            "last_login_at",
+            "created_at",
+            "updated_at",
+        )
+        if key in identity
     }
 
 
@@ -92,27 +110,92 @@ async def create_session(
 
 
 async def resolve_auth_payload(db: Database, identity: dict) -> dict:
-    platform_user = await db.collection("platform_users").find_one({"email": identity["email"]})
-    memberships = []
-    portal_account = None
-    portal_client = None
-    if platform_user:
-        memberships = await db.collection("agency_staff_memberships").find_many(
-            {"user_id": platform_user["id"], "status": "active"}
-        )
-    if identity.get("identity_type") == "client_portal":
-        portal_account = await db.collection("portal_access_mappings").find_one(
-            {"user_email": identity["email"], "portal_status": "active"}
-        )
-        if portal_account:
-            portal_client = await db.collection("client_profiles").find_one(
-                {"agency_id": portal_account["agency_id"], "id": portal_account["client_id"]}
+    staff_identity = identity.get("identity_type") in {"platform_user", "agency_staff"}
+    platform_user = await resolve_staff_user(db, identity) if staff_identity else None
+    if platform_user and platform_user.get("status") != "active":
+        platform_user = None
+    memberships = (
+        await active_memberships(db, platform_user, identity)
+        if platform_user and staff_identity
+        else []
+    )
+    portal_context = None
+    portal_link_error = None
+    if identity.get("identity_type") in {"client_portal", "passenger_portal"}:
+        try:
+            portal_context = await resolve_portal_identity_context(
+                db,
+                identity["id"],
+                required=False,
             )
+        except PortalIdentityLinkError:
+            portal_link_error = "Portal access requires operator review."
+    platform_access = None
+    if platform_user and platform_user.get("global_role"):
+        platform_access = {
+            "user_id": platform_user["id"],
+            "role": platform_user.get("global_role"),
+            "permissions": sorted(platform_permissions(platform_user.get("global_role"))),
+        }
+    agency_access = [
+        {
+            "membership": safe_membership(membership),
+            "permissions": sorted(agency_permissions(membership.get("agency_role"))),
+        }
+        for membership in memberships
+    ]
+    portal_access = (
+        {
+            "linked": True,
+            "mapping": safe_portal_mapping(portal_context["mapping"]),
+            "subject_type": portal_context["subject_type"],
+            "subject": safe_portal_subject(
+                portal_context["subject_type"],
+                portal_context["subject"],
+            ),
+            "permissions": sorted(portal_permissions(identity.get("identity_type"))),
+        }
+        if portal_context
+        else {
+            "linked": False,
+            "mapping": None,
+            "subject_type": None,
+            "subject": None,
+            "permissions": sorted(portal_permissions(identity.get("identity_type"))),
+            "message": portal_link_error or UNLINKED_PORTAL_MESSAGE,
+        }
+        if identity.get("identity_type") in {"client_portal", "passenger_portal"}
+        else None
+    )
     return {
         "identity": safe_identity(identity),
-        "user": platform_user,
-        "memberships": memberships,
-        "portal": {"account": portal_account, "client": portal_client} if portal_account else None,
+        "authorization": {
+            "identity_type": identity.get("identity_type"),
+            "platform": platform_access,
+            "agency_memberships": agency_access,
+            "portal": portal_access,
+        },
+        # Compatibility keys remain projections of the canonical contract.
+        "user": safe_platform_user(platform_user),
+        "memberships": [safe_membership(item) for item in memberships],
+        "portal": (
+            {
+                "account": safe_portal_mapping(portal_context["mapping"]),
+                "client": (
+                    safe_portal_subject("client", portal_context["client"])
+                    if portal_context.get("client")
+                    else None
+                ),
+                "passenger": (
+                    safe_portal_subject("passenger", portal_context["passenger"])
+                    if portal_context.get("passenger")
+                    else None
+                ),
+                "subject_type": portal_context["subject_type"],
+            }
+            if portal_context
+            else None
+        ),
     }
 
 
@@ -163,11 +246,20 @@ async def get_current_identity(
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required.")
 
 
-async def get_current_user(identity: dict = Depends(get_current_identity), db: Database = Depends(get_database)) -> dict:
-    user = await db.collection("platform_users").find_one({"email": identity["email"]})
+async def get_current_user(
+    request: Request,
+    identity: dict = Depends(get_current_identity),
+    db: Database = Depends(get_database),
+) -> dict:
+    if identity.get("identity_type") in {"client_portal", "passenger_portal"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Staff or Platform identity required.",
+        )
+    user = await resolve_staff_user(db, identity)
     if user is None or user.get("status") != "active":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Active staff or platform user required.")
-    return user
+    return await authorize_staff_request(request, db, identity, user)
 
 
 def require_platform_role(roles: Iterable[str]) -> Callable:

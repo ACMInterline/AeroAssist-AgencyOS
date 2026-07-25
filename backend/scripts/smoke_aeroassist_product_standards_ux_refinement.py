@@ -122,6 +122,15 @@ def verify_shared_components() -> None:
         "FormSection": SURFACES["booking_list"],
     }
     for component, relative_path in representative_usage.items():
+        if component == "Timeline":
+            require_markers(
+                relative_path,
+                [
+                    'components/OperationalCollaborationPanel"',
+                    "<OperationalCollaborationPanel",
+                ],
+            )
+            continue
         require_markers(relative_path, [f'components/{component}"', f"<{component}"])
 
 
@@ -152,7 +161,7 @@ def verify_priority_workflows() -> None:
         ],
         SURFACES["request_detail"]: [
             "<DetailSummary",
-            "<Timeline",
+            "<OperationalCollaborationPanel",
             "Advanced source details",
             "Prepare trip",
         ],
@@ -163,7 +172,7 @@ def verify_priority_workflows() -> None:
         ],
         SURFACES["offer_detail"]: [
             "<ConfirmationDialog",
-            "<Timeline",
+            "<OperationalCollaborationPanel",
             "Prepare booking",
         ],
         SURFACES["booking_list"]: [
@@ -302,9 +311,16 @@ def verify_accessible_controls() -> None:
         [
             'role="alertdialog"',
             'aria-modal="true"',
+            "useDialogFocus",
+            "initialFocusRef: confirmRef",
+        ],
+    )
+    require_markers(
+        "frontend/src/hooks/useDialogFocus.js",
+        [
             'event.key === "Escape"',
+            'event.key !== "Tab"',
             "previousFocus?.focus?.()",
-            "confirmRef.current?.focus()",
         ],
     )
     require_markers(
@@ -338,7 +354,7 @@ def verify_accessible_controls() -> None:
 
 def verify_routes_and_docs() -> None:
     for relative_path in [
-        "frontend/src/App.jsx",
+        "frontend/src/routes/RoutedApplication.jsx",
         "frontend/src/lib/moduleCatalog.js",
     ]:
         content = read(relative_path)
@@ -347,7 +363,7 @@ def verify_routes_and_docs() -> None:
 
     app_routes = re.findall(
         r'^\s*"(/[^"]*)":\s*[A-Za-z]',
-        read("frontend/src/App.jsx"),
+        read("frontend/src/routes/RoutedApplication.jsx"),
         flags=re.MULTILINE,
     )
     duplicate_routes = sorted({route for route in app_routes if app_routes.count(route) > 1})

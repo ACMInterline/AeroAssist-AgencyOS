@@ -37,6 +37,27 @@ def not_found(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
 
+def agency_action_required() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            "Platform work-queue routes are governance/read-only. "
+            "Agency operational mutations require active Agency membership "
+            "through the canonical Agency route."
+        ),
+    )
+
+
+async def require_global_record(
+    db: Database, collection: str, record_id: str, label: str
+) -> None:
+    record = await db.collection(collection).find_one({"id": record_id})
+    if not record:
+        raise not_found(f"{label} metadata was not found.")
+    if record.get("agency_id"):
+        raise agency_action_required()
+
+
 @router.get("")
 async def platform_work_queue_dashboard(
     agency_id: str | None = Query(default=None),
@@ -46,6 +67,7 @@ async def platform_work_queue_dashboard(
     severity: str | None = Query(default=None),
     work_item_type: str | None = Query(default=None),
     source_entity_type: str | None = Query(default=None),
+    source_entity_id: str | None = Query(default=None),
     assigned_user_id: str | None = Query(default=None),
     assigned_team_code: str | None = Query(default=None),
     blocker_status: str | None = Query(default=None),
@@ -63,6 +85,7 @@ async def platform_work_queue_dashboard(
         severity=severity,
         work_item_type=work_item_type,
         source_entity_type=source_entity_type,
+        source_entity_id=source_entity_id,
         assigned_user_id=assigned_user_id,
         assigned_team_code=assigned_team_code,
         blocker_status=blocker_status,
@@ -103,7 +126,9 @@ async def create_platform_queue_definition(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await AgentWorkQueueService(db).create_queue_definition(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        return await AgentWorkQueueService(db).create_queue_definition(data, user)
     except AgentWorkQueueError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -116,8 +141,16 @@ async def update_platform_queue_definition(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_record(
+        db, "operational_queue_definitions", definition_id, "Queue definition"
+    )
     try:
-        return await AgentWorkQueueService(db).update_queue_definition(definition_id, payload, user)
+        return await AgentWorkQueueService(db).update_queue_definition(
+            definition_id,
+            payload,
+            user,
+            platform_scope_only=True,
+        )
     except AgentWorkQueueError as exc:
         raise not_found(str(exc)) from exc
 
@@ -141,7 +174,10 @@ async def create_platform_queue_view(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await AgentWorkQueueService(db).create_queue_view(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        data["owner_scope"] = "platform"
+        return await AgentWorkQueueService(db).create_queue_view(data, user)
     except AgentWorkQueueError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -154,6 +190,9 @@ async def update_platform_queue_view(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_record(
+        db, "operational_queue_views", view_id, "Queue view"
+    )
     try:
         return await AgentWorkQueueService(db).update_queue_view(view_id, payload, user)
     except AgentWorkQueueError as exc:
@@ -203,10 +242,7 @@ async def create_platform_work_item(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await AgentWorkQueueService(db).create_work_item(payload, user)
-    except AgentWorkQueueError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/work-items/generate", status_code=status.HTTP_201_CREATED)
@@ -216,10 +252,7 @@ async def generate_platform_work_item(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await AgentWorkQueueService(db).generate_work_item(payload, user)
-    except AgentWorkQueueError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/work-items/sync")
@@ -229,7 +262,7 @@ async def sync_platform_work_items(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    return await AgentWorkQueueService(db).sync_sources(agency_id, user)
+    raise agency_action_required()
 
 
 @router.get("/work-items/{work_item_id}")
@@ -254,10 +287,7 @@ async def update_platform_work_item(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await AgentWorkQueueService(db).update_work_item(work_item_id, payload, user)
-    except AgentWorkQueueError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.get("/work-items/{work_item_id}/events")

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import ClientForm from "../../components/ClientForm"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import RelationshipEditor from "../../components/RelationshipEditor"
 import StatusBadge from "../../components/StatusBadge"
@@ -90,6 +91,9 @@ export default function ClientDetailPage({ clientId }) {
             </div>
           </div>
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={clientId}
+            workEntityType="client"
             breadcrumbs={[{ label: "Clients", href: "/agency/clients" }]}
             currentLabel={state?.client?.display_name || "Client"}
             status={state?.client?.status}
@@ -157,6 +161,12 @@ export default function ClientDetailPage({ clientId }) {
               <EmptyState title="No passengers linked" body="Link passenger profiles through explicit permission relationships." />
             )}
           </section>
+          <OperationalCollaborationPanel
+            agencyId={state?.agency?.id}
+            entityId={clientId}
+            entityLabel={state?.client?.display_name || "Client"}
+            entityType="client"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

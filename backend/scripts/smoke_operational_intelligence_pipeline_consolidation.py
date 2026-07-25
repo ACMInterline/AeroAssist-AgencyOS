@@ -220,8 +220,8 @@ def verify_router_and_ui_registration() -> None:
                     raise AssertionError(f"Forbidden execution route exposed for operational intelligence cases: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-intelligence-cases"),
-        (ROOT / "frontend/src/App.jsx", "/agency/intelligence-cases"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-intelligence-cases"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/intelligence-cases"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Intelligence Cases"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Intelligence Cases"),
         (ROOT / "frontend/src/pages/platform/OperationalIntelligenceCasesPage.jsx", "Case Overview"),

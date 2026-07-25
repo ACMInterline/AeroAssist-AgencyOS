@@ -266,6 +266,10 @@ class OfferToBookingHandoffService:
             handoff["agency_id"],
             BookingCreateFromReadinessRequest(
                 booking_readiness_package_id=readiness_id,
+                accepted_offer_snapshot_id=handoff.get(
+                    "trip_accepted_offer_snapshot_id"
+                ),
+                offer_booking_handoff_id=handoff["id"],
                 provider_target=provider_target,
                 internal_notes=data.get("internal_notes") or "Created from Phase 54.6 offer-to-booking handoff metadata.",
                 create_draft_record=bool(data.get("create_draft_record", True)),
@@ -426,8 +430,18 @@ class OfferToBookingHandoffService:
             readiness = self._latest(await self.db.collection("booking_readiness_packages").find_many({"agency_id": agency_id, "trip_id": data["trip_id"]}))
         if acceptance:
             trip_snapshot = await self.db.collection("trip_accepted_offer_snapshots").find_one({"agency_id": agency_id, "acceptance_id": acceptance["id"]})
-            if not trip_snapshot and acceptance.get("trip_id"):
-                trip_snapshot = await self.db.collection("trip_accepted_offer_snapshots").find_one({"agency_id": agency_id, "trip_id": acceptance["trip_id"]})
+        if not acceptance or acceptance.get("status") != "accepted":
+            raise OfferToBookingHandoffError(
+                "An active exact-version OfferAcceptance is required before booking handoff."
+            )
+        if not trip_snapshot or trip_snapshot.get("acceptance_id") != acceptance.get("id"):
+            raise OfferToBookingHandoffError(
+                "The immutable accepted-offer snapshot is required before booking handoff."
+            )
+        if trip_snapshot.get("source_hash") != acceptance.get("accepted_payload_hash"):
+            raise OfferToBookingHandoffError(
+                "Accepted-offer snapshot integrity does not match the acceptance evidence."
+            )
         trip_id = (readiness or {}).get("trip_id") or (acceptance or {}).get("trip_id") or data.get("trip_id")
         trip = await self.db.collection("trip_dossiers").find_one({"agency_id": agency_id, "id": trip_id}) if trip_id else None
         existing_booking = None
@@ -471,7 +485,20 @@ class OfferToBookingHandoffService:
         distribution_capability = context.get("distribution_capability") or {}
         distribution_ready = bool(distribution_capability.get("available_channel_count"))
         checks = [
-            self._check("accepted_offer_snapshot", "Accepted offer snapshot exists", "snapshot", bool(acceptance and acceptance.get("status") == "accepted"), "Accepted offer snapshot is required before booking handoff.", blocked=not bool(acceptance)),
+            self._check(
+                "accepted_offer_snapshot",
+                "Accepted offer snapshot exists",
+                "snapshot",
+                bool(
+                    acceptance
+                    and acceptance.get("status") == "accepted"
+                    and trip_snapshot
+                    and trip_snapshot.get("source_hash")
+                    == acceptance.get("accepted_payload_hash")
+                ),
+                "Immutable accepted-offer snapshot is required before booking handoff.",
+                blocked=not bool(trip_snapshot),
+            ),
             self._check("trip_linkage", "Trip linkage", "trip", bool(context.get("trip_id")), "Accepted offer must be linked to a trip dossier.", blocked=not bool(context.get("trip_id"))),
             self._check("booking_readiness_package", "Booking readiness package", "readiness", bool(readiness), "Booking readiness package is required for controlled booking workspace creation.", blocked=not bool(readiness)),
             self._check("passenger_mapping", "Passenger mapping", "mapping", bool(passengers), "Passenger snapshot metadata should be present for booking handoff.", blocked=not bool(passengers)),

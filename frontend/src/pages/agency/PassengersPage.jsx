@@ -9,6 +9,7 @@ import PrimaryButton from "../../components/PrimaryButton"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import SecondaryButton from "../../components/SecondaryButton"
 import StatusBadge from "../../components/StatusBadge"
+import PtcSelect from "../../components/reference/PtcSelect"
 import AgencyLayout from "../../layouts/AgencyLayout"
 import { apiGet, apiPost } from "../../lib/api"
 import { loadCurrentAgency } from "../../lib/agency"
@@ -37,7 +38,7 @@ export default function PassengersPage() {
     return (state?.passengers || []).filter((passenger) => {
       const matchesSearch = !search || [passenger.display_name, passenger.first_name, passenger.last_name, passenger.nationality].some((value) => String(value || "").toLowerCase().includes(search))
       return matchesSearch
-        && (!filters.passenger_type || passenger.passenger_type === filters.passenger_type)
+        && (!filters.passenger_type || (passenger.passenger_type_code || passenger.passenger_type) === filters.passenger_type)
         && (!filters.status || passenger.status === filters.status)
     })
   }, [filters, state])
@@ -80,15 +81,14 @@ export default function PassengersPage() {
                 Search
                 <input className="field" placeholder="Passenger name or nationality" value={filters.search} onChange={(event) => setFilters({ ...filters, search: event.target.value })} />
               </label>
-              <label className="grid gap-1 text-sm font-medium text-slate-700">
-                Passenger type
-                <select className="field" value={filters.passenger_type} onChange={(event) => setFilters({ ...filters, passenger_type: event.target.value })}>
-                  <option value="">All passenger types</option>
-                  {["ADT", "CHD", "INF", "YTH", "SRC", "STU", "UMNR", "INS", "other"].map((value) => (
-                    <option key={value} value={value}>{passengerTypeLabel(value)}</option>
-                  ))}
-                </select>
-              </label>
+              <PtcSelect
+                label="Passenger type"
+                placeholder="All passenger types"
+                selectedCode={filters.passenger_type}
+                value={filters.passenger_type}
+                valueMode="code"
+                onChange={(option) => setFilters({ ...filters, passenger_type: option?.code || "" })}
+              />
               <label className="grid gap-1 text-sm font-medium text-slate-700">
                 Current status
                 <select className="field" value={filters.status} onChange={(event) => setFilters({ ...filters, status: event.target.value })}>
@@ -108,7 +108,7 @@ export default function PassengersPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <h3 className="font-semibold text-slate-950">{passenger.display_name}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{passengerTypeLabel(passenger.passenger_type)} · born {passenger.date_of_birth}</p>
+                      <p className="mt-1 text-sm text-slate-600">{passenger.passenger_type_label || passengerTypeLabel(passenger.passenger_type_code || passenger.passenger_type)} · born {passenger.date_of_birth}</p>
                     </div>
                     <StatusBadge status={passenger.status} />
                   </div>

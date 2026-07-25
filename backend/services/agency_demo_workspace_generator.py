@@ -47,6 +47,7 @@ from models import (
     TripAcceptedOfferSnapshot,
     TripWorkspace,
 )
+from services.canonical_commercial_lifecycle_service import canonical_json_hash
 
 
 PHASE_LABEL = "phase_58_3_complete_pilot_agency_experience"
@@ -828,6 +829,58 @@ class AgencyDemoWorkspaceGenerator:
         readiness_id = None
         handoff_id = None
         if scenario["accepted"]:
+            accepted_pricing = {
+                "currency": currency,
+                "base_fare": base_fare,
+                "taxes": taxes,
+                "total": total,
+                "immutable": True,
+            }
+            accepted_routing = {
+                "segment_ids": segment_ids,
+                "route": scenario["route"],
+            }
+            accepted_fare_bundle = {
+                "brand": "Flex",
+                "baggage": "1 checked piece illustrative",
+            }
+            accepted_services = {
+                "service_codes": scenario["services"],
+                "manual_confirmation": bool(scenario["services"]),
+            }
+            accepted_rules = {
+                "result": "conditional" if scenario["services"] else "feasible",
+                "evidence_required": True,
+            }
+            accepted_client_summary = {
+                "title": scenario["label"],
+                "total": total,
+                "currency": currency,
+            }
+            accepted_payload = {
+                "agency_id": self.agency_id,
+                "request_id": request_id,
+                "trip_id": trip_id,
+                "offer_id": offer_workspace_id,
+                "offer_version": 1,
+                "option_id": option_ids[0],
+                "option_version": 1,
+                "passengers": [{"passenger_id": item} for item in passenger_ids],
+                "itinerary_segments": [
+                    {"flight_workspace_id": item} for item in segment_ids
+                ],
+                "fare": accepted_fare_bundle,
+                "pricing": accepted_pricing,
+                "services": accepted_services,
+                "rules_feasibility": accepted_rules,
+                "client_visible_summary": accepted_client_summary,
+                "created_by": self.actor_user_id,
+                "synthetic": True,
+            }
+            accepted_payload_hash = canonical_json_hash(accepted_payload)
+            snapshot_id = self.stable_id(
+                self._key(scenario, "accepted_snapshot")
+            )
             acceptance_id = self._add(
                 "offer_acceptances",
                 OfferAcceptance,
@@ -836,18 +889,28 @@ class AgencyDemoWorkspaceGenerator:
                     "agency_id": self.agency_id,
                     "workspace_id": offer_workspace_id,
                     "option_id": option_ids[0],
+                    "offer_version": 1,
+                    "option_version": 1,
+                    "idempotency_key": (
+                        f"demo:{self.agency_id}:{scenario_key}:offer-acceptance"
+                    ),
                     "request_id": request_id,
                     "trip_id": trip_id,
                     "accepted_by_user_id": self.actor_user_id,
                     "accepted_at": self.anchor - timedelta(days=1),
+                    "channel": "synthetic_demo",
+                    "acceptance_terms_version": "synthetic-demo-v1",
                     "acceptance_source": "internal",
                     "status": "accepted",
-                    "accepted_pricing_snapshot_json": {"currency": currency, "base_fare": base_fare, "taxes": taxes, "total": total, "immutable": True},
-                    "accepted_routing_snapshot_json": {"segment_ids": segment_ids, "route": scenario["route"]},
-                    "accepted_fare_bundle_snapshot_json": {"brand": "Flex", "baggage": "1 checked piece illustrative"},
-                    "accepted_services_snapshot_json": {"service_codes": scenario["services"], "manual_confirmation": bool(scenario["services"])},
-                    "rules_feasibility_snapshot_json": {"result": "conditional" if scenario["services"] else "feasible", "evidence_required": True},
-                    "client_visible_summary_json": {"title": scenario["label"], "total": total, "currency": currency},
+                    "accepted_pricing_snapshot_json": accepted_pricing,
+                    "accepted_routing_snapshot_json": accepted_routing,
+                    "accepted_fare_bundle_snapshot_json": accepted_fare_bundle,
+                    "accepted_services_snapshot_json": accepted_services,
+                    "rules_feasibility_snapshot_json": accepted_rules,
+                    "client_visible_summary_json": accepted_client_summary,
+                    "accepted_payload_hash": accepted_payload_hash,
+                    "accepted_snapshot_id": snapshot_id,
+                    "reconciliation_status": "canonical",
                     "internal_notes": "Frozen synthetic acceptance snapshot; mutable offer data is not reconstructed.",
                 },
                 scenario=scenario_key,
@@ -863,12 +926,30 @@ class AgencyDemoWorkspaceGenerator:
                     "workspace_id": offer_workspace_id,
                     "option_id": option_ids[0],
                     "acceptance_id": acceptance_id,
+                    "offer_version": 1,
+                    "option_version": 1,
                     "confirmed_segments_json": [{"flight_workspace_id": item} for item in segment_ids],
                     "confirmed_passengers_json": [{"passenger_id": item} for item in passenger_ids],
-                    "confirmed_fare_bundle_json": {"brand": "Flex"},
-                    "confirmed_pricing_json": {"currency": currency, "total": total},
-                    "confirmed_services_json": {"service_codes": scenario["services"]},
+                    "confirmed_fare_bundle_json": accepted_fare_bundle,
+                    "confirmed_pricing_json": accepted_pricing,
+                    "confirmed_services_json": accepted_services,
                     "booking_readiness_json": {"status": "blocked" if scenario["booking_status"] == "blocked" else "ready"},
+                    "total_snapshot_json": {
+                        "total_amount": total,
+                        "currency": currency,
+                        "server_derived": True,
+                    },
+                    "currency": currency,
+                    "terms_snapshot_json": {
+                        "acceptance_terms_version": "synthetic-demo-v1",
+                        "synthetic": True,
+                    },
+                    "policy_readiness_snapshot_json": {
+                        "rules_feasibility": accepted_rules,
+                    },
+                    "source_hash": accepted_payload_hash,
+                    "created_by_user_id": self.actor_user_id,
+                    "immutable": True,
                 },
                 scenario=scenario_key,
             )

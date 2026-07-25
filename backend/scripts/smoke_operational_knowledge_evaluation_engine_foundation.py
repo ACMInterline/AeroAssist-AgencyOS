@@ -242,8 +242,8 @@ def verify_routes(paths: dict) -> None:
 
 def verify_frontend_and_docs() -> None:
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/operational-evaluations"),
-        (ROOT / "frontend/src/App.jsx", "/agency/operational-evaluations"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operational-evaluations"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operational-evaluations"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Knowledge Evaluations"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operational Evaluations"),
         (ROOT / "frontend/src/pages/platform/OperationalEvaluationsPage.jsx", "Evaluation Overview"),

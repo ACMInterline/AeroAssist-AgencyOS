@@ -21,12 +21,13 @@ from models import (
     AgencyStaffMembership,
     AfterSalesCaseCreate,
     AfterSalesFinancialImpactCreate,
+    BookingRecordUpdate,
     ClientPassengerRelationship,
     ClientProfile,
     DocumentRenderJob,
     DocumentWorkspaceOutputReconciliationRequest,
     Invoice,
-    InvoiceLineItem,
+    InvoiceLineItemCreate,
     ManualTicketCreate,
     OfferAcceptanceCreate,
     OfferBookingHandoffBookingCreateRequest,
@@ -35,13 +36,14 @@ from models import (
     OfferFareBundleCreate,
     OfferOptionCreate,
     OfferPricingLineCreate,
+    OfferWorkspaceTransitionRequest,
     PassengerProfile,
     PassengerServiceConfirmationRequest,
     PassengerServiceFulfilmentLinkRequest,
     PassengerServiceOutcomeRequest,
     PassengerServiceReconciliationRequest,
     PassengerServiceRequestCreate,
-    PaymentRecord,
+    PaymentRecordCreate,
     PlatformUser,
     RequestPassenger,
     RequestPassengerSegmentService,
@@ -52,6 +54,8 @@ from models import (
     TravelRequest,
 )
 from services.after_sales_workflow_service import AfterSalesWorkflowError, AfterSalesWorkflowService
+from services.booking_workspace_service import BookingWorkspaceService
+from services.canonical_commercial_ledger_service import CanonicalCommercialLedgerService
 from services.document_workspace_service import DocumentWorkspaceError, DocumentWorkspaceService
 from services.offer_acceptance_service import OfferAcceptanceService
 from services.offer_builder_service import OfferBuilderService
@@ -112,7 +116,7 @@ async def seed_case(db: Database) -> dict:
             user_id=USER_ID,
             email=user["email"],
             normalized_email=user["email"],
-            agency_role="agency_agent",
+            agency_role="agency_admin",
             status="active",
         ),
     )
@@ -352,6 +356,16 @@ async def run_golden_path() -> None:
             USER_ID,
         )
     await builder.recalculate_option_pricing(AGENCY_ID, option["id"], USER_ID)
+    offer_workspace = await builder.deliver_workspace(
+        AGENCY_ID,
+        offer_workspace["id"],
+        OfferWorkspaceTransitionRequest(
+            expected_version=offer_workspace["version"],
+            reason="V1 Golden Path accepted-offer delivery evidence.",
+        ),
+        USER_ID,
+    )
+    option = await builder.get_option_or_none(AGENCY_ID, option["id"])
 
     acceptance_result = await OfferAcceptanceService(db).accept_offer_option(
         AGENCY_ID,
@@ -360,6 +374,9 @@ async def run_golden_path() -> None:
         user,
         OfferAcceptanceCreate(
             acceptance_source="internal",
+            offer_version=offer_workspace["version"],
+            option_version=option["version"],
+            acceptance_terms_version="v1-golden-path-v1",
             provider_target="manual",
             client_visible_summary_json={"option_label": "BA assisted economy", "manual_confirmation_required": True},
             internal_notes="Frozen internal acceptance note.",
@@ -415,6 +432,38 @@ async def run_golden_path() -> None:
         handoff["id"], OfferBookingHandoffBookingCreateRequest(), user, agency_id=AGENCY_ID
     )
     require(booking_retry.get("idempotent_reused") is True and booking_retry.get("booking_workspace", {}).get("id") == booking_workspace["id"], "Booking workspace retry duplicated the workspace.")
+
+    booking_service = BookingWorkspaceService(db)
+    await booking_service.update_booking_workspace_status(
+        AGENCY_ID,
+        booking_workspace["id"],
+        "booking_in_progress",
+        user,
+        "Human operator began the external booking step.",
+    )
+    confirmed_booking = await booking_service.update_booking_record(
+        AGENCY_ID,
+        booking_record["id"],
+        BookingRecordUpdate(
+            pnr_locator="V1GOLD",
+            provider_status="confirmed",
+            booking_status="confirmed",
+            source_evidence_reference="evidence://booking/manual/V1GOLD",
+            source_evidence_json={"operator_verified": True},
+            expected_version=booking_record["current_external_result_version"],
+            reason="Recorded the externally confirmed booking result.",
+        ),
+        user,
+    )
+    booking_workspace = (
+        (confirmed_booking or {}).get("booking_workspace") or booking_workspace
+    )
+    booking_record = (confirmed_booking or {}).get("booking_record") or {}
+    require(
+        booking_record.get("booking_status") == "confirmed"
+        and booking_record.get("source_evidence_reference"),
+        "Golden Path did not record governed confirmed BookingRecord evidence.",
+    )
 
     ticket_service = TicketEmdService(db)
     ticket_detail = await ticket_service.create_manual_ticket(
@@ -649,39 +698,28 @@ async def run_golden_path() -> None:
     )
     invoice_retry = await create_invoice_from_booking_workspace(AGENCY_ID, booking_workspace["id"], user=user, db=db)
     require(invoice_retry.get("idempotent_reused") is True and invoice_retry["invoice"]["id"] == invoice["id"], "Finance bridge retry duplicated the invoice.")
-    invoice = await db.collection("invoices").update_one(
-        {"agency_id": AGENCY_ID, "id": invoice["id"]},
-        {
-            "status": "issued",
-            "subtotal_amount": 305.0,
-            "total_amount": 305.0,
-            "paid_amount": 305.0,
-            "due_amount": 0.0,
-            "internal_notes": "Internal invoice note.",
-            "client_visible_notes": "Paid in full.",
-        },
-    )
-    invoice_line = await insert(
-        db,
-        "invoice_line_items",
-        InvoiceLineItem(
-            agency_id=AGENCY_ID,
-            invoice_id=invoice["id"],
+    ledger = CanonicalCommercialLedgerService(db)
+    invoice_line = await ledger.add_invoice_line(
+        AGENCY_ID,
+        invoice["id"],
+        InvoiceLineItemCreate(
             booking_id=booking_record["id"],
+            booking_record_id=booking_record["id"],
             ticket_id=ticket["id"],
-            line_type="airfare",
+            line_type="ticket",
             description="Accepted assisted itinerary",
             quantity=1,
             unit_amount=305.0,
-            total_amount=305.0,
             currency="EUR",
         ),
+        USER_ID,
     )
-    payment = await insert(
-        db,
-        "payment_records",
-        PaymentRecord(
-            agency_id=AGENCY_ID,
+    invoice = await ledger.issue_invoice(
+        AGENCY_ID, invoice["id"], USER_ID
+    )
+    payment = await ledger.create_payment(
+        AGENCY_ID,
+        PaymentRecordCreate(
             invoice_id=invoice["id"],
             booking_id=booking_record["id"],
             client_id=context["client"]["id"],
@@ -693,6 +731,7 @@ async def run_golden_path() -> None:
             reconciliation_status="reconciled",
             internal_notes="Internal bank reconciliation note.",
         ),
+        USER_ID,
     )
     after_sales_service = AfterSalesWorkflowService(db)
     link_options = await after_sales_service.link_options(AGENCY_ID)

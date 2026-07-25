@@ -210,6 +210,10 @@ def main() -> int:
     detail = get(f"/api/agencies/{agency_id}/requests/{request_id}", OWNER_HEADERS)
     if len(detail["passengers"]) != 2 or len(detail["segments"]) != 1 or len(detail["services"]) != 2:
         raise AssertionError("Request detail did not preserve structured builder records.")
+    if any(item.get("passenger_id") for item in detail["passengers"]):
+        raise AssertionError("Request builder created a master passenger without explicit identity confirmation.")
+    if any(item.get("identity_status") != "unresolved" for item in detail["passengers"]):
+        raise AssertionError("Inline request travelers were not retained as unresolved request passengers.")
     if detail["request"].get("trip_type") != "round_trip":
         raise AssertionError("Trip type was not stored.")
     if not detail["services"][0].get("detail_payload"):
@@ -228,8 +232,8 @@ def main() -> int:
         stored = detail_for_code["services"][0]["detail_payload"]
         if stored.get("suggested_ssr_code") != code or stored.get("confirmed_ssr_code") != code:
             raise AssertionError(f"{code} assessment recommendation was not preserved.")
-    if not detail["services"][0].get("passenger_ids") or not detail["services"][0].get("segment_ids"):
-        raise AssertionError("Service passenger/segment relationships were not stored.")
+    if not detail["services"][0].get("segment_ids") or not detail["passenger_segment_services"]:
+        raise AssertionError("Request-level passenger/segment service relationships were not stored.")
 
     intake = post("/api/public/request-intakes", public_intake_payload(f"phase27.intake.{int(time.time())}@example.com"), expect=201)
     request("PATCH", f"/api/request-intakes/{intake['intake']['id']}/triage", {"agency_id": agency_id}, OWNER_HEADERS)

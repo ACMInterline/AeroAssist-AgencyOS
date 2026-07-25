@@ -2,7 +2,35 @@
 
 Multi-tenant SaaS foundation for micro and small travel agencies.
 
-The current build marker is `phase_58_5_commercial_pilot_readiness`. Phase 58.5 packages the controlled Commercial Pilot operating guidance, adds tenant-scoped Agency feedback with governed Platform review, and provides a deterministic product-readiness assessment that preserves the separate Phase 57 production release gate. It adds no provider, payment, ticketing, deployment, production-seeding, external-support, or automatic approval execution. See the [Commercial Pilot Package](docs/pilot/README.md).
+The current build marker is `phase_59_0_product_experience_recovery`. Phase 59.0 and P1 Product Recovery 10 present the completed Product Kernel through exact task-oriented Platform, Agency, Client Portal, and Passenger Portal navigation; practical dashboards; shared workflow guidance; accessible responsive layouts; and route-level lazy loading. The work preserves Phase 58 Commercial Pilot behavior, the Phase 57 release gate, every canonical route, and all execution safety boundaries. See the [Product Navigation Contract](docs/architecture/product-navigation-contract.md), [Dashboard Contract](docs/architecture/dashboard-contract.md), [Design System Contract](docs/architecture/design-system-contract.md), and [Workflow Banner Contract](docs/architecture/workflow-banner-contract.md).
+
+An immediate corrective gate now protects audit visibility and passenger identity integrity. Intake and request creation retain unconfirmed travelers as request-level placeholders; only an explicit, tenant-scoped staff confirmation may create or link a canonical `PassengerProfile`. New feature foundations are frozen until the canonical product-kernel ownership map and simplified operator UI are approved. See [P0 Security, Identity Integrity, and Product Kernel Freeze](docs/architecture/p0-security-integrity-product-kernel-freeze.md).
+
+P1 Product Kernel Repair 2 adds an enforceable, non-runtime [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md) and [Canonical Domain Migration Register](docs/architecture/canonical-domain-migration-register.md). Following later kernel decisions including Repairs 3 through 8, the registry selects one target owner for 43 of 46 core domains, leaves three knowledge domains explicitly `decision_required`, confirms `agency_id` as the tenant boundary, and records compatibility history without migrating production data.
+
+P1 Product Kernel Repair 3 enforces the [Canonical Identity and Tenancy Contract](docs/architecture/canonical-identity-and-tenancy-contract.md) and [Portal Identity Linkage Contract](docs/architecture/portal-identity-linkage-contract.md). `AuthIdentity`, `PlatformUser`, `AgencyStaffMembership`, and explicit `PortalAccessMapping` records now have separate responsibilities; every Agency API requires an active same-Agency membership; Client and Passenger Portal scope resolves by immutable identity links rather than email; and one centralized permission vocabulary governs backend requests. Legacy Client/Passenger Master families remain documented compatibility debt, but new Master and relationship rows are source-bound to verified canonical same-Agency records and cannot create independent identity truth. Historical reconciliation remains dry-run only and no production migration is performed.
+
+P1 Product Kernel Repair 9 completes the Client and Passenger Portal as a
+projection over the canonical Product Kernel. Separate dashboards and
+navigation consume Request, released Offer, accepted snapshot, Trip, Booking,
+Ticket, EMD, Document, Commercial Ledger, Operational Collaboration, Timeline,
+and Notification truth without creating Portal-owned duplicates. Client
+commercial decisions use canonical Offer Acceptance; Passenger scope is exact
+subject; documents are versioned and requested-upload only; finance is
+Client-only and read-only. See
+[Client Portal Contract](docs/architecture/client-portal-contract.md),
+[Passenger Portal Contract](docs/architecture/passenger-portal-contract.md),
+and [Portal Operational Workspace](docs/architecture/portal-operational-workspace.md).
+
+P1 Product Recovery 10 converts the implementation-era frontend catalogue into
+an operator-facing product without changing Product Kernel ownership. Platform
+navigation now has nine exact task areas, Agency navigation has fourteen exact
+task areas, Client and Passenger Portal navigation remains security-separated,
+specialist surfaces stay reachable under collapsed Advanced navigation, and a
+governed 311-page inventory records primary, contextual, specialist, and
+orphaned surfaces. Shared search, permission-aware shortcuts, workflow banners,
+tables, empty states, and lazy-loaded routes reduce operational friction while
+retaining all valid deep links.
 
 This repository currently contains the Phase 0 architecture specifications through Phase 42.2 passenger service workflow engine foundation plus Chapter 50 AOIE foundations, Phase 52.1 reference data engine foundation, Phase 52.2 knowledge import templates foundation, Phase 52.3 visual policy editor foundation, Phase 52.4 pricing formula builder foundation, Phase 52.5 operational rule composer foundation, Phase 52.6 knowledge quality assurance foundation, Phase 52.7 airline knowledge publishing foundation, Phase 52.8 operational scenario testing foundation, Phase 52.9 knowledge population toolkit foundation, and Phase 53.0 end-to-end stabilization pilot readiness foundation, including CRM, requests, trips, reference/service catalogue governance, rules/services, offer builder, offer acceptance/booking readiness, booking/ticket/EMD mirrors, standalone/import/change/exchange workflows, document foundation, governed GDS parser foundation, governed airline policy source/extraction/review foundations, canonical special/ancillary service taxonomy mapping, separate SSR/OSI communication plus EMD/RFIC/RFISC payment mechanics mapping, policy-based ancillary pricing/exception metadata, metadata-only airline comparison/service advisory views, offer-linked policy advisor context, human-reviewed offer decision packs, decision explanation timelines, metadata-only review export snapshots, internal render preview metadata, manual release readiness, manual delivery handoff metadata, manual delivery outcome tracking, metadata-only export audit reviews, metadata-only export governance records, metadata-only compliance evidence records, governed airline intelligence data packs with staged items, validation issues, import runs, review notes, and coverage snapshots, metadata-only data pack review checklists, field mappings, conflict records, promotion-readiness records, review snapshots, governed airline intelligence knowledge versions with release-channel metadata, comparisons, rollback plans, and immutable version snapshots, agency consumption profiles, assignment views, usage readiness, notes, and snapshots for safe-use visibility, plain-language Platform Console and Agency Workspace navigation groups, metadata-only SaaS subscription plans, entitlements, assignments, readiness rows, review notes, immutable snapshots, read-only entitlement visibility badges for agency navigation and platform review, agency-specific feature visibility metadata independent of subscription plans, read-only feature flag audit/readiness metadata, reusable feature flag bundle metadata, metadata-only agency feature bundle assignment history, metadata-only capability catalog visibility, assigned-bundle rollout readiness checklists, metadata-only feature bundle rollout plan records, the read-only rollout dashboard, metadata-only rollout approval records, metadata-only rollout schedule records, metadata-only rollout timeline entries, metadata-only feature bundle dependency records, metadata-only feature bundle rollout risk register records, metadata-only feature bundle rollout issue log records, metadata-only feature bundle rollout decision register records, metadata-only feature bundle rollout change request records, metadata-only feature bundle rollout rollback plan records, and metadata-only feature bundle rollout summary evidence-pack records, plus metadata-only operational travel workspace, travel request workspace, passenger workspace, flight workspace, trip workspace, offer workspace, booking workspace, ticket workspace, EMD workspace, SSR / OSI operational workspace, document workspace records, operational timeline records, passenger service workflow records, architecture-only AOIE metadata, metadata-only airline operational knowledge graph records, metadata-only operational constraint language records, metadata-only airline operational knowledge normalisation records, metadata-only airline operational knowledge governance/version records, metadata-only airline operational capability matrix records, metadata-only operational knowledge evaluation records, metadata-only passenger service feasibility records, metadata-only airline recommendation records, metadata-only intelligent offer builder package records, metadata-only operational intelligence case records, metadata-only service parameter taxonomy records, metadata-only request segment service scope records, metadata-only client/passenger master workspace records, metadata-only reference data engine domain records, metadata-only knowledge import template records, metadata-only visual policy editor cards, metadata-only pricing formula builder records, metadata-only operational rule composer records, metadata-only knowledge QA review records, metadata-only airline knowledge publication records, metadata-only operational scenario test records, metadata-only knowledge population toolkit records, metadata-only pilot readiness profile, assessment, check, golden-path case/run, and issue records, metadata-only operational workflow orchestration records, metadata-only canonical agent work queue and assignment records, metadata-only SLA and operational deadline records, metadata-only task automation/dependency orchestration records, metadata-only request-to-trip operational conversion records, metadata-only offer-to-booking handoff readiness records, metadata-only servicing/after-sales workflow records, and metadata-only operations command center aggregate visibility records.
 
@@ -26,6 +54,8 @@ Phase 58.4 (`phase_58_4_aeroassist_product_standards_ux_refinement`) established
 
 Phase 58.5 completes the Commercial Pilot readiness package for controlled use by micro and small agencies. Agency users receive contextual guidance across onboarding, Operations, Requests, Offers, Booking, Passengers, Documents, and Tasks, plus one tenant-scoped help and feedback surface. Platform roles receive governed feedback review and a deterministic Commercial Pilot assessment covering Phase 58 capabilities, documentation, health/readiness, smoke inventory, and disabled execution boundaries. The assessment supplements but never replaces Phase 57 production evidence and human sign-off.
 
+Phase 59.0 reorganizes the technically complete product around operator purpose. Platform users receive nine permission-aware areas and a practical Overview; Agency users receive fourteen workflow-ordered areas with the Phase 58.2 Operations Command Centre at `/agency`. The existing module catalogue remains the route source, specialist surfaces move into collapsed Advanced areas, task search and permission-aware shortcuts improve discovery, shared workflow banners expose stage and next action, and all page imports are route-level lazy loaded. This presentation recovery adds no model, collection, index, router, provider action, payment, ticket issuance, messaging, deployment, or production-data change.
+
 ## Foundational Architecture Documents
 
 Permanent AeroAssist architecture foundations live under `docs/architecture/foundations/`:
@@ -38,6 +68,8 @@ Permanent AeroAssist architecture foundations live under `docs/architecture/foun
 - [Glossary](docs/architecture/foundations/GLOSSARY.md)
 
 Product implementation and UX review should also follow [AeroAssist Product Standards](docs/product/aeroassist-product-standards.md).
+Product navigation and workflow presentation must also follow the [Product Navigation Contract](docs/architecture/product-navigation-contract.md), [Dashboard Contract](docs/architecture/dashboard-contract.md), [Design System Contract](docs/architecture/design-system-contract.md), and [Workflow Banner Contract](docs/architecture/workflow-banner-contract.md).
+Kernel lifecycle or persistence work must also follow the [Canonical Domain Ownership Map](docs/architecture/canonical-domain-ownership-map.md).
 
 ## Future Codex Guidance
 
@@ -50,6 +82,10 @@ Before implementing future phases, Codex should read and follow:
 - `AIRLINE_OPERATIONAL_KNOWLEDGE_ONTOLOGY.md`
 - `GLOSSARY.md`
 - `docs/product/aeroassist-product-standards.md`
+- `docs/architecture/canonical-domain-ownership-map.md`
+- `docs/architecture/canonical-domain-migration-register.md`
+- `docs/architecture/canonical-identity-and-tenancy-contract.md`
+- `docs/architecture/portal-identity-linkage-contract.md`
 
 ## Project Structure
 
@@ -1866,3 +1902,142 @@ Phase 56.5.8 advances the canonical marker to `phase_56_5_8_final_stabilization_
 ## Phase 57.0 Pilot Operations and Release Readiness
 
 Phase 57.0 advances the canonical marker to `phase_57_0_pilot_operations_release_readiness`. It adds a Platform-only operations console at `/platform/pilot-operations`, persists immutable deployment/smoke/backup/restore/production-validation/release-assessment/sign-off evidence, groups the existing deterministic release gate into eight operational assessment areas, records health history, and exposes protected bounded telemetry. Platform Owner controls existing-agency pilot enrollment and isolated prefixed synthetic metadata datasets with audited soft removal. Public health and readiness remain free of operational diagnostics and pilot data. No provider, GDS, payment, booking, ticketing, automatic release approval, migration, backup, restore, or production seed is executed. See [Pilot Operations and Release Readiness](docs/architecture/pilot-operations-release-readiness.md).
+
+## P1 Product Kernel Repair 4 - Canonical Request V4
+
+New Requests now use one strict `request_version: 4` aggregate owned by
+`TravelRequest`. Contact, trip preferences, ordered segments, request
+passengers, passenger-scoped services, animals, special items, and admin
+metadata are validated together. Existing child collections remain
+deterministic operational projections for Offer and request-to-trip
+compatibility; they cannot be written independently for V4 records. Public
+submissions remain intake-only and never create a master passenger. Legacy
+requests remain readable and the supplied analyzer is dry-run only. See
+[Canonical Request V4 Contract](docs/architecture/canonical-request-v4-contract.md)
+and [Request V4 Compatibility and Migration](docs/architecture/request-v4-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 5 - Canonical Reference Data
+
+The existing `GlobalReferenceRecord` engine now owns normalized, tenant-safe
+reference options for Request V4 and Passenger Profile. Rich ADT, CHD, INF,
+YTH, SRC, STU, SEA, MIL, and GRP metadata drives backend PTC validation while
+UMNR remains a service. New writes retain stable IDs with code/key/label
+snapshots; unknown legacy values remain readable and enter reconciliation.
+Platform deactivation is usage-aware, reasoned, audited, and non-destructive.
+Migration analysis is bounded and dry-run only. See
+[Canonical Reference Data Contract](docs/architecture/canonical-reference-data-contract.md),
+[Passenger Type Code Reference Contract](docs/architecture/passenger-type-code-reference-contract.md),
+[Reference Data Wiring and Migration](docs/architecture/reference-data-wiring-and-migration.md),
+and [Reference Data Consumer Map](docs/architecture/reference-data-consumer-map.md).
+
+## P1 Product Kernel Repair 6 - Canonical Commercial Lifecycle
+
+The normal Agency commercial flow now uses one enforceable lineage:
+`TravelRequest -> OfferWorkspace -> OfferOption -> OfferAcceptance ->
+TripAcceptedOfferSnapshot -> TripDossier -> OfferBookingHandoff ->
+BookingRecord -> TicketRecord / EMDRecord`. Offers require a Request, delivery
+freezes exact versions, acceptance creates immutable hashed evidence, normal
+Trip confirmation requires that evidence, and booked state requires an
+evidenced BookingRecord. Normal Ticket/EMD records require BookingRecord
+lineage. Legacy records remain readable and dry-run migration analysis performs
+zero writes. No provider booking, issuance, payment, migration, or deployment
+is enabled. See [Canonical Commercial Lifecycle Contract](docs/architecture/canonical-commercial-lifecycle-contract.md),
+[Offer Acceptance And Snapshot Contract](docs/architecture/offer-acceptance-and-snapshot-contract.md),
+[Trip And Booking Ownership Contract](docs/architecture/trip-and-booking-ownership-contract.md),
+and [Commercial Lifecycle Compatibility And Migration](docs/architecture/commercial-lifecycle-compatibility-and-migration.md).
+
+## P1 Product Kernel Repair 7 - Finance, Accounting And Commercial Ledger
+
+The canonical operational chain now feeds one Agency-scoped commercial ledger.
+Existing Invoice, Invoice Line, and Payment records are extended rather than
+duplicated. Posted transactions, explicit Payment Allocations, private Supplier
+Costs, non-destructive Credit Notes, Refund entries, and Exchange entries
+provide deterministic revenue, cost, margin, balance, and exposure reporting.
+Owners, admins, and accountants control ledger writes; agents and read-only
+staff receive appropriate read projections without supplier-cost leakage.
+Historical finance analysis is bounded and dry-run only. No payment gateway,
+provider, external accounting integration, migration, or upstream operational
+rewrite is enabled. See [Canonical Commercial Ledger](docs/architecture/canonical-commercial-ledger.md)
+and [Commercial Reporting Contract](docs/architecture/commercial-reporting-contract.md).
+
+## P1 Product Kernel Repair 8 - Unified Communications, Timeline And Operational Collaboration
+
+`OperationalTimeline` now owns append-only business history and
+`CommunicationThread` owns multi-entity operational conversations.
+Communication Messages preserve edit history and deletion is prohibited;
+Participants and immutable Attachment references enforce same-Agency lineage;
+Client and Passenger Portal projections require explicit identity mappings;
+Supplier/Airline interaction is manual evidence only; and Notifications are
+regenerable projections rather than business truth. Legacy communication and
+entity timeline rows remain readable compatibility history, with bounded
+dry-run-only migration analysis. No external email, SMS, chat, airline,
+provider, background-delivery, production migration, commit, push, or
+deployment action is enabled. See [Canonical Operational Timeline](docs/architecture/canonical-operational-timeline.md),
+[Communication Thread Contract](docs/architecture/communication-thread-contract.md),
+[Communication Visibility Contract](docs/architecture/communication-visibility-contract.md),
+and [Participant Visibility Matrix](docs/architecture/participant-visibility-matrix.md).
+
+## P1 Product Kernel Repair 9 - Client And Passenger Portal Completion
+
+The Portal now resolves one active identity mapping and projects only
+same-Agency, subject-owned Product Kernel records. Clients receive operational
+travel, Offer decisions, requested Documents, communications, approvals, and
+read-only ledger visibility. Passengers receive only their own Trips, Tickets,
+EMDs, services, Documents, communications, timeline, actions, and travel
+profile. Shared travel never widens Passenger access to another traveler's
+records.
+
+Canonical Portal navigation uses Travel Options, Trips, Booking Records,
+Tickets, EMDs, Document Workspaces, Operational Collaboration, Timeline,
+Notifications, and Client Ledger projections. Existing old Portal reads remain
+compatibility deep links. `analyze_portal_completion_migration.py` reports
+legacy/missing/duplicate mappings and historical record counts with no write
+mode. No payment, booking, issuance, provider, external messaging, public
+share, production migration, commit, push, or deployment behavior is added.
+
+## P1 Product Recovery 11A - Governed Automation And Orchestration
+
+Product Recovery 11A reconciles the existing queue, task automation, SLA,
+dependency, approval, timeline, audit, and notification foundations under one
+Product Kernel contract. `OperationalWorkItem` is the sole actionable-work
+owner, `OperationalTimeline` is the source-event and operational-history
+owner, `AuditEvent` remains security evidence, and notifications remain
+regenerable user-specific projections.
+
+Only published active allowlisted rules can evaluate canonical timeline
+events. Evaluation is deterministic, tenant-scoped, bounded, idempotent, and
+linked to the exact source timeline entry. Class A and governed Class B
+internal actions are supported; Class C produces an approval request and work
+only; Class D is rejected. Manual bounded processing is available, while a
+persistent scheduler, external delivery, provider execution, payment,
+refund, Ticket/EMD issuance, permission mutation, and autonomous decisions
+remain disabled. See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md)
+and [Automation Rule And Safety Contract](docs/architecture/automation-rule-and-safety-contract.md).
+
+## P1 Product Recovery 11B - Full-System Stabilization
+
+Product Recovery 11B keeps the active
+`phase_59_0_product_experience_recovery` marker and introduces no new business
+domain. It splits the route registry from the initial application shell,
+preserves lazy deep links, adds safe render and Not Found handling, standardizes
+redacted API errors, governs dialog keyboard focus, verifies Portal upload
+content signatures, and repairs Request and Work Queue integration defects.
+
+A deterministic disposable browser contract now exercises 51 Platform, Agency,
+Client Portal, and Passenger Portal checks across the canonical Request to
+Finance workflow. The initial raw JavaScript shell is 30.7% smaller. See the
+[Full-System Stabilization Report](docs/stabilization/full-system-stabilization-report.md),
+[Browser Acceptance Contract](docs/stabilization/browser-acceptance-contract.md),
+and [Release-Candidate Gap Register](docs/stabilization/release-candidate-gap-register.md).
+No provider, payment, issuance, external messaging, production migration,
+commit, push, or deployment behavior is enabled.
+
+## P1 Product Recovery 12 - Release Candidate Integration Gate
+
+Product Recovery 12 adds no runtime capability or new release system. It
+consolidates repository, browser, migration, security, performance, Docker,
+merge, deployment, rollback, and Phase 57 evidence requirements into the
+[Product Recovery Release Candidate package](docs/release-candidate/README.md).
+The application merge SHA must be validated before a separate tooling commit
+updates the exact deployment pin. Phase 57 remains the authoritative
+production evidence and human sign-off gate.

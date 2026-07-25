@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -93,6 +94,9 @@ export default function EmdDetailPage({ emdRecordId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={emdRecordId}
+            workEntityType="emd"
             breadcrumbs={[
               { label: "Tickets & EMDs", href: "/agency/tickets-emds" },
               ...(emd?.booking_workspace_id ? [{ label: "Booking", href: `/agency/booking-workspaces/${emd.booking_workspace_id}` }] : []),
@@ -157,11 +161,14 @@ export default function EmdDetailPage({ emdRecordId }) {
               <Panel title="Warnings">
                 <SnapshotList items={state?.warnings} render={(item) => item.message || JSON.stringify(item)} />
               </Panel>
-              <Panel title="Timeline">
-                <SnapshotList items={state?.timeline} render={(item) => `${item.title}${item.description ? ` · ${item.description}` : ""}`} />
-              </Panel>
             </div>
           </section>
+          <OperationalCollaborationPanel
+            agencyId={state?.agency?.id}
+            entityId={emdRecordId}
+            entityLabel={emd?.emd_number || "EMD"}
+            entityType="emd"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>

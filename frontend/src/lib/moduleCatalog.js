@@ -7,6 +7,10 @@ export const platformModuleGroups = [
     safety: "Metadata only",
     items: [
       { label: "Platform Console", description: "Owner overview and system counts", href: "/platform", icon: "shield", badge: "Platform only" },
+      { label: "Platform Users", description: "Staff access overview by owning agency", href: "/platform/users", icon: "users", badge: "Platform only" },
+      { label: "Monitoring", description: "System health, readiness, backups, and release evidence", href: "/platform/monitoring", icon: "shield", badge: "Platform only" },
+      { label: "Audit", description: "Authorized Platform and Agency activity", href: "/platform/audit", icon: "clipboard", badge: "Platform only" },
+      { label: "Platform Settings", description: "Governed Platform configuration entry points", href: "/platform/settings", icon: "settings", badge: "Platform only" },
       { label: "Pilot Operations", description: "Release evidence, pilot agencies, health history, and protected diagnostics", href: "/platform/pilot-operations", icon: "shield", badge: "Owner governed", metadata_only: true },
       { label: "Commercial Pilot Readiness", description: "Product, guidance, feedback, and safety readiness", href: "/platform/commercial-pilot-readiness", icon: "check", badge: "Read-only", metadata_only: true },
       { label: "Pilot Feedback Review", description: "Tenant-scoped pilot feedback governance", href: "/platform/pilot-feedback", icon: "clipboard", badge: "Platform review", metadata_only: true },
@@ -28,9 +32,9 @@ export const platformModuleGroups = [
       { label: "Document Workspaces", description: "Operational document workspace metadata", href: "/platform/document-workspaces", icon: "files", badge: "Metadata only", metadata_only: true },
       { label: "Operational Timelines", description: "Operational history metadata", href: "/platform/operational-timelines", icon: "clipboard", badge: "Metadata only", metadata_only: true },
       { label: "Operational Workflows", description: "Shared workflow-state and guarded transition metadata", href: "/platform/operational-workflows", icon: "git", badge: "Metadata only", metadata_only: true },
-      { label: "Work Queue Governance", description: "Canonical work queue and assignment metadata", href: "/platform/work-queues", icon: "rows", badge: "Metadata only", metadata_only: true },
-      { label: "SLA Policies", description: "Operational SLA policies, calendars, and deadline metadata", href: "/platform/sla-policies", icon: "check", badge: "Metadata only", metadata_only: true },
-      { label: "Task Automation", description: "Safe task templates, dependencies, and automation run metadata", href: "/platform/task-automation", icon: "rows", badge: "Metadata only", metadata_only: true },
+      { label: "Work Queue Governance", description: "Inspect canonical queues, assignments, and work-item health", href: "/platform/work-queues", icon: "rows" },
+      { label: "SLA Policies", description: "Govern operational SLA policies, calendars, and deadline rules", href: "/platform/sla-policies", icon: "check" },
+      { label: "Automation Governance", description: "Govern global templates and review bounded execution evidence", href: "/platform/task-automation", icon: "rows" },
       { label: "Request-to-Trip Conversion", description: "Conversion run, mapping, and issue diagnostics", href: "/platform/request-trip-conversion", icon: "git", badge: "Read-only", metadata_only: true },
       { label: "Booking Handoffs", description: "Accepted-offer to booking readiness diagnostics", href: "/platform/booking-handoffs", icon: "git", badge: "Read-only", metadata_only: true },
       { label: "After-Sales Workflows", description: "Servicing, refund, exchange, claim, amendment, and disruption metadata", href: "/platform/after-sales", icon: "clipboard", badge: "Read-only", metadata_only: true },
@@ -171,6 +175,8 @@ export const agencyModuleGroups = [
     safety: "Manual operations",
     items: [
       { label: "Operations", description: "Today’s work, queues, deadlines, and follow-ups", href: "/agency", icon: "rows", entitlementKey: "dashboard" },
+      { label: "Communications", description: "Client, passenger, supplier, and internal conversations", href: "/agency/communications", icon: "phone", entitlementKey: "requests" },
+      { label: "Reports", description: "Operational workload and posted commercial results", href: "/agency/reports", icon: "clipboard", entitlementKey: "finance" },
       { label: "Pilot Help & Feedback", description: "Operating guides and tenant-scoped feedback", href: "/agency/pilot-feedback", icon: "clipboard", badge: "Pilot" },
       { label: "Create request", description: "Start a staff request", href: "/agency/requests/new", icon: "plus", entitlementKey: "requests" },
       { label: "Intakes", description: "Public and portal queue", href: "/agency/request-intakes", icon: "inbox", entitlementKey: "request_intakes" },
@@ -191,9 +197,9 @@ export const agencyModuleGroups = [
       { label: "Passenger Services", description: "SSR / OSI service workspace metadata", href: "/agency/passenger-services", icon: "clipboard", badge: "Read-only", entitlementKey: "tickets_emds", metadata_only: true },
       { label: "Timeline", description: "Operational history metadata", href: "/agency/timeline", icon: "clipboard", badge: "Read-only", entitlementKey: "requests", metadata_only: true },
       { label: "Operational Workflows", description: "Workflow-state and guarded transition metadata", href: "/agency/operational-workflows", icon: "git", badge: "Metadata only", entitlementKey: "requests", metadata_only: true },
-      { label: "Agent Work Queue", description: "Canonical operational work and assignment queue", href: "/agency/work-queue", icon: "rows", badge: "Metadata only", entitlementKey: "work_queue", metadata_only: true },
-      { label: "Deadlines", description: "SLA and operational deadline metadata", href: "/agency/deadlines", icon: "check", badge: "Metadata only", entitlementKey: "deadlines", metadata_only: true },
-      { label: "Task Automation", description: "Safe task templates, dependencies, and automation runs", href: "/agency/task-automation", icon: "rows", badge: "Metadata only", entitlementKey: "task_automation", metadata_only: true },
+      { label: "Agent Work Queue", description: "Claim, assign, progress, and complete canonical operational work", href: "/agency/work-queue", icon: "rows", entitlementKey: "work_queue" },
+      { label: "Deadlines", description: "Review due work, SLA explanations, pauses, and approved extensions", href: "/agency/deadlines", icon: "check", entitlementKey: "deadlines" },
+      { label: "Automation Rules", description: "Govern internal-work rules, approvals, dependencies, and execution evidence", href: "/agency/task-automation", icon: "rows", entitlementKey: "task_automation" },
       { label: "Request-to-Trip Conversion", description: "Auditable request conversion wizard", href: "/agency/request-trip-conversion", icon: "git", badge: "Metadata only", entitlementKey: "requests", metadata_only: true },
       { label: "Booking Handoffs", description: "Accepted-offer booking readiness handoff", href: "/agency/booking-handoffs", icon: "git", badge: "Metadata only", entitlementKey: "booking_handoffs", metadata_only: true },
       { label: "After-Sales", description: "Servicing, refund, exchange, claim, amendment, and disruption case metadata", href: "/agency/after-sales", icon: "clipboard", badge: "Metadata only", entitlementKey: "after_sales", metadata_only: true },
@@ -223,6 +229,7 @@ export const agencyModuleGroups = [
       { label: "Requests", description: "Operational work", href: "/agency/requests", icon: "clipboard", entitlementKey: "requests" },
       { label: "Trips", description: "Travel dossiers", href: "/agency/trips", icon: "plane", entitlementKey: "trips" },
       { label: "Offers", description: "Prepare, compare, deliver, and manage client responses", href: "/agency/offers", icon: "sparkles", entitlementKey: "offers", workspace_owner: "offer", surface_type: "primary_workspace", navigation_visibility: "visible", user_facing_label: "Offer Workspace" },
+      { label: "Bookings", description: "Booking records and operational follow-up", href: "/agency/bookings", icon: "building", entitlementKey: "booking_workspaces" },
       { label: "Offer Intelligence", description: "Offer-intelligence packages", href: "/agency/offer-intelligence", icon: "rows", badge: "No sending", entitlementKey: "offers", metadata_only: true },
       { label: "Booking Handoffs", description: "Accepted-offer readiness handoff", href: "/agency/booking-handoffs", icon: "git", badge: "Metadata only", entitlementKey: "booking_handoffs", metadata_only: true },
       { label: "After-Sales", description: "Unified servicing cases", href: "/agency/after-sales", icon: "clipboard", badge: "Metadata only", entitlementKey: "after_sales", metadata_only: true },
@@ -231,6 +238,9 @@ export const agencyModuleGroups = [
       { label: "Booking Mirrors", description: "Internal PNR mirror records", href: "/agency/booking-workspaces", icon: "clipboard", badge: "Read-only", entitlementKey: "booking_workspaces", metadata_only: true },
       { label: "Booking Imports", description: "GDS drafts", href: "/agency/booking-imports", icon: "files", badge: "Review only", entitlementKey: "booking_imports" },
       { label: "Tickets & EMDs", description: "Mirror records", href: "/agency/tickets-emds", icon: "files", badge: "No issuance", entitlementKey: "tickets_emds" },
+      { label: "Finance", description: "Revenue, invoices, payments, costs, margin, credits, refunds, and exchanges", href: "/agency/finance", icon: "clipboard", entitlementKey: "finance" },
+      { label: "Invoices", description: "Server-derived invoice and payment status", href: "/agency/invoices", icon: "clipboard", entitlementKey: "finance" },
+      { label: "Supplier Costs", description: "Agency-private supplier costs and margin inputs", href: "/agency/supplier-costs", icon: "clipboard", entitlementKey: "finance", required_permission: "view_supplier_costs" },
       { label: "Refunds & Exchanges", description: "Service cases", href: "/agency/refunds-exchanges", icon: "clipboard", badge: "Manual only", entitlementKey: "refunds_exchanges" },
     ],
   },
@@ -349,6 +359,137 @@ export const agencyModuleGroups = [
 
 export function flattenModuleGroups(groups) {
   return groups.flatMap((group) => group.items.map((item) => ({ ...item, group: group.title })))
+}
+
+const platformProductAreaDefinitions = [
+  { title: "Overview", description: "Current Platform priorities.", icon: "shield", allowed_roles: ["platform_owner", "platform_admin", "platform_support"], items: [{ href: "/platform", preferred_label: "Overview", preferred_description: "See what needs attention across AeroAssist" }] },
+  { title: "Reference Data", description: "Shared product lookups.", icon: "database", allowed_roles: ["platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"], items: [{ href: "/platform/reference", preferred_label: "Reference Data", preferred_description: "Maintain shared travel and aviation references" }] },
+  { title: "Airline Knowledge", description: "Airline records and governed operational guidance.", icon: "plane", allowed_roles: ["platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"], items: [{ href: "/platform/airlines", preferred_label: "Airline Knowledge", preferred_description: "Review airlines, evidence, coverage, and guidance" }] },
+  { title: "Policies", description: "Structured airline service policies.", icon: "clipboard", allowed_roles: ["platform_owner", "platform_admin", "platform_knowledge_editor"], items: [{ href: "/platform/visual-policy-editor", preferred_label: "Policies", preferred_description: "Maintain reviewed airline service policies" }] },
+  { title: "Agencies", description: "Agency setup and account activity.", icon: "building", allowed_roles: ["platform_owner", "platform_admin", "platform_support"], items: [{ href: "/platform/agencies", preferred_label: "Agencies", preferred_description: "Review agency setup, onboarding, and access" }] },
+  { title: "Users", description: "Platform and Agency access overview.", icon: "users", allowed_roles: ["platform_owner", "platform_admin"], items: [{ href: "/platform/users", preferred_label: "Users", preferred_description: "Review staff access by owning agency" }] },
+  { title: "Monitoring", description: "Health, readiness, backups, and release evidence.", icon: "shield", allowed_roles: ["platform_owner", "platform_admin", "platform_support"], items: [{ href: "/platform/monitoring", preferred_label: "Monitoring", preferred_description: "Review health, readiness, and operational alerts" }] },
+  { title: "Audit", description: "Governed activity across Platform and Agencies.", icon: "clipboard", allowed_roles: ["platform_owner", "platform_admin"], items: [{ href: "/platform/audit", preferred_label: "Audit", preferred_description: "Review authorized activity and related records" }] },
+  { title: "Settings", description: "Governed Platform configuration.", icon: "settings", allowed_roles: ["platform_owner", "platform_admin"], items: [{ href: "/platform/settings", preferred_label: "Settings", preferred_description: "Open Platform configuration and access controls" }] },
+]
+
+const agencyProductAreaDefinitions = [
+  { title: "Dashboard", description: "Today’s workload, deadlines, and priorities.", icon: "rows", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency", preferred_label: "Dashboard", preferred_description: "See today’s work and next actions" }] },
+  { title: "Requests", description: "New and active travel requests.", icon: "clipboard", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"], items: [{ href: "/agency/requests", preferred_label: "Requests", preferred_description: "Review and progress travel requests" }] },
+  { title: "Offers", description: "Prepare and review travel offers.", icon: "sparkles", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"], items: [{ href: "/agency/offers", preferred_label: "Offers", preferred_description: "Prepare, compare, and follow up offers" }] },
+  { title: "Trips", description: "Operational trip dossiers and itineraries.", icon: "plane", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_readonly"], items: [{ href: "/agency/trips", preferred_label: "Trips", preferred_description: "Open active trip dossiers" }] },
+  { title: "Bookings", description: "Confirmed booking records and follow-up.", icon: "building", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/bookings", preferred_label: "Bookings", preferred_description: "Review booking details and status" }] },
+  { title: "Tickets & EMDs", description: "Ticket and ancillary document records.", icon: "files", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/tickets-emds", preferred_label: "Tickets & EMDs", preferred_description: "Review ticket and EMD records" }] },
+  { title: "Finance", description: "Posted invoices, payments, costs, and balances.", icon: "clipboard", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/finance", preferred_label: "Finance", preferred_description: "Review posted commercial results and balances" }] },
+  { title: "Clients", description: "Client relationships and account records.", icon: "users", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/clients", preferred_label: "Clients", preferred_description: "Manage client accounts and relationships" }] },
+  { title: "Passengers", description: "Traveller profiles and service needs.", icon: "user", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/passengers", preferred_label: "Passengers", preferred_description: "Manage traveller profiles and requirements" }] },
+  { title: "Communications", description: "Operational conversations and internal notes.", icon: "phone", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/communications", preferred_label: "Communications", preferred_description: "Find conversations and continue from related records" }] },
+  { title: "Documents", description: "Required, received, and prepared travel documents.", icon: "files", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/document-workspaces", preferred_label: "Documents", preferred_description: "Review travel document requirements and status" }] },
+  { title: "Operations", description: "Assigned work, queues, deadlines, and follow-ups.", icon: "rows", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/work-queue", preferred_label: "Operations", preferred_description: "Review assigned and unassigned operational work" }] },
+  { title: "Reports", description: "Operational and posted commercial reporting.", icon: "clipboard", allowed_roles: ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"], items: [{ href: "/agency/reports", preferred_label: "Reports", preferred_description: "Review workload, deadlines, departures, and results" }] },
+  { title: "Settings", description: "Agency preferences, branding, forms, and access.", icon: "settings", allowed_roles: ["agency_owner", "agency_admin"], items: [{ href: "/agency/settings", preferred_label: "Settings", preferred_description: "Manage Agency preferences and workspace setup" }] },
+]
+
+function catalogueIndex(groups) {
+  const index = new Map()
+  flattenModuleGroups(groups).forEach((item) => {
+    if (!index.has(item.href) || index.get(item.href)?.navigation_visibility === "contextual") {
+      index.set(item.href, item)
+    }
+  })
+  return index
+}
+
+function productItem(source, area, definition, priority, advancedOnly = false) {
+  return {
+    ...source,
+    primary_area: area.title,
+    user_purpose: definition.user_purpose || definition.preferred_description || source.description,
+    audience: area.audience,
+    navigation_priority: priority,
+    advanced_only: advancedOnly,
+    hidden_from_primary_navigation: advancedOnly,
+    preferred_label: definition.preferred_label || source.user_facing_label || source.label,
+    preferred_description: definition.preferred_description || source.description,
+    allowed_roles: definition.allowed_roles || area.allowed_roles,
+  }
+}
+
+function buildProductNavigation(groups, definitions, advancedDefinition, primaryAudience) {
+  const index = catalogueIndex(groups)
+  const primaryHrefs = new Set()
+  const primaryAreas = definitions.map((area, areaIndex) => ({
+    ...area,
+    audience: area.audience || primaryAudience,
+    navigation_priority: areaIndex + 1,
+    advanced_only: false,
+    items: area.items.map((definition, itemIndex) => {
+      const source = index.get(definition.href)
+      if (!source) {
+        throw new Error(`Product navigation references a missing module-catalogue route: ${definition.href}`)
+      }
+      primaryHrefs.add(definition.href)
+      return productItem(source, area, definition, itemIndex + 1)
+    }),
+  }))
+
+  const seen = new Set()
+  const advancedItems = flattenModuleGroups(groups)
+    .filter((item) => item.navigation_visibility !== "contextual" && !primaryHrefs.has(item.href))
+    .filter((item) => {
+      if (seen.has(item.href)) return false
+      seen.add(item.href)
+      return true
+    })
+    .map((source, indexValue) => productItem(source, advancedDefinition, {}, indexValue + 1, true))
+
+  return [
+    ...primaryAreas,
+    {
+      ...advancedDefinition,
+      navigation_priority: primaryAreas.length + 1,
+      advanced_only: true,
+      hidden_from_primary_navigation: true,
+      items: advancedItems,
+    },
+  ]
+}
+
+export const platformProductNavigation = buildProductNavigation(
+  platformModuleGroups,
+  platformProductAreaDefinitions,
+  {
+    title: "Advanced",
+    description: "Technical diagnostics, detailed registers, rollout planning, and implementation references.",
+    icon: "database",
+    audience: "Platform technical users",
+    allowed_roles: ["platform_owner", "platform_admin"],
+  },
+  "Platform operators",
+)
+
+export const agencyProductNavigation = buildProductNavigation(
+  agencyModuleGroups,
+  agencyProductAreaDefinitions,
+  {
+    title: "Advanced",
+    description: "System details, planning registers, and specialist diagnostic views.",
+    icon: "database",
+    audience: "Agency administrators",
+    allowed_roles: ["agency_owner", "agency_admin"],
+  },
+  "Agency staff",
+)
+
+export function productNavigationForRole(navigation, role) {
+  if (!role) return []
+  return navigation
+    .filter((area) => area.allowed_roles.includes(role))
+    .map((area) => ({
+      ...area,
+      items: area.items.filter((item) => item.allowed_roles.includes(role)),
+    }))
+    .filter((area) => area.items.length)
 }
 
 export const entitlementVisibilityLabels = {

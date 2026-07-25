@@ -195,8 +195,8 @@ def verify_router_ui_docs_registration() -> None:
             raise AssertionError(f"Pilot readiness route used old root: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/pilot-readiness"),
-        (ROOT / "frontend/src/App.jsx", "/agency/pilot-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/pilot-readiness"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/pilot-readiness"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Pilot Readiness"),
         (ROOT / "backend/services/saas_subscription_service.py", "pilot_readiness"),
         (ROOT / "backend/services/blueprint_adoption_service.py", "PilotReadinessAssessment"),
@@ -337,7 +337,7 @@ def verify_health_readiness_and_core_workflow() -> tuple[str, str, str]:
     if "remediation_checklist" not in checklist or "module_readiness" not in checklist:
         raise AssertionError("Agency remediation checklist response shape is incomplete.")
     if other_agency_id:
-        request("GET", f"/api/agencies/{other_agency_id}/pilot-readiness/golden-path-cases/{agency_case['id']}", None, OWNER_HEADERS, 404)
+        request("GET", f"/api/agencies/{other_agency_id}/pilot-readiness/golden-path-cases/{agency_case['id']}", None, OWNER_HEADERS, 403)
 
     dashboard = get("/api/platform/pilot-readiness", OWNER_HEADERS)
     for key in ["summary", "module_readiness", "airline_service_coverage", "sample_cases", "issues"]:

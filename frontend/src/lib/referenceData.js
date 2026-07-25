@@ -8,6 +8,39 @@ export function fetchReferenceDomain(domain, includeInactive = false) {
   return apiGet(`/api/reference/${domain}?include_inactive=${includeInactive ? "true" : "false"}`)
 }
 
+export function fetchReferenceOptions(domain, { query = "", limit = 50 } = {}) {
+  const search = new URLSearchParams()
+  if (query) search.set("q", query)
+  search.set("limit", String(Math.min(Math.max(Number(limit) || 50, 1), 200)))
+  return apiGet(`/api/reference/${domain}/options?${search.toString()}`)
+}
+
+export function fetchReferenceRecord(domain, recordId) {
+  return apiGet(`/api/reference/${domain}/${encodeURIComponent(recordId)}`)
+}
+
+export function fetchReferenceRecordUsage(domain, recordId) {
+  return apiGet(`/api/reference/${domain}/usage?record_id=${encodeURIComponent(recordId)}`)
+}
+
+export function passengerTypeCompatibilityCode(option, fallback = "ADT") {
+  const code = String(option?.code || option?.key || "").toUpperCase()
+  const supported = new Set(["ADT", "CHD", "INF", "YTH", "SRC", "STU", "SEA", "MIL", "GRP", "UMNR"])
+  if (supported.has(code)) return code
+  const category = String(option?.raw?.metadata?.passenger_category || "").toLowerCase()
+  return {
+    adult: "ADT",
+    child: "CHD",
+    infant: "INF",
+    youth: "YTH",
+    senior: "SRC",
+    student: "STU",
+    seaman: "SEA",
+    military: "MIL",
+    group: "GRP",
+  }[category] || fallback
+}
+
 export function searchReferenceDomain(domain, query, includeInactive = false) {
   return apiGet(`/api/reference/${domain}/search?q=${encodeURIComponent(query)}&include_inactive=${includeInactive ? "true" : "false"}`)
 }
@@ -24,8 +57,8 @@ export function activateReferenceRecord(domain, recordId) {
   return apiPatch(`/api/reference/${domain}/${recordId}/activate`, {})
 }
 
-export function deactivateReferenceRecord(domain, recordId) {
-  return apiPatch(`/api/reference/${domain}/${recordId}/deactivate`, {})
+export function deactivateReferenceRecord(domain, recordId, payload = {}) {
+  return apiPatch(`/api/reference/${domain}/${recordId}/deactivate`, payload)
 }
 
 export function submitReferenceSuggestion(payload) {

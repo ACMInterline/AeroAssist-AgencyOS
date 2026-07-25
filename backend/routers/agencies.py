@@ -6,7 +6,7 @@ from pathlib import PurePath
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import get_current_agency_context, get_current_user, require_platform_role
+from auth import get_current_agency_context, get_current_user, require_agency_role, require_platform_role
 from config import get_settings as get_app_settings
 from database import Database, get_database
 from models import (
@@ -30,8 +30,9 @@ from models import (
     now_utc,
 )
 from security import hash_token, new_raw_token, normalize_email
-from services.tenant_service import require_any_agency_role
 from services.agency_onboarding_service import AgencyOnboardingService
+from services.audit_event_access_service import AGENCY_AUDIT_READ_ROLES, AuditEventAccessService
+from services.tenant_service import require_any_agency_role
 
 router = APIRouter(prefix="/api/agencies", tags=["agencies"])
 
@@ -564,6 +565,27 @@ async def get_agency(context: dict = Depends(get_current_agency_context), db: Da
         },
         "membership": context["membership"],
     }
+
+
+@router.get("/{agency_id}/audit-events")
+async def list_agency_audit_events(
+    agency_id: str,
+    entity_type: str | None = Query(default=None),
+    entity_id: str | None = Query(default=None),
+    event_type: str | None = Query(default=None),
+    limit: int | None = Query(default=None, ge=1),
+    cursor: str | None = Query(default=None),
+    membership: dict = Depends(require_agency_role("agency_id", AGENCY_AUDIT_READ_ROLES)),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await AuditEventAccessService(db).list_agency_events(
+        agency_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        event_type=event_type,
+        limit=limit,
+        cursor=cursor,
+    )
 
 
 @router.put("/{agency_id}")
@@ -1212,14 +1234,52 @@ async def create_staff(
     if agency is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agency not found.")
 
-    staff_user = await db.collection("platform_users").find_one({"email": payload.email})
+    normalized = normalize_email(str(payload.email))
+    identity = await db.collection("auth_identities").find_one(
+        {"normalized_email": normalized}
+    )
+    if (
+        not identity
+        or identity.get("status") != "active"
+        or identity.get("identity_type") not in {"platform_user", "agency_staff"}
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "An active staff AuthIdentity is required. Use the staff invitation "
+                "flow to create a new identity."
+            ),
+        )
+
+    staff_user = await db.collection("platform_users").find_one(
+        {"identity_id": identity["id"]}
+    )
+    if staff_user is None:
+        staff_user = await db.collection("platform_users").find_one(
+            {"email": normalized}
+        )
+    if (
+        staff_user
+        and staff_user.get("identity_id")
+        and staff_user["identity_id"] != identity["id"]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Existing staff projection belongs to another AuthIdentity.",
+        )
     if staff_user is None:
         staff_user_model = PlatformUser(
-            email=payload.email,
+            identity_id=identity["id"],
+            email=normalized,
             full_name=payload.full_name,
             status=payload.status,
         )
         staff_user = await db.collection("platform_users").insert_one(staff_user_model.model_dump(mode="json"))
+    elif staff_user.get("identity_id") != identity["id"]:
+        staff_user = await db.collection("platform_users").update_one(
+            {"id": staff_user["id"]},
+            {"identity_id": identity["id"]},
+        )
 
     existing = await db.collection("agency_staff_memberships").find_one(
         {"agency_id": agency_id, "user_id": staff_user["id"]}
@@ -1230,6 +1290,9 @@ async def create_staff(
     membership = AgencyStaffMembership(
         agency_id=agency_id,
         user_id=staff_user["id"],
+        identity_id=identity["id"],
+        email=normalized,
+        normalized_email=normalized,
         agency_role=payload.agency_role,
         status=payload.status,
         joined_at=staff_user["created_at"] if payload.status == "active" else None,

@@ -106,9 +106,12 @@ def verify_static_contracts() -> None:
         "after_sales_cases",
         "operational_intelligence_cases",
         "pilot_readiness_issues",
-        "request_tasks",
     ]:
         require_text(ROOT / "backend/services/operations_command_center_service.py", source_collection)
+    reject_text(
+        ROOT / "backend/services/operations_command_center_service.py",
+        '"request_tasks"',
+    )
 
 
 def verify_routes_and_docs(paths: dict) -> None:
@@ -138,8 +141,8 @@ def verify_routes_and_docs(paths: dict) -> None:
     if "/api/agencies/{agency_id}/operations-command-center/kanban/move" in paths:
         raise AssertionError("Command center must not expose uncontrolled kanban move endpoints.")
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/agency/operations-command-center"),
-        (ROOT / "frontend/src/App.jsx", "/platform/operations-governance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/operations-command-center"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/operations-governance"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Operations Command Centre"),
         (ROOT / "frontend/src/components/operations/OperationsWorkList.jsx", "My Work Today"),
         (ROOT / "frontend/src/pages/platform/OperationsGovernancePage.jsx", "Read-only platform command center"),
@@ -336,7 +339,7 @@ def verify_live_api(paths: dict) -> None:
     assert_flags(platform_summary)
     request("POST", "/api/platform/operations-governance", {}, OWNER_HEADERS, 405)
     request("POST", f"/api/agencies/{primary_agency_id}/operations-command-center", {}, AGENCY_AGENT_HEADERS, 405)
-    request("GET", "/api/agencies/not-an-agency/operations-command-center", None, AGENCY_AGENT_HEADERS, 404)
+    request("GET", "/api/agencies/not-an-agency/operations-command-center", None, AGENCY_AGENT_HEADERS, 403)
 
 
 def main() -> None:

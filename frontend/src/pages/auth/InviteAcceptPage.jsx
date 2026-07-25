@@ -37,11 +37,11 @@ export default function InviteAcceptPage() {
       if (result.auth?.user?.email) {
         setDemoEmail(result.auth.user.email)
       }
-      if (result.auth?.identity?.identity_type === "client_portal") {
+      if (["client_portal", "passenger_portal"].includes(result.auth?.identity?.identity_type)) {
         setDemoPortalEmail(result.auth.identity.email)
       }
       const type = result.auth?.identity?.identity_type
-      window.location.href = type === "client_portal" ? "/portal" : "/agency"
+      window.location.href = ["client_portal", "passenger_portal"].includes(type) ? "/portal" : "/agency"
     } catch (err) {
       clearAuthSession()
       setError(err.message)

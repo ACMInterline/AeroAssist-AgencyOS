@@ -63,6 +63,8 @@ class RequestToTripConversionService:
             "request_to_trip_operational_conversion_foundation": True,
             "request_remains_intake_origin": True,
             "trip_becomes_operational_shell": True,
+            "pre_acceptance_conversion_is_planning_projection": True,
+            "confirmed_trip_requires_accepted_offer_snapshot": True,
             "never_use_request_id_as_trip_id": True,
             "source_snapshots_preserved": True,
             "idempotent_safe_retry_enabled": True,
@@ -259,6 +261,15 @@ class RequestToTripConversionService:
             "timeline_event_ids": integrations.get("timeline_event_ids") or [],
             "source_request_snapshot_preserved": True,
             "request_id_used_as_trip_id": trip["id"] == data["request_id"],
+            "trip_lifecycle_state": trip.get("trip_status") or "planning",
+            "planning_projection": (
+                trip.get("creation_mode") == "request_planning_projection"
+                or trip.get("trip_status") in {"draft", "planning", "quoted"}
+            ),
+            "confirmed_trip_created": bool(
+                trip.get("trip_status") == "confirmed"
+                and trip.get("accepted_offer_snapshot_id")
+            ),
             "metadata_only": True,
         }
         updated_run = await self.db.collection(REQUEST_TRIP_CONVERSION_RUNS_COLLECTION).update_one(
@@ -289,6 +300,14 @@ class RequestToTripConversionService:
             "validation": validation,
             "integrations": integrations,
             "idempotent_reused": False,
+            "planning_projection": (
+                trip.get("creation_mode") == "request_planning_projection"
+                or trip.get("trip_status") in {"draft", "planning", "quoted"}
+            ),
+            "confirmed_trip_created": bool(
+                trip.get("trip_status") == "confirmed"
+                and trip.get("accepted_offer_snapshot_id")
+            ),
             "metadata_only": True,
             **self.safety_flags(),
         }
@@ -346,6 +365,22 @@ class RequestToTripConversionService:
             critical.append(self._issue("missing_client_linkage", "critical", "Client linkage is required before creating the trip shell.", "Resolve or attach the request client before conversion."))
         if not context["passengers"]:
             critical.append(self._issue("missing_passengers", "critical", "At least one normalized request passenger is required.", "Add or resolve passengers before conversion."))
+        elif all(
+            not passenger.get("passenger_id")
+            and not any(
+                str((passenger.get("proposed_identity_json") or {}).get(field) or "").strip()
+                for field in ("first_name", "last_name", "display_name")
+            )
+            for passenger in context["passengers"]
+        ):
+            critical.append(
+                self._issue(
+                    "missing_passenger_identity_details",
+                    "critical",
+                    "At least one request passenger needs identifying details before conversion.",
+                    "Add the traveler name or explicitly link a same-agency passenger profile.",
+                )
+            )
         if not context["segments"]:
             critical.append(self._issue("missing_segments", "critical", "At least one normalized request segment is required.", "Add request itinerary segments before conversion."))
         if existing_trip_id:

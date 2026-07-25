@@ -348,3 +348,34 @@ Before approving a new or changed product surface, verify:
 - Older non-priority Agency pages may still contain foundation-era terminology or page-local component patterns.
 - A full workflow editor is intentionally deferred.
 - Phase 58.4 introduces no backend label directory, design-token migration, new route, model, collection, or operational capability.
+
+## P1 Product Recovery 11B - Executed Standards Evidence
+
+Product Recovery 11B applies the standards without changing product ownership:
+
+- every page route is lazy and retains a loading announcement;
+- unknown routes use a literal `Page not found` heading and safe recovery link;
+- unexpected render failures use a bounded application error state;
+- HTTP errors use status-aware language, redact technical internals, and retain
+  safe correlation references;
+- all four current dialogs use one focus-entry, Tab-containment, Escape, and
+  focus-restoration contract;
+- Login controls expose names, types, autocomplete, required state, progress,
+  and announced outcomes;
+- the Portal Invoice uses consistent financial formatting;
+- the browser acceptance suite verifies one critical keyboard dialog path.
+
+The source validator and Chromium test do not establish formal WCAG
+conformance. Contrast tooling, screen readers, zoom, mobile, Safari, and
+Firefox remain explicit review items in
+[Accessibility Findings](../stabilization/accessibility-findings.md).
+
+## Product Recovery 12 - Release Discipline
+
+The Product Standards remain product-facing acceptance criteria during the
+release gate. A build or source validator cannot substitute for executed
+browser acceptance, and Chromium evidence cannot be generalized to Firefox,
+WebKit, screen readers, or formal WCAG conformance. The
+[Release Candidate Assessment](../release-candidate/release-candidate-assessment.md)
+records the exact evidence boundary; Phase 57 remains the production approval
+authority.

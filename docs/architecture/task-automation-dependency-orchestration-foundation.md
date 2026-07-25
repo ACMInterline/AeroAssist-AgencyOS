@@ -17,11 +17,21 @@ The foundation registers:
 - `/platform/task-automation`
 - `/agency/task-automation`
 
-This layer extends the existing request-task foundation. It does not replace request tasks, operational timelines, workflow events, the agent work queue, SLA deadlines, or passenger service workflow records.
+This historical Phase 54 layer is reconciled by Product Recovery 11A.
+`OperationalWorkItem` is now the sole actionable-work owner. Existing
+`request_tasks` records remain readable compatibility history and projection
+input; no new governed automation action writes parallel task truth.
 
 ## Safe Task Creation
 
-`TaskAutomationDependencyService` stores reusable task templates and automation rules. A rule may create existing `request_tasks` records for known operational events such as request triage, missing passenger data, documents, MEDIF, POC/battery checks, PETC/AVIH documents, airline approval, offer preparation, manual quote review, client acceptance follow-up, booking readiness, ticket/EMD verification, payment follow-up, disruption handling, refund/change/claim follow-up, and final trip document checks.
+`TaskAutomationDependencyService` stores reusable task templates and versioned
+automation rules. Published active rules may create canonical
+`OperationalWorkItem` records for known operational events such as request
+triage, missing passenger data, documents, MEDIF, POC/battery checks,
+PETC/AVIH documents, airline approval, offer preparation, manual quote review,
+client acceptance follow-up, booking readiness, ticket/EMD verification,
+payment follow-up, disruption handling, refund/change/claim follow-up, and
+final trip document checks.
 
 Creation is idempotent through automation run records and deduplication keys. Re-running the same safe metadata event records skipped tasks rather than creating duplicates.
 
@@ -33,7 +43,10 @@ Dependency orchestration is advisory metadata. It does not execute tasks, enforc
 
 ## Queue, Workflow, And SLA Links
 
-Generated tasks synchronize into `OperationalWorkItem` records using the existing agent work queue service. Due offsets on templates populate request-task `due_at` metadata for SLA and queue visibility. Runs can also record operational workflow event metadata when a workflow instance reference is present.
+Generated work is created through the existing agent work queue service. Due
+offsets and SLA policies create canonical deadline metadata for queue
+visibility. Runs record exact source timeline lineage and may retain workflow
+instance linkage where present.
 
 These integrations are records only. They do not schedule workers, send communications, invoke provider systems, mutate booking/ticket/EMD state, or perform operational execution.
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import EmptyState from "../../components/EmptyState"
+import OperationalCollaborationPanel from "../../components/OperationalCollaborationPanel"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import WorkflowContinuityPanel from "../../components/WorkflowContinuityPanel"
 import AgencyLayout from "../../layouts/AgencyLayout"
@@ -8,7 +9,7 @@ import { loadCurrentAgency } from "../../lib/agency"
 
 export default function TripDetailPage({ tripId }) {
   const [state, setState] = useState(null)
-  const [form, setForm] = useState({ trip_title: "", trip_status: "draft", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", link_request_id: "" })
+  const [form, setForm] = useState({ trip_title: "", trip_status: "planning", trip_type: "unknown", operational_summary: "", internal_notes: "", client_visible_notes: "", transition_reason: "", link_request_id: "" })
   const [changeForm, setChangeForm] = useState({
     operation_type: "itinerary_change",
     reason: "",
@@ -27,7 +28,7 @@ export default function TripDetailPage({ tripId }) {
 
   async function load() {
     const context = await loadCurrentAgency()
-    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds, changes] = await Promise.all([
+    const [detail, requests, acceptedOffer, bookingReadiness, bookingWorkspaces, tickets, emds, changes, finance] = await Promise.all([
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}`),
       apiGet(`/api/agencies/${context.agency.id}/requests`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/accepted-offer`),
@@ -36,12 +37,13 @@ export default function TripDetailPage({ tripId }) {
       apiGet(`/api/agencies/${context.agency.id}/tickets?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/emds?trip_id=${encodeURIComponent(tripId)}`),
       apiGet(`/api/agencies/${context.agency.id}/trips/${tripId}/change-operations`),
+      apiGet(`/api/agencies/${context.agency.id}/finance/reporting?trip_id=${encodeURIComponent(tripId)}`),
     ])
     const bookingRecordId = bookingWorkspaces.items?.[0]?.booking_record?.id
     const ticketEmdReadiness = bookingRecordId
       ? await apiGet(`/api/agencies/${context.agency.id}/booking-records/${bookingRecordId}/ticket-emd-readiness`)
       : null
-    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], changes, ticketEmdReadiness })
+    setState({ ...context, ...detail, requests: requests.items, acceptedOffer, bookingReadiness, bookingWorkspaces: bookingWorkspaces.items || [], tickets: tickets.items || [], emds: emds.items || [], changes, ticketEmdReadiness, finance })
     setForm({
       trip_title: detail.trip.trip_title || "",
       trip_status: detail.trip.trip_status || "draft",
@@ -49,6 +51,7 @@ export default function TripDetailPage({ tripId }) {
       operational_summary: detail.trip.operational_summary || "",
       internal_notes: detail.trip.internal_notes || "",
       client_visible_notes: detail.trip.client_visible_notes || "",
+      transition_reason: "",
       link_request_id: "",
     })
   }
@@ -70,6 +73,8 @@ export default function TripDetailPage({ tripId }) {
       operational_summary: form.operational_summary,
       internal_notes: form.internal_notes,
       client_visible_notes: form.client_visible_notes,
+      expected_version: state.trip.current_operational_version || 1,
+      transition_reason: form.trip_status === state.trip.trip_status ? null : form.transition_reason,
     })
     await load()
   }
@@ -200,8 +205,21 @@ export default function TripDetailPage({ tripId }) {
   const acceptance = state?.acceptedOffer?.acceptance
   const bookingReadiness = state?.bookingReadiness?.booking_readiness
   const bookingWorkspace = state?.bookingWorkspaces?.[0]
+  const acceptedSnapshot = state?.acceptedOffer?.accepted_offer
   const tripReady = Boolean(state?.passengers?.length && state?.segments?.length)
   const tripClosed = ["cancelled", "archived"].includes(state?.trip?.trip_status)
+  const planningProjection = !state?.trip?.accepted_offer_snapshot_id && ["draft", "planning", "quoted"].includes(state?.trip?.trip_status)
+  const tripStatusOptions = Array.from(new Set([
+    state?.trip?.trip_status,
+    "planning",
+    "confirmed",
+    "booking_in_progress",
+    "booked",
+    "ticketed",
+    "servicing",
+    "completed",
+    "cancelled",
+  ].filter(Boolean)))
   const handoffHref = acceptance && bookingReadiness
     ? `/agency/booking-handoffs?acceptance_id=${encodeURIComponent(acceptance.id)}&booking_readiness_package_id=${encodeURIComponent(bookingReadiness.id)}&trip_id=${encodeURIComponent(tripId)}&offer_workspace_id=${encodeURIComponent(acceptance.workspace_id || acceptance.offer_workspace_id || "")}`
     : ""
@@ -227,6 +245,9 @@ export default function TripDetailPage({ tripId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={tripId}
+            workEntityType="trip"
             breadcrumbs={[{ label: "Trips", href: "/agency/trips" }]}
             currentLabel={state?.trip?.trip_reference || "Trip"}
             status={state?.trip?.trip_status}
@@ -248,20 +269,31 @@ export default function TripDetailPage({ tripId }) {
             ]}
           />
 
-          <section className="grid gap-4 lg:grid-cols-4">
+          <div className={`rounded-lg border p-4 text-sm ${planningProjection ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}>
+            <span className="font-semibold">{planningProjection ? "Planning projection:" : "Confirmed operational Trip:"}</span>{" "}
+            {planningProjection
+              ? "This record supports pre-acceptance planning and is not confirmed commercial truth."
+              : acceptedSnapshot
+                ? `Confirmed from immutable accepted evidence ${acceptedSnapshot.id}.`
+                : `Created through governed ${String(state?.trip?.creation_mode || "exception").replaceAll("_", " ")} evidence.`}
+          </div>
+
+          <section className="grid gap-4 lg:grid-cols-5">
             <Metric label="Status" value={state?.trip?.trip_status?.replaceAll("_", " ")} />
             <Metric label="Passengers" value={state?.trip?.passenger_count ?? 0} />
             <Metric label="Segments" value={state?.trip?.segment_count ?? 0} />
             <Metric label="Services" value={state?.trip?.service_count ?? 0} />
+            <Metric label="Version" value={state?.trip?.current_operational_version || 1} />
           </section>
 
           <form className="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 md:grid-cols-3" onSubmit={save}>
             <Field label="Trip title" value={form.trip_title} onChange={(value) => setField("trip_title", value)} />
-            <Select label="Status" value={form.trip_status} onChange={(value) => setField("trip_status", value)} options={["draft", "planning", "quoted", "booked", "ticketed", "in_travel", "completed", "cancelled", "archived"]} />
+            <Select label="Status" value={form.trip_status} onChange={(value) => setField("trip_status", value)} options={tripStatusOptions} />
             <Select label="Trip type" value={form.trip_type} onChange={(value) => setField("trip_type", value)} options={["one_way", "round_trip", "multi_city", "open_jaw", "complex", "unknown"]} />
             <Textarea label="Operational summary" value={form.operational_summary} onChange={(value) => setField("operational_summary", value)} />
             <Textarea label="Internal notes" value={form.internal_notes} onChange={(value) => setField("internal_notes", value)} />
             <Textarea label="Client-visible notes" value={form.client_visible_notes} onChange={(value) => setField("client_visible_notes", value)} />
+            <Textarea label="Status change reason" value={form.transition_reason} onChange={(value) => setField("transition_reason", value)} />
             <div className="md:col-span-3">
               <button className="aa-primary-action rounded-md px-4 py-2 text-sm font-semibold" type="submit">Save trip</button>
             </div>
@@ -314,6 +346,8 @@ export default function TripDetailPage({ tripId }) {
             state={state}
           />
 
+          <TripCommercialSummary finance={state?.finance} tripId={tripId} />
+
           <Panel title="Related operational records">
             <div className="flex flex-wrap gap-2">
               {state?.bookingWorkspaces?.[0] ? <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/booking-workspaces/${state.bookingWorkspaces[0].id}`}>Booking workspace</a> : null}
@@ -323,7 +357,12 @@ export default function TripDetailPage({ tripId }) {
             </div>
           </Panel>
 
-          <Panel title="Timeline"><List items={state?.timeline} empty="No trip timeline events yet" render={(item) => `${item.title}${item.summary ? ` · ${item.summary}` : ""}`} /></Panel>
+          <OperationalCollaborationPanel
+            agencyId={state?.agency?.id}
+            entityId={tripId}
+            entityLabel={state?.trip?.trip_reference || "Trip"}
+            entityType="trip"
+          />
         </div>
       </ProtectedRoute>
     </AgencyLayout>
@@ -336,6 +375,25 @@ function Metric({ label, value }) {
 
 function Panel({ title, children }) {
   return <section className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"><h3 className="font-semibold text-slate-950">{title}</h3>{children}</section>
+}
+
+function TripCommercialSummary({ finance, tripId }) {
+  const summary = finance?.summaries?.[0]
+  const profitability = finance?.profitability?.find((item) => item.context_type === "trip") || finance?.profitability?.[0]
+  return (
+    <Panel title="Commercial summary">
+      {summary ? <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Revenue" value={money(profitability?.revenue ?? summary.revenue, summary.currency)} />
+        {finance?.supplier_costs_visible ? <Metric label="Supplier costs" value={money(profitability?.supplier_costs, summary.currency)} /> : null}
+        {finance?.supplier_costs_visible ? <Metric label="Gross margin" value={money(profitability?.gross_margin, summary.currency)} /> : null}
+        <Metric label="Payments received" value={money(summary.payments_received, summary.currency)} />
+      </div> : <EmptyState title="No posted commercial activity" body="Issued invoices, received payments, and confirmed costs linked to this trip will appear here." />}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate-600">This projection comes only from immutable ledger postings and does not recalculate or edit the Trip.</p>
+        <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href={`/agency/finance?trip_id=${encodeURIComponent(tripId)}`}>Open finance</a>
+      </div>
+    </Panel>
+  )
 }
 
 function AcceptedOfferPanel({ state }) {
@@ -405,24 +463,24 @@ function AcceptedOfferPanel({ state }) {
         <SnapshotList
           title="SSR Preview"
           items={ssr}
-          render={(item) => item.ssr_code || item.code || JSON.stringify(item)}
+          render={(item) => item.ssr_code || item.code || item.label || "SSR review item"}
         />
         <SnapshotList
           title="OSI Preview"
           items={osi}
-          render={(item) => item.osi_text || item.text || JSON.stringify(item)}
+          render={(item) => item.osi_text || item.text || item.label || "OSI review item"}
         />
       </section>
       <section className="grid gap-4 lg:grid-cols-2">
         <SnapshotList
           title="Warnings"
           items={readiness?.warnings_json}
-          render={(item) => item.message || JSON.stringify(item)}
+          render={(item) => item.message || item.reason || item.code || "Review required"}
         />
         <SnapshotList
           title="Required Documents"
           items={readiness?.required_documents_json}
-          render={(item) => item.label || item.document_type || JSON.stringify(item)}
+          render={(item) => item.label || item.document_type || item.reference || "Document required"}
         />
       </section>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 p-4">
@@ -465,7 +523,7 @@ function TicketsEmdsTripPanel({ state }) {
       <SnapshotList
         title="EMD Readiness Warnings"
         items={readiness?.warnings}
-        render={(item) => item.message || JSON.stringify(item)}
+        render={(item) => item.message || item.reason || item.code || "Review required"}
       />
     </Panel>
   )

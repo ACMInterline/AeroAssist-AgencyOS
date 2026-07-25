@@ -241,9 +241,9 @@ def verify_routes(paths: dict) -> None:
 
 def verify_frontend_and_docs() -> None:
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/airline-knowledge-governance"),
-        (ROOT / "frontend/src/App.jsx", "/platform/airline-knowledge-releases"),
-        (ROOT / "frontend/src/App.jsx", "/agency/knowledge-governance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/airline-knowledge-governance"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/airline-knowledge-releases"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/knowledge-governance"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge Governance"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge Releases"),
         (ROOT / "frontend/src/pages/platform/AirlineKnowledgeGovernancePage.jsx", "Knowledge Versions"),
@@ -273,7 +273,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/AirlineKnowledgeGovernancePage.jsx",
         ROOT / "frontend/src/pages/agency/KnowledgeGovernancePage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

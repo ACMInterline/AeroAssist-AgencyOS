@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
+from pydantic_core import PydanticCustomError
 
 
 def now_utc() -> datetime:
@@ -41,6 +42,7 @@ class AuthIdentityType(str, Enum):
     PLATFORM_USER = "platform_user"
     AGENCY_STAFF = "agency_staff"
     CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
 
 
 class AuthSessionStatus(str, Enum):
@@ -53,6 +55,7 @@ class InvitationType(str, Enum):
     PLATFORM_USER = "platform_user"
     AGENCY_STAFF = "agency_staff"
     CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
 
 
 class InvitationStatus(str, Enum):
@@ -292,7 +295,13 @@ class ClientPortalStatus(str, Enum):
     EMAIL_UNVERIFIED = "email_unverified"
     ACTIVE = "active"
     SUSPENDED = "suspended"
+    REVOKED = "revoked"
     ARCHIVED = "archived"
+
+
+class PortalSubjectType(str, Enum):
+    CLIENT = "client"
+    PASSENGER = "passenger"
 
 
 class ClientStatus(str, Enum):
@@ -308,6 +317,11 @@ class PassengerType(str, Enum):
     YTH = "YTH"
     SRC = "SRC"
     STU = "STU"
+    SEA = "SEA"
+    MIL = "MIL"
+    GRP = "GRP"
+    # Legacy compatibility values remain readable. UMNR is a service and INS
+    # is not seeded as a canonical Passenger Type Code.
     UMNR = "UMNR"
     INS = "INS"
     OTHER = "other"
@@ -318,6 +332,18 @@ class PassengerStatus(str, Enum):
     INACTIVE = "inactive"
     ARCHIVED = "archived"
     DUPLICATE_MERGED = "duplicate_merged"
+    QUARANTINED = "quarantined"
+
+
+class PassengerIdentityIntegrityStatus(str, Enum):
+    CANONICAL = "canonical"
+    QUARANTINED_INTAKE_PLACEHOLDER = "quarantined_intake_placeholder"
+
+
+class RequestPassengerIdentityStatus(str, Enum):
+    UNRESOLVED = "unresolved"
+    CONFIRMED = "confirmed"
+    SOURCE_QUARANTINED = "source_quarantined"
 
 
 class RelationshipType(str, Enum):
@@ -442,9 +468,12 @@ class PassengerLinkMode(str, Enum):
 class TripStatus(str, Enum):
     DRAFT = "draft"
     PLANNING = "planning"
+    CONFIRMED = "confirmed"
+    BOOKING_IN_PROGRESS = "booking_in_progress"
     QUOTED = "quoted"
     BOOKED = "booked"
     TICKETED = "ticketed"
+    SERVICING = "servicing"
     IN_TRAVEL = "in_travel"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
@@ -454,8 +483,11 @@ class TripStatus(str, Enum):
 class TripDossierSource(str, Enum):
     MANUAL = "manual"
     REQUEST_CONVERSION = "request_conversion"
+    ACCEPTED_OFFER = "accepted_offer"
     INTAKE_CONVERSION = "intake_conversion"
     IMPORTED = "imported"
+    HISTORICAL_MIGRATION = "historical_migration"
+    DISRUPTION_AFTER_SALES = "disruption_after_sales"
 
 
 class TripPassengerType(str, Enum):
@@ -559,6 +591,7 @@ class BaseDocument(BaseModel):
 
 
 class PlatformUser(BaseDocument):
+    identity_id: Optional[str] = None
     email: EmailStr
     full_name: str
     global_role: Optional[PlatformRole] = None
@@ -568,6 +601,7 @@ class PlatformUser(BaseDocument):
 class PlatformUserCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    identity_id: Optional[str] = None
     email: EmailStr
     full_name: str
     global_role: Optional[PlatformRole] = None
@@ -608,6 +642,7 @@ class Invitation(BaseDocument):
     invitation_type: InvitationType
     target_role: Optional[str] = None
     target_client_id: Optional[str] = None
+    target_passenger_id: Optional[str] = None
     target_user_id: Optional[str] = None
     accepted_by_user_id: Optional[str] = None
     accepted_by_identity_id: Optional[str] = None
@@ -649,6 +684,11 @@ class StaffInvitationCreate(BaseModel):
 
 class ClientPortalInvitationCreate(BaseModel):
     email: Optional[EmailStr] = None
+    display_name: Optional[str] = None
+
+
+class PassengerPortalInvitationCreate(BaseModel):
+    email: EmailStr
     display_name: Optional[str] = None
 
 
@@ -1278,11 +1318,98 @@ class ClientProfileUpdate(BaseModel):
 
 class PortalAccessMapping(BaseDocument):
     agency_id: str
-    client_id: str
-    user_email: EmailStr
+    auth_identity_id: Optional[str] = None
+    subject_type: Optional[PortalSubjectType] = None
+    client_profile_id: Optional[str] = None
+    passenger_profile_id: Optional[str] = None
+    status: ClientPortalStatus = ClientPortalStatus.ACTIVE
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+    revoked_at: Optional[datetime] = None
+    revoked_by: Optional[str] = None
+    replacement_mapping_id: Optional[str] = None
+    active_mapping_key: Optional[str] = None
+    active_subject_key: Optional[str] = None
+    identity_email_snapshot: Optional[EmailStr] = None
+    linkage_version: str = "explicit_identity_v1"
+    # Compatibility fields are retained for historical reads and old indexes.
+    # They are never authoritative for portal authorization.
+    client_id: Optional[str] = None
+    user_email: Optional[EmailStr] = None
     portal_status: ClientPortalStatus = ClientPortalStatus.ACTIVE
-    display_name: str
+    display_name: Optional[str] = None
     last_login_at: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def validate_subject_link(self) -> "PortalAccessMapping":
+        if self.linkage_version == "legacy_email":
+            if not self.client_id or not self.user_email:
+                raise PydanticCustomError(
+                    "legacy_portal_mapping_invalid",
+                    "Legacy portal mappings require client_id and user_email.",
+                )
+            return self
+
+        if not self.auth_identity_id or not self.subject_type:
+            raise PydanticCustomError(
+                "portal_identity_link_required",
+                "Explicit portal mappings require an AuthIdentity and subject type.",
+            )
+        client_id = self.client_profile_id or self.client_id
+        if self.subject_type == PortalSubjectType.CLIENT:
+            if not client_id or self.passenger_profile_id:
+                raise PydanticCustomError(
+                    "portal_client_subject_invalid",
+                    "Client portal mappings require exactly one client profile.",
+                )
+            self.client_profile_id = client_id
+            self.client_id = client_id
+        elif not self.passenger_profile_id or client_id:
+            raise PydanticCustomError(
+                "portal_passenger_subject_invalid",
+                "Passenger portal mappings require exactly one passenger profile.",
+            )
+        if self.status != self.portal_status:
+            self.portal_status = self.status
+        return self
+
+
+class PortalAccessMappingCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    auth_identity_id: str
+    subject_type: PortalSubjectType
+    client_profile_id: Optional[str] = None
+    passenger_profile_id: Optional[str] = None
+    display_name: Optional[str] = None
+    replaces_mapping_id: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_subject(self) -> "PortalAccessMappingCreate":
+        client = bool(self.client_profile_id)
+        passenger = bool(self.passenger_profile_id)
+        if client == passenger:
+            raise PydanticCustomError(
+                "portal_subject_required",
+                "Exactly one client or passenger profile is required.",
+            )
+        if self.subject_type == PortalSubjectType.CLIENT and not client:
+            raise PydanticCustomError(
+                "portal_client_subject_required",
+                "Client subject type requires client_profile_id.",
+            )
+        if self.subject_type == PortalSubjectType.PASSENGER and not passenger:
+            raise PydanticCustomError(
+                "portal_passenger_subject_required",
+                "Passenger subject type requires passenger_profile_id.",
+            )
+        return self
+
+
+class PortalAccessMappingRevoke(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str = Field(min_length=3, max_length=500)
 
 
 class PassengerProfile(BaseDocument):
@@ -1293,20 +1420,43 @@ class PassengerProfile(BaseDocument):
     display_name: str
     date_of_birth: date
     passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: str = "ADT"
+    passenger_type_label: str = "Adult"
+    passenger_type_reconciliation_status: str = "legacy_unresolved"
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: str = "en"
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Dict[str, str] = Field(default_factory=dict)
     loyalty_numbers: List[Dict[str, str]] = Field(default_factory=list)
     status: PassengerStatus = PassengerStatus.ACTIVE
     merged_into_passenger_id: Optional[str] = None
+    identity_integrity_status: PassengerIdentityIntegrityStatus = PassengerIdentityIntegrityStatus.CANONICAL
+    source_intake_id: Optional[str] = None
+    quarantined_at: Optional[datetime] = None
+    quarantined_by_user_id: Optional[str] = None
+    quarantine_reason: Optional[str] = None
 
 
 class PassengerProfileCreate(BaseModel):
@@ -1318,17 +1468,34 @@ class PassengerProfileCreate(BaseModel):
     display_name: Optional[str] = None
     date_of_birth: date
     passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: str = "en"
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Dict[str, str] = Field(default_factory=dict)
     loyalty_numbers: List[Dict[str, str]] = Field(default_factory=list)
     status: PassengerStatus = PassengerStatus.ACTIVE
 
@@ -1342,17 +1509,34 @@ class PassengerProfileUpdate(BaseModel):
     display_name: Optional[str] = None
     date_of_birth: Optional[date] = None
     passenger_type: Optional[PassengerType] = None
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
     gender: Optional[str] = None
     nationality: Optional[str] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
     residence_country: Optional[str] = None
+    residence_country_reference_id: Optional[str] = None
+    residence_country_label: Optional[str] = None
     primary_language: Optional[str] = None
+    primary_language_reference_id: Optional[str] = None
+    primary_language_label: Optional[str] = None
     passport_number: Optional[str] = None
     passport_country: Optional[str] = None
+    passport_country_reference_id: Optional[str] = None
+    passport_country_label: Optional[str] = None
+    travel_document_type_id: Optional[str] = None
+    travel_document_type_code: Optional[str] = None
+    travel_document_type_label: Optional[str] = None
     passport_expiry: Optional[date] = None
     travel_document_notes: Optional[str] = None
     known_assistance_needs: Optional[str] = None
     medical_notes_internal: Optional[str] = None
     meal_preferences: Optional[str] = None
+    seating_preferences: Optional[str] = None
+    baggage_preferences: Optional[str] = None
+    emergency_contact: Optional[Dict[str, str]] = None
     loyalty_numbers: Optional[List[Dict[str, str]]] = None
     status: Optional[PassengerStatus] = None
 
@@ -1463,7 +1647,7 @@ class ClientMasterRecordCreate(BaseModel):
     client_status: str = "active"
     client_version: Optional[str] = None
     created_by: Optional[str] = None
-    source_client_profile_id: Optional[str] = None
+    source_client_profile_id: str
     commercial_owner_type: Optional[str] = None
     profile: Dict[str, Any] = Field(default_factory=dict)
     contacts: List[Dict[str, Any]] = Field(default_factory=list)
@@ -1572,7 +1756,7 @@ class PassengerMasterRecordCreate(BaseModel):
     passenger_status: str = "active"
     passenger_version: Optional[str] = None
     created_by: Optional[str] = None
-    source_passenger_profile_id: Optional[str] = None
+    source_passenger_profile_id: str
     operational_profile: Dict[str, Any] = Field(default_factory=dict)
     service_history_ids: List[str] = Field(default_factory=list)
     mobility_profile: Dict[str, Any] = Field(default_factory=dict)
@@ -1681,7 +1865,7 @@ class ClientPassengerMasterLinkCreate(BaseModel):
     link_status: str = "active"
     client_master_record_id: str
     passenger_master_record_id: str
-    source_relationship_id: Optional[str] = None
+    source_relationship_id: str
     relationship_type: Optional[str] = None
     commercial_role: Optional[str] = None
     beneficiary_role: Optional[str] = None
@@ -2034,6 +2218,617 @@ class PassengerMergeAudit(BaseModel):
     created_at: datetime = Field(default_factory=now_utc)
 
 
+class RequestV4TripPurpose(str, Enum):
+    BUSINESS = "business"
+    LEISURE = "leisure"
+    MEDICAL = "medical"
+    FAMILY = "family"
+    OTHER = "other"
+
+
+class RequestV4QuoteMode(str, Enum):
+    ONE_WAY = "one_way"
+    ROUND_TRIP = "round_trip"
+    MULTI_CITY = "multi_city"
+    OPEN_JAW = "open_jaw"
+
+
+class RequestV4Cabin(str, Enum):
+    ECONOMY = "Y"
+    PREMIUM_ECONOMY = "W"
+    BUSINESS = "C"
+    FIRST = "F"
+
+
+class RequestV4ScopeMode(str, Enum):
+    ALL_SEGMENTS = "all_segments"
+    SELECTED_SEGMENTS = "selected_segments"
+
+
+class RequestV4Contact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: str = Field(min_length=1, max_length=80)
+    last_name: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    phone: Optional[str] = Field(default=None, max_length=80)
+
+    @model_validator(mode="after")
+    def validate_names(self):
+        self.first_name = self.first_name.strip()
+        self.last_name = self.last_name.strip()
+        if not self.first_name:
+            raise PydanticCustomError("contact_first_name_required", "Contact first name is required.")
+        if not self.last_name:
+            raise PydanticCustomError("contact_last_name_required", "Contact last name is required.")
+        return self
+
+
+class RequestV4Trip(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    trip_label: str = Field(default="", max_length=180)
+    trip_purpose: RequestV4TripPurpose = RequestV4TripPurpose.LEISURE
+    quote_mode: RequestV4QuoteMode = RequestV4QuoteMode.ONE_WAY
+    preferred_cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    preferred_cabin_id: str = Field(default="", max_length=120)
+    preferred_cabin_label: str = Field(default="", max_length=80)
+    budget_currency: str = Field(default="", max_length=3)
+    budget_currency_id: str = Field(default="", max_length=120)
+    budget_currency_label: str = Field(default="", max_length=80)
+    budget_amount: Optional[float] = None
+    max_stops: Optional[int] = Field(default=None, ge=0, le=12)
+    max_total_travel_hours: Optional[float] = Field(default=None, gt=0, le=240)
+    flexibility_days: Optional[int] = Field(default=None, ge=0, le=31)
+    preferred_airlines: List[str] = Field(default_factory=list, max_length=50)
+    preferred_airline_ids: List[str] = Field(default_factory=list, max_length=50)
+    preferred_airline_labels: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airlines: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airline_ids: List[str] = Field(default_factory=list, max_length=50)
+    excluded_airline_labels: List[str] = Field(default_factory=list, max_length=50)
+
+    @model_validator(mode="after")
+    def validate_trip_preferences(self):
+        if self.budget_amount is not None and self.budget_amount <= 0:
+            raise PydanticCustomError("budget_positive", "Budget amount must be greater than zero.")
+        if self.budget_currency:
+            self.budget_currency = self.budget_currency.strip().upper()
+            if len(self.budget_currency) != 3 or not self.budget_currency.isalpha():
+                raise PydanticCustomError("currency_invalid", "Budget currency must be a three-letter currency code.")
+        preferred = {value.strip().upper() for value in self.preferred_airlines if value.strip()}
+        excluded = {value.strip().upper() for value in self.excluded_airlines if value.strip()}
+        conflict = sorted(preferred.intersection(excluded))
+        if conflict:
+            raise PydanticCustomError(
+                "airline_preference_conflict",
+                f"Airline cannot be both preferred and excluded: {', '.join(conflict)}.",
+            )
+        self.preferred_airlines = sorted(preferred)
+        self.excluded_airlines = sorted(excluded)
+        return self
+
+
+class RequestV4Segment(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    segment_local_id: str = Field(min_length=1, max_length=80)
+    segment_order: int = Field(ge=1, le=100)
+    origin_label: str = Field(min_length=1, max_length=160)
+    origin_airport_id: str = Field(default="", max_length=120)
+    origin_iata: str = Field(default="", max_length=3)
+    origin_country_id: str = Field(default="", max_length=120)
+    origin_country_code: str = Field(default="", max_length=2)
+    destination_label: str = Field(min_length=1, max_length=160)
+    destination_airport_id: str = Field(default="", max_length=120)
+    destination_iata: str = Field(default="", max_length=3)
+    destination_country_id: str = Field(default="", max_length=120)
+    destination_country_code: str = Field(default="", max_length=2)
+    departure_date: date
+    departure_time: str = Field(default="", max_length=8)
+    arrival_date: Optional[date] = None
+    arrival_time: str = Field(default="", max_length=8)
+    marketing_carrier: str = Field(default="", max_length=3)
+    marketing_carrier_id: str = Field(default="", max_length=120)
+    marketing_carrier_label: str = Field(default="", max_length=160)
+    operating_carrier: str = Field(default="", max_length=3)
+    operating_carrier_id: str = Field(default="", max_length=120)
+    operating_carrier_label: str = Field(default="", max_length=160)
+    flight_number: str = Field(default="", max_length=12)
+    cabin: RequestV4Cabin = RequestV4Cabin.ECONOMY
+    cabin_id: str = Field(default="", max_length=120)
+    cabin_label: str = Field(default="", max_length=80)
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_segment(self):
+        self.segment_local_id = self.segment_local_id.strip()
+        self.origin_label = self.origin_label.strip()
+        self.destination_label = self.destination_label.strip()
+        self.origin_iata = self.origin_iata.strip().upper()
+        self.destination_iata = self.destination_iata.strip().upper()
+        self.origin_country_code = self.origin_country_code.strip().upper()
+        self.destination_country_code = self.destination_country_code.strip().upper()
+        self.marketing_carrier = self.marketing_carrier.strip().upper()
+        self.operating_carrier = self.operating_carrier.strip().upper()
+        origin_key = self.origin_iata or self.origin_label.casefold()
+        destination_key = self.destination_iata or self.destination_label.casefold()
+        if origin_key == destination_key:
+            raise PydanticCustomError("segment_same_airport", "Origin and destination must be different.")
+        for field_name, value in (("departure_time", self.departure_time), ("arrival_time", self.arrival_time)):
+            if value:
+                try:
+                    datetime.strptime(value, "%H:%M")
+                except ValueError as exc:
+                    raise PydanticCustomError("time_invalid", f"{field_name.replace('_', ' ').title()} must use HH:MM.") from exc
+        if self.arrival_date:
+            departure_value = datetime.combine(
+                self.departure_date,
+                datetime.strptime(self.departure_time or "00:00", "%H:%M").time(),
+            )
+            arrival_value = datetime.combine(
+                self.arrival_date,
+                datetime.strptime(self.arrival_time or "23:59", "%H:%M").time(),
+            )
+            if arrival_value < departure_value:
+                raise PydanticCustomError("segment_arrival_before_departure", "Arrival cannot be before departure.")
+        return self
+
+
+class RequestV4ServiceScope(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+
+    @model_validator(mode="after")
+    def validate_scope(self):
+        if self.segment_scope_mode == RequestV4ScopeMode.SELECTED_SEGMENTS and not self.segment_ids:
+            raise PydanticCustomError("selected_segments_required", "Select at least one itinerary segment.")
+        if self.segment_scope_mode == RequestV4ScopeMode.ALL_SEGMENTS and self.segment_ids:
+            raise PydanticCustomError("all_segments_has_ids", "All-segments scope cannot include selected segment IDs.")
+        if len(set(self.segment_ids)) != len(self.segment_ids):
+            raise PydanticCustomError("duplicate_segment_reference", "Segment references must be unique.")
+        return self
+
+
+class RequestV4ChildrenServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    child_age: Optional[int] = Field(default=None, ge=0, le=17)
+    escort_needed: bool = False
+    handover_contact: str = Field(default="", max_length=240)
+    pickup_contact: str = Field(default="", max_length=240)
+    airline_um_service_required: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_unaccompanied_minor(self):
+        if self.airline_um_service_required and self.child_age is None:
+            raise PydanticCustomError("child_age_required", "Child age is required for unaccompanied-minor support.")
+        if self.airline_um_service_required and (not self.handover_contact or not self.pickup_contact):
+            raise PydanticCustomError(
+                "minor_contacts_required",
+                "Handover and pickup contacts are required for unaccompanied-minor support.",
+            )
+        return self
+
+
+class RequestV4MobilityServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    assessment_version: str = Field(default="v2_assessment_driven", max_length=80)
+    passenger_context_tags: List[str] = Field(default_factory=list, max_length=30)
+    passenger_context_notes: str = Field(default="", max_length=2000)
+    functional_assessment: Dict[str, str] = Field(default_factory=dict)
+    suggested_ssr_code: str = Field(default="manual_review", max_length=20)
+    suggested_ssr_reason: str = Field(default="", max_length=1000)
+    recommendation_confidence: str = Field(default="manual_review", max_length=40)
+    confirmed_ssr_code: str = Field(default="manual_review", max_length=20)
+    override_reason: str = Field(default="", max_length=1000)
+    final_assistance_label: str = Field(default="", max_length=240)
+    own_mobility_device: str = Field(default="no", max_length=80)
+    own_device_details: Dict[str, Any] = Field(default_factory=dict)
+    battery_details: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_mobility(self):
+        allowed = {"WCHR", "WCHS", "WCHC", "MAAS", "MEDA", "BLND", "DEAF", "OTHER", "manual_review"}
+        if self.suggested_ssr_code not in allowed or self.confirmed_ssr_code not in allowed:
+            raise PydanticCustomError("mobility_code_invalid", "Mobility assistance code is not supported.")
+        if self.confirmed_ssr_code != self.suggested_ssr_code and not self.override_reason:
+            raise PydanticCustomError(
+                "mobility_override_reason_required",
+                "Explain why the confirmed assistance code differs from the suggested code.",
+            )
+        for container_name, values in (("device", self.own_device_details), ("battery", self.battery_details)):
+            for key in ("weight_kg", "length_cm", "width_cm", "height_cm", "battery_watt_hours", "battery_voltage", "battery_amp_hours"):
+                value = values.get(key)
+                if value not in (None, ""):
+                    try:
+                        if float(value) <= 0:
+                            raise ValueError
+                    except (TypeError, ValueError) as exc:
+                        raise PydanticCustomError("measurement_positive", f"{container_name.title()} {key.replace('_', ' ')} must be positive.") from exc
+        return self
+
+
+class RequestV4MedicalServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    medical_clearance_needed: bool = False
+    medif_required: bool = False
+    oxygen_needed: bool = False
+    portable_oxygen_concentrator: bool = False
+    equipment_type: str = Field(default="", max_length=120)
+    device_make_model: str = Field(default="", max_length=240)
+    battery_watt_hours: Optional[float] = Field(default=None, gt=0, le=5000)
+    stretcher_needed: bool = False
+    companion_required: bool = False
+    fit_to_fly_status: str = Field(default="unknown", max_length=80)
+    notes: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_medical_support(self):
+        if self.portable_oxygen_concentrator and not self.device_make_model:
+            raise PydanticCustomError("poc_model_required", "Portable oxygen concentrator make and model is required.")
+        return self
+
+
+class RequestV4ServiceAnimalDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    species: str = Field(min_length=1, max_length=80)
+    task_or_support: str = Field(default="", max_length=500)
+    animal_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    documentation_status: str = Field(default="pending_information", max_length=80)
+    approval_status: str = Field(default="unknown", max_length=80)
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4SensoryServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    hearing_support: bool = False
+    visual_support: bool = False
+    preferred_communication_method: str = Field(default="", max_length=160)
+    escort_or_navigation_support: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4CognitiveServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    support_type: str = Field(min_length=1, max_length=160)
+    preferred_language: str = Field(default="", max_length=80)
+    communication_support: str = Field(default="", max_length=500)
+    companion_present: bool = False
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4ExtraSeatDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    reason: str = Field(min_length=1, max_length=500)
+    extra_seat_count: int = Field(default=1, ge=1, le=4)
+    adjacent_seat_required: bool = True
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4SpecialEquipmentServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    item_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    item_type: str = Field(default="", max_length=160)
+    quantity: int = Field(default=1, ge=1, le=100)
+    weight_kg: Optional[float] = Field(default=None, gt=0, le=1000)
+    length_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    width_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    height_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    notes: str = Field(default="", max_length=2000)
+
+
+class RequestV4DocumentServiceDetails(RequestV4ServiceScope):
+    schema_version: int = 1
+    nationality: str = Field(default="", max_length=80)
+    residence: str = Field(default="", max_length=80)
+    destination_documents_needed: List[str] = Field(default_factory=list, max_length=100)
+    visa_transit_concern: str = Field(default="", max_length=1000)
+    deadline: Optional[date] = None
+    notes: str = Field(default="", max_length=2000)
+
+
+REQUEST_V4_SERVICE_DETAIL_MODELS = {
+    "children_traveling_alone": RequestV4ChildrenServiceDetails,
+    "wheelchair_and_mobility_assistance": RequestV4MobilityServiceDetails,
+    "medical_equipment_and_travel_support": RequestV4MedicalServiceDetails,
+    "service_animal": RequestV4ServiceAnimalDetails,
+    "hearing_and_visual_impairments": RequestV4SensoryServiceDetails,
+    "invisible_cognitive_or_language_support": RequestV4CognitiveServiceDetails,
+    "extra_seat_support": RequestV4ExtraSeatDetails,
+    "special_items_and_equipment": RequestV4SpecialEquipmentServiceDetails,
+    "documents_and_travel_compliance": RequestV4DocumentServiceDetails,
+}
+
+
+class RequestV4Passenger(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    passenger_local_id: str = Field(min_length=1, max_length=80)
+    passenger_profile_id: Optional[str] = None
+    identity_status: RequestPassengerIdentityStatus = RequestPassengerIdentityStatus.UNRESOLVED
+    passenger_type_code_id: str = Field(default="", max_length=120)
+    passenger_type_code: str = Field(default="ADT", max_length=12)
+    passenger_type_label: str = Field(default="Adult", max_length=80)
+    first_name: str = Field(default="", max_length=80)
+    last_name: str = Field(default="", max_length=80)
+    date_of_birth: Optional[date] = None
+    calculated_age_on_first_segment: Optional[int] = Field(default=None, ge=0, le=130)
+    passenger_type_reconciliation_status: str = Field(default="pending_resolution", max_length=80)
+    passenger_type_validation_messages: List[str] = Field(default_factory=list, max_length=20)
+    nationality_reference_id: str = Field(default="", max_length=120)
+    nationality_label: str = Field(default="", max_length=120)
+    nationality_code: str = Field(default="", max_length=3)
+    notes: str = Field(default="", max_length=2000)
+    selected_services: List[str] = Field(default_factory=list, max_length=50)
+    service_details: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_services(self):
+        self.passenger_local_id = self.passenger_local_id.strip()
+        self.passenger_type_code = self.passenger_type_code.strip().upper()
+        self.nationality_code = self.nationality_code.strip().upper()
+        selected = list(dict.fromkeys(value.strip() for value in self.selected_services if value.strip()))
+        unknown = sorted(set(selected).difference(REQUEST_V4_SERVICE_DETAIL_MODELS))
+        if unknown:
+            raise PydanticCustomError("service_key_unknown", f"Unsupported passenger service: {', '.join(unknown)}.")
+        missing = sorted(set(selected).difference(self.service_details))
+        if missing:
+            raise PydanticCustomError("service_details_missing", f"Service details are required for: {', '.join(missing)}.")
+        unexpected = sorted(set(self.service_details).difference(selected))
+        if unexpected:
+            raise PydanticCustomError("service_details_unselected", f"Remove details for unselected services: {', '.join(unexpected)}.")
+        normalized: Dict[str, Dict[str, Any]] = {}
+        for service_key in selected:
+            model = REQUEST_V4_SERVICE_DETAIL_MODELS[service_key]
+            normalized[service_key] = model.model_validate(self.service_details[service_key]).model_dump(mode="json")
+        self.selected_services = selected
+        self.service_details = normalized
+        return self
+
+
+class RequestV4Pet(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    pet_local_id: str = Field(min_length=1, max_length=80)
+    linked_passenger_local_id: Optional[str] = Field(default=None, max_length=80)
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+    pet_category: str = Field(default="PETC", max_length=16)
+    species_reference_id: str = Field(default="", max_length=120)
+    species_label: str = Field(min_length=1, max_length=120)
+    species_key: str = Field(default="", max_length=120)
+    breed_reference_id: str = Field(default="", max_length=120)
+    breed_label: str = Field(default="", max_length=120)
+    breed_key: str = Field(default="", max_length=120)
+    colour: str = Field(default="", max_length=80)
+    sex: str = Field(default="", max_length=40)
+    date_of_birth: Optional[date] = None
+    age_text: str = Field(default="", max_length=80)
+    is_pregnant: bool = False
+    is_nursing: bool = False
+    aggression_risk: bool = False
+    aggression_notes: str = Field(default="", max_length=1000)
+    pet_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    container_weight_kg: Optional[float] = Field(default=None, gt=0, le=250)
+    total_weight_kg: Optional[float] = Field(default=None, gt=0, le=500)
+    carrier_length_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    carrier_width_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    carrier_height_cm: Optional[float] = Field(default=None, gt=0, le=1000)
+    crate_type: str = Field(default="", max_length=120)
+    container_type_reference_id: str = Field(default="", max_length=120)
+    container_type_label: str = Field(default="", max_length=120)
+    vaccination_passport_uploaded: bool = False
+    rabies_vaccination_date: Optional[date] = None
+    rabies_serology_done: bool = False
+    rabies_serology_date: Optional[date] = None
+    rabies_serology_result: str = Field(default="", max_length=500)
+    microchip_number: str = Field(default="", max_length=120)
+    microchip_implantation_date: Optional[date] = None
+    eu_pet_passport: bool = False
+    import_permits_notes: str = Field(default="", max_length=2000)
+    quarantine_documents_notes: str = Field(default="", max_length=2000)
+    country_specific_restrictions_notes: str = Field(default="", max_length=2000)
+    special_instructions: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def validate_pet(self):
+        self.pet_category = self.pet_category.strip().upper()
+        if self.pet_category not in {"PETC", "AVIH", "SVAN", "ESAN", "OTHER"}:
+            raise PydanticCustomError("pet_category_invalid", "Pet category is not supported.")
+        RequestV4ServiceScope(
+            segment_scope_mode=self.segment_scope_mode,
+            segment_ids=self.segment_ids,
+        )
+        if self.pet_category in {"PETC", "AVIH"} and not all(
+            value is not None and value > 0
+            for value in (self.carrier_length_cm, self.carrier_width_cm, self.carrier_height_cm)
+        ):
+            raise PydanticCustomError(
+                "pet_carrier_dimensions_required",
+                "PETC and AVIH requests require positive carrier length, width, and height.",
+            )
+        if self.aggression_risk and not self.aggression_notes:
+            raise PydanticCustomError("aggression_notes_required", "Add notes when aggression risk is selected.")
+        if self.pet_weight_kg is not None or self.container_weight_kg is not None:
+            self.total_weight_kg = round((self.pet_weight_kg or 0) + (self.container_weight_kg or 0), 3)
+        else:
+            self.total_weight_kg = None
+        return self
+
+
+class RequestV4SpecialItem(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    item_local_id: str = Field(min_length=1, max_length=80)
+    linked_passenger_local_id: Optional[str] = Field(default=None, max_length=80)
+    segment_scope_mode: RequestV4ScopeMode = RequestV4ScopeMode.ALL_SEGMENTS
+    segment_ids: List[str] = Field(default_factory=list, max_length=100)
+    item_category_reference_id: str = Field(default="", max_length=120)
+    item_category_label: str = Field(default="", max_length=120)
+    item_category: str = Field(default="other", max_length=40)
+    declared_value_currency_id: str = Field(default="", max_length=120)
+    declared_value_currency_label: str = Field(default="", max_length=80)
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_item(self):
+        self.item_category = self.item_category.strip().lower()
+        allowed = {"weapon", "sports_equipment", "musical_instrument", "valuables_fragile", "other"}
+        if self.item_category not in allowed:
+            raise PydanticCustomError("item_category_invalid", "Special-item category is not supported.")
+        RequestV4ServiceScope(
+            segment_scope_mode=self.segment_scope_mode,
+            segment_ids=self.segment_ids,
+        )
+        detail_fields = {
+            "weapon": {"weapon_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "unloaded_confirmed", "secure_case_confirmed", "approval_status", "currency", "declared_value", "notes"},
+            "sports_equipment": {"equipment_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "fragile", "notes"},
+            "musical_instrument": {"instrument_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "cabin_transport_requested", "extra_seat_requested", "notes"},
+            "valuables_fragile": {"item_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "fragile", "notes"},
+            "other": {"item_type", "quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "currency", "declared_value", "notes"},
+        }
+        unexpected = sorted(set(self.details).difference(detail_fields[self.item_category]))
+        if unexpected:
+            raise PydanticCustomError("item_details_unknown", f"Unsupported {self.item_category} detail: {', '.join(unexpected)}.")
+        if self.item_category == "weapon":
+            if not self.details.get("unloaded_confirmed") or not self.details.get("secure_case_confirmed"):
+                raise PydanticCustomError(
+                    "weapon_confirmation_required",
+                    "Weapon requests require unloaded and secure-case confirmation.",
+                )
+            if not self.details.get("approval_status"):
+                raise PydanticCustomError("weapon_approval_status_required", "Weapon approval status is required.")
+        if self.item_category in {"sports_equipment", "musical_instrument", "valuables_fragile"}:
+            required_key = "equipment_type" if self.item_category == "sports_equipment" else "instrument_type" if self.item_category == "musical_instrument" else "item_type"
+            if not self.details.get(required_key):
+                raise PydanticCustomError("item_type_required", f"{required_key.replace('_', ' ').title()} is required.")
+        for field_name in ("quantity", "weight_kg", "length_cm", "width_cm", "height_cm", "declared_value"):
+            value = self.details.get(field_name)
+            if value not in (None, ""):
+                try:
+                    if float(value) <= 0:
+                        raise ValueError
+                except (TypeError, ValueError) as exc:
+                    raise PydanticCustomError("item_measurement_positive", f"{field_name.replace('_', ' ').title()} must be positive.") from exc
+        currency = str(self.details.get("currency") or "").strip().upper()
+        if currency and (len(currency) != 3 or not currency.isalpha()):
+            raise PydanticCustomError("item_currency_invalid", "Declared-value currency must be a three-letter currency code.")
+        if currency:
+            self.details["currency"] = currency
+        return self
+
+
+class RequestV4AdminMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source: str = Field(default="public_submission", max_length=80)
+    status: str = Field(default="new", max_length=40)
+    priority: str = Field(default="normal", max_length=40)
+    created_on_behalf_of: str = Field(default="", max_length=160)
+    internal_notes: str = Field(default="", max_length=4000)
+    assigned_to: str = Field(default="", max_length=120)
+    reference_reconciliation_messages: List[str] = Field(default_factory=list, max_length=100)
+
+
+class RequestV4Payload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_version: int
+    contact: RequestV4Contact
+    trip: RequestV4Trip
+    itinerary_segments: List[RequestV4Segment] = Field(min_length=1, max_length=100)
+    passengers: List[RequestV4Passenger] = Field(min_length=1, max_length=100)
+    pets: List[RequestV4Pet] = Field(default_factory=list, max_length=100)
+    special_items: List[RequestV4SpecialItem] = Field(default_factory=list, max_length=100)
+    request_level_notes: str = Field(default="", max_length=4000)
+    admin_metadata: RequestV4AdminMetadata = Field(default_factory=RequestV4AdminMetadata)
+
+    @model_validator(mode="after")
+    def validate_aggregate(self):
+        if self.request_version != 4:
+            raise PydanticCustomError("request_version_invalid", "Request version must equal 4.")
+        segment_ids = [item.segment_local_id for item in self.itinerary_segments]
+        if len(segment_ids) != len(set(segment_ids)):
+            raise PydanticCustomError(
+                "duplicate_segment_ids",
+                "itinerary_segments.segment_local_id values must be unique.",
+            )
+        orders = [item.segment_order for item in self.itinerary_segments]
+        if orders != list(range(1, len(orders) + 1)):
+            raise PydanticCustomError(
+                "segment_order_invalid",
+                "itinerary_segments.segment_order must be sequential and begin at 1.",
+            )
+        passenger_ids = [item.passenger_local_id for item in self.passengers]
+        if len(passenger_ids) != len(set(passenger_ids)):
+            raise PydanticCustomError(
+                "duplicate_passenger_ids",
+                "passengers.passenger_local_id values must be unique.",
+            )
+        segment_id_set = set(segment_ids)
+        passenger_id_set = set(passenger_ids)
+        first_departure = self.itinerary_segments[0].departure_date
+        for passenger in self.passengers:
+            if passenger.date_of_birth:
+                age = first_departure.year - passenger.date_of_birth.year
+                if (first_departure.month, first_departure.day) < (
+                    passenger.date_of_birth.month,
+                    passenger.date_of_birth.day,
+                ):
+                    age -= 1
+                if age < 0 or age > 130:
+                    raise PydanticCustomError("passenger_age_invalid", "Passenger date of birth is not valid for the first departure.")
+                passenger.calculated_age_on_first_segment = age
+            else:
+                passenger.calculated_age_on_first_segment = None
+            for service_key, detail in passenger.service_details.items():
+                missing_segments = sorted(set(detail.get("segment_ids") or []).difference(segment_id_set))
+                if missing_segments:
+                    raise PydanticCustomError(
+                        "service_segment_reference_invalid",
+                        f"passengers.service_details.{service_key}.segment_ids references unknown itinerary segment IDs: {', '.join(missing_segments)}.",
+                    )
+        pet_ids = [item.pet_local_id for item in self.pets]
+        if len(pet_ids) != len(set(pet_ids)):
+            raise PydanticCustomError(
+                "duplicate_pet_ids",
+                "pets.pet_local_id values must be unique.",
+            )
+        item_ids = [item.item_local_id for item in self.special_items]
+        if len(item_ids) != len(set(item_ids)):
+            raise PydanticCustomError(
+                "duplicate_item_ids",
+                "special_items.item_local_id values must be unique.",
+            )
+        for label, items in (("Pet", self.pets), ("Special item", self.special_items)):
+            for item in items:
+                linked_passenger = item.linked_passenger_local_id
+                if linked_passenger and linked_passenger not in passenger_id_set:
+                    raise PydanticCustomError(
+                        "passenger_reference_invalid",
+                        f"{label}.linked_passenger_local_id references an unknown passengers.passenger_local_id: {linked_passenger}.",
+                    )
+                missing_segments = sorted(set(item.segment_ids).difference(segment_id_set))
+                if missing_segments:
+                    raise PydanticCustomError(
+                        "segment_reference_invalid",
+                        f"{label}.segment_ids references unknown itinerary_segments.segment_local_id values: {', '.join(missing_segments)}.",
+                    )
+        return self
+
+
+class RequestV4Update(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    canonical_payload: RequestV4Payload
+    remove_passenger_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_segment_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_pet_local_ids: List[str] = Field(default_factory=list, max_length=100)
+    remove_item_local_ids: List[str] = Field(default_factory=list, max_length=100)
+
+
 class TravelRequest(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None
@@ -2075,6 +2870,11 @@ class TravelRequest(BaseDocument):
     submission_channel: SubmissionChannel = SubmissionChannel.STAFF_CONSOLE
     account_origin_at_submission: AccountOriginAtSubmission = AccountOriginAtSubmission.STAFF_CREATED
     canonical_alignment_notes: Dict[str, Any] = Field(default_factory=dict)
+    request_version: Optional[int] = None
+    canonical_payload: Dict[str, Any] = Field(default_factory=dict)
+    canonical_projection_status: str = "not_applicable"
+    canonical_projection_warnings: List[str] = Field(default_factory=list)
+    canonical_payload_updated_at: Optional[datetime] = None
     intake_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     builder_payload_snapshot: Dict[str, Any] = Field(default_factory=dict)
     closed_at: Optional[datetime] = None
@@ -2196,7 +2996,9 @@ class RequestIntake(BaseDocument):
     contact_snapshot: RequestIntakeContactSnapshot
     travel_summary: RequestIntakeTravelSummary
     service_summary: RequestIntakeServiceSummary
+    request_version: Optional[int] = None
     canonical_payload: Dict[str, Any] = Field(default_factory=dict)
+    canonical_validation_status: str = "legacy"
     raw_payload: Dict[str, Any] = Field(default_factory=dict)
     normalized_payload: Optional[Dict[str, Any]] = None
     priority: RequestPriority = RequestPriority.NORMAL
@@ -2291,6 +3093,18 @@ class TripDossier(BaseDocument):
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
     source: TripDossierSource = TripDossierSource.MANUAL
+    creation_mode: str = "manual_planning"
+    source_reference: Optional[str] = None
+    creation_reason: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
+    offer_workspace_id: Optional[str] = None
+    offer_workspace_version: Optional[int] = None
+    offer_option_id: Optional[str] = None
+    offer_acceptance_id: Optional[str] = None
+    confirmed_at: Optional[datetime] = None
+    confirmed_by_user_id: Optional[str] = None
+    current_operational_version: int = 1
+    reconciliation_status: str = "planning_only"
     raw_source_payloads: List[Dict[str, Any]] = Field(default_factory=list)
     created_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
@@ -2302,6 +3116,7 @@ class TripPassenger(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None
     trip_id: str
+    accepted_offer_snapshot_id: Optional[str] = None
     source_request_passenger_id: Optional[str] = None
     passenger_profile_id: Optional[str] = None
     display_name: str
@@ -2312,12 +3127,16 @@ class TripPassenger(BaseDocument):
     assistance_summary: Optional[str] = None
     service_summary: Optional[str] = None
     sort_order: int = 0
+    operational_version: int = 1
+    reconciliation_status: str = "planning"
+    planning_projection_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TripSegment(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None
     trip_id: str
+    accepted_offer_snapshot_id: Optional[str] = None
     source_request_segment_id: Optional[str] = None
     segment_order: int
     origin_airport_code: str
@@ -2332,6 +3151,9 @@ class TripSegment(BaseDocument):
     cabin: Optional[str] = None
     booking_class: Optional[str] = None
     segment_status: TripSegmentStatus = TripSegmentStatus.PLANNED
+    operational_version: int = 1
+    reconciliation_status: str = "planning"
+    planning_projection_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
 
 
 class TripServiceItem(BaseDocument):
@@ -2382,6 +3204,9 @@ class TripDossierCreate(BaseModel):
     operational_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    creation_mode: str = "manual_planning"
+    source_reference: Optional[str] = None
+    reason: Optional[str] = None
 
 
 class TripDossierUpdate(BaseModel):
@@ -2397,6 +3222,8 @@ class TripDossierUpdate(BaseModel):
     operational_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     client_visible_notes: Optional[str] = None
+    expected_version: Optional[int] = None
+    transition_reason: Optional[str] = None
 
 
 class TripLinkRequestPayload(BaseModel):
@@ -2448,10 +3275,27 @@ class RequestPet(BaseDocument):
     travel_request_id: Optional[str] = None
     request_passenger_id: Optional[str] = None
     passenger_id: Optional[str] = None
+    pet_local_id: Optional[str] = None
+    linked_passenger_local_id: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
+    segment_local_ids: List[str] = Field(default_factory=list)
+    pet_category: Optional[str] = None
     pet_name: Optional[str] = None
+    species_reference_id: Optional[str] = None
     species: str
+    species_key: Optional[str] = None
+    breed_reference_id: Optional[str] = None
     breed: Optional[str] = None
+    breed_key: Optional[str] = None
     breed_free_text: Optional[str] = None
+    colour: Optional[str] = None
+    sex: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    age_text: Optional[str] = None
+    is_pregnant: bool = False
+    is_nursing: bool = False
+    aggression_risk: bool = False
+    aggression_notes: Optional[str] = None
     snub_nosed_flag: bool = False
     age_months: Optional[int] = None
     pet_weight_kg: Optional[float] = None
@@ -2459,11 +3303,27 @@ class RequestPet(BaseDocument):
     combined_weight_kg: Optional[float] = None
     requested_transport_mode: Optional[str] = None
     carrier_dimensions_cm: Dict[str, Any] = Field(default_factory=dict)
+    container_type_reference_id: Optional[str] = None
+    container_type_label: Optional[str] = None
+    crate_type: Optional[str] = None
+    vaccination_passport_uploaded: bool = False
+    rabies_vaccination_date: Optional[date] = None
+    rabies_serology_done: bool = False
+    rabies_serology_date: Optional[date] = None
+    rabies_serology_result: Optional[str] = None
+    microchip_number: Optional[str] = None
+    microchip_implantation_date: Optional[date] = None
+    eu_pet_passport: bool = False
+    import_permits_notes: Optional[str] = None
+    quarantine_documents_notes: Optional[str] = None
+    country_specific_restrictions_notes: Optional[str] = None
     documentation_status: Optional[str] = None
     special_requirements: Optional[str] = None
     carrier_required: bool = True
     service_animal: bool = False
     generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     notes: Optional[str] = None
     status: str = "active"
 
@@ -2491,7 +3351,13 @@ class RequestSpecialItem(BaseDocument):
     travel_request_id: Optional[str] = None
     request_passenger_id: Optional[str] = None
     owner_passenger_id: Optional[str] = None
+    item_local_id: Optional[str] = None
+    linked_passenger_local_id: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
+    segment_local_ids: List[str] = Field(default_factory=list)
     item_type: str
+    item_category_reference_id: Optional[str] = None
+    item_category_label: Optional[str] = None
     item_category_code: Optional[str] = None
     item_name: Optional[str] = None
     description: str
@@ -2504,10 +3370,15 @@ class RequestSpecialItem(BaseDocument):
     usage_in_cabin_flag: bool = False
     special_handling_instructions: Optional[str] = None
     documentation_status: Optional[str] = None
+    declared_value_currency_id: Optional[str] = None
+    declared_value_currency_label: Optional[str] = None
     dimensions_text: Optional[str] = None
     weight_text: Optional[str] = None
     requires_policy_check: bool = True
     generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
+    canonical_details: Dict[str, Any] = Field(default_factory=dict)
     notes: Optional[str] = None
     status: str = "active"
 
@@ -2802,6 +3673,7 @@ class RequestPassenger(BaseDocument):
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    passenger_local_id: Optional[str] = None
     passenger_id: Optional[str] = None
     passenger_link_mode: PassengerLinkMode = PassengerLinkMode.EXISTING
     client_passenger_relationship_id: Optional[str] = None
@@ -2809,8 +3681,29 @@ class RequestPassenger(BaseDocument):
     is_primary_traveler: bool = False
     service_needs_summary: Optional[str] = None
     snapshot_display_name: str
-    snapshot_date_of_birth: date
+    snapshot_date_of_birth: Optional[date] = None
     snapshot_passenger_type: str
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
+    passenger_type_reconciliation_status: str = "legacy_unresolved"
+    passenger_type_validation_messages: List[str] = Field(default_factory=list)
+    calculated_age_on_first_segment: Optional[int] = None
+    nationality_reference_id: Optional[str] = None
+    nationality_label: Optional[str] = None
+    nationality_code: Optional[str] = None
+    selected_services: List[str] = Field(default_factory=list)
+    service_details: Dict[str, Any] = Field(default_factory=dict)
+    identity_status: RequestPassengerIdentityStatus = RequestPassengerIdentityStatus.CONFIRMED
+    identity_source: Optional[str] = None
+    proposed_identity_json: Dict[str, Any] = Field(default_factory=dict)
+    identity_confirmed_at: Optional[datetime] = None
+    identity_confirmed_by_user_id: Optional[str] = None
+    identity_confirmation_reason: Optional[str] = None
+    source_intake_id: Optional[str] = None
+    quarantined_passenger_profile_id: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     status: str = "active"
 
 
@@ -2835,19 +3728,76 @@ class RequestPassengerUpdate(BaseModel):
     service_needs_summary: Optional[str] = None
 
 
+class RequestPassengerIdentityConfirm(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    existing_passenger_id: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    display_name: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    passenger_type: PassengerType = PassengerType.ADT
+    passenger_type_code_id: Optional[str] = None
+    passenger_type_code: Optional[str] = None
+    passenger_type_label: Optional[str] = None
+    gender: Optional[str] = None
+    nationality: Optional[str] = None
+    residence_country: Optional[str] = None
+    primary_language: str = "en"
+    relationship_type: RelationshipType = RelationshipType.OTHER
+    confirmation_reason: str = Field(min_length=3, max_length=500)
+
+    @model_validator(mode="after")
+    def validate_identity_source(self):
+        supplied_identity_fields = [
+            self.first_name,
+            self.middle_name,
+            self.last_name,
+            self.display_name,
+            self.date_of_birth,
+            self.gender,
+            self.nationality,
+            self.residence_country,
+        ]
+        if self.existing_passenger_id:
+            if any(value is not None for value in supplied_identity_fields):
+                raise PydanticCustomError(
+                    "identity_source_conflict",
+                    "Existing passenger confirmation cannot include replacement identity fields.",
+                )
+            return self
+        if not self.first_name or not self.last_name or not self.date_of_birth:
+            raise PydanticCustomError(
+                "identity_fields_required",
+                "New passenger confirmation requires first name, last name, and date of birth.",
+            )
+        if self.first_name.startswith("Passenger ") and self.last_name == "Details pending":
+            raise PydanticCustomError(
+                "placeholder_identity_forbidden",
+                "Placeholder identity values cannot create a passenger profile.",
+            )
+        return self
+
+
 class RequestSegment(BaseDocument):
     agency_id: str
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    segment_local_id: Optional[str] = None
     trip_segment_id: Optional[str] = None
     sequence: int
     origin_text: str
+    origin_airport_id: Optional[str] = None
     origin_airport_code: Optional[str] = None
+    origin_country_id: Optional[str] = None
     origin_city: Optional[str] = None
     origin_country: Optional[str] = None
     destination_text: str
+    destination_airport_id: Optional[str] = None
     destination_airport_code: Optional[str] = None
+    destination_country_id: Optional[str] = None
     destination_city: Optional[str] = None
     destination_country: Optional[str] = None
     departure_date: Optional[date] = None
@@ -2855,10 +3805,18 @@ class RequestSegment(BaseDocument):
     arrival_date: Optional[date] = None
     arrival_time_window: Optional[str] = None
     marketing_airline: Optional[str] = None
+    marketing_airline_id: Optional[str] = None
+    marketing_airline_label: Optional[str] = None
     operating_airline: Optional[str] = None
+    operating_airline_id: Optional[str] = None
+    operating_airline_label: Optional[str] = None
     preferred_airline_code: Optional[str] = None
     preferred_flight_number: Optional[str] = None
     cabin_preference: Optional[str] = None
+    cabin_reference_id: Optional[str] = None
+    cabin_label: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     notes: Optional[str] = None
     status: str = "active"
 
@@ -2919,6 +3877,7 @@ class RequestedService(BaseDocument):
     workspace_id: Optional[str] = None
     request_id: str
     travel_request_id: Optional[str] = None
+    passenger_service_request_id: Optional[str] = None
     request_passenger_segment_service_ids: List[str] = Field(default_factory=list)
     passenger_id: Optional[str] = None
     service_catalogue_id: Optional[str] = None
@@ -2936,6 +3895,8 @@ class RequestedService(BaseDocument):
     segment_ids: List[str] = Field(default_factory=list)
     applies_to_all_passengers: bool = True
     applies_to_all_segments: bool = True
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     client_visible_summary: Optional[str] = None
     internal_notes: Optional[str] = None
     requires_documents: bool = False
@@ -3147,6 +4108,9 @@ class RequestMessage(BaseDocument):
     sender_type: MessageSenderType = MessageSenderType.STAFF
     visibility: Visibility = Visibility.INTERNAL
     message_text: str
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
 
 
 class RequestMessageCreate(BaseModel):
@@ -3662,11 +4626,16 @@ class OfferTimelineEvent(BaseModel):
 
 class OfferWorkspaceStatus(str, Enum):
     DRAFT = "draft"
+    READY = "ready"
     IN_REVIEW = "in_review"
+    DELIVERED = "delivered"
     SHARED = "shared"
     ACCEPTED = "accepted"
+    DECLINED = "declined"
     REJECTED = "rejected"
     EXPIRED = "expired"
+    SUPERSEDED = "superseded"
+    CANCELLED = "cancelled"
     ARCHIVED = "archived"
 
 
@@ -3708,23 +4677,36 @@ class OfferBuilderPricingLineType(str, Enum):
 class OfferWorkspace(BaseDocument):
     agency_id: str
     request_id: Optional[str] = None
+    client_profile_id: Optional[str] = None
     trip_id: Optional[str] = None
     existing_trip_id: Optional[str] = None
     trip_change_operation_id: Optional[str] = None
     offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     title: str
     status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
+    version: int = 1
+    revision_root_id: Optional[str] = None
+    previous_version_id: Optional[str] = None
     currency: str = "EUR"
+    currency_reference_id: Optional[str] = None
+    currency_label_snapshot: Optional[str] = None
+    expires_at: Optional[datetime] = None
     client_summary_json: Dict[str, Any] = Field(default_factory=dict)
     internal_notes: Optional[str] = None
     created_by_user_id: Optional[str] = None
     updated_by_user_id: Optional[str] = None
+    delivered_at: Optional[datetime] = None
+    superseded_at: Optional[datetime] = None
+    superseded_by_offer_id: Optional[str] = None
+    compatibility_metadata: Dict[str, Any] = Field(default_factory=dict)
+    reconciliation_status: str = "canonical"
 
 
 class OfferWorkspaceCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     request_id: Optional[str] = None
+    client_profile_id: Optional[str] = None
     trip_id: Optional[str] = None
     existing_trip_id: Optional[str] = None
     trip_change_operation_id: Optional[str] = None
@@ -3732,6 +4714,9 @@ class OfferWorkspaceCreate(BaseModel):
     title: str
     status: OfferWorkspaceStatus = OfferWorkspaceStatus.DRAFT
     currency: str = "EUR"
+    currency_reference_id: Optional[str] = None
+    currency_label_snapshot: Optional[str] = None
+    expires_at: Optional[datetime] = None
     client_summary_json: Dict[str, Any] = Field(default_factory=dict)
     internal_notes: Optional[str] = None
 
@@ -3740,6 +4725,7 @@ class OfferWorkspaceUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     request_id: Optional[str] = None
+    client_profile_id: Optional[str] = None
     trip_id: Optional[str] = None
     existing_trip_id: Optional[str] = None
     trip_change_operation_id: Optional[str] = None
@@ -3747,13 +4733,29 @@ class OfferWorkspaceUpdate(BaseModel):
     title: Optional[str] = None
     status: Optional[OfferWorkspaceStatus] = None
     currency: Optional[str] = None
+    currency_reference_id: Optional[str] = None
+    currency_label_snapshot: Optional[str] = None
+    expires_at: Optional[datetime] = None
     client_summary_json: Optional[Dict[str, Any]] = None
     internal_notes: Optional[str] = None
+    expected_version: Optional[int] = None
+    revision_reason: Optional[str] = None
+
+
+class OfferWorkspaceTransitionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_version: Optional[int] = None
+    reason: Optional[str] = None
 
 
 class OfferOption(BaseDocument):
     agency_id: str
     workspace_id: str
+    offer_workspace_id: Optional[str] = None
+    offer_workspace_version: int = 1
+    option_order: int = 1
+    version: int = 1
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
     existing_trip_id: Optional[str] = None
@@ -3767,12 +4769,26 @@ class OfferOption(BaseDocument):
     main_airline_id: Optional[str] = None
     main_airline_code: Optional[str] = None
     provider_name: OfferProviderName = OfferProviderName.MANUAL
+    itinerary_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    passenger_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    fare_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    service_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    pet_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    special_item_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    airline_charge_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    agency_fee_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    tax_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    total_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    currency: str = "EUR"
+    booking_readiness_inputs_json: Dict[str, Any] = Field(default_factory=dict)
     source_payload_json: Dict[str, Any] = Field(default_factory=dict)
     rules_summary_json: Dict[str, Any] = Field(default_factory=dict)
     service_feasibility_json: Dict[str, Any] = Field(default_factory=dict)
     pricing_summary_json: Dict[str, Any] = Field(default_factory=dict)
     warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
 
 
 class OfferOptionCreate(BaseModel):
@@ -3782,6 +4798,7 @@ class OfferOptionCreate(BaseModel):
     trip_change_operation_id: Optional[str] = None
     offer_purpose: OfferPurpose = OfferPurpose.NEW_BOOKING
     label: str
+    option_order: Optional[int] = None
     option_type: OfferOptionType = OfferOptionType.FLIGHT
     status: OfferOptionStatus = OfferOptionStatus.DRAFT
     recommendation_rank: Optional[int] = None
@@ -3817,6 +4834,7 @@ class OfferOptionUpdate(BaseModel):
     pricing_summary_json: Optional[Dict[str, Any]] = None
     warnings_json: Optional[List[Dict[str, Any]]] = None
     internal_notes: Optional[str] = None
+    expected_version: Optional[int] = None
 
 
 class OfferRoutingOption(BaseDocument):
@@ -3974,7 +4992,11 @@ class OfferAcceptanceSource(str, Enum):
 
 
 class OfferAcceptanceStatus(str, Enum):
+    PENDING = "pending"
     ACCEPTED = "accepted"
+    DECLINED = "declined"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
     SUPERSEDED = "superseded"
     CANCELLED = "cancelled"
 
@@ -4129,10 +5151,20 @@ class OfferAcceptance(BaseDocument):
     agency_id: str
     workspace_id: str
     option_id: str
+    offer_version: int = 1
+    option_version: int = 1
+    idempotency_key: str
     request_id: Optional[str] = None
     trip_id: Optional[str] = None
     accepted_by_user_id: Optional[str] = None
-    accepted_at: datetime = Field(default_factory=now_utc)
+    accepted_at: Optional[datetime] = None
+    declined_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+    expired_at: Optional[datetime] = None
+    actor_identity_id: Optional[str] = None
+    channel: str = "agency_staff"
+    acceptance_terms_version: Optional[str] = None
+    consent_evidence_json: Dict[str, Any] = Field(default_factory=dict)
     acceptance_source: OfferAcceptanceSource = OfferAcceptanceSource.INTERNAL
     status: OfferAcceptanceStatus = OfferAcceptanceStatus.ACCEPTED
     accepted_pricing_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
@@ -4143,6 +5175,10 @@ class OfferAcceptance(BaseDocument):
     accepted_special_items_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     rules_feasibility_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     client_visible_summary_json: Dict[str, Any] = Field(default_factory=dict)
+    accepted_payload_hash: str
+    accepted_snapshot_id: Optional[str] = None
+    reconciliation_status: str = "pending"
+    failure_reason: Optional[str] = None
     internal_notes: Optional[str] = None
 
 
@@ -4150,9 +5186,26 @@ class OfferAcceptanceCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     acceptance_source: OfferAcceptanceSource = OfferAcceptanceSource.INTERNAL
+    offer_version: Optional[int] = None
+    option_version: Optional[int] = None
+    idempotency_key: Optional[str] = None
+    channel: str = "agency_staff"
+    acceptance_terms_version: Optional[str] = None
+    consent_evidence_json: Dict[str, Any] = Field(default_factory=dict)
+    override_reason: Optional[str] = None
     provider_target: BookingProviderTarget = BookingProviderTarget.MANUAL
     client_visible_summary_json: Dict[str, Any] = Field(default_factory=dict)
     internal_notes: Optional[str] = None
+
+
+class OfferDeclineCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    offer_version: Optional[int] = None
+    option_version: Optional[int] = None
+    idempotency_key: Optional[str] = None
+    channel: str = "agency_staff"
+    reason: Optional[str] = None
 
 
 class TripAcceptedOfferSnapshot(BaseDocument):
@@ -4162,6 +5215,10 @@ class TripAcceptedOfferSnapshot(BaseDocument):
     workspace_id: str
     option_id: str
     acceptance_id: str
+    request_version: Optional[int] = None
+    offer_version: int = 1
+    option_version: int = 1
+    client_profile_id: Optional[str] = None
     confirmed_segments_json: List[Dict[str, Any]] = Field(default_factory=list)
     confirmed_passengers_json: List[Dict[str, Any]] = Field(default_factory=list)
     confirmed_fare_bundle_json: Dict[str, Any] = Field(default_factory=dict)
@@ -4171,6 +5228,19 @@ class TripAcceptedOfferSnapshot(BaseDocument):
     confirmed_special_items_json: Dict[str, Any] = Field(default_factory=dict)
     ssr_osi_preview_json: Dict[str, Any] = Field(default_factory=dict)
     booking_readiness_json: Dict[str, Any] = Field(default_factory=dict)
+    airlines_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    cabins_snapshot_json: List[Dict[str, Any]] = Field(default_factory=list)
+    baggage_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    airline_charges_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    agency_fees_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    taxes_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    total_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    currency: Optional[str] = None
+    terms_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    policy_readiness_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    source_hash: str
+    created_by_user_id: Optional[str] = None
+    immutable: bool = True
 
 
 class BookingReadinessPackage(BaseDocument):
@@ -4210,6 +5280,8 @@ class BookingWorkspace(BaseDocument):
     offer_workspace_id: Optional[str] = None
     offer_option_id: Optional[str] = None
     offer_acceptance_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
+    offer_booking_handoff_id: Optional[str] = None
     booking_readiness_package_id: Optional[str] = None
     import_draft_id: Optional[str] = None
     trip_change_operation_id: Optional[str] = None
@@ -4348,11 +5420,14 @@ class BookingRecord(BaseDocument):
     request_id: Optional[str] = None
     booking_readiness_package_id: Optional[str] = None
     offer_acceptance_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
+    offer_booking_handoff_id: Optional[str] = None
     import_draft_id: Optional[str] = None
     trip_change_operation_id: Optional[str] = None
     original_booking_record_id: Optional[str] = None
     revision_reason: Optional[str] = None
     pnr_locator: Optional[str] = None
+    airline_locators_json: List[Dict[str, Any]] = Field(default_factory=list)
     provider: BookingProviderTarget = BookingProviderTarget.MANUAL
     provider_status: BookingRecordProviderStatus = BookingRecordProviderStatus.DRAFT
     booking_status: BookingRecordStatus = BookingRecordStatus.DRAFT
@@ -4366,16 +5441,25 @@ class BookingRecord(BaseDocument):
     osi_json: List[Dict[str, Any]] = Field(default_factory=list)
     provider_payload_json: Dict[str, Any] = Field(default_factory=dict)
     provider_response_json: Dict[str, Any] = Field(default_factory=dict)
+    source_evidence_reference: Optional[str] = None
+    source_evidence_json: Dict[str, Any] = Field(default_factory=dict)
+    confirmation_timestamp: Optional[datetime] = None
+    current_external_result_version: int = 1
+    reconciliation_status: str = "draft"
+    result_hash: Optional[str] = None
     internal_pnr_mirror_json: Dict[str, Any] = Field(default_factory=dict)
     warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
     internal_notes: Optional[str] = None
     created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
 
 
 class BookingCreateFromReadinessRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     booking_readiness_package_id: str
+    accepted_offer_snapshot_id: Optional[str] = None
+    offer_booking_handoff_id: Optional[str] = None
     provider_target: Optional[BookingProviderTarget] = None
     internal_notes: Optional[str] = None
     create_draft_record: bool = True
@@ -4405,6 +5489,8 @@ class ManualBookingWorkspaceCreate(BaseModel):
     trip_change_operation_id: Optional[str] = None
     original_booking_record_id: Optional[str] = None
     revision_reason: Optional[str] = None
+    source_reference: Optional[str] = None
+    reason: Optional[str] = None
 
 
 class BookingWorkspaceStatusUpdate(BaseModel):
@@ -4430,6 +5516,12 @@ class BookingRecordUpdate(BaseModel):
     osi_json: Optional[List[Dict[str, Any]]] = None
     provider_payload_json: Optional[Dict[str, Any]] = None
     provider_response_json: Optional[Dict[str, Any]] = None
+    airline_locators_json: Optional[List[Dict[str, Any]]] = None
+    source_evidence_reference: Optional[str] = None
+    source_evidence_json: Optional[Dict[str, Any]] = None
+    reconciliation_status: Optional[str] = None
+    expected_version: Optional[int] = None
+    reason: Optional[str] = None
     internal_notes: Optional[str] = None
 
 
@@ -14864,9 +15956,233 @@ class DocumentWorkspaceOutputReconciliationRequest(BaseModel):
     correlation_id: Optional[str] = None
 
 
+class OperationalTimelineVisibility(str, Enum):
+    INTERNAL = "internal"
+    AGENCY = "agency"
+    CLIENT = "client"
+    PASSENGER = "passenger"
+    SUPPLIER = "supplier"
+    PLATFORM = "platform"
+    SYSTEM = "system"
+
+
+class CommunicationParticipantType(str, Enum):
+    PLATFORM = "platform"
+    AGENCY = "agency"
+    CLIENT_PORTAL = "client_portal"
+    PASSENGER_PORTAL = "passenger_portal"
+    SUPPLIER = "supplier"
+    AIRLINE = "airline"
+    SYSTEM = "system"
+
+
+class CommunicationThreadStatus(str, Enum):
+    OPEN = "open"
+    CLOSED = "closed"
+    ARCHIVED = "archived"
+
+
+class CommunicationDeliveryStatus(str, Enum):
+    RECORDED = "recorded"
+    RECEIVED = "received"
+    NOT_SENT = "not_sent"
+    ACKNOWLEDGED = "acknowledged"
+    FAILED = "failed"
+
+
+class NotificationProjectionType(str, Enum):
+    INFO = "info"
+    WARNING = "warning"
+    ACTION_REQUIRED = "action_required"
+    APPROVAL_REQUIRED = "approval_required"
+    DEADLINE = "deadline"
+    FAILED = "failed"
+
+
+class CommunicationEntityReference(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    entity_type: str
+    entity_id: str
+    label: Optional[str] = None
+
+
+class CommunicationParticipant(BaseDocument):
+    agency_id: str
+    thread_id: str
+    participant_type: CommunicationParticipantType
+    identity_id: Optional[str] = None
+    portal_account_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    airline_code: Optional[str] = None
+    display_name: str
+    participant_role: Optional[str] = None
+    permissions: List[str] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(default_factory=list)
+    status: str = "active"
+    created_by_actor_id: Optional[str] = None
+
+
+class CommunicationParticipantCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    participant_type: CommunicationParticipantType
+    identity_id: Optional[str] = None
+    portal_account_id: Optional[str] = None
+    client_id: Optional[str] = None
+    passenger_id: Optional[str] = None
+    supplier_reference: Optional[str] = None
+    airline_code: Optional[str] = None
+    display_name: str
+    participant_role: Optional[str] = None
+    permissions: List[str] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(default_factory=list)
+
+
+class CommunicationThread(BaseDocument):
+    agency_id: str
+    thread_reference: str
+    subject: str
+    status: CommunicationThreadStatus = CommunicationThreadStatus.OPEN
+    participant_ids: List[str] = Field(default_factory=list)
+    entity_references: List[CommunicationEntityReference] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(
+        default_factory=lambda: [OperationalTimelineVisibility.INTERNAL]
+    )
+    created_by_actor_type: CommunicationParticipantType = CommunicationParticipantType.AGENCY
+    created_by_actor_id: Optional[str] = None
+    closed_at: Optional[datetime] = None
+    closed_by_actor_id: Optional[str] = None
+    archived_at: Optional[datetime] = None
+    archived_by_actor_id: Optional[str] = None
+    last_message_at: Optional[datetime] = None
+    message_count: int = 0
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    canonical_communication_owner: bool = True
+
+
+class CommunicationThreadCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    idempotency_key: Optional[str] = None
+    subject: str
+    participants: List[CommunicationParticipantCreate] = Field(default_factory=list)
+    entity_references: List[CommunicationEntityReference] = Field(default_factory=list)
+    visibility: List[OperationalTimelineVisibility] = Field(
+        default_factory=lambda: [OperationalTimelineVisibility.INTERNAL]
+    )
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CommunicationMessageEdit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    plain_text: str
+    rich_text: Optional[str] = None
+    reason: str
+
+
+class CommunicationMessage(BaseDocument):
+    agency_id: str
+    thread_id: str
+    sender_participant_id: str
+    sender_type: CommunicationParticipantType
+    sender_identity_id: Optional[str] = None
+    sender_display: str
+    recipient_participant_ids: List[str] = Field(default_factory=list)
+    message_type: str = "message"
+    plain_text: str
+    rich_text: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    delivery_status: CommunicationDeliveryStatus = CommunicationDeliveryStatus.RECORDED
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    edited_at: Optional[datetime] = None
+    edited_by_actor_id: Optional[str] = None
+    edit_history: List[Dict[str, Any]] = Field(default_factory=list)
+    linked_timeline_entry_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    deletion_prohibited: bool = True
+
+
+class CommunicationMessageCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    idempotency_key: Optional[str] = None
+    sender_participant_id: Optional[str] = None
+    recipient_participant_ids: List[str] = Field(default_factory=list)
+    message_type: str = "message"
+    plain_text: str
+    rich_text: Optional[str] = None
+    attachment_ids: List[str] = Field(default_factory=list)
+    delivery_status: CommunicationDeliveryStatus = CommunicationDeliveryStatus.RECORDED
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CommunicationAttachment(BaseDocument):
+    agency_id: str
+    thread_id: str
+    message_id: Optional[str] = None
+    document_id: Optional[str] = None
+    reference_type: str
+    reference_id: str
+    title: str
+    media_type: Optional[str] = None
+    checksum: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    created_by_actor_type: CommunicationParticipantType = CommunicationParticipantType.AGENCY
+    created_by_actor_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    immutable: bool = True
+    binary_duplicated: bool = False
+
+
+class CommunicationAttachmentCreate(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    message_id: Optional[str] = None
+    document_id: Optional[str] = None
+    reference_type: str
+    reference_id: str
+    title: str
+    media_type: Optional[str] = None
+    checksum: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class NotificationProjection(BaseDocument):
+    agency_id: str
+    timeline_entry_id: str
+    participant_id: Optional[str] = None
+    recipient_user_id: Optional[str] = None
+    notification_type: NotificationProjectionType = NotificationProjectionType.INFO
+    status: str = "unread"
+    read_by_user_ids: List[str] = Field(default_factory=list)
+    read_at_by_user: Dict[str, datetime] = Field(default_factory=dict)
+    title: str
+    summary: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
+    due_at: Optional[datetime] = None
+    regenerated_at: datetime = Field(default_factory=now_utc)
+    projection_key: str
+    source_event_type: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+    business_truth: bool = False
+
+
 class OperationalTimeline(BaseDocument):
     agency_id: str
     timeline_reference: str
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    parent_entity_type: Optional[str] = None
+    parent_entity_id: Optional[str] = None
     created_by: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
@@ -14877,6 +16193,12 @@ class OperationalTimeline(BaseDocument):
     ssr_osi_workspace_id: Optional[str] = None
     document_workspace_id: Optional[str] = None
     event_type: str = "other"
+    event_subtype: Optional[str] = None
+    event_time: datetime = Field(default_factory=now_utc)
+    actor_type: str = "system"
+    actor_id: Optional[str] = None
+    actor_display: Optional[str] = None
+    visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
     event_category: Optional[str] = None
     event_source: Optional[str] = None
     event_status: Optional[str] = None
@@ -14892,6 +16214,18 @@ class OperationalTimeline(BaseDocument):
     recipient: Optional[str] = None
     subject: Optional[str] = None
     summary: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    linked_communication_thread_id: Optional[str] = None
+    linked_communication_message_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    linked_document_id: Optional[str] = None
+    linked_finance_record: Optional[str] = None
+    linked_booking: Optional[str] = None
+    linked_ticket: Optional[str] = None
+    linked_emd: Optional[str] = None
+    linked_request: Optional[str] = None
+    linked_offer: Optional[str] = None
+    linked_trip: Optional[str] = None
     attachment_ids: List[str] = Field(default_factory=list)
     approval_reference: Optional[str] = None
     approval_status: Optional[str] = None
@@ -14905,7 +16239,14 @@ class OperationalTimeline(BaseDocument):
     updated_by: Optional[str] = None
     deleted_at: Optional[datetime] = None
     deleted_by: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    ordering_key: str = ""
+    supersedes_entry_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    append_only: bool = True
+    immutable_business_history: bool = True
     metadata_only: bool = True
     timeline_workspace_metadata_only: bool = True
     email_sending_disabled: bool = True
@@ -14927,6 +16268,10 @@ class OperationalTimelineCreate(BaseModel):
     id: Optional[str] = None
     agency_id: str
     timeline_reference: Optional[str] = None
+    entity_type: Optional[str] = None
+    entity_id: Optional[str] = None
+    parent_entity_type: Optional[str] = None
+    parent_entity_id: Optional[str] = None
     created_by: Optional[str] = None
     passenger_workspace_id: Optional[str] = None
     travel_request_workspace_id: Optional[str] = None
@@ -14937,6 +16282,12 @@ class OperationalTimelineCreate(BaseModel):
     ssr_osi_workspace_id: Optional[str] = None
     document_workspace_id: Optional[str] = None
     event_type: str = "other"
+    event_subtype: Optional[str] = None
+    event_time: Optional[datetime] = None
+    actor_type: Optional[str] = None
+    actor_id: Optional[str] = None
+    actor_display: Optional[str] = None
+    visibility: Optional[OperationalTimelineVisibility] = None
     event_category: Optional[str] = None
     event_source: Optional[str] = None
     event_status: Optional[str] = None
@@ -14952,6 +16303,18 @@ class OperationalTimelineCreate(BaseModel):
     recipient: Optional[str] = None
     subject: Optional[str] = None
     summary: Optional[str] = None
+    details: Dict[str, Any] = Field(default_factory=dict)
+    linked_communication_thread_id: Optional[str] = None
+    linked_communication_message_id: Optional[str] = None
+    linked_audit_event_id: Optional[str] = None
+    linked_document_id: Optional[str] = None
+    linked_finance_record: Optional[str] = None
+    linked_booking: Optional[str] = None
+    linked_ticket: Optional[str] = None
+    linked_emd: Optional[str] = None
+    linked_request: Optional[str] = None
+    linked_offer: Optional[str] = None
+    linked_trip: Optional[str] = None
     attachment_ids: List[str] = Field(default_factory=list)
     approval_reference: Optional[str] = None
     approval_status: Optional[str] = None
@@ -14962,6 +16325,10 @@ class OperationalTimelineCreate(BaseModel):
     passenger_visible: bool = False
     airline_visible: bool = False
     operational_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    supersedes_entry_id: Optional[str] = None
+    source_collection: Optional[str] = None
+    source_record_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -15360,25 +16727,54 @@ class OperationalWorkItem(BaseDocument):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     status: str = "open"
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_decision: Optional[str] = None
+    approval_decision_reason: Optional[str] = None
+    approval_decided_by: Optional[str] = None
+    approval_decided_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     source_fingerprint: Optional[str] = None
+    started_at: Optional[datetime] = None
     accepted_at: Optional[datetime] = None
     accepted_by_user_id: Optional[str] = None
     released_at: Optional[datetime] = None
@@ -15386,16 +16782,25 @@ class OperationalWorkItem(BaseDocument):
     blocked_reason: Optional[str] = None
     reopened_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
+    completed_by: Optional[str] = None
+    completion_evidence: Dict[str, Any] = Field(default_factory=dict)
+    cancelled_at: Optional[datetime] = None
+    cancelled_by: Optional[str] = None
+    cancellation_reason: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    version: int = 1
+    reconciliation_status: str = "canonical"
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     agent_work_queue_assignment_foundation: bool = True
     canonical_operational_queue: bool = True
-    existing_task_system_preserved: bool = True
+    canonical_operational_truth: bool = True
+    legacy_request_task_projection_only: bool = True
     client_facing_context_hidden: bool = True
     provider_integrations_disabled: bool = True
-    automation_disabled: bool = True
+    governed_internal_automation_enabled: bool = True
+    ungoverned_automation_disabled: bool = True
     background_workers_disabled: bool = True
     human_authority_final: bool = True
 
@@ -15409,53 +16814,69 @@ class OperationalWorkItemCreate(BaseModel):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     status: str = "open"
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     source_fingerprint: Optional[str] = None
+    version: int = 1
+    reconciliation_status: str = "canonical"
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OperationalWorkItemUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    work_item_code: Optional[str] = None
-    work_item_type: Optional[str] = None
-    source_entity_type: Optional[str] = None
-    source_entity_id: Optional[str] = None
-    workflow_instance_id: Optional[str] = None
-    workflow_event_id: Optional[str] = None
-    request_task_id: Optional[str] = None
-    timeline_entry_id: Optional[str] = None
     title: Optional[str] = None
+    description: Optional[str] = None
     summary: Optional[str] = None
-    status: Optional[str] = None
     priority: Optional[str] = None
     severity: Optional[str] = None
-    queue_code: Optional[str] = None
-    assigned_user_id: Optional[str] = None
-    assigned_team_code: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
-    blocker_status: Optional[str] = None
     client_impact: Optional[str] = None
-    internal_context_json: Optional[Dict[str, Any]] = None
-    compatibility_mapping_json: Optional[Dict[str, Any]] = None
+    checklist: Optional[List[Dict[str, Any]]] = None
+    expected_version: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -15466,21 +16887,45 @@ class OperationalWorkItemGenerateRequest(BaseModel):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     generation_reason: Optional[str] = None
@@ -15493,9 +16938,16 @@ class OperationalWorkItemActionRequest(BaseModel):
 
     to_user_id: Optional[str] = None
     to_team_code: Optional[str] = None
+    queue_code: Optional[str] = None
     reason: Optional[str] = None
     blocker_status: Optional[str] = None
     due_at: Optional[datetime] = None
+    expected_version: Optional[int] = None
+    completion_evidence: Dict[str, Any] = Field(default_factory=dict)
+    approval_type: Optional[str] = None
+    required_permission: Optional[str] = None
+    decision: Optional[str] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
@@ -15510,6 +16962,17 @@ class OperationalBulkAssignmentRequest(BaseModel):
     only_unassigned: bool = True
     max_items: int = 50
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAssignmentRouteRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    strategy: str
+    fixed_user_id: Optional[str] = None
+    fixed_team_code: Optional[str] = None
+    parent_owner_user_id: Optional[str] = None
+    reason: str
+    expected_version: Optional[int] = None
 
 
 class OperationalQueueDefinition(BaseDocument):
@@ -15708,6 +17171,7 @@ class OperationalSlaPolicy(BaseDocument):
     effective_from: Optional[datetime] = None
     effective_to: Optional[datetime] = None
     timezone: str = "UTC"
+    version: int = 1
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -15749,9 +17213,6 @@ class OperationalSlaPolicyCreate(BaseModel):
 class OperationalSlaPolicyUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    agency_id: Optional[str] = None
-    scope: Optional[str] = None
-    policy_code: Optional[str] = None
     name: Optional[str] = None
     entity_type: Optional[str] = None
     work_item_type: Optional[str] = None
@@ -15770,6 +17231,7 @@ class OperationalSlaPolicyUpdate(BaseModel):
     effective_from: Optional[datetime] = None
     effective_to: Optional[datetime] = None
     timezone: Optional[str] = None
+    expected_version: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -15778,6 +17240,7 @@ class OperationalDeadline(BaseDocument):
     deadline_reference: str
     policy_id: Optional[str] = None
     policy_code: Optional[str] = None
+    policy_version: int = 1
     source_entity_type: str
     source_entity_id: str
     workflow_instance_id: Optional[str] = None
@@ -15801,12 +17264,14 @@ class OperationalDeadline(BaseDocument):
     extended_at: Optional[datetime] = None
     extension_reason: Optional[str] = None
     manual_extension_approved: bool = False
+    override_history: List[Dict[str, Any]] = Field(default_factory=list)
     explanation: str
     calculation_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     escalation_suggestions: List[Dict[str, Any]] = Field(default_factory=list)
     source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    version: int = 1
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     sla_operational_deadline_engine_foundation: bool = True
@@ -15845,19 +17310,11 @@ class OperationalDeadlineCreate(BaseModel):
 class OperationalDeadlineUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    policy_id: Optional[str] = None
-    policy_code: Optional[str] = None
-    source_entity_type: Optional[str] = None
-    source_entity_id: Optional[str] = None
-    workflow_instance_id: Optional[str] = None
-    workflow_event_id: Optional[str] = None
-    work_item_id: Optional[str] = None
-    request_task_id: Optional[str] = None
-    timeline_entry_id: Optional[str] = None
-    deadline_type: Optional[str] = None
     priority: Optional[str] = None
     service_family: Optional[str] = None
     due_at: Optional[datetime] = None
+    override_reason: Optional[str] = None
+    expected_version: Optional[int] = None
     status: Optional[str] = None
     breach_state: Optional[str] = None
     explanation: Optional[str] = None
@@ -15870,6 +17327,7 @@ class OperationalDeadlineActionRequest(BaseModel):
 
     reason: Optional[str] = None
     due_at: Optional[datetime] = None
+    expected_version: Optional[int] = None
     force_recalculate: bool = False
     actor_user_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -15988,7 +17446,8 @@ class OperationalTaskDependency(BaseDocument):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     task_automation_dependency_orchestration_foundation: bool = True
-    dependency_enforcement_is_advisory: bool = True
+    mandatory_dependency_enforcement_enabled: bool = True
+    advisory_dependency_non_blocking: bool = True
 
 
 class OperationalTaskDependencyCreate(BaseModel):
@@ -16024,20 +17483,39 @@ class OperationalTaskAutomationRule(BaseDocument):
     agency_id: Optional[str] = None
     scope: str = "platform"
     rule_code: str
+    rule_key: Optional[str] = None
     name: str
-    trigger_event: str
+    description: Optional[str] = None
+    platform_scope: bool = True
+    version: int = 1
+    trigger_event: Optional[str] = None
+    trigger_event_types: List[str] = Field(default_factory=list)
+    trigger_entity_types: List[str] = Field(default_factory=list)
     conditions_json: Dict[str, Any] = Field(default_factory=dict)
-    generated_template_code: str
+    actions: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_template_code: Optional[str] = None
     deduplication_key_pattern: str
-    enabled: bool = True
-    status: str = "active"
+    priority: int = 100
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: str = "A"
+    dry_run_supported: bool = True
+    enabled: bool = False
+    status: str = "draft"
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    published_at: Optional[datetime] = None
+    published_by: Optional[str] = None
+    superseded_at: Optional[datetime] = None
+    superseded_by_rule_id: Optional[str] = None
+    reconciliation_status: str = "canonical"
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     task_automation_dependency_orchestration_foundation: bool = True
+    canonical_governed_automation_rule: bool = True
     arbitrary_code_execution_disabled: bool = True
-    safe_task_creation_only: bool = True
+    external_execution_disabled: bool = True
 
 
 class OperationalTaskAutomationRuleCreate(BaseModel):
@@ -16047,29 +17525,47 @@ class OperationalTaskAutomationRuleCreate(BaseModel):
     agency_id: Optional[str] = None
     scope: str = "platform"
     rule_code: Optional[str] = None
+    rule_key: Optional[str] = None
     name: str
-    trigger_event: str
+    description: Optional[str] = None
+    platform_scope: Optional[bool] = None
+    trigger_event: Optional[str] = None
+    trigger_event_types: List[str] = Field(default_factory=list)
+    trigger_entity_types: List[str] = Field(default_factory=list)
     conditions_json: Dict[str, Any] = Field(default_factory=dict)
-    generated_template_code: str
+    actions: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_template_code: Optional[str] = None
     deduplication_key_pattern: Optional[str] = None
-    enabled: bool = True
-    status: str = "active"
+    priority: int = 100
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: str = "A"
+    dry_run_supported: bool = True
+    enabled: bool = False
+    status: str = "draft"
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OperationalTaskAutomationRuleUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    agency_id: Optional[str] = None
-    scope: Optional[str] = None
-    rule_code: Optional[str] = None
     name: Optional[str] = None
+    description: Optional[str] = None
     trigger_event: Optional[str] = None
+    trigger_event_types: Optional[List[str]] = None
+    trigger_entity_types: Optional[List[str]] = None
     conditions_json: Optional[Dict[str, Any]] = None
+    actions: Optional[List[Dict[str, Any]]] = None
     generated_template_code: Optional[str] = None
     deduplication_key_pattern: Optional[str] = None
-    enabled: Optional[bool] = None
-    status: Optional[str] = None
+    priority: Optional[int] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: Optional[str] = None
+    dry_run_supported: Optional[bool] = None
+    expected_version: Optional[int] = None
+    audit_metadata: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -16079,15 +17575,34 @@ class OperationalTaskAutomationRun(BaseDocument):
     trigger_event: str
     source_entity_type: str
     source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
     idempotency_key: str
     event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     rules_matched: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluation_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_attempted: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_completed: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_skipped: List[Dict[str, Any]] = Field(default_factory=list)
     tasks_created: List[Dict[str, Any]] = Field(default_factory=list)
     tasks_skipped: List[Dict[str, Any]] = Field(default_factory=list)
+    approvals_created: List[str] = Field(default_factory=list)
+    timeline_entries_created: List[str] = Field(default_factory=list)
     dependencies_created: List[Dict[str, Any]] = Field(default_factory=list)
+    execution_safety_class: str = "A"
+    permission_checks: List[Dict[str, Any]] = Field(default_factory=list)
+    idempotency_result: str = "created"
+    duration_ms: int = 0
+    retry_count: int = 0
+    recursion_depth: int = 0
+    chained_action_count: int = 0
+    reconciliation_status: str = "canonical"
+    lock_token: Optional[str] = None
+    locked_until: Optional[datetime] = None
+    dry_run: bool = False
     warnings: List[str] = Field(default_factory=list)
     errors: List[str] = Field(default_factory=list)
-    status: str = "completed"
+    failure_reason: Optional[str] = None
+    status: str = "processing"
     retry_of_run_id: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -16105,11 +17620,15 @@ class OperationalTaskAutomationRunRequest(BaseModel):
     trigger_event: str
     source_entity_type: str
     source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
     request_id: Optional[str] = None
     idempotency_key: Optional[str] = None
     event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     template_codes: Optional[List[str]] = None
     retry_of_run_id: Optional[str] = None
+    dry_run: bool = False
+    recursion_depth: int = 0
+    chained_action_count: int = 0
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -16117,6 +17636,63 @@ class OperationalTaskDependencyActionRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     reason: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationRuleLifecycleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str
+    expected_version: Optional[int] = None
+    superseded_by_rule_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationDryRunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_timeline_entry_id: Optional[str] = None
+    event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationProcessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    timeline_entry_ids: List[str] = Field(default_factory=list)
+    batch_limit: int = 25
+    dry_run: bool = False
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalReminderProcessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    batch_limit: int = 50
+
+
+class OperationalApprovalRequestCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approval_type: str
+    title: str
+    summary: Optional[str] = None
+    source_entity_type: str
+    source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
+    required_permission: str
+    assigned_approver_id: Optional[str] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalApprovalDecisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str
+    reason: str
+    expected_version: Optional[int] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -16643,6 +18219,9 @@ class AfterSalesCommunicationRecord(BaseDocument):
     supplier_reference: Optional[str] = None
     document_ids: List[str] = Field(default_factory=list)
     timeline_entry_id: Optional[str] = None
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
     sent_externally: bool = False
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -20648,13 +22227,23 @@ class InvoiceStatus(str, Enum):
     ISSUED = "issued"
     PARTIALLY_PAID = "partially_paid"
     PAID = "paid"
+    CREDITED = "credited"
+    CANCELLED = "cancelled"
+    # Read compatibility only. New writes use the canonical lifecycle above.
     OVERDUE = "overdue"
     VOIDED = "voided"
-    CANCELLED = "cancelled"
     ARCHIVED = "archived"
 
 
 class InvoiceLineType(str, Enum):
+    TICKET = "ticket"
+    EMD = "emd"
+    SERVICE = "service"
+    AGENCY_FEE = "agency_fee"
+    SUPPLIER_FEE = "supplier_fee"
+    MANUAL_FEE = "manual_fee"
+    TAX = "tax"
+    ADJUSTMENT = "adjustment"
     AIRFARE = "airfare"
     TAXES = "taxes"
     AIRLINE_ANCILLARY = "airline_ancillary"
@@ -20872,6 +22461,8 @@ class TicketRecord(BaseDocument):
     original_ticket_record_id: Optional[str] = None
     exchange_operation_id: Optional[str] = None
     import_draft_id: Optional[str] = None
+    standalone_source_reference: Optional[str] = None
+    standalone_exception_reason: Optional[str] = None
     booking_passenger_id: Optional[str] = None
     passenger_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     ticket_number: Optional[str] = None
@@ -21004,6 +22595,8 @@ class ManualTicketCreate(BaseModel):
     original_ticket_record_id: Optional[str] = None
     exchange_operation_id: Optional[str] = None
     import_draft_id: Optional[str] = None
+    source_reference: Optional[str] = None
+    exception_reason: Optional[str] = None
 
 
 class TicketResultReconciliationRequest(BaseModel):
@@ -21030,6 +22623,8 @@ class EMDRecord(BaseDocument):
     original_emd_record_id: Optional[str] = None
     exchange_operation_id: Optional[str] = None
     import_draft_id: Optional[str] = None
+    standalone_source_reference: Optional[str] = None
+    standalone_exception_reason: Optional[str] = None
     booking_passenger_id: Optional[str] = None
     ticket_id: Optional[str] = None
     ticket_record_id: Optional[str] = None
@@ -21179,6 +22774,8 @@ class ManualEmdCreate(BaseModel):
     original_emd_record_id: Optional[str] = None
     exchange_operation_id: Optional[str] = None
     import_draft_id: Optional[str] = None
+    source_reference: Optional[str] = None
+    exception_reason: Optional[str] = None
 
 
 class TicketEmdTimelineEvent(BaseModel):
@@ -21201,17 +22798,22 @@ class TicketEmdTimelineEvent(BaseModel):
 
 class Invoice(BaseDocument):
     agency_id: str
+    ledger_id: Optional[str] = None
     invoice_number: str
     client_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"
     subtotal_amount: float = 0
     tax_amount: float = 0
     total_amount: float = 0
+    credited_amount: float = 0
+    payable_amount: float = 0
     paid_amount: float = 0
     due_amount: float = 0
     issue_date: Optional[date] = None
@@ -21220,6 +22822,12 @@ class Invoice(BaseDocument):
     internal_notes: Optional[str] = None
     issued_at: Optional[datetime] = None
     paid_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    credited_at: Optional[datetime] = None
+    created_by_user_id: Optional[str] = None
+    updated_by_user_id: Optional[str] = None
+    source_snapshot_hash: Optional[str] = None
+    source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
 
 
 class InvoiceCreate(BaseModel):
@@ -21227,10 +22835,12 @@ class InvoiceCreate(BaseModel):
 
     invoice_number: Optional[str] = None
     client_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
     booking_record_id: Optional[str] = None
     offer_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
     status: InvoiceStatus = InvoiceStatus.DRAFT
     currency: str = "EUR"
     issue_date: Optional[date] = None
@@ -21242,7 +22852,6 @@ class InvoiceCreate(BaseModel):
 class InvoiceUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    status: Optional[InvoiceStatus] = None
     issue_date: Optional[date] = None
     due_date: Optional[date] = None
     client_visible_notes: Optional[str] = None
@@ -21252,9 +22861,13 @@ class InvoiceUpdate(BaseModel):
 class InvoiceLineItem(BaseDocument):
     agency_id: str
     invoice_id: str
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     ticket_id: Optional[str] = None
     emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
     line_type: InvoiceLineType
     description: str
     service_code: Optional[str] = None
@@ -21270,9 +22883,13 @@ class InvoiceLineItem(BaseDocument):
 class InvoiceLineItemCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
+    booking_record_id: Optional[str] = None
     ticket_id: Optional[str] = None
     emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
     line_type: InvoiceLineType
     description: str
     service_code: Optional[str] = None
@@ -21291,24 +22908,32 @@ class InvoiceLineItemUpdate(InvoiceLineItemCreate):
 
 class PaymentRecord(BaseDocument):
     agency_id: str
-    invoice_id: str
+    ledger_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     client_id: str
     status: PaymentStatus = PaymentStatus.PENDING
     method: PaymentMethod = PaymentMethod.BANK_TRANSFER
     amount: float = 0
+    allocated_amount: float = 0
+    unallocated_amount: float = 0
     currency: str = "EUR"
     received_at: Optional[datetime] = None
     external_reference: Optional[str] = None
     reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    received_by_user_id: Optional[str] = None
+    source_snapshot_hash: Optional[str] = None
 
 
 class PaymentRecordCreate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    invoice_id: str
+    invoice_id: Optional[str] = None
+    trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     client_id: str
     status: PaymentStatus = PaymentStatus.PENDING
@@ -21320,6 +22945,7 @@ class PaymentRecordCreate(BaseModel):
     reconciliation_status: ReconciliationStatus = ReconciliationStatus.UNRECONCILED
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+    idempotency_key: Optional[str] = None
 
 
 class PaymentRecordUpdate(BaseModel):
@@ -21327,13 +22953,307 @@ class PaymentRecordUpdate(BaseModel):
 
     status: Optional[PaymentStatus] = None
     method: Optional[PaymentMethod] = None
-    amount: Optional[float] = None
-    currency: Optional[str] = None
     received_at: Optional[datetime] = None
     external_reference: Optional[str] = None
     reconciliation_status: Optional[ReconciliationStatus] = None
     reconciliation_notes: Optional[str] = None
     internal_notes: Optional[str] = None
+
+
+class CommercialTransactionType(str, Enum):
+    OFFER_ACCEPTED = "offer_accepted"
+    INVOICE_CREATED = "invoice_created"
+    INVOICE_ADJUSTED = "invoice_adjusted"
+    SUPPLIER_COST = "supplier_cost"
+    PAYMENT_RECEIVED = "payment_received"
+    PAYMENT_ALLOCATED = "payment_allocated"
+    REFUND = "refund"
+    CREDIT_NOTE = "credit_note"
+    EXCHANGE = "exchange"
+    MANUAL_ADJUSTMENT = "manual_adjustment"
+
+
+class CommercialLedger(BaseDocument):
+    agency_id: str
+    ledger_code: str
+    currency: str
+    status: str = "active"
+    created_by_user_id: Optional[str] = None
+
+
+class CommercialTransaction(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    entry_type: CommercialTransactionType
+    reporting_category: str
+    direction: str
+    amount: float
+    signed_amount: float
+    currency: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_offer_snapshot_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    invoice_line_item_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    supplier_cost_id: Optional[str] = None
+    credit_note_id: Optional[str] = None
+    refund_ledger_entry_id: Optional[str] = None
+    exchange_ledger_entry_id: Optional[str] = None
+    source_event_type: str
+    source_event_id: str
+    posting_time: datetime = Field(default_factory=now_utc)
+    created_by_user_id: Optional[str] = None
+    idempotency_key: str
+    immutable_source_hash: str
+    immutable_source_json: Dict[str, Any] = Field(default_factory=dict)
+    posting_status: str = "posted"
+
+
+class PaymentAllocation(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    payment_record_id: str
+    invoice_id: str
+    invoice_line_item_id: Optional[str] = None
+    amount: float
+    currency: str
+    status: str = "posted"
+    idempotency_key: str
+    allocated_at: datetime = Field(default_factory=now_utc)
+    allocated_by_user_id: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class PaymentAllocationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    invoice_id: str
+    invoice_line_item_id: Optional[str] = None
+    amount: float
+    idempotency_key: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class SupplierCostStatus(str, Enum):
+    DRAFT = "draft"
+    CONFIRMED = "confirmed"
+    PAID = "paid"
+    CANCELLED = "cancelled"
+
+
+class SupplierCost(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    supplier_cost_reference: str
+    supplier_reference: str
+    supplier_name: Optional[str] = None
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    currency: str
+    expected_cost_amount: float = 0
+    actual_cost_amount: float = 0
+    posted_cost_amount: float = 0
+    status: SupplierCostStatus = SupplierCostStatus.DRAFT
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = None
+    confirmed_by_user_id: Optional[str] = None
+    confirmed_at: Optional[datetime] = None
+
+
+class SupplierCostLine(BaseDocument):
+    agency_id: str
+    supplier_cost_id: str
+    description: str
+    expected_amount: float = 0
+    actual_amount: float = 0
+    currency: str
+    expense_category: str = "supplier_cost"
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    status: str = "active"
+
+
+class SupplierCostCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    supplier_reference: str
+    supplier_name: Optional[str] = None
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    booking_workspace_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+    currency: str = "EUR"
+    description: str
+    expected_cost_amount: float = 0
+    actual_cost_amount: float = 0
+    expense_category: str = "supplier_cost"
+    notes: Optional[str] = None
+
+
+class SupplierCostLineCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    description: str
+    expected_amount: float = 0
+    actual_amount: float = 0
+    currency: Optional[str] = None
+    expense_category: str = "supplier_cost"
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    service_id: Optional[str] = None
+
+
+class CreditNoteStatus(str, Enum):
+    DRAFT = "draft"
+    ISSUED = "issued"
+    CANCELLED = "cancelled"
+
+
+class CreditNote(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    credit_note_number: str
+    invoice_id: str
+    client_id: str
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    currency: str
+    status: CreditNoteStatus = CreditNoteStatus.DRAFT
+    reason: str
+    total_amount: float = 0
+    created_by_user_id: Optional[str] = None
+    issued_by_user_id: Optional[str] = None
+    issued_at: Optional[datetime] = None
+    notes: Optional[str] = None
+
+
+class CreditNoteLine(BaseDocument):
+    agency_id: str
+    credit_note_id: str
+    invoice_line_item_id: Optional[str] = None
+    description: str
+    amount: float
+    currency: str
+    status: str = "active"
+
+
+class CreditNoteCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    invoice_id: str
+    reason: str
+    amount: float
+    invoice_line_item_id: Optional[str] = None
+    description: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class RefundLedgerEntry(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    refund_reference: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    commercial_source_type: str
+    commercial_source_id: Optional[str] = None
+    amount: float
+    currency: str
+    reason: str
+    status: str = "recorded"
+    recorded_by_user_id: Optional[str] = None
+    recorded_at: datetime = Field(default_factory=now_utc)
+    idempotency_key: str
+    notes: Optional[str] = None
+
+
+class RefundLedgerEntryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    payment_record_id: Optional[str] = None
+    payment_allocation_id: Optional[str] = None
+    commercial_source_type: str
+    commercial_source_id: Optional[str] = None
+    amount: float
+    currency: str = "EUR"
+    reason: str
+    status: str = "recorded"
+    idempotency_key: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ExchangeLedgerEntry(BaseDocument):
+    agency_id: str
+    ledger_id: str
+    exchange_reference: str
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    original_ticket_id: Optional[str] = None
+    new_ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_change_id: Optional[str] = None
+    fare_difference_amount: float = 0
+    tax_difference_amount: float = 0
+    agency_fee_amount: float = 0
+    supplier_fee_amount: float = 0
+    emd_difference_amount: float = 0
+    exchange_fee_amount: float = 0
+    total_difference_amount: float = 0
+    currency: str
+    reason: str
+    status: str = "recorded"
+    recorded_by_user_id: Optional[str] = None
+    recorded_at: datetime = Field(default_factory=now_utc)
+    idempotency_key: str
+    notes: Optional[str] = None
+
+
+class ExchangeLedgerEntryCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: Optional[str] = None
+    trip_id: Optional[str] = None
+    booking_id: Optional[str] = None
+    original_ticket_id: Optional[str] = None
+    new_ticket_id: Optional[str] = None
+    emd_id: Optional[str] = None
+    accepted_change_id: Optional[str] = None
+    fare_difference_amount: float = 0
+    tax_difference_amount: float = 0
+    agency_fee_amount: float = 0
+    supplier_fee_amount: float = 0
+    emd_difference_amount: float = 0
+    exchange_fee_amount: float = 0
+    currency: str = "EUR"
+    reason: str
+    status: str = "recorded"
+    idempotency_key: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class BookingTimelineEvent(BaseModel):
@@ -24216,6 +26136,12 @@ class UnifiedExceptionRuleUpdate(BaseModel):
 class PassengerServiceRequest(BaseDocument):
     agency_id: str
     request_id: Optional[str] = None
+    request_passenger_id: Optional[str] = None
+    request_passenger_local_id: Optional[str] = None
+    request_segment_ids: List[str] = Field(default_factory=list)
+    request_segment_local_ids: List[str] = Field(default_factory=list)
+    request_service_key: Optional[str] = None
+    segment_scope_mode: Optional[str] = None
     trip_id: Optional[str] = None
     booking_id: Optional[str] = None
     booking_workspace_id: Optional[str] = None
@@ -24239,6 +26165,8 @@ class PassengerServiceRequest(BaseDocument):
     ssr_code: Optional[str] = None
     osi_code: Optional[str] = None
     metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    client_visible_details_json: Dict[str, Any] = Field(default_factory=dict)
+    internal_details_json: Dict[str, Any] = Field(default_factory=dict)
     gds_text: Optional[str] = None
     required_documents_json: List[Dict[str, Any]] = Field(default_factory=list)
     warnings_json: List[Dict[str, Any]] = Field(default_factory=list)
@@ -24261,6 +26189,9 @@ class PassengerServiceRequest(BaseDocument):
     fulfilment_correlation_id: Optional[str] = None
     timeline_entry_ids: List[str] = Field(default_factory=list)
     work_item_id: Optional[str] = None
+    generated_key: Optional[str] = None
+    canonical_request_version: Optional[int] = None
+    canonical_projection: bool = False
     status: PassengerServiceRequestStatus = PassengerServiceRequestStatus.REQUESTED
 
 
@@ -25146,6 +27077,13 @@ class GlobalReferenceUpdate(BaseModel):
     metadata: Optional[Dict[str, Any]] = None
     source_type: Optional[ReferenceRecordSourceType] = None
     is_active: Optional[bool] = None
+
+
+class ReferenceDeactivationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    force: bool = False
+    reason: Optional[str] = Field(default=None, max_length=1000)
 
 
 class ReferenceDomainMetadata(BaseDocument):
@@ -28306,6 +30244,9 @@ class JourneyOfferClientQuestion(BaseDocument):
     created_by_id: Optional[str] = None
     answered_at: Optional[datetime] = None
     archived_at: Optional[datetime] = None
+    canonical_thread_id: Optional[str] = None
+    canonical_message_id: Optional[str] = None
+    compatibility_projection_only: bool = True
     metadata_only: bool = True
 
 

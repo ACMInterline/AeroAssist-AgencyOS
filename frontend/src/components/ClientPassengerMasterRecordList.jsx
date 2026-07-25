@@ -37,11 +37,11 @@ export function MasterSections({ item }) {
       <RecordCard title="Client Overview" value={item.client_overview_section} />
       <RecordCard title="Passenger Overview" value={item.passenger_overview_section} />
       <RecordCard title="Service History" value={item.service_history_section} />
-      <RecordCard title="Known Operational Profile" value={item.known_operational_profile_section} />
-      <RecordCard title="Known Preferences" value={item.known_preferences_section} />
+      <RecordCard title="Travel Support Profile" value={item.known_operational_profile_section} />
+      <RecordCard title="Travel Preferences" value={item.known_preferences_section} />
       <RecordCard title="Portal Access" value={item.portal_access_section} />
-      <RecordCard title="Relationship Graph" value={item.relationship_graph_section} />
-      <RecordCard title="Notes" value={{ internal_notes: item.internal_notes, agent_notes: item.agent_notes, metadata: item.metadata }} />
+      <RecordCard title="Related Records" value={item.relationship_graph_section} />
+      <RecordCard title="Notes" value={{ internal_notes: item.internal_notes, agent_notes: item.agent_notes }} />
     </div>
   )
 }
@@ -59,9 +59,39 @@ export function RecordCard({ title, value }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
       <p className="font-semibold uppercase tracking-wide text-slate-500">{title}</p>
-      <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-white p-3 text-xs leading-5 text-slate-600">{hasContent(value) ? JSON.stringify(value, null, 2) : "No metadata recorded."}</pre>
+      <div className="mt-2 rounded-md bg-white p-3 text-xs leading-5 text-slate-600">
+        {hasContent(value) ? <ReadableDetails value={value} /> : <p>No details recorded.</p>}
+      </div>
     </div>
   )
+}
+
+function ReadableDetails({ value }) {
+  if (Array.isArray(value)) {
+    return (
+      <ul className="list-disc space-y-1 pl-4">
+        {value.map((item, index) => <li key={index}>{typeof item === "object" ? <ReadableDetails value={item} /> : displayValue(item)}</li>)}
+      </ul>
+    )
+  }
+  if (value && typeof value === "object") {
+    return (
+      <dl className="space-y-1">
+        {Object.entries(value).filter(([, item]) => hasContent(item)).map(([key, item]) => (
+          <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]" key={key}>
+            <dt className="font-medium text-slate-500">{formatType(key)}</dt>
+            <dd className="break-words">{typeof item === "object" ? <ReadableDetails value={item} /> : displayValue(item)}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+  return <p>{displayValue(value)}</p>
+}
+
+function displayValue(value) {
+  if (typeof value === "boolean") return value ? "Yes" : "No"
+  return String(value ?? "Not set")
 }
 
 export function Field({ label, value, onChange }) {

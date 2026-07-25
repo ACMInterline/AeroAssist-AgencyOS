@@ -19,6 +19,7 @@ from models import (
     OperationalSlaPolicyUpdate,
     new_id,
 )
+from services.operational_collaboration_service import OperationalCollaborationService
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -32,7 +33,7 @@ OPERATIONAL_BUSINESS_CALENDARS_COLLECTION = "operational_business_calendars"
 
 SLA_POLICY_SCOPES = ["platform", "agency"]
 SLA_POLICY_STATUSES = ["draft", "active", "paused", "archived"]
-SLA_DURATION_UNITS = ["minutes", "hours", "days"]
+SLA_DURATION_UNITS = ["minutes", "hours", "days", "business_days"]
 BUSINESS_HOURS_BEHAVIORS = ["calendar_hours", "business_hours"]
 DEADLINE_STATUSES = ["open", "due_soon", "overdue", "paused", "extended", "completed", "waived", "archived"]
 BREACH_STATES = ["not_breached", "due_soon", "breached", "paused", "completed", "waived"]
@@ -66,7 +67,7 @@ DEFAULT_SLA_POLICIES: list[dict[str, Any]] = [
     {"deadline_type": "mobility_poc_notice_deadline", "entity_type": "ssr_osi_workspace", "duration_value": 48, "duration_unit": "hours", "service_family": "MOBILITY_POC", "name": "Mobility/POC notice deadline"},
     {"deadline_type": "payment_deadline", "entity_type": "payment", "duration_value": 24, "duration_unit": "hours", "name": "Payment deadline"},
     {"deadline_type": "booking_ticketing_deadline", "entity_type": "booking_workspace", "duration_value": 24, "duration_unit": "hours", "priority": "high", "name": "Booking/ticketing deadline"},
-    {"deadline_type": "task_deadline", "entity_type": "request_task", "work_item_type": "task_deadline", "duration_value": 1, "duration_unit": "days", "name": "Task deadline"},
+    {"deadline_type": "task_deadline", "entity_type": "operational_work_item", "work_item_type": "task_deadline", "duration_value": 1, "duration_unit": "days", "name": "Task deadline"},
     {"deadline_type": "disruption_response_deadline", "entity_type": "disruption", "work_item_type": "disruption", "duration_value": 1, "duration_unit": "hours", "priority": "urgent", "name": "Disruption response deadline"},
     {"deadline_type": "claim_refund_change_deadline", "entity_type": "service_case", "work_item_type": "claim_service_case", "duration_value": 5, "duration_unit": "days", "name": "Claim/refund/change deadline"},
 ]
@@ -142,22 +143,56 @@ class OperationalSlaDeadlineService:
         created = await self.db.collection(OPERATIONAL_SLA_POLICIES_COLLECTION).insert_one(policy.model_dump(mode="json"))
         return {"phase": PHASE_LABEL, "policy": created, "metadata_only": True, **self.safety_flags()}
 
-    async def update_policy(self, policy_id: str, payload: OperationalSlaPolicyUpdate | dict[str, Any], user: dict) -> dict[str, Any]:
-        existing = await self.db.collection(OPERATIONAL_SLA_POLICIES_COLLECTION).find_one({"id": policy_id})
+    async def update_policy(
+        self,
+        policy_id: str,
+        payload: OperationalSlaPolicyUpdate | dict[str, Any],
+        user: dict,
+        *,
+        agency_id: str | None = None,
+        platform_scope_only: bool = False,
+    ) -> dict[str, Any]:
+        filters: dict[str, Any] = {"id": policy_id}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        elif platform_scope_only:
+            filters["agency_id"] = None
+        existing = await self.db.collection(
+            OPERATIONAL_SLA_POLICIES_COLLECTION
+        ).find_one(filters)
         if not existing:
             raise OperationalSlaDeadlineError("SLA policy metadata was not found.")
         updates = self._payload(payload, exclude_unset=True)
         if not updates:
             raise OperationalSlaDeadlineError("No SLA policy metadata updates were provided.")
+        expected_version = updates.pop("expected_version", None)
+        if expected_version is not None and int(expected_version) != int(
+            existing.get("version") or 1
+        ):
+            raise OperationalSlaDeadlineError("SLA policy version conflict.")
+        forbidden = sorted(set(updates) & {"agency_id", "scope", "policy_code"})
+        if forbidden:
+            raise OperationalSlaDeadlineError(
+                "SLA policy Agency scope and stable policy code are immutable."
+            )
         merged = {**existing, **updates}
         self._normalize_policy(merged, partial=True)
         for field in ["scope", "policy_code", "entity_type", "work_item_type", "deadline_type", "priority", "service_family", "duration_unit", "business_hours_behavior", "status"]:
             if field in updates and updates[field] is not None:
                 updates[field] = self._norm(updates[field])
         updates["updated_by"] = user.get("id")
-        updated = await self.db.collection(OPERATIONAL_SLA_POLICIES_COLLECTION).update_one({"id": policy_id}, updates)
+        updates["version"] = int(existing.get("version") or 1) + 1
+        updated = await self.db.collection(
+            OPERATIONAL_SLA_POLICIES_COLLECTION
+        ).update_one(
+            {
+                **filters,
+                "version": existing.get("version", 1),
+            },
+            updates,
+        )
         if not updated:
-            raise OperationalSlaDeadlineError("SLA policy metadata could not be updated.")
+            raise OperationalSlaDeadlineError("SLA policy version conflict.")
         return {"phase": PHASE_LABEL, "policy": updated, "metadata_only": True, **self.safety_flags()}
 
     async def list_business_calendars(self, agency_id: str | None = None, include_defaults: bool = True, **filters: Any) -> list[dict[str, Any]]:
@@ -184,13 +219,32 @@ class OperationalSlaDeadlineService:
         created = await self.db.collection(OPERATIONAL_BUSINESS_CALENDARS_COLLECTION).insert_one(calendar.model_dump(mode="json"))
         return {"phase": PHASE_LABEL, "business_calendar": created, "metadata_only": True, **self.safety_flags()}
 
-    async def update_business_calendar(self, calendar_id: str, payload: OperationalBusinessCalendarUpdate | dict[str, Any], user: dict) -> dict[str, Any]:
-        existing = await self.db.collection(OPERATIONAL_BUSINESS_CALENDARS_COLLECTION).find_one({"id": calendar_id})
+    async def update_business_calendar(
+        self,
+        calendar_id: str,
+        payload: OperationalBusinessCalendarUpdate | dict[str, Any],
+        user: dict,
+        *,
+        agency_id: str | None = None,
+        platform_scope_only: bool = False,
+    ) -> dict[str, Any]:
+        filters: dict[str, Any] = {"id": calendar_id}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        elif platform_scope_only:
+            filters["agency_id"] = None
+        existing = await self.db.collection(
+            OPERATIONAL_BUSINESS_CALENDARS_COLLECTION
+        ).find_one(filters)
         if not existing:
             raise OperationalSlaDeadlineError("Business calendar metadata was not found.")
         updates = self._payload(payload, exclude_unset=True)
         if not updates:
             raise OperationalSlaDeadlineError("No business calendar metadata updates were provided.")
+        if set(updates) & {"agency_id", "calendar_code"}:
+            raise OperationalSlaDeadlineError(
+                "Business calendar Agency scope and stable code are immutable."
+            )
         merged = {**existing, **updates}
         self._normalize_calendar(merged, partial=True)
         if "calendar_code" in updates and updates["calendar_code"]:
@@ -198,7 +252,9 @@ class OperationalSlaDeadlineService:
         if "status" in updates and updates["status"]:
             updates["status"] = self._norm(updates["status"])
         updates["updated_by"] = user.get("id")
-        updated = await self.db.collection(OPERATIONAL_BUSINESS_CALENDARS_COLLECTION).update_one({"id": calendar_id}, updates)
+        updated = await self.db.collection(
+            OPERATIONAL_BUSINESS_CALENDARS_COLLECTION
+        ).update_one(filters, updates)
         if not updated:
             raise OperationalSlaDeadlineError("Business calendar metadata could not be updated.")
         return {"phase": PHASE_LABEL, "business_calendar": updated, "metadata_only": True, **self.safety_flags()}
@@ -289,6 +345,7 @@ class OperationalSlaDeadlineService:
                 "started_at": started_at,
                 "policy_id": policy.get("id"),
                 "policy_code": policy.get("policy_code"),
+                "policy_version": int(policy.get("version") or 1),
                 "original_due_at": due_at,
                 "calculated_due_at": due_at,
                 "due_at": due_at,
@@ -299,6 +356,7 @@ class OperationalSlaDeadlineService:
                 "escalation_suggestions": self.escalation_suggestions(due_at, policy, status=status, breach_state=breach_state),
                 "created_by": user.get("id"),
                 "updated_by": user.get("id"),
+                "version": 1,
             }
         )
         created = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).insert_one(record.model_dump(mode="json"))
@@ -319,24 +377,60 @@ class OperationalSlaDeadlineService:
         updates = self._payload(payload, exclude_unset=True)
         if not updates:
             raise OperationalSlaDeadlineError("No deadline metadata updates were provided.")
-        if "deadline_type" in updates and updates["deadline_type"]:
-            updates["deadline_type"] = self._norm(updates["deadline_type"])
-        for field in ["status", "breach_state", "priority", "service_family", "source_entity_type"]:
+        expected_version = updates.pop("expected_version", None)
+        if expected_version is not None and int(expected_version) != int(
+            existing.get("version") or 1
+        ):
+            raise OperationalSlaDeadlineError("Deadline version conflict.")
+        override_reason = updates.pop("override_reason", None)
+        allowed_fields = {
+            "priority",
+            "service_family",
+            "due_at",
+            "explanation",
+            "source_snapshot_json",
+            "metadata",
+        }
+        unsupported = sorted(set(updates) - allowed_fields)
+        if unsupported:
+            raise OperationalSlaDeadlineError(
+                "Deadline source, policy, type, ownership, and lifecycle fields "
+                "are immutable or action-controlled."
+            )
+        for field in ["priority", "service_family"]:
             if field in updates and updates[field] is not None:
                 updates[field] = self._norm(updates[field])
         if "due_at" in updates and updates["due_at"]:
+            if not str(override_reason or "").strip():
+                raise OperationalSlaDeadlineError(
+                    "Deadline override requires an actor reason."
+                )
             due_at = self._parse_dt(updates["due_at"])
             updates["due_at"] = due_at
             updates["manual_extension_approved"] = True
             updates["extended_at"] = self._now()
-            updates["extension_reason"] = "Manual deadline metadata update."
+            updates["extension_reason"] = override_reason
+            updates["override_history"] = [
+                *(existing.get("override_history") or []),
+                {
+                    "previous_due_at": existing.get("due_at"),
+                    "new_due_at": due_at,
+                    "reason": override_reason,
+                    "actor_user_id": user.get("id"),
+                    "recorded_at": self._now(),
+                },
+            ]
             status_value, breach_value = self._computed_status(due_at, updates.get("status") or existing.get("status") or "open")
             updates["status"] = status_value
             updates["breach_state"] = breach_value
         updates["updated_by"] = user.get("id")
-        updated = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).update_one({"id": existing["id"]}, updates)
+        updates["version"] = int(existing.get("version") or 1) + 1
+        version_filter = {"id": existing["id"]}
+        if "version" in existing:
+            version_filter["version"] = existing["version"]
+        updated = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).update_one(version_filter, updates)
         if not updated:
-            raise OperationalSlaDeadlineError("Deadline metadata could not be updated.")
+            raise OperationalSlaDeadlineError("Deadline version conflict.")
         await self._record_event(updated, "recalculated" if "due_at" in updates else "warning", user, reason="Deadline metadata updated.", payload={"updated_fields": sorted(updates)})
         await self._sync_work_queue_deadline(updated, user)
         return {"phase": PHASE_LABEL, "deadline": await self._deadline_projection(updated), "metadata_only": True, **self.safety_flags()}
@@ -351,11 +445,21 @@ class OperationalSlaDeadlineService:
     ) -> dict[str, Any]:
         deadline = await self._require_deadline(deadline_id, agency_id=agency_id)
         data = self._payload(payload)
+        if data.get("expected_version") is not None and int(
+            data["expected_version"]
+        ) != int(deadline.get("version") or 1):
+            raise OperationalSlaDeadlineError("Deadline version conflict.")
         action = self._norm(action)
         now = self._now()
         updates: dict[str, Any] = {"updated_by": user.get("id")}
         event_type = action
         reason = data.get("reason")
+        if action in {"pause", "resume", "extend", "waive", "recalculate"} and not str(
+            reason or ""
+        ).strip():
+            raise OperationalSlaDeadlineError(
+                f"Deadline action {action} requires an actor reason."
+            )
 
         if action == "pause":
             if deadline.get("status") != "paused":
@@ -376,6 +480,17 @@ class OperationalSlaDeadlineService:
                     "paused_at": None,
                     "paused_duration_minutes": int(deadline.get("paused_duration_minutes") or 0) + paused_minutes,
                     "due_at": new_due_at,
+                    "override_history": [
+                        *(deadline.get("override_history") or []),
+                        {
+                            "previous_due_at": deadline.get("due_at"),
+                            "new_due_at": new_due_at,
+                            "reason": reason,
+                            "override_type": "pause_resume_shift",
+                            "actor_user_id": user.get("id"),
+                            "recorded_at": now,
+                        },
+                    ],
                     "explanation": f"Deadline resumed after {paused_minutes} paused minutes. The due date was shifted to preserve the pause interval.",
                 }
             )
@@ -393,6 +508,16 @@ class OperationalSlaDeadlineService:
                     "extended_at": now,
                     "extension_reason": reason,
                     "manual_extension_approved": True,
+                    "override_history": [
+                        *(deadline.get("override_history") or []),
+                        {
+                            "previous_due_at": deadline.get("due_at"),
+                            "new_due_at": due_at,
+                            "reason": reason,
+                            "actor_user_id": user.get("id"),
+                            "recorded_at": now,
+                        },
+                    ],
                     "explanation": reason or f"Deadline manually extended to {self._display_dt(due_at)}.",
                 }
             )
@@ -422,6 +547,7 @@ class OperationalSlaDeadlineService:
                 {
                     "policy_id": policy.get("id"),
                     "policy_code": policy.get("policy_code"),
+                    "policy_version": int(policy.get("version") or 1),
                     "calculated_due_at": due_at,
                     "due_at": due_at,
                     "status": status_value,
@@ -435,9 +561,13 @@ class OperationalSlaDeadlineService:
         else:
             raise OperationalSlaDeadlineError(f"Unsupported SLA deadline action metadata: {action}.")
 
-        updated = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).update_one({"id": deadline["id"]}, updates)
+        updates["version"] = int(deadline.get("version") or 1) + 1
+        version_filter = {"id": deadline["id"]}
+        if "version" in deadline:
+            version_filter["version"] = deadline["version"]
+        updated = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).update_one(version_filter, updates)
         if not updated:
-            raise OperationalSlaDeadlineError("SLA deadline action could not be recorded.")
+            raise OperationalSlaDeadlineError("Deadline version conflict.")
         await self._record_event(updated, event_type, user, reason=reason, from_status=deadline.get("status"), to_status=updates.get("status"), payload={"action": action, "metadata": data.get("metadata") or {}})
         await self._sync_work_queue_deadline(updated, user)
         await self._emit_workflow_event(updated, event_type, user)
@@ -445,7 +575,11 @@ class OperationalSlaDeadlineService:
         return {"phase": PHASE_LABEL, "deadline": await self._deadline_projection(updated), "action": event_type, "metadata_only": True, **self.safety_flags()}
 
     async def monitor_deadlines(self, agency_id: str | None = None, user: dict | None = None) -> dict[str, Any]:
-        records = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).find_many({"agency_id": agency_id} if agency_id else None)
+        records = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).find_many(
+            {"agency_id": agency_id} if agency_id else None,
+            sort=[("due_at", 1), ("id", 1)],
+            limit=500,
+        )
         changed: list[dict[str, Any]] = []
         actor = user or {"id": "system_metadata_monitor"}
         for record in records:
@@ -457,16 +591,33 @@ class OperationalSlaDeadlineService:
             status_value, breach_value = self._computed_status(due_at, record.get("status") or "open")
             if status_value == record.get("status") and breach_value == record.get("breach_state"):
                 continue
+            version_filter = {"id": record["id"]}
+            if "version" in record:
+                version_filter["version"] = record["version"]
             updated = await self.db.collection(OPERATIONAL_DEADLINES_COLLECTION).update_one(
-                {"id": record["id"]},
-                {"status": status_value, "breach_state": breach_value, "updated_by": actor.get("id")},
+                version_filter,
+                {
+                    "status": status_value,
+                    "breach_state": breach_value,
+                    "version": int(record.get("version") or 1) + 1,
+                    "updated_by": actor.get("id"),
+                },
             )
             if updated:
                 event_type = "breached" if breach_value == "breached" else "warning"
                 await self._record_event(updated, event_type, actor, reason="SLA deadline monitoring metadata refresh.", payload={"previous_status": record.get("status")})
                 await self._sync_work_queue_deadline(updated, actor)
+                await self._emit_workflow_event(updated, event_type, actor)
+                await self._emit_timeline_event(updated, event_type, actor)
                 changed.append(await self._deadline_projection(updated))
-        return {"phase": PHASE_LABEL, "updated_count": len(changed), "deadlines": changed, "metadata_only": True, **self.safety_flags()}
+        return {
+            "phase": PHASE_LABEL,
+            "updated_count": len(changed),
+            "deadlines": changed,
+            "bounded_record_limit": 500,
+            "metadata_only": True,
+            **self.safety_flags(),
+        }
 
     async def list_events(self, deadline_id: str, agency_id: str | None = None) -> list[dict[str, Any]]:
         filters = {"deadline_id": deadline_id}
@@ -500,10 +651,24 @@ class OperationalSlaDeadlineService:
         raise OperationalSlaDeadlineError(f"No SLA policy metadata matched deadline type {source_deadline_type}.")
 
     def calculate_due_at(self, started_at: datetime, policy: dict[str, Any], calendar: dict[str, Any] | None = None) -> datetime:
+        duration_unit = self._norm(policy.get("duration_unit") or "hours")
+        calendar = calendar or self._default_calendar(
+            agency_id=policy.get("agency_id")
+        )
+        if duration_unit == "business_days":
+            return self._add_business_days(
+                started_at,
+                int(policy.get("duration_value") or 1),
+                calendar,
+                self._zone(
+                    calendar.get("timezone")
+                    or policy.get("timezone")
+                    or "UTC"
+                ),
+            )
         duration = self._duration(policy)
         if self._norm(policy.get("business_hours_behavior") or "calendar_hours") != "business_hours":
             return started_at + duration
-        calendar = calendar or self._default_calendar(agency_id=policy.get("agency_id"))
         timezone_name = calendar.get("timezone") or policy.get("timezone") or "UTC"
         tz = self._zone(timezone_name)
         current = self._to_zone(started_at, tz)
@@ -670,9 +835,18 @@ class OperationalSlaDeadlineService:
                     "sla_deadline_type": deadline.get("deadline_type"),
                     "sla_explanation": deadline.get("explanation"),
                 }
+                version_filter = {"id": work_item["id"]}
+                if "version" in work_item:
+                    version_filter["version"] = work_item["version"]
                 await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one(
-                    {"id": work_item["id"]},
-                    {"due_at": deadline.get("due_at"), "sla_status": sla_status, "internal_context_json": context, "updated_by": user.get("id")},
+                    version_filter,
+                    {
+                        "due_at": deadline.get("due_at"),
+                        "sla_status": sla_status,
+                        "internal_context_json": context,
+                        "version": int(work_item.get("version") or 1) + 1,
+                        "updated_by": user.get("id"),
+                    },
                 )
             return
         await service.generate_work_item(
@@ -725,30 +899,26 @@ class OperationalSlaDeadlineService:
         )
 
     async def _emit_timeline_event(self, deadline: dict[str, Any], event_type: str, user: dict) -> None:
-        await self.db.collection("operational_timelines").insert_one(
-            {
-                "id": new_id(),
-                "agency_id": deadline["agency_id"],
-                "timeline_reference": f"SLA-{(deadline.get('deadline_reference') or deadline['id'])[-12:]}-{self._norm(event_type)}",
-                "created_at": self._now(),
-                "updated_at": self._now(),
-                "created_by": user.get("id"),
-                "event_type": f"SLA deadline {self._label(event_type)}",
-                "event_category": "sla_deadline",
-                "event_source": "sla_operational_deadline_engine",
-                "event_status": "recorded",
+        await OperationalCollaborationService(self.db).record_compatibility_event(
+            agency_id=deadline["agency_id"],
+            entity_type=deadline.get("source_entity_type") or "operational_deadline",
+            entity_id=deadline.get("source_entity_id") or deadline["id"],
+            source_event_type=f"sla.deadline.{self._norm(event_type)}",
+            summary=deadline.get("explanation")
+            or f"SLA deadline {self._label(event_type)}.",
+            actor_user_id=user.get("id"),
+            visibility="internal",
+            details={
+                "operational_deadline_id": deadline["id"],
+                "deadline_reference": deadline.get("deadline_reference"),
+                "deadline_type": deadline.get("deadline_type"),
                 "event_priority": deadline.get("priority") or "normal",
                 "operational_stage": "deadline_monitoring",
                 "operational_result": deadline.get("status"),
-                "summary": deadline.get("explanation"),
-                "operational_notes": "Metadata-only SLA/deadline timeline entry. No messaging, provider calls, or automation occurred.",
-                "internal_only": True,
-                "passenger_visible": False,
-                "airline_visible": False,
-                "attachment_ids": [],
                 "metadata_only": True,
-                "operational_deadline_id": deadline["id"],
-            }
+            },
+            source_collection=OPERATIONAL_SLA_EVENTS_COLLECTION,
+            source_record_id=deadline["id"],
         )
 
     async def _calendar_for_policy(self, policy: dict[str, Any], agency_id: str | None = None) -> dict[str, Any]:
@@ -944,6 +1114,30 @@ class OperationalSlaDeadlineService:
         if unit == "days":
             return timedelta(days=value)
         return timedelta(hours=value)
+
+    def _add_business_days(
+        self,
+        started_at: datetime,
+        business_days: int,
+        calendar: dict[str, Any],
+        tz: ZoneInfo,
+    ) -> datetime:
+        current = self._next_business_instant(started_at, calendar, tz)
+        remaining = max(0, business_days)
+        while remaining:
+            next_date = current.date() + timedelta(days=1)
+            while True:
+                candidate = datetime.combine(
+                    next_date,
+                    current.timetz().replace(tzinfo=None),
+                    tzinfo=tz,
+                )
+                if self._is_working_day(candidate, calendar):
+                    current = candidate
+                    break
+                next_date += timedelta(days=1)
+            remaining -= 1
+        return current.astimezone(timezone.utc)
 
     def _default_policy(self, policy: dict[str, Any], agency_id: str | None = None) -> dict[str, Any]:
         deadline_type = policy["deadline_type"]

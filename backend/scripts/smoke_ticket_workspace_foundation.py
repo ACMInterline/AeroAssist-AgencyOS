@@ -303,8 +303,8 @@ def verify_routes(paths: dict) -> None:
 def verify_frontend_and_docs() -> None:
     for path, text in [
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Ticket Workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/platform/ticket-workspaces"),
-        (ROOT / "frontend/src/App.jsx", "/agency/ticket-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/ticket-workspaces"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/ticket-workspaces"),
         (ROOT / "frontend/src/pages/platform/TicketWorkspacesPage.jsx", "Ticket Workspaces"),
         (ROOT / "frontend/src/pages/platform/TicketWorkspacesPage.jsx", "No issuance"),
         (ROOT / "frontend/src/pages/platform/TicketWorkspacesPage.jsx", "Ticket document"),
@@ -352,7 +352,7 @@ def verify_frontend_and_docs() -> None:
         ROOT / "frontend/src/lib/moduleCatalog.js",
         ROOT / "frontend/src/pages/platform/TicketWorkspacesPage.jsx",
         ROOT / "frontend/src/pages/agency/TicketWorkspaceMetadataPage.jsx",
-        ROOT / "frontend/src/App.jsx",
+        ROOT / "frontend/src/routes/RoutedApplication.jsx",
     ]:
         for text in ['"/admin', '"/agent', '"/api/admin', '"/api/agent']:
             reject_text(path, text)

@@ -4,6 +4,7 @@ import OperationalAlert from "../../components/OperationalAlert"
 import PageHeader from "../../components/PageHeader"
 import PilotGuidance from "../../components/PilotGuidance"
 import ProtectedRoute from "../../components/ProtectedRoute"
+import WorkspacePage from "../../components/WorkspacePage"
 import OperationsAlerts from "../../components/operations/OperationsAlerts"
 import OperationsFilters from "../../components/operations/OperationsFilters"
 import OperationsQueues from "../../components/operations/OperationsQueues"
@@ -91,7 +92,7 @@ export default function OperationsCommandCenterPage() {
     <AgencyLayout user={context?.me?.user} agency={context?.agency}>
       <ProtectedRoute loading={!state && !error && !context?.onboardingRedirect} error={!state ? error : ""}>
         {!context?.agency ? null : (
-          <main className="space-y-6">
+          <WorkspacePage as="main" variant="wide" className="space-y-6">
             <PageHeader
               eyebrow="Operations"
               title={`${greeting}, ${name}.`}
@@ -101,6 +102,18 @@ export default function OperationsCommandCenterPage() {
             <PilotGuidance area="operations" />
 
             {error ? <OperationalAlert title="The operations view could not be refreshed" tone="error">{error}</OperationalAlert> : null}
+
+            <section aria-label="Today’s operational summary" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+              <DashboardMetric label="Today’s work" value={state?.priorities?.displayed_count || 0} href="/agency/work-queue" detail="Assigned and available" />
+              <DashboardMetric label="Action required" value={state?.alerts?.length || 0} href="/agency/work-queue" detail="Warnings and blockers" warning />
+              <DashboardMetric label="Deadlines" value={(state?.kpis?.due_soon || 0) + (state?.kpis?.overdue || 0)} href="/agency/deadlines" detail="Due soon or overdue" warning />
+              <DashboardMetric label="Bookings needing action" value={(state?.kpis?.accepted_offers_awaiting_booking || 0) + (state?.kpis?.bookings_awaiting_ticketing || 0)} href="/agency/bookings" detail="Booking or ticketing follow-up" />
+              <DashboardMetric label="Pending offers" value={state?.kpis?.offers_awaiting_action || queueCount(state?.queues, "offers_awaiting_action")} href="/agency/offers" detail="Preparation or client response" />
+              <DashboardMetric label="Pending approvals" value={queueCount(state?.queues, "awaiting_approval")} href="/agency/passenger-services" detail="Passenger service review" />
+              <DashboardMetric label="Recent communications" value={state?.recent_activity?.length || 0} href="/agency/communications" detail="Latest recorded activity" />
+              <DashboardMetric label="Financial summary" value={state?.kpis?.payment_invoice_blockers || 0} href="/agency/finance" detail="Payment or invoice blockers" warning />
+              <DashboardMetric label="Notifications" value={state?.alerts?.length || 0} href="/agency/communications" detail="Items needing follow-up" />
+            </section>
 
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
               <div className="space-y-6">
@@ -125,9 +138,24 @@ export default function OperationsCommandCenterPage() {
               open={Boolean(pendingConfirmation)}
               title="Confirm this update?"
             />
-          </main>
+          </WorkspacePage>
         )}
       </ProtectedRoute>
     </AgencyLayout>
   )
+}
+
+function DashboardMetric({ detail, href, label, value, warning = false }) {
+  const highlighted = warning && Number(value) > 0
+  return (
+    <a className={`rounded-lg border bg-white p-4 hover:border-blue-300 ${highlighted ? "border-amber-300" : "border-slate-200"}`} href={href}>
+      <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold ${highlighted ? "text-amber-800" : "text-slate-950"}`}>{value}</p>
+      <p className="mt-1 text-xs text-slate-500">{detail}</p>
+    </a>
+  )
+}
+
+function queueCount(queues = [], key) {
+  return queues.find((queue) => queue.key === key)?.count || 0
 }

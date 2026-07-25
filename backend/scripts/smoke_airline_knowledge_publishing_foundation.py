@@ -155,8 +155,8 @@ def verify_router_ui_docs_registration() -> None:
                     raise AssertionError(f"Forbidden publication execution route registered: {path}")
 
     for path, text in [
-        (ROOT / "frontend/src/App.jsx", "/platform/knowledge-publishing"),
-        (ROOT / "frontend/src/App.jsx", "/agency/published-knowledge"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/platform/knowledge-publishing"),
+        (ROOT / "frontend/src/routes/RoutedApplication.jsx", "/agency/published-knowledge"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Knowledge Publishing"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "Published Knowledge"),
         (ROOT / "frontend/src/pages/platform/AirlineKnowledgePublishingPage.jsx", "Included Knowledge"),

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import Building2 from "lucide-react/dist/esm/icons/building-2.js"
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2.js"
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down.js"
 import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list.js"
 import Database from "lucide-react/dist/esm/icons/database.js"
 import Files from "lucide-react/dist/esm/icons/files.js"
@@ -17,13 +19,25 @@ import Sparkles from "lucide-react/dist/esm/icons/sparkles.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
 import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
+import ProductQuickSearch from "../components/ProductQuickSearch"
+import WorkflowQuickActions from "../components/WorkflowQuickActions"
 import { apiDeleteSession, apiGet } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
-import { agencyModuleGroups, entitlementLabel, entitlementTone, entitlementVisibilityForItem, flattenModuleGroups } from "../lib/moduleCatalog"
+import { useAuthorization } from "../context/AuthorizationContext"
+import {
+  agencyModuleGroups,
+  agencyProductNavigation,
+  entitlementLabel,
+  entitlementTone,
+  entitlementVisibilityForItem,
+  flattenModuleGroups,
+  productNavigationForRole,
+} from "../lib/moduleCatalog"
 import { agencyThemeStyle } from "../lib/theme"
 
 const iconMap = {
   building: Building2,
+  check: CheckCircle2,
   clipboard: ClipboardList,
   database: Database,
   files: Files,
@@ -42,6 +56,7 @@ const iconMap = {
 }
 
 const allAgencyModules = flattenModuleGroups(agencyModuleGroups)
+const allAgencyProductItems = agencyProductNavigation.flatMap((area) => area.items)
 
 async function logout() {
   await apiDeleteSession().catch(() => null)
@@ -55,25 +70,34 @@ function isActive(item, pathname) {
   return pathname === item.href || pathname.startsWith(`${item.href}/`)
 }
 
-export default function AgencyLayout({ children, user, agency }) {
+export default function AgencyLayout({ children, user: providedUser, agency }) {
+  const authorization = useAuthorization()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [entitlementVisibility, setEntitlementVisibility] = useState({})
-  const [entitlementNotice, setEntitlementNotice] = useState("")
   const themeStyle = agencyThemeStyle(agency)
   const brandName = agency?.branding?.brand_name || agency?.name || "AeroAssist"
   const sidebarLogo = agency?.branding?.logo_assets?.sidebar?.url || agency?.branding?.logo_url
   const initials = brandName.slice(0, 2).toUpperCase()
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/agency"
+  const membershipAccess = (
+    authorization.auth?.authorization?.agency_memberships || []
+  ).find((item) => item.membership?.agency_id === agency?.id) || authorization.agencyAccess
+  const user = providedUser || authorization.user
+  const navigationRole = agencyNavigationRole(membershipAccess, agency)
+  const navigation = useMemo(
+    () => productNavigationForRole(agencyProductNavigation, navigationRole),
+    [navigationRole],
+  )
   const pageTitle = useMemo(() => {
-    const item = allAgencyModules.find((navItem) => isActive(navItem, pathname))
-    return item?.label || "Agency Workspace"
+    const productItem = allAgencyProductItems.find((navItem) => isActive(navItem, pathname))
+    if (productItem) return productItem.preferred_label
+    return allAgencyModules.find((navItem) => isActive(navItem, pathname))?.label || "Agency Workspace"
   }, [pathname])
 
   useEffect(() => {
     if (!agency?.id) {
       setEntitlementVisibility({})
-      setEntitlementNotice("")
       return
     }
     let active = true
@@ -81,12 +105,10 @@ export default function AgencyLayout({ children, user, agency }) {
       .then((result) => {
         if (!active) return
         setEntitlementVisibility(result.visibility_by_key || {})
-        setEntitlementNotice(result.notice || "")
       })
       .catch(() => {
         if (!active) return
         setEntitlementVisibility({})
-        setEntitlementNotice("")
       })
     return () => {
       active = false
@@ -112,7 +134,15 @@ export default function AgencyLayout({ children, user, agency }) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {agencyModuleGroups.map((group) => <NavSection group={group} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={group.title} />)}
+        {collapsed ? (
+          <nav className="grid gap-2" aria-label="Agency workflow areas">
+            {navigation.filter((area) => !area.advanced_only).map((area) => (
+              <NavItem item={area.items[0]} pathname={pathname} collapsed entitlementVisibility={entitlementVisibility} icon={area.icon} title={area.title} key={area.title} />
+            ))}
+          </nav>
+        ) : navigation.map((area) => (
+          <NavSection group={area} pathname={pathname} collapsed={false} entitlementVisibility={entitlementVisibility} key={area.title} />
+        ))}
       </div>
 
       <div className="border-t p-3" style={{ borderColor: "var(--aa-border)" }}>
@@ -123,14 +153,14 @@ export default function AgencyLayout({ children, user, agency }) {
           <div className="mt-3 rounded-md border px-3 py-3 text-xs" style={{ borderColor: "var(--aa-border)", background: "var(--aa-muted-bg)", color: "var(--aa-muted-text)" }}>
             <div className="flex items-center gap-2 font-semibold" style={{ color: "var(--aa-text)" }}>
               <Palette className="h-3.5 w-3.5" />
-              Theme active
+              Agency appearance
             </div>
-            <p className="mt-1">Brand presets control fonts, radius, colors, and surfaces.</p>
+            <p className="mt-1">Branding and workspace preferences are managed in Settings.</p>
           </div>
         ) : null}
         {!collapsed ? (
           <p className="mt-3 rounded-md border px-3 py-2 text-[11px] leading-4" style={{ borderColor: "var(--aa-border)", background: "var(--aa-muted-bg)", color: "var(--aa-muted-text)" }}>
-            {entitlementNotice || "Subscription visibility is informational only and does not automatically enforce access."}
+            Workspace access reflects your agency’s assigned plan.
           </p>
         ) : null}
       </div>
@@ -139,6 +169,7 @@ export default function AgencyLayout({ children, user, agency }) {
 
   return (
     <div className="aa-themed min-h-screen" style={themeStyle}>
+      <a className="aa-skip-link" href="#main-content">Skip to main content</a>
       <div className="aa-shell-grid min-h-screen">
         <div className="hidden lg:block">{sidebar}</div>
         {drawerOpen ? (
@@ -152,7 +183,7 @@ export default function AgencyLayout({ children, user, agency }) {
           <header className="aa-topbar sticky top-0 z-30 border-b backdrop-blur" style={{ background: "color-mix(in srgb, var(--aa-bg), transparent 8%)", borderColor: "var(--aa-border)" }}>
             <div className="flex min-h-16 items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
-                <button className="rounded-md border p-2 lg:hidden" type="button" aria-label="Open navigation" onClick={() => setDrawerOpen(true)}>
+                <button className="rounded-md border p-2 lg:hidden" type="button" aria-label="Open navigation" onClick={() => { setCollapsed(false); setDrawerOpen(true) }}>
                   <Menu className="h-5 w-5" />
                 </button>
                 <div className="min-w-0">
@@ -161,12 +192,8 @@ export default function AgencyLayout({ children, user, agency }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex" style={{ background: "var(--aa-muted-bg)", color: "var(--aa-primary)" }}>Manual operations</span>
-                <a className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" href="/agency/requests/new">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create request</span>
-                  <span className="sm:hidden">Create</span>
-                </a>
+                <ProductQuickSearch areas={navigation} label="Search Agency pages" />
+                <WorkflowQuickActions hasPermission={authorization.hasPermission} />
                 <div className="hidden min-w-0 text-right md:block">
                   <p className="truncate text-sm font-medium" style={{ color: "var(--aa-text)" }}>{user?.full_name || "Staff user"}</p>
                   <p className="truncate text-xs" style={{ color: "var(--aa-muted-text)" }}>{user?.email || "Signed in"}</p>
@@ -175,9 +202,7 @@ export default function AgencyLayout({ children, user, agency }) {
               </div>
             </div>
           </header>
-          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-[1440px]">{children}</div>
-          </main>
+          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8" id="main-content" tabIndex="-1">{children}</main>
         </div>
       </div>
     </div>
@@ -186,32 +211,42 @@ export default function AgencyLayout({ children, user, agency }) {
 
 function NavSection({ group, pathname, collapsed, entitlementVisibility }) {
   const navigationItems = group.items.filter((item) => item.navigation_visibility !== "contextual")
+  const Icon = iconMap[group.icon] || Files
+  if (group.advanced_only) {
+    return (
+      <details className="aa-advanced-navigation mt-5 border-t pt-4" style={{ borderColor: "var(--aa-border)" }}>
+        <summary className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" style={{ color: "var(--aa-muted-text)" }}>
+          <Icon className="h-4 w-4" />
+          <span className="flex-1">Advanced</span>
+          <ChevronDown className="h-4 w-4" />
+        </summary>
+        <p className="px-3 pb-2 pt-1 text-[11px] leading-4" style={{ color: "var(--aa-muted-text)" }}>{group.description}</p>
+        <nav className="grid gap-1" aria-label="Advanced agency modules">
+          {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={false} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
+        </nav>
+      </details>
+    )
+  }
   return (
-    <div className="mb-6">
-      {!collapsed ? (
-        <div className="mb-2 px-3">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--aa-muted-text)" }}>{group.title}</p>
-          <p className="mt-1 text-[11px] leading-4" style={{ color: "var(--aa-muted-text)" }}>{group.description}</p>
-        </div>
-      ) : null}
+    <div className="mb-1">
       <nav className="grid gap-1" aria-label={group.title}>
-        {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
+        {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} compact entitlementVisibility={entitlementVisibility} icon={group.icon} key={`${group.title}-${item.href}-${item.label}`} />)}
       </nav>
     </div>
   )
 }
 
-function NavItem({ item, pathname, collapsed, entitlementVisibility }) {
-  const Icon = iconMap[item.icon] || Files
+function NavItem({ item, pathname, collapsed, compact = false, entitlementVisibility, icon, title }) {
+  const Icon = iconMap[icon || item.icon] || Files
   const active = isActive(item, pathname)
   const visibility = entitlementVisibilityForItem(item, entitlementVisibility)
   const content = (
     <>
       <Icon className="h-4 w-4 shrink-0" />
       {!collapsed ? (
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">{item.label}</span>
-          <span className="block truncate text-[11px] opacity-75">{item.description}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{item.preferred_label || item.label}</span>
+            {!compact ? <span className="block text-[11px] leading-4 opacity-75">{item.preferred_description || item.description}</span> : null}
         </span>
       ) : null}
       {!collapsed ? (
@@ -233,10 +268,16 @@ function NavItem({ item, pathname, collapsed, entitlementVisibility }) {
   }
 
   return (
-    <a className={`aa-nav-item ${active ? "aa-nav-active" : ""}`} href={item.href} aria-current={active ? "page" : undefined} title={collapsed ? item.label : undefined}>
+    <a className={`aa-nav-item ${active ? "aa-nav-active" : ""}`} href={item.href} aria-current={active ? "page" : undefined} title={collapsed ? title || item.preferred_label || item.label : undefined}>
       {content}
     </a>
   )
+}
+
+function agencyNavigationRole(membershipAccess, agency) {
+  return membershipAccess?.membership?.agency_role ||
+    agency?.current_membership?.agency_role ||
+    null
 }
 
 function EntitlementBadge({ status, title }) {

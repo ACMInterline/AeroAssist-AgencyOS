@@ -132,7 +132,6 @@ class OperationsCommandCenterService:
             "after_sales_cases": "after_sales_cases",
             "operational_intelligence_cases": "operational_intelligence_cases",
             "pilot_readiness_issues": "pilot_readiness_issues",
-            "request_tasks": "request_tasks",
             "invoices": "invoices",
             "payments": "payments",
         }

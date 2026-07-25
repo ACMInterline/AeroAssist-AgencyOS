@@ -48,7 +48,13 @@ def create_booking_record() -> tuple[str, dict, dict, dict]:
     option = create_priced_option(agency_id, offer_workspace["id"])
     accepted = post(
         f"/api/agencies/{agency_id}/offer-workspaces/{offer_workspace['id']}/options/{option['id']}/accept",
-        {"acceptance_source": "internal", "provider_target": "manual"},
+        {
+            "acceptance_source": "internal",
+            "offer_version": option["offer_workspace_version"],
+            "option_version": option["version"],
+            "acceptance_terms_version": "ticket-emd-smoke-v1",
+            "provider_target": "manual",
+        },
         OWNER_HEADERS,
         201,
     )
@@ -59,7 +65,33 @@ def create_booking_record() -> tuple[str, dict, dict, dict]:
         OWNER_HEADERS,
         201,
     )
-    return agency_id, readiness, booking["booking_workspace"], booking["booking_record"]
+    booking_workspace = booking["booking_workspace"]
+    booking_record = booking["booking_record"]
+    post(
+        f"/api/agencies/{agency_id}/booking-workspaces/{booking_workspace['id']}/status",
+        {
+            "status": "booking_in_progress",
+            "internal_notes": "Manual booking result entry started for Ticket/EMD smoke.",
+        },
+        OWNER_HEADERS,
+    )
+    confirmed = put(
+        f"/api/agencies/{agency_id}/booking-records/{booking_record['id']}",
+        {
+            "pnr_locator": f"T{int(time.time())}"[-6:],
+            "provider_status": "confirmed",
+            "booking_status": "confirmed",
+            "source_evidence_reference": f"ticket-emd-smoke:{booking_record['id']}",
+            "source_evidence_json": {
+                "manual_confirmation": True,
+                "provider_execution_disabled": True,
+            },
+            "expected_version": booking_record.get("current_external_result_version", 1),
+            "reason": "Record a governed manual PNR result before Ticket/EMD mirrors.",
+        },
+        OWNER_HEADERS,
+    )
+    return agency_id, readiness, confirmed["booking_workspace"], confirmed["booking_record"]
 
 
 def main() -> int:

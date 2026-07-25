@@ -20,14 +20,20 @@ from models import (
     JourneyOfferDocumentPackageLink,
     JourneyOfferWarningAcknowledgement,
     OfferAcceptanceCreate,
+    OfferWorkspaceTransitionRequest,
     OperationalTimeline,
     new_id,
 )
 from services.document_render_service import DocumentRenderService
+from services.canonical_commercial_lifecycle_service import CommercialLifecycleError
 from services.journey_comparison_client_presentation_service import (
     JourneyComparisonClientPresentationService,
 )
 from services.offer_acceptance_service import OfferAcceptanceService
+from services.operational_collaboration_service import (
+    OperationalCollaborationError,
+    OperationalCollaborationService,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -379,12 +385,24 @@ class OfferDeliveryClientInteractionService:
         mapping = None
         portal_user_id = data.get("portal_user_id")
         if portal_user_id:
-            mapping = await self.db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "id": portal_user_id, "client_id": client_id})
-        elif data.get("email_reference"):
-            mapping = await self.db.collection("portal_access_mappings").find_one({"agency_id": agency_id, "client_id": client_id, "user_email": data["email_reference"]})
-        if (portal_user_id or data.get("email_reference")) and not mapping:
-            raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient must resolve to an existing portal identity for this client and agency.")
-        if mapping and mapping.get("portal_status") != "active":
+            mapping = await self.db.collection("portal_access_mappings").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": portal_user_id,
+                    "auth_identity_id": {"$ne": None},
+                    "subject_type": "client",
+                    "client_profile_id": client_id,
+                    "status": "active",
+                }
+            )
+        if not portal_user_id and data.get("email_reference"):
+            raise JourneyOfferDeliveryError(
+                "RECIPIENT_NOT_AUTHORIZED",
+                "Email is not portal authority. Select an explicit portal access mapping.",
+            )
+        if portal_user_id and not mapping:
+            raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient must resolve to an active explicit portal identity for this client and agency.")
+        if mapping and (mapping.get("status") or mapping.get("portal_status")) != "active":
             raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Recipient portal access is not active.")
         passenger_id = data.get("passenger_id")
         if passenger_id:
@@ -666,6 +684,44 @@ class OfferDeliveryClientInteractionService:
             return {**preview, "created": False, "idempotent": True}
         if not preview["can_apply"]:
             raise JourneyOfferDeliveryError("ACCEPTANCE_HANDOFF_NOT_READY", "Acceptance handoff is blocked by deterministic validation findings.")
+        canonical_offer = await self.db.collection("offer_workspaces").find_one(
+            {
+                "agency_id": agency_id,
+                "id": preview["preview"]["offer_id"],
+            }
+        )
+        canonical_option = await self.db.collection("offer_options").find_one(
+            {
+                "agency_id": agency_id,
+                "id": preview["preview"]["offer_option_id"],
+                "workspace_id": preview["preview"]["offer_id"],
+            }
+        )
+        if not canonical_offer or not canonical_option:
+            raise JourneyOfferDeliveryError(
+                "ACCEPTANCE_HANDOFF_NOT_READY",
+                "Canonical Offer and Option must remain available for acceptance.",
+            )
+        if canonical_offer.get("status") not in {"delivered", "shared"}:
+            canonical_offer = await self.acceptance.builder.deliver_workspace(
+                agency_id,
+                canonical_offer["id"],
+                OfferWorkspaceTransitionRequest(
+                    expected_version=int(canonical_offer.get("version") or 1),
+                    reason=(
+                        "Released immutable client delivery "
+                        f"{preview['preview']['delivery_version_id']}."
+                    ),
+                ),
+                user.get("id"),
+            )
+            canonical_option = await self.db.collection("offer_options").find_one(
+                {
+                    "agency_id": agency_id,
+                    "id": canonical_option["id"],
+                    "workspace_id": canonical_offer["id"],
+                }
+            )
         result = await self.acceptance.accept_offer_option(
             agency_id,
             preview["preview"]["offer_id"],
@@ -673,6 +729,17 @@ class OfferDeliveryClientInteractionService:
             user,
             OfferAcceptanceCreate(
                 acceptance_source="client_preview",
+                offer_version=int(canonical_offer.get("version") or 1),
+                option_version=int((canonical_option or {}).get("version") or 1),
+                idempotency_key=f"delivery-decision:{preview['preview']['decision_id']}",
+                channel="portal_delivery_decision",
+                acceptance_terms_version=preview["preview"]["delivery_version_id"],
+                consent_evidence_json={
+                    "delivery_id": delivery_id,
+                    "delivery_version_id": preview["preview"]["delivery_version_id"],
+                    "decision_id": preview["preview"]["decision_id"],
+                    "source_payload_hash": preview["preview"]["source_payload_hash"],
+                },
                 provider_target="manual",
                 client_visible_summary_json={
                     "delivery_id": delivery_id,
@@ -701,6 +768,28 @@ class OfferDeliveryClientInteractionService:
         await self.db.collection(DELIVERY_COLLECTION).update_one({"agency_id": agency_id, "id": delivery_id}, {"status": "accepted"})
         await self._audit("handoff_applied", delivery, user, version_id=handoff["delivery_version_id"], summary="Client decision explicitly handed to canonical Offer Acceptance.")
         await self._timeline(delivery, "offer_accepted", "Client selection handed to Offer Acceptance", user)
+        await OperationalCollaborationService(self.db).record_business_event(
+            agency_id=agency_id,
+            entity_type="offer",
+            entity_id=delivery.get("offer_id") or delivery["id"],
+            event_type="portal_approval",
+            event_subtype="offer_acceptance",
+            summary="Portal approval was recorded against immutable offer evidence.",
+            actor={
+                "id": self._actor(user),
+                "identity_id": self._actor(user),
+                "actor_type": "client_portal",
+            },
+            visibility="client",
+            details={
+                "offer_delivery_id": delivery_id,
+                "decision_id": handoff["decision_id"],
+                "canonical_acceptance_id": acceptance_id,
+            },
+            idempotency_key=f"portal-approval:{handoff['decision_id']}",
+            source_collection=DECISION_COLLECTION,
+            source_record_id=handoff["decision_id"],
+        )
         return {"phase": PHASE_LABEL, "handoff": stored or handoff, "canonical_acceptance": result, "booking_created": False, **self.safety_flags()}
 
     async def document_handoff_preview(
@@ -779,8 +868,51 @@ class OfferDeliveryClientInteractionService:
 
     async def portal_list(self, context: dict[str, Any]) -> dict[str, Any]:
         agency_id = context["account"]["agency_id"]
-        client_id = context["account"]["client_id"]
-        deliveries = await self.list_deliveries(agency_id, client_id=client_id, include_archived=True)
+        subject_type = context.get("subject_type")
+        account_id = context["account"]["id"]
+        recipient_filters: dict[str, Any] = {
+            "agency_id": agency_id,
+            "access_status": "authorized",
+        }
+        if subject_type == "passenger":
+            passenger_id = context["account"].get("passenger_profile_id")
+            if not passenger_id:
+                raise JourneyOfferDeliveryError(
+                    "RECIPIENT_NOT_AUTHORIZED",
+                    "The portal account is not linked to a Passenger profile.",
+                )
+            recipient_filters["passenger_id"] = passenger_id
+        else:
+            client_id = (
+                context["account"].get("client_profile_id")
+                or context["account"].get("client_id")
+            )
+            if not client_id:
+                raise JourneyOfferDeliveryError(
+                    "RECIPIENT_NOT_AUTHORIZED",
+                    "The portal account is not linked to a Client profile.",
+                )
+            recipient_filters["client_id"] = client_id
+        recipients = await self.db.collection(RECIPIENT_COLLECTION).find_many(
+            recipient_filters
+        )
+        delivery_ids = {
+            item["delivery_id"]
+            for item in recipients
+            if item.get("delivery_id")
+            and (
+                item.get("portal_user_id") == account_id
+                or not item.get("portal_user_id")
+            )
+        }
+        deliveries = [
+            await self._require_delivery(agency_id, delivery_id)
+            for delivery_id in delivery_ids
+        ]
+        deliveries.sort(
+            key=lambda item: str(item.get("updated_at") or item.get("created_at") or ""),
+            reverse=True,
+        )
         items = []
         for delivery in deliveries:
             recipient = await self._portal_recipient(context, delivery["id"], required=False)
@@ -815,6 +947,43 @@ class OfferDeliveryClientInteractionService:
         decisions = await self.db.collection(DECISION_COLLECTION).find_many({"agency_id": agency_id, "delivery_id": delivery_id, "recipient_id": recipient["id"]})
         acknowledgements = await self.db.collection(ACKNOWLEDGEMENT_COLLECTION).find_many({"agency_id": agency_id, "delivery_version_id": version["id"], "recipient_id": recipient["id"]})
         documents = await self.db.collection(DOCUMENT_LINK_COLLECTION).find_many({"agency_id": agency_id, "delivery_version_id": version["id"]})
+        revision_rows = await self.db.collection(VERSION_COLLECTION).find_many(
+            {"agency_id": agency_id, "delivery_id": delivery_id}
+        )
+        revision_history = [
+            self._client_version(item)
+            for item in sorted(
+                revision_rows,
+                key=lambda item: int(item.get("version_number") or 0),
+                reverse=True,
+            )
+            if item.get("status")
+            in {"released", "expired", "revoked", "superseded", "archived"}
+        ]
+        acceptance_rows = (
+            await self.db.collection("offer_acceptances").find_many(
+                {
+                    "agency_id": agency_id,
+                    "workspace_id": delivery.get("offer_id"),
+                }
+            )
+            if delivery.get("offer_id")
+            else []
+        )
+        accepted = next(
+            (
+                item
+                for item in sorted(
+                    acceptance_rows,
+                    key=lambda item: str(
+                        item.get("accepted_at") or item.get("created_at") or ""
+                    ),
+                    reverse=True,
+                )
+                if item.get("status") in {"accepted", "pending"}
+            ),
+            None,
+        )
         portal_payload = {
             "phase": PHASE_LABEL,
             "delivery": self._client_delivery(delivery),
@@ -825,6 +994,24 @@ class OfferDeliveryClientInteractionService:
             "decisions": [self._client_decision(item) for item in decisions],
             "warning_acknowledgements": [self._client_acknowledgement(item) for item in acknowledgements],
             "documents": [self._client_document(item) for item in documents],
+            "revision_history": revision_history,
+            "accepted_snapshot": (
+                {
+                    "acceptance_id": accepted.get("id"),
+                    "status": accepted.get("status"),
+                    "offer_version": accepted.get("offer_version"),
+                    "option_version": accepted.get("option_version"),
+                    "accepted_at": accepted.get("accepted_at")
+                    or accepted.get("created_at"),
+                    "snapshot_id": accepted.get("accepted_snapshot_id"),
+                    "summary": self._sanitize_client(
+                        accepted.get("client_visible_summary_json") or {}
+                    ),
+                    "immutable": True,
+                }
+                if accepted
+                else None
+            ),
         }
         if self._restricted_keys(portal_payload):
             raise JourneyOfferDeliveryError("CLIENT_PAYLOAD_INTERNAL_FIELD_DETECTED", "Client portal projection contains a restricted field.")
@@ -896,7 +1083,7 @@ class OfferDeliveryClientInteractionService:
         message = str(payload_dict(payload).get("message_text") or "").strip()
         if not message:
             raise JourneyOfferDeliveryError("DELIVERY_SOURCE_REQUIRED", "A question is required.")
-        question = await self.db.collection(QUESTION_COLLECTION).insert_one(JourneyOfferClientQuestion(
+        question_model = JourneyOfferClientQuestion(
             agency_id=agency_id,
             delivery_id=delivery_id,
             delivery_version_id=version["id"],
@@ -906,9 +1093,64 @@ class OfferDeliveryClientInteractionService:
             message_text=message,
             created_by_type="client",
             created_by_id=recipient["id"],
-        ).model_dump(mode="json"))
+        )
+        collaboration = OperationalCollaborationService(self.db)
+        portal_actor = collaboration.portal_actor(context)
+        try:
+            offer_id = delivery.get("offer_id") or delivery_id
+            thread_detail = await collaboration.create_thread(
+                agency_id,
+                {
+                    "idempotency_key": (
+                        f"entity-thread:offer:{offer_id}:offer_delivery_questions"
+                    ),
+                    "subject": (
+                        f"Offer {delivery.get('delivery_reference') or delivery_id}"
+                    ),
+                    "entity_references": [
+                        {"entity_type": "offer", "entity_id": offer_id},
+                        {
+                            "entity_type": "client",
+                            "entity_id": delivery["client_id"],
+                        },
+                    ],
+                    "visibility": ["client"],
+                    "participants": [
+                    {
+                        "participant_type": "agency",
+                        "display_name": "Agency operations",
+                        "participant_role": "offer_operations",
+                        "visibility": ["client"],
+                        "permissions": ["read", "post"],
+                    }
+                    ],
+                    "metadata": {"context_key": "offer_delivery_questions"},
+                },
+                portal_actor,
+            )
+            canonical_message = await collaboration.portal_post_message(
+                context,
+                thread_detail["thread"]["id"],
+                {
+                    "plain_text": message,
+                    "message_type": "offer_question",
+                    "idempotency_key": f"offer-question:{question_model.id}",
+                    "metadata": {
+                        "source_collection": QUESTION_COLLECTION,
+                        "source_record_id": question_model.id,
+                        "delivery_id": delivery_id,
+                        "delivery_version_id": version["id"],
+                    },
+                },
+            )
+        except OperationalCollaborationError as exc:
+            raise JourneyOfferDeliveryError(exc.code, str(exc)) from exc
+        question_model.canonical_thread_id = thread_detail["thread"]["id"]
+        question_model.canonical_message_id = canonical_message["id"]
+        question = await self.db.collection(QUESTION_COLLECTION).insert_one(
+            question_model.model_dump(mode="json")
+        )
         await self._record_interaction(delivery, version, recipient, "question_submitted")
-        await self._timeline(delivery, "customer_contacted", "Client submitted an offer question", {"id": recipient["id"]})
         return {"phase": PHASE_LABEL, "question": self._client_question(question), "external_message_sent": False, **self._portal_safety_flags()}
 
     async def portal_decision_preview(
@@ -935,6 +1177,11 @@ class OfferDeliveryClientInteractionService:
     async def portal_submit_decision(
         self, context: dict[str, Any], delivery_id: str, payload: Any
     ) -> dict[str, Any]:
+        if context.get("subject_type") != "client":
+            raise JourneyOfferDeliveryError(
+                "RECIPIENT_NOT_AUTHORIZED",
+                "Only an authorized Client portal account can make an Offer decision.",
+            )
         preview = await self.portal_decision_preview(context, delivery_id, payload)
         if not preview["can_submit"]:
             raise JourneyOfferDeliveryError("ACCEPTANCE_HANDOFF_NOT_READY", "Decision submission is blocked by deterministic validation findings.")
@@ -970,14 +1217,63 @@ class OfferDeliveryClientInteractionService:
             acknowledged_warning_codes=self._tokens(data.get("acknowledged_warning_codes") or []),
             terms_acknowledged=bool(data.get("terms_acknowledged")),
             status="submitted",
-            handoff_status="pending_agency_action" if decision_type == "accept" else "not_required",
+            handoff_status="pending" if decision_type == "accept" else "not_required",
         ).model_dump(mode="json"))
         status_by_decision = {"accept": "client_action_received", "decline": "declined", "request_changes": "change_requested"}
         if decision_type in status_by_decision:
             await self.db.collection(DELIVERY_COLLECTION).update_one({"agency_id": agency_id, "id": delivery_id}, {"status": status_by_decision[decision_type]})
         await self._record_interaction(delivery, version, recipient, "decision_submitted", option_id=data.get("selected_option_id"), fare_brand_id=data.get("selected_fare_brand_id"))
         await self._audit("decision_received", delivery, {"id": recipient["id"]}, version_id=version["id"], recipient_id=recipient["id"], actor_type="portal_recipient", summary=f"Client decision recorded: {decision_type}.")
-        return {"phase": PHASE_LABEL, "decision": self._client_decision(decision), "canonical_acceptance_created": False, "booking_created": False, **self._portal_safety_flags()}
+        if decision_type != "accept":
+            return {
+                "phase": PHASE_LABEL,
+                "decision": self._client_decision(decision),
+                "canonical_acceptance_created": False,
+                "booking_created": False,
+                **self._portal_safety_flags(),
+            }
+        actor = {
+            "id": (
+                (context.get("identity") or {}).get("id")
+                or context["account"].get("auth_identity_id")
+                or context["account"]["id"]
+            )
+        }
+        try:
+            handoff = await self.acceptance_handoff_apply(
+                agency_id,
+                delivery_id,
+                {"decision_id": decision["id"]},
+                actor,
+            )
+        except (CommercialLifecycleError, JourneyOfferDeliveryError) as exc:
+            await self.db.collection(DECISION_COLLECTION).update_one(
+                {"agency_id": agency_id, "id": decision["id"]},
+                {"handoff_status": "blocked"},
+            )
+            if isinstance(exc, JourneyOfferDeliveryError):
+                raise
+            raise JourneyOfferDeliveryError(
+                "ACCEPTANCE_HANDOFF_NOT_READY",
+                str(exc),
+            ) from exc
+        acceptance = (handoff.get("canonical_acceptance") or {}).get("acceptance") or {}
+        stored_decision = await self.db.collection(DECISION_COLLECTION).find_one(
+            {"agency_id": agency_id, "id": decision["id"]}
+        )
+        return {
+            "phase": PHASE_LABEL,
+            "decision": self._client_decision(stored_decision or decision),
+            "canonical_acceptance_created": bool(acceptance.get("id")),
+            "canonical_acceptance": {
+                "id": acceptance.get("id"),
+                "status": acceptance.get("status"),
+                "accepted_at": acceptance.get("accepted_at"),
+                "accepted_snapshot_id": acceptance.get("accepted_snapshot_id"),
+            },
+            "booking_created": False,
+            **self._portal_safety_flags(),
+        }
 
     async def portal_documents(self, context: dict[str, Any], delivery_id: str) -> dict[str, Any]:
         recipient = await self._portal_recipient(context, delivery_id)
@@ -1258,17 +1554,60 @@ class OfferDeliveryClientInteractionService:
         self, context: dict[str, Any], delivery_id: str, *, required: bool = True
     ) -> dict[str, Any] | None:
         agency_id = context["account"]["agency_id"]
-        client_id = context["account"]["client_id"]
-        delivery = await self.db.collection(DELIVERY_COLLECTION).find_one({"agency_id": agency_id, "id": delivery_id, "client_id": client_id})
+        subject_type = context.get("subject_type")
+        delivery = await self.db.collection(DELIVERY_COLLECTION).find_one(
+            {"agency_id": agency_id, "id": delivery_id}
+        )
+        client_id = (
+            context["account"].get("client_profile_id")
+            or context["account"].get("client_id")
+        )
+        passenger_id = context["account"].get("passenger_profile_id")
+        if delivery and subject_type == "client" and delivery.get("client_id") != client_id:
+            delivery = None
         if not delivery:
             if required:
-                raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "Offer delivery was not found for this portal client.")
+                raise JourneyOfferDeliveryError(
+                    "RECIPIENT_NOT_AUTHORIZED",
+                    "Offer delivery was not found for this portal account.",
+                )
             return None
-        recipients = await self.db.collection(RECIPIENT_COLLECTION).find_many({"agency_id": agency_id, "delivery_id": delivery_id, "client_id": client_id})
+        recipient_filters: dict[str, Any] = {
+            "agency_id": agency_id,
+            "delivery_id": delivery_id,
+            "access_status": "authorized",
+        }
+        if subject_type == "passenger":
+            if not passenger_id:
+                if required:
+                    raise JourneyOfferDeliveryError(
+                        "RECIPIENT_NOT_AUTHORIZED",
+                        "The portal account is not linked to a Passenger profile.",
+                    )
+                return None
+            recipient_filters["passenger_id"] = passenger_id
+        else:
+            if not client_id:
+                if required:
+                    raise JourneyOfferDeliveryError(
+                        "RECIPIENT_NOT_AUTHORIZED",
+                        "The portal account is not linked to a Client profile.",
+                    )
+                return None
+            recipient_filters["client_id"] = client_id
+        recipients = await self.db.collection(RECIPIENT_COLLECTION).find_many(
+            recipient_filters
+        )
         account_id = context["account"]["id"]
-        recipient = next((item for item in recipients if item.get("portal_user_id") == account_id and item.get("access_status") == "authorized"), None)
+        recipient = next(
+            (item for item in recipients if item.get("portal_user_id") == account_id),
+            None,
+        )
         if not recipient:
-            recipient = next((item for item in recipients if not item.get("portal_user_id") and item.get("access_status") == "authorized"), None)
+            recipient = next(
+                (item for item in recipients if not item.get("portal_user_id")),
+                None,
+            )
         if not recipient and required:
             raise JourneyOfferDeliveryError("RECIPIENT_NOT_AUTHORIZED", "This portal identity is not an authorized recipient.")
         return recipient
@@ -1413,20 +1752,40 @@ class OfferDeliveryClientInteractionService:
     async def _timeline(
         self, delivery: dict[str, Any], event_type: str, summary: str, user: dict[str, Any] | None
     ) -> None:
-        await self.db.collection("operational_timelines").insert_one(OperationalTimeline(
+        canonical_event_type = (
+            "offer_delivered"
+            if event_type == "offer_created"
+            else "communication_received"
+            if event_type == "customer_contacted"
+            else event_type
+        )
+        await OperationalCollaborationService(self.db).record_business_event(
             agency_id=delivery["agency_id"],
-            timeline_reference=f"JOD-{new_id()[:10].upper()}",
-            created_by=self._actor(user),
-            trip_workspace_id=delivery.get("trip_id"),
-            event_type=event_type,
-            event_category="offer_delivery",
-            event_source="phase_56_4",
-            event_status="recorded",
+            entity_type="offer",
+            entity_id=delivery.get("offer_id") or delivery["id"],
+            event_type=canonical_event_type,
             summary=summary,
-            internal_only=True,
-            passenger_visible=False,
-            metadata={"offer_delivery_id": delivery["id"]},
-        ).model_dump(mode="json"))
+            actor={
+                "id": self._actor(user),
+                "identity_id": self._actor(user),
+                "actor_type": "agency"
+                if event_type != "customer_contacted"
+                else "client_portal",
+            },
+            visibility="client"
+            if event_type == "customer_contacted"
+            else "internal",
+            details={"offer_delivery_id": delivery["id"]},
+            parent_entity_type="offer_delivery",
+            parent_entity_id=delivery["id"],
+            idempotency_key=(
+                f"offer-delivery:{delivery['id']}:{canonical_event_type}:"
+                f"{delivery.get('updated_at') or new_id()}"
+            ),
+            event_source="phase_56_4",
+            source_collection=DELIVERY_COLLECTION,
+            source_record_id=delivery["id"],
+        )
 
     def _sanitize_client(self, value: Any) -> Any:
         if isinstance(value, dict):
