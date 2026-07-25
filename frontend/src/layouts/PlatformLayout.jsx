@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import Building2 from "lucide-react/dist/esm/icons/building-2.js"
 import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2.js"
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down.js"
+import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list.js"
 import Database from "lucide-react/dist/esm/icons/database.js"
 import FileText from "lucide-react/dist/esm/icons/file-text.js"
 import Layers3 from "lucide-react/dist/esm/icons/layers-3.js"
@@ -10,7 +11,10 @@ import PanelLeftClose from "lucide-react/dist/esm/icons/panel-left-close.js"
 import PanelLeftOpen from "lucide-react/dist/esm/icons/panel-left-open.js"
 import Plane from "lucide-react/dist/esm/icons/plane.js"
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check.js"
+import Settings from "lucide-react/dist/esm/icons/settings.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
+import Users from "lucide-react/dist/esm/icons/users.js"
+import ProductQuickSearch from "../components/ProductQuickSearch"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 import { useAuthorization } from "../context/AuthorizationContext"
@@ -24,12 +28,15 @@ import {
 const iconMap = {
   building: Building2,
   check: CheckCircle2,
+  clipboard: ClipboardList,
   database: Database,
   file: FileText,
   layers: Layers3,
   plane: Plane,
   shield: ShieldCheck,
+  settings: Settings,
   tags: Tags,
+  users: Users,
 }
 
 const allPlatformModules = flattenModuleGroups(platformModuleGroups)
@@ -88,6 +95,7 @@ export default function PlatformLayout({ children, user: providedUser }) {
         "--aa-radius": "6px",
       }}
     >
+      <a className="aa-skip-link" href="#main-content">Skip to main content</a>
       <div className="aa-shell-grid min-h-screen">
         <div className="hidden lg:block">{sidebar}</div>
         {drawerOpen ? (
@@ -118,6 +126,7 @@ export default function PlatformLayout({ children, user: providedUser }) {
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                <ProductQuickSearch areas={navigation} label="Search Platform pages" />
                 <div className="hidden min-w-0 text-right md:block">
                   <p className="truncate text-sm font-medium text-slate-900">{user?.full_name || "Platform user"}</p>
                   <p className="truncate text-xs text-slate-500">{formatRole(user?.global_role)}</p>
@@ -126,7 +135,7 @@ export default function PlatformLayout({ children, user: providedUser }) {
               </div>
             </div>
           </header>
-          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8" id="main-content" tabIndex="-1">{children}</main>
         </div>
       </div>
     </div>
@@ -180,15 +189,11 @@ function PlatformArea({ area, pathname }) {
     )
   }
   return (
-    <section className="mb-5">
-      <div className="mb-1 flex items-center gap-2 px-3 text-[11px] font-bold uppercase text-slate-500">
-        <Icon className="h-3.5 w-3.5" />
-        <span>{area.title}</span>
-      </div>
+    <div className="mb-1">
       <nav className="grid gap-1" aria-label={area.title}>
-        {area.items.map((item) => <PlatformNavItem item={item} pathname={pathname} key={item.href} />)}
+        {area.items.map((item) => <PlatformNavItem item={item} pathname={pathname} icon={area.icon} key={item.href} />)}
       </nav>
-    </section>
+    </div>
   )
 }
 

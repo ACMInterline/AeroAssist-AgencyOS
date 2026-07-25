@@ -1,6 +1,5 @@
 import Bell from "lucide-react/dist/esm/icons/bell.js"
 import BookOpenCheck from "lucide-react/dist/esm/icons/book-open-check.js"
-import BriefcaseBusiness from "lucide-react/dist/esm/icons/briefcase-business.js"
 import CircleDollarSign from "lucide-react/dist/esm/icons/circle-dollar-sign.js"
 import ClipboardList from "lucide-react/dist/esm/icons/clipboard-list.js"
 import FileText from "lucide-react/dist/esm/icons/file-text.js"
@@ -8,26 +7,20 @@ import Home from "lucide-react/dist/esm/icons/home.js"
 import LogOut from "lucide-react/dist/esm/icons/log-out.js"
 import MessageSquareText from "lucide-react/dist/esm/icons/message-square-text.js"
 import PlaneTakeoff from "lucide-react/dist/esm/icons/plane-takeoff.js"
-import ReceiptText from "lucide-react/dist/esm/icons/receipt-text.js"
 import TicketCheck from "lucide-react/dist/esm/icons/ticket-check.js"
 import UserCircle from "lucide-react/dist/esm/icons/user-circle.js"
-import Users from "lucide-react/dist/esm/icons/users.js"
 import { useAuthorization } from "../context/AuthorizationContext"
 import { apiDeleteSession } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 
 const clientLinks = [
   ["/portal", "Dashboard", Home],
-  ["/portal/requests", "Requests", ClipboardList],
-  ["/portal/travel-options", "Travel Options", BookOpenCheck],
   ["/portal/trips", "Trips", PlaneTakeoff],
-  ["/portal/bookings", "Bookings", BriefcaseBusiness],
-  ["/portal/tickets", "Tickets", TicketCheck],
+  ["/portal/travel-options", "Offers", BookOpenCheck],
+  ["/portal/requests", "Requests", ClipboardList],
   ["/portal/documents", "Documents", FileText],
   ["/portal/communications", "Messages", MessageSquareText],
-  ["/portal/finance", "Finance", CircleDollarSign],
-  ["/portal/notifications", "Actions", Bell],
-  ["/portal/passengers", "Passengers", Users],
+  ["/portal/finance", "Payments", CircleDollarSign],
   ["/portal/profile", "Profile", UserCircle],
 ]
 
@@ -60,6 +53,7 @@ export default function ClientPortalLayout({ children, user: providedUser, brand
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <a className="aa-skip-link" href="#main-content">Skip to main content</a>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
           <a className="min-w-0" href="/portal">
@@ -82,7 +76,7 @@ export default function ClientPortalLayout({ children, user: providedUser, brand
           </div>
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8" id="main-content" tabIndex="-1">{children}</main>
     </div>
   )
 }

@@ -121,6 +121,24 @@ Client delivery must originate from an immutable, reviewed Journey comparison sn
 
 One operational object has one primary workspace. Engines and services do not automatically justify top-level Agency pages; supporting capabilities should be embedded or linked contextually from their owning workspace. Separate surfaces require a different actor, Platform governance purpose, independent lifecycle, or materially different operational object. Every phase must apply [Product Surface and Workspace Governance](../product-surface-workspace-governance.md), use travel-agent vocabulary in ordinary UI, preserve passenger-needs-first design, and reject duplicate lifecycles or unnecessary navigation.
 
+## Product Experience Contract
+
+Normal navigation follows user tasks rather than implementation history.
+Specialist foundations, diagnostics, governance utilities, and catalogue tools
+remain available under Advanced navigation but do not compete with daily work.
+Each dashboard count links to its canonical owner, each operational detail
+surface explains its workflow position and next valid action, and Client and
+Passenger Portal navigation remains deliberately distinct.
+
+Frontend presentation must follow the
+[Product Navigation Contract](../product-navigation-contract.md),
+[Dashboard Contract](../dashboard-contract.md),
+[Design System Contract](../design-system-contract.md), and
+[Workflow Banner Contract](../workflow-banner-contract.md). Navigation hiding,
+search results, shortcuts, dashboard cards, and workflow banners never replace
+backend authorization, tenant isolation, lifecycle guards, or canonical
+ownership.
+
 ## Canonical Request Aggregate Rule
 
 `TravelRequest` is the only Request owner. New Request structure is written

@@ -30,7 +30,7 @@ export default function PortalDashboardPage() {
         <div className="space-y-8">
           <header className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
             <div>
-              <p className="text-xs font-semibold uppercase text-blue-700">{passenger ? "Your journey workspace" : "Your travel workspace"}</p>
+              <p className="text-xs font-semibold uppercase text-blue-700">{passenger ? "Your journey" : "Your travel"}</p>
               <h2 className="mt-1 text-2xl font-semibold text-slate-950">Welcome, {subject?.display_name || "traveller"}</h2>
               <p className="mt-2 text-sm text-slate-600">{passenger ? "Your trips, travel documents, assistance, and actions in one place." : "Requests, travel options, trips, documents, and account actions in one place."}</p>
             </div>
@@ -40,7 +40,7 @@ export default function PortalDashboardPage() {
             </div>
           </header>
 
-          <section aria-label="Workspace summary" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+          <section aria-label="Travel summary" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
             <PortalSummaryCard label="Upcoming trips" value={counts.upcoming_trips || 0} href="/portal/trips" />
             {!passenger ? <PortalSummaryCard label="Pending offers" value={counts.pending_offers || 0} href="/portal/travel-options" /> : null}
             <PortalSummaryCard label="Action required" value={counts.action_required || 0} href="/portal/notifications" />

@@ -442,10 +442,17 @@ Agency APIs expose tenant-checked presentation projection, wording, preview, exp
 
 ## Phase 59.0 Product Experience Recovery Routes
 
-- Phase 59.0 adds no frontend route, API route, alias, router, or mutation.
+- Phase 59.0 and P1 Product Recovery 10 add no API route, router, persistence
+  path, or business mutation.
 - Task-based navigation projects existing module-catalogue entries into Platform and Agency product areas.
 - Canonical `/platform/*`, `/agency/*`, `/api/platform/*`, and `/api/agencies/{agency_id}/*` ownership remains unchanged.
 - `/platform` continues to resolve to the Platform Overview and `/agency` continues to resolve to the Phase 58.2 Operations Command Centre after the existing onboarding check.
+- Product hubs use `/platform/users`, `/platform/monitoring`,
+  `/platform/audit`, `/platform/settings`, `/agency/communications`, and
+  `/agency/reports`. They consume existing protected APIs and do not create new
+  domain ownership.
+- `/platform/monitoring` is a product-facing alias of the existing protected
+  Pilot Operations surface; `/platform/pilot-operations` remains valid.
 - Specialist deep links remain valid in collapsed Advanced navigation; contextual tools remain owned by their existing primary workspaces.
 - No `/admin/*`, `/agent/*`, parallel workflow root, or direct frontend persistence path is introduced.
 

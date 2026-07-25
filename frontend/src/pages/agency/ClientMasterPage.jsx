@@ -47,13 +47,9 @@ export default function ClientMasterPage() {
         <div className="space-y-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Client Master</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Client directory</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-950">Clients</h2>
-              <p className="mt-1 text-sm text-slate-600">Commercial owner metadata linked to passengers, requests, trips, offers, invoices, communications, documents, and portal access.</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Metadata only</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Human authority</span>
+              <p className="mt-1 text-sm text-slate-600">Find each client’s passengers, requests, trips, offers, invoices, conversations, documents, and portal access.</p>
             </div>
           </div>
 
@@ -75,10 +71,10 @@ export default function ClientMasterPage() {
 
           <section className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-lg font-semibold text-slate-950">Client Master Records</h3>
+              <h3 className="text-lg font-semibold text-slate-950">Client records</h3>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{items.length}</span>
             </div>
-            {items.length ? <MasterRecordList items={items} type="client" /> : <EmptyState title="No client master records" body="Client master metadata will appear here." />}
+            {items.length ? <MasterRecordList items={items} type="client" /> : <EmptyState title="No clients yet" body="Client records will appear here once a client has been added." />}
           </section>
         </div>
       </ProtectedRoute>

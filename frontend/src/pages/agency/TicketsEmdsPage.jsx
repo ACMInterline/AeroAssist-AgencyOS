@@ -135,7 +135,7 @@ export default function TicketsEmdsPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
               <h2 className="text-2xl font-semibold text-slate-950">Tickets & EMDs</h2>
-              <p className="mt-1 text-sm text-slate-600">Internal mirrors only. Live issuance is disabled.</p>
+              <p className="mt-1 text-sm text-slate-600">Record and review issued travel documents. No airline action is performed from this page.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button className="aa-primary-action rounded-md px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("ticket")}>Create manual ticket</button>
@@ -143,7 +143,7 @@ export default function TicketsEmdsPage() {
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("ticket_exchange")}>Start ticket exchange</button>
               <button className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" type="button" onClick={() => openModal("emd_exchange")}>Start EMD exchange</button>
               <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/documents?document_type=ticket_receipt&source_context_type=ticket_record">Documents</a>
-              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/booking-workspaces">Booking workspaces</a>
+              <a className="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold" href="/agency/bookings">Bookings</a>
             </div>
           </div>
 
@@ -189,7 +189,7 @@ function MirrorModal({ form, modal, onChange, onClose, onSubmit, working }) {
       <form className="max-h-[90vh] w-full max-w-6xl overflow-auto rounded-lg bg-white shadow-xl" onSubmit={onSubmit}>
         <div className="flex items-start justify-between gap-3 border-b border-slate-200 p-5">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Internal mirror only</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Record only</p>
             <h3 className="text-xl font-semibold text-slate-950">{title}</h3>
             <p className="mt-1 text-sm text-slate-600">No provider action, issuance, exchange, refund, or void is performed.</p>
           </div>

@@ -426,7 +426,14 @@ Active marker: `phase_59_0_product_experience_recovery`.
 
 Phase 59.0 adds no new persistence, Pydantic model, MongoDB collection, index, repository, router, or API contract. It is a presentation projection over the existing React module catalogue and canonical route map. The Platform Overview adds a bounded `product_overview` projection to the existing protected `/api/platform/summary` response using canonical Agency onboarding and audit records; it does not persist a dashboard model or duplicate domain state.
 
-`WorkspacePage` owns layout width only. The Platform and Agency navigation projections own no authorization state: existing platform roles, agency memberships, tenant helpers, and API dependencies remain authoritative.
+P1 Product Recovery 10 adds frontend-only task hubs for Platform Users,
+Monitoring, Audit, and Settings plus Agency Communications and Reports. These
+pages consume existing protected services and do not add a model, collection,
+index, repository, or API. `ProductQuickSearch`, `WorkflowQuickActions`,
+`ProductTable`, and the enhanced `WorkflowContinuityPanel` are presentation
+components only.
+
+`WorkspacePage` owns layout width only. The Platform and Agency navigation projections own no authorization state: existing platform roles, agency memberships, tenant helpers, and API dependencies remain authoritative. The deterministic [Product Page Inventory](product-page-inventory.csv) classifies all page files without becoming a runtime registry.
 
 ## P1 Product Kernel Repair 2 Ownership Registry
 

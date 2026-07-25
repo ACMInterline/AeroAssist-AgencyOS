@@ -1,6 +1,9 @@
 import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left.js"
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right.js"
+import CircleAlert from "lucide-react/dist/esm/icons/circle-alert.js"
+import Clock3 from "lucide-react/dist/esm/icons/clock-3.js"
 import Link2 from "lucide-react/dist/esm/icons/link-2.js"
+import ListChecks from "lucide-react/dist/esm/icons/list-checks.js"
 
 const validationTone = {
   ready: "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -11,13 +14,33 @@ const validationTone = {
 
 export default function WorkflowContinuityPanel({
   breadcrumbs = [],
+  blockers = [],
+  completedStages = [],
   currentLabel,
+  currentStage,
+  deadline,
+  deadlineLabel = "Deadline",
   status = "unknown",
+  timelineHref = "/agency/timeline",
   validation = { state: "unknown", label: "Review required" },
   previous,
   next,
   relatedRecords = [],
+  warnings = [],
 }) {
+  const effectiveStage = currentStage || status
+  const effectiveWarnings = [
+    ...warnings,
+    ...(validation.state === "warning" ? [validation.reason || validation.label] : []),
+  ].filter(Boolean)
+  const effectiveBlockers = [
+    ...blockers,
+    ...(validation.state === "blocked" ? [validation.reason || validation.label] : []),
+  ].filter(Boolean)
+  const completed = completedStages.length
+    ? completedStages
+    : ["draft", "unknown"].includes(String(effectiveStage || "").toLowerCase()) ? [] : ["Record created"]
+
   return (
     <section className="border-y border-slate-200 bg-white py-4" aria-label="Workflow continuity">
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
@@ -25,13 +48,19 @@ export default function WorkflowContinuityPanel({
         {breadcrumbs.length ? <span>/</span> : null}
         <span className="font-semibold text-slate-800">{currentLabel}</span>
       </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <WorkflowFact label="Current stage" value={format(effectiveStage)} />
+        <WorkflowFact label="Completed" value={completed.length ? completed.map(format).join(", ") : "No completed stages yet"} />
+        <WorkflowFact label="Next action" value={next?.label || "Review this record"} />
+        <WorkflowFact label={deadlineLabel} value={formatDeadline(deadline)} icon={Clock3} />
+      </div>
       <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)_auto] lg:items-center">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Status: {format(status)}</span>
           <span className={`rounded-md border px-3 py-1 text-xs font-semibold ${validationTone[validation.state] || validationTone.unknown}`}>
             {validation.label || format(validation.state)}
           </span>
-          {validation.reason ? <span className="text-xs text-slate-600">{validation.reason}</span> : null}
+          {effectiveWarnings.length ? <Signal icon={CircleAlert} label="Warning" items={effectiveWarnings} tone="text-amber-800" /> : null}
+          {effectiveBlockers.length ? <Signal icon={CircleAlert} label="Blocked" items={effectiveBlockers} tone="text-red-800" /> : null}
         </div>
         <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
           {relatedRecords.map((item) => item.href ? (
@@ -44,12 +73,27 @@ export default function WorkflowContinuityPanel({
           ))}
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
+          {timelineHref ? <a className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700" href={timelineHref}><ListChecks className="h-4 w-4" />Timeline</a> : null}
           <WorkflowAction action={previous} direction="previous" />
           <WorkflowAction action={next} direction="next" />
         </div>
       </div>
     </section>
   )
+}
+
+function WorkflowFact({ icon: Icon, label, value }) {
+  return (
+    <div className="min-w-0 border-l-2 border-slate-200 pl-3">
+      <p className="flex items-center gap-1 text-[11px] font-semibold uppercase text-slate-500">{Icon ? <Icon aria-hidden="true" className="h-3.5 w-3.5" /> : null}{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold text-slate-900" title={value}>{value}</p>
+    </div>
+  )
+}
+
+function Signal({ icon: Icon, items, label, tone }) {
+  const text = items.join("; ")
+  return <span className={`inline-flex min-w-0 items-center gap-1 text-xs ${tone}`} title={text}><Icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{label}: {text}</span></span>
 }
 
 function WorkflowAction({ action, direction }) {
@@ -65,4 +109,10 @@ function WorkflowAction({ action, direction }) {
 
 function format(value) {
   return String(value || "unknown").replaceAll("_", " ")
+}
+
+function formatDeadline(value) {
+  if (!value) return "No deadline recorded"
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.valueOf()) ? String(value) : parsed.toLocaleString()
 }

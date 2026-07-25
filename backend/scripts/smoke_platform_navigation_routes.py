@@ -73,11 +73,11 @@ def main() -> int:
         '"/platform/airline-policy-ingestion": AirlinePolicyIngestionPage',
         '"/platform/service-taxonomy": PlatformServiceTaxonomyPage',
         '"/platform/service-mechanics": PlatformServiceMechanicsPage',
-        'import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"',
-        'import AirlinesPage from "./pages/platform/AirlinesPage"',
-        'import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"',
-        'import PlatformServiceTaxonomyPage from "./pages/platform/ServiceTaxonomyPage"',
-        'import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"',
+        'const PlatformAgenciesPage = lazy(() => import("./pages/platform/PlatformAgenciesPage"))',
+        'const AirlinesPage = lazy(() => import("./pages/platform/AirlinesPage"))',
+        'const AirlinePolicyIngestionPage = lazy(() => import("./pages/platform/AirlinePolicyIngestionPage"))',
+        'const PlatformServiceTaxonomyPage = lazy(() => import("./pages/platform/ServiceTaxonomyPage"))',
+        'const PlatformServiceMechanicsPage = lazy(() => import("./pages/platform/ServiceMechanicsPage"))',
         "PlatformAgencyDetailPage",
         "AirlineDetailPage",
         "AirlineKnowledgeDetailPage",
@@ -86,7 +86,7 @@ def main() -> int:
     require_text(platform_catalog, ["Platform Console", "Agencies", "Reference Data", "Airlines / Knowledge", "Policy Ingestion", "Service Taxonomy", "Service Mechanics", 'href: "/platform/agencies"', 'href: "/platform/airlines"', 'href: "/platform/airline-policy-ingestion"', 'href: "/platform/service-taxonomy"', 'href: "/platform/service-mechanics"'], "Platform module catalog")
     reject_text(layout, ["Agency Workspace", 'href="/agency"'], "Platform header")
     reject_text(platform_catalog, ["Agency Workspace", 'href: "/agency"'], "Platform module catalog")
-    require_text(dashboard, ['href="/platform/agencies"', "Attention required", "Knowledge readiness", "Pilot status", "System health", "Recent activity", "Quick actions"], "Platform dashboard")
+    require_text(dashboard, ['href="/platform/agencies"', "Attention required", "Agency health", "Reference updates", "Knowledge updates", "Operational alerts", "System health", "Recent activity", "Quick actions"], "Platform dashboard")
     require_text(agencies, ["Agencies", "Create Agency", "Promise.allSettled", "agencies = state?.agencies || []"], "Platform agencies defensive route")
     require_text(agency_detail, ["Enter workspace", "`/agency?agency_id=${agencyId}`"], "Contextual agency workspace entry")
     require_text(airlines, ["Airline Knowledge", "Promise.allSettled", "airlines = state?.airlines || []", "Platform owners will manage airline policy"], "Platform airlines defensive route")

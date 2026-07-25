@@ -162,7 +162,7 @@ def verify_static_contracts() -> None:
     require_text(ROOT / "frontend/src/pages/agency/PassengerDetailPage.jsx", "Continue to request")
     require_text(ROOT / "frontend/src/pages/platform/OfferDeliveryDiagnosticsPage.jsx", "Governance view only")
     require_text(ROOT / "frontend/src/pages/portal/PortalOfferDeliveryDetailPage.jsx", "Acknowledge")
-    require_text(ROOT / "frontend/src/layouts/ClientPortalLayout.jsx", "Travel Options")
+    require_text(ROOT / "frontend/src/layouts/ClientPortalLayout.jsx", '["/portal/travel-options", "Offers"')
     require_text(ROOT / "docs/architecture/offer-delivery-client-interaction-foundation.md", "Delivery And Immutable Versions")
     require_text(ROOT / "docs/architecture/product-surface-workspace-governance.md", "Product Surface Review Gate")
     require_text(ROOT / "backend/routers/portal_offer_deliveries.py", "Depends(portal_context)")

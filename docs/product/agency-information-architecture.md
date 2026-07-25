@@ -14,37 +14,44 @@ The sidebar mixed daily work, metadata workspaces, airline intelligence foundati
 
 The Agency navigation follows this workflow:
 
-1. Operations
+1. Dashboard
 2. Requests
-3. Clients & Passengers
+3. Offers
 4. Trips
-5. Offers
-6. Bookings
-7. Tickets & EMDs
-8. Special Services
-9. Documents
-10. Tasks & Follow-ups
-11. Reports
-12. Settings
-13. Advanced
+5. Bookings
+6. Tickets & EMDs
+7. Finance
+8. Clients
+9. Passengers
+10. Communications
+11. Documents
+12. Operations
+13. Reports
+14. Settings
 
-`/agency` and the visible Operations link both open the Phase 58.2 Operations Command Centre. Newly created incomplete agencies still redirect to `/agency/onboarding`. Legacy agencies without onboarding profiles remain compatible through the existing legacy exemption.
+`/agency` and the visible Dashboard link open the Phase 58.2 Operations
+Command Centre. A separate Advanced area is collapsed by default. Newly
+created incomplete agencies still redirect to `/agency/onboarding`. Legacy
+agencies without onboarding profiles remain compatible through the existing
+legacy exemption.
 
 ## Before And After Mapping
 
 | Before: navigation item or group | After: primary area | Notes |
 |---|---|---|
-| Daily Work, Operations Command Centre compatibility route | Operations | One visible home route: `/agency`. |
+| Daily Work, Operations Command Centre compatibility route | Dashboard | One visible home route: `/agency`. |
 | Requests, Create request, Intakes, Travel Request Workspaces | Requests | Creation stays a prominent action; specialist request mirrors move to Advanced. |
-| Clients & Passengers, Passenger Workspaces | Clients & Passengers | Canonical client and passenger workspaces are primary. |
-| Trips, Trip Workspaces, Journey views | Trips | Trip dossiers are primary; journey engines and diagnostics are contextual or Advanced. |
 | Offers, offer intelligence, comparison, delivery, export registers | Offers | Offer Workspace is primary; supporting engines remain contextual or Advanced. |
+| Trips, Trip Workspaces, Journey views | Trips | Trip dossiers are primary; journey engines and diagnostics are contextual or Advanced. |
 | Booking Mirrors, Booking Handoffs, imports | Bookings | Booking records and readiness are primary; import diagnostics move to Advanced. |
 | Tickets & EMDs, Ticket Workspaces, EMD Workspaces | Tickets & EMDs | One daily objective; detailed mirrors remain available in Advanced. |
-| Passenger Services, service feasibility, policy advisors | Special Services | Passenger assistance is primary; specialist intelligence stays Advanced. |
+| Invoices, payments, costs, credits, refunds, exchanges | Finance | Posted commercial records remain permission-aware; private cost values stay restricted. |
+| Client master compatibility and canonical client detail | Clients | User-facing directory labels hide storage terminology. |
+| Passenger master compatibility and canonical passenger detail | Passengers | User-facing directory labels hide storage terminology. |
+| Collaboration threads, messages, and notes | Communications | One searchable entry point; detail pages retain contextual collaboration panels. |
 | Document Workspaces, Documents, export governance | Documents | Required documents and prepared files are primary. |
-| Agent Work Queue, Deadlines, Task Automation | Tasks & Follow-ups | Work and deadlines are primary; automation diagnostics move to Advanced. |
-| Invoices and payment status | Reports | Existing finance route is reused; no reporting subsystem is introduced. |
+| Agent Work Queue, deadlines, passenger services, after-sales | Operations | Work queue is primary; automation diagnostics move to Advanced. |
+| Operations and posted commercial summaries | Reports | Existing APIs are aggregated; no reporting persistence is introduced. |
 | Branding, forms, subscription, feature and rollout settings | Settings | Owner/Admin see everyday settings; rollout internals move to Advanced. |
 | Workflow maturity, operational workflows, state details, rollout registers, knowledge tooling | Advanced | Collapsed by default and limited to Agency Owner/Admin. |
 
@@ -54,7 +61,8 @@ The Agency navigation follows this workflow:
 - Agency Agent sees daily operational areas without Settings or Advanced.
 - Agency Read-only sees permitted read views without Settings or Advanced.
 - Agency Accountant sees finance-relevant Operations, clients, bookings, tickets, documents, tasks, and Reports.
-- Platform Owner/Admin entering an Agency context receive the existing platform override behavior.
+- Platform roles do not bypass Agency membership. Any Agency access still
+  requires the existing active same-Agency membership and permission checks.
 
 These rules only prevent misleading navigation exposure. Tenant and role checks on the canonical API remain authoritative.
 
@@ -70,3 +78,5 @@ Genuine authorization, tenancy, and unrelated API errors still fail normally. Te
 
 No fake workflow records are created. No workflow, provider, payment, ticketing, messaging, or automation behavior is enabled. All existing deep links remain valid.
 
+The complete page classification and compatibility aliases are governed by the
+[Product Navigation Contract](../architecture/product-navigation-contract.md).

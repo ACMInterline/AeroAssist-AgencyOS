@@ -78,27 +78,32 @@ export default function PlatformDashboardPage() {
             )}
           </section>
 
-          <section className="grid gap-4 xl:grid-cols-4">
-            <OverviewCard icon={Building2} title="Agencies" href="/platform/agencies" status={overview.onboarding_attention_count ? "warning" : "ready"}>
+          <section className="grid gap-4 xl:grid-cols-4" aria-label="Platform priorities">
+            <OverviewCard icon={Building2} title="Agency health" href="/platform/agencies" status={overview.onboarding_attention_count ? "warning" : "ready"}>
               <Metric label="Total agencies" value={overview.agency_count ?? state?.summary?.counts?.agencies ?? 0} />
               <Metric label="Onboarding attention" value={overview.onboarding_attention_count ?? 0} />
               <Metric label="Open requests" value={overview.open_operational_request_count ?? 0} />
             </OverviewCard>
-            <OverviewCard icon={Plane} title="Knowledge readiness" href="/platform/airline-intelligence-readiness" status={knowledgeSummary.blocked_gate_count ? "blocked" : knowledgeSummary.release_ready_count ? "ready" : "warning"}>
+            <OverviewCard icon={RefreshCw} title="Reference updates" href="/platform/reference" status={(state?.summary?.counts?.pending_reference_suggestions || 0) > 0 ? "warning" : "ready"}>
+              <Metric label="Reference records" value={state?.summary?.counts?.reference_records ?? 0} />
+              <Metric label="Pending suggestions" value={state?.summary?.counts?.pending_reference_suggestions ?? 0} />
+              <Metric label="Import batches" value={state?.summary?.counts?.reference_import_batches ?? 0} />
+            </OverviewCard>
+            <OverviewCard icon={Plane} title="Knowledge updates" href="/platform/airline-intelligence-readiness" status={knowledgeSummary.blocked_gate_count ? "blocked" : knowledgeSummary.release_ready_count ? "ready" : "warning"}>
               <Metric label="Average readiness" value={formatScore(knowledgeSummary.average_readiness_score)} />
               <Metric label="Release ready" value={knowledgeSummary.release_ready_count ?? 0} />
               <Metric label="Blocked gates" value={knowledgeSummary.blocked_gate_count ?? 0} />
             </OverviewCard>
-            <OverviewCard icon={ShieldCheck} title="Pilot status" href="/platform/commercial-pilot-readiness" status={pilot.status || "not_verified"}>
-              <Metric label="Current status" value={productLabel(pilot.status || "not verified")} />
-              <Metric label="Blocking checks" value={pilot.blocker_count ?? "—"} />
-              <Metric label="New feedback" value={feedbackCount} />
+            <OverviewCard icon={CircleAlert} title="Operational alerts" href="/platform/operations-governance" status={attention.length ? "warning" : "ready"}>
+              <Metric label="Attention items" value={attention.length} />
+              <Metric label="New pilot feedback" value={feedbackCount} />
+              <Metric label="System readiness" value={readiness.ok ? "Ready" : "Needs attention"} />
             </OverviewCard>
-            <OverviewCard icon={Activity} title="System health" href="/platform/pilot-operations" status={readiness.ok ? "ready" : "blocked"}>
-              <Metric label="API readiness" value={readiness.ok ? "Ready" : "Needs attention"} />
-              <Metric label="Configuration" value={productLabel(readiness.diagnostics?.configuration || "unknown")} />
-              <Metric label="Smoke inventory" value={inventoryLabel(readiness.inventory)} />
-            </OverviewCard>
+          </section>
+
+          <section className="grid gap-3 md:grid-cols-2" aria-label="Release and pilot status">
+            <StatusLine href="/platform/commercial-pilot-readiness" icon={ShieldCheck} label="Commercial Pilot" status={pilot.status || "not_verified"} value={`${pilot.blocker_count ?? 0} blocking checks`} />
+            <StatusLine href="/platform/monitoring" icon={Activity} label="System health" status={readiness.ok ? "ready" : "blocked"} value={`${inventoryLabel(readiness.inventory)} smoke inventory`} />
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
@@ -189,6 +194,15 @@ function Metric({ label, value }) {
 
 function QuickAction({ href, label }) {
   return <a className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50" href={href}>{label}<ArrowRight className="h-4 w-4 text-slate-400" aria-hidden="true" /></a>
+}
+
+function StatusLine({ href, icon: Icon, label, status, value }) {
+  return (
+    <a className="flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:border-blue-300" href={href}>
+      <span className="flex min-w-0 items-center gap-3"><Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-blue-700" /><span><span className="block text-sm font-semibold text-slate-950">{label}</span><span className="block truncate text-xs text-slate-500">{value}</span></span></span>
+      <StatusBadge status={status} />
+    </a>
+  )
 }
 
 function formatScore(value) {

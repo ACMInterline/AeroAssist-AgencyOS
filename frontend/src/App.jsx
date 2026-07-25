@@ -1,311 +1,322 @@
-import AgencySettingsPage from "./pages/agency/AgencySettingsPage"
+import { lazy, Suspense } from "react"
+import LoadingState from "./components/LoadingState"
 import { AuthorizationBoundary, AuthorizationProvider } from "./context/AuthorizationContext"
-import AgencyOnboardingPage from "./pages/agency/AgencyOnboardingPage"
-import PilotFeedbackPage from "./pages/agency/PilotFeedbackPage"
-import AssignedBundlesPage from "./pages/agency/AssignedBundlesPage"
-import BundleRolloutReadinessPage from "./pages/agency/BundleRolloutReadinessPage"
-import BundleDependenciesPage from "./pages/agency/BundleDependenciesPage"
-import CapabilitiesPage from "./pages/agency/CapabilitiesPage"
-import AgencyRolloutDashboardPage from "./pages/agency/RolloutDashboardPage"
-import RolloutApprovalPage from "./pages/agency/RolloutApprovalPage"
-import RolloutChangeRequestsPage from "./pages/agency/RolloutChangeRequestsPage"
-import RolloutDecisionsPage from "./pages/agency/RolloutDecisionsPage"
-import RolloutIssuesPage from "./pages/agency/RolloutIssuesPage"
-import RolloutPlansPage from "./pages/agency/RolloutPlansPage"
-import RolloutRisksPage from "./pages/agency/RolloutRisksPage"
-import RolloutRollbackPlansPage from "./pages/agency/RolloutRollbackPlansPage"
-import RolloutSchedulePage from "./pages/agency/RolloutSchedulePage"
-import RolloutSummaryPacksPage from "./pages/agency/RolloutSummaryPacksPage"
-import RolloutTimelinePage from "./pages/agency/RolloutTimelinePage"
-import TimelinePage from "./pages/agency/TimelinePage"
-import WorkflowEnginePage from "./pages/agency/WorkflowEnginePage"
-import FlightWorkspacesPage from "./pages/agency/FlightWorkspacesPage"
-import TripWorkspacesPage from "./pages/agency/TripWorkspacesPage"
-import JourneyWorkspacePage from "./pages/agency/JourneyWorkspacePage"
-import JourneyAuthoringWorkspacePage from "./pages/agency/JourneyAuthoringWorkspacePage"
-import JourneyOptionCompositionWorkspacePage from "./pages/agency/JourneyOptionCompositionWorkspacePage"
-import JourneyComparisonPresentationWorkspacePage from "./pages/agency/JourneyComparisonPresentationWorkspacePage"
-import OfferDeliveryContextPage from "./pages/agency/OfferDeliveryContextPage"
-import TravelRequestsPage from "./pages/agency/TravelRequestsPage"
-import TravelWorkspacesPage from "./pages/agency/TravelWorkspacesPage"
-import AirlineIntelligenceDetailPage from "./pages/agency/AirlineIntelligenceDetailPage"
-import AirlineIntelligenceCoveragePage from "./pages/agency/AirlineIntelligenceCoveragePage"
-import AgencyAirlineIntelligenceConsumptionPage from "./pages/agency/AirlineIntelligenceConsumptionPage"
-import AgencyAirlineIntelligenceKnowledgeVersionsPage from "./pages/agency/AirlineIntelligenceKnowledgeVersionsPage"
-import AirlineIntelligenceReviewCoveragePage from "./pages/agency/AirlineIntelligenceReviewCoveragePage"
-import AirlineIntelligencePage from "./pages/agency/AirlineIntelligencePage"
-import AirlineProfilesPage from "./pages/agency/AirlineProfilesPage"
-import AgencyAirlineEvidencePage from "./pages/agency/AirlineEvidencePage"
-import AgencyKnowledgeUpdatesPage from "./pages/agency/KnowledgeUpdatesPage"
-import AgencyAirlineServiceCoveragePage from "./pages/agency/AirlineServiceCoveragePage"
-import AgencyAirlineDistributionCapabilitiesPage from "./pages/agency/AirlineDistributionCapabilitiesPage"
-import AgencyInterlineCodeshareAdvisorPage from "./pages/agency/InterlineCodeshareAdvisorPage"
-import AgencyFareBrandLibraryPage from "./pages/agency/FareBrandLibraryPage"
-import AgencyAirlineContactDirectoryPage from "./pages/agency/AirlineContactDirectoryPage"
-import AgencyAirlineIntelligenceReadinessPage from "./pages/agency/AirlineIntelligenceReadinessPage"
-import AirlineKnowledgeViewPage from "./pages/agency/AirlineKnowledgeViewPage"
-import CapabilityMatrixPage from "./pages/agency/CapabilityMatrixPage"
-import KnowledgeAcquisitionPage from "./pages/agency/KnowledgeAcquisitionPage"
-import KnowledgeGovernancePage from "./pages/agency/KnowledgeGovernancePage"
-import KnowledgeNormalisationPage from "./pages/agency/KnowledgeNormalisationPage"
-import IntelligenceCasesPage from "./pages/agency/IntelligenceCasesPage"
-import OperationalEvaluationsPage from "./pages/agency/OperationalEvaluationsPage"
-import RecommendationsPage from "./pages/agency/RecommendationsPage"
-import RequestSegmentServicesPage from "./pages/agency/RequestSegmentServicesPage"
-import ImportTemplatesPage from "./pages/agency/ImportTemplatesPage"
-import AgencyReferenceDataEnginePage from "./pages/agency/ReferenceDataEnginePage"
-import PolicyEditorPage from "./pages/agency/PolicyEditorPage"
-import AgencyPricingFormulaBuilderPage from "./pages/agency/PricingFormulaBuilderPage"
-import RuleComposerPage from "./pages/agency/RuleComposerPage"
-import AgencyKnowledgeQualityAssurancePage from "./pages/agency/KnowledgeQualityAssurancePage"
-import AgencyPublishedKnowledgePage from "./pages/agency/PublishedKnowledgePage"
-import AgencyScenarioTestingPage from "./pages/agency/ScenarioTestingPage"
-import AgencyKnowledgePopulationToolkitPage from "./pages/agency/KnowledgePopulationToolkitPage"
-import AgencyPilotReadinessPage from "./pages/agency/PilotReadinessPage"
-import ServiceFeasibilityPage from "./pages/agency/ServiceFeasibilityPage"
-import ServiceParameterTaxonomiesPage from "./pages/agency/ServiceParameterTaxonomiesPage"
-import AirlinePolicyLibraryPage from "./pages/agency/AirlinePolicyLibraryPage"
-import AirlineServiceAdvisorPage from "./pages/agency/AirlineServiceAdvisorPage"
-import OperationalIntelligencePage from "./pages/agency/OperationalIntelligencePage"
-import AgencyOperationalConstraintsPage from "./pages/agency/OperationalConstraintsPage"
-import AgencyOperationalWorkflowsPage from "./pages/agency/OperationalWorkflowsPage"
-import AgentWorkQueuePage from "./pages/agency/AgentWorkQueuePage"
-import DeadlinesPage from "./pages/agency/DeadlinesPage"
-import AgencyTaskAutomationPage from "./pages/agency/TaskAutomationPage"
-import RequestTripConversionPage from "./pages/agency/RequestTripConversionPage"
-import BookingHandoffsPage from "./pages/agency/BookingHandoffsPage"
-import AfterSalesPage from "./pages/agency/AfterSalesPage"
-import OperationsCommandCenterPage from "./pages/agency/OperationsCommandCenterPage"
-import AgencyWorkflowMaturityPage from "./pages/agency/WorkflowMaturityPage"
-import BookingDetailPage from "./pages/agency/BookingDetailPage"
-import BookingImportsPage from "./pages/agency/BookingImportsPage"
-import BookingWorkspaceDetailPage from "./pages/agency/BookingWorkspaceDetailPage"
-import BookingWorkspaceMetadataPage from "./pages/agency/BookingWorkspaceMetadataPage"
-import BookingWorkspacesPage from "./pages/agency/BookingWorkspacesPage"
-import BookingsPage from "./pages/agency/BookingsPage"
-import AgencyClientMasterPage from "./pages/agency/ClientMasterPage"
-import ClientDetailPage from "./pages/agency/ClientDetailPage"
-import ClientsPage from "./pages/agency/ClientsPage"
-import DocumentDetailPage from "./pages/agency/DocumentDetailPage"
-import DocumentStoragePage from "./pages/agency/DocumentStoragePage"
-import DocumentTemplatesPage from "./pages/agency/DocumentTemplatesPage"
-import DocumentsPage from "./pages/agency/DocumentsPage"
-import DocumentWorkspacesPage from "./pages/agency/DocumentWorkspacesPage"
-import EmdDetailPage from "./pages/agency/EmdDetailPage"
-import EmdWorkspaceMetadataPage from "./pages/agency/EmdWorkspaceMetadataPage"
-import InvoiceDetailPage from "./pages/agency/InvoiceDetailPage"
-import InvoicesPage from "./pages/agency/InvoicesPage"
-import FinanceDashboardPage from "./pages/agency/FinanceDashboardPage"
-import SupplierCostsPage from "./pages/agency/SupplierCostsPage"
-import OfferCreatePage from "./pages/agency/OfferCreatePage"
-import OfferBuilderPage from "./pages/agency/OfferBuilderPage"
-import OfferIntelligencePage from "./pages/agency/OfferIntelligencePage"
-import AgencyOfferDecisionExportAuditReviewsPage from "./pages/agency/OfferDecisionExportAuditReviewsPage"
-import AgencyOfferDecisionExportCompliancePage from "./pages/agency/OfferDecisionExportCompliancePage"
-import AgencyOfferDecisionExportDeliveriesPage from "./pages/agency/OfferDecisionExportDeliveriesPage"
-import AgencyOfferDecisionExportDeliveryOutcomesPage from "./pages/agency/OfferDecisionExportDeliveryOutcomesPage"
-import AgencyOfferDecisionExportGovernancePage from "./pages/agency/OfferDecisionExportGovernancePage"
-import AgencyOfferDecisionExportPreviewsPage from "./pages/agency/OfferDecisionExportPreviewsPage"
-import AgencyOfferDecisionExportReleasesPage from "./pages/agency/OfferDecisionExportReleasesPage"
-import AgencyOfferDecisionExportsPage from "./pages/agency/OfferDecisionExportsPage"
-import AgencyOfferDecisionExplanationsPage from "./pages/agency/OfferDecisionExplanationsPage"
-import AgencyOfferDecisionPacksPage from "./pages/agency/OfferDecisionPacksPage"
-import AgencyOfferPolicyAdvisorPage from "./pages/agency/OfferPolicyAdvisorPage"
-import OfferWorkspaceDetailPage from "./pages/agency/OfferWorkspaceDetailPage"
-import OfferWorkspaceMetadataPage from "./pages/agency/OfferWorkspaceMetadataPage"
-import OfferWorkspacesPage from "./pages/agency/OfferWorkspacesPage"
-import RefundExchangeCaseCreatePage from "./pages/agency/RefundExchangeCaseCreatePage"
-import RefundExchangeCaseDetailPage from "./pages/agency/RefundExchangeCaseDetailPage"
-import RefundExchangeCasesPage from "./pages/agency/RefundExchangeCasesPage"
-import ReferenceDataPage from "./pages/agency/ReferenceDataPage"
-import FeatureAvailabilityPage from "./pages/agency/FeatureAvailabilityPage"
-import FeatureBundlesPage from "./pages/agency/FeatureBundlesPage"
-import FeatureReadinessPage from "./pages/agency/FeatureReadinessPage"
-import FormProfilesPage from "./pages/agency/FormProfilesPage"
-import GdsParserPage from "./pages/agency/GdsParserPage"
-import AgencyAncillaryPricingPage from "./pages/agency/AncillaryPricingPage"
-import AgencyPolicyComparisonPage from "./pages/agency/PolicyComparisonPage"
-import AgencyServiceMechanicsPage from "./pages/agency/ServiceMechanicsPage"
-import AgencyServiceTaxonomyPage from "./pages/agency/ServiceTaxonomyPage"
-import SpecialServicesPage from "./pages/agency/SpecialServicesPage"
-import PassengerDetailPage from "./pages/agency/PassengerDetailPage"
-import AgencyPassengerMasterPage from "./pages/agency/PassengerMasterPage"
-import PassengerWorkspacesPage from "./pages/agency/PassengerWorkspacesPage"
-import PassengerServicesPage from "./pages/agency/PassengerServicesPage"
-import PassengersPage from "./pages/agency/PassengersPage"
-import PaymentsPage from "./pages/agency/PaymentsPage"
-import AgencyPortalActionsPage from "./pages/agency/PortalActionsPage"
-import RequestCreatePage from "./pages/agency/RequestCreatePage"
-import RequestDetailPage from "./pages/agency/RequestDetailPage"
-import RequestIntakeDetailPage from "./pages/agency/RequestIntakeDetailPage"
-import RequestIntakesListPage from "./pages/agency/RequestIntakesListPage"
-import RequestsPage from "./pages/agency/RequestsPage"
-import SaaSSubscriptionPage from "./pages/agency/SaaSSubscriptionPage"
-import TripCreatePage from "./pages/agency/TripCreatePage"
-import TripDetailPage from "./pages/agency/TripDetailPage"
-import TripsPage from "./pages/agency/TripsPage"
-import TicketDetailPage from "./pages/agency/TicketDetailPage"
-import TicketWorkspaceMetadataPage from "./pages/agency/TicketWorkspaceMetadataPage"
-import TicketsEmdsPage from "./pages/agency/TicketsEmdsPage"
-import WebsiteBuilderPage from "./pages/agency/WebsiteBuilderPage"
-import WebsiteMediaLibraryPage from "./pages/agency/WebsiteMediaLibraryPage"
-import LoginPage from "./pages/auth/LoginPage"
-import InviteAcceptPage from "./pages/auth/InviteAcceptPage"
-import AirlineDetailPage from "./pages/platform/AirlineDetailPage"
-import AirlineIntelligenceDataPacksPage from "./pages/platform/AirlineIntelligenceDataPacksPage"
-import AirlineIntelligenceDataPackReviewsPage from "./pages/platform/AirlineIntelligenceDataPackReviewsPage"
-import AirlineCapabilityMatrixPage from "./pages/platform/AirlineCapabilityMatrixPage"
-import AirlineKnowledgeAcquisitionPage from "./pages/platform/AirlineKnowledgeAcquisitionPage"
-import AirlineKnowledgeGovernancePage from "./pages/platform/AirlineKnowledgeGovernancePage"
-import AirlineKnowledgeNormalisationPage from "./pages/platform/AirlineKnowledgeNormalisationPage"
-import AirlineOperationalIntelligencePage from "./pages/platform/AirlineOperationalIntelligencePage"
-import PlatformAirlineRecommendationsPage from "./pages/platform/AirlineRecommendationsPage"
-import PlatformOperationalIntelligenceCasesPage from "./pages/platform/OperationalIntelligenceCasesPage"
-import PlatformOperationalEvaluationsPage from "./pages/platform/OperationalEvaluationsPage"
-import PlatformPassengerServiceFeasibilityPage from "./pages/platform/PassengerServiceFeasibilityPage"
-import PlatformOperationalConstraintsPage from "./pages/platform/OperationalConstraintsPage"
-import PlatformOperationalWorkflowsPage from "./pages/platform/OperationalWorkflowsPage"
-import PlatformWorkQueueGovernancePage from "./pages/platform/WorkQueueGovernancePage"
-import PlatformSlaPoliciesPage from "./pages/platform/SlaPoliciesPage"
-import PlatformTaskAutomationPage from "./pages/platform/TaskAutomationPage"
-import PlatformRequestTripConversionDiagnosticsPage from "./pages/platform/RequestTripConversionDiagnosticsPage"
-import PlatformBookingHandoffDiagnosticsPage from "./pages/platform/BookingHandoffDiagnosticsPage"
-import PlatformAfterSalesDiagnosticsPage from "./pages/platform/AfterSalesDiagnosticsPage"
-import PlatformOperationsGovernancePage from "./pages/platform/OperationsGovernancePage"
-import PlatformWorkflowMaturityPage from "./pages/platform/WorkflowMaturityPage"
-import PlatformRequestSegmentServicesPage from "./pages/platform/RequestSegmentServicesPage"
-import PlatformKnowledgeImportTemplatesPage from "./pages/platform/KnowledgeImportTemplatesPage"
-import PlatformReferenceDataEnginePage from "./pages/platform/ReferenceDataEnginePage"
-import PlatformServiceParameterTaxonomiesPage from "./pages/platform/ServiceParameterTaxonomiesPage"
-import PlatformVisualPolicyEditorPage from "./pages/platform/VisualPolicyEditorPage"
-import PlatformPricingFormulaBuilderPage from "./pages/platform/PricingFormulaBuilderPage"
-import PlatformOperationalRuleComposerPage from "./pages/platform/OperationalRuleComposerPage"
-import PlatformKnowledgeQualityAssurancePage from "./pages/platform/KnowledgeQualityAssurancePage"
-import PlatformAirlineKnowledgePublishingPage from "./pages/platform/AirlineKnowledgePublishingPage"
-import PlatformOperationalScenarioTestingPage from "./pages/platform/OperationalScenarioTestingPage"
-import PlatformKnowledgePopulationToolkitPage from "./pages/platform/KnowledgePopulationToolkitPage"
-import PlatformPilotReadinessPage from "./pages/platform/PilotReadinessPage"
-import PlatformPilotOperationsReadinessPage from "./pages/platform/PilotOperationsReadinessPage"
-import CommercialPilotReadinessPage from "./pages/platform/CommercialPilotReadinessPage"
-import PilotFeedbackReviewPage from "./pages/platform/PilotFeedbackReviewPage"
-import PlatformAirlineIntelligenceAgencyConsumptionPage from "./pages/platform/AirlineIntelligenceAgencyConsumptionPage"
-import PlatformAirlineIntelligenceKnowledgeVersionsPage from "./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"
-import AirlineKnowledgeDetailPage from "./pages/platform/AirlineKnowledgeDetailPage"
-import AirlinePolicyIngestionPage from "./pages/platform/AirlinePolicyIngestionPage"
-import AirlinesPage from "./pages/platform/AirlinesPage"
-import AirlineMasterProfilesPage from "./pages/platform/AirlineMasterProfilesPage"
-import PlatformAirlineEvidencePage from "./pages/platform/AirlineEvidencePage"
-import PlatformAirlineKnowledgeVersionsPage from "./pages/platform/AirlineKnowledgeVersionsPage"
-import PlatformAirlineServiceCoveragePage from "./pages/platform/AirlineServiceCoveragePage"
-import PlatformAirlineDistributionCapabilitiesPage from "./pages/platform/AirlineDistributionCapabilitiesPage"
-import PlatformInterlineCodeshareIntelligencePage from "./pages/platform/InterlineCodeshareIntelligencePage"
-import PlatformFareBrandIntelligencePage from "./pages/platform/FareBrandIntelligencePage"
-import PlatformAirlineContactIntelligencePage from "./pages/platform/AirlineContactIntelligencePage"
-import PlatformAirlineIntelligenceReadinessPage from "./pages/platform/AirlineIntelligenceReadinessPage"
-import PlatformAgenciesPage from "./pages/platform/PlatformAgenciesPage"
-import PlatformAncillaryPricingPage from "./pages/platform/AncillaryPricingPage"
-import PlatformAgencyDetailPage from "./pages/platform/PlatformAgencyDetailPage"
-import PlatformBlueprintPage from "./pages/platform/PlatformBlueprintPage"
-import PlatformCapabilityCatalogPage from "./pages/platform/CapabilityCatalogPage"
-import PlatformClientMasterPage from "./pages/platform/ClientMasterPage"
-import PlatformDashboardPage from "./pages/platform/PlatformDashboardPage"
-import PlatformDocumentWorkspacesPage from "./pages/platform/DocumentWorkspacesPage"
-import PlatformDocumentTemplatesPage from "./pages/platform/PlatformDocumentTemplatesPage"
-import PlatformFeatureBundleDependenciesPage from "./pages/platform/FeatureBundleDependenciesPage"
-import PlatformFeatureBundleAssignmentsPage from "./pages/platform/FeatureBundleAssignmentsPage"
-import PlatformFeatureBundleRolloutApprovalsPage from "./pages/platform/FeatureBundleRolloutApprovalsPage"
-import PlatformFeatureBundleRolloutChangeRequestsPage from "./pages/platform/FeatureBundleRolloutChangeRequestsPage"
-import PlatformFeatureBundleRolloutDecisionsPage from "./pages/platform/FeatureBundleRolloutDecisionsPage"
-import PlatformFeatureBundleRolloutIssuesPage from "./pages/platform/FeatureBundleRolloutIssuesPage"
-import PlatformFeatureBundleRolloutPlansPage from "./pages/platform/FeatureBundleRolloutPlansPage"
-import PlatformFeatureBundleRolloutReadinessPage from "./pages/platform/FeatureBundleRolloutReadinessPage"
-import PlatformFeatureBundleRolloutRisksPage from "./pages/platform/FeatureBundleRolloutRisksPage"
-import PlatformFeatureBundleRolloutRollbackPlansPage from "./pages/platform/FeatureBundleRolloutRollbackPlansPage"
-import PlatformFeatureBundleRolloutSchedulePage from "./pages/platform/FeatureBundleRolloutSchedulePage"
-import PlatformFeatureBundleRolloutSummaryPacksPage from "./pages/platform/FeatureBundleRolloutSummaryPacksPage"
-import PlatformFeatureBundleRolloutTimelinePage from "./pages/platform/FeatureBundleRolloutTimelinePage"
-import PlatformFlightWorkspacesPage from "./pages/platform/FlightWorkspacesPage"
-import PlatformBookingWorkspacesPage from "./pages/platform/BookingWorkspacesPage"
-import PlatformOfferWorkspacesPage from "./pages/platform/OfferWorkspacesPage"
-import PlatformPassengerMasterPage from "./pages/platform/PassengerMasterPage"
-import PlatformOperationalTimelinesPage from "./pages/platform/OperationalTimelinesPage"
-import PlatformOperationalTravelWorkspacesPage from "./pages/platform/OperationalTravelWorkspacesPage"
-import PlatformPassengerServiceWorkflowsPage from "./pages/platform/PassengerServiceWorkflowsPage"
-import PlatformPassengerWorkspacesPage from "./pages/platform/PassengerWorkspacesPage"
-import PlatformSsrOsiWorkspacesPage from "./pages/platform/SsrOsiWorkspacesPage"
-import PlatformTicketWorkspacesPage from "./pages/platform/TicketWorkspacesPage"
-import PlatformEmdWorkspacesPage from "./pages/platform/EmdWorkspacesPage"
-import PlatformTripWorkspacesPage from "./pages/platform/TripWorkspacesPage"
-import PlatformJourneyEnginePage from "./pages/platform/JourneyEnginePage"
-import PlatformJourneyAuthoringDiagnosticsPage from "./pages/platform/JourneyAuthoringDiagnosticsPage"
-import PlatformJourneyOptionCompositionDiagnosticsPage from "./pages/platform/JourneyOptionCompositionDiagnosticsPage"
-import PlatformJourneyComparisonPresentationDiagnosticsPage from "./pages/platform/JourneyComparisonPresentationDiagnosticsPage"
-import PlatformOfferDeliveryDiagnosticsPage from "./pages/platform/OfferDeliveryDiagnosticsPage"
-import PlatformTravelRequestWorkspacesPage from "./pages/platform/TravelRequestWorkspacesPage"
-import PlatformRolloutDashboardPage from "./pages/platform/RolloutDashboardPage"
-import PlatformFeatureFlagAuditPage from "./pages/platform/FeatureFlagAuditPage"
-import PlatformFeatureFlagBundlesPage from "./pages/platform/FeatureFlagBundlesPage"
-import PlatformFeatureFlagsPage from "./pages/platform/FeatureFlagsPage"
-import PlatformGdsParserPage from "./pages/platform/PlatformGdsParserPage"
-import PlatformOfferDecisionExportAuditReviewsPage from "./pages/platform/OfferDecisionExportAuditReviewsPage"
-import PlatformOfferDecisionExportCompliancePage from "./pages/platform/OfferDecisionExportCompliancePage"
-import PlatformOfferDecisionExportDeliveriesPage from "./pages/platform/OfferDecisionExportDeliveriesPage"
-import PlatformOfferDecisionExportDeliveryOutcomesPage from "./pages/platform/OfferDecisionExportDeliveryOutcomesPage"
-import PlatformOfferDecisionExportGovernancePage from "./pages/platform/OfferDecisionExportGovernancePage"
-import PlatformOfferDecisionExportPreviewsPage from "./pages/platform/OfferDecisionExportPreviewsPage"
-import PlatformOfferDecisionExportReleasesPage from "./pages/platform/OfferDecisionExportReleasesPage"
-import PlatformOfferDecisionExportsPage from "./pages/platform/OfferDecisionExportsPage"
-import PlatformOfferDecisionExplanationsPage from "./pages/platform/OfferDecisionExplanationsPage"
-import PlatformOfferDecisionPacksPage from "./pages/platform/OfferDecisionPacksPage"
-import PlatformIntelligentOfferBuilderPage from "./pages/platform/IntelligentOfferBuilderPage"
-import PlatformOfferPolicyAdvisorPage from "./pages/platform/OfferPolicyAdvisorPage"
-import PlatformPolicyComparisonPage from "./pages/platform/PolicyComparisonPage"
-import PlatformReferenceDataPage from "./pages/platform/PlatformReferenceDataPage"
-import PlatformRulesServicesPage from "./pages/platform/PlatformRulesServicesPage"
-import PlatformSaaSSubscriptionsPage from "./pages/platform/SaaSSubscriptionsPage"
-import PlatformServiceMechanicsPage from "./pages/platform/ServiceMechanicsPage"
-import PlatformServiceTaxonomyPage from "./pages/platform/ServiceTaxonomyPage"
-import PortalBookingDetailPage from "./pages/portal/PortalBookingDetailPage"
-import PortalActionsPage from "./pages/portal/PortalActionsPage"
-import PortalBookingsPage from "./pages/portal/PortalBookingsPage"
-import PortalDashboardPage from "./pages/portal/PortalDashboardPage"
-import PortalDocumentDetailPage from "./pages/portal/PortalDocumentDetailPage"
-import PortalDocumentsPage from "./pages/portal/PortalDocumentsPage"
-import PortalInvoiceDetailPage from "./pages/portal/PortalInvoiceDetailPage"
-import PortalInvoicesPage from "./pages/portal/PortalInvoicesPage"
-import PortalOfferDetailPage from "./pages/portal/PortalOfferDetailPage"
-import PortalOfferDeliveriesPage from "./pages/portal/PortalOfferDeliveriesPage"
-import PortalOfferDeliveryDetailPage from "./pages/portal/PortalOfferDeliveryDetailPage"
-import PortalPassengerDetailPage from "./pages/portal/PortalPassengerDetailPage"
-import PortalPassengersPage from "./pages/portal/PortalPassengersPage"
-import PortalPaymentsPage from "./pages/portal/PortalPaymentsPage"
-import PortalProfilePage from "./pages/portal/PortalProfilePage"
-import PortalRequestDetailPage from "./pages/portal/PortalRequestDetailPage"
-import PortalRequestCreatePage from "./pages/portal/PortalRequestCreatePage"
-import PortalRequestsPage from "./pages/portal/PortalRequestsPage"
-import PortalRefundExchangeCaseDetailPage from "./pages/portal/PortalRefundExchangeCaseDetailPage"
-import PortalRefundExchangeCasesPage from "./pages/portal/PortalRefundExchangeCasesPage"
-import PortalApprovalsPage from "./pages/portal/PortalApprovalsPage"
-import PortalAssistancePage from "./pages/portal/PortalAssistancePage"
-import PortalCommunicationDetailPage from "./pages/portal/PortalCommunicationDetailPage"
-import PortalCommunicationsPage from "./pages/portal/PortalCommunicationsPage"
-import PortalEmdDetailPage from "./pages/portal/PortalEmdDetailPage"
-import PortalEmdsPage from "./pages/portal/PortalEmdsPage"
-import PortalFinancePage from "./pages/portal/PortalFinancePage"
-import PortalNotificationsPage from "./pages/portal/PortalNotificationsPage"
-import PortalTicketDetailPage from "./pages/portal/PortalTicketDetailPage"
-import PortalTicketsPage from "./pages/portal/PortalTicketsPage"
-import PortalTimelinePage from "./pages/portal/PortalTimelinePage"
-import PortalTripDetailPage from "./pages/portal/PortalTripDetailPage"
-import PortalTripsPage from "./pages/portal/PortalTripsPage"
-import HomePage from "./pages/public/HomePage"
-import PublicAgencyWebsitePage from "./pages/public/PublicAgencyWebsitePage"
+const AgencySettingsPage = lazy(() => import("./pages/agency/AgencySettingsPage"))
+const AgencyOnboardingPage = lazy(() => import("./pages/agency/AgencyOnboardingPage"))
+const PilotFeedbackPage = lazy(() => import("./pages/agency/PilotFeedbackPage"))
+const AssignedBundlesPage = lazy(() => import("./pages/agency/AssignedBundlesPage"))
+const BundleRolloutReadinessPage = lazy(() => import("./pages/agency/BundleRolloutReadinessPage"))
+const BundleDependenciesPage = lazy(() => import("./pages/agency/BundleDependenciesPage"))
+const CapabilitiesPage = lazy(() => import("./pages/agency/CapabilitiesPage"))
+const AgencyRolloutDashboardPage = lazy(() => import("./pages/agency/RolloutDashboardPage"))
+const RolloutApprovalPage = lazy(() => import("./pages/agency/RolloutApprovalPage"))
+const RolloutChangeRequestsPage = lazy(() => import("./pages/agency/RolloutChangeRequestsPage"))
+const RolloutDecisionsPage = lazy(() => import("./pages/agency/RolloutDecisionsPage"))
+const RolloutIssuesPage = lazy(() => import("./pages/agency/RolloutIssuesPage"))
+const RolloutPlansPage = lazy(() => import("./pages/agency/RolloutPlansPage"))
+const RolloutRisksPage = lazy(() => import("./pages/agency/RolloutRisksPage"))
+const RolloutRollbackPlansPage = lazy(() => import("./pages/agency/RolloutRollbackPlansPage"))
+const RolloutSchedulePage = lazy(() => import("./pages/agency/RolloutSchedulePage"))
+const RolloutSummaryPacksPage = lazy(() => import("./pages/agency/RolloutSummaryPacksPage"))
+const RolloutTimelinePage = lazy(() => import("./pages/agency/RolloutTimelinePage"))
+const TimelinePage = lazy(() => import("./pages/agency/TimelinePage"))
+const WorkflowEnginePage = lazy(() => import("./pages/agency/WorkflowEnginePage"))
+const FlightWorkspacesPage = lazy(() => import("./pages/agency/FlightWorkspacesPage"))
+const TripWorkspacesPage = lazy(() => import("./pages/agency/TripWorkspacesPage"))
+const JourneyWorkspacePage = lazy(() => import("./pages/agency/JourneyWorkspacePage"))
+const JourneyAuthoringWorkspacePage = lazy(() => import("./pages/agency/JourneyAuthoringWorkspacePage"))
+const JourneyOptionCompositionWorkspacePage = lazy(() => import("./pages/agency/JourneyOptionCompositionWorkspacePage"))
+const JourneyComparisonPresentationWorkspacePage = lazy(() => import("./pages/agency/JourneyComparisonPresentationWorkspacePage"))
+const OfferDeliveryContextPage = lazy(() => import("./pages/agency/OfferDeliveryContextPage"))
+const TravelRequestsPage = lazy(() => import("./pages/agency/TravelRequestsPage"))
+const TravelWorkspacesPage = lazy(() => import("./pages/agency/TravelWorkspacesPage"))
+const AirlineIntelligenceDetailPage = lazy(() => import("./pages/agency/AirlineIntelligenceDetailPage"))
+const AirlineIntelligenceCoveragePage = lazy(() => import("./pages/agency/AirlineIntelligenceCoveragePage"))
+const AgencyAirlineIntelligenceConsumptionPage = lazy(() => import("./pages/agency/AirlineIntelligenceConsumptionPage"))
+const AgencyAirlineIntelligenceKnowledgeVersionsPage = lazy(() => import("./pages/agency/AirlineIntelligenceKnowledgeVersionsPage"))
+const AirlineIntelligenceReviewCoveragePage = lazy(() => import("./pages/agency/AirlineIntelligenceReviewCoveragePage"))
+const AirlineIntelligencePage = lazy(() => import("./pages/agency/AirlineIntelligencePage"))
+const AirlineProfilesPage = lazy(() => import("./pages/agency/AirlineProfilesPage"))
+const AgencyAirlineEvidencePage = lazy(() => import("./pages/agency/AirlineEvidencePage"))
+const AgencyKnowledgeUpdatesPage = lazy(() => import("./pages/agency/KnowledgeUpdatesPage"))
+const AgencyAirlineServiceCoveragePage = lazy(() => import("./pages/agency/AirlineServiceCoveragePage"))
+const AgencyAirlineDistributionCapabilitiesPage = lazy(() => import("./pages/agency/AirlineDistributionCapabilitiesPage"))
+const AgencyInterlineCodeshareAdvisorPage = lazy(() => import("./pages/agency/InterlineCodeshareAdvisorPage"))
+const AgencyFareBrandLibraryPage = lazy(() => import("./pages/agency/FareBrandLibraryPage"))
+const AgencyAirlineContactDirectoryPage = lazy(() => import("./pages/agency/AirlineContactDirectoryPage"))
+const AgencyAirlineIntelligenceReadinessPage = lazy(() => import("./pages/agency/AirlineIntelligenceReadinessPage"))
+const AirlineKnowledgeViewPage = lazy(() => import("./pages/agency/AirlineKnowledgeViewPage"))
+const CapabilityMatrixPage = lazy(() => import("./pages/agency/CapabilityMatrixPage"))
+const KnowledgeAcquisitionPage = lazy(() => import("./pages/agency/KnowledgeAcquisitionPage"))
+const KnowledgeGovernancePage = lazy(() => import("./pages/agency/KnowledgeGovernancePage"))
+const KnowledgeNormalisationPage = lazy(() => import("./pages/agency/KnowledgeNormalisationPage"))
+const IntelligenceCasesPage = lazy(() => import("./pages/agency/IntelligenceCasesPage"))
+const OperationalEvaluationsPage = lazy(() => import("./pages/agency/OperationalEvaluationsPage"))
+const RecommendationsPage = lazy(() => import("./pages/agency/RecommendationsPage"))
+const RequestSegmentServicesPage = lazy(() => import("./pages/agency/RequestSegmentServicesPage"))
+const ImportTemplatesPage = lazy(() => import("./pages/agency/ImportTemplatesPage"))
+const AgencyReferenceDataEnginePage = lazy(() => import("./pages/agency/ReferenceDataEnginePage"))
+const PolicyEditorPage = lazy(() => import("./pages/agency/PolicyEditorPage"))
+const AgencyPricingFormulaBuilderPage = lazy(() => import("./pages/agency/PricingFormulaBuilderPage"))
+const RuleComposerPage = lazy(() => import("./pages/agency/RuleComposerPage"))
+const AgencyKnowledgeQualityAssurancePage = lazy(() => import("./pages/agency/KnowledgeQualityAssurancePage"))
+const AgencyPublishedKnowledgePage = lazy(() => import("./pages/agency/PublishedKnowledgePage"))
+const AgencyScenarioTestingPage = lazy(() => import("./pages/agency/ScenarioTestingPage"))
+const AgencyKnowledgePopulationToolkitPage = lazy(() => import("./pages/agency/KnowledgePopulationToolkitPage"))
+const AgencyPilotReadinessPage = lazy(() => import("./pages/agency/PilotReadinessPage"))
+const ServiceFeasibilityPage = lazy(() => import("./pages/agency/ServiceFeasibilityPage"))
+const ServiceParameterTaxonomiesPage = lazy(() => import("./pages/agency/ServiceParameterTaxonomiesPage"))
+const AirlinePolicyLibraryPage = lazy(() => import("./pages/agency/AirlinePolicyLibraryPage"))
+const AirlineServiceAdvisorPage = lazy(() => import("./pages/agency/AirlineServiceAdvisorPage"))
+const OperationalIntelligencePage = lazy(() => import("./pages/agency/OperationalIntelligencePage"))
+const AgencyOperationalConstraintsPage = lazy(() => import("./pages/agency/OperationalConstraintsPage"))
+const AgencyOperationalWorkflowsPage = lazy(() => import("./pages/agency/OperationalWorkflowsPage"))
+const AgentWorkQueuePage = lazy(() => import("./pages/agency/AgentWorkQueuePage"))
+const DeadlinesPage = lazy(() => import("./pages/agency/DeadlinesPage"))
+const AgencyTaskAutomationPage = lazy(() => import("./pages/agency/TaskAutomationPage"))
+const RequestTripConversionPage = lazy(() => import("./pages/agency/RequestTripConversionPage"))
+const BookingHandoffsPage = lazy(() => import("./pages/agency/BookingHandoffsPage"))
+const AfterSalesPage = lazy(() => import("./pages/agency/AfterSalesPage"))
+const OperationsCommandCenterPage = lazy(() => import("./pages/agency/OperationsCommandCenterPage"))
+const AgencyWorkflowMaturityPage = lazy(() => import("./pages/agency/WorkflowMaturityPage"))
+const BookingDetailPage = lazy(() => import("./pages/agency/BookingDetailPage"))
+const BookingImportsPage = lazy(() => import("./pages/agency/BookingImportsPage"))
+const BookingWorkspaceDetailPage = lazy(() => import("./pages/agency/BookingWorkspaceDetailPage"))
+const BookingWorkspaceMetadataPage = lazy(() => import("./pages/agency/BookingWorkspaceMetadataPage"))
+const BookingWorkspacesPage = lazy(() => import("./pages/agency/BookingWorkspacesPage"))
+const BookingsPage = lazy(() => import("./pages/agency/BookingsPage"))
+const AgencyClientMasterPage = lazy(() => import("./pages/agency/ClientMasterPage"))
+const ClientDetailPage = lazy(() => import("./pages/agency/ClientDetailPage"))
+const ClientsPage = lazy(() => import("./pages/agency/ClientsPage"))
+const DocumentDetailPage = lazy(() => import("./pages/agency/DocumentDetailPage"))
+const DocumentStoragePage = lazy(() => import("./pages/agency/DocumentStoragePage"))
+const DocumentTemplatesPage = lazy(() => import("./pages/agency/DocumentTemplatesPage"))
+const DocumentsPage = lazy(() => import("./pages/agency/DocumentsPage"))
+const DocumentWorkspacesPage = lazy(() => import("./pages/agency/DocumentWorkspacesPage"))
+const EmdDetailPage = lazy(() => import("./pages/agency/EmdDetailPage"))
+const EmdWorkspaceMetadataPage = lazy(() => import("./pages/agency/EmdWorkspaceMetadataPage"))
+const InvoiceDetailPage = lazy(() => import("./pages/agency/InvoiceDetailPage"))
+const InvoicesPage = lazy(() => import("./pages/agency/InvoicesPage"))
+const FinanceDashboardPage = lazy(() => import("./pages/agency/FinanceDashboardPage"))
+const SupplierCostsPage = lazy(() => import("./pages/agency/SupplierCostsPage"))
+const OfferCreatePage = lazy(() => import("./pages/agency/OfferCreatePage"))
+const OfferBuilderPage = lazy(() => import("./pages/agency/OfferBuilderPage"))
+const OfferIntelligencePage = lazy(() => import("./pages/agency/OfferIntelligencePage"))
+const AgencyOfferDecisionExportAuditReviewsPage = lazy(() => import("./pages/agency/OfferDecisionExportAuditReviewsPage"))
+const AgencyOfferDecisionExportCompliancePage = lazy(() => import("./pages/agency/OfferDecisionExportCompliancePage"))
+const AgencyOfferDecisionExportDeliveriesPage = lazy(() => import("./pages/agency/OfferDecisionExportDeliveriesPage"))
+const AgencyOfferDecisionExportDeliveryOutcomesPage = lazy(() => import("./pages/agency/OfferDecisionExportDeliveryOutcomesPage"))
+const AgencyOfferDecisionExportGovernancePage = lazy(() => import("./pages/agency/OfferDecisionExportGovernancePage"))
+const AgencyOfferDecisionExportPreviewsPage = lazy(() => import("./pages/agency/OfferDecisionExportPreviewsPage"))
+const AgencyOfferDecisionExportReleasesPage = lazy(() => import("./pages/agency/OfferDecisionExportReleasesPage"))
+const AgencyOfferDecisionExportsPage = lazy(() => import("./pages/agency/OfferDecisionExportsPage"))
+const AgencyOfferDecisionExplanationsPage = lazy(() => import("./pages/agency/OfferDecisionExplanationsPage"))
+const AgencyOfferDecisionPacksPage = lazy(() => import("./pages/agency/OfferDecisionPacksPage"))
+const AgencyOfferPolicyAdvisorPage = lazy(() => import("./pages/agency/OfferPolicyAdvisorPage"))
+const OfferWorkspaceDetailPage = lazy(() => import("./pages/agency/OfferWorkspaceDetailPage"))
+const OfferWorkspaceMetadataPage = lazy(() => import("./pages/agency/OfferWorkspaceMetadataPage"))
+const OfferWorkspacesPage = lazy(() => import("./pages/agency/OfferWorkspacesPage"))
+const RefundExchangeCaseCreatePage = lazy(() => import("./pages/agency/RefundExchangeCaseCreatePage"))
+const RefundExchangeCaseDetailPage = lazy(() => import("./pages/agency/RefundExchangeCaseDetailPage"))
+const RefundExchangeCasesPage = lazy(() => import("./pages/agency/RefundExchangeCasesPage"))
+const ReferenceDataPage = lazy(() => import("./pages/agency/ReferenceDataPage"))
+const FeatureAvailabilityPage = lazy(() => import("./pages/agency/FeatureAvailabilityPage"))
+const FeatureBundlesPage = lazy(() => import("./pages/agency/FeatureBundlesPage"))
+const FeatureReadinessPage = lazy(() => import("./pages/agency/FeatureReadinessPage"))
+const FormProfilesPage = lazy(() => import("./pages/agency/FormProfilesPage"))
+const GdsParserPage = lazy(() => import("./pages/agency/GdsParserPage"))
+const AgencyAncillaryPricingPage = lazy(() => import("./pages/agency/AncillaryPricingPage"))
+const AgencyPolicyComparisonPage = lazy(() => import("./pages/agency/PolicyComparisonPage"))
+const AgencyServiceMechanicsPage = lazy(() => import("./pages/agency/ServiceMechanicsPage"))
+const AgencyServiceTaxonomyPage = lazy(() => import("./pages/agency/ServiceTaxonomyPage"))
+const SpecialServicesPage = lazy(() => import("./pages/agency/SpecialServicesPage"))
+const PassengerDetailPage = lazy(() => import("./pages/agency/PassengerDetailPage"))
+const AgencyPassengerMasterPage = lazy(() => import("./pages/agency/PassengerMasterPage"))
+const PassengerWorkspacesPage = lazy(() => import("./pages/agency/PassengerWorkspacesPage"))
+const PassengerServicesPage = lazy(() => import("./pages/agency/PassengerServicesPage"))
+const PassengersPage = lazy(() => import("./pages/agency/PassengersPage"))
+const PaymentsPage = lazy(() => import("./pages/agency/PaymentsPage"))
+const AgencyPortalActionsPage = lazy(() => import("./pages/agency/PortalActionsPage"))
+const RequestCreatePage = lazy(() => import("./pages/agency/RequestCreatePage"))
+const RequestDetailPage = lazy(() => import("./pages/agency/RequestDetailPage"))
+const RequestIntakeDetailPage = lazy(() => import("./pages/agency/RequestIntakeDetailPage"))
+const RequestIntakesListPage = lazy(() => import("./pages/agency/RequestIntakesListPage"))
+const RequestsPage = lazy(() => import("./pages/agency/RequestsPage"))
+const SaaSSubscriptionPage = lazy(() => import("./pages/agency/SaaSSubscriptionPage"))
+const TripCreatePage = lazy(() => import("./pages/agency/TripCreatePage"))
+const TripDetailPage = lazy(() => import("./pages/agency/TripDetailPage"))
+const TripsPage = lazy(() => import("./pages/agency/TripsPage"))
+const TicketDetailPage = lazy(() => import("./pages/agency/TicketDetailPage"))
+const TicketWorkspaceMetadataPage = lazy(() => import("./pages/agency/TicketWorkspaceMetadataPage"))
+const TicketsEmdsPage = lazy(() => import("./pages/agency/TicketsEmdsPage"))
+const WebsiteBuilderPage = lazy(() => import("./pages/agency/WebsiteBuilderPage"))
+const WebsiteMediaLibraryPage = lazy(() => import("./pages/agency/WebsiteMediaLibraryPage"))
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
+const InviteAcceptPage = lazy(() => import("./pages/auth/InviteAcceptPage"))
+const AirlineDetailPage = lazy(() => import("./pages/platform/AirlineDetailPage"))
+const AirlineIntelligenceDataPacksPage = lazy(() => import("./pages/platform/AirlineIntelligenceDataPacksPage"))
+const AirlineIntelligenceDataPackReviewsPage = lazy(() => import("./pages/platform/AirlineIntelligenceDataPackReviewsPage"))
+const AirlineCapabilityMatrixPage = lazy(() => import("./pages/platform/AirlineCapabilityMatrixPage"))
+const AirlineKnowledgeAcquisitionPage = lazy(() => import("./pages/platform/AirlineKnowledgeAcquisitionPage"))
+const AirlineKnowledgeGovernancePage = lazy(() => import("./pages/platform/AirlineKnowledgeGovernancePage"))
+const AirlineKnowledgeNormalisationPage = lazy(() => import("./pages/platform/AirlineKnowledgeNormalisationPage"))
+const AirlineOperationalIntelligencePage = lazy(() => import("./pages/platform/AirlineOperationalIntelligencePage"))
+const PlatformAirlineRecommendationsPage = lazy(() => import("./pages/platform/AirlineRecommendationsPage"))
+const PlatformOperationalIntelligenceCasesPage = lazy(() => import("./pages/platform/OperationalIntelligenceCasesPage"))
+const PlatformOperationalEvaluationsPage = lazy(() => import("./pages/platform/OperationalEvaluationsPage"))
+const PlatformPassengerServiceFeasibilityPage = lazy(() => import("./pages/platform/PassengerServiceFeasibilityPage"))
+const PlatformOperationalConstraintsPage = lazy(() => import("./pages/platform/OperationalConstraintsPage"))
+const PlatformOperationalWorkflowsPage = lazy(() => import("./pages/platform/OperationalWorkflowsPage"))
+const PlatformWorkQueueGovernancePage = lazy(() => import("./pages/platform/WorkQueueGovernancePage"))
+const PlatformSlaPoliciesPage = lazy(() => import("./pages/platform/SlaPoliciesPage"))
+const PlatformTaskAutomationPage = lazy(() => import("./pages/platform/TaskAutomationPage"))
+const PlatformRequestTripConversionDiagnosticsPage = lazy(() => import("./pages/platform/RequestTripConversionDiagnosticsPage"))
+const PlatformBookingHandoffDiagnosticsPage = lazy(() => import("./pages/platform/BookingHandoffDiagnosticsPage"))
+const PlatformAfterSalesDiagnosticsPage = lazy(() => import("./pages/platform/AfterSalesDiagnosticsPage"))
+const PlatformOperationsGovernancePage = lazy(() => import("./pages/platform/OperationsGovernancePage"))
+const PlatformWorkflowMaturityPage = lazy(() => import("./pages/platform/WorkflowMaturityPage"))
+const PlatformRequestSegmentServicesPage = lazy(() => import("./pages/platform/RequestSegmentServicesPage"))
+const PlatformKnowledgeImportTemplatesPage = lazy(() => import("./pages/platform/KnowledgeImportTemplatesPage"))
+const PlatformReferenceDataEnginePage = lazy(() => import("./pages/platform/ReferenceDataEnginePage"))
+const PlatformServiceParameterTaxonomiesPage = lazy(() => import("./pages/platform/ServiceParameterTaxonomiesPage"))
+const PlatformVisualPolicyEditorPage = lazy(() => import("./pages/platform/VisualPolicyEditorPage"))
+const PlatformPricingFormulaBuilderPage = lazy(() => import("./pages/platform/PricingFormulaBuilderPage"))
+const PlatformOperationalRuleComposerPage = lazy(() => import("./pages/platform/OperationalRuleComposerPage"))
+const PlatformKnowledgeQualityAssurancePage = lazy(() => import("./pages/platform/KnowledgeQualityAssurancePage"))
+const PlatformAirlineKnowledgePublishingPage = lazy(() => import("./pages/platform/AirlineKnowledgePublishingPage"))
+const PlatformOperationalScenarioTestingPage = lazy(() => import("./pages/platform/OperationalScenarioTestingPage"))
+const PlatformKnowledgePopulationToolkitPage = lazy(() => import("./pages/platform/KnowledgePopulationToolkitPage"))
+const PlatformPilotReadinessPage = lazy(() => import("./pages/platform/PilotReadinessPage"))
+const PlatformPilotOperationsReadinessPage = lazy(() => import("./pages/platform/PilotOperationsReadinessPage"))
+const CommercialPilotReadinessPage = lazy(() => import("./pages/platform/CommercialPilotReadinessPage"))
+const PilotFeedbackReviewPage = lazy(() => import("./pages/platform/PilotFeedbackReviewPage"))
+const PlatformAirlineIntelligenceAgencyConsumptionPage = lazy(() => import("./pages/platform/AirlineIntelligenceAgencyConsumptionPage"))
+const PlatformAirlineIntelligenceKnowledgeVersionsPage = lazy(() => import("./pages/platform/AirlineIntelligenceKnowledgeVersionsPage"))
+const AirlineKnowledgeDetailPage = lazy(() => import("./pages/platform/AirlineKnowledgeDetailPage"))
+const AirlinePolicyIngestionPage = lazy(() => import("./pages/platform/AirlinePolicyIngestionPage"))
+const AirlinesPage = lazy(() => import("./pages/platform/AirlinesPage"))
+const AirlineMasterProfilesPage = lazy(() => import("./pages/platform/AirlineMasterProfilesPage"))
+const PlatformAirlineEvidencePage = lazy(() => import("./pages/platform/AirlineEvidencePage"))
+const PlatformAirlineKnowledgeVersionsPage = lazy(() => import("./pages/platform/AirlineKnowledgeVersionsPage"))
+const PlatformAirlineServiceCoveragePage = lazy(() => import("./pages/platform/AirlineServiceCoveragePage"))
+const PlatformAirlineDistributionCapabilitiesPage = lazy(() => import("./pages/platform/AirlineDistributionCapabilitiesPage"))
+const PlatformInterlineCodeshareIntelligencePage = lazy(() => import("./pages/platform/InterlineCodeshareIntelligencePage"))
+const PlatformFareBrandIntelligencePage = lazy(() => import("./pages/platform/FareBrandIntelligencePage"))
+const PlatformAirlineContactIntelligencePage = lazy(() => import("./pages/platform/AirlineContactIntelligencePage"))
+const PlatformAirlineIntelligenceReadinessPage = lazy(() => import("./pages/platform/AirlineIntelligenceReadinessPage"))
+const PlatformAgenciesPage = lazy(() => import("./pages/platform/PlatformAgenciesPage"))
+const PlatformAncillaryPricingPage = lazy(() => import("./pages/platform/AncillaryPricingPage"))
+const PlatformAgencyDetailPage = lazy(() => import("./pages/platform/PlatformAgencyDetailPage"))
+const PlatformBlueprintPage = lazy(() => import("./pages/platform/PlatformBlueprintPage"))
+const PlatformCapabilityCatalogPage = lazy(() => import("./pages/platform/CapabilityCatalogPage"))
+const PlatformClientMasterPage = lazy(() => import("./pages/platform/ClientMasterPage"))
+const PlatformDashboardPage = lazy(() => import("./pages/platform/PlatformDashboardPage"))
+const PlatformDocumentWorkspacesPage = lazy(() => import("./pages/platform/DocumentWorkspacesPage"))
+const PlatformDocumentTemplatesPage = lazy(() => import("./pages/platform/PlatformDocumentTemplatesPage"))
+const PlatformFeatureBundleDependenciesPage = lazy(() => import("./pages/platform/FeatureBundleDependenciesPage"))
+const PlatformFeatureBundleAssignmentsPage = lazy(() => import("./pages/platform/FeatureBundleAssignmentsPage"))
+const PlatformFeatureBundleRolloutApprovalsPage = lazy(() => import("./pages/platform/FeatureBundleRolloutApprovalsPage"))
+const PlatformFeatureBundleRolloutChangeRequestsPage = lazy(() => import("./pages/platform/FeatureBundleRolloutChangeRequestsPage"))
+const PlatformFeatureBundleRolloutDecisionsPage = lazy(() => import("./pages/platform/FeatureBundleRolloutDecisionsPage"))
+const PlatformFeatureBundleRolloutIssuesPage = lazy(() => import("./pages/platform/FeatureBundleRolloutIssuesPage"))
+const PlatformFeatureBundleRolloutPlansPage = lazy(() => import("./pages/platform/FeatureBundleRolloutPlansPage"))
+const PlatformFeatureBundleRolloutReadinessPage = lazy(() => import("./pages/platform/FeatureBundleRolloutReadinessPage"))
+const PlatformFeatureBundleRolloutRisksPage = lazy(() => import("./pages/platform/FeatureBundleRolloutRisksPage"))
+const PlatformFeatureBundleRolloutRollbackPlansPage = lazy(() => import("./pages/platform/FeatureBundleRolloutRollbackPlansPage"))
+const PlatformFeatureBundleRolloutSchedulePage = lazy(() => import("./pages/platform/FeatureBundleRolloutSchedulePage"))
+const PlatformFeatureBundleRolloutSummaryPacksPage = lazy(() => import("./pages/platform/FeatureBundleRolloutSummaryPacksPage"))
+const PlatformFeatureBundleRolloutTimelinePage = lazy(() => import("./pages/platform/FeatureBundleRolloutTimelinePage"))
+const PlatformFlightWorkspacesPage = lazy(() => import("./pages/platform/FlightWorkspacesPage"))
+const PlatformBookingWorkspacesPage = lazy(() => import("./pages/platform/BookingWorkspacesPage"))
+const PlatformOfferWorkspacesPage = lazy(() => import("./pages/platform/OfferWorkspacesPage"))
+const PlatformPassengerMasterPage = lazy(() => import("./pages/platform/PassengerMasterPage"))
+const PlatformOperationalTimelinesPage = lazy(() => import("./pages/platform/OperationalTimelinesPage"))
+const PlatformOperationalTravelWorkspacesPage = lazy(() => import("./pages/platform/OperationalTravelWorkspacesPage"))
+const PlatformPassengerServiceWorkflowsPage = lazy(() => import("./pages/platform/PassengerServiceWorkflowsPage"))
+const PlatformPassengerWorkspacesPage = lazy(() => import("./pages/platform/PassengerWorkspacesPage"))
+const PlatformSsrOsiWorkspacesPage = lazy(() => import("./pages/platform/SsrOsiWorkspacesPage"))
+const PlatformTicketWorkspacesPage = lazy(() => import("./pages/platform/TicketWorkspacesPage"))
+const PlatformEmdWorkspacesPage = lazy(() => import("./pages/platform/EmdWorkspacesPage"))
+const PlatformTripWorkspacesPage = lazy(() => import("./pages/platform/TripWorkspacesPage"))
+const PlatformJourneyEnginePage = lazy(() => import("./pages/platform/JourneyEnginePage"))
+const PlatformJourneyAuthoringDiagnosticsPage = lazy(() => import("./pages/platform/JourneyAuthoringDiagnosticsPage"))
+const PlatformJourneyOptionCompositionDiagnosticsPage = lazy(() => import("./pages/platform/JourneyOptionCompositionDiagnosticsPage"))
+const PlatformJourneyComparisonPresentationDiagnosticsPage = lazy(() => import("./pages/platform/JourneyComparisonPresentationDiagnosticsPage"))
+const PlatformOfferDeliveryDiagnosticsPage = lazy(() => import("./pages/platform/OfferDeliveryDiagnosticsPage"))
+const PlatformTravelRequestWorkspacesPage = lazy(() => import("./pages/platform/TravelRequestWorkspacesPage"))
+const PlatformRolloutDashboardPage = lazy(() => import("./pages/platform/RolloutDashboardPage"))
+const PlatformFeatureFlagAuditPage = lazy(() => import("./pages/platform/FeatureFlagAuditPage"))
+const PlatformFeatureFlagBundlesPage = lazy(() => import("./pages/platform/FeatureFlagBundlesPage"))
+const PlatformFeatureFlagsPage = lazy(() => import("./pages/platform/FeatureFlagsPage"))
+const PlatformGdsParserPage = lazy(() => import("./pages/platform/PlatformGdsParserPage"))
+const PlatformOfferDecisionExportAuditReviewsPage = lazy(() => import("./pages/platform/OfferDecisionExportAuditReviewsPage"))
+const PlatformOfferDecisionExportCompliancePage = lazy(() => import("./pages/platform/OfferDecisionExportCompliancePage"))
+const PlatformOfferDecisionExportDeliveriesPage = lazy(() => import("./pages/platform/OfferDecisionExportDeliveriesPage"))
+const PlatformOfferDecisionExportDeliveryOutcomesPage = lazy(() => import("./pages/platform/OfferDecisionExportDeliveryOutcomesPage"))
+const PlatformOfferDecisionExportGovernancePage = lazy(() => import("./pages/platform/OfferDecisionExportGovernancePage"))
+const PlatformOfferDecisionExportPreviewsPage = lazy(() => import("./pages/platform/OfferDecisionExportPreviewsPage"))
+const PlatformOfferDecisionExportReleasesPage = lazy(() => import("./pages/platform/OfferDecisionExportReleasesPage"))
+const PlatformOfferDecisionExportsPage = lazy(() => import("./pages/platform/OfferDecisionExportsPage"))
+const PlatformOfferDecisionExplanationsPage = lazy(() => import("./pages/platform/OfferDecisionExplanationsPage"))
+const PlatformOfferDecisionPacksPage = lazy(() => import("./pages/platform/OfferDecisionPacksPage"))
+const PlatformIntelligentOfferBuilderPage = lazy(() => import("./pages/platform/IntelligentOfferBuilderPage"))
+const PlatformOfferPolicyAdvisorPage = lazy(() => import("./pages/platform/OfferPolicyAdvisorPage"))
+const PlatformPolicyComparisonPage = lazy(() => import("./pages/platform/PolicyComparisonPage"))
+const PlatformReferenceDataPage = lazy(() => import("./pages/platform/PlatformReferenceDataPage"))
+const PlatformRulesServicesPage = lazy(() => import("./pages/platform/PlatformRulesServicesPage"))
+const PlatformSaaSSubscriptionsPage = lazy(() => import("./pages/platform/SaaSSubscriptionsPage"))
+const PlatformServiceMechanicsPage = lazy(() => import("./pages/platform/ServiceMechanicsPage"))
+const PlatformServiceTaxonomyPage = lazy(() => import("./pages/platform/ServiceTaxonomyPage"))
+const PortalBookingDetailPage = lazy(() => import("./pages/portal/PortalBookingDetailPage"))
+const PortalActionsPage = lazy(() => import("./pages/portal/PortalActionsPage"))
+const PortalBookingsPage = lazy(() => import("./pages/portal/PortalBookingsPage"))
+const PortalDashboardPage = lazy(() => import("./pages/portal/PortalDashboardPage"))
+const PortalDocumentDetailPage = lazy(() => import("./pages/portal/PortalDocumentDetailPage"))
+const PortalDocumentsPage = lazy(() => import("./pages/portal/PortalDocumentsPage"))
+const PortalInvoiceDetailPage = lazy(() => import("./pages/portal/PortalInvoiceDetailPage"))
+const PortalInvoicesPage = lazy(() => import("./pages/portal/PortalInvoicesPage"))
+const PortalOfferDetailPage = lazy(() => import("./pages/portal/PortalOfferDetailPage"))
+const PortalOfferDeliveriesPage = lazy(() => import("./pages/portal/PortalOfferDeliveriesPage"))
+const PortalOfferDeliveryDetailPage = lazy(() => import("./pages/portal/PortalOfferDeliveryDetailPage"))
+const PortalPassengerDetailPage = lazy(() => import("./pages/portal/PortalPassengerDetailPage"))
+const PortalPassengersPage = lazy(() => import("./pages/portal/PortalPassengersPage"))
+const PortalPaymentsPage = lazy(() => import("./pages/portal/PortalPaymentsPage"))
+const PortalProfilePage = lazy(() => import("./pages/portal/PortalProfilePage"))
+const PortalRequestDetailPage = lazy(() => import("./pages/portal/PortalRequestDetailPage"))
+const PortalRequestCreatePage = lazy(() => import("./pages/portal/PortalRequestCreatePage"))
+const PortalRequestsPage = lazy(() => import("./pages/portal/PortalRequestsPage"))
+const PortalRefundExchangeCaseDetailPage = lazy(() => import("./pages/portal/PortalRefundExchangeCaseDetailPage"))
+const PortalRefundExchangeCasesPage = lazy(() => import("./pages/portal/PortalRefundExchangeCasesPage"))
+const PortalApprovalsPage = lazy(() => import("./pages/portal/PortalApprovalsPage"))
+const PortalAssistancePage = lazy(() => import("./pages/portal/PortalAssistancePage"))
+const PortalCommunicationDetailPage = lazy(() => import("./pages/portal/PortalCommunicationDetailPage"))
+const PortalCommunicationsPage = lazy(() => import("./pages/portal/PortalCommunicationsPage"))
+const PortalEmdDetailPage = lazy(() => import("./pages/portal/PortalEmdDetailPage"))
+const PortalEmdsPage = lazy(() => import("./pages/portal/PortalEmdsPage"))
+const PortalFinancePage = lazy(() => import("./pages/portal/PortalFinancePage"))
+const PortalNotificationsPage = lazy(() => import("./pages/portal/PortalNotificationsPage"))
+const PortalTicketDetailPage = lazy(() => import("./pages/portal/PortalTicketDetailPage"))
+const PortalTicketsPage = lazy(() => import("./pages/portal/PortalTicketsPage"))
+const PortalTimelinePage = lazy(() => import("./pages/portal/PortalTimelinePage"))
+const PortalTripDetailPage = lazy(() => import("./pages/portal/PortalTripDetailPage"))
+const PortalTripsPage = lazy(() => import("./pages/portal/PortalTripsPage"))
+const HomePage = lazy(() => import("./pages/public/HomePage"))
+const PublicAgencyWebsitePage = lazy(() => import("./pages/public/PublicAgencyWebsitePage"))
+const CommunicationsPage = lazy(() => import("./pages/agency/CommunicationsPage"))
+const ReportsPage = lazy(() => import("./pages/agency/ReportsPage"))
+const PlatformUsersPage = lazy(() => import("./pages/platform/PlatformUsersPage"))
+const PlatformAuditPage = lazy(() => import("./pages/platform/PlatformAuditPage"))
+const PlatformSettingsPage = lazy(() => import("./pages/platform/PlatformSettingsPage"))
 
 const routes = {
   "/": HomePage,
   "/invite/accept": InviteAcceptPage,
   "/login": LoginPage,
   "/platform": PlatformDashboardPage,
+  "/platform/users": PlatformUsersPage,
+  "/platform/monitoring": PlatformPilotOperationsReadinessPage,
+  "/platform/audit": PlatformAuditPage,
+  "/platform/settings": PlatformSettingsPage,
   "/platform/saas-subscriptions": PlatformSaaSSubscriptionsPage,
   "/platform/feature-flags": PlatformFeatureFlagsPage,
   "/platform/feature-flag-audit": PlatformFeatureFlagAuditPage,
@@ -419,6 +430,8 @@ const routes = {
   "/platform/offer-decision-export-governance": PlatformOfferDecisionExportGovernancePage,
   "/platform/offer-decision-export-compliance": PlatformOfferDecisionExportCompliancePage,
   "/agency": OperationsCommandCenterPage,
+  "/agency/communications": CommunicationsPage,
+  "/agency/reports": ReportsPage,
   "/agency/onboarding": AgencyOnboardingPage,
   "/agency/pilot-feedback": PilotFeedbackPage,
   "/agency/saas-subscription": SaaSSubscriptionPage,
@@ -860,7 +873,9 @@ export default function App() {
   return (
     <AuthorizationProvider>
       <AuthorizationBoundary>
-        <RoutedApp />
+        <Suspense fallback={<main className="mx-auto max-w-3xl p-6"><LoadingState label="Opening page" /></main>}>
+          <RoutedApp />
+        </Suspense>
       </AuthorizationBoundary>
     </AuthorizationProvider>
   )

@@ -12,30 +12,38 @@ The Platform shell rendered the complete internal module catalogue as a multi-co
 
 ## After
 
-The primary navigation has exactly eight areas:
+The primary navigation has exactly nine areas:
 
 1. Overview
-2. Agencies
+2. Reference Data
 3. Airline Knowledge
-4. Services & Pricing
-5. Product Configuration
-6. Pilot & Support
-7. System Health
-8. Advanced
+4. Policies
+5. Agencies
+6. Users
+7. Monitoring
+8. Audit
+9. Settings
 
-`Advanced` is collapsed by default and visually separated. Platform Owner and Platform Admin receive the complete permitted product hierarchy. Platform Support receives Overview, Agencies, Airline Knowledge, Pilot & Support, and System Health. The existing knowledge-editor role receives its permitted knowledge and service areas. API authorization remains authoritative.
+A separate `Advanced` area is collapsed by default and visually separated.
+Platform Owner and Platform Admin receive the complete permitted product
+hierarchy. Platform Support receives Overview, Reference Data, Airline
+Knowledge, Agencies, and Monitoring. The existing knowledge-editor role
+receives its permitted Reference Data, Airline Knowledge, Policies, and
+specialist areas. API authorization remains authoritative.
 
 ## Before And After Mapping
 
 | Before: catalogue group or item | After: primary area | Notes |
 |---|---|---|
 | Platform Console and full count grid | Overview | Replaced by attention, agency, knowledge, pilot, health, activity, and quick-action sections. |
-| Agencies, subscriptions, feature flags | Agencies | Feature rollout registers move to Advanced. |
-| Airlines, profiles, policies, evidence, coverage, distribution, interline, brands, contacts, releases | Airline Knowledge | Operational evaluation internals and population tooling move to Advanced. |
-| Rules & Services, taxonomy, mechanics, ancillary pricing, policy comparison, rule composition, scenarios | Services & Pricing | Labels describe user outcomes rather than implementation layers. |
-| Reference data, document templates, feature bundles, offer settings | Product Configuration | Detailed import and export registers remain available in Advanced. |
-| Commercial Pilot readiness, feedback, pilot guidance | Pilot & Support | Phase 57 release authority remains separate and unchanged. |
-| Pilot Operations and Operations Governance | System Health | Surfaces existing health, readiness, backup, smoke, release, and alert information. |
+| Reference data and suggestion review | Reference Data | One governed entry point; import internals remain Advanced. |
+| Airlines, profiles, evidence, coverage, distribution, interline, brands, contacts, releases | Airline Knowledge | Operational evaluation internals and population tooling move to Advanced. |
+| Visual policy editor and reviewed airline policies | Policies | Rule engines and formula internals remain Advanced. |
+| Agencies, onboarding, subscriptions, feature access | Agencies | Feature rollout registers move to Advanced. |
+| Platform and Agency staff access overview | Users | Uses existing Platform summaries and Agency ownership; no Agency bypass. |
+| Commercial Pilot, health, readiness, backups, smoke, and release evidence | Monitoring | Phase 57 release authority remains separate and unchanged. |
+| Protected audit activity | Audit | Existing protected audit API; Owner/Admin only. |
+| Feature access, subscriptions, templates, and pilot setup entry points | Settings | Links to existing governed settings; no duplicate configuration model. |
 | Operational workspace mirrors, raw registers, rollout internals, workflow diagnostics, maturity, blueprints | Advanced | Existing routes remain available as collapsed specialist links. |
 | CMS, offer-export, document-delivery, and implementation-specific governance pages | Advanced | Nothing is deleted; deep links remain valid. |
 
@@ -71,3 +79,5 @@ Unselected non-contextual catalogue entries are projected into Advanced. This av
 
 Phase 59.0 adds no router, mutation, model, collection, index, provider connection, payment, ticket issuance, messaging, or release action. Navigation visibility improves product comprehension but never replaces backend authorization.
 
+The complete page classification and compatibility aliases are governed by the
+[Product Navigation Contract](../architecture/product-navigation-contract.md).

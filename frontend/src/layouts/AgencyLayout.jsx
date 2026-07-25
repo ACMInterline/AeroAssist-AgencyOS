@@ -19,6 +19,8 @@ import Sparkles from "lucide-react/dist/esm/icons/sparkles.js"
 import Tags from "lucide-react/dist/esm/icons/tags.js"
 import UserRound from "lucide-react/dist/esm/icons/user-round.js"
 import Users from "lucide-react/dist/esm/icons/users.js"
+import ProductQuickSearch from "../components/ProductQuickSearch"
+import WorkflowQuickActions from "../components/WorkflowQuickActions"
 import { apiDeleteSession, apiGet } from "../lib/api"
 import { clearAuthSession } from "../lib/auth"
 import { useAuthorization } from "../context/AuthorizationContext"
@@ -167,6 +169,7 @@ export default function AgencyLayout({ children, user: providedUser, agency }) {
 
   return (
     <div className="aa-themed min-h-screen" style={themeStyle}>
+      <a className="aa-skip-link" href="#main-content">Skip to main content</a>
       <div className="aa-shell-grid min-h-screen">
         <div className="hidden lg:block">{sidebar}</div>
         {drawerOpen ? (
@@ -189,12 +192,8 @@ export default function AgencyLayout({ children, user: providedUser, agency }) {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline-flex" style={{ background: "var(--aa-muted-bg)", color: "var(--aa-primary)" }}>Agency operations</span>
-                {(membershipAccess?.permissions || []).includes("edit_requests") ? <a className="aa-primary-action inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold" href="/agency/requests/new">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Create request</span>
-                  <span className="sm:hidden">Create</span>
-                </a> : null}
+                <ProductQuickSearch areas={navigation} label="Search Agency pages" />
+                <WorkflowQuickActions hasPermission={authorization.hasPermission} />
                 <div className="hidden min-w-0 text-right md:block">
                   <p className="truncate text-sm font-medium" style={{ color: "var(--aa-text)" }}>{user?.full_name || "Staff user"}</p>
                   <p className="truncate text-xs" style={{ color: "var(--aa-muted-text)" }}>{user?.email || "Signed in"}</p>
@@ -203,7 +202,7 @@ export default function AgencyLayout({ children, user: providedUser, agency }) {
               </div>
             </div>
           </header>
-          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+          <main className="aa-main-frame px-4 py-6 sm:px-6 lg:px-8" id="main-content" tabIndex="-1">{children}</main>
         </div>
       </div>
     </div>
@@ -229,20 +228,15 @@ function NavSection({ group, pathname, collapsed, entitlementVisibility }) {
     )
   }
   return (
-    <div className="mb-5">
-      {!collapsed ? (
-        <div className="mb-2 px-3">
-          <p className="flex items-center gap-2 text-[11px] font-bold uppercase" style={{ color: "var(--aa-muted-text)" }}><Icon className="h-3.5 w-3.5" />{group.title}</p>
-        </div>
-      ) : null}
+    <div className="mb-1">
       <nav className="grid gap-1" aria-label={group.title}>
-        {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} entitlementVisibility={entitlementVisibility} key={`${group.title}-${item.href}-${item.label}`} />)}
+        {navigationItems.map((item) => <NavItem item={item} pathname={pathname} collapsed={collapsed} compact entitlementVisibility={entitlementVisibility} icon={group.icon} key={`${group.title}-${item.href}-${item.label}`} />)}
       </nav>
     </div>
   )
 }
 
-function NavItem({ item, pathname, collapsed, entitlementVisibility, icon, title }) {
+function NavItem({ item, pathname, collapsed, compact = false, entitlementVisibility, icon, title }) {
   const Icon = iconMap[icon || item.icon] || Files
   const active = isActive(item, pathname)
   const visibility = entitlementVisibilityForItem(item, entitlementVisibility)
@@ -250,9 +244,9 @@ function NavItem({ item, pathname, collapsed, entitlementVisibility, icon, title
     <>
       <Icon className="h-4 w-4 shrink-0" />
       {!collapsed ? (
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">{item.preferred_label || item.label}</span>
-          <span className="block text-[11px] leading-4 opacity-75">{item.preferred_description || item.description}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{item.preferred_label || item.label}</span>
+            {!compact ? <span className="block text-[11px] leading-4 opacity-75">{item.preferred_description || item.description}</span> : null}
         </span>
       ) : null}
       {!collapsed ? (

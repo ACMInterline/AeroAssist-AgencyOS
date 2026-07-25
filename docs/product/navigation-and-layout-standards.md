@@ -10,11 +10,14 @@ Platform navigation was a large module grid and both shells constrained work to 
 
 Navigation is organized by user purpose:
 
-- Platform has no more than eight primary areas.
-- Agency follows the travel workflow from Operations through Reports and Settings.
+- Platform has exactly nine primary task areas.
+- Agency has exactly fourteen primary task areas from Dashboard through
+  Reports and Settings.
 - Advanced is always the final area and is collapsed by default.
 - Contextual tools remain linked from their owning workspace rather than becoming primary navigation.
 - Product labels are projected from the existing module catalogue.
+- Page search uses the same role-filtered projection.
+- Agency quick actions use the current server-derived permission set.
 - Backend permissions remain authoritative.
 
 ## Workspace Layout Primitives
@@ -38,6 +41,8 @@ The application shells own viewport padding, not a global content maximum. Pages
 - Labels may wrap; they must not be horizontally clipped.
 - Icon-only controls have accessible names and hover titles.
 - Advanced uses a native closed `details` disclosure without an `open` attribute.
+- Every shell includes a skip link and focusable main content target.
+- Portal navigation remains horizontally scrollable on narrow screens.
 
 ## Language Rules
 
@@ -70,8 +75,14 @@ Precise technical language remains valid in developer documentation and inside e
 | Truncated two-line sidebar labels | Wrapping product label with concise purpose |
 | Raw workflow maps visible | Closed Advanced system details disclosure |
 | Optional diagnostic 404 shown as red page | Useful empty state; real failures preserved |
+| Every page included in the initial bundle | Route-level lazy loading under one loading boundary |
+| Repeated technical list markup | Shared responsive `ProductTable` with caption and empty state |
 
 ## Validation
 
-`backend/scripts/validate_product_experience_recovery.py` evaluates area counts and order, catalogue metadata, role projections, deep-link preservation, onboarding and Operations routing, Advanced disclosure, workflow empty states, layout primitives, canonical roots, documentation, phase registration, and unchanged execution boundaries.
-
+`backend/scripts/validate_product_experience_recovery.py` evaluates area counts
+and order, catalogue metadata, role projections, deep-link preservation,
+onboarding and Operations routing, Advanced disclosure, dashboards, workflow
+guidance, accessibility controls, lazy loading, the 311-page inventory,
+canonical roots, documentation, phase registration, and unchanged execution
+boundaries.
