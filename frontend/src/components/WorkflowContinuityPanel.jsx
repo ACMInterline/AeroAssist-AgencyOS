@@ -4,6 +4,7 @@ import CircleAlert from "lucide-react/dist/esm/icons/circle-alert.js"
 import Clock3 from "lucide-react/dist/esm/icons/clock-3.js"
 import Link2 from "lucide-react/dist/esm/icons/link-2.js"
 import ListChecks from "lucide-react/dist/esm/icons/list-checks.js"
+import OperationalWorkPanel from "./OperationalWorkPanel"
 
 const validationTone = {
   ready: "border-emerald-200 bg-emerald-50 text-emerald-800",
@@ -27,6 +28,9 @@ export default function WorkflowContinuityPanel({
   next,
   relatedRecords = [],
   warnings = [],
+  agencyId,
+  workEntityId,
+  workEntityType,
 }) {
   const effectiveStage = currentStage || status
   const effectiveWarnings = [
@@ -42,6 +46,7 @@ export default function WorkflowContinuityPanel({
     : ["draft", "unknown"].includes(String(effectiveStage || "").toLowerCase()) ? [] : ["Record created"]
 
   return (
+    <>
     <section className="border-y border-slate-200 bg-white py-4" aria-label="Workflow continuity">
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
         {breadcrumbs.map((item) => <a className="font-medium text-blue-700 hover:underline" href={item.href} key={`${item.href}-${item.label}`}>{item.label}</a>)}
@@ -79,6 +84,8 @@ export default function WorkflowContinuityPanel({
         </div>
       </div>
     </section>
+    <OperationalWorkPanel agencyId={agencyId} entityId={workEntityId} entityType={workEntityType} />
+    </>
   )
 }
 

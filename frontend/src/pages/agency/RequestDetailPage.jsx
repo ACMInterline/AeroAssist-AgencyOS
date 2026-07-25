@@ -219,6 +219,9 @@ export default function RequestDetailPage({ requestId }) {
           />
           {isCanonicalV4 ? <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">Journey, traveler, assistance, animal, and special-item changes are kept together. Use Edit request to update this request safely.</p> : <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">This earlier request remains readable. Reconcile it before using the unified request editor.</p>}
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={requestId}
+            workEntityType="request"
             breadcrumbs={[{ label: "Clients", href: state?.client?.id ? `/agency/clients/${state.client.id}` : "/agency/clients" }, { label: "Requests", href: "/agency/requests" }]}
             currentLabel={state?.request?.request_reference || "Request"}
             status={state?.request?.status}

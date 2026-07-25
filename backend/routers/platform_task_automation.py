@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from auth import get_current_user
 from database import Database, get_database
 from models import (
+    OperationalAutomationDryRunRequest,
+    OperationalAutomationRuleLifecycleRequest,
     OperationalTaskAutomationRuleCreate,
     OperationalTaskAutomationRuleUpdate,
     OperationalTaskAutomationRunRequest,
@@ -32,6 +34,43 @@ async def require_platform_write(user: dict) -> None:
 
 def bad_request(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+
+def agency_action_required() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            "Platform automation routes govern global rules only. "
+            "Agency operational mutations require active Agency membership "
+            "through the canonical Agency route."
+        ),
+    )
+
+
+async def require_global_rule(db: Database, rule_id: str) -> None:
+    rule = await db.collection("operational_task_automation_rules").find_one(
+        {"id": rule_id}
+    )
+    if not rule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task automation rule metadata was not found.",
+        )
+    if rule.get("agency_id"):
+        raise agency_action_required()
+
+
+async def require_global_template(db: Database, template_id: str) -> None:
+    template = await db.collection("operational_task_templates").find_one(
+        {"id": template_id}
+    )
+    if not template:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task template metadata was not found.",
+        )
+    if template.get("agency_id"):
+        raise agency_action_required()
 
 
 @router.get("")
@@ -81,7 +120,10 @@ async def create_platform_task_template(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await TaskAutomationDependencyService(db).create_template(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        data["scope"] = "platform"
+        return await TaskAutomationDependencyService(db).create_template(data, user)
     except TaskAutomationDependencyError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -94,6 +136,7 @@ async def update_platform_task_template(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_template(db, template_id)
     try:
         return await TaskAutomationDependencyService(db).update_template(template_id, payload, user)
     except TaskAutomationDependencyError as exc:
@@ -127,7 +170,11 @@ async def create_platform_task_automation_rule(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await TaskAutomationDependencyService(db).create_rule(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        data["scope"] = "platform"
+        data["platform_scope"] = True
+        return await TaskAutomationDependencyService(db).create_rule(data, user)
     except TaskAutomationDependencyError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -140,6 +187,7 @@ async def update_platform_task_automation_rule(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_rule(db, rule_id)
     try:
         return await TaskAutomationDependencyService(db).update_rule(rule_id, payload, user)
     except TaskAutomationDependencyError as exc:
@@ -168,10 +216,7 @@ async def create_platform_task_dependency(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await TaskAutomationDependencyService(db).create_dependency(payload, user)
-    except TaskAutomationDependencyError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.put("/dependencies/{dependency_id}")
@@ -182,10 +227,7 @@ async def update_platform_task_dependency(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await TaskAutomationDependencyService(db).update_dependency(dependency_id, payload, user)
-    except TaskAutomationDependencyError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/dependencies/{dependency_id}/satisfy")
@@ -196,10 +238,7 @@ async def satisfy_platform_task_dependency(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await TaskAutomationDependencyService(db).satisfy_dependency(dependency_id, payload, user)
-    except TaskAutomationDependencyError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/dependencies/{dependency_id}/waive")
@@ -210,10 +249,7 @@ async def waive_platform_task_dependency(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await TaskAutomationDependencyService(db).waive_dependency(dependency_id, payload, user)
-    except TaskAutomationDependencyError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/dependencies/evaluate")
@@ -226,13 +262,7 @@ async def evaluate_platform_task_dependencies(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    return await TaskAutomationDependencyService(db).evaluate_dependencies(
-        agency_id,
-        user,
-        successor_task_id=successor_task_id,
-        source_entity_type=source_entity_type,
-        source_entity_id=source_entity_id,
-    )
+    raise agency_action_required()
 
 
 @router.get("/runs")
@@ -258,10 +288,7 @@ async def run_platform_task_automation(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await TaskAutomationDependencyService(db).run_automation(payload, user)
-    except TaskAutomationDependencyError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/runs/{run_id}/retry")
@@ -272,7 +299,72 @@ async def retry_platform_task_automation_run(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    raise agency_action_required()
+
+
+@router.post("/rules/{rule_id}/publish")
+async def publish_platform_automation_rule(
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_write(user)
+    await require_global_rule(db, rule_id)
     try:
-        return await TaskAutomationDependencyService(db).retry_run(run_id, payload, user)
+        return await TaskAutomationDependencyService(db).publish_rule(
+            rule_id, payload, user
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/deactivate")
+async def deactivate_platform_automation_rule(
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_write(user)
+    await require_global_rule(db, rule_id)
+    try:
+        return await TaskAutomationDependencyService(db).deactivate_rule(
+            rule_id, payload, user
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/supersede")
+async def supersede_platform_automation_rule(
+    rule_id: str,
+    payload: OperationalAutomationRuleLifecycleRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_write(user)
+    await require_global_rule(db, rule_id)
+    try:
+        return await TaskAutomationDependencyService(db).supersede_rule(
+            rule_id, payload, user
+        )
+    except TaskAutomationDependencyError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.post("/rules/{rule_id}/dry-run")
+async def dry_run_platform_automation_rule(
+    rule_id: str,
+    payload: OperationalAutomationDryRunRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_platform_read(user)
+    await require_global_rule(db, rule_id)
+    try:
+        return await TaskAutomationDependencyService(db).dry_run_rule(
+            rule_id, payload, user
+        )
     except TaskAutomationDependencyError as exc:
         raise bad_request(str(exc)) from exc

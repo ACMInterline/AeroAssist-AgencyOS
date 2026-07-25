@@ -1994,3 +1994,22 @@ compatibility deep links. `analyze_portal_completion_migration.py` reports
 legacy/missing/duplicate mappings and historical record counts with no write
 mode. No payment, booking, issuance, provider, external messaging, public
 share, production migration, commit, push, or deployment behavior is added.
+
+## P1 Product Recovery 11A - Governed Automation And Orchestration
+
+Product Recovery 11A reconciles the existing queue, task automation, SLA,
+dependency, approval, timeline, audit, and notification foundations under one
+Product Kernel contract. `OperationalWorkItem` is the sole actionable-work
+owner, `OperationalTimeline` is the source-event and operational-history
+owner, `AuditEvent` remains security evidence, and notifications remain
+regenerable user-specific projections.
+
+Only published active allowlisted rules can evaluate canonical timeline
+events. Evaluation is deterministic, tenant-scoped, bounded, idempotent, and
+linked to the exact source timeline entry. Class A and governed Class B
+internal actions are supported; Class C produces an approval request and work
+only; Class D is rejected. Manual bounded processing is available, while a
+persistent scheduler, external delivery, provider execution, payment,
+refund, Ticket/EMD issuance, permission mutation, and autonomous decisions
+remain disabled. See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md)
+and [Automation Rule And Safety Contract](docs/architecture/automation-rule-and-safety-contract.md).

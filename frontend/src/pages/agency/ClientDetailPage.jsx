@@ -91,6 +91,9 @@ export default function ClientDetailPage({ clientId }) {
             </div>
           </div>
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={clientId}
+            workEntityType="client"
             breadcrumbs={[{ label: "Clients", href: "/agency/clients" }]}
             currentLabel={state?.client?.display_name || "Client"}
             status={state?.client?.status}

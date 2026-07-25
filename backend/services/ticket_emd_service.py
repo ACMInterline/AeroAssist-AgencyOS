@@ -1329,8 +1329,38 @@ class TicketEmdService:
         work_item = generated.get("work_item") or {}
         if work_item.get("id"):
             if reconciliation_status == "matched" and work_item.get("status") != "completed":
+                if work_item.get("blocker_status") not in {None, "", "not_blocked"} or any(
+                    not blocker.get("resolved")
+                    for blocker in work_item.get("blockers") or []
+                ):
+                    resolved = await self.work_queue.apply_action(
+                        work_item["id"],
+                        "resolve_blocker",
+                        OperationalWorkItemActionRequest(
+                            reason=(
+                                "Reviewed external ticket evidence resolved the "
+                                "reconciliation blocker."
+                            )
+                        ),
+                        user,
+                        agency_id=ticket["agency_id"],
+                    )
+                    work_item = resolved.get("work_item") or work_item
                 await self.work_queue.apply_action(
-                    work_item["id"], "complete", OperationalWorkItemActionRequest(reason="External ticket result matched reviewed evidence."), user, agency_id=ticket["agency_id"]
+                    work_item["id"],
+                    "complete",
+                    OperationalWorkItemActionRequest(
+                        reason="External ticket result matched reviewed evidence.",
+                        completion_evidence={
+                            "ticket_record_id": ticket["id"],
+                            "reconciliation_status": reconciliation_status,
+                            "external_evidence_reference": ticket.get(
+                                "external_evidence_reference"
+                            ),
+                        },
+                    ),
+                    user,
+                    agency_id=ticket["agency_id"],
                 )
             elif reconciliation_status in {"mismatch", "manual_review", "unknown"} and work_item.get("status") != "blocked":
                 await self.work_queue.apply_action(

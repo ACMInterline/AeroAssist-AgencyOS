@@ -41,3 +41,20 @@ than expand an ungoverned top-level vocabulary.
 The catalog describes evidence, not execution. `ticket_imported`,
 `emd_imported`, `payment_received`, and document or communication events do not
 perform the underlying external action.
+
+## Governed Automation Event Keys
+
+Automation uses stable dotted event keys while retaining the canonical
+timeline type/subtype compatibility mapping. Families include
+`request.*`, `offer.*`, `trip.*`, `booking.*`, `ticket.*`, `emd.*`,
+`invoice.*`, `payment.*`, `supplier_cost.*`, `refund.*`, `exchange.*`,
+`document.*`, and `approval.*`, plus `communication.received`,
+`client_reply_received`, `passenger_reply_received`, and
+`supplier_reply_received`.
+
+Legacy labels such as `request_created`, `offer_sent`, `offer_accepted`,
+`booking_ready`, and `payment_due` are normalized through a finite alias map.
+Unknown event keys are rejected. Every trigger remains Agency-scoped,
+references its exact timeline row, and records source rule/execution lineage
+on generated evidence. The full allowlist and schemas are documented in
+[Automation Event Catalog](automation-event-catalog.md).

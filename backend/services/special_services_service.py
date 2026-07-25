@@ -618,8 +618,36 @@ class SpecialServicesService:
         work_item = work_item_result.get("work_item") or {}
         if work_item.get("id"):
             if result in {"fulfilled", "cancelled"} and work_item.get("status") != "completed":
+                if work_item.get("blocker_status") not in {None, "", "not_blocked"} or any(
+                    not blocker.get("resolved")
+                    for blocker in work_item.get("blockers") or []
+                ):
+                    resolved = await self.work_queue.apply_action(
+                        work_item["id"],
+                        "resolve_blocker",
+                        OperationalWorkItemActionRequest(
+                            reason=(
+                                "Reviewed passenger-service evidence resolved "
+                                "the fulfilment blocker."
+                            )
+                        ),
+                        user,
+                        agency_id=agency_id,
+                    )
+                    work_item = resolved.get("work_item") or work_item
                 await self.work_queue.apply_action(
-                    work_item["id"], "complete", OperationalWorkItemActionRequest(reason=f"Service outcome recorded as {result}."), user, agency_id=agency_id
+                    work_item["id"],
+                    "complete",
+                    OperationalWorkItemActionRequest(
+                        reason=f"Service outcome recorded as {result}.",
+                        completion_evidence={
+                            "passenger_service_request_id": service["id"],
+                            "fulfilment_result": result,
+                            "timeline_entry_id": timeline_id,
+                        },
+                    ),
+                    user,
+                    agency_id=agency_id,
                 )
             elif (result == "failed" or warnings) and work_item.get("status") != "blocked":
                 await self.work_queue.apply_action(

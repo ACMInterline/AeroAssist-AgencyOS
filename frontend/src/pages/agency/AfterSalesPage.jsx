@@ -226,6 +226,9 @@ export default function AfterSalesPage() {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={selectedId}
+            workEntityType="after_sales_case"
             breadcrumbs={[{ label: "Finance", href: "/agency/invoices" }, { label: "After Sales", href: "/agency/after-sales" }]}
             currentLabel={selected?.case_reference || "After-Sales Case"}
             status={selected?.case_status || "not opened"}

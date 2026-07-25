@@ -131,6 +131,9 @@ export default function DocumentWorkspacesPage() {
           <PilotGuidance area="documents" />
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={sourceDocument?.id}
+            workEntityType="document"
             breadcrumbs={[{ label: "Passenger services", href: filters.related_service ? `/agency/passenger-services?service_id=${encodeURIComponent(filters.related_service)}` : "/agency/passenger-services" }, { label: "Documents", href: "/agency/document-workspaces" }]}
             currentLabel={sourceDocument?.document_display_name || sourceDocument?.document_reference || "Document"}
             status={sourceDocument?.document_status || "unknown"}

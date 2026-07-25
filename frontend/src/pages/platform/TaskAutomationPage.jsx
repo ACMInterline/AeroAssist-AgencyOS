@@ -3,7 +3,7 @@ import EmptyState from "../../components/EmptyState"
 import { Field, Metric, RecordCard, SelectField, formatType, queryString } from "../../components/ClientPassengerMasterRecordList"
 import ProtectedRoute from "../../components/ProtectedRoute"
 import PlatformLayout from "../../layouts/PlatformLayout"
-import { apiGet, apiPost } from "../../lib/api"
+import { apiGet } from "../../lib/api"
 
 const defaultFilters = {
   agency_id: "",
@@ -14,7 +14,6 @@ const defaultFilters = {
 export default function TaskAutomationPage() {
   const [state, setState] = useState(null)
   const [filters, setFilters] = useState(defaultFilters)
-  const [runForm, setRunForm] = useState({ agency_id: "", trigger_event: "request_created", source_entity_type: "request", source_entity_id: "", request_id: "", source_label: "" })
   const [error, setError] = useState("")
 
   async function load(nextFilters = filters) {
@@ -34,30 +33,6 @@ export default function TaskAutomationPage() {
       summary: response.summary || {},
       safeTemplateCodes: response.safe_template_codes || [],
     })
-  }
-
-  async function runAutomation() {
-    if (!runForm.agency_id || !runForm.source_entity_id) {
-      setError("Agency and source entity are required for a safe metadata automation run.")
-      return
-    }
-    await apiPost("/api/platform/task-automation/runs", {
-      agency_id: runForm.agency_id,
-      trigger_event: runForm.trigger_event,
-      source_entity_type: runForm.source_entity_type,
-      source_entity_id: runForm.source_entity_id,
-      request_id: runForm.request_id || runForm.source_entity_id,
-      event_snapshot_json: {
-        source_label: runForm.source_label || runForm.source_entity_id,
-        request_id: runForm.request_id || runForm.source_entity_id,
-      },
-    })
-    await load(filters)
-  }
-
-  async function retryRun(runId) {
-    await apiPost(`/api/platform/task-automation/runs/${runId}/retry`, { reason: "Manual safe retry from platform governance" })
-    await load(filters)
   }
 
   useEffect(() => {
@@ -82,11 +57,11 @@ export default function TaskAutomationPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Operations</p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-950">Task Automation</h2>
-              <p className="mt-1 text-sm text-slate-600">Metadata-only task templates, dependencies, and safe task creation on top of existing request tasks. This does not execute providers, run arbitrary code, schedule workers, send messages, or replace human authority.</p>
+              <p className="mt-1 text-sm text-slate-600">Global template and rule governance for the canonical OperationalWorkItem owner. Platform operators can inspect Agency outcomes but cannot act as Agency staff or run Agency automation.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Metadata only</span>
-              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Existing tasks reused</span>
+              <span className="rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Governance only</span>
+              <span className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Agency actions protected</span>
             </div>
           </div>
 
@@ -103,19 +78,6 @@ export default function TaskAutomationPage() {
               <SelectField label="Trigger event" value={filters.trigger_event} onChange={(value) => setFilters({ ...filters, trigger_event: value })} options={triggerOptions} placeholder="All triggers" />
               <Field label="Run status" value={filters.status} onChange={(value) => setFilters({ ...filters, status: value })} />
             </div>
-          </section>
-
-          <section className="rounded-lg border border-slate-200 bg-white p-5">
-            <h3 className="font-semibold text-slate-950">Safe metadata run</h3>
-            <div className="mt-4 grid gap-3 lg:grid-cols-6">
-              <SelectField label="Agency" value={runForm.agency_id} onChange={(value) => setRunForm({ ...runForm, agency_id: value })} options={agencyOptions} placeholder="Choose agency" />
-              <SelectField label="Trigger" value={runForm.trigger_event} onChange={(value) => setRunForm({ ...runForm, trigger_event: value })} options={triggerOptions} placeholder="Trigger" />
-              <Field label="Source type" value={runForm.source_entity_type} onChange={(value) => setRunForm({ ...runForm, source_entity_type: value })} />
-              <Field label="Source id" value={runForm.source_entity_id} onChange={(value) => setRunForm({ ...runForm, source_entity_id: value })} />
-              <Field label="Request id" value={runForm.request_id} onChange={(value) => setRunForm({ ...runForm, request_id: value })} />
-              <Field label="Label" value={runForm.source_label} onChange={(value) => setRunForm({ ...runForm, source_label: value })} />
-            </div>
-            <button className="mt-4 rounded-md bg-slate-950 px-3 py-2 text-xs font-semibold text-white" type="button" onClick={runAutomation}>Create safe tasks</button>
           </section>
 
           <section className="grid gap-4 lg:grid-cols-2">
@@ -154,8 +116,8 @@ export default function TaskAutomationPage() {
           </section>
 
           <section className="grid gap-4 lg:grid-cols-[1.2fr_.8fr]">
-            <Panel title="Automation Runs" count={state?.runs?.length || 0}>
-              {(state?.runs || []).length ? <RunTable runs={state.runs} onRetry={retryRun} /> : <EmptyState title="No automation runs" body="Safe metadata runs appear here after task creation is requested." />}
+            <Panel title="Agency Execution Evidence" count={state?.runs?.length || 0}>
+              {(state?.runs || []).length ? <RunTable runs={state.runs} /> : <EmptyState title="No automation runs" body="Agency-scoped execution evidence appears here for Platform review." />}
             </Panel>
             <Panel title="Task Dependencies" count={state?.dependencies?.length || 0}>
               {(state?.dependencies || []).length ? (
@@ -183,7 +145,7 @@ function Panel({ title, count, children }) {
   )
 }
 
-function RunTable({ runs, onRetry }) {
+function RunTable({ runs }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -193,7 +155,6 @@ function RunTable({ runs, onRetry }) {
             <th className="px-4 py-3">Trigger</th>
             <th className="px-4 py-3">Tasks</th>
             <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Retry</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -209,9 +170,6 @@ function RunTable({ runs, onRetry }) {
                 <p className="mt-1">Skipped: {(run.tasks_skipped || []).length}</p>
               </td>
               <td className="px-4 py-3 align-top text-xs text-slate-600">{formatType(run.status)}</td>
-              <td className="px-4 py-3 align-top">
-                <button className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50" type="button" onClick={() => onRetry(run.id)}>Retry safely</button>
-              </td>
             </tr>
           ))}
         </tbody>

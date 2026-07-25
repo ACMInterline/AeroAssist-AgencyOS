@@ -202,3 +202,23 @@ unavailable.
 Invoices, Payments, refunds, missing cost/margin evidence, duplicate Invoices,
 and duplicate allocations. It compares collection counts before and after the
 run, exposes no write mode, and never creates ledger entries.
+
+## Governed Automation Reconciliation Status
+
+| Writer or processor | Classification | Canonical behavior |
+|---|---|---|
+| `AgentWorkQueueService` | `canonical_writer` | Creates and transitions `OperationalWorkItem` |
+| `TaskAutomationDependencyService` | `governed_adapter` / `evaluator` | Evaluates published rules and calls canonical owners |
+| `OperationalSlaDeadlineService` | `canonical_writer` for deadlines | Preserves policy version, source time, overrides, and history |
+| Request task compatibility routes | `compatibility_writer` | Project into canonical work; do not create new parallel task truth |
+| `OperationalCollaborationService` | `canonical_writer` / `projection_writer` | Appends timeline evidence and regenerates notifications |
+| Operations Command Centre services | `evaluator` | Bounded reads from canonical work, deadlines, and workflows |
+| Demo, seed, and smoke helpers | `demo_or_test_writer` | Disposable or explicit demo scope only |
+| Persistent scheduler | `decision_required` | Disabled until deployment-safe single-processing guarantees exist |
+
+`backend/scripts/analyze_governed_automation_migration.py` reports duplicate
+tasks, missing lineage or Agency scope, invalid assignments/status/deadlines,
+dependency cycles, duplicate reminders/projections, conflicting active rule
+keys, orphan approvals/runs, and incomplete completion evidence. It produces
+deterministic candidate and manual-review output, compares collection counts,
+has no write path, and explicitly rejects `--write`.

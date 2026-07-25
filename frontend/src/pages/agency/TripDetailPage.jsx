@@ -245,6 +245,9 @@ export default function TripDetailPage({ tripId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={tripId}
+            workEntityType="trip"
             breadcrumbs={[{ label: "Trips", href: "/agency/trips" }]}
             currentLabel={state?.trip?.trip_reference || "Trip"}
             status={state?.trip?.trip_status}

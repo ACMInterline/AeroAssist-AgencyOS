@@ -14,9 +14,7 @@ READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant
 
 async def require_read(db: Database, agency_id: str, user: dict) -> dict | None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in {"platform_owner", "platform_admin", "platform_support"}:
-        return await require_any_agency_role(db, agency_id, user, READ_ROLES)
-    return None
+    return await require_any_agency_role(db, agency_id, user, READ_ROLES)
 
 
 @router.get("")

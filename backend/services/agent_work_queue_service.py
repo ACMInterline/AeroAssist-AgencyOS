@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from hashlib import sha256
 from typing import Any
 
 from database import Database
@@ -23,6 +24,12 @@ from models import (
     new_id,
 )
 from services.operational_collaboration_service import OperationalCollaborationService
+from services.authorization_service import agency_permissions
+from services.governed_automation_contract import (
+    TASK_TYPE_CATALOGUE,
+    bounded_safe_snapshot,
+    task_type_contract,
+)
 
 
 from build_phase import CURRENT_BUILD_PHASE
@@ -34,7 +41,17 @@ OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION = "operational_queue_definitions"
 OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION = "operational_assignment_events"
 OPERATIONAL_QUEUE_VIEWS_COLLECTION = "operational_queue_views"
 
-WORK_ITEM_STATUSES = ["open", "accepted", "in_progress", "waiting", "blocked", "completed", "reopened", "cancelled"]
+WORK_ITEM_STATUSES = [
+    "open",
+    "assigned",
+    "in_progress",
+    "waiting",
+    "blocked",
+    "approval_required",
+    "completed",
+    "cancelled",
+    "overdue",
+]
 WORK_ITEM_PRIORITIES = ["low", "normal", "high", "urgent", "critical"]
 WORK_ITEM_SEVERITIES = ["low", "medium", "high", "critical"]
 BLOCKER_STATUSES = [
@@ -63,6 +80,13 @@ ASSIGNMENT_EVENT_TYPES = [
     "completed",
     "reopened",
     "bulk_assigned",
+    "waiting",
+    "cancelled",
+    "approval_requested",
+    "approval_completed",
+    "escalated",
+    "blocker_resolved",
+    "queue_changed",
 ]
 WORK_ITEM_TYPES = [
     "new_request_triage",
@@ -83,7 +107,22 @@ WORK_ITEM_TYPES = [
     "workflow_blocker",
     "claim_service_case",
     "manual",
+    "approval_request",
+    "reminder",
+    "escalation",
+    *sorted(TASK_TYPE_CATALOGUE),
 ]
+WORK_ITEM_TRANSITIONS: dict[str, set[str]] = {
+    "open": {"assigned", "in_progress", "waiting", "blocked", "approval_required", "completed", "cancelled", "overdue"},
+    "assigned": {"in_progress", "waiting", "blocked", "approval_required", "completed", "cancelled", "open", "overdue"},
+    "in_progress": {"waiting", "blocked", "approval_required", "completed", "cancelled", "overdue"},
+    "waiting": {"open", "assigned", "in_progress", "blocked", "approval_required", "cancelled", "overdue"},
+    "blocked": {"open", "assigned", "in_progress", "approval_required", "cancelled", "overdue"},
+    "approval_required": {"open", "assigned", "in_progress", "completed", "cancelled", "blocked"},
+    "overdue": {"assigned", "in_progress", "waiting", "blocked", "approval_required", "completed", "cancelled"},
+    "completed": {"open"},
+    "cancelled": {"open"},
+}
 CANONICAL_QUEUE_CODES = [
     "unassigned",
     "my_work",
@@ -247,6 +286,7 @@ class AgentWorkQueueService:
         severity: str | None = None,
         work_item_type: str | None = None,
         source_entity_type: str | None = None,
+        source_entity_id: str | None = None,
         assigned_user_id: str | None = None,
         assigned_team_code: str | None = None,
         blocker_status: str | None = None,
@@ -266,6 +306,8 @@ class AgentWorkQueueService:
             filters["work_item_type"] = self._norm(work_item_type)
         if source_entity_type:
             filters["source_entity_type"] = self._norm(source_entity_type)
+        if source_entity_id:
+            filters["source_entity_id"] = source_entity_id
         if assigned_user_id:
             filters["assigned_user_id"] = assigned_user_id
         if assigned_team_code:
@@ -311,8 +353,33 @@ class AgentWorkQueueService:
         self._validate_work_item_payload(data)
         data.setdefault("work_item_code", self._work_item_code())
         data.setdefault("source_fingerprint", self._fingerprint(data))
+        if data.get("assigned_user_id"):
+            await self._validate_assignee(
+                data["agency_id"],
+                data["assigned_user_id"],
+                data["work_item_type"],
+            )
+            data["status"] = "assigned" if data.get("status") == "open" else data.get("status")
+        data.setdefault("primary_entity_type", data["source_entity_type"])
+        data.setdefault("primary_entity_id", data["source_entity_id"])
+        data.setdefault(
+            "entity_references",
+            [
+                {
+                    "entity_type": data["source_entity_type"],
+                    "entity_id": data["source_entity_id"],
+                }
+            ],
+        )
         data["created_by"] = user.get("id")
         data["updated_by"] = user.get("id")
+        data["version"] = 1
+        data["internal_context_json"] = bounded_safe_snapshot(
+            data.get("internal_context_json") or {}, max_depth=4
+        )
+        data["metadata"] = bounded_safe_snapshot(
+            data.get("metadata") or {}, max_depth=3
+        )
         record = OperationalWorkItem(**data).model_dump(mode="json")
         created = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).insert_one(record)
         await self._record_event(created, "created", user, reason="Work item created.", payload={"source": self._source_ref(created)})
@@ -329,12 +396,44 @@ class AgentWorkQueueService:
         updates = self._payload(payload, exclude_unset=True)
         if not updates:
             raise AgentWorkQueueError("No work item metadata updates were provided.")
+        expected_version = updates.pop("expected_version", None)
+        self._check_expected_version(existing, expected_version)
+        allowed_fields = {
+            "title",
+            "description",
+            "summary",
+            "priority",
+            "severity",
+            "due_at",
+            "reminder_at",
+            "escalation_at",
+            "sla_status",
+            "client_impact",
+            "checklist",
+            "metadata",
+        }
+        unsupported = sorted(set(updates) - allowed_fields)
+        if unsupported:
+            raise AgentWorkQueueError(
+                "Assignment, queue, status, source, and ownership changes must "
+                "use a governed work-item action."
+            )
         merged = {**existing, **updates}
         self._validate_work_item_payload(merged, partial=True)
+        if "metadata" in updates:
+            updates["metadata"] = bounded_safe_snapshot(
+                updates.get("metadata") or {}, max_depth=3
+            )
         updates["updated_by"] = user.get("id")
-        updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one({"id": existing["id"]}, updates)
+        updates["version"] = int(existing.get("version") or 1) + 1
+        version_filter = {"id": existing["id"]}
+        if "version" in existing:
+            version_filter["version"] = existing["version"]
+        updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one(
+            version_filter, updates
+        )
         if not updated:
-            raise AgentWorkQueueError("Work item metadata could not be updated.")
+            raise AgentWorkQueueError("Work item version conflict.")
         await self._record_event(updated, "synchronized", user, reason="Work item metadata updated.", payload={"updated_fields": sorted(updates)})
         return {"phase": PHASE_LABEL, "work_item": await self._work_item_projection(updated), "metadata_only": True, **self.safety_flags()}
 
@@ -350,7 +449,28 @@ class AgentWorkQueueService:
         self._validate_work_item_payload(data)
         data.setdefault("status", "open")
         data.setdefault("work_item_code", self._work_item_code())
-        source_snapshot = data.pop("source_snapshot_json", {})
+        data.setdefault("primary_entity_type", data["source_entity_type"])
+        data.setdefault("primary_entity_id", data["source_entity_id"])
+        data.setdefault(
+            "entity_references",
+            [
+                {
+                    "entity_type": data["source_entity_type"],
+                    "entity_id": data["source_entity_id"],
+                }
+            ],
+        )
+        if data.get("assigned_user_id"):
+            await self._validate_assignee(
+                data["agency_id"],
+                data["assigned_user_id"],
+                data["work_item_type"],
+            )
+            if data["status"] == "open":
+                data["status"] = "assigned"
+        source_snapshot = bounded_safe_snapshot(
+            data.pop("source_snapshot_json", {}), max_depth=3
+        )
         generation_reason = data.pop("generation_reason", None)
         data["internal_context_json"] = {
             **(data.get("internal_context_json") or {}),
@@ -371,8 +491,14 @@ class AgentWorkQueueService:
                 "internal_context_json": {**(existing.get("internal_context_json") or {}), **(data.get("internal_context_json") or {})},
                 "compatibility_mapping_json": {**(existing.get("compatibility_mapping_json") or {}), **(data.get("compatibility_mapping_json") or {})},
                 "updated_by": user.get("id"),
+                "version": int(existing.get("version") or 1) + 1,
             }
-            updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one({"id": existing["id"]}, updates)
+            version_filter = {"id": existing["id"]}
+            if "version" in existing:
+                version_filter["version"] = existing["version"]
+            updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one(
+                version_filter, updates
+            )
             await self._record_event(updated or existing, "synchronized", user, reason="Idempotent work-item generation reused existing record.", payload={"source_fingerprint": data["source_fingerprint"]})
             return {
                 "phase": PHASE_LABEL,
@@ -383,6 +509,10 @@ class AgentWorkQueueService:
             }
         data["created_by"] = user.get("id")
         data["updated_by"] = user.get("id")
+        data["version"] = 1
+        data["metadata"] = bounded_safe_snapshot(
+            data.get("metadata") or {}, max_depth=3
+        )
         record = OperationalWorkItem(**data).model_dump(mode="json")
         created = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).insert_one(record)
         await self._record_event(created, "generated", user, reason=generation_reason or "Work item generated from source metadata.", payload={"source_fingerprint": data["source_fingerprint"]})
@@ -429,68 +559,216 @@ class AgentWorkQueueService:
         item = await self._require_work_item(work_item_id, agency_id=agency_id)
         data = self._payload(payload)
         action = self._norm(action)
+        self._check_expected_version(item, data.get("expected_version"))
         now = self._now()
         updates: dict[str, Any] = {"updated_by": user.get("id")}
         event_type = action
+        target_status: str | None = None
 
         if action == "assign_self":
+            await self._validate_assignee(
+                item["agency_id"], user.get("id"), item["work_item_type"]
+            )
             updates["assigned_user_id"] = user.get("id")
-            updates["status"] = "accepted"
+            updates["status"] = "assigned"
             updates["accepted_at"] = now
             updates["accepted_by_user_id"] = user.get("id")
+            updates["assignment_explanation"] = (
+                "Eligible Agency member claimed the work item."
+            )
+            target_status = "assigned"
             event_type = "assigned_to_self"
         elif action in {"assign", "reassign"}:
             if not data.get("to_user_id") and not data.get("to_team_code"):
                 raise AgentWorkQueueError("Assignment requires to_user_id or to_team_code metadata.")
+            if data.get("to_user_id"):
+                await self._validate_assignee(
+                    item["agency_id"],
+                    data["to_user_id"],
+                    item["work_item_type"],
+                )
             updates["assigned_user_id"] = data.get("to_user_id")
             updates["assigned_team_code"] = self._norm(data.get("to_team_code")) if data.get("to_team_code") else item.get("assigned_team_code")
-            updates["status"] = "open" if item.get("status") in {"completed", "cancelled"} else item.get("status", "open")
+            updates["assignment_explanation"] = (
+                data.get("reason") or "Manual governed assignment."
+            )
+            if item.get("status") in {"open", "reopened"}:
+                updates["status"] = "assigned"
+                target_status = "assigned"
             event_type = "reassigned" if item.get("assigned_user_id") or action == "reassign" else "assigned"
         elif action == "unassign":
             updates["assigned_user_id"] = None
             updates["assigned_team_code"] = None
             updates["status"] = "open"
+            updates["assignment_explanation"] = data.get("reason") or "Work item returned to the unassigned queue."
+            target_status = "open"
             event_type = "unassigned"
         elif action == "accept":
+            await self._validate_assignee(
+                item["agency_id"],
+                item.get("assigned_user_id") or user.get("id"),
+                item["work_item_type"],
+            )
             updates["assigned_user_id"] = item.get("assigned_user_id") or user.get("id")
-            updates["status"] = "accepted"
+            updates["status"] = "assigned"
             updates["accepted_at"] = now
             updates["accepted_by_user_id"] = user.get("id")
+            target_status = "assigned"
             event_type = "accepted"
         elif action == "release":
             updates["assigned_user_id"] = None
             updates["status"] = "open"
             updates["released_at"] = now
+            target_status = "open"
             event_type = "released"
-        elif action in {"in_progress", "mark_in_progress"}:
+        elif action in {"in_progress", "mark_in_progress", "start"}:
             updates["status"] = "in_progress"
+            updates["started_at"] = item.get("started_at") or now
+            target_status = "in_progress"
             event_type = "in_progress"
+        elif action == "wait":
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError("Waiting requires an operational reason.")
+            updates["status"] = "waiting"
+            updates["blocker_status"] = self._norm(
+                data.get("blocker_status") or "manual_review"
+            )
+            updates["blocked_reason"] = data["reason"]
+            target_status = "waiting"
+            event_type = "waiting"
         elif action == "block":
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError("Blocking requires an operational reason.")
             updates["status"] = "blocked"
             updates["blocker_status"] = self._norm(data.get("blocker_status") or "blocked")
             updates["blocked_at"] = now
             updates["blocked_reason"] = data.get("reason")
+            updates["blockers"] = [
+                *(item.get("blockers") or []),
+                {
+                    "blocker_type": updates["blocker_status"],
+                    "reason": data["reason"],
+                    "source": "manual",
+                    "created_by": user.get("id"),
+                    "created_at": now,
+                    "resolved": False,
+                },
+            ]
+            target_status = "blocked"
             event_type = "blocked"
+        elif action == "resolve_blocker":
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError("Resolving a blocker requires a reason.")
+            updates["blockers"] = [
+                (
+                    blocker
+                    if blocker.get("resolved")
+                    else {
+                        **blocker,
+                        "resolved": True,
+                        "resolved_at": now,
+                        "resolved_by": user.get("id"),
+                        "resolution_reason": data["reason"],
+                    }
+                )
+                for blocker in item.get("blockers") or []
+            ]
+            updates["blocker_status"] = "not_blocked"
+            updates["blocked_reason"] = None
+            updates["status"] = "assigned" if item.get("assigned_user_id") else "open"
+            target_status = updates["status"]
+            event_type = "blocker_resolved"
+        elif action == "request_approval":
+            if not data.get("approval_type") or not data.get("required_permission"):
+                raise AgentWorkQueueError(
+                    "Approval request requires approval_type and required_permission."
+                )
+            updates.update(
+                {
+                    "status": "approval_required",
+                    "blocker_status": "waiting_approval",
+                    "approval_required": True,
+                    "approval_type": self._norm(data["approval_type"]),
+                    "approval_status": "requested",
+                    "approval_required_permission": data["required_permission"],
+                    "approval_requested_by": user.get("id"),
+                    "approval_requested_at": now,
+                    "approval_evidence_snapshot": data.get("evidence_snapshot") or {},
+                    "human_confirmation_required": True,
+                }
+            )
+            target_status = "approval_required"
+            event_type = "approval_requested"
         elif action == "complete":
+            await self._assert_completion_allowed(item, user, data)
             updates["status"] = "completed"
             updates["completed_at"] = now
+            updates["completed_by"] = user.get("id")
+            updates["completion_evidence"] = data.get("completion_evidence") or {}
             updates["sla_status"] = "completed"
+            target_status = "completed"
             event_type = "completed"
         elif action == "reopen":
-            updates["status"] = "reopened"
+            updates["status"] = "open"
             updates["completed_at"] = None
+            updates["completed_by"] = None
             updates["reopened_at"] = now
+            target_status = "open"
             event_type = "reopened"
+        elif action == "cancel":
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError("Cancellation requires a reason.")
+            updates.update(
+                {
+                    "status": "cancelled",
+                    "cancelled_at": now,
+                    "cancelled_by": user.get("id"),
+                    "cancellation_reason": data["reason"],
+                }
+            )
+            target_status = "cancelled"
+            event_type = "cancelled"
+        elif action == "escalate":
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError("Escalation requires an operational reason.")
+            priority_order = ["low", "normal", "high", "urgent", "critical"]
+            current = self._norm(item.get("priority") or "normal")
+            index = min(priority_order.index(current) + 1, len(priority_order) - 1)
+            updates["priority"] = priority_order[index]
+            updates["escalation_at"] = now
+            updates["queue_code"] = "urgent_critical"
+            updates["queue_key"] = "urgent_critical"
+            event_type = "escalated"
+        elif action == "place_in_queue":
+            queue_code = self._norm(
+                data.get("queue_code")
+                or (data.get("metadata") or {}).get("queue_code")
+            )
+            if queue_code not in CANONICAL_QUEUE_CODES:
+                raise AgentWorkQueueError("A canonical queue_code is required.")
+            updates["queue_code"] = queue_code
+            updates["queue_key"] = queue_code
+            event_type = "queue_changed"
         else:
             raise AgentWorkQueueError(f"Unsupported work queue action metadata: {action}.")
 
         if data.get("due_at"):
+            if not str(data.get("reason") or "").strip():
+                raise AgentWorkQueueError(
+                    "Changing a work-item deadline requires a reason."
+                )
             updates["due_at"] = data["due_at"]
         if data.get("internal_context_json"):
             updates["internal_context_json"] = {**(item.get("internal_context_json") or {}), **data["internal_context_json"]}
-        updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one({"id": item["id"]}, updates, allow_agency_update=True)
+        if target_status:
+            self._assert_transition(item.get("status") or "open", target_status)
+        updates["version"] = int(item.get("version") or 1) + 1
+        version_filter = {"id": item["id"]}
+        if "version" in item:
+            version_filter["version"] = item["version"]
+        updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one(version_filter, updates, allow_agency_update=True)
         if not updated:
-            raise AgentWorkQueueError("Work item action could not be recorded.")
+            raise AgentWorkQueueError("Work item version conflict.")
         await self._record_event(
             updated,
             event_type,
@@ -502,7 +780,383 @@ class AgentWorkQueueService:
             to_team_code=updates.get("assigned_team_code"),
             payload={"action": action, "previous_status": item.get("status"), "next_status": updated.get("status"), "metadata": data.get("metadata") or {}},
         )
+        if event_type == "completed":
+            from services.task_automation_dependency_service import (
+                TaskAutomationDependencyService,
+            )
+
+            await TaskAutomationDependencyService(self.db).evaluate_dependencies(
+                item["agency_id"], user
+            )
         return {"phase": PHASE_LABEL, "work_item": await self._work_item_projection(updated), "action": event_type, "metadata_only": True, **self.safety_flags()}
+
+    async def synchronize_dependency_state(
+        self,
+        work_item_id: str,
+        *,
+        agency_id: str,
+        blocked: bool,
+        dependency_ids: list[str],
+        dependency_blockers: list[dict[str, Any]],
+        user: dict,
+    ) -> dict[str, Any]:
+        item = await self._require_work_item(work_item_id, agency_id=agency_id)
+        now = self._now()
+        existing_blockers = item.get("blockers") or []
+        non_dependency_blockers = [
+            blocker
+            for blocker in existing_blockers
+            if blocker.get("blocker_type") != "mandatory_dependency"
+        ]
+        if blocked:
+            if item.get("status") in {
+                "completed",
+                "cancelled",
+                "approval_required",
+            }:
+                return item
+            normalized_dependency_blockers = sorted(
+                dependency_blockers,
+                key=lambda blocker: (
+                    str(blocker.get("dependency_id") or ""),
+                    str(blocker.get("predecessor_task_id") or ""),
+                ),
+            )
+            updates = {
+                "status": "blocked",
+                "blocker_status": "blocked",
+                "dependency_ids": sorted(set(dependency_ids)),
+                "blockers": [
+                    *non_dependency_blockers,
+                    *normalized_dependency_blockers,
+                ],
+                "blocked_at": item.get("blocked_at") or now,
+                "blocked_reason": (
+                    "Mandatory work-item dependency is incomplete."
+                ),
+                "version": int(item.get("version") or 1) + 1,
+                "updated_by": user.get("id"),
+            }
+            event_type = "dependency_blocked"
+            reason = updates["blocked_reason"]
+        else:
+            resolved_dependency_blockers = [
+                (
+                    blocker
+                    if blocker.get("resolved")
+                    else {
+                        **blocker,
+                        "resolved": True,
+                        "resolved_at": now,
+                        "resolved_by": user.get("id"),
+                        "resolution_reason": (
+                            "Mandatory predecessor completion satisfied the "
+                            "dependency."
+                        ),
+                    }
+                )
+                for blocker in existing_blockers
+                if blocker.get("blocker_type") == "mandatory_dependency"
+            ]
+            active_non_dependency = [
+                blocker
+                for blocker in non_dependency_blockers
+                if not blocker.get("resolved")
+            ]
+            remains_blocked = bool(active_non_dependency)
+            updates = {
+                "status": (
+                    "blocked"
+                    if remains_blocked
+                    else (
+                        "assigned"
+                        if item.get("assigned_user_id")
+                        else "open"
+                    )
+                ),
+                "blocker_status": (
+                    item.get("blocker_status") or "blocked"
+                    if remains_blocked
+                    else "not_blocked"
+                ),
+                "blockers": [
+                    *non_dependency_blockers,
+                    *resolved_dependency_blockers,
+                ],
+                "blocked_reason": (
+                    item.get("blocked_reason") if remains_blocked else None
+                ),
+                "version": int(item.get("version") or 1) + 1,
+                "updated_by": user.get("id"),
+            }
+            event_type = "dependency_satisfied"
+            reason = (
+                "Mandatory predecessor completion satisfied the dependency."
+            )
+        target_status = updates["status"]
+        self._assert_transition(item.get("status") or "open", target_status)
+        updated = await self.db.collection(
+            OPERATIONAL_WORK_ITEMS_COLLECTION
+        ).update_one(
+            {
+                "agency_id": agency_id,
+                "id": item["id"],
+                "version": item.get("version", 1),
+            },
+            updates,
+            allow_agency_update=True,
+        )
+        if not updated:
+            raise AgentWorkQueueError("Work item version conflict.")
+        await self._record_event(
+            updated,
+            event_type,
+            user,
+            reason=reason,
+            payload={
+                "dependency_ids": sorted(set(dependency_ids)),
+                "previous_status": item.get("status"),
+                "next_status": updated.get("status"),
+            },
+        )
+        return updated
+
+    async def record_approval_decision(
+        self,
+        work_item_id: str,
+        *,
+        agency_id: str,
+        decision: str,
+        reason: str,
+        evidence_snapshot: dict[str, Any],
+        user: dict,
+        expected_version: int | None = None,
+    ) -> dict[str, Any]:
+        item = await self._require_work_item(work_item_id, agency_id=agency_id)
+        self._check_expected_version(item, expected_version)
+        now = self._now()
+        target_status = (
+            "completed" if decision in {"approved", "rejected"} else "cancelled"
+        )
+        self._assert_transition(item.get("status") or "approval_required", target_status)
+        decision_evidence = bounded_safe_snapshot(evidence_snapshot)
+        updates = {
+            "approval_status": decision,
+            "approval_decision": decision,
+            "approval_decision_reason": reason,
+            "approval_decided_by": user.get("id"),
+            "approval_decided_at": now,
+            "approval_evidence_snapshot": {
+                **(item.get("approval_evidence_snapshot") or {}),
+                "decision_evidence": decision_evidence,
+            },
+            "status": target_status,
+            "blocker_status": "not_blocked",
+            "completed_at": (
+                now if decision in {"approved", "rejected"} else None
+            ),
+            "completed_by": (
+                user.get("id")
+                if decision in {"approved", "rejected"}
+                else None
+            ),
+            "completion_evidence": {
+                "approval_decision": decision,
+                "decision_evidence": decision_evidence,
+            },
+            "version": int(item.get("version") or 1) + 1,
+            "updated_by": user.get("id"),
+        }
+        updated = await self.db.collection(
+            OPERATIONAL_WORK_ITEMS_COLLECTION
+        ).update_one(
+            {
+                "agency_id": agency_id,
+                "id": item["id"],
+                "version": item.get("version", 1),
+            },
+            updates,
+            allow_agency_update=True,
+        )
+        if not updated:
+            raise AgentWorkQueueError("Approval version conflict.")
+        await self._record_event(
+            updated,
+            "approval_completed",
+            user,
+            reason=reason,
+            payload={
+                "decision": decision,
+                "previous_status": item.get("status"),
+                "next_status": target_status,
+                "underlying_action_executed": False,
+            },
+        )
+        return updated
+
+    async def route_assignment(
+        self,
+        work_item_id: str,
+        *,
+        strategy: str,
+        user: dict,
+        agency_id: str,
+        fixed_user_id: str | None = None,
+        fixed_team_code: str | None = None,
+        parent_owner_user_id: str | None = None,
+        reason: str,
+        expected_version: int | None = None,
+    ) -> dict[str, Any]:
+        item = await self._require_work_item(work_item_id, agency_id=agency_id)
+        self._check_expected_version(item, expected_version)
+        strategy = self._norm(strategy)
+        if strategy not in {
+            "fixed_user",
+            "fixed_team",
+            "least_open_eligible",
+            "round_robin",
+            "retain_current_owner",
+            "parent_entity_owner",
+            "manual_assignment_required",
+        }:
+            raise AgentWorkQueueError("Unsupported governed assignment strategy.")
+        if not str(reason or "").strip():
+            raise AgentWorkQueueError("Assignment routing requires an explanation.")
+
+        target_user_id: str | None = None
+        target_team_code: str | None = None
+        explanation = reason.strip()
+        if strategy == "fixed_user":
+            target_user_id = fixed_user_id
+        elif strategy == "fixed_team":
+            target_team_code = self._norm(fixed_team_code)
+            if not target_team_code:
+                raise AgentWorkQueueError("Fixed-team routing requires a team code.")
+        elif strategy == "retain_current_owner":
+            target_user_id = item.get("assigned_user_id")
+            target_team_code = item.get("assigned_team_code")
+        elif strategy == "parent_entity_owner":
+            target_user_id = parent_owner_user_id
+        elif strategy == "manual_assignment_required":
+            return await self.apply_action(
+                work_item_id,
+                "place_in_queue",
+                {
+                    "queue_code": "unassigned",
+                    "reason": explanation,
+                    "expected_version": expected_version,
+                    "metadata": {
+                        "assignment_strategy": strategy,
+                        "assignment_unresolved": True,
+                    },
+                },
+                user,
+                agency_id=agency_id,
+            )
+        else:
+            eligible = await self._eligible_assignees(
+                agency_id, item["work_item_type"]
+            )
+            if not eligible:
+                return await self.apply_action(
+                    work_item_id,
+                    "place_in_queue",
+                    {
+                        "queue_code": "unassigned",
+                        "reason": explanation,
+                        "expected_version": expected_version,
+                        "metadata": {
+                            "assignment_strategy": strategy,
+                            "assignment_unresolved": True,
+                        },
+                    },
+                    user,
+                    agency_id=agency_id,
+                )
+            if strategy == "least_open_eligible":
+                active_items = await self.db.collection(
+                    OPERATIONAL_WORK_ITEMS_COLLECTION
+                ).find_many(
+                    {"agency_id": agency_id},
+                    sort=[("id", 1)],
+                    limit=MAXIMUM_QUERY_LIMIT,
+                )
+                active_items = [
+                    work
+                    for work in active_items
+                    if work.get("id") != item["id"]
+                    and work.get("status") not in {"completed", "cancelled"}
+                ]
+                loads = {
+                    member["user_id"]: len(
+                        [
+                            work
+                            for work in active_items
+                            if work.get("assigned_user_id") == member["user_id"]
+                        ]
+                    )
+                    for member in eligible
+                }
+                target_user_id = min(loads, key=lambda member_id: (loads[member_id], member_id))
+                explanation = (
+                    f"{explanation} Least-open routing selected {target_user_id} "
+                    f"from {len(eligible)} eligible members at load {loads[target_user_id]}."
+                )
+            else:
+                ordered_ids = sorted(member["user_id"] for member in eligible)
+                seed = int(
+                    sha256(
+                        f"{agency_id}:{item['id']}:{item.get('source_fingerprint') or ''}".encode(
+                            "utf-8"
+                        )
+                    ).hexdigest()[:12],
+                    16,
+                )
+                target_user_id = ordered_ids[seed % len(ordered_ids)]
+                explanation = (
+                    f"{explanation} Deterministic round-robin routing selected "
+                    f"{target_user_id} from {len(ordered_ids)} eligible members."
+                )
+
+        if target_user_id:
+            await self._validate_assignee(
+                agency_id, target_user_id, item["work_item_type"]
+            )
+        if not target_user_id and not target_team_code:
+            return await self.apply_action(
+                work_item_id,
+                "place_in_queue",
+                {
+                    "queue_code": "unassigned",
+                    "reason": explanation,
+                    "expected_version": expected_version,
+                    "metadata": {
+                        "assignment_strategy": strategy,
+                        "assignment_unresolved": True,
+                    },
+                },
+                user,
+                agency_id=agency_id,
+            )
+        result = await self.apply_action(
+            work_item_id,
+            "assign" if not item.get("assigned_user_id") else "reassign",
+            {
+                "to_user_id": target_user_id,
+                "to_team_code": target_team_code,
+                "reason": explanation,
+                "expected_version": expected_version,
+                "metadata": {
+                    "assignment_strategy": strategy,
+                    "deterministic_routing": True,
+                },
+            },
+            user,
+            agency_id=agency_id,
+        )
+        result["assignment_strategy"] = strategy
+        result["assignment_explanation"] = explanation
+        return result
 
     async def bulk_assign(
         self,
@@ -514,6 +1168,18 @@ class AgentWorkQueueService:
         request_model = OperationalBulkAssignmentRequest(**data)
         if not request_model.to_user_id and not request_model.to_team_code:
             raise AgentWorkQueueError("Bulk assignment requires a user or team target.")
+        if request_model.to_user_id:
+            membership = await self.db.collection("agency_staff_memberships").find_one(
+                {
+                    "agency_id": agency_id,
+                    "user_id": request_model.to_user_id,
+                    "status": "active",
+                }
+            )
+            if not membership:
+                raise AgentWorkQueueError(
+                    "Bulk assignment target must be an active member of this Agency."
+                )
         updated_items: list[dict[str, Any]] = []
         skipped: list[dict[str, Any]] = []
         for work_item_id in request_model.work_item_ids[: request_model.max_items]:
@@ -528,12 +1194,35 @@ class AgentWorkQueueService:
             if request_model.only_unassigned and item.get("assigned_user_id"):
                 skipped.append({"work_item_id": work_item_id, "reason": "already_assigned"})
                 continue
+            if request_model.to_user_id:
+                try:
+                    await self._validate_assignee(
+                        agency_id,
+                        request_model.to_user_id,
+                        item["work_item_type"],
+                    )
+                except AgentWorkQueueError:
+                    skipped.append(
+                        {
+                            "work_item_id": work_item_id,
+                            "reason": "assignee_not_eligible",
+                        }
+                    )
+                    continue
             updates = {
                 "assigned_user_id": request_model.to_user_id,
                 "assigned_team_code": self._norm(request_model.to_team_code) if request_model.to_team_code else item.get("assigned_team_code"),
+                "status": "assigned"
+                if item.get("status") in {"open", "reopened", "accepted"}
+                else item.get("status"),
+                "assignment_explanation": request_model.reason,
+                "version": int(item.get("version") or 1) + 1,
                 "updated_by": user.get("id"),
             }
-            updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one({"id": item["id"]}, updates, allow_agency_update=True)
+            version_filter = {"id": item["id"]}
+            if "version" in item:
+                version_filter["version"] = item["version"]
+            updated = await self.db.collection(OPERATIONAL_WORK_ITEMS_COLLECTION).update_one(version_filter, updates, allow_agency_update=True)
             if updated:
                 await self._record_event(
                     updated,
@@ -586,8 +1275,16 @@ class AgentWorkQueueService:
         definitions.sort(key=lambda item: str(item.get("queue_code") or ""))
         return definitions
 
-    async def create_queue_definition(self, payload: OperationalQueueDefinitionCreate | dict[str, Any], user: dict) -> dict[str, Any]:
+    async def create_queue_definition(
+        self,
+        payload: OperationalQueueDefinitionCreate | dict[str, Any],
+        user: dict,
+        *,
+        agency_id: str | None = None,
+    ) -> dict[str, Any]:
         data = self._payload(payload)
+        if agency_id:
+            data["agency_id"] = agency_id
         data["queue_code"] = self._norm(data["queue_code"])
         data["assignment_strategy"] = self._norm(data.get("assignment_strategy") or "manual")
         data["created_by"] = user.get("id")
@@ -596,17 +1293,36 @@ class AgentWorkQueueService:
         created = await self.db.collection(OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION).insert_one(definition.model_dump(mode="json"))
         return {"phase": PHASE_LABEL, "queue_definition": created, "metadata_only": True, **self.safety_flags()}
 
-    async def update_queue_definition(self, definition_id: str, payload: OperationalQueueDefinitionUpdate | dict[str, Any], user: dict) -> dict[str, Any]:
-        existing = await self.db.collection(OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION).find_one({"id": definition_id})
+    async def update_queue_definition(
+        self,
+        definition_id: str,
+        payload: OperationalQueueDefinitionUpdate | dict[str, Any],
+        user: dict,
+        *,
+        agency_id: str | None = None,
+        platform_scope_only: bool = False,
+    ) -> dict[str, Any]:
+        filters: dict[str, Any] = {"id": definition_id}
+        if agency_id:
+            filters["agency_id"] = agency_id
+        elif platform_scope_only:
+            filters["agency_id"] = None
+        existing = await self.db.collection(
+            OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION
+        ).find_one(filters)
         if not existing:
             raise AgentWorkQueueError("Queue definition metadata was not found.")
         updates = self._payload(payload, exclude_unset=True)
-        if "queue_code" in updates:
-            updates["queue_code"] = self._norm(updates["queue_code"])
+        if set(updates) & {"agency_id", "queue_code"}:
+            raise AgentWorkQueueError(
+                "Queue Agency scope and stable queue code are immutable."
+            )
         if "assignment_strategy" in updates:
             updates["assignment_strategy"] = self._norm(updates["assignment_strategy"])
         updates["updated_by"] = user.get("id")
-        updated = await self.db.collection(OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION).update_one({"id": definition_id}, updates)
+        updated = await self.db.collection(
+            OPERATIONAL_QUEUE_DEFINITIONS_COLLECTION
+        ).update_one(filters, updates)
         if not updated:
             raise AgentWorkQueueError("Queue definition metadata could not be updated.")
         return {"phase": PHASE_LABEL, "queue_definition": updated, "metadata_only": True, **self.safety_flags()}
@@ -703,6 +1419,8 @@ class AgentWorkQueueService:
             "metadata_only": True,
             "agent_work_queue_assignment_foundation": True,
             "canonical_operational_queue": True,
+            "canonical_operational_work_item_owner": True,
+            "legacy_request_tasks_projection_only": True,
             "existing_task_system_preserved": True,
             "reuse_existing_tasks_timelines_workflows_enabled": True,
             "client_facing_context_hidden": True,
@@ -714,6 +1432,9 @@ class AgentWorkQueueService:
             "background_workers_disabled": True,
             "automatic_execution_disabled": True,
             "automation_disabled": True,
+            "external_execution_disabled": True,
+            "governed_internal_automation_enabled": True,
+            "class_c_business_execution_disabled": True,
             "human_authority_final": True,
         }
 
@@ -1007,12 +1728,88 @@ class AgentWorkQueueService:
         return generated
 
     async def _work_item_projection(self, item: dict[str, Any]) -> dict[str, Any]:
-        projected = dict(item)
+        projected = bounded_safe_snapshot(item, max_depth=6)
+        for field in (
+            "id",
+            "agency_id",
+            "work_item_code",
+            "work_item_type",
+            "source_entity_type",
+            "source_entity_id",
+            "primary_entity_type",
+            "primary_entity_id",
+            "workflow_instance_id",
+            "workflow_event_id",
+            "request_task_id",
+            "timeline_entry_id",
+            "source_timeline_entry_id",
+            "source_automation_rule_id",
+            "source_automation_execution_id",
+            "title",
+            "summary",
+            "description",
+            "status",
+            "priority",
+            "severity",
+            "queue_code",
+            "queue_key",
+            "assigned_user_id",
+            "assigned_team_code",
+            "assignment_explanation",
+            "due_at",
+            "reminder_at",
+            "escalation_at",
+            "sla_status",
+            "blocker_status",
+            "approval_required",
+            "approval_type",
+            "approval_status",
+            "approval_required_permission",
+            "started_at",
+            "completed_at",
+            "cancelled_at",
+            "version",
+            "reconciliation_status",
+        ):
+            if field in item:
+                projected[field] = item.get(field)
         projected["sla_status"] = self._computed_sla_status(projected)
         projected["queue_labels"] = [self._label(queue) for queue in CANONICAL_QUEUE_CODES if self._queue_matches(projected, queue)]
         projected["source"] = self._source_ref(projected)
         projected["source_route"] = self._source_route(projected)
         projected["assignment_events"] = (await self.list_assignment_events(projected["id"], agency_id=projected.get("agency_id")))[-5:]
+        projected["dependencies"] = await self.db.collection(
+            "operational_task_dependencies"
+        ).find_many(
+            {
+                "agency_id": projected.get("agency_id"),
+                "successor_task_id": projected["id"],
+            },
+            sort=[("created_at", 1), ("id", 1)],
+            limit=50,
+        )
+        projected["dependants"] = await self.db.collection(
+            "operational_task_dependencies"
+        ).find_many(
+            {
+                "agency_id": projected.get("agency_id"),
+                "predecessor_task_id": projected["id"],
+            },
+            sort=[("created_at", 1), ("id", 1)],
+            limit=50,
+        )
+        source_execution_id = projected.get("source_automation_execution_id")
+        projected["latest_automation_explanation"] = (
+            await self.db.collection("operational_task_automation_runs").find_one(
+                {
+                    "agency_id": projected.get("agency_id"),
+                    "id": source_execution_id,
+                }
+            )
+            if source_execution_id
+            else None
+        )
+        projected["next_recommended_safe_action"] = self._next_safe_action(projected)
         projected["client_facing_context_hidden"] = True
         projected.update(self.safety_flags())
         return projected
@@ -1040,7 +1837,7 @@ class AgentWorkQueueService:
             to_team_code=to_team_code,
             reason=reason,
             actor_user_id=user.get("id"),
-            payload_json=payload or {},
+            payload_json=bounded_safe_snapshot(payload or {}, max_depth=4),
         )
         created = await self.db.collection(
             OPERATIONAL_ASSIGNMENT_EVENTS_COLLECTION
@@ -1102,6 +1899,141 @@ class AgentWorkQueueService:
         if not item:
             raise AgentWorkQueueError("Work item metadata was not found.")
         return item
+
+    def _check_expected_version(
+        self, item: dict[str, Any], expected_version: int | None
+    ) -> None:
+        if expected_version is not None and int(expected_version) != int(
+            item.get("version") or 1
+        ):
+            raise AgentWorkQueueError("Work item version conflict.")
+
+    def _assert_transition(self, current: str, target: str) -> None:
+        current = self._norm(current)
+        target = self._norm(target)
+        current = {"accepted": "assigned", "reopened": "open"}.get(
+            current, current
+        )
+        target = {"accepted": "assigned", "reopened": "open"}.get(
+            target, target
+        )
+        if current == target:
+            return
+        if target not in WORK_ITEM_TRANSITIONS.get(current, set()):
+            raise AgentWorkQueueError(
+                f"Invalid work-item transition from {current} to {target}."
+            )
+
+    async def _validate_assignee(
+        self, agency_id: str, user_id: str | None, work_item_type: str
+    ) -> dict[str, Any]:
+        if not user_id:
+            raise AgentWorkQueueError("Assignment target user is required.")
+        membership = await self.db.collection("agency_staff_memberships").find_one(
+            {"agency_id": agency_id, "user_id": user_id, "status": "active"}
+        )
+        if not membership:
+            raise AgentWorkQueueError(
+                "Assignment target must be an active member of this Agency."
+            )
+        required_permission = task_type_contract(work_item_type)[
+            "required_permission"
+        ]
+        permissions = agency_permissions(membership.get("agency_role"))
+        if required_permission and required_permission not in permissions:
+            raise AgentWorkQueueError(
+                "Assignment target does not hold the required Agency permission."
+            )
+        return membership
+
+    async def _eligible_assignees(
+        self, agency_id: str, work_item_type: str
+    ) -> list[dict[str, Any]]:
+        memberships = await self.db.collection(
+            "agency_staff_memberships"
+        ).find_many(
+            {"agency_id": agency_id, "status": "active"},
+            sort=[("user_id", 1), ("id", 1)],
+            limit=200,
+        )
+        required_permission = task_type_contract(work_item_type)[
+            "required_permission"
+        ]
+        eligible = [
+            membership
+            for membership in memberships
+            if membership.get("user_id")
+            and (
+                not required_permission
+                or required_permission
+                in agency_permissions(membership.get("agency_role"))
+            )
+        ]
+        eligible.sort(key=lambda membership: str(membership.get("user_id") or ""))
+        return eligible
+
+    async def _assert_completion_allowed(
+        self, item: dict[str, Any], user: dict, data: dict[str, Any]
+    ) -> None:
+        dependencies = await self.db.collection(
+            "operational_task_dependencies"
+        ).find_many(
+            {
+                "agency_id": item["agency_id"],
+                "successor_task_id": item["id"],
+            },
+            sort=[("created_at", 1), ("id", 1)],
+            limit=100,
+        )
+        unsatisfied = [
+            dependency
+            for dependency in dependencies
+            if dependency.get("dependency_type") != "advisory"
+            and dependency.get("status") not in {"satisfied", "waived"}
+        ]
+        if unsatisfied:
+            raise AgentWorkQueueError(
+                "Mandatory work-item dependencies must be satisfied before completion."
+            )
+        if item.get("blocker_status") not in {None, "", "not_blocked"} or any(
+            not blocker.get("resolved") for blocker in item.get("blockers") or []
+        ):
+            raise AgentWorkQueueError(
+                "Active work-item blockers must be resolved before completion."
+            )
+        if item.get("human_confirmation_required") or item.get(
+            "execution_safety_class"
+        ) == "C":
+            if item.get("approval_status") != "approved":
+                raise AgentWorkQueueError(
+                    "Class C work requires an approved internal approval before "
+                    "completion."
+                )
+        evidence = data.get("completion_evidence") or {}
+        if not evidence:
+            raise AgentWorkQueueError(
+                "Manual work-item completion requires bounded completion evidence."
+            )
+        if not user.get("id"):
+            raise AgentWorkQueueError("Completion actor is required.")
+
+    def _next_safe_action(self, item: dict[str, Any]) -> str | None:
+        status = self._norm(item.get("status") or "open")
+        if status in {"completed", "cancelled"}:
+            return "reopen"
+        if status == "approval_required":
+            return "review_approval"
+        if status == "blocked":
+            return "resolve_blocker"
+        if status == "waiting":
+            return "resume"
+        if not item.get("assigned_user_id"):
+            return "claim"
+        if status in {"open", "assigned", "accepted", "reopened", "overdue"}:
+            return "start"
+        if status == "in_progress":
+            return "complete"
+        return None
 
     def _queue_matches(self, item: dict[str, Any], queue_code: str, *, current_user_id: str | None = None) -> bool:
         queue = self._norm(queue_code)
@@ -1174,6 +2106,9 @@ class AgentWorkQueueService:
             data.get("workflow_instance_id") or "",
             data.get("workflow_event_id") or "",
             data.get("request_task_id") or "",
+            data.get("source_timeline_entry_id") or "",
+            data.get("source_automation_rule_id") or "",
+            data.get("source_automation_execution_id") or "",
         ]
         return "::".join(str(part or "") for part in parts)
 
@@ -1196,6 +2131,10 @@ class AgentWorkQueueService:
                 data[field] = value
         if data.get("work_item_type"):
             data["work_item_type"] = self._norm(data["work_item_type"])
+            if not partial and data["work_item_type"] not in WORK_ITEM_TYPES:
+                raise AgentWorkQueueError(
+                    f"Unsupported canonical work_item_type: {data['work_item_type']}."
+                )
         if data.get("source_entity_type"):
             data["source_entity_type"] = self._norm(data["source_entity_type"])
         if data.get("queue_code"):
@@ -1206,6 +2145,10 @@ class AgentWorkQueueService:
             parsed_due_at = self._parse_dt(data["due_at"])
             if parsed_due_at:
                 data["due_at"] = parsed_due_at
+        if data.get("execution_safety_class") not in {None, "A", "B", "C"}:
+            raise AgentWorkQueueError(
+                "Work-item execution_safety_class must be A, B, or C."
+            )
 
     def _source_ref(self, item: dict[str, Any]) -> dict[str, Any]:
         return {

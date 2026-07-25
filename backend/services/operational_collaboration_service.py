@@ -1215,6 +1215,7 @@ class OperationalCollaborationService:
         *,
         visibility: Iterable[str] | None = None,
         limit: int = 100,
+        user_id: str | None = None,
     ) -> list[dict[str, Any]]:
         allowed = set(visibility or VISIBILITY_VALUES)
         items = await self.db.collection(NOTIFICATION_COLLECTION).find_many(
@@ -1222,9 +1223,65 @@ class OperationalCollaborationService:
             sort=[("created_at", -1), ("id", -1)],
             limit=self._bounded_limit(limit),
         )
-        return [
+        visible = [
             item for item in items if self._canonical_visibility(item) in allowed
         ]
+        if not user_id:
+            return visible
+        visible = [
+            item
+            for item in visible
+            if not item.get("recipient_user_id")
+            or item.get("recipient_user_id") == user_id
+        ]
+        return [
+            {
+                **item,
+                "status": "read"
+                if user_id in set(item.get("read_by_user_ids") or [])
+                else "unread",
+                "read_at": (item.get("read_at_by_user") or {}).get(user_id),
+                "user_specific_read_state": True,
+            }
+            for item in visible
+        ]
+
+    async def mark_notification_read(
+        self, agency_id: str, notification_id: str, user_id: str
+    ) -> dict[str, Any]:
+        item = await self.db.collection(NOTIFICATION_COLLECTION).find_one(
+            {"agency_id": agency_id, "id": notification_id}
+        )
+        if not item:
+            raise OperationalCollaborationError(
+                "Notification projection was not found.",
+                "NOTIFICATION_NOT_FOUND",
+            )
+        if item.get("recipient_user_id") and item.get("recipient_user_id") != user_id:
+            raise OperationalCollaborationError(
+                "Notification projection was not found.",
+                "NOTIFICATION_NOT_FOUND",
+            )
+        readers = sorted(set(item.get("read_by_user_ids") or []) | {user_id})
+        read_at = {
+            **(item.get("read_at_by_user") or {}),
+            user_id: self._now(),
+        }
+        updated = await self.db.collection(NOTIFICATION_COLLECTION).update_one(
+            {"agency_id": agency_id, "id": notification_id},
+            {
+                "read_by_user_ids": readers,
+                "read_at_by_user": read_at,
+                "status": "unread",
+            },
+        )
+        return {
+            **(updated or item),
+            "status": "read",
+            "read_at": read_at[user_id],
+            "user_specific_read_state": True,
+            "business_truth_mutated": False,
+        }
 
     async def rebuild_notification_projections(
         self, agency_id: str
@@ -1956,6 +2013,12 @@ class OperationalCollaborationService:
         notification_type = self._notification_type(timeline)
         if not notification_type:
             return
+        details = timeline.get("details") or {}
+        recipient_user_id = (
+            details.get("recipient_user_id")
+            or details.get("to_user_id")
+            or details.get("assigned_user_id")
+        )
         projection_key = f"timeline:{timeline['id']}:{notification_type}"
         projection_id = self._stable_id(
             "ntf", timeline["agency_id"], projection_key
@@ -1969,6 +2032,7 @@ class OperationalCollaborationService:
             id=projection_id,
             agency_id=timeline["agency_id"],
             timeline_entry_id=timeline["id"],
+            recipient_user_id=recipient_user_id,
             notification_type=notification_type,
             status="unread",
             title=timeline.get("summary") or timeline.get("event_type") or "Activity",
@@ -1979,6 +2043,7 @@ class OperationalCollaborationService:
             metadata={
                 "entity_type": timeline.get("entity_type"),
                 "entity_id": timeline.get("entity_id"),
+                "recipient_scoped": bool(recipient_user_id),
                 "regenerable": True,
             },
         )
@@ -2384,20 +2449,43 @@ class OperationalCollaborationService:
         return "status_transition"
 
     def _notification_type(self, timeline: dict[str, Any]) -> str | None:
-        event_type = str(timeline.get("event_type") or "")
+        event_type = str(timeline.get("event_type") or "").strip().lower()
         status = str(timeline.get("event_status") or "")
         priority = str(timeline.get("event_priority") or "")
-        if status == "failed":
+        if status == "failed" or event_type in {
+            "automation.failed",
+            "automation.execution_failed",
+        }:
             return "failed"
-        if event_type in {"approval_requested", "portal_approval"}:
+        if event_type in {
+            "approval.requested",
+            "approval_requested",
+            "portal_approval",
+        }:
             return "approval_required"
-        if event_type in {"deadline_reached", "reminder"}:
+        if event_type in {
+            "deadline_reached",
+            "reminder",
+            "ticket.deadline_approaching",
+            "invoice.due_soon",
+            "invoice.overdue",
+        }:
             return "deadline"
         if priority in {"urgent", "critical"}:
             return "warning"
         if event_type in {
+            "assignment",
+            "task.assigned",
+            "automation.notification_projected",
+            "communication.received",
+            "client_reply_received",
+            "passenger_reply_received",
+            "supplier_reply_received",
             "communication_received",
+            "document.uploaded",
             "document_uploaded",
+            "payment.unallocated",
+            "supplier_cost.missing",
             "payment_received",
         }:
             return "action_required"

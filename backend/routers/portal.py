@@ -17,7 +17,6 @@ from models import (
     PortalOfferDecisionSubmit,
     PortalRequestSubmit,
     RequestMessage,
-    RequestTask,
     RequestTimelineEvent,
     new_id,
     now_utc,
@@ -40,6 +39,7 @@ from services.operational_collaboration_service import (
     OperationalCollaborationError,
     OperationalCollaborationService,
 )
+from services.agent_work_queue_service import AgentWorkQueueService
 
 router = APIRouter(prefix="/api/portal", tags=["portal"])
 
@@ -725,15 +725,47 @@ async def create_portal_action(db: Database, ctx: dict, action_type: str, source
 
 
 async def create_staff_review_task(db: Database, ctx: dict, request_id: str, title: str, description: str | None = None) -> dict:
-    task = RequestTask(
-        agency_id=ctx["account"]["agency_id"],
-        request_id=request_id,
-        title=title,
-        description=description,
-        priority="normal",
-        visibility="internal",
+    agency_id = ctx["account"]["agency_id"]
+    actor = {
+        "id": ctx.get("identity", {}).get("id"),
+        "identity_id": ctx.get("identity", {}).get("id"),
+        "actor_type": ctx.get("subject_type") or "client_portal",
+        "display_name": "Portal user",
+    }
+    result = await AgentWorkQueueService(db).generate_work_item(
+        {
+            "agency_id": agency_id,
+            "work_item_type": "respond_to_client"
+            if ctx.get("subject_type") == "client"
+            else "respond_to_passenger",
+            "source_entity_type": "request",
+            "source_entity_id": request_id,
+            "primary_entity_type": "request",
+            "primary_entity_id": request_id,
+            "title": title,
+            "description": description,
+            "summary": description,
+            "priority": "normal",
+            "queue_code": "unassigned",
+            "blocker_status": "not_blocked",
+            "source_fingerprint": (
+                f"{agency_id}::portal-review::{ctx['account']['id']}::"
+                f"{request_id}::{'_'.join(title.lower().split())[:80]}"
+            ),
+            "generation_reason": "portal_action_requires_staff_review",
+            "source_snapshot_json": {
+                "portal_account_id": ctx["account"]["id"],
+                "portal_identity_type": ctx.get("subject_type"),
+            },
+            "compatibility_mapping_json": {
+                "request_id": request_id,
+                "legacy_request_task_created": False,
+            },
+        },
+        actor,
+        agency_id=agency_id,
     )
-    return await db.collection("request_tasks").insert_one(task.model_dump(mode="json"))
+    return result["work_item"]
 
 
 async def write_request_timeline(db: Database, ctx: dict, request_id: str, event_type: str, title: str, summary: str | None = None, visibility: str = "client_visible", payload: dict | None = None) -> None:

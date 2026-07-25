@@ -79,3 +79,17 @@ note fields. It has no write mode.
 Appending history does not send email, SMS, chat, supplier, airline, or Portal
 messages. It does not execute bookings, tickets, EMDs, payments, refunds,
 exchanges, provider calls, background delivery, or notifications.
+
+## Automation Source And Result Lineage
+
+Governed automation consumes the exact canonical timeline entry ID, not a
+free-standing mutable entity snapshot. Each execution stores that source ID,
+the rule ID and version, a bounded condition trace, action outcomes, created
+work/approval/timeline IDs, safety class, idempotency result, duration, and
+reconciliation state.
+
+Generated timeline entries carry source rule and execution IDs. Recursion
+depth and chained-action count are bounded, replay uses stable idempotency
+keys, and self-trigger loops are rejected. Notification rows derived from
+timeline events are user-specific projections and can be rebuilt without
+changing timeline truth.

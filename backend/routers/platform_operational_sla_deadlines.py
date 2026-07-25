@@ -37,6 +37,27 @@ def not_found(message: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=message)
 
 
+def agency_action_required() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail=(
+            "Platform SLA routes govern global policies and calendars only. "
+            "Agency deadline mutations require active Agency membership "
+            "through the canonical Agency route."
+        ),
+    )
+
+
+async def require_global_record(
+    db: Database, collection: str, record_id: str, label: str
+) -> None:
+    record = await db.collection(collection).find_one({"id": record_id})
+    if not record:
+        raise not_found(f"{label} metadata was not found.")
+    if record.get("agency_id"):
+        raise agency_action_required()
+
+
 @router.get("")
 async def platform_sla_dashboard(
     agency_id: str | None = Query(default=None),
@@ -108,7 +129,10 @@ async def create_platform_sla_policy(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await OperationalSlaDeadlineService(db).create_policy(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        data["scope"] = "platform"
+        return await OperationalSlaDeadlineService(db).create_policy(data, user)
     except OperationalSlaDeadlineError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -121,8 +145,13 @@ async def update_platform_sla_policy(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_record(
+        db, "operational_sla_policies", policy_id, "SLA policy"
+    )
     try:
-        return await OperationalSlaDeadlineService(db).update_policy(policy_id, payload, user)
+        return await OperationalSlaDeadlineService(db).update_policy(
+            policy_id, payload, user, platform_scope_only=True
+        )
     except OperationalSlaDeadlineError as exc:
         raise not_found(str(exc)) from exc
 
@@ -147,7 +176,11 @@ async def create_platform_business_calendar(
 ) -> dict:
     await require_platform_write(user)
     try:
-        return await OperationalSlaDeadlineService(db).create_business_calendar(payload, user)
+        data = payload.model_dump(mode="json", exclude_none=True)
+        data["agency_id"] = None
+        return await OperationalSlaDeadlineService(db).create_business_calendar(
+            data, user
+        )
     except OperationalSlaDeadlineError as exc:
         raise bad_request(str(exc)) from exc
 
@@ -160,8 +193,16 @@ async def update_platform_business_calendar(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
+    await require_global_record(
+        db, "operational_business_calendars", calendar_id, "Business calendar"
+    )
     try:
-        return await OperationalSlaDeadlineService(db).update_business_calendar(calendar_id, payload, user)
+        return await OperationalSlaDeadlineService(db).update_business_calendar(
+            calendar_id,
+            payload,
+            user,
+            platform_scope_only=True,
+        )
     except OperationalSlaDeadlineError as exc:
         raise not_found(str(exc)) from exc
 
@@ -207,10 +248,7 @@ async def create_platform_deadline(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await OperationalSlaDeadlineService(db).create_deadline(payload, user)
-    except OperationalSlaDeadlineError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/deadlines/monitor")
@@ -220,7 +258,7 @@ async def monitor_platform_deadlines(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    return await OperationalSlaDeadlineService(db).monitor_deadlines(agency_id=agency_id, user=user)
+    raise agency_action_required()
 
 
 @router.get("/deadlines/{deadline_id}")
@@ -245,10 +283,7 @@ async def update_platform_deadline(
     db: Database = Depends(get_database),
 ) -> dict:
     await require_platform_write(user)
-    try:
-        return await OperationalSlaDeadlineService(db).update_deadline(deadline_id, payload, user)
-    except OperationalSlaDeadlineError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.get("/deadlines/{deadline_id}/events")
@@ -264,10 +299,7 @@ async def list_platform_deadline_events(
 
 async def _apply_action(deadline_id: str, action: str, payload: OperationalDeadlineActionRequest, user: dict, db: Database) -> dict:
     await require_platform_write(user)
-    try:
-        return await OperationalSlaDeadlineService(db).apply_action(deadline_id, action, payload, user)
-    except OperationalSlaDeadlineError as exc:
-        raise bad_request(str(exc)) from exc
+    raise agency_action_required()
 
 
 @router.post("/deadlines/{deadline_id}/pause")

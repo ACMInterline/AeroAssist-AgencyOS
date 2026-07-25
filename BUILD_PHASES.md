@@ -2797,3 +2797,28 @@ Phase 56.2 adds the Journey Option and Fare Brand Composition Workspace Foundati
   [Dashboard Contract](docs/architecture/dashboard-contract.md),
   [Design System Contract](docs/architecture/design-system-contract.md), and
   [Workflow Banner Contract](docs/architecture/workflow-banner-contract.md).
+
+## P1 Product Recovery 11A - Governed Automation And Orchestration
+
+- Retains active marker `phase_59_0_product_experience_recovery`; this is a
+  Product Kernel reconciliation, not a new roadmap phase.
+- Makes `OperationalWorkItem` the sole actionable-work owner and treats
+  historical `request_tasks` as compatibility history/projection input only.
+- Evaluates exact canonical `OperationalTimeline` events through versioned,
+  published, active, allowlisted rules with deterministic traces and replay
+  idempotency.
+- Supports bounded internal work, dependencies, SLA deadlines, approvals,
+  assignment, queue placement, reminders, escalations, and user-specific
+  notification projections.
+- Enforces Class A/B internal automation, Class C approval projection without
+  underlying business execution, and unconditional rejection of Class D.
+- Provides Agency operations and administration surfaces plus Platform
+  global-governance surfaces without allowing Platform roles to act as Agency
+  staff.
+- Keeps persistent scheduling disabled; processing is explicit, bounded,
+  lock-protected, recoverable, and safe to retry.
+- Adds permanently dry-run migration analysis with no write mode and performs
+  no production migration.
+- See [Canonical Automation Orchestration Contract](docs/architecture/canonical-automation-orchestration-contract.md),
+  [Operational Work Item Contract](docs/architecture/operational-work-item-contract.md),
+  and [Automation Compatibility And Migration](docs/architecture/automation-compatibility-and-migration.md).

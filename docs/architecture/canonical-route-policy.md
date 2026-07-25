@@ -512,3 +512,25 @@ overwrite OfferWorkspace; legacy Booking and Booking Ticket/EMD mutations
 return `409`. Portal decisions use authenticated subject-scoped delivery and
 explicit PortalAccessMapping. There is no anonymous acceptance, `/admin/*`,
 provider booking, Ticket/EMD issuance, or payment execution route.
+
+## Governed Automation And Work Routes
+
+- Agency work operations:
+  `/api/agencies/{agency_id}/work-queue*`.
+- Agency automation, dependencies, approvals, reminders, and bounded
+  processing:
+  `/api/agencies/{agency_id}/task-automation*`.
+- Agency SLA policy/calendar administration and deadline operations:
+  `/api/agencies/{agency_id}/operational-sla-deadlines*`.
+- Platform global-definition governance:
+  `/api/platform/work-queues*`, `/api/platform/task-automation*`, and
+  `/api/platform/operational-sla-deadlines*`.
+
+Agency reads require active membership and Agency writes require the
+centralized role/permission boundary. Body, query, source entity, dependency,
+rule, deadline, or assignment IDs cannot widen the path `agency_id`. Platform
+roles do not imply Agency membership: Platform routes may govern global
+definitions but reject Agency operational mutations with `409`. Portal routes
+do not expose internal rules, traces, work items, approvals, or deadlines.
+There is no `/admin/*`, `/agent/*`, arbitrary expression, external execution,
+or scheduler callback route.

@@ -540,3 +540,23 @@ reference lookups; startup index governance remains non-destructive.
 Existing records are not migrated or deleted. New indexes are additive,
 non-unique lineage/idempotency lookups and startup index governance remains
 non-destructive.
+
+## P1 Product Recovery 11A - Governed Automation
+
+| Model | Collection | Role |
+|---|---|---|
+| `OperationalWorkItem` | `operational_work_items` | Sole canonical actionable-work owner |
+| `OperationalAssignmentEvent` | `operational_assignment_events` | Append-only assignment and lifecycle actor evidence |
+| `OperationalQueueDefinition` / `OperationalQueueView` | `operational_queue_definitions` / `operational_queue_views` | Governed queue definitions and user views |
+| `OperationalTaskAutomationRule` | `operational_task_automation_rules` | Versioned rule metadata; only published active records evaluate |
+| `OperationalTaskAutomationRun` | `operational_task_automation_runs` | Bounded evaluation/execution evidence and recoverable lock state |
+| `OperationalTaskDependency` | `operational_task_dependencies` | Mandatory/advisory work dependency evidence |
+| `OperationalApprovalRequest` | `operational_approval_requests` | Internal Class C approval decision evidence; no underlying execution |
+| `OperationalSlaPolicy` | `operational_sla_policies` | Versioned Platform/Agency SLA policy |
+| `OperationalDeadline` / `OperationalSlaEvent` | `operational_deadlines` / `operational_sla_events` | Calculated deadline truth and append-only lifecycle history |
+| `OperationalBusinessCalendar` | `operational_business_calendars` | Agency-timezone working calendar |
+| `NotificationProjection` | `operational_notification_projections` | Regenerable, user-specific projection only |
+
+Historical `request_tasks` remain readable compatibility history and source
+input, not a canonical write target. All new indexes are additive,
+non-destructive scope, lineage, status, idempotency, or recipient lookups.

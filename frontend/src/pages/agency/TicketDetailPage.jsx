@@ -87,6 +87,9 @@ export default function TicketDetailPage({ ticketRecordId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={ticketRecordId}
+            workEntityType="ticket"
             breadcrumbs={[{ label: "Bookings", href: ticket?.booking_workspace_id ? `/agency/booking-workspaces/${ticket.booking_workspace_id}` : "/agency/booking-workspaces" }, { label: "Tickets", href: "/agency/tickets-emds" }]}
             currentLabel={ticket?.ticket_number || "Draft ticket mirror"}
             status={ticket?.issue_status || ticket?.status}

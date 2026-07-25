@@ -94,6 +94,9 @@ export default function EmdDetailPage({ emdRecordId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={emdRecordId}
+            workEntityType="emd"
             breadcrumbs={[
               { label: "Tickets & EMDs", href: "/agency/tickets-emds" },
               ...(emd?.booking_workspace_id ? [{ label: "Booking", href: `/agency/booking-workspaces/${emd.booking_workspace_id}` }] : []),

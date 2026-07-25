@@ -193,6 +193,9 @@ export default function BookingWorkspaceDetailPage({ bookingWorkspaceId }) {
           />
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={bookingWorkspaceId}
+            workEntityType="booking"
             breadcrumbs={[{ label: "Booking handoffs", href: "/agency/booking-handoffs" }, { label: "Bookings", href: "/agency/booking-workspaces" }]}
             currentLabel={workspace?.workspace_number || "Booking"}
             status={workspace?.status}

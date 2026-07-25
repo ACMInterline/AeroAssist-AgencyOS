@@ -3,7 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from auth import get_current_user
 from database import Database, get_database
 from models import (
+    OperationalAssignmentRouteRequest,
     OperationalBulkAssignmentRequest,
+    OperationalQueueDefinitionCreate,
+    OperationalQueueDefinitionUpdate,
     OperationalQueueViewCreate,
     OperationalQueueViewUpdate,
     OperationalWorkItemActionRequest,
@@ -19,19 +22,22 @@ router = APIRouter(prefix="/api/agencies/{agency_id}/work-queue", tags=["agency-
 
 READ_ROLES = ["agency_owner", "agency_admin", "agency_agent", "agency_accountant", "agency_readonly"]
 WRITE_ROLES = ["agency_owner", "agency_admin", "agency_agent"]
-PLATFORM_ROLES = {"platform_owner", "platform_admin", "platform_support", "platform_knowledge_editor"}
+ADMIN_ROLES = ["agency_owner", "agency_admin"]
 
 
 async def require_read(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, READ_ROLES)
+    await require_any_agency_role(db, agency_id, user, READ_ROLES)
 
 
 async def require_write(db: Database, agency_id: str, user: dict) -> None:
     await assert_agency_access(db, agency_id, user)
-    if user.get("global_role") not in PLATFORM_ROLES:
-        await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+    await require_any_agency_role(db, agency_id, user, WRITE_ROLES)
+
+
+async def require_admin(db: Database, agency_id: str, user: dict) -> None:
+    await assert_agency_access(db, agency_id, user)
+    await require_any_agency_role(db, agency_id, user, ADMIN_ROLES)
 
 
 def bad_request(message: str) -> HTTPException:
@@ -51,6 +57,7 @@ async def agency_work_queue_dashboard(
     severity: str | None = Query(default=None),
     work_item_type: str | None = Query(default=None),
     source_entity_type: str | None = Query(default=None),
+    source_entity_id: str | None = Query(default=None),
     assigned_user_id: str | None = Query(default=None),
     assigned_team_code: str | None = Query(default=None),
     blocker_status: str | None = Query(default=None),
@@ -69,6 +76,7 @@ async def agency_work_queue_dashboard(
         severity=severity,
         work_item_type=work_item_type,
         source_entity_type=source_entity_type,
+        source_entity_id=source_entity_id,
         assigned_user_id=assigned_user_id,
         assigned_team_code=assigned_team_code,
         blocker_status=blocker_status,
@@ -98,6 +106,42 @@ async def list_agency_queue_definitions(
     await require_read(db, agency_id, user)
     service = AgentWorkQueueService(db)
     return {"phase": PHASE_LABEL, "agency_id": agency_id, "queue_definitions": await service.list_queue_definitions(agency_id=agency_id, include_defaults=True), "metadata_only": True, **service.safety_flags()}
+
+
+@router.post("/queue-definitions", status_code=status.HTTP_201_CREATED)
+async def create_agency_queue_definition(
+    agency_id: str,
+    payload: OperationalQueueDefinitionCreate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await AgentWorkQueueService(db).create_queue_definition(
+            payload, user, agency_id=agency_id
+        )
+    except AgentWorkQueueError as exc:
+        raise bad_request(str(exc)) from exc
+
+
+@router.put("/queue-definitions/{definition_id}")
+async def update_agency_queue_definition(
+    agency_id: str,
+    definition_id: str,
+    payload: OperationalQueueDefinitionUpdate,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_admin(db, agency_id, user)
+    try:
+        return await AgentWorkQueueService(db).update_queue_definition(
+            definition_id,
+            payload,
+            user,
+            agency_id=agency_id,
+        )
+    except AgentWorkQueueError as exc:
+        raise not_found(str(exc)) from exc
 
 
 @router.get("/views")
@@ -219,6 +263,10 @@ async def update_agency_work_item(
     try:
         return await AgentWorkQueueService(db).update_work_item(work_item_id, payload, user, agency_id=agency_id)
     except AgentWorkQueueError as exc:
+        if "version conflict" in str(exc).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
         raise bad_request(str(exc)) from exc
 
 
@@ -239,6 +287,10 @@ async def _apply_action(agency_id: str, work_item_id: str, action: str, payload:
     try:
         return await AgentWorkQueueService(db).apply_action(work_item_id, action, payload, user, agency_id=agency_id)
     except AgentWorkQueueError as exc:
+        if "version conflict" in str(exc).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
         raise bad_request(str(exc)) from exc
 
 
@@ -262,6 +314,35 @@ async def assign_work_item(
     db: Database = Depends(get_database),
 ) -> dict:
     return await _apply_action(agency_id, work_item_id, "assign", payload, user, db)
+
+
+@router.post("/work-items/{work_item_id}/route-assignment")
+async def route_work_item_assignment(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalAssignmentRouteRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    await require_write(db, agency_id, user)
+    try:
+        return await AgentWorkQueueService(db).route_assignment(
+            work_item_id,
+            strategy=payload.strategy,
+            fixed_user_id=payload.fixed_user_id,
+            fixed_team_code=payload.fixed_team_code,
+            parent_owner_user_id=payload.parent_owner_user_id,
+            reason=payload.reason,
+            expected_version=payload.expected_version,
+            user=user,
+            agency_id=agency_id,
+        )
+    except AgentWorkQueueError as exc:
+        if "version conflict" in str(exc).lower():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+            ) from exc
+        raise bad_request(str(exc)) from exc
 
 
 @router.post("/work-items/{work_item_id}/reassign")
@@ -350,3 +431,75 @@ async def reopen_work_item(
     db: Database = Depends(get_database),
 ) -> dict:
     return await _apply_action(agency_id, work_item_id, "reopen", payload, user, db)
+
+
+@router.post("/work-items/{work_item_id}/start")
+async def start_work_item(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(agency_id, work_item_id, "start", payload, user, db)
+
+
+@router.post("/work-items/{work_item_id}/wait")
+async def wait_work_item(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(agency_id, work_item_id, "wait", payload, user, db)
+
+
+@router.post("/work-items/{work_item_id}/resolve-blocker")
+async def resolve_work_item_blocker(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(
+        agency_id, work_item_id, "resolve_blocker", payload, user, db
+    )
+
+
+@router.post("/work-items/{work_item_id}/cancel")
+async def cancel_work_item(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(agency_id, work_item_id, "cancel", payload, user, db)
+
+
+@router.post("/work-items/{work_item_id}/escalate")
+async def escalate_work_item(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(
+        agency_id, work_item_id, "escalate", payload, user, db
+    )
+
+
+@router.post("/work-items/{work_item_id}/request-approval")
+async def request_work_item_approval(
+    agency_id: str,
+    work_item_id: str,
+    payload: OperationalWorkItemActionRequest,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict:
+    return await _apply_action(
+        agency_id, work_item_id, "request_approval", payload, user, db
+    )

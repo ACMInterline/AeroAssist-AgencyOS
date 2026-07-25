@@ -43,6 +43,7 @@ from phase_assertions import application_phase_is_at_least
 MINIMUM_PHASE = "phase_54_4_task_automation_dependency_orchestration_foundation"
 ROOT = Path(__file__).resolve().parents[2]
 AGENCY_AGENT_HEADERS = {"X-Demo-User-Email": "agency.agent@aeroassist.dev"}
+AGENCY_OWNER_HEADERS = {"X-Demo-User-Email": "agency.owner@aeroassist.dev"}
 
 
 def run_ref(prefix: str) -> str:
@@ -71,7 +72,8 @@ def assert_safety_flags(payload: dict) -> None:
         "metadata_only",
         "task_automation_dependency_orchestration_foundation",
         "existing_tasks_preserved",
-        "request_tasks_reused",
+        "operational_work_item_is_sole_task_owner",
+        "legacy_request_tasks_projection_only",
         "safe_automatic_task_creation_enabled",
         "idempotent_task_generation_enabled",
         "dependency_blocking_enabled",
@@ -202,6 +204,51 @@ def automation_run_payload(agency_id: str, request_id: str, workflow_instance_id
     }
 
 
+def publish_request_rule(
+    agency_id: str, request_id: str, template_code: str
+) -> dict:
+    rule_key = run_ref(f"smoke_{template_code}").lower()
+    created = post(
+        f"/api/agencies/{agency_id}/task-automation/rules",
+        {
+            "name": f"Smoke {template_code.replace('_', ' ')}",
+            "rule_key": rule_key,
+            "trigger_event": "request.created",
+            "trigger_event_types": ["request.created"],
+            "trigger_entity_types": ["request"],
+            "conditions_json": {
+                "all": [
+                    {
+                        "field": "source.entity_id",
+                        "operator": "equals",
+                        "value": request_id,
+                    }
+                ]
+            },
+            "actions": [
+                {
+                    "action_type": "create_work_item",
+                    "parameters": {"template_code": template_code},
+                    "safety_class": "A",
+                }
+            ],
+            "generated_template_code": template_code,
+            "execution_safety_class": "A",
+            "dry_run_supported": True,
+        },
+        AGENCY_OWNER_HEADERS,
+        201,
+    )["rule"]
+    return post(
+        f"/api/agencies/{agency_id}/task-automation/rules/{created['id']}/publish",
+        {
+            "reason": "Explicit disposable smoke publication.",
+            "expected_version": created["version"],
+        },
+        AGENCY_OWNER_HEADERS,
+    )["rule"]
+
+
 def verify_models_and_registration() -> None:
     if not application_phase_is_at_least(PHASE_LABEL, MINIMUM_PHASE):
         raise AssertionError(f"Service phase label mismatch: {PHASE_LABEL}")
@@ -213,9 +260,12 @@ def verify_models_and_registration() -> None:
     ]:
         if collection not in AGENCY_OWNED_COLLECTIONS:
             raise AssertionError(f"{collection} is not registered as agency-owned metadata.")
-    for value in ["draft", "active", "paused", "archived"]:
-        if value not in TASK_TEMPLATE_STATUSES or value not in TASK_AUTOMATION_RULE_STATUSES:
-            raise AssertionError(f"Missing task template/rule status: {value}")
+    for value in ["draft", "active", "inactive", "superseded", "archived"]:
+        if value not in TASK_AUTOMATION_RULE_STATUSES:
+            raise AssertionError(f"Missing governed rule status: {value}")
+    for value in ["draft", "active", "inactive", "paused", "superseded", "archived"]:
+        if value not in TASK_TEMPLATE_STATUSES:
+            raise AssertionError(f"Missing task template status: {value}")
     for value in ["finish_to_start", "manual_review", "evidence_required"]:
         if value not in TASK_DEPENDENCY_TYPES:
             raise AssertionError(f"Missing dependency type: {value}")
@@ -225,7 +275,7 @@ def verify_models_and_registration() -> None:
     for value in ["completed", "completed_with_warnings", "failed", "skipped"]:
         if value not in TASK_AUTOMATION_RUN_STATUSES:
             raise AssertionError(f"Missing run status: {value}")
-    for value in ["request_created", "service_requirement_detected", "offer_needed", "ticket_emd_linked", "manual_retry"]:
+    for value in ["request.created", "trip.service_added", "offer.created", "ticket.recorded", "refund.requested"]:
         if value not in TASK_AUTOMATION_TRIGGER_EVENTS:
             raise AssertionError(f"Missing trigger event: {value}")
     for template_code in [
@@ -318,7 +368,7 @@ def verify_router_ui_docs_registration() -> None:
         (ROOT / "frontend/src/App.jsx", "/platform/task-automation"),
         (ROOT / "frontend/src/App.jsx", "/agency/task-automation"),
         (ROOT / "frontend/src/pages/platform/TaskAutomationPage.jsx", "Task Automation"),
-        (ROOT / "frontend/src/pages/agency/TaskAutomationPage.jsx", "Dependency Graph"),
+        (ROOT / "frontend/src/pages/agency/TaskAutomationPage.jsx", "Approvals and dependencies"),
         (ROOT / "frontend/src/lib/moduleCatalog.js", "task_automation"),
         (ROOT / "backend/services/saas_subscription_service.py", "task_automation"),
         (ROOT / "backend/services/blueprint_adoption_service.py", "Task Automation and Dependency Orchestration"),
@@ -371,6 +421,8 @@ def verify_health_readiness() -> None:
         "operational_task_automation_runs_collection_enabled",
         "existing_task_system_preserved",
         "request_tasks_reused",
+        "request_tasks_projection_only",
+        "canonical_operational_work_item_owner",
         "safe_automatic_task_creation_enabled",
         "idempotent_task_generation_enabled",
         "dependency_blocking_enabled",
@@ -412,6 +464,21 @@ def verify_task_automation_lifecycle(agency_id: str, other_agency_id: str) -> No
     task_request = create_request(agency_id)
     workflow_instance = start_workflow_instance(agency_id, task_request["id"])
     payload = automation_run_payload(agency_id, task_request["id"], workflow_instance["id"])
+    published_rules = [
+        publish_request_rule(agency_id, task_request["id"], "triage_request"),
+        publish_request_rule(
+            agency_id,
+            task_request["id"],
+            "obtain_missing_passenger_data",
+        ),
+    ]
+    if not all(
+        rule.get("status") == "active"
+        and rule.get("published_at")
+        and rule.get("enabled") is True
+        for rule in published_rules
+    ):
+        raise AssertionError("Explicit smoke rules were not published as active.")
 
     first_run = post(f"/api/agencies/{agency_id}/task-automation/runs", payload, AGENCY_AGENT_HEADERS, 201)
     assert_safety_flags(first_run)
@@ -433,19 +500,34 @@ def verify_task_automation_lifecycle(agency_id: str, other_agency_id: str) -> No
     dependency = dependencies[0]
     predecessor = dependency.get("predecessor_task") or {}
     successor = dependency.get("successor_task") or {}
-    if dependency.get("status") != "pending" or successor.get("status") != "waiting":
+    if (
+        dependency.get("status") != "pending"
+        or successor.get("status") != "blocked"
+        or successor.get("blocker_status") != "blocked"
+        or not any(
+            blocker.get("dependency_id") == dependency["id"]
+            and blocker.get("resolved") is False
+            for blocker in successor.get("blockers") or []
+        )
+    ):
         raise AssertionError(f"Dependency should block successor until predecessor completion: {dependency}")
     if not predecessor.get("due_at") or not successor.get("due_at"):
         raise AssertionError("Generated request tasks should carry due_at metadata from template offsets.")
 
     queue = get(f"/api/agencies/{agency_id}/work-queue?{urlencode({'include_completed': 'true'})}", AGENCY_AGENT_HEADERS)
     queue_items = queue.get("items") or []
-    predecessor_item = next((item for item in queue_items if item.get("request_task_id") == predecessor["id"]), None)
-    successor_item = next((item for item in queue_items if item.get("request_task_id") == successor["id"]), None)
+    predecessor_item = next((item for item in queue_items if item.get("id") == predecessor["id"]), None)
+    successor_item = next((item for item in queue_items if item.get("id") == successor["id"]), None)
     if not predecessor_item or not successor_item:
         raise AssertionError("Generated tasks were not synchronized into the agent work queue.")
-    if successor_item.get("blocker_status") != "manual_review" or successor_item.get("queue_code") != "waiting_client":
+    if successor_item.get("status") != "blocked" or successor_item.get("blocker_status") != "blocked":
         raise AssertionError(f"Blocked successor did not refresh queue blocker metadata: {successor_item}")
+    blocked_queue = get(
+        f"/api/agencies/{agency_id}/work-queue?{urlencode({'queue_code': 'blocked', 'include_completed': 'true'})}",
+        AGENCY_AGENT_HEADERS,
+    ).get("items") or []
+    if not any(item.get("id") == successor["id"] for item in blocked_queue):
+        raise AssertionError("Mandatory dependency successor was absent from the blocked queue.")
 
     events = get(f"/api/platform/operational-workflows/instances/{workflow_instance['id']}/events", OWNER_HEADERS).get("events") or []
     if not any(event.get("source_entity_id") == run["id"] and event.get("source_module") == "task_automation_dependency_orchestration" for event in events):

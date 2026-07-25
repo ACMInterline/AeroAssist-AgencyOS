@@ -193,7 +193,7 @@ def verify_models_and_registration() -> None:
     ]:
         if collection not in AGENCY_OWNED_COLLECTIONS:
             raise AssertionError(f"{collection} is not registered as agency-owned metadata.")
-    for value in ["open", "accepted", "in_progress", "blocked", "completed", "reopened"]:
+    for value in ["open", "assigned", "in_progress", "waiting", "blocked", "approval_required", "completed", "cancelled", "overdue"]:
         if value not in WORK_ITEM_STATUSES:
             raise AssertionError(f"Missing work item status: {value}")
     for value in ["critical", "urgent", "high", "normal", "low"]:
@@ -473,7 +473,7 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
         {"reason": "Taking ownership in smoke."},
         AGENCY_AGENT_HEADERS,
     )["work_item"]
-    if assigned.get("assigned_user_id") != agent_user["id"] or assigned.get("status") != "accepted":
+    if assigned.get("assigned_user_id") != agent_user["id"] or assigned.get("status") != "assigned":
         raise AssertionError(f"Assign to self failed: {assigned}")
     released = post(
         f"/api/agencies/{agency_id}/work-queue/work-items/{manual_item['id']}/release",
@@ -503,9 +503,22 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
     )["work_item"]
     if blocked.get("status") != "blocked" or blocked.get("blocker_status") != "waiting_client":
         raise AssertionError("Block action failed.")
+    resolved = post(
+        f"/api/agencies/{agency_id}/work-queue/work-items/{manual_item['id']}/resolve-blocker",
+        {"reason": "Client evidence received and reviewed."},
+        AGENCY_AGENT_HEADERS,
+    )["work_item"]
+    if resolved.get("blocker_status") != "not_blocked":
+        raise AssertionError("Blocker resolution failed.")
     completed = post(
         f"/api/agencies/{agency_id}/work-queue/work-items/{manual_item['id']}/complete",
-        {"reason": "Completed smoke metadata."},
+        {
+            "reason": "Completed smoke metadata.",
+            "completion_evidence": {
+                "method": "smoke_operator_confirmation",
+                "reference": run_ref("completion-evidence"),
+            },
+        },
         AGENCY_AGENT_HEADERS,
     )["work_item"]
     if completed.get("status") != "completed" or completed.get("sla_status") != "completed":
@@ -515,7 +528,7 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
         {"reason": "Reopen smoke metadata."},
         AGENCY_AGENT_HEADERS,
     )["work_item"]
-    if reopened.get("status") != "reopened" or reopened.get("completed_at") is not None:
+    if reopened.get("status") != "open" or reopened.get("completed_at") is not None:
         raise AssertionError("Reopen action failed.")
 
     events = get(f"/api/agencies/{agency_id}/work-queue/work-items/{manual_item['id']}/events", AGENCY_AGENT_HEADERS)
@@ -543,7 +556,14 @@ def verify_queue_lifecycle(agency_id: str, other_agency_id: str) -> tuple[str, s
     my_work = get(f"/api/agencies/{agency_id}/work-queue?{urlencode({'queue_code': 'my_work'})}", AGENCY_AGENT_HEADERS)
     assert_item_present(my_work.get("items") or [], bulk_one["id"], "My work queue did not include assigned bulk item.")
     waiting_client = get(f"/api/agencies/{agency_id}/work-queue?{urlencode({'queue_code': 'waiting_client', 'include_completed': 'true'})}", AGENCY_AGENT_HEADERS)
-    assert_item_present(waiting_client.get("items") or [], manual_item["id"], "Waiting-client queue did not include blocked lifecycle item.")
+    if any(item.get("id") == manual_item["id"] for item in waiting_client.get("items") or []):
+        raise AssertionError("Resolved lifecycle item remained in the active waiting-client queue.")
+    if not any(
+        blocker.get("blocker_type") == "waiting_client"
+        and blocker.get("resolved") is True
+        for blocker in reopened.get("blockers") or []
+    ):
+        raise AssertionError("Resolved waiting-client blocker was not retained as historical evidence.")
 
     overdue_item = create_manual_work_item(agency_id, "overdue", "urgent", utc_iso(timedelta(days=-1)))
     low_item = create_manual_work_item(agency_id, "low", "low", utc_iso(timedelta(days=5)))
@@ -619,14 +639,27 @@ def verify_source_synchronization(agency_id: str, agent_user_id: str) -> None:
         raise AssertionError(f"Source synchronization was not idempotent: first={synced_once}, second={synced_twice}")
 
     items = get(f"/api/agencies/{agency_id}/work-queue?{urlencode({'include_completed': 'true'})}", AGENCY_AGENT_HEADERS).get("items") or []
-    task_item = next((item for item in items if item.get("request_task_id") == task["id"]), None)
-    if not task_item or task_item.get("work_item_type") not in {"overdue_task", "task_deadline"}:
-        raise AssertionError("Request task did not synchronize into a compatible work item.")
+    matching_task_items = [item for item in items if item.get("id") == task["id"]]
+    task_item = matching_task_items[0] if matching_task_items else None
+    if (
+        not task_item
+        or task_item.get("work_item_type") != "manual"
+        or task_item.get("request_task_id") is not None
+        or (task_item.get("compatibility_mapping_json") or {}).get(
+            "compatibility_route"
+        )
+        != "request_tasks"
+    ):
+        raise AssertionError(
+            "Request task compatibility route did not preserve direct canonical work-item truth."
+        )
+    if len(matching_task_items) != 1:
+        raise AssertionError("Repeated source synchronization duplicated canonical request work.")
     workflow_item = next((item for item in items if item.get("workflow_instance_id") == started["id"]), None)
     if not workflow_item or workflow_item.get("source", {}).get("workflow_instance_id") != started["id"]:
         raise AssertionError("Operational workflow event did not synchronize into a work item.")
-    if not any(event.get("event_type") in {"generated", "synchronized"} for event in task_item.get("assignment_events", [])):
-        raise AssertionError("Generated work item did not expose compact assignment/history events.")
+    if not any(event.get("event_type") == "created" for event in task_item.get("assignment_events", [])):
+        raise AssertionError("Canonical request work did not expose creation history.")
 
 
 def verify_blueprint_registration() -> None:

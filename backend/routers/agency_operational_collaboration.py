@@ -65,6 +65,7 @@ def translate(exc: OperationalCollaborationError) -> HTTPException:
         "MESSAGE_NOT_FOUND",
         "TIMELINE_NOT_FOUND",
         "ENTITY_REFERENCE_NOT_FOUND",
+        "NOTIFICATION_NOT_FOUND",
     }
     conflict = {
         "IDEMPOTENCY_CONFLICT",
@@ -272,10 +273,33 @@ async def list_notifications(
         agency_id,
         visibility={"internal", "agency", "client", "passenger", "supplier", "system"},
         limit=limit,
+        user_id=user.get("id"),
     )
     return {
         "items": items,
         "count": len(items),
+        "projection_only": True,
+        **service.safety_flags(),
+    }
+
+
+@router.post("/notifications/{notification_id}/read")
+async def mark_notification_read(
+    agency_id: str,
+    notification_id: str,
+    user: dict = Depends(get_current_user),
+    db: Database = Depends(get_database),
+) -> dict[str, Any]:
+    await authorize(db, agency_id, user, "view_tasks")
+    service = OperationalCollaborationService(db)
+    try:
+        notification = await service.mark_notification_read(
+            agency_id, notification_id, user["id"]
+        )
+    except OperationalCollaborationError as exc:
+        raise translate(exc) from exc
+    return {
+        "notification": notification,
         "projection_only": True,
         **service.safety_flags(),
     }

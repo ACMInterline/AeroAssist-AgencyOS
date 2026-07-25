@@ -397,3 +397,19 @@ exact-version Offer decisions, requested Document versions, allowlisted
 profile updates, and governed Collaboration replies. Historical Portal
 records remain compatibility data and migration analysis is dry-run only. See
 [Portal Visibility Matrix](portal-visibility-matrix.md).
+
+## P1 Product Recovery 11A - Automation Ownership
+
+Automation introduces no new business owner. Canonical events originate in
+`OperationalTimeline`; governed rule evaluation may project internal work into
+`OperationalWorkItem`, calculate an `OperationalDeadline`, request an
+`OperationalApproval`, or regenerate a user-specific notification projection.
+`AuditEvent` remains independent security evidence and
+`CommunicationThread` / `CommunicationMessage` remain the communication
+owners.
+
+`request_tasks` is not a second task owner. Compatibility routes and source
+adapters project their actionable state into `operational_work_items`; new
+governed automation writes actionable work only through
+`AgentWorkQueueService`. Platform governance can manage global definitions but
+cannot mutate Agency operational work without active Agency membership.

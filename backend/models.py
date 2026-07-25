@@ -16160,8 +16160,11 @@ class NotificationProjection(BaseDocument):
     agency_id: str
     timeline_entry_id: str
     participant_id: Optional[str] = None
+    recipient_user_id: Optional[str] = None
     notification_type: NotificationProjectionType = NotificationProjectionType.INFO
     status: str = "unread"
+    read_by_user_ids: List[str] = Field(default_factory=list)
+    read_at_by_user: Dict[str, datetime] = Field(default_factory=dict)
     title: str
     summary: Optional[str] = None
     visibility: OperationalTimelineVisibility = OperationalTimelineVisibility.INTERNAL
@@ -16724,25 +16727,54 @@ class OperationalWorkItem(BaseDocument):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     status: str = "open"
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_decision: Optional[str] = None
+    approval_decision_reason: Optional[str] = None
+    approval_decided_by: Optional[str] = None
+    approval_decided_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     source_fingerprint: Optional[str] = None
+    started_at: Optional[datetime] = None
     accepted_at: Optional[datetime] = None
     accepted_by_user_id: Optional[str] = None
     released_at: Optional[datetime] = None
@@ -16750,16 +16782,25 @@ class OperationalWorkItem(BaseDocument):
     blocked_reason: Optional[str] = None
     reopened_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
+    completed_by: Optional[str] = None
+    completion_evidence: Dict[str, Any] = Field(default_factory=dict)
+    cancelled_at: Optional[datetime] = None
+    cancelled_by: Optional[str] = None
+    cancellation_reason: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    version: int = 1
+    reconciliation_status: str = "canonical"
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     agent_work_queue_assignment_foundation: bool = True
     canonical_operational_queue: bool = True
-    existing_task_system_preserved: bool = True
+    canonical_operational_truth: bool = True
+    legacy_request_task_projection_only: bool = True
     client_facing_context_hidden: bool = True
     provider_integrations_disabled: bool = True
-    automation_disabled: bool = True
+    governed_internal_automation_enabled: bool = True
+    ungoverned_automation_disabled: bool = True
     background_workers_disabled: bool = True
     human_authority_final: bool = True
 
@@ -16773,53 +16814,69 @@ class OperationalWorkItemCreate(BaseModel):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     status: str = "open"
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     source_fingerprint: Optional[str] = None
+    version: int = 1
+    reconciliation_status: str = "canonical"
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OperationalWorkItemUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    work_item_code: Optional[str] = None
-    work_item_type: Optional[str] = None
-    source_entity_type: Optional[str] = None
-    source_entity_id: Optional[str] = None
-    workflow_instance_id: Optional[str] = None
-    workflow_event_id: Optional[str] = None
-    request_task_id: Optional[str] = None
-    timeline_entry_id: Optional[str] = None
     title: Optional[str] = None
+    description: Optional[str] = None
     summary: Optional[str] = None
-    status: Optional[str] = None
     priority: Optional[str] = None
     severity: Optional[str] = None
-    queue_code: Optional[str] = None
-    assigned_user_id: Optional[str] = None
-    assigned_team_code: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
-    blocker_status: Optional[str] = None
     client_impact: Optional[str] = None
-    internal_context_json: Optional[Dict[str, Any]] = None
-    compatibility_mapping_json: Optional[Dict[str, Any]] = None
+    checklist: Optional[List[Dict[str, Any]]] = None
+    expected_version: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -16830,21 +16887,45 @@ class OperationalWorkItemGenerateRequest(BaseModel):
     work_item_type: str
     source_entity_type: str
     source_entity_id: str
+    description: Optional[str] = None
+    entity_references: List[Dict[str, Any]] = Field(default_factory=list)
+    primary_entity_type: Optional[str] = None
+    primary_entity_id: Optional[str] = None
     workflow_instance_id: Optional[str] = None
     workflow_event_id: Optional[str] = None
     request_task_id: Optional[str] = None
     timeline_entry_id: Optional[str] = None
+    source_timeline_entry_id: Optional[str] = None
+    source_automation_rule_id: Optional[str] = None
+    source_automation_execution_id: Optional[str] = None
     title: str
     summary: Optional[str] = None
     priority: str = "normal"
     severity: str = "medium"
     queue_code: str = "unassigned"
+    queue_key: Optional[str] = None
     assigned_user_id: Optional[str] = None
     assigned_team_code: Optional[str] = None
+    assignment_explanation: Optional[str] = None
     due_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    escalation_at: Optional[datetime] = None
     sla_status: Optional[str] = None
     blocker_status: str = "not_blocked"
+    blockers: List[Dict[str, Any]] = Field(default_factory=list)
+    dependency_ids: List[str] = Field(default_factory=list)
+    checklist: List[Dict[str, Any]] = Field(default_factory=list)
     client_impact: Optional[str] = None
+    approval_required: bool = False
+    approval_type: Optional[str] = None
+    approval_status: Optional[str] = None
+    approval_required_permission: Optional[str] = None
+    approval_requested_by: Optional[str] = None
+    approval_requested_at: Optional[datetime] = None
+    approval_evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    execution_safety_class: str = "A"
+    external_action_required: bool = False
+    human_confirmation_required: bool = False
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     compatibility_mapping_json: Dict[str, Any] = Field(default_factory=dict)
     generation_reason: Optional[str] = None
@@ -16857,9 +16938,16 @@ class OperationalWorkItemActionRequest(BaseModel):
 
     to_user_id: Optional[str] = None
     to_team_code: Optional[str] = None
+    queue_code: Optional[str] = None
     reason: Optional[str] = None
     blocker_status: Optional[str] = None
     due_at: Optional[datetime] = None
+    expected_version: Optional[int] = None
+    completion_evidence: Dict[str, Any] = Field(default_factory=dict)
+    approval_type: Optional[str] = None
+    required_permission: Optional[str] = None
+    decision: Optional[str] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
     internal_context_json: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
@@ -16874,6 +16962,17 @@ class OperationalBulkAssignmentRequest(BaseModel):
     only_unassigned: bool = True
     max_items: int = 50
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAssignmentRouteRequest(BaseModel):
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
+
+    strategy: str
+    fixed_user_id: Optional[str] = None
+    fixed_team_code: Optional[str] = None
+    parent_owner_user_id: Optional[str] = None
+    reason: str
+    expected_version: Optional[int] = None
 
 
 class OperationalQueueDefinition(BaseDocument):
@@ -17072,6 +17171,7 @@ class OperationalSlaPolicy(BaseDocument):
     effective_from: Optional[datetime] = None
     effective_to: Optional[datetime] = None
     timezone: str = "UTC"
+    version: int = 1
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -17113,9 +17213,6 @@ class OperationalSlaPolicyCreate(BaseModel):
 class OperationalSlaPolicyUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    agency_id: Optional[str] = None
-    scope: Optional[str] = None
-    policy_code: Optional[str] = None
     name: Optional[str] = None
     entity_type: Optional[str] = None
     work_item_type: Optional[str] = None
@@ -17134,6 +17231,7 @@ class OperationalSlaPolicyUpdate(BaseModel):
     effective_from: Optional[datetime] = None
     effective_to: Optional[datetime] = None
     timezone: Optional[str] = None
+    expected_version: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -17142,6 +17240,7 @@ class OperationalDeadline(BaseDocument):
     deadline_reference: str
     policy_id: Optional[str] = None
     policy_code: Optional[str] = None
+    policy_version: int = 1
     source_entity_type: str
     source_entity_id: str
     workflow_instance_id: Optional[str] = None
@@ -17165,12 +17264,14 @@ class OperationalDeadline(BaseDocument):
     extended_at: Optional[datetime] = None
     extension_reason: Optional[str] = None
     manual_extension_approved: bool = False
+    override_history: List[Dict[str, Any]] = Field(default_factory=list)
     explanation: str
     calculation_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     escalation_suggestions: List[Dict[str, Any]] = Field(default_factory=list)
     source_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    version: int = 1
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     sla_operational_deadline_engine_foundation: bool = True
@@ -17209,19 +17310,11 @@ class OperationalDeadlineCreate(BaseModel):
 class OperationalDeadlineUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    policy_id: Optional[str] = None
-    policy_code: Optional[str] = None
-    source_entity_type: Optional[str] = None
-    source_entity_id: Optional[str] = None
-    workflow_instance_id: Optional[str] = None
-    workflow_event_id: Optional[str] = None
-    work_item_id: Optional[str] = None
-    request_task_id: Optional[str] = None
-    timeline_entry_id: Optional[str] = None
-    deadline_type: Optional[str] = None
     priority: Optional[str] = None
     service_family: Optional[str] = None
     due_at: Optional[datetime] = None
+    override_reason: Optional[str] = None
+    expected_version: Optional[int] = None
     status: Optional[str] = None
     breach_state: Optional[str] = None
     explanation: Optional[str] = None
@@ -17234,6 +17327,7 @@ class OperationalDeadlineActionRequest(BaseModel):
 
     reason: Optional[str] = None
     due_at: Optional[datetime] = None
+    expected_version: Optional[int] = None
     force_recalculate: bool = False
     actor_user_id: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -17352,7 +17446,8 @@ class OperationalTaskDependency(BaseDocument):
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     task_automation_dependency_orchestration_foundation: bool = True
-    dependency_enforcement_is_advisory: bool = True
+    mandatory_dependency_enforcement_enabled: bool = True
+    advisory_dependency_non_blocking: bool = True
 
 
 class OperationalTaskDependencyCreate(BaseModel):
@@ -17388,20 +17483,39 @@ class OperationalTaskAutomationRule(BaseDocument):
     agency_id: Optional[str] = None
     scope: str = "platform"
     rule_code: str
+    rule_key: Optional[str] = None
     name: str
-    trigger_event: str
+    description: Optional[str] = None
+    platform_scope: bool = True
+    version: int = 1
+    trigger_event: Optional[str] = None
+    trigger_event_types: List[str] = Field(default_factory=list)
+    trigger_entity_types: List[str] = Field(default_factory=list)
     conditions_json: Dict[str, Any] = Field(default_factory=dict)
-    generated_template_code: str
+    actions: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_template_code: Optional[str] = None
     deduplication_key_pattern: str
-    enabled: bool = True
-    status: str = "active"
+    priority: int = 100
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: str = "A"
+    dry_run_supported: bool = True
+    enabled: bool = False
+    status: str = "draft"
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
+    published_at: Optional[datetime] = None
+    published_by: Optional[str] = None
+    superseded_at: Optional[datetime] = None
+    superseded_by_rule_id: Optional[str] = None
+    reconciliation_status: str = "canonical"
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata_only: bool = True
     task_automation_dependency_orchestration_foundation: bool = True
+    canonical_governed_automation_rule: bool = True
     arbitrary_code_execution_disabled: bool = True
-    safe_task_creation_only: bool = True
+    external_execution_disabled: bool = True
 
 
 class OperationalTaskAutomationRuleCreate(BaseModel):
@@ -17411,29 +17525,47 @@ class OperationalTaskAutomationRuleCreate(BaseModel):
     agency_id: Optional[str] = None
     scope: str = "platform"
     rule_code: Optional[str] = None
+    rule_key: Optional[str] = None
     name: str
-    trigger_event: str
+    description: Optional[str] = None
+    platform_scope: Optional[bool] = None
+    trigger_event: Optional[str] = None
+    trigger_event_types: List[str] = Field(default_factory=list)
+    trigger_entity_types: List[str] = Field(default_factory=list)
     conditions_json: Dict[str, Any] = Field(default_factory=dict)
-    generated_template_code: str
+    actions: List[Dict[str, Any]] = Field(default_factory=list)
+    generated_template_code: Optional[str] = None
     deduplication_key_pattern: Optional[str] = None
-    enabled: bool = True
-    status: str = "active"
+    priority: int = 100
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: str = "A"
+    dry_run_supported: bool = True
+    enabled: bool = False
+    status: str = "draft"
+    audit_metadata: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class OperationalTaskAutomationRuleUpdate(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
-    agency_id: Optional[str] = None
-    scope: Optional[str] = None
-    rule_code: Optional[str] = None
     name: Optional[str] = None
+    description: Optional[str] = None
     trigger_event: Optional[str] = None
+    trigger_event_types: Optional[List[str]] = None
+    trigger_entity_types: Optional[List[str]] = None
     conditions_json: Optional[Dict[str, Any]] = None
+    actions: Optional[List[Dict[str, Any]]] = None
     generated_template_code: Optional[str] = None
     deduplication_key_pattern: Optional[str] = None
-    enabled: Optional[bool] = None
-    status: Optional[str] = None
+    priority: Optional[int] = None
+    effective_from: Optional[datetime] = None
+    effective_to: Optional[datetime] = None
+    execution_safety_class: Optional[str] = None
+    dry_run_supported: Optional[bool] = None
+    expected_version: Optional[int] = None
+    audit_metadata: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
 
 
@@ -17443,15 +17575,34 @@ class OperationalTaskAutomationRun(BaseDocument):
     trigger_event: str
     source_entity_type: str
     source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
     idempotency_key: str
     event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     rules_matched: List[Dict[str, Any]] = Field(default_factory=list)
+    evaluation_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_attempted: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_completed: List[Dict[str, Any]] = Field(default_factory=list)
+    actions_skipped: List[Dict[str, Any]] = Field(default_factory=list)
     tasks_created: List[Dict[str, Any]] = Field(default_factory=list)
     tasks_skipped: List[Dict[str, Any]] = Field(default_factory=list)
+    approvals_created: List[str] = Field(default_factory=list)
+    timeline_entries_created: List[str] = Field(default_factory=list)
     dependencies_created: List[Dict[str, Any]] = Field(default_factory=list)
+    execution_safety_class: str = "A"
+    permission_checks: List[Dict[str, Any]] = Field(default_factory=list)
+    idempotency_result: str = "created"
+    duration_ms: int = 0
+    retry_count: int = 0
+    recursion_depth: int = 0
+    chained_action_count: int = 0
+    reconciliation_status: str = "canonical"
+    lock_token: Optional[str] = None
+    locked_until: Optional[datetime] = None
+    dry_run: bool = False
     warnings: List[str] = Field(default_factory=list)
     errors: List[str] = Field(default_factory=list)
-    status: str = "completed"
+    failure_reason: Optional[str] = None
+    status: str = "processing"
     retry_of_run_id: Optional[str] = None
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
@@ -17469,11 +17620,15 @@ class OperationalTaskAutomationRunRequest(BaseModel):
     trigger_event: str
     source_entity_type: str
     source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
     request_id: Optional[str] = None
     idempotency_key: Optional[str] = None
     event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
     template_codes: Optional[List[str]] = None
     retry_of_run_id: Optional[str] = None
+    dry_run: bool = False
+    recursion_depth: int = 0
+    chained_action_count: int = 0
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -17481,6 +17636,63 @@ class OperationalTaskDependencyActionRequest(BaseModel):
     model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     reason: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationRuleLifecycleRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reason: str
+    expected_version: Optional[int] = None
+    superseded_by_rule_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationDryRunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_timeline_entry_id: Optional[str] = None
+    event_snapshot_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalAutomationProcessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    timeline_entry_ids: List[str] = Field(default_factory=list)
+    batch_limit: int = 25
+    dry_run: bool = False
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalReminderProcessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    batch_limit: int = 50
+
+
+class OperationalApprovalRequestCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    approval_type: str
+    title: str
+    summary: Optional[str] = None
+    source_entity_type: str
+    source_entity_id: str
+    source_timeline_entry_id: Optional[str] = None
+    required_permission: str
+    assigned_approver_id: Optional[str] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class OperationalApprovalDecisionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str
+    reason: str
+    expected_version: Optional[int] = None
+    evidence_snapshot: Dict[str, Any] = Field(default_factory=dict)
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

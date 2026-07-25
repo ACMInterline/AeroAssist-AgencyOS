@@ -447,8 +447,38 @@ class DocumentWorkspaceService:
         work_item = work_item_result.get("work_item") or {}
         if work_item.get("id"):
             if status_value in {"verified", "not_required"} and work_item.get("status") != "completed":
+                if work_item.get("blocker_status") not in {None, "", "not_blocked"} or any(
+                    not blocker.get("resolved")
+                    for blocker in work_item.get("blockers") or []
+                ):
+                    resolved = await self.work_queue.apply_action(
+                        work_item["id"],
+                        "resolve_blocker",
+                        OperationalWorkItemActionRequest(
+                            reason=(
+                                "Reviewed document evidence resolved the "
+                                "document requirement blocker."
+                            )
+                        ),
+                        user,
+                        agency_id=agency_id,
+                    )
+                    work_item = resolved.get("work_item") or work_item
                 await self.work_queue.apply_action(
-                    work_item["id"], "complete", OperationalWorkItemActionRequest(reason="Document requirement reconciled."), user, agency_id=agency_id
+                    work_item["id"],
+                    "complete",
+                    OperationalWorkItemActionRequest(
+                        reason="Document requirement reconciled.",
+                        completion_evidence={
+                            "document_workspace_id": workspace["id"],
+                            "document_status": status_value,
+                            "timeline_entry_id": (
+                                timeline_result.get("timeline_entry") or {}
+                            ).get("id"),
+                        },
+                    ),
+                    user,
+                    agency_id=agency_id,
                 )
             elif status_value in {"rejected", "expired"} and work_item.get("status") != "blocked":
                 await self.work_queue.apply_action(

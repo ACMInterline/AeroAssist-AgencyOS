@@ -28,13 +28,13 @@ from models import (
     RefundExchangeMessageVisibility,
     RefundExchangeTimelineEvent,
     RefundExchangeTimelineVisibility,
-    RequestTask,
 )
 from routers.portal import portal_context
 from services.operational_collaboration_service import (
     OperationalCollaborationError,
     OperationalCollaborationService,
 )
+from services.agent_work_queue_service import AgentWorkQueueService
 from services.tenant_service import (
     assert_agency_access,
     assert_portal_projection_safe,
@@ -868,15 +868,49 @@ async def create_case_from_booking(
         metadata={"booking_id": booking_id},
     )
     if booking.get("request_id"):
-        await db.collection("request_tasks").insert_one(
-            RequestTask(
-                agency_id=agency_id,
-                request_id=booking["request_id"],
-                title="Review refund/exchange case",
-                description=f"Review case {created_case['case_reference']} from booking {booking['booking_reference']}.",
-                status="open",
-                assigned_user_id=user["id"],
-            ).model_dump(mode="json")
+        await AgentWorkQueueService(db).generate_work_item(
+            {
+                "agency_id": agency_id,
+                "work_item_type": "review_refund"
+                if created_case.get("case_type") == "refund"
+                else "review_exchange",
+                "source_entity_type": "refund_exchange_case",
+                "source_entity_id": created_case["id"],
+                "primary_entity_type": "refund_exchange_case",
+                "primary_entity_id": created_case["id"],
+                "entity_references": [
+                    {
+                        "entity_type": "request",
+                        "entity_id": booking["request_id"],
+                    },
+                    {
+                        "entity_type": "booking",
+                        "entity_id": booking_id,
+                    },
+                ],
+                "title": "Review refund/exchange case",
+                "description": f"Review case {created_case['case_reference']} from booking {booking['booking_reference']}.",
+                "summary": f"Review case {created_case['case_reference']} from booking {booking['booking_reference']}.",
+                "status": "open",
+                "priority": "high",
+                "queue_code": "service_case_queue",
+                "blocker_status": "not_blocked",
+                "source_fingerprint": (
+                    f"{agency_id}::refund-exchange-review::{created_case['id']}"
+                ),
+                "generation_reason": "refund_exchange_case_created",
+                "source_snapshot_json": {
+                    "case_id": created_case["id"],
+                    "booking_id": booking_id,
+                    "request_id": booking["request_id"],
+                },
+                "compatibility_mapping_json": {
+                    "legacy_request_task_created": False,
+                    "request_id": booking["request_id"],
+                },
+            },
+            user,
+            agency_id=agency_id,
         )
     await write_audit(
         db=db,

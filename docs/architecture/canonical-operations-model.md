@@ -238,3 +238,23 @@ actions are narrower and never imply household, finance, or commercial
 decision authority. Operational history remains append-only in
 `OperationalTimeline`; Audit remains security evidence; Notifications remain
 projections. See [Portal Operational Workspace](portal-operational-workspace.md).
+
+## Governed Operational Automation
+
+The canonical orchestration loop is:
+
+`OperationalTimeline event -> published rule evaluation -> OperationalWorkItem
+/ OperationalDeadline / OperationalApproval / notification projection ->
+Agency human action -> completion evidence -> OperationalTimeline entry`.
+
+Rules do not own Request, Offer, Trip, Booking, Ticket, EMD, Document, finance,
+communication, identity, or permission state. They can create bounded internal
+work and evidence through the canonical owning services. Any externally or
+commercially meaningful Class C action stops at approval-required work and
+must later use the canonical business service; prohibited Class D actions are
+rejected.
+
+Processing is manual and bounded in the current topology. Idempotency keys,
+optimistic versions, source-event lineage, finite chain depth, recoverable
+locks, and deterministic ordering make retries safe without claiming
+exactly-once execution.

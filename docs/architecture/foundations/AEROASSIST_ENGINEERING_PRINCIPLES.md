@@ -227,3 +227,25 @@ Audit or Timeline evidence. They must never imply provider execution, payment,
 booking, Ticket/EMD issuance, public document sharing, external messaging, or
 automatic approval. Historical compatibility remains readable; reconciliation
 is bounded and dry-run first.
+
+## Governed Automation Rule
+
+Automation must consume canonical `OperationalTimeline` events and create
+internal operational work only through `OperationalWorkItem` and the existing
+deadline, approval, audit, communication, and projection owners. It must not
+introduce another task engine, workflow owner, timeline, audit system,
+notification owner, or lifecycle framework.
+
+Stored conditions are allowlisted typed data, never executable expressions.
+Every evaluation is deterministic, Agency-scoped, permission-aware,
+explainable, bounded, idempotent, replay-safe, and linked to its exact source
+event. Class A and governed Class B actions may change internal work metadata.
+Class C can only create approval-required work; the approved action still
+requires the canonical human-governed business service. Class D is prohibited.
+
+No rule may change tenant scope or permissions, fabricate evidence, expose
+restricted finance/medical/internal details, or execute external messaging,
+airline/GDS/NDC/provider, Ticket/EMD, payment, refund, accounting, legal,
+medical, safety, pricing, or eligibility decisions. Persistent scheduling
+must remain disabled until the deployed topology can guarantee bounded,
+recoverable, duplicate-safe processing.

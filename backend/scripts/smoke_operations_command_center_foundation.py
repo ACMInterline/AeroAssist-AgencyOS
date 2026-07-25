@@ -106,9 +106,12 @@ def verify_static_contracts() -> None:
         "after_sales_cases",
         "operational_intelligence_cases",
         "pilot_readiness_issues",
-        "request_tasks",
     ]:
         require_text(ROOT / "backend/services/operations_command_center_service.py", source_collection)
+    reject_text(
+        ROOT / "backend/services/operations_command_center_service.py",
+        '"request_tasks"',
+    )
 
 
 def verify_routes_and_docs(paths: dict) -> None:

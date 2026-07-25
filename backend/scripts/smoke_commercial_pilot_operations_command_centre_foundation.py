@@ -172,12 +172,19 @@ async def verify_service() -> None:
     )
     await insert(
         database,
-        "request_tasks",
-        id="task-1",
+        "operational_work_items",
+        id="work-follow-up",
         agency_id=agency_id,
-        request_id="request-1",
+        work_item_code="WI-003",
+        work_item_type="respond_to_client",
+        source_entity_type="request",
+        source_entity_id="request-1",
         title="Call passenger",
         status="open",
+        priority="normal",
+        severity="medium",
+        queue_code="unassigned",
+        blocker_status="not_blocked",
         due_at=NOW + timedelta(hours=1),
     )
     await insert(
@@ -209,7 +216,11 @@ async def verify_service() -> None:
     assert home["generated_at"] == NOW.isoformat()
     assert home["user_context"]["can_update_work_items"] is True
     priority_ids = [item["id"] for item in home["priorities"]["items"]]
-    assert priority_ids == ["work-critical", "work-team"], priority_ids
+    assert priority_ids == [
+        "work-critical",
+        "work-team",
+        "work-follow-up",
+    ], priority_ids
     assert "cross-tenant-work" not in str(home)
     critical = home["priorities"]["items"][0]
     assert critical["client"] == "Alex Morgan" and critical["passenger"] == "Jamie Morgan"

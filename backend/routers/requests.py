@@ -20,7 +20,6 @@ from models import (
     RequestSegmentCreate,
     RequestSegmentUpdate,
     RequestStatusUpdate,
-    RequestTask,
     RequestTaskCreate,
     RequestTaskUpdate,
     RequestTimelineEvent,
@@ -48,6 +47,7 @@ from services.operational_collaboration_service import (
     OperationalCollaborationError,
     OperationalCollaborationService,
 )
+from services.agent_work_queue_service import AgentWorkQueueError, AgentWorkQueueService
 from services.service_catalogue_service import find_service_catalogue_record, service_catalogue_snapshot
 from services.tenant_service import assert_agency_access, require_any_agency_role
 
@@ -758,17 +758,89 @@ async def create_message(agency_id: str, request_id: str, payload: RequestMessag
 async def list_tasks(agency_id: str, request_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_read(db, agency_id, user)
     await get_request_or_404(db, agency_id, request_id)
-    return {"items": await db.collection("request_tasks").find_many({"agency_id": agency_id, "request_id": request_id})}
+    canonical = await AgentWorkQueueService(db).list_work_items(
+        agency_id=agency_id,
+        source_entity_type="request",
+        include_completed=True,
+    )
+    canonical = [
+        item for item in canonical if item.get("source_entity_id") == request_id
+    ]
+    historical = await db.collection("request_tasks").find_many(
+        {"agency_id": agency_id, "request_id": request_id}
+    )
+    mapped_legacy_ids = {
+        (item.get("compatibility_mapping_json") or {}).get("request_task_id")
+        for item in canonical
+    }
+    legacy_history = [
+        {
+            **item,
+            "canonical": False,
+            "read_only_historical_projection": True,
+            "mutation_supported": False,
+        }
+        for item in historical
+        if item.get("id") not in mapped_legacy_ids
+    ]
+    return {
+        "items": [
+            {
+                **item,
+                "request_id": request_id,
+                "status": "done"
+                if item.get("status") == "completed"
+                else item.get("status"),
+                "canonical": True,
+            }
+            for item in canonical
+        ],
+        "legacy_history": legacy_history,
+        "canonical_collection": "operational_work_items",
+    }
 
 
 @router.post("/requests/{request_id}/tasks", status_code=status.HTTP_201_CREATED)
 async def create_task(agency_id: str, request_id: str, payload: RequestTaskCreate, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
     await get_request_or_404(db, agency_id, request_id)
-    task = RequestTask(agency_id=agency_id, request_id=request_id, **payload.model_dump(mode="json"))
-    created = await db.collection("request_tasks").insert_one(task.model_dump(mode="json"))
+    data = payload.model_dump(mode="json", exclude_none=True)
+    status_value = data.pop("status", "open")
+    if status_value == "done":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Create the task first, then complete it with canonical completion evidence.",
+        )
+    result = await AgentWorkQueueService(db).create_work_item(
+        {
+            "agency_id": agency_id,
+            "work_item_type": "manual",
+            "source_entity_type": "request",
+            "source_entity_id": request_id,
+            "primary_entity_type": "request",
+            "primary_entity_id": request_id,
+            "title": data.get("title"),
+            "description": data.get("description"),
+            "summary": data.get("description"),
+            "status": "waiting" if status_value == "waiting" else "open",
+            "priority": data.get("priority") or "normal",
+            "assigned_user_id": data.get("assigned_user_id"),
+            "due_at": data.get("due_at"),
+            "blocker_status": "manual_review"
+            if status_value == "waiting"
+            else "not_blocked",
+            "compatibility_mapping_json": {
+                "request_id": request_id,
+                "compatibility_route": "request_tasks",
+                "legacy_request_task_created": False,
+            },
+        },
+        user,
+        agency_id=agency_id,
+    )
+    created = result["work_item"]
     await write_timeline(db, agency_id, request_id, user["id"], "request.task_created", "Task created", payload.title)
-    return {"task": created}
+    return {"task": {**created, "request_id": request_id}, "canonical": True}
 
 
 @router.put("/requests/{request_id}/tasks/{task_id}")
@@ -777,23 +849,76 @@ async def update_task(agency_id: str, request_id: str, task_id: str, payload: Re
     updates = clean_updates(payload)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No update fields provided.")
-    if updates.get("status") == "done":
-        updates["completed_at"] = datetime.now(timezone.utc)
-    task = await db.collection("request_tasks").update_one({"agency_id": agency_id, "request_id": request_id, "id": task_id}, updates)
-    if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+    legacy = await db.collection("request_tasks").find_one(
+        {"agency_id": agency_id, "request_id": request_id, "id": task_id}
+    )
+    if legacy:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Historical request tasks are read-only. Create or use the canonical work item.",
+        )
+    if updates.pop("status", None) is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Task status changes must use canonical work-item actions.",
+        )
+    allowed = {
+        key: value
+        for key, value in updates.items()
+        if key in {"title", "description", "priority", "assigned_user_id", "due_at"}
+    }
+    if "description" in allowed:
+        allowed["summary"] = allowed["description"]
+    try:
+        task = (
+            await AgentWorkQueueService(db).update_work_item(
+                task_id, allowed, user, agency_id=agency_id
+            )
+        )["work_item"]
+    except AgentWorkQueueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
     await write_timeline(db, agency_id, request_id, user["id"], "request.task_updated", "Task updated", task["title"])
-    return {"task": task}
+    return {"task": {**task, "request_id": request_id}, "canonical": True}
 
 
 @router.post("/requests/{request_id}/tasks/{task_id}/complete")
 async def complete_task(agency_id: str, request_id: str, task_id: str, user: dict = Depends(get_current_user), db: Database = Depends(get_database)) -> dict:
     await require_write(db, agency_id, user)
-    task = await db.collection("request_tasks").update_one({"agency_id": agency_id, "request_id": request_id, "id": task_id}, {"status": "done", "completed_at": datetime.now(timezone.utc)})
-    if not task:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found.")
+    legacy = await db.collection("request_tasks").find_one(
+        {"agency_id": agency_id, "request_id": request_id, "id": task_id}
+    )
+    if legacy:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Historical request tasks are read-only and cannot be completed.",
+        )
+    try:
+        task = (
+            await AgentWorkQueueService(db).apply_action(
+                task_id,
+                "complete",
+                {
+                    "reason": "Completed through the request task compatibility route.",
+                    "completion_evidence": {
+                        "completion_source": "request_task_compatibility_route",
+                        "request_id": request_id,
+                    },
+                },
+                user,
+                agency_id=agency_id,
+            )
+        )["work_item"]
+    except AgentWorkQueueError as exc:
+        code = (
+            status.HTTP_409_CONFLICT
+            if "dependency" in str(exc).lower()
+            else status.HTTP_404_NOT_FOUND
+        )
+        raise HTTPException(status_code=code, detail=str(exc)) from exc
     await write_timeline(db, agency_id, request_id, user["id"], "request.task_completed", "Task completed", task["title"])
-    return {"task": task}
+    return {"task": {**task, "request_id": request_id}, "canonical": True}
 
 
 @router.get("/requests/{request_id}/timeline")

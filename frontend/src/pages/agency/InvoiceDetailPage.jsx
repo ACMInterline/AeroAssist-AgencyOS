@@ -143,6 +143,9 @@ export default function InvoiceDetailPage({ invoiceId }) {
             </div>
           </div>
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={invoiceId}
+            workEntityType="invoice"
             breadcrumbs={[{ label: "Documents", href: state?.booking_workspace?.booking_reference ? `/agency/document-workspaces?booking_reference=${encodeURIComponent(state.booking_workspace.booking_reference)}` : "/agency/document-workspaces" }, { label: "Finance", href: "/agency/invoices" }]}
             currentLabel={state?.invoice?.invoice_number || "Invoice"}
             status={invoice.status}

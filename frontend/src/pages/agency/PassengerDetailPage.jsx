@@ -122,6 +122,9 @@ export default function PassengerDetailPage({ passengerId }) {
             actions={<><SecondaryButton icon={Pencil} onClick={() => setShowEdit((value) => !value)}>{showEdit ? "Close edit form" : "Edit passenger"}</SecondaryButton><SecondaryButton icon={Archive} onClick={archiveOrRestore}>{state?.passenger?.status === "archived" ? "Restore passenger" : "Archive passenger"}</SecondaryButton></>}
           />
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={passengerId}
+            workEntityType="passenger"
             breadcrumbs={[{ label: "Passengers", href: "/agency/passengers" }]}
             currentLabel={state?.passenger?.display_name || "Passenger"}
             status={state?.passenger?.status}

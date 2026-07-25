@@ -171,6 +171,9 @@ export default function OfferWorkspaceDetailPage({ workspaceId }) {
           </div>
 
           <WorkflowContinuityPanel
+            agencyId={state?.agency?.id}
+            workEntityId={workspaceId}
+            workEntityType="offer"
             breadcrumbs={[{ label: "Trips", href: state?.trip?.id ? `/agency/trips/${state.trip.id}` : "/agency/trips" }, { label: "Offers", href: "/agency/offers" }]}
             currentLabel={state?.workspace?.title || "Offer"}
             status={accepted ? "accepted" : state?.workspace?.status}
