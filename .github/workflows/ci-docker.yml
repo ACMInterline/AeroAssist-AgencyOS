@@ -1,11 +1,15 @@
 name: Production Docker validation
+run-name: Production Docker validation application=${{ inputs.application_commit || github.sha }} workflow=${{ github.workflow_sha }}
 
 on:
   pull_request:
     paths:
       - "backend/**"
+      - "frontend/**"
+      - "data/reference_packs/**"
       - "docker-compose.yml"
       - "docker-compose.production.yml"
+      - ".dockerignore"
       - ".env.production.example"
       - "deploy/hostinger/**"
       - ".github/workflows/**"
@@ -14,44 +18,259 @@ on:
       - main
     paths:
       - "backend/**"
+      - "frontend/**"
+      - "data/reference_packs/**"
       - "docker-compose.yml"
       - "docker-compose.production.yml"
+      - ".dockerignore"
       - ".env.production.example"
       - "deploy/hostinger/**"
       - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      application_commit:
+        description: Exact 40-character application commit to validate
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-docker-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-docker-${{ github.event_name }}-${{ inputs.application_commit || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+env:
+  APPLICATION_COMMIT: ${{ inputs.application_commit || github.sha }}
+  WORKFLOW_DEFINITION_COMMIT: ${{ github.workflow_sha }}
 
 jobs:
-  backend-image:
-    name: Build, import, start, and inspect backend image
+  workflow-definition:
+    name: Validate current workflow definition
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
-      - name: Check out repository
+      - name: Check out reviewed workflow definition
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Build production backend image
-        run: docker build --file backend/Dockerfile --tag aeroassist-ci-backend:${{ github.sha }} backend
-
-      - name: Validate runtime files and imports inside image
+      - name: Verify workflow-definition commit
         run: |
-          docker run --rm --entrypoint python aeroassist-ci-backend:${{ github.sha }} -c "from pathlib import Path; import smoke_inventory, server; assert Path('/app/smoke_inventory.py').is_file(); assert Path('/app/scripts/smoke_inventory.json').is_file(); assert smoke_inventory.SMOKE_INVENTORY_PATH == Path('/app/scripts/smoke_inventory.json'); assert smoke_inventory.SMOKE_INVENTORY_SUMMARY['unresolved_scripts'] == 0; print(server.app)"
+          [[ "$WORKFLOW_DEFINITION_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$WORKFLOW_DEFINITION_COMMIT"
+          if git rev-parse "${WORKFLOW_DEFINITION_COMMIT}^" >/dev/null 2>&1; then
+            git diff --check "${WORKFLOW_DEFINITION_COMMIT}^" "$WORKFLOW_DEFINITION_COMMIT"
+          else
+            git diff --check "$(git hash-object -t tree /dev/null)" "$WORKFLOW_DEFINITION_COMMIT"
+          fi
 
-      - name: Start safe backend container
+      - name: Validate current CI foundation
+        run: python3 backend/scripts/validate_ci_foundation.py
+
+  exact-release-validation:
+    name: Complete source and smoke gate for exact application tree
+    if: github.event_name == 'workflow_dispatch'
+    needs: workflow-definition
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      APP_ENV: development
+      AEROASSIST_DB_MODE: memory
+      DEMO_AUTH_ENABLED: "true"
+      SEED_ON_STARTUP: "true"
+      SEED_ENDPOINT_ENABLED: "true"
+      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
+    steps:
+      - name: Check out exact application commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.application_commit }}
+          fetch-depth: 0
+
+      - name: Verify exact application commit and record lineage
         run: |
+          [[ "$APPLICATION_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_DEFINITION_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "${APPLICATION_COMMIT}^{commit}"
+          checked_out_head="$(git rev-parse HEAD)"
+          test "$checked_out_head" = "$APPLICATION_COMMIT"
+          CHECKED_OUT_APPLICATION_COMMIT="$checked_out_head" python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "schema_version": 1,
+              "application_commit": os.environ["APPLICATION_COMMIT"],
+              "workflow_definition_commit": os.environ["WORKFLOW_DEFINITION_COMMIT"],
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "checked_out_application_tree": os.environ["CHECKED_OUT_APPLICATION_COMMIT"],
+              "validation_result": "running",
+          }
+          Path(os.environ["RUNNER_TEMP"]).joinpath("exact-application-lineage.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install backend dependencies
+        run: python3 -m pip install -r backend/requirements.txt
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Validate exact application source
+        run: |
+          if git rev-parse "${APPLICATION_COMMIT}^" >/dev/null 2>&1; then
+            git diff --check "${APPLICATION_COMMIT}^" "$APPLICATION_COMMIT"
+          else
+            git diff --check "$(git hash-object -t tree /dev/null)" "$APPLICATION_COMMIT"
+          fi
+          python3 -m compileall -q backend
+          cd backend
+          python3 -c "import smoke_inventory, server; print(server.app)"
+
+      - name: Build and audit frontend
+        run: |
+          npm run build --prefix frontend
+          npm audit --prefix frontend
+
+      - name: Run explicit release validators
+        run: |
+          python3 backend/scripts/validate_smoke_inventory.py
+          python3 backend/scripts/validate_ci_foundation.py
+          python3 backend/scripts/validate_persistence_query_foundation.py
+          python3 backend/scripts/validate_canonical_domain_ownership.py
+          python3 backend/scripts/validate_canonical_identity_tenancy.py
+          python3 backend/scripts/validate_canonical_lifecycle_integrity.py
+          python3 backend/scripts/validate_product_experience_recovery.py
+          python3 backend/scripts/validate_stabilization_accessibility.py
+          python3 backend/scripts/validate_full_system_stabilization.py
+          python3 backend/scripts/validate_observability_foundation.py
+          python3 backend/scripts/validate_final_stabilization_pilot_release_gate.py
+
+      - name: Run complete governed smoke inventory and Compose validation
+        run: python3 backend/scripts/run_pilot_release_validation.py --profile full --include-docker-config --output "${RUNNER_TEMP}/exact-application-validation.json"
+
+      - name: Finalize exact application lineage
+        if: always()
+        env:
+          VALIDATION_RESULT: ${{ job.status }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["RUNNER_TEMP"]).joinpath("exact-application-lineage.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          payload["validation_result"] = os.environ["VALIDATION_RESULT"]
+          path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload sanitized exact-application evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exact-application-validation-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/exact-application-lineage.json
+            ${{ runner.temp }}/exact-application-validation.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Clean generated application artifacts
+        if: always()
+        run: |
+          find backend -type d -name __pycache__ -prune -exec rm -rf {} +
+          find backend -type f -name '*.pyc' -delete
+          rm -rf frontend/dist "$DOCUMENT_EXPORT_STORAGE_DIR"
+
+  backend-image:
+    name: Build, import, start, and inspect production images
+    needs: workflow-definition
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - name: Check out exact application commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.application_commit || github.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify exact application commit and initialize image names
+        run: |
+          [[ "$APPLICATION_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$WORKFLOW_DEFINITION_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          git cat-file -e "${APPLICATION_COMMIT}^{commit}"
+          checked_out_head="$(git rev-parse HEAD)"
+          test "$checked_out_head" = "$APPLICATION_COMMIT"
+          echo "CHECKED_OUT_APPLICATION_COMMIT=$checked_out_head" >> "$GITHUB_ENV"
+          echo "BACKEND_IMAGE=aeroassist-ci-backend:${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=aeroassist-ci-frontend:${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Build exact production backend image
+        run: docker build --label "org.opencontainers.image.revision=$APPLICATION_COMMIT" --file backend/Dockerfile --tag "$BACKEND_IMAGE" .
+
+      - name: Build exact production frontend image
+        run: docker build --label "org.opencontainers.image.revision=$APPLICATION_COMMIT" --file frontend/Dockerfile --tag "$FRONTEND_IMAGE" frontend
+
+      - name: Validate image lineage, runtime user, files, and packaged metadata
+        run: |
+          test "$(docker image inspect "$BACKEND_IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$APPLICATION_COMMIT"
+          test "$(docker image inspect "$FRONTEND_IMAGE" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$APPLICATION_COMMIT"
+          test "$(docker image inspect "$BACKEND_IMAGE" --format '{{.Config.User}}')" = "aeroassist"
+          docker run --rm --entrypoint sh "$FRONTEND_IMAGE" -c 'test -s /usr/share/nginx/html/index.html'
+          metadata="$(
+            docker run --rm --entrypoint python "$BACKEND_IMAGE" -c \
+              "import json; from pathlib import Path; from build_phase import CURRENT_BUILD_PHASE; import smoke_inventory, server; assert Path('/app/smoke_inventory.py').is_file(); assert Path('/app/scripts/smoke_inventory.json').is_file(); assert smoke_inventory.SMOKE_INVENTORY_PATH == Path('/app/scripts/smoke_inventory.json'); print(json.dumps({'phase': CURRENT_BUILD_PHASE, 'inventory_total': smoke_inventory.SMOKE_INVENTORY_SUMMARY['inventoried_smoke_scripts'], 'unresolved': smoke_inventory.SMOKE_INVENTORY_SUMMARY['unresolved_scripts']}))"
+          )"
+          PACKAGED_METADATA="$metadata" python3 - <<'PY'
+          import json
+          import os
+
+          metadata = json.loads(os.environ["PACKAGED_METADATA"])
+          assert metadata["phase"].startswith("phase_")
+          assert metadata["inventory_total"] > 0
+          assert metadata["unresolved"] == 0
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"EXPECTED_PHASE={metadata['phase']}\n")
+              handle.write(f"EXPECTED_INVENTORY_TOTAL={metadata['inventory_total']}\n")
+              handle.write(f"EXPECTED_UNRESOLVED={metadata['unresolved']}\n")
+          PY
+
+      - name: Start safe production-image containers
+        run: |
+          docker network create aeroassist-ci-runtime
           docker run --detach --name aeroassist-ci-backend \
+            --network aeroassist-ci-runtime \
+            --network-alias backend \
             --publish 127.0.0.1:18080:8000 \
             --env APP_ENV=development \
             --env AEROASSIST_DB_MODE=memory \
@@ -60,56 +279,103 @@ jobs:
             --env SEED_ENDPOINT_ENABLED=true \
             --env DOCUMENT_EXPORT_STORAGE_DIR=/var/lib/aeroassist/document_exports \
             --env LOG_FORMAT=json \
-            --env APP_GIT_COMMIT=${{ github.sha }} \
-            aeroassist-ci-backend:${{ github.sha }}
+            --env APP_GIT_COMMIT="$APPLICATION_COMMIT" \
+            "$BACKEND_IMAGE"
+          docker run --detach --name aeroassist-ci-frontend \
+            --network aeroassist-ci-runtime \
+            --publish 127.0.0.1:18082:80 \
+            "$FRONTEND_IMAGE"
+          test "$(docker inspect aeroassist-ci-backend --format '{{.Config.User}}')" = "aeroassist"
 
-      - name: Wait for healthy backend
+      - name: Wait for healthy application containers
         run: |
-          for attempt in {1..60}; do
-            status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' aeroassist-ci-backend)"
-            if [[ "$status" == "healthy" ]]; then
-              exit 0
-            fi
-            if [[ "$(docker inspect --format '{{.State.Status}}' aeroassist-ci-backend)" != "running" ]]; then
-              docker logs aeroassist-ci-backend
-              exit 1
-            fi
-            sleep 2
+          for container in aeroassist-ci-backend aeroassist-ci-frontend; do
+            for attempt in {1..60}; do
+              status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$container")"
+              if [[ "$status" == "healthy" ]]; then
+                break
+              fi
+              if [[ "$(docker inspect --format '{{.State.Status}}' "$container")" != "running" ]]; then
+                docker logs "$container"
+                exit 1
+              fi
+              sleep 2
+            done
+            test "$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$container")" = "healthy"
           done
-          docker logs aeroassist-ci-backend
-          exit 1
 
-      - name: Validate health and readiness
+      - name: Validate dynamic health, readiness, and protected diagnostics
         run: |
           python3 - <<'PY'
           import json
+          import os
           from urllib.error import HTTPError
-          from urllib.request import urlopen
+          from urllib.request import Request, urlopen
 
-          health = json.load(urlopen("http://127.0.0.1:18080/api/health", timeout=10))
-          readiness = json.load(urlopen("http://127.0.0.1:18080/api/readiness", timeout=30))
-          expected = "phase_57_0_pilot_operations_release_readiness"
-          assert health["phase"] == expected, health
-          assert readiness["phase"] == expected, readiness["phase"]
+          base_url = "http://127.0.0.1:18080"
+          health = json.load(urlopen(f"{base_url}/api/health", timeout=10))
+          readiness = json.load(urlopen(f"{base_url}/api/readiness", timeout=30))
+          expected_phase = os.environ["EXPECTED_PHASE"]
+          expected_inventory = int(os.environ["EXPECTED_INVENTORY_TOTAL"])
+          assert health["phase"] == expected_phase, health
+          assert readiness["phase"] == expected_phase, readiness["phase"]
           section = readiness["github_actions_continuous_integration_foundation"]
           assert section["production_import_validation_enabled"] is True
-          assert section["inventoried_smoke_scripts"] == 141
-          assert section["unresolved_scripts"] == 0
+          assert section["inventoried_smoke_scripts"] == expected_inventory
+          assert section["unresolved_scripts"] == int(os.environ["EXPECTED_UNRESOLVED"]) == 0
           release_gate = readiness["final_stabilization_pilot_release_gate"]
           assert release_gate["assessment_status"] == "blocked"
           assert release_gate["production_evidence_supplied"] is False
-          pilot_operations = readiness["pilot_operations_release_readiness"]
-          assert pilot_operations["automatic_release_approval_disabled"] is True
-          assert pilot_operations["automatic_production_migration_disabled"] is True
           assert release_gate["production_deployment_verified"] is False
           assert release_gate["pilot_release_ready"] is False
           assert "dimensions" not in release_gate and "evidence" not in release_gate
+          pilot_operations = readiness["pilot_operations_release_readiness"]
+          assert pilot_operations["automatic_release_approval_disabled"] is True
+          assert pilot_operations["automatic_production_migration_disabled"] is True
+          assert "operational_diagnostics" not in readiness
+
+          denied_request = Request(
+              f"{base_url}/api/platform/diagnostics/observability",
+              headers={"Authorization": "Bearer invalid-ci-diagnostics-token"},
+          )
           try:
-              urlopen("http://127.0.0.1:18080/api/observability-ci-not-found", timeout=10)
+              urlopen(denied_request, timeout=10)
           except HTTPError as exc:
-              assert exc.code == 404
-          print(json.dumps({"health": health, "ci_readiness": section}, sort_keys=True))
+              assert exc.code == 401, exc.code
+          else:
+              raise AssertionError("Invalid authorization reached protected Platform diagnostics.")
+
+          login = Request(
+              f"{base_url}/api/auth/login",
+              data=json.dumps({
+                  "email": "owner@aeroassist.dev",
+                  "password": "DemoPass123!",
+              }).encode("utf-8"),
+              headers={"Content-Type": "application/json"},
+              method="POST",
+          )
+          login_payload = json.load(urlopen(login, timeout=30))
+          token = login_payload["session"]["access_token"]
+          diagnostic_request = Request(
+              f"{base_url}/api/platform/diagnostics/observability",
+              headers={"Authorization": f"Bearer {token}"},
+          )
+          diagnostic_payload = json.load(urlopen(diagnostic_request, timeout=10))
+          assert diagnostic_payload["bounded_aggregates_only"] is True
+          assert diagnostic_payload["raw_logs_exposed"] is False
+          assert diagnostic_payload["environment_values_exposed"] is False
+          assert diagnostic_payload["sensitive_values_exposed"] is False
+          diagnostics = diagnostic_payload["diagnostics"]
+          assert diagnostics["process_local"] is True
+          assert diagnostics["durable"] is False
+          print(json.dumps({
+              "application_commit": os.environ["APPLICATION_COMMIT"],
+              "phase": expected_phase,
+              "inventory_total": expected_inventory,
+              "diagnostics_protected": True,
+          }, sort_keys=True))
           PY
+          wget -qO- http://127.0.0.1:18082/ >/dev/null
 
       - name: Validate structured container logs
         run: |
@@ -126,6 +392,7 @@ jobs:
           assert any(event.get("event_type") == "http_request_completed" for event in events), events
           required = {"timestamp", "level", "event_type", "service", "environment", "build_phase", "outcome", "metadata"}
           assert all(required.issubset(event) for event in events), events
+          assert all(event.get("build_phase") == os.environ["EXPECTED_PHASE"] for event in events), events
           serialized = json.dumps(events).lower()
           assert "demopass123!" not in serialized
           assert "authorization" not in serialized
@@ -170,6 +437,7 @@ jobs:
           LOG_REDACTION_ENABLED=true
           LOG_HASH_TENANT_IDENTIFIERS=true
           APP_DEPLOYMENT_ID=github-actions-docker
+          APP_GIT_COMMIT=$APPLICATION_COMMIT
           EOF
           chmod 600 "$env_file"
           echo "CI_MONGO_ENV_FILE=$env_file" >> "$GITHUB_ENV"
@@ -183,6 +451,10 @@ jobs:
             status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' aeroassist-ci-mongodb-backend-1)"
             if [[ "$status" == "healthy" ]]; then
               exit 0
+            fi
+            if [[ "$(docker inspect --format '{{.State.Status}}' aeroassist-ci-mongodb-backend-1)" != "running" ]]; then
+              docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml logs backend mongo
+              exit 1
             fi
             sleep 2
           done
@@ -202,11 +474,22 @@ jobs:
 
       - name: Validate authenticated backend after restore rehearsal
         run: |
-          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == 'phase_57_0_pilot_operations_release_readiness'; print(payload['phase'])"
-          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
-          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
-          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_final_stabilization_pilot_release_gate.py --static
-          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend aeroassist-ci-backend:${{ github.sha }} /workspace/backend/scripts/smoke_pilot_operations_release_readiness.py --static
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python -c "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/health')); assert payload['phase'] == '$EXPECTED_PHASE'; print(payload['phase'])"
+          AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T backend python - <<'PY'
+          from urllib.error import HTTPError
+          from urllib.request import urlopen
+
+          try:
+              urlopen("http://127.0.0.1:8000/api/platform/diagnostics/observability", timeout=10)
+          except HTTPError as exc:
+              assert exc.code == 401, exc.code
+          else:
+              raise AssertionError("Anonymous production-shaped diagnostics access was accepted.")
+          PY
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend "$BACKEND_IMAGE" /workspace/backend/scripts/smoke_persistence_scalability_tenant_query_hardening_foundation.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend "$BACKEND_IMAGE" /workspace/backend/scripts/smoke_observability_diagnostics_performance_telemetry_foundation.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend "$BACKEND_IMAGE" /workspace/backend/scripts/smoke_final_stabilization_pilot_release_gate.py --static
+          docker run --rm --entrypoint python --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace/backend "$BACKEND_IMAGE" /workspace/backend/scripts/smoke_pilot_operations_release_readiness.py --static
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml exec -T mongo sh -eu -c 'mongosh --quiet --username "$MONGO_APP_USERNAME" --password "$MONGO_APP_PASSWORD" --authenticationDatabase "$MONGO_AUTH_SOURCE" "$MONGO_DATABASE" --eval "const names=db.operational_work_items.getIndexes().map(item => item.name); if (!names.includes(\"operational_work_items_agency_status_due_created_id\")) { throw new Error(\"governed work-queue index missing\"); }"'
 
       - name: Validate disposable release assessment remains production-blocked
@@ -247,22 +530,49 @@ jobs:
                   except json.JSONDecodeError:
                       pass
           assert any(item.get("event_type") == "application_startup_completed" for item in payloads), payloads[-20:]
-          assert all(item.get("build_phase") == "phase_57_0_pilot_operations_release_readiness" for item in payloads), payloads
+          assert all(item.get("build_phase") == os.environ["EXPECTED_PHASE"] for item in payloads), payloads
           PY
 
-      - name: Capture Docker diagnostics on failure
+      - name: Record safe Docker validation lineage
+        if: always()
+        env:
+          VALIDATION_RESULT: ${{ job.status }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = {
+              "schema_version": 1,
+              "application_commit": os.environ["APPLICATION_COMMIT"],
+              "workflow_definition_commit": os.environ["WORKFLOW_DEFINITION_COMMIT"],
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "checked_out_application_tree": os.environ.get("CHECKED_OUT_APPLICATION_COMMIT"),
+              "packaged_phase": os.environ.get("EXPECTED_PHASE"),
+              "packaged_inventory_total": int(os.environ["EXPECTED_INVENTORY_TOTAL"]) if os.environ.get("EXPECTED_INVENTORY_TOTAL") else None,
+              "validation_result": os.environ["VALIDATION_RESULT"],
+          }
+          Path(os.environ["RUNNER_TEMP"]).joinpath("docker-validation-lineage.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Capture bounded Docker state on failure
         if: failure()
         run: |
           if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
             docker inspect --format '{"status":"{{.State.Status}}","health":"{{if .State.Health}}{{.State.Health.Status}}{{end}}","exit_code":{{.State.ExitCode}}}' aeroassist-ci-backend > docker-safe-diagnostic.json
           fi
 
-      - name: Upload safe Docker diagnostics
-        if: failure()
+      - name: Upload safe Docker validation evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: docker-validation-diagnostics
+          name: docker-validation-evidence-${{ github.run_id }}
           path: |
+            ${{ runner.temp }}/docker-validation-lineage.json
             docker-safe-diagnostic.json
           if-no-files-found: ignore
           retention-days: 7
@@ -271,13 +581,81 @@ jobs:
         if: always()
         run: |
           if [[ -n "${CI_MONGO_ENV_FILE:-}" && -f "$CI_MONGO_ENV_FILE" ]]; then
-            AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml down --volumes --remove-orphans || true
+            AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml down --volumes --remove-orphans --rmi local || true
             rm -f "$CI_MONGO_ENV_FILE"
           fi
           rm -rf "${CI_MONGO_BACKUP_ROOT:-${RUNNER_TEMP}/aeroassist-ci-backups}"
-          if docker container inspect aeroassist-ci-backend >/dev/null 2>&1; then
-            docker rm --force aeroassist-ci-backend
+          for container in aeroassist-ci-backend aeroassist-ci-frontend; do
+            if docker container inspect "$container" >/dev/null 2>&1; then
+              docker rm --force "$container"
+            fi
+          done
+          for image in "${BACKEND_IMAGE:-}" "${FRONTEND_IMAGE:-}"; do
+            if [[ -n "$image" ]] && docker image inspect "$image" >/dev/null 2>&1; then
+              docker image rm --force "$image"
+            fi
+          done
+          if docker network inspect aeroassist-ci-runtime >/dev/null 2>&1; then
+            docker network rm aeroassist-ci-runtime
           fi
-          if docker image inspect aeroassist-ci-backend:${{ github.sha }} >/dev/null 2>&1; then
-            docker image rm --force aeroassist-ci-backend:${{ github.sha }}
-          fi
+          docker builder prune --force
+          rm -f \
+            "${RUNNER_TEMP}/backend-structured.log" \
+            "${RUNNER_TEMP}/authenticated-backend.log" \
+            docker-safe-diagnostic.json
+
+  release-candidate-summary:
+    name: Exact release-candidate evidence summary
+    if: always() && github.event_name == 'workflow_dispatch'
+    needs:
+      - workflow-definition
+      - exact-release-validation
+      - backend-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      WORKFLOW_DEFINITION_RESULT: ${{ needs.workflow-definition.result }}
+      EXACT_SOURCE_RESULT: ${{ needs.exact-release-validation.result }}
+      DOCKER_RESULT: ${{ needs.backend-image.result }}
+    steps:
+      - name: Record complete hosted validation result
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          job_results = {
+              "workflow_definition": os.environ["WORKFLOW_DEFINITION_RESULT"],
+              "exact_source_and_inventory": os.environ["EXACT_SOURCE_RESULT"],
+              "production_docker": os.environ["DOCKER_RESULT"],
+          }
+          result = "success" if all(value == "success" for value in job_results.values()) else "failure"
+          payload = {
+              "schema_version": 1,
+              "application_commit": os.environ["APPLICATION_COMMIT"],
+              "workflow_definition_commit": os.environ["WORKFLOW_DEFINITION_COMMIT"],
+              "github_run_id": os.environ["GITHUB_RUN_ID"],
+              "checked_out_application_tree": os.environ["APPLICATION_COMMIT"],
+              "validation_result": result,
+              "job_results": job_results,
+          }
+          Path(os.environ["RUNNER_TEMP"]).joinpath("release-candidate-lineage.json").write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload safe release-candidate summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-lineage-${{ github.run_id }}
+          path: ${{ runner.temp }}/release-candidate-lineage.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce complete hosted validation success
+        run: |
+          test "$WORKFLOW_DEFINITION_RESULT" = "success"
+          test "$EXACT_SOURCE_RESULT" = "success"
+          test "$DOCKER_RESULT" = "success"

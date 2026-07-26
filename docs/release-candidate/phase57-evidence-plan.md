@@ -18,6 +18,12 @@ Deployment evidence must bind:
 The later deployment-tooling/tag commit is useful repository provenance but
 must not replace the exact application SHA in deployment evidence.
 
+Hosted CI evidence should additionally retain the safe lineage fields
+`application_commit`, `workflow_definition_commit`, `github_run_id`,
+`checked_out_application_tree`, and `validation_result`. A successful hosted
+run is supporting evidence only: it does not manufacture production deployment,
+backup, restore, tenant-isolation, or human sign-off evidence.
+
 ## Required Reviewed Evidence
 
 Persist real records through the existing Phase 57 APIs for:
@@ -47,6 +53,11 @@ The production evidence record supports:
 Leave unverified booleans `null`. In particular, never set
 `off_host_copy_verified` or `restore_rehearsal_verified` without independent
 evidence.
+
+The hosted exact-commit gate must show that the runtime phase and smoke count
+match the values packaged in the requested application tree, zero smoke entries
+are unresolved, protected diagnostics reject anonymous access, and the Phase
+57 assessment remains blocked without real production evidence.
 
 ## Guided Existing Workflow
 

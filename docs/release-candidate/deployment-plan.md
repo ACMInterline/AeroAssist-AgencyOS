@@ -4,10 +4,14 @@ This plan uses the existing Hostinger tooling. It does not authorize execution.
 
 ## Preconditions
 
-- `origin/main` contains the validated application merge and separate pin
-  commit.
+- The application evidence names
+  `de22b70c1ccdabf7bd6d28765addf63f79dd189d`; any later CI or deployment
+  tooling commit is recorded separately.
+- `origin/main` contains the validated application merge and reviewed tooling.
 - The pin names the exact 40-character application merge SHA.
-- Hosted CI passed for the exact commits.
+- The manually dispatched `ci-docker.yml` gate passed for the explicit
+  application SHA, and its safe lineage artifact records the separate
+  workflow-definition commit and GitHub run ID.
 - The production worktree is clean.
 - Current running commit is resolvable and will become `ROLLBACK_COMMIT`.
 - Configuration, authenticated MongoDB, document volume, disk, memory, HTTPS,
@@ -163,4 +167,9 @@ pin mismatch, configuration error, backup/checksum/manifest failure, missing
 off-host copy, restore-rehearsal failure, database/index incompatibility,
 unhealthy container, phase mismatch, unsafe readiness disclosure,
 authentication failure, tenant-isolation failure, smoke failure, or blocked
-Phase 57 assessment. Never reinterpret a failed check as success.
+Phase 57 assessment. Also stop if hosted lineage substitutes a branch tip for
+the requested application SHA, application and workflow-definition commits
+cannot be distinguished, packaged phase or inventory differs from runtime
+health/readiness, an artifact contains raw logs or environment material, or
+cleanup leaves disposable Docker resources. Never reinterpret a failed check
+as success.

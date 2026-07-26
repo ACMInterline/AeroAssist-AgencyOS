@@ -2,7 +2,8 @@
 
 **Assessment date:** 2026-07-25
 
-**Scope:** Product Recovery branch through P1 Product Recovery 11B
+**Scope:** Product Recovery application merge
+`de22b70c1ccdabf7bd6d28765addf63f79dd189d`
 
 **Production accessed:** no
 
@@ -77,3 +78,21 @@ secret artifact appears, the branch no longer has a reviewable relationship to
 `origin/main`, or every registered smoke does not execute. Deployment must
 stop independently until the exact merge commit is pinned and the Phase 57
 gate is satisfied.
+
+## Hosted CI Evidence Boundary
+
+The application tree was locally approved independently of the later CI
+tooling repair. Hosted release evidence is acceptable only when the manually
+dispatched workflow:
+
+- receives the full application SHA rather than a branch name;
+- checks out and verifies that exact tree;
+- records the reviewed workflow-definition commit separately;
+- derives phase and inventory values from the packaged tree;
+- passes complete source, inventory, Docker, MongoDB, backup, restore, and
+  protected-diagnostics checks; and
+- uploads only bounded JSON summaries.
+
+Until that hosted run succeeds, hosted exact-commit evidence remains pending.
+That pending state does not invalidate the prior local application evidence,
+and it does not authorize deployment or Phase 57 sign-off.

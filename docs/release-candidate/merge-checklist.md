@@ -3,6 +3,10 @@
 These commands are preparation only. Run them after human review of the
 uncommitted release-candidate artifacts.
 
+The approved Product Recovery application merge commit is
+`de22b70c1ccdabf7bd6d28765addf63f79dd189d`. CI or deployment tooling committed
+after it must not be presented as the application commit.
+
 ## 1. Commit And Push The Reviewed Feature Branch
 
 ```bash
@@ -67,7 +71,57 @@ git fetch origin main
 test "$(git rev-parse origin/main)" = "$APPLICATION_MERGE_COMMIT"
 ```
 
-## 4. Update The Deployment Pin Separately
+## 4. Validate The Exact Application Commit In Hosted CI
+
+The reviewed workflow definition may live at a later tooling commit. Dispatch
+the production Docker workflow from that reviewed tooling revision and pass the
+application merge SHA explicitly:
+
+```bash
+set -Eeuo pipefail
+APPLICATION_MERGE_COMMIT="de22b70c1ccdabf7bd6d28765addf63f79dd189d"
+test "${#APPLICATION_MERGE_COMMIT}" -eq 40
+git fetch origin main
+WORKFLOW_DEFINITION_COMMIT="$(git rev-parse origin/main)"
+BEFORE_RUN_ID="$(
+  gh run list \
+    --workflow ci-docker.yml \
+    --event workflow_dispatch \
+    --limit 20 \
+    --json databaseId,displayTitle \
+    --jq "map(select(.displayTitle | contains(\"application=$APPLICATION_MERGE_COMMIT\")))[0].databaseId // empty"
+)"
+gh workflow run ci-docker.yml \
+  --ref main \
+  -f "application_commit=$APPLICATION_MERGE_COMMIT"
+RUN_ID=""
+for attempt in {1..30}; do
+  RUN_ID="$(
+    gh run list \
+      --workflow ci-docker.yml \
+      --event workflow_dispatch \
+      --limit 20 \
+      --json databaseId,displayTitle \
+      --jq "map(select(.displayTitle | contains(\"application=$APPLICATION_MERGE_COMMIT\")))[0].databaseId"
+  )"
+  if test -n "$RUN_ID" && test "$RUN_ID" != "$BEFORE_RUN_ID"; then
+    break
+  fi
+  RUN_ID=""
+  sleep 2
+done
+test -n "$RUN_ID"
+gh run watch "$RUN_ID" --exit-status
+gh run view "$RUN_ID" --json headSha,conclusion,url
+```
+
+Download the safe `release-candidate-lineage-*` artifact and verify that
+`application_commit` and `checked_out_application_tree` equal the requested
+merge SHA, `workflow_definition_commit` equals the reviewed tooling revision,
+the run ID matches, and `validation_result` is `success`. Stop if any value
+differs.
+
+## 5. Update The Deployment Pin Separately
 
 After the merge SHA is known and validated, edit only
 `RELEASE_COMMIT` and its matching eight-character `RELEASE_SHORT` in
@@ -89,7 +143,7 @@ git push origin main
 The full pin must equal `APPLICATION_MERGE_COMMIT`; the short pin must equal
 its first eight characters. Do not use a branch, tag, or guessed SHA.
 
-## 5. Release Tag Policy
+## 6. Release Tag Policy
 
 The current established policy tags the later deployment-tooling commit while
 Phase 57 deployment evidence records the exact application merge commit

@@ -22,6 +22,7 @@ WORKFLOW_SPECS = {
     ".github/workflows/ci-fast.yml": (
         "pull_request:",
         "push:",
+        "fetch-depth: 0",
         "python3 -m compileall -q backend",
         "validate_smoke_inventory.py",
         "validate_ci_foundation.py",
@@ -42,16 +43,29 @@ WORKFLOW_SPECS = {
         "pull_request:",
         "push:",
         "workflow_dispatch:",
-        "docker build --file backend/Dockerfile",
+        "application_commit:",
+        "required: true",
+        "github.workflow_sha",
+        "fetch-depth: 0",
+        "--file backend/Dockerfile",
+        "--file frontend/Dockerfile",
+        "org.opencontainers.image.revision=$APPLICATION_COMMIT",
+        "CURRENT_BUILD_PHASE",
+        "SMOKE_INVENTORY_SUMMARY",
         "/app/smoke_inventory.py",
         "/app/scripts/smoke_inventory.json",
         "import smoke_inventory, server",
         "/api/health",
         "/api/readiness",
+        "/api/platform/diagnostics/observability",
         "final_stabilization_pilot_release_gate",
         "smoke_final_stabilization_pilot_release_gate.py --static",
         "smoke_pilot_operations_release_readiness.py --static",
         "assess_pilot_release_readiness.py",
+        "run_pilot_release_validation.py",
+        "--profile full",
+        "--include-docker-config",
+        "release-candidate-lineage.json",
     ),
     ".github/workflows/ci-smoke-focused.yml": (
         "pull_request:",
@@ -64,11 +78,18 @@ WORKFLOW_SPECS = {
     ),
     ".github/workflows/ci-regression-full.yml": (
         "workflow_dispatch:",
+        "application_commit:",
+        "required: true",
         "schedule:",
         "mongo:7",
+        "github.workflow_sha",
+        "fetch-depth: 0",
+        "npm audit --prefix frontend",
         "run_pilot_release_validation.py",
         "--profile full",
+        "--include-docker-config",
         "pilot-release-validation.json",
+        "full-regression-lineage.json",
     ),
 }
 ALLOWED_ACTIONS = {
@@ -89,6 +110,8 @@ FORBIDDEN_WORKFLOW_PATTERNS = {
     "deployments: write": "Workflow permissions must not deploy.",
     "pull-requests: write": "Workflow permissions must not mutate pull requests.",
 }
+APPROVED_APPLICATION_COMMIT = "de22b70c1ccdabf7bd6d28765addf63f79dd189d"
+FULL_SHA_SHELL_PATTERN = r"^[0-9a-f]{40}$"
 
 
 def validate_workflow(path: Path, required_tokens: tuple[str, ...]) -> list[str]:
@@ -120,6 +143,225 @@ def validate_workflow(path: Path, required_tokens: tuple[str, ...]) -> list[str]
     return errors
 
 
+def artifact_upload_blocks(text: str) -> list[str]:
+    lines = text.splitlines()
+    blocks: list[str] = []
+    for index, line in enumerate(lines):
+        if "uses: actions/upload-artifact@v4" not in line:
+            continue
+        block = [line]
+        for following in lines[index + 1 :]:
+            if following.startswith("      - name:"):
+                break
+            block.append(following)
+        blocks.append("\n".join(block))
+    return blocks
+
+
+def workflow_job_block(text: str, job_name: str) -> str:
+    marker = f"  {job_name}:\n"
+    start = text.find(marker)
+    if start < 0:
+        return ""
+    following = text[start + len(marker) :]
+    next_job = re.search(r"(?m)^  [a-z0-9][a-z0-9-]*:\n", following)
+    end = start + len(marker) + next_job.start() if next_job else len(text)
+    return text[start:end]
+
+
+def validate_exact_commit_release_contract() -> list[str]:
+    docker_path = ROOT / ".github/workflows/ci-docker.yml"
+    regression_path = ROOT / ".github/workflows/ci-regression-full.yml"
+    if not docker_path.is_file() or not regression_path.is_file():
+        return []
+
+    docker_text = docker_path.read_text(encoding="utf-8")
+    regression_text = regression_path.read_text(encoding="utf-8")
+    exact_source_job = workflow_job_block(docker_text, "exact-release-validation")
+    docker_job = workflow_job_block(docker_text, "backend-image")
+    summary_job = workflow_job_block(docker_text, "release-candidate-summary")
+    regression_job = workflow_job_block(regression_text, "complete-inventory")
+    errors: list[str] = []
+
+    dispatch_contract = (
+        "workflow_dispatch:\n"
+        "    inputs:\n"
+        "      application_commit:\n"
+        "        description: Exact 40-character application commit to validate\n"
+        "        required: true\n"
+        "        type: string"
+    )
+    for relative, text in (
+        (docker_path.relative_to(ROOT), docker_text),
+        (regression_path.relative_to(ROOT), regression_text),
+    ):
+        if dispatch_contract not in text:
+            errors.append(f"{relative}: exact-commit dispatch input is not required and typed.")
+        if FULL_SHA_SHELL_PATTERN not in text:
+            errors.append(f"{relative}: application commit is not validated as a full lowercase SHA.")
+        if 'test "$checked_out_head" = "$APPLICATION_COMMIT"' not in text:
+            errors.append(f"{relative}: checked-out HEAD is not compared with the requested application commit.")
+        if "git cat-file -e \"${APPLICATION_COMMIT}^{commit}\"" not in text:
+            errors.append(f"{relative}: requested application commit existence is not verified.")
+        if "application_commit" not in text or "workflow_definition_commit" not in text:
+            errors.append(f"{relative}: application and workflow-definition commit lineage are not distinct.")
+        if "github_run_id" not in text or "checked_out_application_tree" not in text:
+            errors.append(f"{relative}: hosted run and checked-out tree lineage are incomplete.")
+        if APPROVED_APPLICATION_COMMIT in text:
+            errors.append(f"{relative}: exact validation is pinned to one historical application commit.")
+
+    exact_job_contracts = (
+        ("ci-docker.yml exact-release-validation", exact_source_job),
+        ("ci-docker.yml backend-image", docker_job),
+        ("ci-regression-full.yml complete-inventory", regression_job),
+    )
+    for label, block in exact_job_contracts:
+        if not block:
+            errors.append(f"{label}: exact-tree job is missing.")
+            continue
+        if 'test "$checked_out_head" = "$APPLICATION_COMMIT"' not in block:
+            errors.append(f"{label}: checked-out HEAD equality guard is missing.")
+        if "git cat-file -e \"${APPLICATION_COMMIT}^{commit}\"" not in block:
+            errors.append(f"{label}: requested commit existence guard is missing.")
+        for field in (
+            "application_commit",
+            "workflow_definition_commit",
+            "github_run_id",
+            "checked_out_application_tree",
+            "validation_result",
+        ):
+            if field not in block:
+                errors.append(f"{label}: lineage field {field!r} is missing.")
+    if not summary_job:
+        errors.append("ci-docker.yml release-candidate-summary: composite evidence job is missing.")
+    else:
+        for field in (
+            "application_commit",
+            "workflow_definition_commit",
+            "github_run_id",
+            "checked_out_application_tree",
+            "validation_result",
+        ):
+            if field not in summary_job:
+                errors.append(f"ci-docker.yml release-candidate-summary: lineage field {field!r} is missing.")
+
+    required_docker_commands = (
+        'docker build --label "org.opencontainers.image.revision=$APPLICATION_COMMIT" --file backend/Dockerfile --tag "$BACKEND_IMAGE" .',
+        'docker build --label "org.opencontainers.image.revision=$APPLICATION_COMMIT" --file frontend/Dockerfile --tag "$FRONTEND_IMAGE" frontend',
+    )
+    for command in required_docker_commands:
+        if command not in docker_text:
+            errors.append(f"ci-docker.yml: missing exact production image build command {command!r}.")
+    if re.search(r"--file\s+backend/Dockerfile\s+--tag\s+[^\n]+\s+backend(?:\s|$)", docker_text):
+        errors.append("ci-docker.yml: backend image uses backend/ instead of repository root as build context.")
+
+    hardcoded_phases = sorted(set(re.findall(r"phase_\d+_[a-z0-9_]+", docker_text)))
+    if hardcoded_phases:
+        errors.append(
+            "ci-docker.yml: runtime phase must come from packaged build metadata, not "
+            + ", ".join(hardcoded_phases)
+        )
+    numeric_inventory_assertions = re.findall(
+        r"inventoried_smoke_scripts[\"'\]]*\s*==\s*\d+",
+        docker_text,
+    )
+    if numeric_inventory_assertions or re.search(r"\b(?:141|171)\b", docker_text):
+        errors.append("ci-docker.yml: smoke inventory total is hardcoded instead of package-derived.")
+    if "from build_phase import CURRENT_BUILD_PHASE" not in docker_text:
+        errors.append("ci-docker.yml: packaged runtime phase is not derived from CURRENT_BUILD_PHASE.")
+    if "SMOKE_INVENTORY_SUMMARY['inventoried_smoke_scripts']" not in docker_text:
+        errors.append("ci-docker.yml: packaged smoke inventory total is not derived canonically.")
+    if 'section["inventoried_smoke_scripts"] == expected_inventory' not in docker_text:
+        errors.append("ci-docker.yml: readiness inventory is not compared with packaged inventory.")
+    if 'health["phase"] == expected_phase' not in docker_text or 'readiness["phase"] == expected_phase' not in docker_text:
+        errors.append("ci-docker.yml: health/readiness phase is not compared with packaged phase.")
+
+    required_release_behaviors = (
+        "validate_canonical_domain_ownership.py",
+        "validate_canonical_identity_tenancy.py",
+        "validate_canonical_lifecycle_integrity.py",
+        "validate_product_experience_recovery.py",
+        "validate_stabilization_accessibility.py",
+        "validate_full_system_stabilization.py",
+        "validate_observability_foundation.py",
+        "validate_final_stabilization_pilot_release_gate.py",
+        "run_pilot_release_validation.py --profile full --include-docker-config",
+        "npm audit --prefix frontend",
+        "final_stabilization_pilot_release_gate",
+        'release_gate["assessment_status"] == "blocked"',
+        'release_gate["production_evidence_supplied"] is False',
+        'release_gate["production_deployment_verified"] is False',
+        'release_gate["pilot_release_ready"] is False',
+        "automatic_release_approval_disabled",
+        "automatic_production_migration_disabled",
+        "test_restore_mongodb_backup.sh",
+        "verify_mongodb_backup.sh",
+        "Anonymous production-shaped diagnostics access was accepted.",
+        "docker network create aeroassist-ci-runtime",
+        "--network-alias backend",
+        "docker network rm aeroassist-ci-runtime",
+        "docker builder prune --force",
+        "down --volumes --remove-orphans --rmi local",
+    )
+    for behavior in required_release_behaviors:
+        if behavior not in docker_text:
+            errors.append(f"ci-docker.yml: exact release gate omits {behavior!r}.")
+
+    if 'ref: ${{ inputs.application_commit }}' not in docker_text:
+        errors.append("ci-docker.yml: manual full gate does not check out the requested application commit.")
+    if 'ref: ${{ inputs.application_commit || github.sha }}' not in docker_text:
+        errors.append("ci-docker.yml: Docker job does not bind checkout to dispatch input or event SHA.")
+    if 'ref: ${{ github.workflow_sha }}' not in docker_text:
+        errors.append("ci-docker.yml: reviewed workflow definition is not validated on its own commit.")
+    expected_commit_delta_checks = (
+        'git diff --check "${WORKFLOW_DEFINITION_COMMIT}^" "$WORKFLOW_DEFINITION_COMMIT"',
+        'git diff --check "${APPLICATION_COMMIT}^" "$APPLICATION_COMMIT"',
+    )
+    for check in expected_commit_delta_checks:
+        if check not in docker_text:
+            errors.append(f"ci-docker.yml: exact-commit whitespace validation omits {check!r}.")
+    if 'git diff --check "$(git hash-object -t tree /dev/null)" HEAD' in docker_text:
+        errors.append(
+            "ci-docker.yml: exact validation scans the entire historical tree instead of the requested commit delta."
+        )
+    fast_text = (ROOT / ".github/workflows/ci-fast.yml").read_text(encoding="utf-8")
+    if 'git diff --check "$(git hash-object -t tree /dev/null)" HEAD' in fast_text:
+        errors.append("ci-fast.yml: whitespace validation scans the entire historical tree.")
+    for check in (
+        'git diff --check "$EVENT_BEFORE" "$GITHUB_SHA"',
+        'git diff --check "${GITHUB_SHA}^" "$GITHUB_SHA"',
+    ):
+        if check not in fast_text:
+            errors.append(f"ci-fast.yml: commit-range whitespace validation omits {check!r}.")
+    if 'ref: ${{ inputs.application_commit || github.sha }}' not in regression_text:
+        errors.append("ci-regression-full.yml: full regression does not bind checkout to exact input or schedule SHA.")
+    if "--include-docker-config" not in regression_text:
+        errors.append("ci-regression-full.yml: full regression omits production Compose rendering.")
+
+    unsafe_artifact_markers = (".log", ".env", "GITHUB_ENV", "MONGO_APP_PASSWORD", "AUTH_TOKEN_SECRET")
+    for relative, text in (
+        (docker_path.relative_to(ROOT), docker_text),
+        (regression_path.relative_to(ROOT), regression_text),
+    ):
+        for block in artifact_upload_blocks(text):
+            unsafe = [marker for marker in unsafe_artifact_markers if marker in block]
+            if unsafe:
+                errors.append(f"{relative}: artifact upload includes unsafe material: {', '.join(unsafe)}")
+
+    command_forbidden = (
+        (r"\bgit\s+push\b", "push commits"),
+        (r"\bdocker\s+push\b", "publish images"),
+        (r"\bkubectl\b", "operate a cluster"),
+        (r"\bssh\b", "access an external host"),
+        (r"\bdeploy_v1_release_candidate\.sh\b", "invoke production deployment"),
+        (r"(?m)^\s*(?:python3?|bash|sh)\s+[^\n]*(?:migrate|migration)", "execute a migration"),
+    )
+    for pattern, action in command_forbidden:
+        if re.search(pattern, docker_text, flags=re.IGNORECASE):
+            errors.append(f"ci-docker.yml: hosted validation must not {action}.")
+    return errors
+
+
 def validate_ci_foundation() -> list[str]:
     errors: list[str] = []
     if not phase_is_at_least(CURRENT_BUILD_PHASE, MINIMUM_PHASE):
@@ -127,6 +369,7 @@ def validate_ci_foundation() -> list[str]:
 
     for relative, tokens in WORKFLOW_SPECS.items():
         errors.extend(validate_workflow(ROOT / relative, tokens))
+    errors.extend(validate_exact_commit_release_contract())
 
     summary, inventory_errors = validate_inventory()
     errors.extend(inventory_errors)

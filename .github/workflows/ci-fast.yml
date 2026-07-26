@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -48,7 +50,16 @@ jobs:
         run: npm ci --prefix frontend
 
       - name: Check repository whitespace
-        run: git diff --check "$(git hash-object -t tree /dev/null)" HEAD
+        env:
+          EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$EVENT_BEFORE" =~ ^[0-9a-f]{40}$ && "$EVENT_BEFORE" != "0000000000000000000000000000000000000000" ]]; then
+            git diff --check "$EVENT_BEFORE" "$GITHUB_SHA"
+          elif git rev-parse "${GITHUB_SHA}^" >/dev/null 2>&1; then
+            git diff --check "${GITHUB_SHA}^" "$GITHUB_SHA"
+          else
+            git diff --check "$(git hash-object -t tree /dev/null)" "$GITHUB_SHA"
+          fi
 
       - name: Compile backend Python
         run: python3 -m compileall -q backend

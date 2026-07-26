@@ -13,8 +13,8 @@ Human reviewers decide whether each is acceptable for the intended pilot.
 | Product surface | 311 governed pages and seven orphan compatibility pages remain | use the page inventory and retirement register; do not delete without evidence |
 | Automation | Persistent scheduler and external execution remain disabled | continue explicit bounded processing; Class C approval only and Class D prohibited |
 | Providers | Airline, GDS/NDC, ticket/EMD issuance, payment/refund, and external communications are not enabled | treat records as operational evidence/planning until separately authorized |
-| Hosted evidence | Local validators do not prove hosted CI or production behavior | require exact-commit hosted CI and Phase 57 production evidence |
-| Release identity | Final application merge SHA and later deployment-tooling SHA do not yet exist | create them through the reviewed merge and separate pin procedure |
+| Hosted evidence | The exact-commit hosted workflow is prepared but cannot produce evidence until its separate tooling commit is reviewed and available to GitHub Actions | dispatch it with the approved application SHA, verify the safe two-commit lineage artifact, and retain Phase 57 production evidence separately |
+| Release identity | The application merge is `de22b70c1ccdabf7bd6d28765addf63f79dd189d`; the later workflow and deployment-tooling commits are intentionally distinct | never substitute a tooling SHA or branch tip for application evidence |
 | Deployment | Current script intentionally remains pinned to the last approved Phase 58 application release | update only after the validated Product Recovery merge SHA exists |
 | Production gate | Backup, off-host copy, restore rehearsal, production validation, and human sign-off are not completed by this review | Phase 57 must remain blocked until real reviewed evidence is persisted |
 

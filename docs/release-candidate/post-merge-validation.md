@@ -2,6 +2,11 @@
 
 Run this gate on the exact unmodified `APPLICATION_MERGE_COMMIT`. A later
 deployment-tooling commit does not replace application validation evidence.
+For the current candidate:
+
+```bash
+APPLICATION_MERGE_COMMIT="de22b70c1ccdabf7bd6d28765addf63f79dd189d"
+```
 
 ```bash
 set -Eeuo pipefail
@@ -64,10 +69,62 @@ readiness, anonymous diagnostics rejection, and authorized bounded Platform
 diagnostics. Remove the temporary network, containers, volumes, reports,
 Python caches, and `frontend/dist` after evidence is recorded.
 
+## Hosted Exact-Commit Gate
+
+After the CI tooling repair is reviewed and present on `main`, dispatch its
+workflow definition while passing the application SHA:
+
+```bash
+BEFORE_RUN_ID="$(
+  gh run list \
+    --workflow ci-docker.yml \
+    --event workflow_dispatch \
+    --limit 20 \
+    --json databaseId,displayTitle \
+    --jq "map(select(.displayTitle | contains(\"application=$APPLICATION_MERGE_COMMIT\")))[0].databaseId // empty"
+)"
+gh workflow run ci-docker.yml \
+  --ref main \
+  -f "application_commit=$APPLICATION_MERGE_COMMIT"
+RUN_ID=""
+for attempt in {1..30}; do
+  RUN_ID="$(
+    gh run list \
+      --workflow ci-docker.yml \
+      --event workflow_dispatch \
+      --limit 20 \
+      --json databaseId,displayTitle \
+      --jq "map(select(.displayTitle | contains(\"application=$APPLICATION_MERGE_COMMIT\")))[0].databaseId"
+  )"
+  if test -n "$RUN_ID" && test "$RUN_ID" != "$BEFORE_RUN_ID"; then
+    break
+  fi
+  RUN_ID=""
+  sleep 2
+done
+test -n "$RUN_ID"
+gh run watch "$RUN_ID" --exit-status
+gh run view "$RUN_ID" --json headSha,conclusion,url
+mkdir -p "/tmp/aeroassist-hosted-$RUN_ID"
+gh run download "$RUN_ID" --dir "/tmp/aeroassist-hosted-$RUN_ID"
+```
+
+The workflow validates its own definition at `github.workflow_sha`, checks out
+the requested 40-character application commit independently, and fails if
+`git rev-parse HEAD` differs. The safe JSON evidence records the application
+commit, workflow-definition commit, run ID, checked-out application tree, and
+composite result. Uploaded evidence is limited to bounded JSON summaries; raw
+logs, environment files, credentials, and database artifacts are excluded.
+
 ## Required Result
 
-- 171 registered, 171 selected, 171 executed, 171 passed.
+- The registered, selected, executed, and passed totals all equal the exact
+  application's packaged canonical inventory; this candidate's baseline is
+  171 with zero unresolved scripts.
 - Chromium: 51 checks passed.
+- Exact source/inventory, production Docker, authenticated MongoDB,
+  backup/checksum, restore rehearsal, protected diagnostics, and workflow
+  definition jobs all succeed.
 - No tracked or untracked generated artifact remains.
 - No release criterion relies only on source inspection when an executed
   validator exists.
