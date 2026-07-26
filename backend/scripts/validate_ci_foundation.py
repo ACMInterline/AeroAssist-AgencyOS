@@ -118,6 +118,8 @@ DOCUMENT_EXPORT_JOBS = {
     ".github/workflows/ci-regression-full.yml": ("complete-inventory",),
     ".github/workflows/ci-docker.yml": ("exact-release-validation",),
 }
+FOCUSED_WORKFLOW_RELATIVE = ".github/workflows/ci-smoke-focused.yml"
+FOCUSED_UX_SMOKE_PATH = "backend/scripts/smoke_platform_agency_ux_consolidation.py"
 EXPRESSION_CONTEXT_RE = re.compile(r"\$\{\{\s*([A-Za-z_][A-Za-z0-9_-]*)")
 
 
@@ -217,6 +219,236 @@ def job_step_blocks(job_block: str) -> list[str]:
         end = matches[index + 1].start() if index + 1 < len(matches) else len(steps_text)
         blocks.append(steps_text[match.start() : end])
     return blocks
+
+
+def step_property(step: str, key: str) -> str | None:
+    match = re.search(rf"(?m)^        {re.escape(key)}:\s*(.*?)\s*$", step)
+    if not match:
+        return None
+    return match.group(1).strip().strip("\"'")
+
+
+def step_with_value(step: str, key: str) -> str | None:
+    with_block = indented_mapping_block(step, "with", 8)
+    match = re.search(rf"(?m)^          {re.escape(key)}:\s*(.*?)\s*$", with_block)
+    if not match:
+        return None
+    return match.group(1).strip().strip("\"'")
+
+
+def step_run_text(step: str) -> str:
+    lines = step.splitlines()
+    for index, line in enumerate(lines):
+        match = re.match(r"^        run:\s*(.*)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value not in {"|", ">", "|-", ">-"}:
+            return value
+        return "\n".join(
+            following[10:] if following.startswith("          ") else following.strip()
+            for following in lines[index + 1 :]
+        ).strip()
+    return ""
+
+
+def replace_focused_step(text: str, predicate, replacement) -> str:
+    job = workflow_job_blocks(text).get("focused-smokes", "")
+    for step in job_step_blocks(job):
+        if predicate(step):
+            return text.replace(step, replacement(step), 1)
+    return text
+
+
+def validate_focused_workflow_contract(text: str) -> list[str]:
+    relative = FOCUSED_WORKFLOW_RELATIVE
+    job = workflow_job_blocks(text).get("focused-smokes")
+    if not job:
+        return [f"{relative}: focused-smokes job is missing."]
+    steps = job_step_blocks(job)
+    errors: list[str] = []
+
+    node_indexes = [
+        index for index, step in enumerate(steps)
+        if step_property(step, "uses") == "actions/setup-node@v4"
+    ]
+    if len(node_indexes) != 1:
+        errors.append(f"{relative}: expected exactly one actions/setup-node@v4 step.")
+        node_index = None
+    else:
+        node_index = node_indexes[0]
+        node_step = steps[node_index]
+        if step_with_value(node_step, "node-version") != "20":
+            errors.append(f"{relative}: Focused Node version must be 20.")
+        if step_with_value(node_step, "cache") != "npm":
+            errors.append(f"{relative}: Focused Node setup must enable the npm cache.")
+        if step_with_value(node_step, "cache-dependency-path") != "frontend/package-lock.json":
+            errors.append(
+                f"{relative}: Focused npm cache dependency path must be frontend/package-lock.json."
+            )
+
+    install_indexes = [
+        index for index, step in enumerate(steps)
+        if step_run_text(step).strip() == "npm ci --prefix frontend"
+    ]
+    if len(install_indexes) != 1:
+        errors.append(
+            f"{relative}: expected exactly one locked frontend dependency installation "
+            "'npm ci --prefix frontend'."
+        )
+        install_index = None
+    else:
+        install_index = install_indexes[0]
+        if step_property(steps[install_index], "continue-on-error") is not None:
+            errors.append(f"{relative}: frontend dependency installation must not use continue-on-error.")
+
+    for step in steps:
+        run_text = step_run_text(step)
+        if re.search(r"(?m)(?:^|[;&|]\s*)npm\s+(?:install|i)(?:\s|$)", run_text):
+            errors.append(f"{relative}: npm install is not permitted; use the locked npm ci command.")
+        if re.search(
+            r"\bnpm\s+(?:install|i)\b[^\n]*"
+            r"(?:(?:--global|-g)[^\n]*\bvite\b|\bvite\b[^\n]*(?:--global|-g))",
+            run_text,
+            flags=re.IGNORECASE,
+        ):
+            errors.append(f"{relative}: global Vite installation is prohibited.")
+
+    static_indexes = [
+        index for index, step in enumerate(steps)
+        if "run_smoke_inventory.py" in step_run_text(step) and "--tier static" in step_run_text(step)
+    ]
+    focused_indexes = [
+        index for index, step in enumerate(steps)
+        if "run_smoke_inventory.py" in step_run_text(step) and "--tier focused" in step_run_text(step)
+    ]
+    if len(static_indexes) != 1:
+        errors.append(f"{relative}: expected exactly one static inventory tier step.")
+    if len(focused_indexes) != 1:
+        errors.append(f"{relative}: expected exactly one focused inventory tier step.")
+
+    if (
+        node_index is not None
+        and install_index is not None
+        and len(static_indexes) == 1
+        and len(focused_indexes) == 1
+        and not node_index < install_index < min(static_indexes[0], focused_indexes[0])
+    ):
+        errors.append(
+            f"{relative}: Node setup and locked frontend installation must run before both inventory tiers."
+        )
+
+    if len(focused_indexes) == 1:
+        focused_index = focused_indexes[0]
+        focused_step = steps[focused_index]
+        if step_property(focused_step, "continue-on-error") is not None:
+            errors.append(f"{relative}: focused inventory must not use continue-on-error.")
+        focused_run = step_run_text(focused_step)
+        if any(marker in focused_run for marker in ("--exclude", "--skip", "|| true")):
+            errors.append(f"{relative}: focused inventory command contains a smoke bypass.")
+        cleanup_steps = [
+            step for index, step in enumerate(steps)
+            if index > focused_index
+            and step_property(step, "if") == "always()"
+            and "frontend/dist" in step_run_text(step)
+            and "rm -rf" in step_run_text(step)
+        ]
+        if not cleanup_steps:
+            errors.append(f"{relative}: always-run cleanup must remove frontend/dist.")
+
+    return errors
+
+
+def validate_focused_workflow_mutations(text: str) -> list[str]:
+    node_predicate = lambda step: step_property(step, "uses") == "actions/setup-node@v4"
+    install_predicate = lambda step: step_run_text(step).strip() == "npm ci --prefix frontend"
+    focused_predicate = lambda step: (
+        "run_smoke_inventory.py" in step_run_text(step) and "--tier focused" in step_run_text(step)
+    )
+    cleanup_predicate = lambda step: (
+        step_property(step, "if") == "always()" and "frontend/dist" in step_run_text(step)
+    )
+
+    missing_node = replace_focused_step(text, node_predicate, lambda _step: "")
+    wrong_node = replace_focused_step(
+        text,
+        node_predicate,
+        lambda step: step.replace('node-version: "20"', 'node-version: "18"', 1),
+    )
+    missing_install = replace_focused_step(text, install_predicate, lambda _step: "")
+    unlocked_install = replace_focused_step(
+        text,
+        install_predicate,
+        lambda step: step.replace("npm ci --prefix frontend", "npm install --prefix frontend", 1),
+    )
+    missing_cache_path = replace_focused_step(
+        text,
+        node_predicate,
+        lambda step: step.replace(
+            "cache-dependency-path: frontend/package-lock.json",
+            "cache-dependency-path: frontend/package.json",
+            1,
+        ),
+    )
+    missing_cleanup = replace_focused_step(
+        text,
+        cleanup_predicate,
+        lambda step: step.replace("frontend/dist", "frontend/build-output", 1),
+    )
+    global_vite = replace_focused_step(
+        text,
+        install_predicate,
+        lambda step: step + "      - name: Install Vite globally\n"
+        "        run: npm install --global vite\n\n",
+    )
+    focused_continue = replace_focused_step(
+        text,
+        focused_predicate,
+        lambda step: step.replace(
+            "      - name: Run focused inventory tier\n",
+            "      - name: Run focused inventory tier\n        continue-on-error: true\n",
+            1,
+        ),
+    )
+
+    job = workflow_job_blocks(text).get("focused-smokes", "")
+    steps = job_step_blocks(job)
+    install_step = next((step for step in steps if install_predicate(step)), "")
+    focused_step = next((step for step in steps if focused_predicate(step)), "")
+    install_after_focused = text
+    if install_step and focused_step:
+        marker = "__AEROASSIST_FOCUSED_INSTALL_STEP__"
+        install_after_focused = install_after_focused.replace(install_step, marker, 1)
+        install_after_focused = install_after_focused.replace(
+            focused_step,
+            focused_step + install_step,
+            1,
+        )
+        install_after_focused = install_after_focused.replace(marker, "", 1)
+
+    cases = (
+        ("missing Node setup", missing_node, "exactly one actions/setup-node@v4"),
+        ("wrong Node version", wrong_node, "Node version must be 20"),
+        ("missing npm ci", missing_install, "locked frontend dependency installation"),
+        ("npm install replacement", unlocked_install, "npm install is not permitted"),
+        ("install after focused smokes", install_after_focused, "before both inventory tiers"),
+        ("missing package-lock cache path", missing_cache_path, "npm cache dependency path"),
+        ("missing frontend/dist cleanup", missing_cleanup, "cleanup must remove frontend/dist"),
+        ("global Vite installation", global_vite, "global Vite installation is prohibited"),
+        ("focused continue-on-error", focused_continue, "focused inventory must not use continue-on-error"),
+    )
+    errors: list[str] = []
+    for label, mutated, expected_error in cases:
+        if mutated == text:
+            errors.append(f"{FOCUSED_WORKFLOW_RELATIVE}: mutation coverage could not apply {label}.")
+            continue
+        mutation_errors = validate_focused_workflow_contract(mutated)
+        if not any(expected_error in error for error in mutation_errors):
+            errors.append(
+                f"{FOCUSED_WORKFLOW_RELATIVE}: mutation coverage did not reject {label} "
+                f"with {expected_error!r}."
+            )
+    return errors
 
 
 def expression_contexts(text: str) -> set[str]:
@@ -520,6 +752,11 @@ def validate_ci_foundation() -> list[str]:
         errors.extend(validate_workflow(path, tokens))
         if path.is_file():
             errors.extend(audit_workflow_context_structure(relative, path.read_text(encoding="utf-8")))
+    focused_workflow_path = ROOT / FOCUSED_WORKFLOW_RELATIVE
+    if focused_workflow_path.is_file():
+        focused_workflow_text = focused_workflow_path.read_text(encoding="utf-8")
+        errors.extend(validate_focused_workflow_contract(focused_workflow_text))
+        errors.extend(validate_focused_workflow_mutations(focused_workflow_text))
     errors.extend(validate_exact_commit_release_contract())
 
     summary, inventory_errors = validate_inventory()
@@ -591,6 +828,12 @@ def validate_ci_foundation() -> list[str]:
     missing_focused = sorted(required_focused - focused_paths)
     if missing_focused:
         errors.append("Focused CI tier is missing critical coverage: " + ", ".join(missing_focused))
+    focused_ux_entry = entry_by_path.get(FOCUSED_UX_SMOKE_PATH) or {}
+    if (
+        focused_ux_entry.get("ci_tier") != "focused"
+        or focused_ux_entry.get("suitable_for_future_ci") is not True
+    ):
+        errors.append("Platform/Agency UX smoke must remain enabled in the focused CI tier.")
 
     tracked = subprocess.run(
         ["git", "ls-files", "--error-unmatch", "backend/smoke_inventory.py"],

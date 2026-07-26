@@ -84,6 +84,41 @@ contains no jobs or runner logs. Affected jobs must instead create
 `DOCUMENT_EXPORT_STORAGE_DIR` to `$GITHUB_ENV`. This keeps the path outside the
 repository and makes it available only after a runner exists.
 
+## Hosted Focused-Smoke Dependency Repair
+
+The first hosted Focused run that reached its runner failed in `Run focused
+inventory tier` when
+`backend/scripts/smoke_platform_agency_ux_consolidation.py` intentionally ran
+`npm run build --prefix frontend`. Vite was unavailable because the Focused
+workflow had installed backend dependencies only; it had neither configured
+Node nor run the locked frontend installation.
+
+The reviewed repair must retain the UX smoke and its frontend build, configure
+Node 20 with npm caching against `frontend/package-lock.json`, and run:
+
+```bash
+npm ci --prefix frontend
+```
+
+before both inventory tiers. The always-run cleanup must remove
+`frontend/dist` and temporary frontend build output without deleting source or
+failure evidence.
+
+After the repair is committed to the reviewed workflow branch, rerun in this
+order:
+
+1. `actionlint .github/workflows/*.yml`;
+2. the Focused workflow;
+3. confirm frontend dependency installation succeeded;
+4. confirm static and focused tiers completed with zero failures;
+5. confirm `smoke_platform_agency_ux_consolidation.py` and its production build
+   passed; and
+6. only then dispatch the exact-commit gate for the approved application SHA.
+
+Stop if locked installation fails, Vite remains unavailable, any selected
+smoke is skipped or ignored, the UX smoke fails, or generated build output
+survives cleanup. Do not reclassify or weaken the smoke to obtain a pass.
+
 ## Hosted Exact-Commit Gate
 
 After the CI tooling repair is reviewed and present on `main`, dispatch its

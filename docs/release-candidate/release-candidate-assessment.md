@@ -99,5 +99,15 @@ dispatched workflow:
 Until that hosted run succeeds, hosted exact-commit evidence remains pending.
 The earlier zero-job runs are workflow-planning failures and provide no
 application evidence.
+
+The subsequent Focused workflow reached a runner but failed in its focused
+inventory tier because the selected Platform/Agency UX smoke correctly invokes
+the frontend production build and the job had not installed frontend
+dependencies. The repair adds Node 20 setup and locked
+`npm ci --prefix frontend` before static or focused inventory execution,
+retains the UX smoke unchanged, and adds deterministic CI-validator mutation
+coverage for dependency ordering and cleanup. A successful hosted Focused
+rerun remains required before exact-commit evidence can be accepted.
+
 That pending state does not invalidate the prior local application evidence,
 and it does not authorize deployment or Phase 57 sign-off.
