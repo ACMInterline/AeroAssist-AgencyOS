@@ -25,11 +25,16 @@ jobs:
       DEMO_AUTH_ENABLED: "true"
       SEED_ON_STARTUP: "true"
       SEED_ENDPOINT_ENABLED: "true"
-      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
       AEROASSIST_SMOKE_BASE_URL: http://127.0.0.1:18081
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Initialize runner paths
+        run: |
+          document_export_dir="$RUNNER_TEMP/document-exports"
+          mkdir -p "$document_export_dir"
+          echo "DOCUMENT_EXPORT_STORAGE_DIR=$document_export_dir" >> "$GITHUB_ENV"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -55,7 +60,7 @@ jobs:
 
       - name: Wait for backend health
         run: |
-          for attempt in {1..60}; do
+          for _ in {1..60}; do
             if python3 -c "from urllib.request import urlopen; urlopen('$AEROASSIST_SMOKE_BASE_URL/api/health', timeout=3)"; then
               exit 0
             fi
@@ -89,3 +94,11 @@ jobs:
               kill "$pid"
             fi
           fi
+          find backend -type d -name __pycache__ -prune -exec rm -rf {} +
+          find backend -type f -name '*.pyc' -delete
+          rm -rf \
+            "$DOCUMENT_EXPORT_STORAGE_DIR" \
+            "${RUNNER_TEMP}/focused-backend.log" \
+            "${RUNNER_TEMP}/focused-backend.pid" \
+            "${RUNNER_TEMP}/static-smoke-results.json" \
+            "${RUNNER_TEMP}/focused-smoke-results.json"

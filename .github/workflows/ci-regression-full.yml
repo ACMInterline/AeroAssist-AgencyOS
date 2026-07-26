@@ -39,7 +39,6 @@ jobs:
       DEMO_AUTH_ENABLED: "true"
       SEED_ON_STARTUP: "true"
       SEED_ENDPOINT_ENABLED: "true"
-      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
       APPLICATION_COMMIT: ${{ inputs.application_commit || github.sha }}
       WORKFLOW_DEFINITION_COMMIT: ${{ github.workflow_sha }}
 
@@ -49,6 +48,12 @@ jobs:
         with:
           ref: ${{ inputs.application_commit || github.sha }}
           fetch-depth: 0
+
+      - name: Initialize runner paths
+        run: |
+          document_export_dir="$RUNNER_TEMP/document-exports"
+          mkdir -p "$document_export_dir"
+          echo "DOCUMENT_EXPORT_STORAGE_DIR=$document_export_dir" >> "$GITHUB_ENV"
 
       - name: Verify exact application commit and record lineage
         run: |

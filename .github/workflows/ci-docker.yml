@@ -86,13 +86,18 @@ jobs:
       DEMO_AUTH_ENABLED: "true"
       SEED_ON_STARTUP: "true"
       SEED_ENDPOINT_ENABLED: "true"
-      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
     steps:
       - name: Check out exact application commit
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.application_commit }}
           fetch-depth: 0
+
+      - name: Initialize runner paths
+        run: |
+          document_export_dir="$RUNNER_TEMP/document-exports"
+          mkdir -p "$document_export_dir"
+          echo "DOCUMENT_EXPORT_STORAGE_DIR=$document_export_dir" >> "$GITHUB_ENV"
 
       - name: Verify exact application commit and record lineage
         run: |
@@ -231,9 +236,11 @@ jobs:
           git cat-file -e "${APPLICATION_COMMIT}^{commit}"
           checked_out_head="$(git rev-parse HEAD)"
           test "$checked_out_head" = "$APPLICATION_COMMIT"
-          echo "CHECKED_OUT_APPLICATION_COMMIT=$checked_out_head" >> "$GITHUB_ENV"
-          echo "BACKEND_IMAGE=aeroassist-ci-backend:${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
-          echo "FRONTEND_IMAGE=aeroassist-ci-frontend:${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+          {
+            echo "CHECKED_OUT_APPLICATION_COMMIT=$checked_out_head"
+            echo "BACKEND_IMAGE=aeroassist-ci-backend:${GITHUB_RUN_ID}"
+            echo "FRONTEND_IMAGE=aeroassist-ci-frontend:${GITHUB_RUN_ID}"
+          } >> "$GITHUB_ENV"
 
       - name: Build exact production backend image
         run: docker build --label "org.opencontainers.image.revision=$APPLICATION_COMMIT" --file backend/Dockerfile --tag "$BACKEND_IMAGE" .
@@ -290,7 +297,7 @@ jobs:
       - name: Wait for healthy application containers
         run: |
           for container in aeroassist-ci-backend aeroassist-ci-frontend; do
-            for attempt in {1..60}; do
+            for _ in {1..60}; do
               status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' "$container")"
               if [[ "$status" == "healthy" ]]; then
                 break
@@ -440,14 +447,16 @@ jobs:
           APP_GIT_COMMIT=$APPLICATION_COMMIT
           EOF
           chmod 600 "$env_file"
-          echo "CI_MONGO_ENV_FILE=$env_file" >> "$GITHUB_ENV"
-          echo "AEROASSIST_ENV_FILE=$env_file" >> "$GITHUB_ENV"
-          echo "CI_MONGO_BACKUP_ROOT=${RUNNER_TEMP}/aeroassist-ci-backups" >> "$GITHUB_ENV"
+          {
+            echo "CI_MONGO_ENV_FILE=$env_file"
+            echo "AEROASSIST_ENV_FILE=$env_file"
+            echo "CI_MONGO_BACKUP_ROOT=${RUNNER_TEMP}/aeroassist-ci-backups"
+          } >> "$GITHUB_ENV"
 
       - name: Start authenticated disposable MongoDB and backend
         run: |
           AEROASSIST_ENV_FILE="$CI_MONGO_ENV_FILE" docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml up --build --detach mongo backend
-          for attempt in {1..60}; do
+          for _ in {1..60}; do
             status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{end}}' aeroassist-ci-mongodb-backend-1)"
             if [[ "$status" == "healthy" ]]; then
               exit 0
@@ -505,6 +514,7 @@ jobs:
         run: |
           docker compose --project-name aeroassist-ci-mongodb --env-file "$CI_MONGO_ENV_FILE" -f docker-compose.production.yml logs --no-color backend > "${RUNNER_TEMP}/authenticated-backend.log" 2>&1
           set -a
+          # shellcheck source=/dev/null
           source "$CI_MONGO_ENV_FILE"
           set +a
           if grep -F "$MONGO_APP_PASSWORD" "${RUNNER_TEMP}/authenticated-backend.log" >/dev/null; then

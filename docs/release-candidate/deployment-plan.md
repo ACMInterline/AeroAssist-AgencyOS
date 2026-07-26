@@ -12,6 +12,8 @@ This plan uses the existing Hostinger tooling. It does not authorize execution.
 - The manually dispatched `ci-docker.yml` gate passed for the explicit
   application SHA, and its safe lineage artifact records the separate
   workflow-definition commit and GitHub run ID.
+- `actionlint .github/workflows/*.yml` completed with no errors, and each
+  runner-dependent path is initialized by a step through `$GITHUB_ENV`.
 - The production worktree is clean.
 - Current running commit is resolvable and will become `ROLLBACK_COMMIT`.
 - Configuration, authenticated MongoDB, document volume, disk, memory, HTTPS,
@@ -171,5 +173,7 @@ Phase 57 assessment. Also stop if hosted lineage substitutes a branch tip for
 the requested application SHA, application and workflow-definition commits
 cannot be distinguished, packaged phase or inventory differs from runtime
 health/readiness, an artifact contains raw logs or environment material, or
-cleanup leaves disposable Docker resources. Never reinterpret a failed check
-as success.
+cleanup leaves disposable Docker resources. A hosted run with zero jobs or no
+runner logs is a workflow planning failure, not release evidence; stop and
+correct invalid context placement before any rerun. Never reinterpret a failed
+check as success.

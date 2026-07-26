@@ -112,6 +112,13 @@ FORBIDDEN_WORKFLOW_PATTERNS = {
 }
 APPROVED_APPLICATION_COMMIT = "de22b70c1ccdabf7bd6d28765addf63f79dd189d"
 FULL_SHA_SHELL_PATTERN = r"^[0-9a-f]{40}$"
+DOCUMENT_EXPORT_JOBS = {
+    ".github/workflows/ci-fast.yml": ("validate",),
+    ".github/workflows/ci-smoke-focused.yml": ("focused-smokes",),
+    ".github/workflows/ci-regression-full.yml": ("complete-inventory",),
+    ".github/workflows/ci-docker.yml": ("exact-release-validation",),
+}
+EXPRESSION_CONTEXT_RE = re.compile(r"\$\{\{\s*([A-Za-z_][A-Za-z0-9_-]*)")
 
 
 def validate_workflow(path: Path, required_tokens: tuple[str, ...]) -> list[str]:
@@ -167,6 +174,147 @@ def workflow_job_block(text: str, job_name: str) -> str:
     next_job = re.search(r"(?m)^  [a-z0-9][a-z0-9-]*:\n", following)
     end = start + len(marker) + next_job.start() if next_job else len(text)
     return text[start:end]
+
+
+def workflow_job_blocks(text: str) -> dict[str, str]:
+    jobs_marker = "\njobs:\n"
+    jobs_start = text.find(jobs_marker)
+    if jobs_start < 0:
+        return {}
+    jobs_text = text[jobs_start + len(jobs_marker) :]
+    matches = list(re.finditer(r"(?m)^  ([a-z0-9][a-z0-9-]*):\n", jobs_text))
+    blocks: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(jobs_text)
+        blocks[match.group(1)] = jobs_text[match.start() : end]
+    return blocks
+
+
+def indented_mapping_block(text: str, key: str, indent: int) -> str:
+    lines = text.splitlines()
+    marker = f"{' ' * indent}{key}:"
+    for index, line in enumerate(lines):
+        if line != marker:
+            continue
+        block = [line]
+        for following in lines[index + 1 :]:
+            if following.strip() and len(following) - len(following.lstrip(" ")) <= indent:
+                break
+            block.append(following)
+        return "\n".join(block)
+    return ""
+
+
+def job_step_blocks(job_block: str) -> list[str]:
+    steps_marker = "\n    steps:\n"
+    start = job_block.find(steps_marker)
+    if start < 0:
+        return []
+    steps_text = job_block[start + len(steps_marker) :]
+    matches = list(re.finditer(r"(?m)^      - (?:name|uses|run):", steps_text))
+    blocks: list[str] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(steps_text)
+        blocks.append(steps_text[match.start() : end])
+    return blocks
+
+
+def expression_contexts(text: str) -> set[str]:
+    return {match.group(1) for match in EXPRESSION_CONTEXT_RE.finditer(text)}
+
+
+def audit_workflow_context_structure(relative: str, text: str) -> list[str]:
+    errors: list[str] = []
+    jobs = workflow_job_blocks(text)
+    jobs_marker = "\njobs:\n"
+    workflow_scope = text[: text.find(jobs_marker)] if jobs_marker in text else text
+    workflow_contexts = expression_contexts(workflow_scope)
+    invalid_workflow_contexts = workflow_contexts.intersection(
+        {"runner", "job", "steps", "needs", "strategy", "matrix", "env", "hashFiles"}
+    )
+    for context in sorted(invalid_workflow_contexts):
+        errors.append(f"{relative}: context {context!r} is not valid at workflow scope.")
+
+    trigger_block = indented_mapping_block(text, "on", 0)
+    has_non_dispatch_trigger = any(
+        re.search(rf"(?m)^  {trigger}:", trigger_block)
+        for trigger in ("pull_request", "push", "schedule")
+    )
+    if has_non_dispatch_trigger:
+        for line in workflow_scope.splitlines():
+            if "${{ inputs." in line and "||" not in line:
+                errors.append(
+                    f"{relative}: workflow-scope inputs context lacks a non-dispatch fallback: {line.strip()!r}."
+                )
+
+    for job_name, block in jobs.items():
+        env_block = indented_mapping_block(block, "env", 4)
+        env_contexts = expression_contexts(env_block)
+        for context in sorted(env_contexts.intersection({"runner", "job", "steps", "env", "hashFiles"})):
+            errors.append(
+                f"{relative} job {job_name!r}: context {context!r} is not valid in jobs.<job_id>.env."
+            )
+
+        steps_marker = "\n    steps:\n"
+        pre_steps = block[: block.find(steps_marker)] if steps_marker in block else block
+        if "steps" in expression_contexts(pre_steps):
+            errors.append(f"{relative} job {job_name!r}: steps context is used before job steps exist.")
+        if "hashFiles" in expression_contexts(pre_steps):
+            errors.append(f"{relative} job {job_name!r}: hashFiles is used outside a step expression.")
+
+        if has_non_dispatch_trigger:
+            dispatch_only = "if: github.event_name == 'workflow_dispatch'" in pre_steps
+            for line in block.splitlines():
+                if "${{ inputs." in line and "||" not in line and not dispatch_only:
+                    errors.append(
+                        f"{relative} job {job_name!r}: inputs context lacks a non-dispatch fallback: "
+                        f"{line.strip()!r}."
+                    )
+
+    for job_name in DOCUMENT_EXPORT_JOBS.get(relative, ()):
+        block = jobs.get(job_name)
+        if not block:
+            errors.append(f"{relative}: required document-export job {job_name!r} is missing.")
+            continue
+        env_block = indented_mapping_block(block, "env", 4)
+        if "DOCUMENT_EXPORT_STORAGE_DIR" in env_block:
+            errors.append(
+                f"{relative} job {job_name!r}: DOCUMENT_EXPORT_STORAGE_DIR must not be initialized "
+                "in job-level env."
+            )
+        steps = job_step_blocks(block)
+        initializer_indexes = [
+            index for index, step in enumerate(steps) if "- name: Initialize runner paths" in step
+        ]
+        if len(initializer_indexes) != 1:
+            errors.append(
+                f"{relative} job {job_name!r}: expected exactly one Initialize runner paths step."
+            )
+            continue
+        initializer_index = initializer_indexes[0]
+        initializer = steps[initializer_index]
+        required_tokens = (
+            'document_export_dir="$RUNNER_TEMP/document-exports"',
+            'mkdir -p "$document_export_dir"',
+            'echo "DOCUMENT_EXPORT_STORAGE_DIR=$document_export_dir" >> "$GITHUB_ENV"',
+        )
+        for token in required_tokens:
+            if token not in initializer:
+                errors.append(
+                    f"{relative} job {job_name!r}: runner-path initializer omits {token!r}."
+                )
+        if "$GITHUB_WORKSPACE" in initializer or "./document-exports" in initializer:
+            errors.append(
+                f"{relative} job {job_name!r}: document exports must be initialized outside the repository."
+            )
+        consumer_indexes = [
+            index for index, step in enumerate(steps) if "DOCUMENT_EXPORT_STORAGE_DIR" in step
+        ]
+        if not consumer_indexes or min(consumer_indexes) != initializer_index:
+            errors.append(
+                f"{relative} job {job_name!r}: DOCUMENT_EXPORT_STORAGE_DIR is used before initialization."
+            )
+    return errors
 
 
 def validate_exact_commit_release_contract() -> list[str]:
@@ -368,7 +516,10 @@ def validate_ci_foundation() -> list[str]:
         errors.append(f"Current build phase is {CURRENT_BUILD_PHASE!r}, expected at least {MINIMUM_PHASE!r}")
 
     for relative, tokens in WORKFLOW_SPECS.items():
-        errors.extend(validate_workflow(ROOT / relative, tokens))
+        path = ROOT / relative
+        errors.extend(validate_workflow(path, tokens))
+        if path.is_file():
+            errors.extend(audit_workflow_context_structure(relative, path.read_text(encoding="utf-8")))
     errors.extend(validate_exact_commit_release_contract())
 
     summary, inventory_errors = validate_inventory()

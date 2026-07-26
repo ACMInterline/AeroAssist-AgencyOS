@@ -85,6 +85,9 @@ The application tree was locally approved independently of the later CI
 tooling repair. Hosted release evidence is acceptable only when the manually
 dispatched workflow:
 
+- passes `actionlint` with no workflow-context errors;
+- initializes runner-dependent document storage in a step through
+  `$GITHUB_ENV`, never in job-level environment mappings;
 - receives the full application SHA rather than a branch name;
 - checks out and verifies that exact tree;
 - records the reviewed workflow-definition commit separately;
@@ -94,5 +97,7 @@ dispatched workflow:
 - uploads only bounded JSON summaries.
 
 Until that hosted run succeeds, hosted exact-commit evidence remains pending.
+The earlier zero-job runs are workflow-planning failures and provide no
+application evidence.
 That pending state does not invalidate the prior local application evidence,
 and it does not authorize deployment or Phase 57 sign-off.

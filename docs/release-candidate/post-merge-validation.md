@@ -69,6 +69,21 @@ readiness, anonymous diagnostics rejection, and authorized bounded Platform
 diagnostics. Remove the temporary network, containers, volumes, reports,
 Python caches, and `frontend/dist` after evidence is recorded.
 
+## Workflow Planning Validation
+
+Run `actionlint` across every workflow before dispatching hosted validation:
+
+```bash
+actionlint .github/workflows/*.yml
+```
+
+Any error is a blocker. In particular, `${{ runner.temp }}` is invalid in
+`jobs.<job_id>.env`: GitHub rejects that workflow while planning it, so the run
+contains no jobs or runner logs. Affected jobs must instead create
+`$RUNNER_TEMP/document-exports` in an early step and append
+`DOCUMENT_EXPORT_STORAGE_DIR` to `$GITHUB_ENV`. This keeps the path outside the
+repository and makes it available only after a runner exists.
+
 ## Hosted Exact-Commit Gate
 
 After the CI tooling repair is reviewed and present on `main`, dispatch its
@@ -108,6 +123,10 @@ gh run view "$RUN_ID" --json headSha,conclusion,url
 mkdir -p "/tmp/aeroassist-hosted-$RUN_ID"
 gh run download "$RUN_ID" --dir "/tmp/aeroassist-hosted-$RUN_ID"
 ```
+
+Stop if the run creates no jobs, provides no runner logs, or reports a workflow
+planning error. Repair and re-run `actionlint`; do not reinterpret an
+unstarted workflow as application-validation evidence.
 
 The workflow validates its own definition at `github.workflow_sha`, checks out
 the requested 40-character application commit independently, and fails if

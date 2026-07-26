@@ -22,12 +22,17 @@ jobs:
     env:
       APP_ENV: development
       AEROASSIST_DB_MODE: memory
-      DOCUMENT_EXPORT_STORAGE_DIR: ${{ runner.temp }}/document-exports
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Initialize runner paths
+        run: |
+          document_export_dir="$RUNNER_TEMP/document-exports"
+          mkdir -p "$document_export_dir"
+          echo "DOCUMENT_EXPORT_STORAGE_DIR=$document_export_dir" >> "$GITHUB_ENV"
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -123,3 +128,10 @@ jobs:
 
       - name: Build frontend
         run: npm run build --prefix frontend
+
+      - name: Clean generated validation artifacts
+        if: always()
+        run: |
+          find backend -type d -name __pycache__ -prune -exec rm -rf {} +
+          find backend -type f -name '*.pyc' -delete
+          rm -rf frontend/dist "$DOCUMENT_EXPORT_STORAGE_DIR"
